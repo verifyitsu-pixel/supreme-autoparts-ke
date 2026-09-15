@@ -1,0 +1,112 @@
+<?php
+declare(strict_types=1);
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+/**
+ * Ensure a product_cat term exists; return term_id.
+ */
+function sa_core_ensure_term(string $name, string $slug, int $parent = 0, string $description = ''): int
+{
+    $existing = get_term_by('slug', $slug, 'product_cat');
+    if ($existing && !is_wp_error($existing)) {
+        return (int) $existing->term_id;
+    }
+    $result = wp_insert_term($name, 'product_cat', [
+        'slug'        => $slug,
+        'parent'      => $parent,
+        'description' => $description,
+    ]);
+    if (is_wp_error($result)) {
+        // Slug collision with different name — try by name
+        $by_name = get_term_by('name', $name, 'product_cat');
+        return $by_name && !is_wp_error($by_name) ? (int) $by_name->term_id : 0;
+    }
+    return (int) $result['term_id'];
+}
+
+function sa_core_slugify(string $label): string
+{
+    $slug = strtolower($label);
+    $slug = preg_replace('/[^a-z0-9]+/', '-', $slug) ?? $slug;
+    return trim($slug, '-');
+}
+
+/**
+ * Seed homepage IA categories + megamenu children.
+ */
+function sa_core_seed_categories(): void
+{
+    if (!taxonomy_exists('product_cat')) {
+        return;
+    }
+
+    $regions = [
+        ['American', 'american'],
+        ['European', 'european'],
+        ['Asian', 'asian'],
+    ];
+    foreach ($regions as [$name, $slug]) {
+        sa_core_ensure_term($name, $slug, 0, "Shop {$name} vehicle parts");
+    }
+
+    $types = [
+        'Air Intake' => 'air-intake',
+        'Brakes' => 'brakes',
+        'Drivetrain' => 'drivetrain',
+        'Engine' => 'engine',
+        'Exhaust' => 'exhaust',
+        'Exterior' => 'exterior',
+        'Interior' => 'interior',
+        'Lighting' => 'lighting',
+        'Suspension' => 'suspension',
+        'Tires' => 'tires',
+        'Wheels' => 'wheels',
+    ];
+    $parent_ids = [];
+    foreach ($types as $name => $slug) {
+        $parent_ids[$slug] = sa_core_ensure_term($name, $slug);
+    }
+
+    $megamenu = [
+        'brakes' => ['Big Brake Kits','Brake Pads','Brake Rotors','Brake Kits','Brake Calipers','Brake Caliper Covers','Brake Fluid','Brake Line Kits','Brake Master Cylinders'],
+        'drivetrain' => ['Axles','Clutch Discs','Clutch Flywheels','Clutch Kits','Clutch Pressure Plates','Differentials','Driveshafts','Torque Converters','Transfer Cases','Transmission Coolers','Transmission Shifters'],
+        'engine' => ['Air Intakes','Cooling','Engine Components','Fueling','Ignition','Forced Induction','Tuners / Programmers'],
+        'exhaust' => ['Axle Back Exhaust','Cat Back Exhaust','Exhaust Tips','Headers & Manifolds','Downpipes','Muffler'],
+        'exterior' => ['Armor & Protection','Bed Accessories','Body Kits','Bug Deflectors','Car Covers','Chrome Trim','Fender Flares','Grilles','Grille Guards','Hoods','Horns','Light Covers','Mirrors','Mud Flaps','Off Road Bumpers','Roof Racks','Running Boards','Spoilers','Tonneau Covers','Toppers','Truck Caps','Winches','Wipers'],
+        'interior' => ['Car Organizers','Cargo Liners','Dash Stuff','Floor Mats','Gauges','Interior Parts','Pedals','Pet Travel','Seat Covers','Seats','Shift Knobs','Steering Wheels','Sun Shades'],
+        'lighting' => ['Accessory Lighting','Car Bulbs','Fog Lights','Headlights','LED Lights','Off-Road Lights','Signal Lights','Tail Lights','Trailer Lights'],
+        'suspension' => ['Air Suspension','Camber Kits','Coilovers','Control Arms','End Links','Leaf Springs','Leveling Kits','Lift Kits','Lowering Springs','Panhard Bars','Shocks & Struts','Strut Tower Braces','Subframe Parts','Suspension Kits','Suspension Parts','Sway Bars','Torque Arms','Torsion Bars','Traction Bars'],
+    ];
+
+    foreach ($megamenu as $parent_slug => $children) {
+        $parent = $parent_ids[$parent_slug] ?? sa_core_ensure_term(ucfirst($parent_slug), $parent_slug);
+        foreach ($children as $child) {
+            sa_core_ensure_term($child, sa_core_slugify($child), $parent);
+        }
+    }
+
+    $brands = [
+        'ACT Clutch' => 'act',
+        'aFe Power' => 'afe',
+        'AWE' => 'awe',
+        'Bilstein' => 'bilstein',
+        'Bushwacker' => 'bushwacker',
+        'Corsa' => 'corsa',
+        'EBC Brakes' => 'ebc',
+        'Fox Shocks' => 'fox',
+        'Garrett' => 'garrett',
+        'King Shocks' => 'king',
+        'Oracle' => 'oracle',
+        'Road Armor' => 'road-armor',
+        'WeatherTech' => 'weathertech',
+    ];
+    $brands_parent = sa_core_ensure_term('Brands', 'brands');
+    foreach ($brands as $name => $slug) {
+        sa_core_ensure_term($name, $slug, $brands_parent);
+    }
+
+    update_option('sa_categories_seeded', time());
+}

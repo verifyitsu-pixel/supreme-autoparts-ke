@@ -1,0 +1,22 @@
+<?php
+/**
+ * Supreme Autoparts theme functions.
+ *
+ * @package Supreme_Autoparts
+ */
+
+declare(strict_types=1);
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+define('SA_THEME_VERSION', '1.0.0');
+define('SA_THEME_DIR', get_template_directory());
+define('SA_THEME_URI', get_template_directory_uri());
+
+require_once SA_THEME_DIR . '/inc/setup.php';
+require_once SA_THEME_DIR . '/inc/assets.php';
+require_once SA_THEME_DIR . '/inc/megamenu.php';
+require_once SA_THEME_DIR . '/inc/woocommerce.php';
+require_once SA_THEME_DIR . '/inc/helpers.php';

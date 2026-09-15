@@ -1,0 +1,15 @@
+.env
+.env.local
+.env.*.local
+node_modules/
+vendor/
+*.log
+.DS_Store
+wp-content/uploads/
+wp-content/cache/
+wp-content/upgrade/
+wp-content/backup*/
+*.sql
+*.sql.gz
+.idea/
+.vscode/

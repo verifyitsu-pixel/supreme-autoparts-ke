@@ -1,0 +1,830 @@
+{
+  "regions": [
+    {
+      "title": "American",
+      "handle": "american-auto-parts",
+      "slug": "american"
+    },
+    {
+      "title": "European",
+      "handle": "european-car-parts",
+      "slug": "european"
+    },
+    {
+      "title": "Asian",
+      "handle": "japanese-korean-parts",
+      "slug": "asian"
+    }
+  ],
+  "product_types": [
+    {
+      "title": "Air Intake",
+      "handle": "air-intake-systems",
+      "slug": "air-intake"
+    },
+    {
+      "title": "Brakes",
+      "handle": "brakes-rotors-pads",
+      "slug": "brakes"
+    },
+    {
+      "title": "Drivetrain",
+      "handle": "drivetrain",
+      "slug": "drivetrain"
+    },
+    {
+      "title": "Engine",
+      "handle": "engine-components",
+      "slug": "engine"
+    },
+    {
+      "title": "Exhaust",
+      "handle": "exhaust-mufflers-tips",
+      "slug": "exhaust"
+    },
+    {
+      "title": "Exterior",
+      "handle": "exterior",
+      "slug": "exterior"
+    },
+    {
+      "title": "Interior",
+      "handle": "interior",
+      "slug": "interior"
+    },
+    {
+      "title": "Lighting",
+      "handle": "lights",
+      "slug": "lighting"
+    },
+    {
+      "title": "Suspension",
+      "handle": "suspension",
+      "slug": "suspension"
+    },
+    {
+      "title": "Tires",
+      "handle": "tires",
+      "slug": "tires"
+    },
+    {
+      "title": "Wheels",
+      "handle": "wheels",
+      "slug": "wheels"
+    }
+  ],
+  "brands": [
+    {
+      "title": "ACT Clutch",
+      "handle": "act-clutch",
+      "slug": "act"
+    },
+    {
+      "title": "aFe Power",
+      "handle": "afe-power",
+      "slug": "afe"
+    },
+    {
+      "title": "AWE",
+      "handle": "awe",
+      "slug": "awe"
+    },
+    {
+      "title": "Bilstein",
+      "handle": "bilstein",
+      "slug": "bilstein"
+    },
+    {
+      "title": "Bushwacker",
+      "handle": "bushwacker",
+      "slug": "bushwacker"
+    },
+    {
+      "title": "Corsa",
+      "handle": "corsa",
+      "slug": "corsa"
+    },
+    {
+      "title": "EBC Brakes",
+      "handle": "ebc-brakes",
+      "slug": "ebc"
+    },
+    {
+      "title": "Fox Shocks",
+      "handle": "fox-shocks",
+      "slug": "fox"
+    },
+    {
+      "title": "Garrett",
+      "handle": "garrett",
+      "slug": "garrett"
+    },
+    {
+      "title": "King Shocks",
+      "handle": "king-shocks",
+      "slug": "king"
+    },
+    {
+      "title": "Oracle",
+      "handle": "oracle",
+      "slug": "oracle"
+    },
+    {
+      "title": "Road Armor",
+      "handle": "road-armor",
+      "slug": "road-armor"
+    },
+    {
+      "title": "WeatherTech",
+      "handle": "weathertech",
+      "slug": "weathertech"
+    }
+  ],
+  "megamenu": {
+    "brakes": [
+      "Big Brake Kits",
+      "Brake Pads",
+      "Brake Rotors",
+      "Brake Kits",
+      "Brake Calipers",
+      "Brake Caliper Covers",
+      "Brake Fluid",
+      "Brake Line Kits",
+      "Brake Master Cylinders"
+    ],
+    "drivetrain": [
+      "Axles",
+      "Clutch Discs",
+      "Clutch Flywheels",
+      "Clutch Kits",
+      "Clutch Pressure Plates",
+      "Differentials",
+      "Driveshafts",
+      "Torque Converters",
+      "Transfer Cases",
+      "Transmission Coolers",
+      "Transmission Shifters"
+    ],
+    "engine": [
+      "Air Intakes",
+      "Cooling",
+      "Engine Components",
+      "Fueling",
+      "Ignition",
+      "Forced Induction",
+      "Tuners / Programmers"
+    ],
+    "exhaust": [
+      "Axle Back Exhaust",
+      "Cat Back Exhaust",
+      "Exhaust Tips",
+      "Headers & Manifolds",
+      "Downpipes",
+      "Muffler"
+    ],
+    "exterior": [
+      "Armor & Protection",
+      "Bed Accessories",
+      "Body Kits",
+      "Bug Deflectors",
+      "Car Covers",
+      "Chrome Trim",
+      "Fender Flares",
+      "Grilles",
+      "Grille Guards",
+      "Hoods",
+      "Horns",
+      "Light Covers",
+      "Mirrors",
+      "Mud Flaps",
+      "Off Road Bumpers",
+      "Roof Racks",
+      "Running Boards",
+      "Spoilers",
+      "Tonneau Covers",
+      "Toppers",
+      "Truck Caps",
+      "Winches",
+      "Wipers"
+    ],
+    "interior": [
+      "Car Organizers",
+      "Cargo Liners",
+      "Dash Stuff",
+      "Floor Mats",
+      "Gauges",
+      "Interior Parts",
+      "Pedals",
+      "Pet Travel",
+      "Seat Covers",
+      "Seats",
+      "Shift Knobs",
+      "Steering Wheels",
+      "Sun Shades"
+    ],
+    "lighting": [
+      "Accessory Lighting",
+      "Car Bulbs",
+      "Fog Lights",
+      "Headlights",
+      "LED Lights",
+      "Off-Road Lights",
+      "Signal Lights",
+      "Tail Lights",
+      "Trailer Lights"
+    ],
+    "suspension": [
+      "Air Suspension",
+      "Camber Kits",
+      "Coilovers",
+      "Control Arms",
+      "End Links",
+      "Leaf Springs",
+      "Leveling Kits",
+      "Lift Kits",
+      "Lowering Springs",
+      "Panhard Bars",
+      "Shocks & Struts",
+      "Strut Tower Braces",
+      "Subframe Parts",
+      "Suspension Kits",
+      "Suspension Parts",
+      "Sway Bars",
+      "Torque Arms",
+      "Torsion Bars",
+      "Traction Bars"
+    ]
+  },
+  "shopify_collections_subset": [
+    {
+      "title": "Air Intake Components",
+      "handle": "air-intake-components",
+      "products_count": 945
+    },
+    {
+      "title": "Air Intake Systems",
+      "handle": "air-intake-systems",
+      "products_count": 9256
+    },
+    {
+      "title": "Air Suspension Kits",
+      "handle": "air-suspension-kits",
+      "products_count": 733
+    },
+    {
+      "title": "American Auto Parts",
+      "handle": "american-auto-parts",
+      "products_count": 0
+    },
+    {
+      "title": "Automotive/UTV Tires - Off Road",
+      "handle": "automotive-utv-tires-off-road",
+      "products_count": 1050
+    },
+    {
+      "title": "Automotive/UTV Tires - On Road",
+      "handle": "automotive-utv-tires-on-road",
+      "products_count": 4377
+    },
+    {
+      "title": "Axles",
+      "handle": "axles",
+      "products_count": 1479
+    },
+    {
+      "title": "Big Brake Kits",
+      "handle": "big-brake-kits",
+      "products_count": 3286
+    },
+    {
+      "title": "Body Kits",
+      "handle": "body-kits",
+      "products_count": 131
+    },
+    {
+      "title": "Brake Fluid",
+      "handle": "brake-fluid",
+      "products_count": 53
+    },
+    {
+      "title": "Brake Lights",
+      "handle": "brake-lights",
+      "products_count": 132
+    },
+    {
+      "title": "Brake Line Kits",
+      "handle": "brake-line-kits",
+      "products_count": 2360
+    },
+    {
+      "title": "Brakes, Rotors & Pads",
+      "handle": "brakes-rotors-pads",
+      "products_count": 74452
+    },
+    {
+      "title": "Bumper Lights",
+      "handle": "bumper-lights",
+      "products_count": 3
+    },
+    {
+      "title": "Camber Kits",
+      "handle": "camber-kits",
+      "products_count": 545
+    },
+    {
+      "title": "Car Covers",
+      "handle": "car-covers",
+      "products_count": 90
+    },
+    {
+      "title": "Clutch Discs",
+      "handle": "clutch-discs",
+      "products_count": 1087
+    },
+    {
+      "title": "Coilovers",
+      "handle": "coilovers",
+      "products_count": 6391
+    },
+    {
+      "title": "Cold Air Intakes",
+      "handle": "cold-air-intakes",
+      "products_count": 5499
+    },
+    {
+      "title": "Control Arms",
+      "handle": "control-arms",
+      "products_count": 3377
+    },
+    {
+      "title": "Cooling",
+      "handle": "cooling",
+      "products_count": 4655
+    },
+    {
+      "title": "Dash & Interior Trim",
+      "handle": "dash-interior-trim",
+      "products_count": 495
+    },
+    {
+      "title": "Daytime Running Lights",
+      "handle": "daytime-running-lights",
+      "products_count": 18
+    },
+    {
+      "title": "Differentials",
+      "handle": "differentials",
+      "products_count": 940
+    },
+    {
+      "title": "Downpipes",
+      "handle": "downpipes",
+      "products_count": 169
+    },
+    {
+      "title": "Driveshafts",
+      "handle": "driveshafts",
+      "products_count": 553
+    },
+    {
+      "title": "Drivetrain",
+      "handle": "drivetrain",
+      "products_count": 29375
+    },
+    {
+      "title": "Driving Lights",
+      "handle": "driving-lights",
+      "products_count": 199
+    },
+    {
+      "title": "Engine Breather Filters",
+      "handle": "engine-breather-filters",
+      "products_count": 60
+    },
+    {
+      "title": "Engine Cleaners",
+      "handle": "engine-cleaners",
+      "products_count": 1
+    },
+    {
+      "title": "Engine Components",
+      "handle": "engine-components",
+      "products_count": 94859
+    },
+    {
+      "title": "Engine Covers",
+      "handle": "engine-covers",
+      "products_count": 258
+    },
+    {
+      "title": "Engine Gaskets",
+      "handle": "engine-gaskets",
+      "products_count": 3002
+    },
+    {
+      "title": "Engine Girdles",
+      "handle": "engine-girdles",
+      "products_count": 8
+    },
+    {
+      "title": "Engine Hardware",
+      "handle": "engine-hardware",
+      "products_count": 925
+    },
+    {
+      "title": "Engine Mounts",
+      "handle": "engine-mounts",
+      "products_count": 1250
+    },
+    {
+      "title": "Engines",
+      "handle": "engines",
+      "products_count": 247
+    },
+    {
+      "title": "European Car Parts",
+      "handle": "european-car-parts",
+      "products_count": 0
+    },
+    {
+      "title": "Exhaust Adapters",
+      "handle": "exhaust-adapters",
+      "products_count": 152
+    },
+    {
+      "title": "Exhaust Brakes",
+      "handle": "exhaust-brakes",
+      "products_count": 59
+    },
+    {
+      "title": "Exhaust Collector",
+      "handle": "exhaust-collector",
+      "products_count": 69
+    },
+    {
+      "title": "Exhaust Cutouts",
+      "handle": "exhaust-cutouts",
+      "products_count": 178
+    },
+    {
+      "title": "Exhaust Gaskets",
+      "handle": "exhaust-gaskets",
+      "products_count": 1716
+    },
+    {
+      "title": "Exhaust Hangers",
+      "handle": "exhaust-hangers",
+      "products_count": 73
+    },
+    {
+      "title": "Exhaust Hardware",
+      "handle": "exhaust-hardware",
+      "products_count": 170
+    },
+    {
+      "title": "Exhaust Hooks",
+      "handle": "exhaust-hooks",
+      "products_count": 15
+    },
+    {
+      "title": "Exhaust Valve Controllers",
+      "handle": "exhaust-valve-controllers",
+      "products_count": 208
+    },
+    {
+      "title": "Exhaust Wrap",
+      "handle": "exhaust-wrap",
+      "products_count": 60
+    },
+    {
+      "title": "Exhaust, Mufflers & Tips",
+      "handle": "exhaust-mufflers-tips",
+      "products_count": 23859
+    },
+    {
+      "title": "Exterior Styling",
+      "handle": "exterior-styling",
+      "products_count": 6448
+    },
+    {
+      "title": "Exterior Trim",
+      "handle": "exterior-trim",
+      "products_count": 1132
+    },
+    {
+      "title": "Fender Flares",
+      "handle": "fender-flares",
+      "products_count": 643
+    },
+    {
+      "title": "Flashlights",
+      "handle": "flashlights",
+      "products_count": 24
+    },
+    {
+      "title": "Floor Mats",
+      "handle": "floor-mats",
+      "products_count": 21799
+    },
+    {
+      "title": "Flywheels",
+      "handle": "flywheels",
+      "products_count": 1429
+    },
+    {
+      "title": "Fog Lights",
+      "handle": "fog-lights",
+      "products_count": 1421
+    },
+    {
+      "title": "Forced Induction",
+      "handle": "forced-induction",
+      "products_count": 7345
+    },
+    {
+      "title": "Gauges",
+      "handle": "gauges",
+      "products_count": 3135
+    },
+    {
+      "title": "Grille Guards",
+      "handle": "grille-guards",
+      "products_count": 243
+    },
+    {
+      "title": "Grilles",
+      "handle": "grilles",
+      "products_count": 323
+    },
+    {
+      "title": "Hand Brakes",
+      "handle": "hand-brakes",
+      "products_count": 27
+    },
+    {
+      "title": "Headers & Manifolds",
+      "handle": "headers-manifolds",
+      "products_count": 1161
+    },
+    {
+      "title": "Headlights",
+      "handle": "headlights",
+      "products_count": 5547
+    },
+    {
+      "title": "Hoods",
+      "handle": "hoods",
+      "products_count": 566
+    },
+    {
+      "title": "Horns",
+      "handle": "horns",
+      "products_count": 49
+    },
+    {
+      "title": "Ignition",
+      "handle": "ignition",
+      "products_count": 4853
+    },
+    {
+      "title": "Interior Accessories",
+      "handle": "interior-accessories",
+      "products_count": 3368
+    },
+    {
+      "title": "Interior Lighting",
+      "handle": "interior-lighting",
+      "products_count": 230
+    },
+    {
+      "title": "Japanese / Korean Car Parts",
+      "handle": "japanese-korean-parts",
+      "products_count": 0
+    },
+    {
+      "title": "Leveling Kits",
+      "handle": "leveling-kits",
+      "products_count": 464
+    },
+    {
+      "title": "Lift Kits",
+      "handle": "lift-kits",
+      "products_count": 6501
+    },
+    {
+      "title": "Lights",
+      "handle": "lights",
+      "products_count": 18945
+    },
+    {
+      "title": "Lights Bed Rail",
+      "handle": "lights-bed-rail",
+      "products_count": 5
+    },
+    {
+      "title": "Lights Corner",
+      "handle": "lights-corner",
+      "products_count": 636
+    },
+    {
+      "title": "Lowering Springs",
+      "handle": "lowering-springs",
+      "products_count": 5440
+    },
+    {
+      "title": "Motorcycle Tires - Off Road",
+      "handle": "motorcycle-tires-off-road",
+      "products_count": 595
+    },
+    {
+      "title": "Motorcycle Tires - On Road",
+      "handle": "motorcycle-tires-on-road",
+      "products_count": 597
+    },
+    {
+      "title": "Mud Flaps",
+      "handle": "mud-flaps",
+      "products_count": 1707
+    },
+    {
+      "title": "Muffler",
+      "handle": "muffler",
+      "products_count": 1266
+    },
+    {
+      "title": "OE Replacement Air Intake Components",
+      "handle": "oe-replacement-air-intake-components",
+      "products_count": 4
+    },
+    {
+      "title": "Panhard Bars",
+      "handle": "panhard-bars",
+      "products_count": 166
+    },
+    {
+      "title": "Pedals",
+      "handle": "pedals",
+      "products_count": 164
+    },
+    {
+      "title": "Powersports Exhausts",
+      "handle": "powersports-exhausts",
+      "products_count": 349
+    },
+    {
+      "title": "Running Boards",
+      "handle": "running-boards",
+      "products_count": 1047
+    },
+    {
+      "title": "Seat Covers",
+      "handle": "seat-covers",
+      "products_count": 396
+    },
+    {
+      "title": "Seats",
+      "handle": "seats",
+      "products_count": 2637
+    },
+    {
+      "title": "Shift Knobs",
+      "handle": "shift-knobs",
+      "products_count": 590
+    },
+    {
+      "title": "Short Ram Air Intakes",
+      "handle": "short-ram-air-intakes",
+      "products_count": 224
+    },
+    {
+      "title": "Spoilers",
+      "handle": "spoilers",
+      "products_count": 294
+    },
+    {
+      "title": "Steering Wheels",
+      "handle": "steering-wheels",
+      "products_count": 532
+    },
+    {
+      "title": "Suspension",
+      "handle": "suspension",
+      "products_count": 69375
+    },
+    {
+      "title": "Suspension Arm Bushings",
+      "handle": "suspension-arm-bushings",
+      "products_count": 323
+    },
+    {
+      "title": "Suspension Arms & Components",
+      "handle": "suspension-arms-components",
+      "products_count": 1314
+    },
+    {
+      "title": "Suspension Controllers",
+      "handle": "suspension-controllers",
+      "products_count": 136
+    },
+    {
+      "title": "Suspension Packages",
+      "handle": "suspension-packages",
+      "products_count": 855
+    },
+    {
+      "title": "Sway Bars",
+      "handle": "sway-bars",
+      "products_count": 2644
+    },
+    {
+      "title": "Tail Lights",
+      "handle": "tail-lights",
+      "products_count": 2106
+    },
+    {
+      "title": "Tires",
+      "handle": "tires",
+      "products_count": 5604
+    },
+    {
+      "title": "Tires - Off Road",
+      "handle": "tires-off-road",
+      "products_count": 757
+    },
+    {
+      "title": "Tires - On Road",
+      "handle": "tires-on-road",
+      "products_count": 3529
+    },
+    {
+      "title": "Tonneau Covers",
+      "handle": "tonneau-covers",
+      "products_count": 4923
+    },
+    {
+      "title": "Torque Converters",
+      "handle": "torque-converters",
+      "products_count": 82
+    },
+    {
+      "title": "Track System Wheels",
+      "handle": "track-system-wheels",
+      "products_count": 0
+    },
+    {
+      "title": "Traction Bars",
+      "handle": "traction-bars",
+      "products_count": 172
+    },
+    {
+      "title": "Trailer Brakes",
+      "handle": "trailer-brakes",
+      "products_count": 3
+    },
+    {
+      "title": "Transmission Coolers",
+      "handle": "transmission-coolers",
+      "products_count": 128
+    },
+    {
+      "title": "Wheels",
+      "handle": "wheels",
+      "products_count": 21907
+    },
+    {
+      "title": "Wheels - Cast",
+      "handle": "wheels-cast",
+      "products_count": 12144
+    },
+    {
+      "title": "Wheels - Forged",
+      "handle": "wheels-forged",
+      "products_count": 9649
+    },
+    {
+      "title": "Wheels - Steel",
+      "handle": "wheels-steel",
+      "products_count": 45
+    },
+    {
+      "title": "Whip Lights",
+      "handle": "whip-lights",
+      "products_count": 18
+    },
+    {
+      "title": "Winches",
+      "handle": "winches",
+      "products_count": 109
+    },
+    {
+      "title": "Work Lights",
+      "handle": "work-lights",
+      "products_count": 214
+    },
+    {
+      "title": "zzTires - Powersports",
+      "handle": "zztires-powersports",
+      "products_count": 0
+    }
+  ]
+}
