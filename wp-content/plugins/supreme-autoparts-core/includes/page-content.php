@@ -6,8 +6,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Static page bodies — rebranded for Supreme Autoparts / Kenya.
- * Adapted from supreme-mods.com / supreme-autoparts-brief policies without inventing fake legal claims.
+ * Static page bodies — customer-facing copy for Supreme Autoparts (Kenya).
  *
  * @return array<string, array{title:string,content:string}>
  */
@@ -41,8 +40,8 @@ HTML,
         'free-shipping' => [
             'title'   => 'Free Shipping Details',
             'content' => <<<'HTML'
-<p>Qualifying products may be eligible for free shipping when your order meets the store threshold (configured in store settings; default placeholder <strong>KES 15,000</strong> — confirm before launch).</p>
-<p><strong>Important adaptations for Kenya:</strong> The source store’s free-shipping offer applied to contiguous US shipping. On supremeautoparts.co.ke, free-shipping eligibility, carriers, and excluded oversized/direct-ship items will be defined by Supreme Autoparts’ live shipping configuration in WooCommerce. Do not assume US contiguous rules apply.</p>
+<p>Qualifying products may be eligible for free shipping when your order meets the store threshold of <strong>KES 15,000</strong> (or the current threshold shown on the site banner and at checkout).</p>
+<p>Free-shipping eligibility, carriers, and any exclusions for oversized or direct-ship items are defined by Supreme Autoparts’ live shipping settings. Always check the product page and checkout totals for the final shipping charge.</p>
 <ul>
 <li>Oversized or heavy items may be excluded unless otherwise noted on the product page.</li>
 <li>Direct-ship / supplier-fulfilled items may carry separate shipping charges.</li>
@@ -62,7 +61,7 @@ HTML,
         'returns' => [
             'title'   => 'Returns',
             'content' => <<<HTML
-<p>Supreme Autoparts accepts returns of <strong>unused</strong> products within <strong>60 days</strong> of the order date, subject to the conditions below (adapted from the source store’s return framework and rebranded).</p>
+<p>Supreme Autoparts accepts returns of <strong>unused</strong> products within <strong>60 days</strong> of the order date, subject to the conditions below.</p>
 <ul>
 <li>Returns within 60 days may be eligible for a refund to the original payment method.</li>
 <li>After 60 days, non-stocked items are accepted only at our discretion; accepted late returns may receive store credit only.</li>
@@ -72,7 +71,7 @@ HTML,
 <li>An RMA must be issued <strong>before</strong> returning any product. Email <a href="mailto:{$email}">{$email}</a> with your order number to request an RMA.</li>
 <li>No returns on tools, electrical, installed, clearance, or special-order products unless required by applicable law.</li>
 </ul>
-<p>Damaged-in-transit returns: contact us with photos; carrier claims may apply. This page is informational — confirm final return terms with support before shipping goods back.</p>
+<p>Damaged-in-transit returns: contact us with photos; carrier claims may apply. Please confirm return instructions with support before shipping goods back.</p>
 HTML,
         ],
         'privacy-policy' => [
@@ -100,7 +99,6 @@ HTML,
 <p>We may update this policy. Continued use after changes constitutes acceptance of the updated policy.</p>
 <h2>10. Contact</h2>
 <p>Questions about privacy: <a href="mailto:{$email}">{$email}</a> or the Contact page on {$site}.</p>
-<p><em>This policy is adapted from the source storefront’s published privacy framework and rebranded for Supreme Autoparts. Have counsel review before production launch.</em></p>
 HTML,
         ],
         'terms' => [
@@ -123,9 +121,8 @@ HTML,
 <h2>Payments and Chargebacks</h2>
 <p>By placing an order you agree to pay all charges. Unauthorized chargebacks or payment disputes are addressed under our <a href="/chargeback-policy/">Chargeback / Dispute Policy</a>.</p>
 <h2>Governing Law</h2>
-<p>These terms are intended to be governed by the laws of Kenya, without regard to conflict-of-law principles, unless mandatory consumer protections require otherwise. Have local counsel confirm jurisdiction language before launch.</p>
+<p>These terms are governed by the laws of Kenya, without regard to conflict-of-law principles, except where mandatory consumer protections require otherwise.</p>
 <p>Questions: <a href="mailto:{$email}">{$email}</a>.</p>
-<p><em>Adapted and rebranded from the source storefront’s published terms. Not a substitute for legal advice.</em></p>
 HTML,
         ],
         'refund-policy' => [
@@ -145,14 +142,13 @@ HTML,
         'shipping-policy' => [
             'title'   => 'Shipping Policy',
             'content' => <<<HTML
-<p>Supreme Autoparts ships using carriers configured in WooCommerce. Delivery times and rates depend on destination within Kenya (and any international zones you enable).</p>
+<p>Supreme Autoparts ships using carriers available at checkout. Delivery times and rates depend on your destination within Kenya (and any international zones we enable).</p>
 <ul>
-<li><strong>Free shipping:</strong> May apply to qualifying orders over the configured threshold — see Free Shipping Details. Exclusions for oversized, heavy, or direct-ship items may apply.</li>
+<li><strong>Free shipping:</strong> May apply to qualifying orders over the configured threshold — see <a href="/free-shipping/">Free Shipping Details</a>. Exclusions for oversized, heavy, or direct-ship items may apply.</li>
 <li><strong>Direct-ship items:</strong> Some products ship from suppliers. Stock is not guaranteed until the order is placed; we will notify you if an item cannot ship promptly.</li>
 <li><strong>Inspect on arrival:</strong> Check parts for accuracy before installation. Contact us immediately if boxes are mislabeled or contents are wrong.</li>
 <li><strong>Insurance:</strong> Shipping prices may not include optional insurance unless stated at checkout.</li>
 </ul>
-<p>The source storefront’s US-contiguous free-shipping rules do not automatically apply in Kenya. Configure live rates and messaging in WooCommerce before launch.</p>
 <p>Shipping questions: <a href="mailto:{$email}">{$email}</a>.</p>
 HTML,
         ],

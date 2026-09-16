@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Deep megamenu IA mirroring supreme-mods.com.
+ * Primary megamenu structure.
  *
  * @return array<string, array{label:string,slug:string,columns:array<int,string>}>
  */

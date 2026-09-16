@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 /**
- * Homepage — mirrors supreme-mods.com IA, rebranded.
+ * Homepage template.
  */
 get_header();
 ?>

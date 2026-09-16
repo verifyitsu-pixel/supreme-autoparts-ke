@@ -102,7 +102,7 @@ add_filter('woocommerce_product_get_image', static function ($image, $product, $
         $class .= ' ' . esc_attr((string) $attr['class']);
     }
     return sprintf(
-        '<img src="%s" alt="%s" class="%s" loading="lazy" decoding="async" referrerpolicy="no-referrer-when-downgrade" data-sa-image-source="shopify-cdn" />',
+        '<img src="%s" alt="%s" class="%s" loading="lazy" decoding="async" referrerpolicy="no-referrer-when-downgrade" />',
         $src,
         $alt,
         $class
@@ -135,7 +135,7 @@ add_filter('woocommerce_single_product_image_thumbnail_html', static function ($
         $out .= sprintf(
             '<div data-thumb="%1$s" class="woocommerce-product-gallery__image%2$s">'
             . '<a href="%1$s"><img src="%1$s" alt="%3$s" class="wp-post-image sa-shopify-cdn-photo" '
-            . 'loading="lazy" decoding="async" data-sa-image-source="shopify-cdn" '
+            . 'loading="lazy" decoding="async" '
             . 'referrerpolicy="no-referrer-when-downgrade" /></a></div>',
             $src,
             $i === 0 ? '' : ' sa-cdn-gallery-extra',
