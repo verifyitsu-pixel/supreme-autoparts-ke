@@ -3,6 +3,7 @@ FROM wordpress:php8.3-apache
 
 # Ensure only the prefork MPM is loaded (Apache otherwise may load multiple MPMs)
 RUN a2dismod mpm_event mpm_worker mpm_itk 2>/dev/null || true \
+    && rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf \
     && a2enmod mpm_prefork
 
 # WP-CLI
