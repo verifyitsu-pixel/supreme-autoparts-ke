@@ -176,11 +176,13 @@ bootstrap_wordpress() {
     wp_as option delete sa_boot_import_done >/dev/null 2>&1 || true
     wp_as option delete sa_boot_import_batch50 >/dev/null 2>&1 || true
     wp_as option delete sa_boot_import_running >/dev/null 2>&1 || true
+    wp_as option delete sa_boot_import_running_at >/dev/null 2>&1 || true
   elif [[ "$PRODUCT_COUNT" -eq 0 ]]; then
     echo "[supreme] Catalog empty — resetting sa_boot_import_* so boot re-import runs"
     wp_as option delete sa_boot_import_done >/dev/null 2>&1 || true
     wp_as option delete sa_boot_import_batch50 >/dev/null 2>&1 || true
     wp_as option delete sa_boot_import_running >/dev/null 2>&1 || true
+    wp_as option delete sa_boot_import_running_at >/dev/null 2>&1 || true
   fi
 
   # Optional catalog import from baked scrape chunk (Shopify CDN photos only).
@@ -231,14 +233,26 @@ bootstrap_wordpress() {
       # Run in background so healthchecks stay green while images sideload.
       (
         mkdir -p /var/www/html/wp-content/uploads
+        wp_as option update sa_boot_import_running_at "$(date +%s)" >/dev/null 2>&1 || true
         wp_as supreme seed-categories >> /var/www/html/wp-content/uploads/sa-boot-import.log 2>&1 || true
         wp_as supreme import-ndjson --file="$IMPORT_FILE" --limit="$IMPORT_LIMIT" --require-images "${SKIP_IMG_FLAG[@]}" \
           >> /var/www/html/wp-content/uploads/sa-boot-import.log 2>&1 \
           || echo "[supreme] Boot import finished with errors (see sa-boot-import.log)."
         wp_as rewrite flush --hard >> /var/www/html/wp-content/uploads/sa-boot-import.log 2>&1 || true
-        wp_as option update sa_boot_import_done 1 >/dev/null 2>&1 || true
-        wp_as option update sa_boot_import_batch50 1 >/dev/null 2>&1 || true
+        AFTER_COUNT="$(wp_as post list --post_type=product --post_status=publish --format=count 2>/dev/null || echo 0)"
+        AFTER_COUNT="$(echo "$AFTER_COUNT" | tr -cd "0-9")"
+        AFTER_COUNT="${AFTER_COUNT:-0}"
+        echo "[supreme] Boot import after-count=${AFTER_COUNT}" >> /var/www/html/wp-content/uploads/sa-boot-import.log
+        if [[ "$AFTER_COUNT" -gt 0 ]]; then
+          wp_as option update sa_boot_import_done 1 >/dev/null 2>&1 || true
+          wp_as option update sa_boot_import_batch50 1 >/dev/null 2>&1 || true
+        else
+          echo "[supreme] Boot import produced 0 products — leaving flags clear for retry." >> /var/www/html/wp-content/uploads/sa-boot-import.log
+          wp_as option delete sa_boot_import_done >/dev/null 2>&1 || true
+          wp_as option delete sa_boot_import_batch50 >/dev/null 2>&1 || true
+        fi
         wp_as option delete sa_boot_import_running >/dev/null 2>&1 || true
+        wp_as option delete sa_boot_import_running_at >/dev/null 2>&1 || true
         echo "[supreme] Boot import finished at $(date -Iseconds)" >> /var/www/html/wp-content/uploads/sa-boot-import.log
       ) &
     else
