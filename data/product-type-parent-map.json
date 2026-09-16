@@ -1,0 +1,39 @@
+{
+  "exact": {
+    "Brake Pads": "brakes",
+    "Brake Rotors": "brakes",
+    "Brake Kits": "brakes",
+    "Brake Calipers": "brakes",
+    "Big Brake Kits": "brakes",
+    "Shocks and Struts": "suspension",
+    "Coilovers": "suspension",
+    "Lift Kits": "suspension",
+    "Leveling Kits": "suspension",
+    "Sway Bars": "suspension",
+    "Control Arms": "suspension",
+    "Cat-Back Exhaust": "exhaust",
+    "Axle-Back Exhaust": "exhaust",
+    "Headers": "exhaust",
+    "Downpipes": "exhaust",
+    "Air Intake Systems": "air-intake",
+    "Cold Air Intakes": "air-intake",
+    "Fog Lights": "lighting",
+    "Headlights": "lighting",
+    "Tail Lights": "lighting",
+    "Wheels": "wheels",
+    "Tires": "tires"
+  },
+  "keywords": {
+    "brakes": ["brake", "rotor", "caliper"],
+    "air-intake": ["air filter", "air intake", "cold air", "cabin air"],
+    "suspension": ["shock", "strut", "coilover", "sway", "spring", "control arm", "lift", "leveling", "camber", "bushing", "torsion", "panhard", "traction"],
+    "exhaust": ["exhaust", "catback", "cat-back", "axle back", "axle-back", "muffler", "header", "manifold", "downpipe", "wrap"],
+    "lighting": ["light", "bulb", "fog", "led", "headlight", "tail light", "signal"],
+    "drivetrain": ["clutch", "axle", "differential", "driveshaft", "transmission", "torque converter", "transfer case"],
+    "tires": ["tire", "tyre"],
+    "wheels": ["wheel", "rim"],
+    "exterior": ["tonneau", "bed", "skid", "body", "grille", "bumper", "winch", "wiper", "fender", "spoiler", "hood", "mirror", "mud flap", "running board", "roof rack", "chrome", "armor", "topper", "truck cap", "cover"],
+    "interior": ["steering wheel", "seat", "floor mat", "gauge", "pedal", "dash", "organizer", "cargo liner", "shift knob", "sun shade"],
+    "engine": ["filter", "intake", "oil", "spark", "intercooler", "fuel", "push rod", "blow off", "bearing", "bolt", "thermal", "cooling", "ignition", "turbo", "supercharg"]
+  }
+}

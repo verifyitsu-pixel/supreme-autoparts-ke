@@ -10,9 +10,13 @@
  *
  * Flags:
  *   --file=PATH       Path to products.ndjson or sample-products.json
- *   --limit=N         Max products this run (0 = all)
+ *   --limit=N         Max matching products this run (0 = all)
  *   --offset=N        Skip first N lines/products
+ *   --category=SLUG   IA parent filter (brakes, suspension, …)
+ *   --dry-run         Count only — no writes
+ *   --mapping=PATH    product_type → parent JSON map
  *   --skip-images     Do not sideload images (faster bulk pass)
+ *   --require-images  Skip products without real CDN images
  *
  * Full catalog scrape first:
  *   python3 scripts/scrape-shopify-catalog.py --resume
@@ -28,11 +32,14 @@ if (!defined('ABSPATH')) {
 }
 
 $opts = [
-    'file'         => '',
-    'limit'        => 0,
-    'offset'       => 0,
-    'skip_images'  => false,
+    'file'          => '',
+    'limit'         => 0,
+    'offset'        => 0,
+    'skip_images'   => false,
     'require_images'=> false,
+    'category'      => getenv('SUPREME_IMPORT_CATEGORY') ?: '',
+    'dry_run'       => false,
+    'mapping'       => getenv('SUPREME_IMPORT_MAPPING') ?: '',
 ];
 
 $argv_list = $GLOBALS['argv'] ?? [];
@@ -46,10 +53,16 @@ foreach ($argv_list as $arg) {
         $opts['limit'] = (int) substr($arg, 8);
     } elseif (str_starts_with($arg, '--offset=')) {
         $opts['offset'] = (int) substr($arg, 9);
+    } elseif (str_starts_with($arg, '--category=')) {
+        $opts['category'] = substr($arg, 11);
+    } elseif (str_starts_with($arg, '--mapping=')) {
+        $opts['mapping'] = substr($arg, 10);
     } elseif ($arg === '--skip-images') {
         $opts['skip_images'] = true;
     } elseif ($arg === '--require-images') {
         $opts['require_images'] = true;
+    } elseif ($arg === '--dry-run') {
+        $opts['dry_run'] = true;
     }
 }
 
@@ -90,21 +103,27 @@ if (!function_exists('sa_core_import_shopify_products_file')) {
 }
 
 $result = sa_core_import_shopify_products_file($opts['file'], [
-    'limit'        => $opts['limit'],
-    'offset'       => $opts['offset'],
-    'skip_images'  => $opts['skip_images'],
-    'require_images'=> $opts['require_images'],
+    'limit'          => $opts['limit'],
+    'offset'         => $opts['offset'],
+    'skip_images'    => $opts['skip_images'],
+    'require_images' => $opts['require_images'],
+    'category'       => (string) $opts['category'],
+    'dry_run'        => (bool) $opts['dry_run'],
+    'mapping'        => (string) $opts['mapping'],
 ]);
 
 $summary = sprintf(
-    "Import done: imported=%d updated=%d skipped=%d errors=%d file=%s limit=%s offset=%d",
+    "Import done%s: imported=%d updated=%d skipped=%d filtered=%d errors=%d file=%s limit=%s offset=%d category=%s",
+    !empty($result['dry_run']) ? ' [dry-run]' : '',
     $result['imported'],
     $result['updated'] ?? 0,
     $result['skipped'],
+    $result['filtered'] ?? 0,
     $result['errors'],
     $opts['file'],
     $opts['limit'] ?: 'all',
-    $opts['offset']
+    $opts['offset'],
+    ($opts['category'] !== '' ? $opts['category'] : 'all')
 );
 
 if (defined('WP_CLI') && WP_CLI) {

@@ -26,6 +26,10 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
         $this->init_settings();
 
         $this->enabled     = $this->get_option('enabled', 'no');
+        // Auto-enable when WHOP_API_KEY + WHOP_COMPANY_ID are present (env wins).
+        if ($this->enabled !== 'yes' && $this->env('WHOP_API_KEY') !== '' && $this->env('WHOP_COMPANY_ID') !== '') {
+            $this->enabled = 'yes';
+        }
         $this->title       = $this->get_option('title', __('Whop Checkout', 'whop-payments'));
         $this->description = $this->get_option(
             'description',
@@ -164,6 +168,11 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
     }
 
     public function is_available(): bool {
+        // When Railway/env credentials exist, treat gateway as enabled even if
+        // the options row was never saved (fresh deploys / empty DB settings).
+        if ($this->get_api_key() !== '' && $this->get_company_id() !== '') {
+            $this->enabled = 'yes';
+        }
         if (!parent::is_available()) {
             return false;
         }

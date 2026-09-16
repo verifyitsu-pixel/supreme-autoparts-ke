@@ -140,6 +140,24 @@ bootstrap_wordpress() {
   wp_as plugin activate sa-geo-currency || true
   wp_as theme activate supreme-autoparts || true
 
+  # Enable Whop gateway when Railway/env credentials are present.
+  if [[ -n "${WHOP_API_KEY:-}" && -n "${WHOP_COMPANY_ID:-}" ]]; then
+    echo "[supreme] WHOP_* env set — enabling Whop payment gateway (webhook: https://www.supremeautoparts.co.ke/?wc-api=whop_webhook)"
+    wp_as eval '
+$s = get_option("woocommerce_whop_settings", []);
+if (!is_array($s)) { $s = []; }
+$s["enabled"] = "yes";
+if (empty($s["title"])) { $s["title"] = "Whop Checkout"; }
+if (empty($s["description"])) {
+  $s["description"] = "Pay securely with Whop — cards (Visa, Mastercard) and supported local methods.";
+}
+update_option("woocommerce_whop_settings", $s);
+echo "whop_enabled\n";
+' || true
+  else
+    echo "[supreme] WHOP_API_KEY / WHOP_COMPANY_ID not set — Whop gateway left as-is (configure later)."
+  fi
+
   wp_as option update woocommerce_currency "${SA_CHECKOUT_CURRENCY:-$WOO_CURRENCY}" || true
   wp_as option update woocommerce_default_country "KE" || true
   wp_as option update woocommerce_currency_pos "left" || true
@@ -209,10 +227,8 @@ bootstrap_wordpress() {
   if [[ "$NEED_IMPORT" == "1" ]]; then
     IMPORT_FILE="${SUPREME_IMPORT_FILE:-}"
     if [[ -z "$IMPORT_FILE" ]]; then
+      # Prefer small/medium batches — never auto-pick 2000 (set SUPREME_IMPORT_FILE explicitly for that).
       for c in \
-        /var/www/html/wp-content/plugins/supreme-autoparts-core/data/scrape/chunks/batch-with-images-2000.ndjson \
-        /usr/src/supreme-data/scrape/chunks/batch-with-images-2000.ndjson \
-        /var/www/html/data/scrape/chunks/batch-with-images-2000.ndjson \
         /var/www/html/wp-content/plugins/supreme-autoparts-core/data/scrape/chunks/batch-with-images-400.ndjson \
         /usr/src/supreme-data/scrape/chunks/batch-with-images-400.ndjson \
         /var/www/html/data/scrape/chunks/batch-with-images-400.ndjson \
@@ -223,12 +239,17 @@ bootstrap_wordpress() {
         if [[ -r "$c" ]]; then IMPORT_FILE="$c"; break; fi
       done
     fi
-    # Default limit: 400 when using 400-batch, else 50.
+    # Safe defaults: one category family first (brakes), small limit — not a blind 2000 dump.
+    # Set SUPREME_IMPORT_CATEGORY=all (or empty with explicit LIMIT) to import unscoped.
+    IMPORT_CATEGORY="${SUPREME_IMPORT_CATEGORY:-brakes}"
+    if [[ "$IMPORT_CATEGORY" == "all" || "$IMPORT_CATEGORY" == "*" || "$IMPORT_CATEGORY" == "any" ]]; then
+      IMPORT_CATEGORY=""
+    fi
     if [[ -z "${SUPREME_IMPORT_LIMIT:-}" ]]; then
-      if [[ "$IMPORT_FILE" == *batch-with-images-2000* ]]; then
-        IMPORT_LIMIT=2000
+      if [[ -n "$IMPORT_CATEGORY" ]]; then
+        IMPORT_LIMIT=50
       elif [[ "$IMPORT_FILE" == *batch-with-images-400* ]]; then
-        IMPORT_LIMIT=400
+        IMPORT_LIMIT=100
       else
         IMPORT_LIMIT=50
       fi
@@ -240,15 +261,25 @@ bootstrap_wordpress() {
     if [[ "${SUPREME_IMPORT_SKIP_IMAGES:-1}" == "1" ]]; then
       SKIP_IMG_FLAG=(--skip-images)
     fi
+    CATEGORY_FLAG=()
+    if [[ -n "$IMPORT_CATEGORY" ]]; then
+      CATEGORY_FLAG=(--category="$IMPORT_CATEGORY")
+    fi
+    MAPPING_FLAG=()
+    if [[ -n "${SUPREME_IMPORT_MAPPING:-}" && -r "${SUPREME_IMPORT_MAPPING}" ]]; then
+      MAPPING_FLAG=(--mapping="$SUPREME_IMPORT_MAPPING")
+    elif [[ -r /var/www/html/wp-content/plugins/supreme-autoparts-core/data/product-type-parent-map.json ]]; then
+      MAPPING_FLAG=(--mapping=/var/www/html/wp-content/plugins/supreme-autoparts-core/data/product-type-parent-map.json)
+    fi
     if [[ -n "$IMPORT_FILE" && -r "$IMPORT_FILE" ]]; then
-      echo "[supreme] Boot import: file=$IMPORT_FILE limit=$IMPORT_LIMIT require-images force=${SUPREME_FORCE_IMPORT:-0}"
+      echo "[supreme] Boot import: file=$IMPORT_FILE limit=$IMPORT_LIMIT category=${IMPORT_CATEGORY:-all} require-images force=${SUPREME_FORCE_IMPORT:-0}"
       wp_as option update sa_boot_import_running 1 >/dev/null 2>&1 || true
       # Run in background so healthchecks stay green while images sideload.
       (
         mkdir -p /var/www/html/wp-content/uploads
         wp_as option update sa_boot_import_running_at "$(date +%s)" >/dev/null 2>&1 || true
         wp_as supreme seed-categories >> /var/www/html/wp-content/uploads/sa-boot-import.log 2>&1 || true
-        wp_as supreme import-ndjson --file="$IMPORT_FILE" --limit="$IMPORT_LIMIT" --require-images "${SKIP_IMG_FLAG[@]}" \
+        wp_as supreme import-ndjson --file="$IMPORT_FILE" --limit="$IMPORT_LIMIT" --require-images "${CATEGORY_FLAG[@]}" "${MAPPING_FLAG[@]}" "${SKIP_IMG_FLAG[@]}" \
           >> /var/www/html/wp-content/uploads/sa-boot-import.log 2>&1 \
           || echo "[supreme] Boot import finished with errors (see sa-boot-import.log)."
         wp_as rewrite flush --hard >> /var/www/html/wp-content/uploads/sa-boot-import.log 2>&1 || true

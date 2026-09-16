@@ -69,13 +69,18 @@ class SA_Core_CLI_Command
             'offset'         => isset($assoc_args['offset']) ? (int) $assoc_args['offset'] : 0,
             'skip_images'    => isset($assoc_args['skip-images']),
             'require_images' => isset($assoc_args['require-images']),
+            'category'       => (string) ($assoc_args['category'] ?? ''),
+            'dry_run'        => isset($assoc_args['dry-run']),
+            'mapping'        => (string) ($assoc_args['mapping'] ?? ''),
         ]);
         WP_CLI::success(sprintf(
-            'Imported %d, updated %d (%d skipped, %d errors).',
+            'Imported %d, updated %d (%d skipped, %d filtered, %d errors)%s.',
             $result['imported'],
             $result['updated'] ?? 0,
             $result['skipped'],
-            $result['errors']
+            $result['filtered'] ?? 0,
+            $result['errors'],
+            !empty($result['dry_run']) ? ' [dry-run]' : ''
         ));
     }
 
@@ -86,17 +91,24 @@ class SA_Core_CLI_Command
      * [--file=<path>]
      * : Path to products.ndjson (default: ABSPATH/data/scrape/products.ndjson)
      * [--limit=<n>]
-     * : Max products this run (0 = all remaining from offset)
+     * : Max matching products this run (0 = all remaining from offset)
      * [--offset=<n>]
-     * : Skip first N NDJSON lines
+     * : Skip first N NDJSON lines (before category filter)
+     * [--category=<slug>]
+     * : Only import products mapping to this IA parent (e.g. brakes, suspension)
+     * [--dry-run]
+     * : Count/match only — do not write products
+     * [--mapping=<path>]
+     * : JSON file mapping product_type → parent category slug
      * [--skip-images]
      * : Skip binary sideload (still stores Shopify CDN URL meta for display)
      * [--require-images]
      * : Only import products that have at least one real http(s) image
      *
      * ## EXAMPLES
+     *     wp supreme import-ndjson --category=brakes --limit=50 --require-images --dry-run
+     *     wp supreme import-ndjson --file=.../batch-with-images-400.ndjson --category=brakes --require-images
      *     wp supreme import-ndjson --limit=500 --require-images
-     *     wp supreme import-ndjson --file=/var/www/html/wp-content/plugins/supreme-autoparts-core/data/scrape/chunks/batch-with-images-400.ndjson --require-images
      *
      * @param array $args
      * @param array $assoc_args
@@ -105,19 +117,27 @@ class SA_Core_CLI_Command
     {
         $default = trailingslashit(ABSPATH) . 'data/scrape/products.ndjson';
         $file = $assoc_args['file'] ?? $default;
+        $category = (string) ($assoc_args['category'] ?? getenv('SUPREME_IMPORT_CATEGORY') ?: '');
+        $mapping = (string) ($assoc_args['mapping'] ?? getenv('SUPREME_IMPORT_MAPPING') ?: '');
         require_once SA_CORE_DIR . 'includes/import-shopify.php';
         $result = sa_core_import_shopify_products_file($file, [
             'limit'          => isset($assoc_args['limit']) ? (int) $assoc_args['limit'] : 0,
             'offset'         => isset($assoc_args['offset']) ? (int) $assoc_args['offset'] : 0,
             'skip_images'    => isset($assoc_args['skip-images']),
             'require_images' => isset($assoc_args['require-images']),
+            'category'       => $category,
+            'dry_run'        => isset($assoc_args['dry-run']),
+            'mapping'        => $mapping,
         ]);
         WP_CLI::success(sprintf(
-            'NDJSON import: imported=%d updated=%d skipped=%d errors=%d file=%s',
+            'NDJSON import%s: imported=%d updated=%d skipped=%d filtered=%d errors=%d category=%s file=%s',
+            !empty($result['dry_run']) ? ' (dry-run)' : '',
             $result['imported'],
             $result['updated'] ?? 0,
             $result['skipped'],
+            $result['filtered'] ?? 0,
             $result['errors'],
+            ($result['category'] ?? '') !== '' ? $result['category'] : 'all',
             $file
         ));
         foreach (array_slice($result['messages'], 0, 30) as $m) {

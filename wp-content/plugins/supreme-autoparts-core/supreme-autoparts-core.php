@@ -228,17 +228,27 @@ add_action('sa_core_empty_catalog_import', static function (): void {
         return;
     }
 
+    $category = (string) (getenv('SUPREME_IMPORT_CATEGORY') ?: 'brakes');
+    if (in_array(strtolower(trim($category)), ['all', '*', 'any'], true)) {
+        $category = '';
+    }
     $limit = $limit_env;
     if ($limit <= 0) {
-        $limit = str_contains($file, 'batch-with-images-400') ? 400 : 50;
+        $limit = $category !== '' ? 50 : (str_contains($file, 'batch-with-images-400') ? 100 : 50);
     }
     $skip_images = (string) (getenv('SUPREME_IMPORT_SKIP_IMAGES') ?: '1') === '1';
+    $mapping = (string) (getenv('SUPREME_IMPORT_MAPPING') ?: '');
+    if ($mapping === '' && is_readable(SA_CORE_DIR . 'data/product-type-parent-map.json')) {
+        $mapping = SA_CORE_DIR . 'data/product-type-parent-map.json';
+    }
 
     require_once SA_CORE_DIR . 'includes/import-shopify.php';
     $result = sa_core_import_shopify_products_file($file, [
         'limit'          => $limit,
         'skip_images'    => $skip_images,
         'require_images' => true,
+        'category'       => $category,
+        'mapping'        => $mapping,
     ]);
 
     flush_rewrite_rules(false);
@@ -367,10 +377,8 @@ add_action('rest_api_init', static function (): void {
                     sa_core_seed_categories();
                 }
 
-                // Prefer 400-with-images so parent + leaf archives fill (CDN meta only over HTTP).
+                // Prefer 400/50 — not auto-2000. Category-scoped by default (brakes).
                 $candidates = [
-                    SA_CORE_DIR . 'data/scrape/chunks/batch-with-images-2000.ndjson',
-                    '/usr/src/supreme-data/scrape/chunks/batch-with-images-2000.ndjson',
                     SA_CORE_DIR . 'data/scrape/chunks/batch-with-images-400.ndjson',
                     '/usr/src/supreme-data/scrape/chunks/batch-with-images-400.ndjson',
                     SA_CORE_DIR . 'data/scrape/chunks/batch-with-images-50.ndjson',
@@ -397,17 +405,27 @@ add_action('rest_api_init', static function (): void {
                     ], 500);
                 }
 
-                // Cap: env SUPREME_IMPORT_LIMIT (default 400 for 400-batch, else 50). CDN meta only.
+                $category = (string) (getenv('SUPREME_IMPORT_CATEGORY') ?: 'brakes');
+                if (in_array(strtolower(trim($category)), ['all', '*', 'any'], true)) {
+                    $category = '';
+                }
+                // Cap: env SUPREME_IMPORT_LIMIT (default 50 for category, else 100). CDN meta only.
                 $limit = (int) (getenv('SUPREME_IMPORT_LIMIT') ?: 0);
                 if ($limit <= 0) {
-                    $limit = str_contains($file, 'batch-with-images-400') ? 400 : 50;
+                    $limit = $category !== '' ? 50 : 100;
                 }
-                $limit = min(2000, max(1, $limit));
+                $limit = min(500, max(1, $limit));
+                $mapping = (string) (getenv('SUPREME_IMPORT_MAPPING') ?: '');
+                if ($mapping === '' && is_readable(SA_CORE_DIR . 'data/product-type-parent-map.json')) {
+                    $mapping = SA_CORE_DIR . 'data/product-type-parent-map.json';
+                }
                 require_once SA_CORE_DIR . 'includes/import-shopify.php';
                 $result = sa_core_import_shopify_products_file($file, [
                     'limit'          => $limit,
                     'skip_images'    => true,
                     'require_images' => str_contains($file, '.ndjson'),
+                    'category'       => $category,
+                    'mapping'        => $mapping,
                 ]);
 
                 $repair = ['repaired' => 0, 'skipped' => 0];

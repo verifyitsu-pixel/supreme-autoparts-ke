@@ -165,7 +165,7 @@ No payment credentials are bundled in Git.
 
 ## Boot import (Railway)
 
-On deploy, when `SUPREME_IMPORT_ON_BOOT=1` (default), the container imports `data/scrape/chunks/batch-with-images-400.ndjson` (products that have real Shopify CDN photos). CDN URL meta is always stored; binary sideload is controlled by `SUPREME_IMPORT_SKIP_IMAGES` (default `1` for fast boot — set `0` to download full galleries into Media Library).
+On deploy (empty catalog / `SUPREME_IMPORT_ON_BOOT=1`), the container imports a **safe** batch from `batch-with-images-400` (then `50`) with default `SUPREME_IMPORT_CATEGORY=brakes` and `SUPREME_IMPORT_LIMIT=50` — not a blind 2000 dump. CDN URL meta is always stored; binary sideload is controlled by `SUPREME_IMPORT_SKIP_IMAGES` (default `1`). See `docs/SUPREME_IMPORT.md` for one-category live import while scrape continues.
 
 ```bash
 wp supreme import-ndjson --file=.../batch-with-images-400.ndjson --require-images

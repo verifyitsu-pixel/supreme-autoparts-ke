@@ -12,12 +12,19 @@ if (!defined('ABSPATH')) {
  * Never invents, generates, or substitutes placeholder/stock imagery.
  *
  * @param string $path File path (.json with {products:[...]} or .ndjson)
- * @param array{limit?:int,offset?:int,skip_images?:bool,require_images?:bool} $opts
- * @return array{imported:int,updated:int,skipped:int,errors:int,messages:array<int,string>}
+ * @param array{limit?:int,offset?:int,skip_images?:bool,require_images?:bool,category?:string,dry_run?:bool,mapping?:string,mapping_file?:string} $opts
+ * @return array{imported:int,updated:int,skipped:int,errors:int,filtered:int,messages:array<int,string>,dry_run?:bool,category?:string}
  */
 function sa_core_import_shopify_products_file(string $path, array $opts = []): array
 {
-    $result = ['imported' => 0, 'updated' => 0, 'skipped' => 0, 'errors' => 0, 'messages' => []];
+    $result = [
+        'imported' => 0,
+        'updated'  => 0,
+        'skipped'  => 0,
+        'errors'   => 0,
+        'filtered' => 0,
+        'messages' => [],
+    ];
 
     if (!file_exists($path)) {
         $result['errors']++;
@@ -34,10 +41,32 @@ function sa_core_import_shopify_products_file(string $path, array $opts = []): a
     $offset = isset($opts['offset']) ? max(0, (int) $opts['offset']) : 0;
     $skip_images = !empty($opts['skip_images']);
     $require_images = !empty($opts['require_images']);
+    $category_raw = strtolower(trim((string) ($opts['category'] ?? '')));
+    if (in_array($category_raw, ['', 'all', '*', 'any'], true)) {
+        $category = '';
+    } else {
+        $category = sanitize_title($category_raw);
+    }
+    $dry_run = !empty($opts['dry_run']);
+    $mapping_file = (string) ($opts['mapping'] ?? $opts['mapping_file'] ?? '');
+    if ($mapping_file !== '') {
+        sa_core_set_product_type_parent_map_file($mapping_file);
+    }
+    $result['dry_run'] = $dry_run;
+    $result['category'] = $category;
 
     $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
     if ($ext === 'ndjson' || $ext === 'jsonl') {
-        return sa_core_import_shopify_ndjson($path, $limit, $offset, $skip_images, $require_images, $result);
+        return sa_core_import_shopify_ndjson(
+            $path,
+            $limit,
+            $offset,
+            $skip_images,
+            $require_images,
+            $result,
+            $category,
+            $dry_run
+        );
     }
 
     $raw = file_get_contents($path);
@@ -57,21 +86,33 @@ function sa_core_import_shopify_products_file(string $path, array $opts = []): a
     if ($offset > 0) {
         $products = array_slice($products, $offset);
     }
-    if ($limit > 0) {
-        $products = array_slice($products, 0, $limit);
-    }
 
+    $processed = 0;
     foreach ($products as $item) {
         if (!is_array($item)) {
             $result['skipped']++;
             continue;
         }
-        if ($require_images && !sa_core_shopify_item_has_images($item)) {
-            $result['skipped']++;
+        if ($category !== '' && !sa_core_product_matches_import_category($item, $category)) {
+            $result['filtered']++;
             continue;
         }
-        sa_core_import_one_shopify_product($item, $result, $skip_images);
+        if ($limit > 0 && $processed >= $limit) {
+            break;
+        }
+        if ($require_images && !sa_core_shopify_item_has_images($item)) {
+            $result['skipped']++;
+            $processed++;
+            continue;
+        }
+        sa_core_import_one_shopify_product($item, $result, $skip_images, $dry_run);
+        $processed++;
     }
+
+    $result['messages'][] = 'JSON processed=' . $processed
+        . ' category=' . ($category !== '' ? $category : 'all')
+        . ' dry_run=' . ($dry_run ? '1' : '0')
+        . ' filtered=' . $result['filtered'];
 
     return $result;
 }
@@ -88,8 +129,13 @@ function sa_core_import_shopify_ndjson(
     int $offset,
     bool $skip_images,
     bool $require_images,
-    array $result
+    array $result,
+    string $category = '',
+    bool $dry_run = false
 ): array {
+    if (!isset($result['filtered'])) {
+        $result['filtered'] = 0;
+    }
     $fh = fopen($path, 'rb');
     if ($fh === false) {
         $result['errors']++;
@@ -98,20 +144,20 @@ function sa_core_import_shopify_ndjson(
     }
 
     $line_no = 0;
+    $seen_lines = 0;
     $processed = 0;
     while (($line = fgets($fh)) !== false) {
         $line = trim($line);
         if ($line === '') {
             continue;
         }
-        if ($line_no < $offset) {
+        if ($seen_lines < $offset) {
+            $seen_lines++;
             $line_no++;
             continue;
         }
-        if ($limit > 0 && $processed >= $limit) {
-            break;
-        }
         $line_no++;
+        $seen_lines++;
         $item = json_decode($line, true);
         if (!is_array($item)) {
             $result['errors']++;
@@ -120,17 +166,28 @@ function sa_core_import_shopify_ndjson(
             }
             continue;
         }
+        // Category filter does not consume --limit (limit = max matching products).
+        if ($category !== '' && !sa_core_product_matches_import_category($item, $category)) {
+            $result['filtered']++;
+            continue;
+        }
+        if ($limit > 0 && $processed >= $limit) {
+            break;
+        }
         if ($require_images && !sa_core_shopify_item_has_images($item)) {
             $result['skipped']++;
             $processed++;
             continue;
         }
-        sa_core_import_one_shopify_product($item, $result, $skip_images);
+        sa_core_import_one_shopify_product($item, $result, $skip_images, $dry_run);
         $processed++;
     }
     fclose($fh);
     $result['messages'][] = "NDJSON processed={$processed} offset={$offset} limit=" . ($limit ?: 'all')
-        . ' require_images=' . ($require_images ? '1' : '0');
+        . ' require_images=' . ($require_images ? '1' : '0')
+        . ' category=' . ($category !== '' ? $category : 'all')
+        . ' dry_run=' . ($dry_run ? '1' : '0')
+        . ' filtered=' . (int) $result['filtered'];
     return $result;
 }
 
@@ -228,7 +285,7 @@ function sa_core_collect_shopify_image_urls(array $item): array
  *
  * @param array{imported:int,updated:int,skipped:int,errors:int,messages:array<int,string>} $result
  */
-function sa_core_import_one_shopify_product(array $item, array &$result, bool $skip_images = false): void
+function sa_core_import_one_shopify_product(array $item, array &$result, bool $skip_images = false, bool $dry_run = false): void
 {
     try {
         $handle = sanitize_title((string) ($item['handle'] ?? ''));
@@ -274,6 +331,25 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
         }
 
         $is_update = $existing_id > 0;
+        if ($dry_run) {
+            if ($is_update) {
+                $result['updated']++;
+            } else {
+                $result['imported']++;
+            }
+            if (count($result['messages']) < 20) {
+                $ptype = (string) ($item['product_type'] ?? '');
+                $parent = sa_core_map_product_type_parent_slug($ptype);
+                $result['messages'][] = sprintf(
+                    '[dry-run] %s %s type=%s parent=%s',
+                    $is_update ? 'update' : 'import',
+                    $handle,
+                    $ptype !== '' ? $ptype : '-',
+                    $parent !== '' ? $parent : '-'
+                );
+            }
+            return;
+        }
         if ($is_update) {
             $product = wc_get_product($existing_id);
         } else {
@@ -434,12 +510,33 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
 }
 
 /**
- * Map Shopify product_type string → IA parent slug (brakes, engine, …).
+ * Optional override path for product_type → parent category mapping JSON.
  */
-function sa_core_map_product_type_parent_slug(string $ptype): string
+function sa_core_set_product_type_parent_map_file(string $path): void
 {
-    $p = strtolower($ptype);
-    $rules = [
+    $GLOBALS['sa_core_ptype_parent_map_file'] = $path;
+    unset($GLOBALS['sa_core_ptype_parent_map_cache']);
+}
+
+/**
+ * Default + optional file mapping: exact product_type → parent slug, plus keyword rules.
+ *
+ * File shape (JSON):
+ * {
+ *   "exact": { "Brake Pads": "brakes", "Shocks and Struts": "suspension" },
+ *   "keywords": { "brakes": ["brake", "rotor"], "suspension": ["shock", "strut"] }
+ * }
+ * Flat { "Brake Pads": "brakes" } is also accepted (treated as exact).
+ *
+ * @return array{exact:array<string,string>,keywords:array<string,list<string>>}
+ */
+function sa_core_product_type_parent_map(): array
+{
+    if (isset($GLOBALS['sa_core_ptype_parent_map_cache']) && is_array($GLOBALS['sa_core_ptype_parent_map_cache'])) {
+        return $GLOBALS['sa_core_ptype_parent_map_cache'];
+    }
+
+    $defaults_keywords = [
         'brakes'     => ['brake', 'rotor', 'caliper'],
         'air-intake' => ['air filter', 'air intake', 'cold air', 'cabin air'],
         'suspension' => ['shock', 'strut', 'coilover', 'sway', 'spring', 'control arm', 'lift', 'leveling', 'camber', 'bushing', 'torsion', 'panhard', 'traction'],
@@ -452,10 +549,131 @@ function sa_core_map_product_type_parent_slug(string $ptype): string
         'interior'   => ['steering wheel', 'seat', 'floor mat', 'gauge', 'pedal', 'dash', 'organizer', 'cargo liner', 'shift knob', 'sun shade'],
         'engine'     => ['filter', 'intake', 'oil', 'spark', 'intercooler', 'fuel', 'push rod', 'blow off', 'bearing', 'bolt', 'thermal', 'cooling', 'ignition', 'turbo', 'supercharg'],
     ];
-    foreach ($rules as $parent => $kws) {
+
+    $exact = [];
+    $keywords = $defaults_keywords;
+
+    $candidates = [];
+    if (!empty($GLOBALS['sa_core_ptype_parent_map_file']) && is_string($GLOBALS['sa_core_ptype_parent_map_file'])) {
+        $candidates[] = $GLOBALS['sa_core_ptype_parent_map_file'];
+    }
+    if (defined('SA_CORE_DIR')) {
+        $candidates[] = SA_CORE_DIR . 'data/product-type-parent-map.json';
+    }
+    $candidates[] = trailingslashit(ABSPATH) . 'data/product-type-parent-map.json';
+
+    foreach ($candidates as $file) {
+        if ($file === '' || !is_readable($file)) {
+            continue;
+        }
+        $raw = file_get_contents($file);
+        if ($raw === false) {
+            continue;
+        }
+        $data = json_decode($raw, true);
+        if (!is_array($data)) {
+            continue;
+        }
+        if (isset($data['exact']) && is_array($data['exact'])) {
+            foreach ($data['exact'] as $k => $v) {
+                if (is_string($k) && is_string($v) && $v !== '') {
+                    $exact[strtolower(trim($k))] = sanitize_title($v);
+                }
+            }
+        }
+        if (isset($data['keywords']) && is_array($data['keywords'])) {
+            foreach ($data['keywords'] as $parent => $kws) {
+                if (!is_string($parent) || !is_array($kws)) {
+                    continue;
+                }
+                $keywords[sanitize_title($parent)] = array_values(array_filter(array_map(
+                    static fn($x) => is_string($x) ? strtolower(trim($x)) : '',
+                    $kws
+                )));
+            }
+        }
+        // Flat map: "Brake Pads": "brakes"
+        $reserved = ['exact' => true, 'keywords' => true];
+        foreach ($data as $k => $v) {
+            if (isset($reserved[$k]) || !is_string($k) || !is_string($v) || $v === '') {
+                continue;
+            }
+            $exact[strtolower(trim($k))] = sanitize_title($v);
+        }
+        break;
+    }
+
+    $map = ['exact' => $exact, 'keywords' => $keywords];
+    $GLOBALS['sa_core_ptype_parent_map_cache'] = $map;
+    return $map;
+}
+
+/**
+ * True when product belongs to the requested IA parent (or exact leaf slug).
+ */
+function sa_core_product_matches_import_category(array $item, string $category): bool
+{
+    $category = sanitize_title($category);
+    if ($category === '') {
+        return true;
+    }
+    $ptype = trim((string) ($item['product_type'] ?? ''));
+    if ($ptype !== '') {
+        if (sanitize_title($ptype) === $category) {
+            return true;
+        }
+        $parent = sa_core_map_product_type_parent_slug($ptype);
+        if ($parent === $category) {
+            return true;
+        }
+    }
+    // Title fallback for sparse product_type.
+    $title = (string) ($item['title'] ?? '');
+    if ($title !== '' && sa_core_map_product_type_parent_slug($title) === $category) {
+        return true;
+    }
+    $collections = $item['collections'] ?? null;
+    if (is_array($collections)) {
+        foreach ($collections as $col) {
+            $handle = '';
+            $cname = '';
+            if (is_array($col)) {
+                $handle = sanitize_title((string) ($col['handle'] ?? ''));
+                $cname = (string) ($col['title'] ?? $col['name'] ?? '');
+            } elseif (is_string($col)) {
+                $handle = sanitize_title($col);
+                $cname = $col;
+            }
+            if ($handle === $category || sa_core_map_product_type_parent_slug($cname) === $category) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ * Map Shopify product_type string → IA parent slug (brakes, engine, …).
+ */
+function sa_core_map_product_type_parent_slug(string $ptype): string
+{
+    $p = strtolower(trim($ptype));
+    if ($p === '') {
+        return '';
+    }
+    $map = sa_core_product_type_parent_map();
+    if (isset($map['exact'][$p]) && $map['exact'][$p] !== '') {
+        return $map['exact'][$p];
+    }
+    // Also try sanitized slug as exact key.
+    $slug = sanitize_title($ptype);
+    if ($slug !== '' && isset($map['exact'][$slug]) && $map['exact'][$slug] !== '') {
+        return $map['exact'][$slug];
+    }
+    foreach ($map['keywords'] as $parent => $kws) {
         foreach ($kws as $kw) {
-            if (str_contains($p, $kw)) {
-                return $parent;
+            if ($kw !== '' && str_contains($p, $kw)) {
+                return (string) $parent;
             }
         }
     }
