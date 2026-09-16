@@ -237,7 +237,7 @@ add_action('sa_core_empty_catalog_import', static function (): void {
     if ($limit <= 0) {
         $limit = $category !== '' ? 50 : (str_contains($file, 'batch-with-images-400') ? 100 : 50);
     }
-    $skip_images = (string) (getenv('SUPREME_IMPORT_SKIP_IMAGES') ?: '1') === '1';
+    $skip_images = (string) (getenv('SUPREME_IMPORT_SKIP_IMAGES') ?: '0') === '1';
     $mapping = (string) (getenv('SUPREME_IMPORT_MAPPING') ?: '');
     if ($mapping === '' && is_readable(SA_CORE_DIR . 'data/product-type-parent-map.json')) {
         $mapping = SA_CORE_DIR . 'data/product-type-parent-map.json';
@@ -421,10 +421,11 @@ add_action('rest_api_init', static function (): void {
                     $mapping = SA_CORE_DIR . 'data/product-type-parent-map.json';
                 }
                 require_once SA_CORE_DIR . 'includes/import-shopify.php';
+                $skip_images = (string) (getenv('SUPREME_IMPORT_SKIP_IMAGES') ?: '0') === '1';
                 $result = sa_core_import_shopify_products_file($file, [
                     'limit'          => $limit,
-                    'skip_images'    => true,
-                    'require_images' => str_contains($file, '.ndjson'),
+                    'skip_images'    => $skip_images,
+                    'require_images' => true,
                     'category'       => $category,
                     'mapping'        => $mapping,
                 ]);
