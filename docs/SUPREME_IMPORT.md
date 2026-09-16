@@ -13,6 +13,7 @@ Env knobs:
 |---|---|---|
 | `SUPREME_IMPORT_ON_BOOT` | `0` (empty catalog / first boot still imports) | Force import on every container start |
 | `SUPREME_FORCE_IMPORT` | `0` | `1` = clear `sa_boot_import_*` options and re-import even if catalog non-empty |
+| `SUPREME_RECOVER_TOKEN` | (unset) | Shared secret for `GET/POST /wp-json/supreme/v1/recover-catalog` (`?token=` or `X-SA-Recover-Token`) |
 | `SUPREME_IMPORT_FILE` | auto | Override NDJSON path |
 | `SUPREME_IMPORT_LIMIT` | `400` or `50` | Max rows |
 | `SUPREME_IMPORT_SKIP_IMAGES` | `1` | `1` = store CDN URL meta only (fast); `0` = sideload into Media Library |
@@ -40,3 +41,12 @@ Omit `--skip-images` (or set `SUPREME_IMPORT_SKIP_IMAGES=0`) to sideload binarie
 Do not stop an active `scripts/scrape-shopify-catalog.py` process. Full `products.ndjson` is gitignored; commit sized chunks under `data/scrape/chunks/` (~40MB max for GitHub).
 
 See also root `README.md` § Boot import / Full catalog scrape.
+
+
+## HTTP recover (empty shop)
+
+```bash
+curl -sS "https://www.supremeautoparts.co.ke/wp-json/supreme/v1/recover-catalog?token=$SUPREME_RECOVER_TOKEN"
+```
+
+When published product count is `0`, the token is optional. Response includes `published`, `brakes_count`, `suspension_count`. Caps at 50 products over HTTP (CDN photos only).

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Supreme Autoparts Core
  * Description: Branding defaults, category seed, static pages, invoices, admin dashboard, and Shopify JSON import helpers for Supreme Autoparts.
- * Version: 1.2.9
+ * Version: 1.3.0
  * Author: Supreme Autoparts
  * Text Domain: supreme-autoparts-core
  * Requires at least: 6.4
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_CORE_VERSION', '1.2.9');
+define('SA_CORE_VERSION', '1.3.0');
 define('SA_CORE_FILE', __FILE__);
 define('SA_CORE_DIR', plugin_dir_path(__FILE__));
 define('SA_CORE_URL', plugin_dir_url(__FILE__));
@@ -271,121 +271,146 @@ add_action('sa_core_empty_catalog_import', static function (): void {
 
 
 /**
- * Public recover endpoint: POST/GET /wp-json/supreme/v1/recover-catalog
- * Allowed when catalog is empty OR X-SA-Import-Secret matches SUPREME_IMPORT_SECRET.
- * Imports batch-with-images (prefer 50) with real Shopify CDN URLs only.
+ * Recover catalog: GET/POST /wp-json/supreme/v1/recover-catalog
+ *
+ * Auth (any one):
+ * - SUPREME_RECOVER_TOKEN via ?token= / header X-SA-Recover-Token / Authorization: Bearer
+ * - current user can manage_woocommerce
+ * - published product count is 0 (emergency empty-shop recovery)
+ *
+ * Always imports at most 50 rows over HTTP (CDN meta only) so the request does not fatal.
+ * Assigns parent IA categories (brakes, suspension, …) and flushes rewrites.
  */
 add_action('rest_api_init', static function (): void {
     register_rest_route('supreme/v1', '/recover-catalog', [
         'methods'             => ['GET', 'POST'],
         'permission_callback' => static function (): bool {
+            $token = (string) (getenv('SUPREME_RECOVER_TOKEN') ?: getenv('SUPREME_IMPORT_SECRET') ?: '');
+            $provided = '';
+            if (isset($_SERVER['HTTP_X_SA_RECOVER_TOKEN'])) {
+                $provided = (string) $_SERVER['HTTP_X_SA_RECOVER_TOKEN'];
+            } elseif (isset($_SERVER['HTTP_X_SA_IMPORT_SECRET'])) {
+                $provided = (string) $_SERVER['HTTP_X_SA_IMPORT_SECRET'];
+            } elseif (isset($_GET['token'])) {
+                $provided = (string) $_GET['token'];
+            } elseif (!empty($_SERVER['HTTP_AUTHORIZATION']) && preg_match('/Bearer\s+(\S+)/i', (string) $_SERVER['HTTP_AUTHORIZATION'], $m)) {
+                $provided = $m[1];
+            }
+            if ($token !== '' && $provided !== '' && hash_equals($token, $provided)) {
+                return true;
+            }
+            if (current_user_can('manage_woocommerce') || current_user_can('manage_options')) {
+                return true;
+            }
             $counts = wp_count_posts('product');
             $published = isset($counts->publish) ? (int) $counts->publish : 0;
-            if ($published === 0) {
-                return true;
-            }
-            // Allow repair when IA parent archives are empty (common after Collections reparent).
-            $brakes = get_term_by('slug', 'brakes', 'product_cat');
-            if ($brakes && !is_wp_error($brakes) && (int) $brakes->count === 0) {
-                return true;
-            }
-            $secret = (string) (getenv('SUPREME_IMPORT_SECRET') ?: '');
-            if ($secret === '') {
-                return (string) (getenv('SUPREME_FORCE_IMPORT') ?: '') === '1';
-            }
-            $hdr = isset($_SERVER['HTTP_X_SA_IMPORT_SECRET']) ? (string) $_SERVER['HTTP_X_SA_IMPORT_SECRET'] : '';
-            return hash_equals($secret, $hdr) || (string) (getenv('SUPREME_FORCE_IMPORT') ?: '') === '1';
+            return $published === 0;
         },
         'callback'            => static function () {
-            if (function_exists('set_time_limit')) {
-                @set_time_limit(0);
-            }
-            if (function_exists('wp_raise_memory_limit')) {
-                wp_raise_memory_limit('admin');
-            }
-            delete_option('sa_boot_import_done');
-            delete_option('sa_boot_import_batch50');
-            delete_option('sa_boot_import_running');
-            delete_option('sa_boot_import_running_at');
-            delete_transient('sa_empty_catalog_import_lock');
-
-            if (function_exists('sa_core_seed_categories')) {
-                sa_core_seed_categories();
-            }
-
-            $candidates = [
-                getenv('SUPREME_IMPORT_FILE') ?: '',
-                SA_CORE_DIR . 'data/scrape/chunks/batch-with-images-50.ndjson',
-                '/usr/src/supreme-data/scrape/chunks/batch-with-images-50.ndjson',
-                SA_CORE_DIR . 'data/scrape/chunks/batch-with-images-400.ndjson',
-                '/usr/src/supreme-data/scrape/chunks/batch-with-images-400.ndjson',
-                SA_CORE_DIR . 'data/sample-products.json',
-            ];
-            $file = '';
-            foreach ($candidates as $c) {
-                if (is_string($c) && $c !== '' && is_readable($c)) {
-                    $file = $c;
-                    break;
+            try {
+                if (function_exists('set_time_limit')) {
+                    @set_time_limit(300);
                 }
-            }
-            if ($file === '') {
-                return new WP_REST_Response(['ok' => false, 'error' => 'no import file'], 500);
-            }
+                if (function_exists('wp_raise_memory_limit')) {
+                    wp_raise_memory_limit('admin');
+                }
+                if (!class_exists('WooCommerce') || !class_exists('WC_Product_Simple')) {
+                    return new WP_REST_Response(['ok' => false, 'error' => 'woocommerce_inactive'], 503);
+                }
 
-            $limit = (int) (getenv('SUPREME_IMPORT_LIMIT') ?: 50);
-            if ($limit <= 0) {
+                delete_option('sa_boot_import_done');
+                delete_option('sa_boot_import_batch50');
+                delete_option('sa_boot_import_running');
+                delete_option('sa_boot_import_running_at');
+                delete_transient('sa_empty_catalog_import_lock');
+
+                if (function_exists('sa_core_seed_categories') && taxonomy_exists('product_cat')) {
+                    sa_core_seed_categories();
+                }
+
+                // Prefer small batch for HTTP recover — never pull 400 over a web request.
+                $candidates = [
+                    SA_CORE_DIR . 'data/scrape/chunks/batch-with-images-50.ndjson',
+                    '/usr/src/supreme-data/scrape/chunks/batch-with-images-50.ndjson',
+                    SA_CORE_DIR . 'data/scrape/chunks/batch-with-images-400.ndjson',
+                    '/usr/src/supreme-data/scrape/chunks/batch-with-images-400.ndjson',
+                    SA_CORE_DIR . 'data/sample-products.json',
+                ];
+                $env_file = getenv('SUPREME_IMPORT_FILE') ?: '';
+                if (is_string($env_file) && $env_file !== '') {
+                    array_unshift($candidates, $env_file);
+                }
+
+                $file = '';
+                foreach ($candidates as $c) {
+                    if (is_string($c) && $c !== '' && is_readable($c)) {
+                        $file = $c;
+                        break;
+                    }
+                }
+                if ($file === '') {
+                    return new WP_REST_Response([
+                        'ok' => false,
+                        'error' => 'no_import_file',
+                        'tried' => $candidates,
+                    ], 500);
+                }
+
+                // Hard cap 50 for HTTP recover regardless of SUPREME_IMPORT_LIMIT.
                 $limit = 50;
-            }
-            // Always skip binary sideload on HTTP recover — CDN meta is enough for real photos.
-            require_once SA_CORE_DIR . 'includes/import-shopify.php';
-            $result = sa_core_import_shopify_products_file($file, [
-                'limit'          => $limit,
-                'skip_images'    => true,
-                'require_images' => true,
-            ]);
-            flush_rewrite_rules(false);
+                require_once SA_CORE_DIR . 'includes/import-shopify.php';
+                $result = sa_core_import_shopify_products_file($file, [
+                    'limit'          => $limit,
+                    'skip_images'    => true,
+                    'require_images' => str_contains($file, '.ndjson'),
+                ]);
 
-            $counts = wp_count_posts('product');
-            $published = isset($counts->publish) ? (int) $counts->publish : 0;
-            if ($published > 0) {
-                update_option('sa_boot_import_done', 1);
-                update_option('sa_boot_import_batch50', 1);
-            }
-
-            $repair = ['repaired' => 0, 'skipped' => 0];
-            if (function_exists('sa_core_repair_product_parent_categories')) {
-                $repair = sa_core_repair_product_parent_categories(max(50, $limit));
-            }
-            // Refresh term counts so parent archives list products.
-            if (function_exists('wp_update_term_count_now')) {
-                $tax = get_terms(['taxonomy' => 'product_cat', 'hide_empty' => false, 'fields' => 'ids']);
-                if (!is_wp_error($tax) && $tax) {
-                    wp_update_term_count_now(array_map('intval', $tax), 'product_cat');
+                $repair = ['repaired' => 0, 'skipped' => 0];
+                if (function_exists('sa_core_repair_product_parent_categories')) {
+                    $repair = sa_core_repair_product_parent_categories(100);
                 }
-            }
-            flush_rewrite_rules(false);
 
-            $counts = wp_count_posts('product');
-            $published = isset($counts->publish) ? (int) $counts->publish : 0;
-            $brakes = get_term_by('slug', 'brakes', 'product_cat');
-            $brakes_count = ($brakes && !is_wp_error($brakes)) ? (int) $brakes->count : 0;
-            return new WP_REST_Response([
-                'ok'        => $published > 0,
-                'file'      => basename($file),
-                'imported'  => (int) ($result['imported'] ?? 0),
-                'updated'   => (int) ($result['updated'] ?? 0),
-                'skipped'   => (int) ($result['skipped'] ?? 0),
-                'errors'    => (int) ($result['errors'] ?? 0),
-                'published' => $published,
-                'repaired_parents' => $repair,
-                'brakes_term_id' => ($brakes && !is_wp_error($brakes)) ? (int) $brakes->term_id : 0,
-                'brakes_count' => $brakes_count,
-                'messages'  => array_slice($result['messages'] ?? [], 0, 10),
-            ], $published > 0 ? 200 : 500);
+                if (function_exists('wc_update_product_lookup_tables_is_running') === false) {
+                    // no-op; keep recover lean
+                }
+                flush_rewrite_rules(false);
+
+                $counts = wp_count_posts('product');
+                $published = isset($counts->publish) ? (int) $counts->publish : 0;
+                if ($published > 0) {
+                    update_option('sa_boot_import_done', 1);
+                    update_option('sa_boot_import_batch50', 1);
+                }
+
+                $brakes = taxonomy_exists('product_cat') ? get_term_by('slug', 'brakes', 'product_cat') : null;
+                $brakes_count = ($brakes && !is_wp_error($brakes)) ? (int) $brakes->count : 0;
+                $suspension = taxonomy_exists('product_cat') ? get_term_by('slug', 'suspension', 'product_cat') : null;
+                $suspension_count = ($suspension && !is_wp_error($suspension)) ? (int) $suspension->count : 0;
+
+                return new WP_REST_Response([
+                    'ok'               => $published > 0,
+                    'file'             => basename($file),
+                    'imported'         => (int) ($result['imported'] ?? 0),
+                    'updated'          => (int) ($result['updated'] ?? 0),
+                    'skipped'          => (int) ($result['skipped'] ?? 0),
+                    'errors'           => (int) ($result['errors'] ?? 0),
+                    'published'        => $published,
+                    'repaired_parents' => $repair,
+                    'brakes_count'     => $brakes_count,
+                    'suspension_count' => $suspension_count,
+                    'messages'         => array_slice($result['messages'] ?? [], 0, 15),
+                ], $published > 0 ? 200 : 500);
+            } catch (Throwable $e) {
+                return new WP_REST_Response([
+                    'ok'    => false,
+                    'error' => 'exception',
+                    'message' => $e->getMessage(),
+                    'where' => basename($e->getFile()) . ':' . $e->getLine(),
+                ], 500);
+            }
         },
     ]);
 });
-
 
 add_action('after_switch_theme', static function (): void {
     flush_rewrite_rules();
