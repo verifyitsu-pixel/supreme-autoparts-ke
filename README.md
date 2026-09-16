@@ -142,6 +142,13 @@ Sandbox: use keys from [sandbox.whop.com](https://sandbox.whop.com) and set `WHO
 
 No payment credentials are bundled in Git.
 
+## Customer service & policies
+
+- Store / WooCommerce email from: `calvin@supremeautoparts.co.ke`
+- Policy pages seeded on boot: terms, privacy, shipping, refund, chargeback, cookies, data policy
+- Checkout requires Terms acceptance and shows policy links before place order
+- Logo: Appearance → Customize → Site Identity → Logo (`custom_logo`)
+
 ## Boot import (Railway)
 
 On deploy, when `SUPREME_IMPORT_ON_BOOT=1` (default), the container imports `data/scrape/chunks/batch-with-images-400.ndjson` (products that have real Shopify CDN photos). CDN URL meta is always stored; binary sideload is controlled by `SUPREME_IMPORT_SKIP_IMAGES` (default `1` for fast boot — set `0` to download full galleries into Media Library).

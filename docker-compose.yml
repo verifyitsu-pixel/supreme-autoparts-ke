@@ -31,7 +31,7 @@ services:
       WP_SITEURL: ${WP_SITEURL:-http://localhost:8080}
       WORDPRESS_ADMIN_USER: ${WORDPRESS_ADMIN_USER:-admin}
       WORDPRESS_ADMIN_PASSWORD: ${WORDPRESS_ADMIN_PASSWORD:-adminpass}
-      WORDPRESS_ADMIN_EMAIL: ${WORDPRESS_ADMIN_EMAIL:-admin@supremeautoparts.co.ke}
+      WORDPRESS_ADMIN_EMAIL: ${WORDPRESS_ADMIN_EMAIL:-calvin@supremeautoparts.co.ke}
       WORDPRESS_TITLE: ${WORDPRESS_TITLE:-Supreme Autoparts}
       WOO_CURRENCY: ${WOO_CURRENCY:-KES}
       TZ: Africa/Nairobi

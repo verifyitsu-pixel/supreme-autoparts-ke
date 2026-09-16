@@ -33,8 +33,20 @@ if (!defined('ABSPATH')) {
     </button>
 
     <a class="sa-logo" href="<?php echo esc_url(home_url('/')); ?>">
+      <?php
+      // Logo slot: Customizer → Site Identity → Logo (custom_logo theme_mod).
+      // Parent agent / ops can upload the brand mark; until then show text mark.
+      if (function_exists('has_custom_logo') && has_custom_logo()) {
+          // Strip default link — we already wrap in .sa-logo
+          $logo_html = get_custom_logo();
+          echo preg_replace('#</?a\b[^>]*>#i', '', $logo_html); // phpcs:ignore WordPress.Security.EscapeOutput
+      } else {
+          ?>
       <span class="sa-logo__mark" aria-hidden="true">S</span>
-      <span><?php bloginfo('name'); ?></span>
+      <span class="sa-logo__text"><?php bloginfo('name'); ?></span>
+          <?php
+      }
+      ?>
     </a>
 
     <form class="sa-search" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>">

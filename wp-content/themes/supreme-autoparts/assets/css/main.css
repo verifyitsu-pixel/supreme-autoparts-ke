@@ -352,3 +352,14 @@ ul,ol { margin: 0 0 1em; padding-left: 1.2em; }
 @media (max-width: 600px) {
   .sa-header__actions .sa-hide-sm { display: none; }
 }
+
+
+/* Custom logo (Site Identity) — ready for uploaded brand mark */
+.sa-logo img,
+.sa-logo .custom-logo {
+  display: block;
+  max-height: 48px;
+  width: auto;
+  height: auto;
+}
+.sa-logo__text { font-weight: 700; letter-spacing: .02em; }

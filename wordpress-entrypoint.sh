@@ -24,7 +24,7 @@ export WOO_CURRENCY="${WOO_CURRENCY:-KES}"
 export TZ="${TZ:-Africa/Nairobi}"
 export WORDPRESS_ADMIN_USER="${WORDPRESS_ADMIN_USER:-admin}"
 export WORDPRESS_ADMIN_PASSWORD="${WORDPRESS_ADMIN_PASSWORD:-adminpass}"
-export WORDPRESS_ADMIN_EMAIL="${WORDPRESS_ADMIN_EMAIL:-admin@supremeautoparts.co.ke}"
+export WORDPRESS_ADMIN_EMAIL="${WORDPRESS_ADMIN_EMAIL:-calvin@supremeautoparts.co.ke}"
 export WORDPRESS_TITLE="${WORDPRESS_TITLE:-Supreme Autoparts}"
 
 export WORDPRESS_CONFIG_EXTRA="${WORDPRESS_CONFIG_EXTRA:-}
@@ -138,9 +138,25 @@ bootstrap_wordpress() {
     wp_as supreme seed-pages 2>/dev/null || true
   fi
 
+  # Force customer-service email + www URLs (apex may be unbound on Railway).
+  wp_as option update admin_email "${WORDPRESS_ADMIN_EMAIL}" || true
+  wp_as option update woocommerce_email_from_address "${WORDPRESS_ADMIN_EMAIL}" || true
+  wp_as option update woocommerce_email_from_name "Supreme Autoparts" || true
+  # Always prefer www in production — apex hostname is often unbound on Railway.
+  case "${WP_HOME}" in
+    https://supremeautoparts.co.ke|https://supremeautoparts.co.ke/*|https://www.supremeautoparts.co.ke|https://www.supremeautoparts.co.ke/*)
+      WWW_HOME="https://www.supremeautoparts.co.ke"
+      wp_as option update home "$WWW_HOME" || true
+      wp_as option update siteurl "$WWW_HOME" || true
+      ;;
+  esac
+  wp_as option update woocommerce_enable_myaccount_registration yes || true
+  wp_as option update woocommerce_enable_signup_and_login_from_checkout yes || true
+
   # Optional catalog import from baked scrape chunk (Shopify CDN photos only).
   # Set SUPREME_IMPORT_ON_BOOT=1 on Railway to load the first real batch after deploy.
-  if [[ "${SUPREME_IMPORT_ON_BOOT:-0}" == "1" ]]; then
+  BOOT_IMPORT_DONE="$(wp_as option get sa_boot_import_batch400 2>/dev/null || true)"
+  if [[ "${SUPREME_IMPORT_ON_BOOT:-0}" == "1" || -z "${BOOT_IMPORT_DONE}" ]]; then
     IMPORT_FILE="${SUPREME_IMPORT_FILE:-}"
     if [[ -z "$IMPORT_FILE" ]]; then
       for c in \

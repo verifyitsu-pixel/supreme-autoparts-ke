@@ -9,7 +9,7 @@ require_once __DIR__ . '/page-content.php';
 require_once __DIR__ . '/seed-categories.php';
 
 /**
- * Create/update static pages and assign WooCommerce pages.
+ * Create/update static pages and assign WooCommerce pages + store options.
  */
 function sa_core_seed_pages(): void
 {
@@ -41,20 +41,20 @@ function sa_core_seed_pages(): void
 
     // WooCommerce system pages
     $woo_pages = [
-        'shop'      => 'Shop',
-        'cart'      => 'Cart',
-        'checkout'  => 'Checkout',
-        'my-account'=> 'My Account',
+        'shop'       => 'Shop',
+        'cart'       => 'Cart',
+        'checkout'   => 'Checkout',
+        'my-account' => 'My Account',
     ];
     foreach ($woo_pages as $slug => $title) {
         $page = get_page_by_path($slug);
         if (!$page) {
             $id = wp_insert_post([
-                'post_title'  => $title,
-                'post_name'   => $slug,
-                'post_status' => 'publish',
-                'post_type'   => 'page',
-                'post_content'=> '',
+                'post_title'   => $title,
+                'post_name'    => $slug,
+                'post_status'  => 'publish',
+                'post_type'    => 'page',
+                'post_content' => '',
             ]);
             if (!is_wp_error($id)) {
                 $created[$slug] = (int) $id;
@@ -77,8 +77,19 @@ function sa_core_seed_pages(): void
         update_option('woocommerce_myaccount_page_id', $created['my-account']);
     }
 
-    // Front page: use a dedicated Home page that theme front-page.php overrides,
-    // or simply show latest posts — theme uses front-page.php when is_front_page.
+    // Terms acceptance at checkout → Terms of Service
+    if (!empty($created['terms'])) {
+        update_option('woocommerce_terms_page_id', $created['terms']);
+        update_option('woocommerce_checkout_privacy_policy_text', sprintf(
+            /* translators: placeholders filled by Woo with policy links when configured */
+            __('Your personal data will be used to process your order, support your experience, and for other purposes described in our [privacy_policy]. By placing an order you also agree to our Terms of Service, Chargeback/Dispute Policy, and Refund/Returns Policy.', 'supreme-autoparts-core')
+        ));
+    }
+    if (!empty($created['privacy-policy'])) {
+        update_option('wp_page_for_privacy_policy', $created['privacy-policy']);
+    }
+
+    // Front page
     $home = get_page_by_path('home');
     if (!$home) {
         $home_id = wp_insert_post([
@@ -100,7 +111,56 @@ function sa_core_seed_pages(): void
         sa_core_seed_categories();
     }
 
+    if (function_exists('sa_core_apply_store_options')) {
+        sa_core_apply_store_options();
+    }
+
     update_option('sa_pages_seeded', time());
+}
+
+/**
+ * Email, account, and checkout options applied on every seed/boot.
+ */
+function sa_core_apply_store_options(): void
+{
+    $admin_email = getenv('WORDPRESS_ADMIN_EMAIL') ?: 'calvin@supremeautoparts.co.ke';
+    if ($admin_email) {
+        update_option('admin_email', $admin_email);
+        // Keep the main admin user email in sync when present.
+        $admin = get_user_by('login', getenv('WORDPRESS_ADMIN_USER') ?: 'admin');
+        if (!$admin) {
+            $admins = get_users(['role' => 'administrator', 'number' => 1, 'orderby' => 'ID', 'order' => 'ASC']);
+            $admin  = $admins[0] ?? null;
+        }
+        if ($admin instanceof WP_User) {
+            wp_update_user([
+                'ID'         => $admin->ID,
+                'user_email' => $admin_email,
+            ]);
+        }
+    }
+
+    update_option('woocommerce_email_from_name', 'Supreme Autoparts');
+    update_option('woocommerce_email_from_address', $admin_email);
+    update_option('woocommerce_email_header_image', ''); // theme/logo can be set later via Customizer
+
+    // Accounts
+    update_option('woocommerce_enable_myaccount_registration', 'yes');
+    update_option('woocommerce_enable_guest_checkout', 'yes');
+    update_option('woocommerce_enable_checkout_login_reminder', 'yes');
+    update_option('woocommerce_registration_generate_username', 'yes');
+    update_option('woocommerce_registration_generate_password', 'no');
+    update_option('users_can_register', 1);
+
+    // Lost password uses core Woo endpoints on My Account — ensure permalinks friendly.
+    update_option('woocommerce_myaccount_lost_password_endpoint', 'lost-password');
+    update_option('woocommerce_myaccount_edit_account_endpoint', 'edit-account');
+
+    // Checkout: show terms checkbox (Woo reads woocommerce_terms_page_id).
+    update_option('woocommerce_checkout_show_terms', 'yes');
+
+    update_option('sa_store_options_applied', time());
+    update_option('sa_smtp_note', 'WordPress mail() / PHP mail is used until an SMTP plugin (e.g. WP Mail SMTP) is configured. Set From address to calvin@supremeautoparts.co.ke and authenticate SPF/DKIM for supremeautoparts.co.ke for deliverability.');
 }
 
 // Allow `wp eval-file .../seed-pages.php` to run seeding when loaded in WP context.
