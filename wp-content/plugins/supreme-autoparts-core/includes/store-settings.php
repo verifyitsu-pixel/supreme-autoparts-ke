@@ -108,6 +108,24 @@ function sa_core_apply_store_settings(): void
     // WooCommerce email sender
     update_option('woocommerce_email_from_name', 'Supreme Autoparts');
     update_option('woocommerce_email_from_address', $email);
+    update_option('sa_brevo_sender_name', 'Supreme Autoparts');
+    // Prefer optimized light JPEG for email header when theme asset exists.
+    $email_logo = '';
+    if (defined('SA_THEME_DIR') && defined('SA_THEME_URI')) {
+        foreach (['logo-light.jpg', 'logo-light.png'] as $f) {
+            if (is_readable(SA_THEME_DIR . '/assets/' . $f)) {
+                $email_logo = SA_THEME_URI . '/assets/' . $f;
+                break;
+            }
+        }
+    }
+    if ($email_logo !== '') {
+        $email_logo = set_url_scheme($email_logo, 'https');
+        update_option('woocommerce_email_header_image', $email_logo);
+        update_option('sa_email_logo_url', $email_logo);
+    }
+    // Flag used by theme/core: order emails should show product images.
+    update_option('sa_email_order_item_images', 'yes');
     update_option('woocommerce_stock_email_recipient', $email);
 
     sa_core_enable_admin_store_emails();
@@ -170,11 +188,15 @@ add_filter('wp_mail_from', static function ($from) {
 
 add_filter('wp_mail_from_name', static function ($name) {
     return 'Supreme Autoparts';
-});
+}, 100);
+
+add_filter('woocommerce_email_from_name', static function ($name) {
+    return 'Supreme Autoparts';
+}, 100);
 
 // Apply lightly on admin/init once per version bump.
 add_action('init', static function (): void {
-    if (get_option('sa_store_settings_ver') === '9') {
+    if (get_option('sa_store_settings_ver') === '10') {
         return;
     }
     if (!function_exists('WC') && !class_exists('WooCommerce')) {
@@ -182,5 +204,5 @@ add_action('init', static function (): void {
         update_option('admin_email', sa_core_store_email());
     }
     sa_core_apply_store_settings();
-    update_option('sa_store_settings_ver', '9');
+    update_option('sa_store_settings_ver', '10');
 }, 20);

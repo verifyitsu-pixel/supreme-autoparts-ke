@@ -39,25 +39,39 @@ if (!defined('ABSPATH')) {
       <?php
       if (function_exists('has_custom_logo') && has_custom_logo()) {
           $custom_logo_id = (int) get_theme_mod('custom_logo');
-          $logo_html      = wp_get_attachment_image($custom_logo_id, 'full', false, [
-              'class'   => 'sa-logo__img',
-              'alt'     => get_bloginfo('name'),
-              'loading' => 'eager',
+          $logo_html      = wp_get_attachment_image($custom_logo_id, 'sa-logo', false, [
+              'class'          => 'sa-logo__img',
+              'alt'            => get_bloginfo('name'),
+              'loading'        => 'eager',
+              'fetchpriority'  => 'high',
+              'decoding'       => 'async',
+              'sizes'          => '(max-width: 767px) 140px, 200px',
           ]);
+          // Fallback if sa-logo size missing (pre-regeneration).
+          if ($logo_html === '') {
+              $logo_html = wp_get_attachment_image($custom_logo_id, 'medium', false, [
+                  'class'         => 'sa-logo__img',
+                  'alt'           => get_bloginfo('name'),
+                  'loading'       => 'eager',
+                  'fetchpriority' => 'high',
+                  'decoding'      => 'async',
+                  'sizes'         => '(max-width: 767px) 140px, 200px',
+              ]);
+          }
           echo $logo_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
       } else {
-          $fallback = SA_THEME_DIR . '/assets/logo.png';
-          $fallback_uri = SA_THEME_URI . '/assets/logo.png';
-          if (is_readable($fallback)) {
+          $fallback_uri = function_exists('sa_theme_logo_url') ? sa_theme_logo_url(false) : (SA_THEME_URI . '/assets/logo.png');
+          $fallback_path = str_replace(SA_THEME_URI, SA_THEME_DIR, $fallback_uri);
+          if (is_readable($fallback_path) || is_readable(SA_THEME_DIR . '/assets/logo.jpg') || is_readable(SA_THEME_DIR . '/assets/logo.png')) {
               printf(
-                  '<img class="sa-logo__img" src="%s" alt="%s" width="200" height="60" loading="eager" />',
+                  '<img class="sa-logo__img" src="%s" alt="%s" width="200" height="112" loading="eager" fetchpriority="high" decoding="async" sizes="(max-width: 767px) 140px, 200px" />',
                   esc_url($fallback_uri),
                   esc_attr(get_bloginfo('name'))
               );
           } else {
               $icon = SA_THEME_URI . '/assets/icon.png';
               printf(
-                  '<img class="sa-logo__img" src="%s" alt="%s" width="48" height="48" loading="eager" />',
+                  '<img class="sa-logo__img" src="%s" alt="%s" width="48" height="48" loading="eager" fetchpriority="high" decoding="async" />',
                   esc_url($icon),
                   esc_attr(get_bloginfo('name'))
               );

@@ -119,10 +119,21 @@ add_filter('woocommerce_create_account_default_checked', static fn (): bool => f
 add_filter('woocommerce_email_header_image', static function ($url) {
     $forced = (string) get_option('sa_email_logo_url', '');
     if ($forced !== '' && filter_var($forced, FILTER_VALIDATE_URL)) {
-        return $forced;
+        return set_url_scheme($forced, 'https');
     }
-    $light = SA_THEME_URI . '/assets/logo-light.png';
-    return $light !== '' ? $light : $url;
+    $opt = (string) get_option('woocommerce_email_header_image', '');
+    if ($opt !== '' && filter_var($opt, FILTER_VALIDATE_URL)) {
+        return set_url_scheme($opt, 'https');
+    }
+    if (function_exists('sa_theme_logo_url')) {
+        return set_url_scheme(sa_theme_logo_url(true), 'https');
+    }
+    foreach (['logo-light.jpg', 'logo-light.png'] as $f) {
+        if (is_readable(SA_THEME_DIR . '/assets/' . $f)) {
+            return SA_THEME_URI . '/assets/' . $f;
+        }
+    }
+    return $url;
 });
 
 add_filter('woocommerce_email_styles', static function (string $css): string {
@@ -130,9 +141,14 @@ add_filter('woocommerce_email_styles', static function (string $css): string {
     $css .= "#wrapper { background-color: #f4f4f5; }\n";
     $css .= "#template_header { background-color: #ffffff !important; border-radius: 8px 8px 0 0; }\n";
     $css .= "#template_header h1 { color: #0B0B0D !important; }\n";
-    $css .= "#template_header_image img { max-height: 72px; width: auto; margin: 16px 0; }\n";
+    $css .= "#template_header_image img { max-height: 64px; width: auto; max-width: 220px; margin: 16px 0; }\n";
     $css .= "#template_footer { color: #71717a; }\n";
     $css .= "a { color: #F5A623; }\n";
+    // Order line-item product thumbnails (email clients).
+    $css .= "td.td img, #body_content_inner img.sa-email-product-thumb, #body_content_inner table.td img {";
+    $css .= " height: auto !important; max-width: 64px !important; width: 64px !important;";
+    $css .= " border: 0; display: block; object-fit: contain; }\n";
+    $css .= "td.td img.sa-shopify-cdn-photo { max-width: 64px !important; }\n";
     return $css;
 });
 
@@ -140,3 +156,7 @@ add_filter('woocommerce_email_base_color', static fn (): string => '#0B0B0D');
 add_filter('woocommerce_email_background_color', static fn (): string => '#F4F4F5');
 add_filter('woocommerce_email_body_background_color', static fn (): string => '#ffffff');
 add_filter('woocommerce_email_text_color', static fn (): string => '#0B0B0D');
+
+/** Friendly From name — never the mailbox address as the visible label. */
+add_filter('woocommerce_email_from_name', static fn (): string => 'Supreme Autoparts', 100);
+

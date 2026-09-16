@@ -226,6 +226,7 @@ echo "whop_enabled\n";
   wp_as option update admin_email "${WORDPRESS_ADMIN_EMAIL}" || true
   wp_as option update woocommerce_email_from_address "${WORDPRESS_ADMIN_EMAIL}" || true
   wp_as option update woocommerce_email_from_name "Supreme Autoparts" || true
+  wp_as option update sa_brevo_sender_name "Supreme Autoparts" || true
   # Force www — apex is unbound on Railway (Application not found).
   WWW_HOME="https://www.supremeautoparts.co.ke"
   wp_as option update home "$WWW_HOME" || true

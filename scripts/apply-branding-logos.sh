@@ -6,8 +6,10 @@ cd /var/www/html
 THEME_ASSETS="wp-content/themes/supreme-autoparts/assets"
 WP=(wp --allow-root --path=/var/www/html)
 
-logo_dark="${THEME_ASSETS}/logo.png"
-logo_light="${THEME_ASSETS}/logo-light.png"
+logo_dark="${THEME_ASSETS}/logo.jpg"
+[[ -f "$logo_dark" ]] || logo_dark="${THEME_ASSETS}/logo.png"
+logo_light="${THEME_ASSETS}/logo-light.jpg"
+[[ -f "$logo_light" ]] || logo_light="${THEME_ASSETS}/logo-light.png"
 icon="${THEME_ASSETS}/icon.png"
 
 for f in "$logo_dark" "$logo_light" "$icon"; do
@@ -53,12 +55,14 @@ echo "LOGO_ID=$LOGO_ID LIGHT_ID=$LIGHT_ID ICON_ID=$ICON_ID"
 
 LIGHT_URL=$("${WP[@]}" eval "echo wp_get_attachment_url((int) $LIGHT_ID);")
 if [[ -z "${LIGHT_URL:-}" ]]; then
-  LIGHT_URL="https://www.supremeautoparts.co.ke/wp-content/themes/supreme-autoparts/assets/logo-light.png"
+  LIGHT_URL="https://www.supremeautoparts.co.ke/wp-content/themes/supreme-autoparts/assets/logo-light.jpg"
 fi
 LIGHT_URL="${LIGHT_URL/http:\/\//https:\/\/}"
 
 "${WP[@]}" option update woocommerce_email_header_image "$LIGHT_URL"
 "${WP[@]}" option update sa_email_logo_url "$LIGHT_URL"
+"${WP[@]}" option update sa_brevo_sender_name "Supreme Autoparts"
+"${WP[@]}" option update woocommerce_email_from_name "Supreme Autoparts"
 
 "${WP[@]}" cache flush 2>/dev/null || true
 "${WP[@]}" rewrite flush 2>/dev/null || true

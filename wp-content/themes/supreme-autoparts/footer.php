@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     <div class="sa-footer__grid">
       <div>
         <a class="sa-footer__brand" href="<?php echo esc_url(home_url('/')); ?>">
-          <img class="sa-footer__logo" src="<?php echo esc_url(SA_THEME_URI . '/assets/logo.png'); ?>" alt="<?php echo esc_attr(get_bloginfo('name')); ?>" width="160" height="48" loading="lazy" />
+          <img class="sa-footer__logo" src="<?php echo esc_url(function_exists('sa_theme_logo_url') ? sa_theme_logo_url(false) : (SA_THEME_URI . '/assets/logo.png')); ?>" alt="<?php echo esc_attr(get_bloginfo('name')); ?>" width="160" height="48" loading="lazy" />
         </a>
         <h3 class="screen-reader-text"><?php esc_html_e('Supreme Autoparts', 'supreme-autoparts'); ?></h3>
         <p class="sa-footer__blurb">

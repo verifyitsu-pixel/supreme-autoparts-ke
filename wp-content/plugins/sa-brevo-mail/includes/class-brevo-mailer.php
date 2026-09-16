@@ -26,7 +26,10 @@ class SA_Brevo_Mailer
         }, 20);
         add_filter('woocommerce_email_from_name', static function () {
             return sa_brevo_sender_name();
-        }, 20);
+        }, 99);
+        add_filter('wp_mail_from_name', static function () {
+            return sa_brevo_sender_name();
+        }, 99);
     }
 
     /**

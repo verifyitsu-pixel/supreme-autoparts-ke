@@ -17,6 +17,7 @@ define('SA_THEME_URI', get_template_directory_uri());
 
 require_once SA_THEME_DIR . '/inc/setup.php';
 require_once SA_THEME_DIR . '/inc/assets.php';
+require_once SA_THEME_DIR . '/inc/image-performance.php';
 require_once SA_THEME_DIR . '/inc/megamenu.php';
 require_once SA_THEME_DIR . '/inc/woocommerce.php';
 require_once SA_THEME_DIR . '/inc/helpers.php';

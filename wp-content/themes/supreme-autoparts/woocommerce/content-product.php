@@ -15,11 +15,30 @@ if (empty($product) || !$product->is_visible()) {
 
 $permalink = $product->get_permalink();
 $name      = $product->get_name();
+
+$index  = function_exists('sa_loop_product_bump') ? sa_loop_product_bump() : 0;
+$is_lcp = $index > 0 && $index <= 4; // first row in 4-col grid
+$attrs  = [
+    'class'    => 'sa-product-card__img',
+    'decoding' => 'async',
+    'sizes'    => '(max-width: 600px) 50vw, (max-width: 1024px) 25vw, 280px',
+];
+if ($is_lcp) {
+    $attrs['loading'] = 'eager';
+    if ($index === 1) {
+        $attrs['fetchpriority'] = 'high';
+    }
+} else {
+    $attrs['loading'] = 'lazy';
+}
+if (function_exists('sa_product_image_attrs')) {
+    $attrs = sa_product_image_attrs($attrs, $index === 1);
+}
 ?>
 <li <?php wc_product_class('sa-product-card', $product); ?>>
   <div class="sa-product-card__media">
     <a href="<?php echo esc_url($permalink); ?>" class="sa-product-card__thumb" aria-label="<?php echo esc_attr($name); ?>">
-      <?php echo $product->get_image('woocommerce_thumbnail', ['class' => 'sa-product-card__img', 'loading' => 'lazy', 'decoding' => 'async']); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+      <?php echo $product->get_image('woocommerce_thumbnail', $attrs); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
     </a>
     <?php if ($product->is_on_sale()) : ?>
       <span class="sa-badge sa-badge--sale"><?php esc_html_e('Sale', 'supreme-autoparts'); ?></span>

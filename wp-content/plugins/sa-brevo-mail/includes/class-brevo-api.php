@@ -68,6 +68,7 @@ class SA_Brevo_API
      */
     public static function send_transactional(array $payload): array
     {
+        // Always overwrite — friendly name must be "Supreme Autoparts", not the mailbox.
         $payload['sender'] = [
             'name'  => sa_brevo_sender_name(),
             'email' => sa_brevo_sender_email(),

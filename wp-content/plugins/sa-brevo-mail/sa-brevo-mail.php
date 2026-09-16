@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Supreme Brevo Mail
  * Description: Brevo (Sendinblue) transactional email + contact sync for Supreme Autoparts WooCommerce.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Supreme Autoparts
  * Text Domain: sa-brevo-mail
  * Requires at least: 6.4
@@ -64,11 +64,22 @@ function sa_brevo_sender_email(): string
 
 function sa_brevo_sender_name(): string
 {
+    // Customer-facing clients show the friendly name first and hide the address
+    // until expand — never use the mailbox as the visible From label.
+    $canonical = 'Supreme Autoparts';
     $env = getenv('BREVO_SENDER_NAME');
-    if (is_string($env) && $env !== '') {
-        return $env;
+    if (is_string($env)) {
+        $env = trim($env);
+        if (preg_match('/^(.+?)\s*<[^>]+>$/', $env, $m)) {
+            $env = trim($m[1]);
+        }
+        // Reject empty / email / anything with @ — always prefer store brand.
+        if ($env !== '' && $env !== $canonical && !is_email($env) && !str_contains($env, '@')) {
+            // Rare: allow intentional non-email override from Railway.
+            return $env;
+        }
     }
-    return 'Supreme Autoparts';
+    return $canonical;
 }
 
 /**
@@ -100,6 +111,8 @@ register_activation_hook(__FILE__, static function (): void {
         }
     }
     update_option('sa_brevo_sender_email', sa_brevo_sender_email());
+    update_option('sa_brevo_sender_name', sa_brevo_sender_name());
+    update_option('woocommerce_email_from_name', sa_brevo_sender_name());
     flush_rewrite_rules();
 });
 
@@ -109,6 +122,17 @@ add_action('plugins_loaded', static function (): void {
     SA_Brevo_Webhooks::init();
     SA_Brevo_Admin_Settings::init();
 }, 20);
+
+/** Keep Woo + Brevo From name = Supreme Autoparts (not the mailbox). */
+add_action('init', static function (): void {
+    $name = sa_brevo_sender_name();
+    if ((string) get_option('sa_brevo_sender_name', '') !== $name) {
+        update_option('sa_brevo_sender_name', $name, false);
+    }
+    if ((string) get_option('woocommerce_email_from_name', '') !== $name) {
+        update_option('woocommerce_email_from_name', $name, false);
+    }
+}, 5);
 
 add_action('before_woocommerce_init', static function (): void {
     if (class_exists(\Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
