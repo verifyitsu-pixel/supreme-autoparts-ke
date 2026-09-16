@@ -55,7 +55,12 @@ if (!defined('ABSPATH')) {
                   esc_attr(get_bloginfo('name'))
               );
           } else {
-              echo '<span class="sa-logo__mark" aria-hidden="true">S</span>';
+              $icon = SA_THEME_URI . '/assets/icon.png';
+              printf(
+                  '<img class="sa-logo__img" src="%s" alt="%s" width="48" height="48" loading="eager" />',
+                  esc_url($icon),
+                  esc_attr(get_bloginfo('name'))
+              );
               echo '<span>' . esc_html(get_bloginfo('name')) . '</span>';
           }
       }

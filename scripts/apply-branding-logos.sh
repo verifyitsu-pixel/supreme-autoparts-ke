@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Apply custom_logo, site_icon, and WooCommerce email header logo on the live WP.
-# Forces fresh media import for Apex Concept A assets (does not reuse old titled attachments).
+# Forces fresh media import for sports-car charcoal+amber lockup (replaces Apex attachments).
 set -euo pipefail
 cd /var/www/html
 THEME_ASSETS="wp-content/themes/supreme-autoparts/assets"
@@ -24,7 +24,10 @@ for title in \
   "Supreme Autoparts Icon" \
   "Supreme Autoparts Apex Logo Dark" \
   "Supreme Autoparts Apex Logo Light" \
-  "Supreme Autoparts Apex Icon"
+  "Supreme Autoparts Apex Icon" \
+  "Supreme Autoparts Sports Car Logo Dark" \
+  "Supreme Autoparts Sports Car Logo Light" \
+  "Supreme Autoparts Sports Car Icon"
 do
   ids=$("${WP[@]}" post list --post_type=attachment --title="$title" --field=ID --posts_per_page=20 2>/dev/null || true)
   for id in $ids; do
@@ -39,9 +42,9 @@ import_file() {
   "${WP[@]}" media import "$file" --title="$title" --porcelain
 }
 
-LOGO_ID=$(import_file "$logo_dark" "Supreme Autoparts Apex Logo Dark")
-LIGHT_ID=$(import_file "$logo_light" "Supreme Autoparts Apex Logo Light")
-ICON_ID=$(import_file "$icon" "Supreme Autoparts Apex Icon")
+LOGO_ID=$(import_file "$logo_dark" "Supreme Autoparts Sports Car Logo Dark")
+LIGHT_ID=$(import_file "$logo_light" "Supreme Autoparts Sports Car Logo Light")
+ICON_ID=$(import_file "$icon" "Supreme Autoparts Sports Car Icon")
 
 echo "LOGO_ID=$LOGO_ID LIGHT_ID=$LIGHT_ID ICON_ID=$ICON_ID"
 

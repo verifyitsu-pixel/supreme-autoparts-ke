@@ -128,9 +128,9 @@ add_filter('woocommerce_email_header_image', static function ($url) {
 add_filter('woocommerce_email_styles', static function (string $css): string {
     $css .= "\nbody { background-color: #f4f4f5; }\n";
     $css .= "#wrapper { background-color: #f4f4f5; }\n";
-    $css .= "#template_header { background-color: #0B0B0D !important; border-radius: 8px 8px 0 0; }\n";
-    $css .= "#template_header h1 { color: #F4F4F5 !important; }\n";
-    $css .= "#template_header_image img { max-height: 56px; width: auto; margin: 16px 0; }\n";
+    $css .= "#template_header { background-color: #ffffff !important; border-radius: 8px 8px 0 0; }\n";
+    $css .= "#template_header h1 { color: #0B0B0D !important; }\n";
+    $css .= "#template_header_image img { max-height: 72px; width: auto; margin: 16px 0; }\n";
     $css .= "#template_footer { color: #71717a; }\n";
     $css .= "a { color: #F5A623; }\n";
     return $css;

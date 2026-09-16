@@ -1,4 +1,4 @@
-/* Supreme Autoparts — storefront components (v1.2.7) */
+/* Supreme Autoparts — storefront components (v1.4.1) */
 
 .sa-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
@@ -48,7 +48,21 @@
   display: grid; place-items: center; color: var(--sa-accent); font-size: 1rem; font-weight: 700;
 }
 .sa-logo .custom-logo,
-.sa-logo__img { display: block; max-height: 48px; width: auto; height: auto; }
+.sa-logo__img {
+  display: block;
+  max-height: 52px;
+  width: auto;
+  height: auto;
+  /* Car lockup is on charcoal — blend flush with header */
+  background: transparent;
+  mix-blend-mode: normal;
+  filter: none;
+}
+.sa-logo .custom-logo-link { display: flex; align-items: center; line-height: 0; }
+@media (min-width: 768px) {
+  .sa-logo .custom-logo,
+  .sa-logo__img { max-height: 58px; }
+}
 
 .sa-search { flex: 1; max-width: 480px; position: relative; }
 .sa-search input[type="search"] {
