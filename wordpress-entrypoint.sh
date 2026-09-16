@@ -40,6 +40,10 @@ sync_custom_content() {
     rm -rf /var/www/html/wp-content/plugins/supreme-autoparts-core
     cp -a /usr/src/wordpress/wp-content/plugins/supreme-autoparts-core /var/www/html/wp-content/plugins/
   fi
+  if [[ -d /usr/src/wordpress/wp-content/plugins/whop-payments ]]; then
+    rm -rf /var/www/html/wp-content/plugins/whop-payments
+    cp -a /usr/src/wordpress/wp-content/plugins/whop-payments /var/www/html/wp-content/plugins/
+  fi
   if [[ -f /usr/src/wordpress/wp-content/mu-plugins/supreme-loader.php ]]; then
     cp -f /usr/src/wordpress/wp-content/mu-plugins/supreme-loader.php /var/www/html/wp-content/mu-plugins/ || true
   fi
@@ -54,7 +58,8 @@ sync_custom_content() {
   fi
   chown -R www-data:www-data \
     /var/www/html/wp-content/themes/supreme-autoparts \
-    /var/www/html/wp-content/plugins/supreme-autoparts-core 2>/dev/null || true
+    /var/www/html/wp-content/plugins/supreme-autoparts-core \
+    /var/www/html/wp-content/plugins/whop-payments 2>/dev/null || true
 }
 
 wait_for_db() {
@@ -113,6 +118,7 @@ bootstrap_wordpress() {
   fi
 
   wp_as plugin activate supreme-autoparts-core || true
+  wp_as plugin activate whop-payments || true
   wp_as theme activate supreme-autoparts || true
 
   wp_as option update woocommerce_currency "$WOO_CURRENCY" || true
