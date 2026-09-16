@@ -49,7 +49,7 @@ function sa_core_apply_store_settings(): void
     update_option('woocommerce_store_address', get_option('woocommerce_store_address') ?: 'Nairobi');
     update_option('woocommerce_store_city', 'Nairobi');
     update_option('woocommerce_default_country', 'KE');
-    update_option('woocommerce_currency', getenv('WOO_CURRENCY') ?: 'KES');
+    update_option('woocommerce_currency', getenv('SA_CHECKOUT_CURRENCY') ?: getenv('WOO_CURRENCY') ?: 'USD');
 
     // Customer registration + account flows
     update_option('woocommerce_enable_myaccount_registration', 'yes');
@@ -106,7 +106,7 @@ add_filter('wp_mail_from_name', static function ($name) {
 
 // Apply lightly on admin/init once per version bump.
 add_action('init', static function (): void {
-    if (get_option('sa_store_settings_ver') === '6') {
+    if (get_option('sa_store_settings_ver') === '7') {
         return;
     }
     if (!function_exists('WC') && !class_exists('WooCommerce')) {
@@ -114,5 +114,5 @@ add_action('init', static function (): void {
         update_option('admin_email', sa_core_store_email());
     }
     sa_core_apply_store_settings();
-    update_option('sa_store_settings_ver', '6');
+    update_option('sa_store_settings_ver', '7');
 }, 20);

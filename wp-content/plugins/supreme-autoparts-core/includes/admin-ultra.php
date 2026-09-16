@@ -137,7 +137,7 @@ function sa_core_ultra_kpis(): array
 
     $currency = function_exists('get_woocommerce_currency_symbol')
         ? get_woocommerce_currency_symbol()
-        : 'KES ';
+        : '$';
 
     return [
         'orders_today'   => $orders_today,

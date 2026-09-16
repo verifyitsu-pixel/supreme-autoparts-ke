@@ -20,6 +20,7 @@ COPY wp-content/themes/supreme-autoparts /usr/src/wordpress/wp-content/themes/su
 COPY wp-content/plugins/supreme-autoparts-core /usr/src/wordpress/wp-content/plugins/supreme-autoparts-core
 COPY wp-content/plugins/whop-payments /usr/src/wordpress/wp-content/plugins/whop-payments
 COPY wp-content/plugins/sa-brevo-mail /usr/src/wordpress/wp-content/plugins/sa-brevo-mail
+COPY wp-content/plugins/sa-geo-currency /usr/src/wordpress/wp-content/plugins/sa-geo-currency
 COPY wp-content/mu-plugins /usr/src/wordpress/wp-content/mu-plugins
 COPY data /usr/src/supreme-data
 COPY scripts /usr/src/supreme-scripts
@@ -31,7 +32,8 @@ RUN chmod +x /usr/local/bin/wordpress-entrypoint.sh \
         /usr/src/wordpress/wp-content/themes/supreme-autoparts \
         /usr/src/wordpress/wp-content/plugins/supreme-autoparts-core \
         /usr/src/wordpress/wp-content/plugins/whop-payments \
-        /usr/src/wordpress/wp-content/plugins/sa-brevo-mail
+        /usr/src/wordpress/wp-content/plugins/sa-brevo-mail \
+        /usr/src/wordpress/wp-content/plugins/sa-geo-currency
 
 # Apache: allow .htaccess for permalinks
 RUN a2enmod rewrite headers expires

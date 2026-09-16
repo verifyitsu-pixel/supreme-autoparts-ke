@@ -159,7 +159,7 @@ function sa_term_link(string $taxonomy, string $slug): string
 function sa_free_shipping_threshold(): string
 {
     $threshold = getenv('SUPREME_FREE_SHIPPING_THRESHOLD') ?: get_option('sa_free_shipping_threshold', '15000');
-    $currency  = function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : 'KES';
+    $currency  = function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : 'USD';
     if (function_exists('wc_price')) {
         return wp_strip_all_tags(wc_price((float) $threshold));
     }

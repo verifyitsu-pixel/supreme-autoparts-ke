@@ -246,3 +246,8 @@ Optional uses only:
 3. Logged-out product page loads; static CSS/JS from `/wp-content/` show `cf-cache-status: HIT` after second request.
 4. Add to cart → cart/checkout never show `HIT` for HTML; cart count updates.
 5. Whop sandbox webhook delivers without Cloudflare challenge pages in the response body.
+
+## Geo currency (CF-IPCountry)
+
+Plugin `sa-geo-currency` reads **`CF-IPCountry`** (set automatically when the zone is proxied) to choose a display currency. HTML responses send `Vary: CF-IPCountry`. Prefer **cache bypass** for HTML shop/product/cart pages (already recommended for Woo) so visitors do not share a single cached currency. Static `/wp-content/*` assets are unaffected.
+

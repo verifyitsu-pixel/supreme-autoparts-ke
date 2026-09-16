@@ -58,7 +58,7 @@ add_filter('woocommerce_loop_add_to_cart_args', static function (array $args): a
     return $args;
 });
 
-// Keep KES visible in price HTML (Woo currency code / symbol).
+// Keep KES code readable when display currency is KES (geo layer may pass KES).
 add_filter('woocommerce_currency_symbol', static function (string $symbol, string $currency): string {
     if (strtoupper($currency) === 'KES' && $symbol !== '' && stripos($symbol, 'KES') === false) {
         return 'KES';

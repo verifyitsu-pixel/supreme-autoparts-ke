@@ -120,7 +120,7 @@ final class Whop_Api_Client {
             ];
         }
 
-        $currency = strtolower((string) ($args['currency'] ?? 'kes'));
+        $currency = strtolower((string) ($args['currency'] ?? 'usd'));
         $meta     = is_array($args['metadata'] ?? null) ? $args['metadata'] : [];
         $meta     = array_merge([
             'source'  => 'supreme-autoparts-myaccount',

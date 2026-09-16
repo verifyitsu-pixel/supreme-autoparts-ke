@@ -1,6 +1,6 @@
 <?php
 /**
- * Product card in loops — real images, KES price, clear Add to cart.
+ * Product card in loops — real images, geo display price, clear Add to cart.
  *
  * @package Supreme_Autoparts
  */
@@ -29,7 +29,7 @@ $name      = $product->get_name();
     <h2 class="woocommerce-loop-product__title sa-product-card__title">
       <a href="<?php echo esc_url($permalink); ?>"><?php echo esc_html($name); ?></a>
     </h2>
-    <div class="sa-product-card__price price" aria-label="<?php esc_attr_e('Price in Kenyan Shillings', 'supreme-autoparts'); ?>">
+    <div class="sa-product-card__price price" aria-label="<?php esc_attr_e('Product price', 'supreme-autoparts'); ?>">
       <?php echo $product->get_price_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
     </div>
     <div class="sa-product-card__actions">

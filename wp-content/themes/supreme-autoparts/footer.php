@@ -56,7 +56,7 @@ if (!defined('ABSPATH')) {
     </div>
     <div class="sa-footer__bottom">
       <span>&copy; <?php echo esc_html(gmdate('Y')); ?> Supreme Autoparts · supremeautoparts.co.ke</span>
-      <span><?php esc_html_e('Prices in KES unless noted. *Free shipping terms apply.', 'supreme-autoparts'); ?></span>
+      <span><?php esc_html_e('Prices shown in local currency where available; charged in USD at checkout. *Free shipping terms apply.', 'supreme-autoparts'); ?></span>
     </div>
   </div>
 </footer>

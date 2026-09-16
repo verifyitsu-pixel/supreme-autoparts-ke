@@ -21,6 +21,8 @@ export WORDPRESS_DB_NAME="${WORDPRESS_DB_NAME:-wordpress}"
 export WP_HOME="${WP_HOME:-http://localhost:8080}"
 export WP_SITEURL="${WP_SITEURL:-${WP_HOME}}"
 export WOO_CURRENCY="${WOO_CURRENCY:-USD}"
+export SA_CHECKOUT_CURRENCY="${SA_CHECKOUT_CURRENCY:-USD}"
+export SA_GEO_CURRENCY="${SA_GEO_CURRENCY:-1}"
 export TZ="${TZ:-Africa/Nairobi}"
 export WORDPRESS_ADMIN_USER="${WORDPRESS_ADMIN_USER:-admin}"
 export WORDPRESS_ADMIN_PASSWORD="${WORDPRESS_ADMIN_PASSWORD:-adminpass}"
@@ -51,6 +53,10 @@ sync_custom_content() {
     rm -rf /var/www/html/wp-content/plugins/sa-brevo-mail
     cp -a /usr/src/wordpress/wp-content/plugins/sa-brevo-mail /var/www/html/wp-content/plugins/
   fi
+  if [[ -d /usr/src/wordpress/wp-content/plugins/sa-geo-currency ]]; then
+    rm -rf /var/www/html/wp-content/plugins/sa-geo-currency
+    cp -a /usr/src/wordpress/wp-content/plugins/sa-geo-currency /var/www/html/wp-content/plugins/
+  fi
   if [[ -f /usr/src/wordpress/wp-content/mu-plugins/supreme-loader.php ]]; then
     cp -f /usr/src/wordpress/wp-content/mu-plugins/supreme-loader.php /var/www/html/wp-content/mu-plugins/ || true
   fi
@@ -67,7 +73,8 @@ sync_custom_content() {
     /var/www/html/wp-content/themes/supreme-autoparts \
     /var/www/html/wp-content/plugins/supreme-autoparts-core \
     /var/www/html/wp-content/plugins/whop-payments \
-    /var/www/html/wp-content/plugins/sa-brevo-mail 2>/dev/null || true
+    /var/www/html/wp-content/plugins/sa-brevo-mail \
+    /var/www/html/wp-content/plugins/sa-geo-currency 2>/dev/null || true
 }
 
 wait_for_db() {
@@ -130,9 +137,10 @@ bootstrap_wordpress() {
   wp_as plugin activate supreme-autoparts-core || true
   wp_as plugin activate whop-payments || true
   wp_as plugin activate sa-brevo-mail || true
+  wp_as plugin activate sa-geo-currency || true
   wp_as theme activate supreme-autoparts || true
 
-  wp_as option update woocommerce_currency "$WOO_CURRENCY" || true
+  wp_as option update woocommerce_currency "${SA_CHECKOUT_CURRENCY:-$WOO_CURRENCY}" || true
   wp_as option update woocommerce_default_country "KE" || true
   wp_as option update woocommerce_currency_pos "left" || true
   wp_as option update woocommerce_price_thousand_sep "," || true

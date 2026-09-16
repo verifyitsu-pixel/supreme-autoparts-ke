@@ -1,6 +1,6 @@
 # Supreme Autoparts (supremeautoparts.co.ke)
 
-WordPress + WooCommerce storefront — visual/UX replica of [supreme-mods.com](https://supreme-mods.com/), rebranded as **Supreme Autoparts** for Kenya (KES, Africa/Nairobi). Deployable on **Railway via Git auto-deploy**, with **Cloudflare** in front for DNS/CDN/proxy (see [Cloudflare + Railway](#cloudflare--railway)).
+WordPress + WooCommerce storefront — visual/UX replica of [supreme-mods.com](https://supreme-mods.com/), rebranded as **Supreme Autoparts** for Kenya (Africa/Nairobi). Store/checkout currency is **USD** (Whop); front-end can show local currency via geo IP. Deployable on **Railway via Git auto-deploy**, with **Cloudflare** in front for DNS/CDN/proxy (see [Cloudflare + Railway](#cloudflare--railway)).
 
 > Catalog note: the source store has on the order of **~1M listings** and **~917 collections**. This repo ships sample products plus a **full Shopify JSON scraper** (`scripts/scrape-shopify-catalog.py`) and NDJSON Woo importer. Run the scrape before production import.
 
@@ -11,6 +11,7 @@ WordPress + WooCommerce storefront — visual/UX replica of [supreme-mods.com](h
 - Custom theme: `wp-content/themes/supreme-autoparts`
 - Core plugin: `wp-content/plugins/supreme-autoparts-core`
 - Payments: `wp-content/plugins/whop-payments` (Whop Checkout)
+- Geo display: `wp-content/plugins/sa-geo-currency` (local FX display; checkout stays USD)
 - MySQL 8 (local Compose) / Railway MySQL plugin (production)
 
 ## Quick start (local)
@@ -37,7 +38,7 @@ docker compose exec wordpress wp eval-file \
 
 Admin UI: **Tools → Supreme Import**.
 
-Sample USD prices are converted with `SUPREME_USD_TO_KES` (default `130`) for display — replace with real KES pricing before launch.
+Catalog prices are stored in **USD**. Front-end geo display converts for visitors (KE→KES, etc.); Whop charges USD.
 
 ## Railway deploy (Git auto-deploy)
 
@@ -55,8 +56,10 @@ Sample USD prices are converted with `SUPREME_USD_TO_KES` (default `130`) for di
 | `WORDPRESS_ADMIN_USER` | Admin username |
 | `WORDPRESS_ADMIN_PASSWORD` | Strong secret |
 | `WORDPRESS_ADMIN_EMAIL` | Your email |
-| `WOO_CURRENCY` | `KES` |
-| `SUPREME_FREE_SHIPPING_THRESHOLD` | e.g. `15000` |
+| `WOO_CURRENCY` / `SA_CHECKOUT_CURRENCY` | `USD` (required for Whop) |
+| `SA_GEO_CURRENCY` | `1` to enable IP→local display |
+| `SA_FX_API_URL` | optional FX endpoint (default open.er-api.com) |
+| `SUPREME_FREE_SHIPPING_THRESHOLD` | e.g. `115` (USD) |
 | `SUPREME_SEED_ON_BOOT` | `1` to seed pages/cats on boot |
 | `WHOP_API_KEY` / `WHOP_COMPANY_ID` / `WHOP_WEBHOOK_SECRET` / `WHOP_SANDBOX` | Whop payment gateway (see Payments) |
 
@@ -65,6 +68,17 @@ Sample USD prices are converted with `SUPREME_USD_TO_KES` (default `130`) for di
 8. After first deploy: log in, run sample import, configure shipping zones, set `WHOP_*` env vars, enable **Whop** under WooCommerce → Payments, and register the webhook URL in the Whop dashboard.
 
 Health check: `GET /healthz.php` → `ok`.
+
+## Geo currency display
+
+Plugin `sa-geo-currency` keeps WooCommerce **order currency = USD** (Whop expects USD amounts) and converts **display** prices from visitor geo:
+
+1. Country from Cloudflare `CF-IPCountry` (preferred), else free IP geo API, sticky cookie `sa_geo_cc`.
+2. Country → currency map (KE→KES, US→USD, …); unknown → USD.
+3. FX from `SA_FX_API_URL` or `https://open.er-api.com/v6/latest/USD`, cached in a WordPress transient (~8h). Fallback display = USD if geo/rates fail.
+4. Shop / PDP / cart show converted amounts + note **“Charged in USD at checkout”**. Order totals remain USD.
+
+Set `SA_GEO_CURRENCY=1`, `SA_CHECKOUT_CURRENCY=USD`, `WOO_CURRENCY=USD` on Railway.
 
 ## Cloudflare + Railway
 
