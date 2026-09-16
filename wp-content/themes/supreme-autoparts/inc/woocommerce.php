@@ -112,3 +112,31 @@ add_action('template_redirect', static function (): void {
  * Default create-account checkbox off (guest-friendly); remember me handled in templates.
  */
 add_filter('woocommerce_create_account_default_checked', static fn (): bool => false);
+
+/**
+ * WooCommerce transactional email branding (light logo on light header).
+ */
+add_filter('woocommerce_email_header_image', static function ($url) {
+    $forced = (string) get_option('sa_email_logo_url', '');
+    if ($forced !== '' && filter_var($forced, FILTER_VALIDATE_URL)) {
+        return $forced;
+    }
+    $light = SA_THEME_URI . '/assets/logo-light.png';
+    return $light !== '' ? $light : $url;
+});
+
+add_filter('woocommerce_email_styles', static function (string $css): string {
+    $css .= "\nbody { background-color: #f4f4f5; }\n";
+    $css .= "#wrapper { background-color: #f4f4f5; }\n";
+    $css .= "#template_header { background-color: #0B0B0D !important; border-radius: 8px 8px 0 0; }\n";
+    $css .= "#template_header h1 { color: #F4F4F5 !important; }\n";
+    $css .= "#template_header_image img { max-height: 56px; width: auto; margin: 16px 0; }\n";
+    $css .= "#template_footer { color: #71717a; }\n";
+    $css .= "a { color: #F5A623; }\n";
+    return $css;
+});
+
+add_filter('woocommerce_email_base_color', static fn (): string => '#0B0B0D');
+add_filter('woocommerce_email_background_color', static fn (): string => '#F4F4F5');
+add_filter('woocommerce_email_body_background_color', static fn (): string => '#ffffff');
+add_filter('woocommerce_email_text_color', static fn (): string => '#0B0B0D');

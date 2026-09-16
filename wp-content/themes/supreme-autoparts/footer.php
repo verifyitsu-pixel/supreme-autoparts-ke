@@ -8,7 +8,10 @@ if (!defined('ABSPATH')) {
   <div class="sa-container">
     <div class="sa-footer__grid">
       <div>
-        <h3><?php esc_html_e('Supreme Autoparts', 'supreme-autoparts'); ?></h3>
+        <a class="sa-footer__brand" href="<?php echo esc_url(home_url('/')); ?>">
+          <img class="sa-footer__logo" src="<?php echo esc_url(SA_THEME_URI . '/assets/logo.png'); ?>" alt="<?php echo esc_attr(get_bloginfo('name')); ?>" width="160" height="48" loading="lazy" />
+        </a>
+        <h3 class="screen-reader-text"><?php esc_html_e('Supreme Autoparts', 'supreme-autoparts'); ?></h3>
         <p class="sa-footer__blurb">
           <?php esc_html_e('Performance parts & accessories for cars, trucks, and SUVs. Serving Kenya and beyond.', 'supreme-autoparts'); ?>
         </p>

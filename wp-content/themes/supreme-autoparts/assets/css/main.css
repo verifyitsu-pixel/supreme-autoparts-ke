@@ -1000,3 +1000,6 @@ body.sa-cart-open { overflow: hidden; }
   background: var(--sa-bg-alt);
 }
 .sa-page__content .entry-content > .sa-enquire:first-child { margin-top: 0; }
+
+.sa-footer__brand { display: inline-block; margin-bottom: 0.75rem; }
+.sa-footer__logo { display: block; max-height: 40px; width: auto; height: auto; }
