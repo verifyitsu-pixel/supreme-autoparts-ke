@@ -77,3 +77,38 @@ add_action('init', static function (): void {
     remove_action('woocommerce_before_shop_loop_item', 'woocommerce_template_loop_product_link_open', 10);
     remove_action('woocommerce_after_shop_loop_item', 'woocommerce_template_loop_product_link_close', 5);
 });
+
+
+/**
+ * Checkout / order-received body classes for styling hooks.
+ */
+add_filter('body_class', static function (array $classes): array {
+    if (function_exists('is_checkout') && is_checkout()) {
+        $classes[] = 'sa-is-checkout';
+    }
+    if (function_exists('is_order_received_page') && is_order_received_page()) {
+        $classes[] = 'sa-is-order-received';
+    }
+    return $classes;
+});
+
+/**
+ * Empty checkout cart → redirect to cart (which shows enquire CTA).
+ */
+add_action('template_redirect', static function (): void {
+    if (!function_exists('is_checkout') || !is_checkout() || is_order_received_page()) {
+        return;
+    }
+    if (!function_exists('WC') || !WC()->cart) {
+        return;
+    }
+    if (WC()->cart->is_empty()) {
+        wp_safe_redirect(wc_get_cart_url());
+        exit;
+    }
+}, 20);
+
+/**
+ * Default create-account checkbox off (guest-friendly); remember me handled in templates.
+ */
+add_filter('woocommerce_create_account_default_checked', static fn (): bool => false);

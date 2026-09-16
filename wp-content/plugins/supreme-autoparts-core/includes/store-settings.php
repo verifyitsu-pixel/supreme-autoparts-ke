@@ -59,6 +59,7 @@ function sa_core_apply_store_settings(): void
     update_option('woocommerce_registration_generate_password', 'yes');
     update_option('users_can_register', 1);
     update_option('woocommerce_enable_checkout_login_reminder', 'yes');
+    update_option('woocommerce_enable_persistent_cart', 'yes');
     update_option('woocommerce_myaccount_lost_password_endpoint', 'lost-password');
     update_option('woocommerce_myaccount_orders_endpoint', 'orders');
     update_option('woocommerce_myaccount_downloads_endpoint', 'downloads');
@@ -106,7 +107,7 @@ add_filter('wp_mail_from_name', static function ($name) {
 
 // Apply lightly on admin/init once per version bump.
 add_action('init', static function (): void {
-    if (get_option('sa_store_settings_ver') === '7') {
+    if (get_option('sa_store_settings_ver') === '8') {
         return;
     }
     if (!function_exists('WC') && !class_exists('WooCommerce')) {
@@ -114,5 +115,5 @@ add_action('init', static function (): void {
         update_option('admin_email', sa_core_store_email());
     }
     sa_core_apply_store_settings();
-    update_option('sa_store_settings_ver', '7');
+    update_option('sa_store_settings_ver', '8');
 }, 20);

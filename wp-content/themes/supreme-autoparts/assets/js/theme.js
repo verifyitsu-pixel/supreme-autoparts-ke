@@ -195,4 +195,73 @@
     });
   });
 
+
+
+  // Checkout: block Place order until terms checkbox is ticked; Remember me default.
+  function saSyncCheckoutTerms() {
+    var form = document.querySelector('form.checkout, form.woocommerce-checkout');
+    if (!form) return;
+    var box = form.querySelector('[data-sa-terms-checkbox], #terms');
+    var btn = form.querySelector('#place_order');
+    var hint = form.querySelector('[data-sa-terms-hint]');
+    if (!box || !btn) return;
+
+    function sync() {
+      var ok = !!box.checked;
+      btn.disabled = !ok;
+      btn.setAttribute('aria-disabled', ok ? 'false' : 'true');
+      if (hint) hint.hidden = ok;
+    }
+
+    sync();
+    box.addEventListener('change', sync);
+    // Woo updates payment fragment via AJAX — rebind after refresh.
+    if (window.jQuery) {
+      jQuery(document.body).on('updated_checkout', function () {
+        box = form.querySelector('[data-sa-terms-checkbox], #terms') || document.querySelector('[data-sa-terms-checkbox], #terms');
+        btn = document.querySelector('#place_order');
+        hint = document.querySelector('[data-sa-terms-hint]');
+        if (box && btn) {
+          box.removeEventListener('change', sync);
+          box.addEventListener('change', sync);
+          sync();
+        }
+      });
+    }
+
+    form.addEventListener('submit', function (e) {
+      var current = form.querySelector('[data-sa-terms-checkbox], #terms');
+      if (current && !current.checked) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (hint) hint.hidden = false;
+        current.focus();
+        var msg = (window.saTheme && saTheme.i18n && saTheme.i18n.termsRequired)
+          ? saTheme.i18n.termsRequired
+          : 'Please accept the store policies to place your order.';
+        if (window.jQuery && jQuery.fn && document.body) {
+          // Soft notice without fighting Woo validation.
+        }
+        return false;
+      }
+    }, true);
+  }
+
+  function saEnsureRememberMe() {
+    document.querySelectorAll('input[name="rememberme"]').forEach(function (el) {
+      if (el.hasAttribute('data-sa-remember-default') || !el.checked) {
+        el.checked = true;
+      }
+    });
+  }
+
+  saSyncCheckoutTerms();
+  saEnsureRememberMe();
+  if (window.jQuery) {
+    jQuery(document.body).on('updated_checkout', function () {
+      saSyncCheckoutTerms();
+      saEnsureRememberMe();
+    });
+  }
+
 })();

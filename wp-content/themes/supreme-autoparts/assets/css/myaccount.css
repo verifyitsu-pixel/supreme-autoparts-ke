@@ -675,3 +675,58 @@
     font-weight: 650;
   }
 }
+
+/* Login / register — unified with checkout visual system */
+.sa-account-auth {
+  padding: .25rem 0 1rem;
+}
+
+.sa-account-auth__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+.sa-account-auth__grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sa-account-auth__panel {
+  background: var(--sa-bg-card);
+  border: 1px solid var(--sa-border);
+  border-radius: var(--sa-radius-lg);
+  padding: 1.35rem 1.4rem 1.5rem;
+}
+
+.sa-account-auth__panel .sa-form__remember {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .85rem;
+}
+
+.sa-account-auth__panel .woocommerce-form-login__rememberme {
+  display: inline-flex;
+  gap: .5rem;
+  align-items: center;
+  font-size: .88rem;
+  color: var(--sa-text);
+}
+
+.sa-account-auth__panel .woocommerce-form-login__rememberme input {
+  accent-color: var(--sa-accent);
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.sa-account-auth__panel .lost_password a,
+.sa-account-auth__panel .woocommerce-LostPassword a {
+  color: var(--sa-accent);
+  font-size: .88rem;
+}
+
+@media (max-width: 800px) {
+  .sa-account-auth__grid--2 {
+    grid-template-columns: 1fr;
+  }
+}

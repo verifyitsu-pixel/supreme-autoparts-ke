@@ -30,12 +30,24 @@ add_action('wp_enqueue_scripts', static function (): void {
         'ajaxUrl' => admin_url('admin-ajax.php'),
         'cartUrl' => function_exists('wc_get_cart_url') ? wc_get_cart_url() : '',
         'i18n'    => [
-            'cart' => __('Cart', 'supreme-autoparts'),
+            'cart'          => __('Cart', 'supreme-autoparts'),
+            'termsRequired' => __('Please accept the store policies to place your order.', 'supreme-autoparts'),
         ],
     ]);
 
     if (function_exists('is_cart') && (is_cart() || is_checkout() || is_product())) {
         wp_enqueue_script('wc-cart-fragments');
+    }
+
+    $is_checkout = function_exists('is_checkout') && is_checkout();
+    $is_order_received = function_exists('is_order_received_page') && is_order_received_page();
+    if ($is_checkout || $is_order_received) {
+        wp_enqueue_style(
+            'supreme-autoparts-checkout',
+            SA_THEME_URI . '/assets/css/checkout.css',
+            ['supreme-autoparts-main'],
+            SA_THEME_VERSION
+        );
     }
 
     if (function_exists('is_account_page') && is_account_page()) {

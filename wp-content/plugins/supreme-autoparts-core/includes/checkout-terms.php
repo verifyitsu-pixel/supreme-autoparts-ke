@@ -35,6 +35,30 @@ function sa_core_checkout_policy_links(): array
 }
 
 /**
+ * Required policy set used in checkbox copy.
+ *
+ * @return array<string, string>
+ */
+function sa_core_checkout_required_policy_links(): array
+{
+    $all = sa_core_checkout_policy_links();
+    $keys = [
+        'Terms of Service',
+        'Privacy Policy',
+        'Chargeback & Disputes',
+        'Cookie Policy',
+        'Refund Policy',
+    ];
+    $out = [];
+    foreach ($keys as $k) {
+        if (isset($all[$k])) {
+            $out[$k] = $all[$k];
+        }
+    }
+    return $out;
+}
+
+/**
  * Compact policy list markup shared by checkout hooks.
  */
 function sa_core_render_checkout_policy_notice(string $variant = 'full'): void
@@ -58,7 +82,8 @@ function sa_core_render_checkout_policy_notice(string $variant = 'full'): void
     echo '</ul>';
     if ($variant === 'full') {
         echo '<p>' . esc_html__('Questions or payment disputes:', 'supreme-autoparts-core') . ' ';
-        echo '<a href="mailto:calvin@supremeautoparts.co.ke">calvin@supremeautoparts.co.ke</a>.</p>';
+        echo '<a href="mailto:calvin@supremeautoparts.co.ke">calvin@supremeautoparts.co.ke</a>';
+        echo ' · <a href="https://wa.me/254714498451" target="_blank" rel="noopener noreferrer">WhatsApp +254 714 498 451</a>.</p>';
     }
     echo '</div>';
 }
@@ -87,7 +112,7 @@ add_action('woocommerce_checkout_process', static function (): void {
     // phpcs:ignore WordPress.Security.NonceVerification.Missing
     if (empty($_POST['terms'])) {
         wc_add_notice(
-            __('Please read and accept the Terms of Service to place your order.', 'supreme-autoparts-core'),
+            __('Please read and accept the Terms of Service, Privacy, Chargeback, Cookie, and Refund policies to place your order.', 'supreme-autoparts-core'),
             'error'
         );
     }
@@ -97,6 +122,25 @@ add_action('woocommerce_checkout_process', static function (): void {
  * Force Woo to show terms checkbox when a terms page is configured.
  */
 add_filter('woocommerce_checkout_show_terms', '__return_true');
+
+/**
+ * Stronger checkbox label referencing all five required policies.
+ */
+add_filter('woocommerce_get_terms_and_conditions_checkbox_text', static function (string $text): string {
+    $links = sa_core_checkout_required_policy_links();
+    $parts = [];
+    foreach ($links as $label => $url) {
+        $parts[] = '<a href="' . esc_url($url) . '" target="_blank" rel="noopener noreferrer">' . esc_html($label) . '</a>';
+    }
+    if (!$parts) {
+        return $text;
+    }
+    return sprintf(
+        /* translators: %s: linked policy names */
+        __('I have read and agree to the %s.', 'supreme-autoparts-core'),
+        implode(', ', $parts)
+    );
+});
 
 /**
  * Keep guest checkout + checkout login reminder enabled (idempotent soft enforce).
@@ -113,5 +157,8 @@ add_action('init', static function (): void {
     }
     if (get_option('woocommerce_enable_signup_and_login_from_checkout') !== 'yes') {
         update_option('woocommerce_enable_signup_and_login_from_checkout', 'yes');
+    }
+    if (get_option('woocommerce_checkout_show_terms') !== 'yes') {
+        update_option('woocommerce_checkout_show_terms', 'yes');
     }
 }, 30);
