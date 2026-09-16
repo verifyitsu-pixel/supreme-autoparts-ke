@@ -21,3 +21,7 @@ data/scrape/scrape.log
 data/scrape/*.log
 data/scrape/progress.json.tmp
 __pycache__/
+
+# Large intermediate scrape chunks / sitemap
+data/scrape/chunks/products-*.ndjson
+data/scrape/sitemap-handles.txt

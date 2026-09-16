@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY wp-content/themes/supreme-autoparts /usr/src/wordpress/wp-content/themes/supreme-autoparts
 COPY wp-content/plugins/supreme-autoparts-core /usr/src/wordpress/wp-content/plugins/supreme-autoparts-core
 COPY wp-content/plugins/whop-payments /usr/src/wordpress/wp-content/plugins/whop-payments
+COPY wp-content/plugins/sa-brevo-mail /usr/src/wordpress/wp-content/plugins/sa-brevo-mail
 COPY wp-content/mu-plugins /usr/src/wordpress/wp-content/mu-plugins
 COPY data /usr/src/supreme-data
 COPY scripts /usr/src/supreme-scripts
@@ -29,7 +30,8 @@ RUN chmod +x /usr/local/bin/wordpress-entrypoint.sh \
     && chown -R www-data:www-data \
         /usr/src/wordpress/wp-content/themes/supreme-autoparts \
         /usr/src/wordpress/wp-content/plugins/supreme-autoparts-core \
-        /usr/src/wordpress/wp-content/plugins/whop-payments
+        /usr/src/wordpress/wp-content/plugins/whop-payments \
+        /usr/src/wordpress/wp-content/plugins/sa-brevo-mail
 
 # Apache: allow .htaccess for permalinks
 RUN a2enmod rewrite headers expires

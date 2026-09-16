@@ -108,5 +108,66 @@ function sa_core_seed_categories(): void
         sa_core_ensure_term($name, $slug, $brands_parent);
     }
 
+
+    // Seed top Shopify collections / product-type style categories for catalog parity.
+    sa_core_seed_collections_from_json();
+
     update_option('sa_categories_seeded', time());
 }
+
+/**
+ * Seed product_cat from baked all-collections-top.json (top N by products_count).
+ */
+function sa_core_seed_collections_from_json(int $limit = 80): void
+{
+    if (!taxonomy_exists('product_cat')) {
+        return;
+    }
+    $candidates = [
+        SA_CORE_DIR . 'data/all-collections-top.json',
+        SA_CORE_DIR . 'data/collections.json',
+        '/usr/src/supreme-data/all-collections-top.json',
+    ];
+    $path = '';
+    foreach ($candidates as $c) {
+        if (is_readable($c)) {
+            $path = $c;
+            break;
+        }
+    }
+    if ($path === '') {
+        return;
+    }
+    $raw = file_get_contents($path);
+    if ($raw === false) {
+        return;
+    }
+    $data = json_decode($raw, true);
+    if (!is_array($data)) {
+        return;
+    }
+    $collections = $data['collections'] ?? null;
+    if (!is_array($collections)) {
+        // Legacy collections.json may use regions/types shape — skip.
+        return;
+    }
+    $parent = sa_core_ensure_term('Collections', 'collections', 0, 'Imported Shopify collections');
+    $n = 0;
+    foreach ($collections as $col) {
+        if ($n >= $limit) {
+            break;
+        }
+        if (!is_array($col)) {
+            continue;
+        }
+        $title = trim((string) ($col['title'] ?? ''));
+        $handle = sanitize_title((string) ($col['handle'] ?? $title));
+        if ($title === '' || $handle === '') {
+            continue;
+        }
+        sa_core_ensure_term($title, $handle, $parent > 0 ? $parent : 0);
+        $n++;
+    }
+    update_option('sa_collections_seeded', $n);
+}
+

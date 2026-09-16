@@ -294,8 +294,14 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
         $product->set_slug($handle);
         $product->set_status('publish');
         $product->set_catalog_visibility('visible');
-        $product->set_description((string) ($item['body_html'] ?? ''));
-        $product->set_short_description(wp_trim_words(wp_strip_all_tags((string) ($item['body_html'] ?? '')), 40));
+        // Preserve real body_html; leave empty when Shopify had no description (no AI filler).
+        $body_html = (string) ($item['body_html'] ?? '');
+        $product->set_description($body_html);
+        if (trim(wp_strip_all_tags($body_html)) === '') {
+            $product->set_short_description('');
+        } else {
+            $product->set_short_description(wp_trim_words(wp_strip_all_tags($body_html), 40));
+        }
 
         $usd_to_kes = (float) (getenv('SUPREME_USD_TO_KES') ?: '130');
         $usd = (float) ($variant['price'] ?? 0);
@@ -326,13 +332,35 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
             return;
         }
 
-        // Categories from product_type / vendor
+        // Categories from product_type AND collections (if present) + vendor.
         $term_ids = [];
         $ptype = (string) ($item['product_type'] ?? '');
         if ($ptype !== '') {
             $tid = sa_core_ensure_product_cat($ptype, sanitize_title($ptype));
             if ($tid) {
                 $term_ids[] = $tid;
+            }
+        }
+        // Collections: array of {title,handle} or handles/titles as strings.
+        $collections = $item['collections'] ?? ($item['collection'] ?? null);
+        if (is_array($collections)) {
+            foreach ($collections as $col) {
+                $cname = '';
+                $cslug = '';
+                if (is_array($col)) {
+                    $cname = trim((string) ($col['title'] ?? $col['name'] ?? ''));
+                    $cslug = sanitize_title((string) ($col['handle'] ?? $cname));
+                } elseif (is_string($col) && trim($col) !== '') {
+                    $cname = trim($col);
+                    $cslug = sanitize_title($cname);
+                }
+                if ($cname === '' || $cslug === '') {
+                    continue;
+                }
+                $tid = sa_core_ensure_product_cat($cname, $cslug);
+                if ($tid) {
+                    $term_ids[] = $tid;
+                }
             }
         }
         $vendor = (string) ($item['vendor'] ?? '');
@@ -348,9 +376,16 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
             if ($tag_names) {
                 wp_set_object_terms($id, $tag_names, 'product_tag', false);
             }
+        } elseif (is_array($tags_raw) && $tags_raw) {
+            $tag_names = array_values(array_filter(array_map(static function ($t) {
+                return is_string($t) ? trim($t) : '';
+            }, $tags_raw)));
+            if ($tag_names) {
+                wp_set_object_terms($id, $tag_names, 'product_tag', false);
+            }
         }
         if ($term_ids) {
-            wp_set_object_terms($id, array_map('intval', $term_ids), 'product_cat', false);
+            wp_set_object_terms($id, array_values(array_unique(array_map('intval', $term_ids))), 'product_cat', false);
         }
 
         $image_urls = sa_core_collect_shopify_image_urls($item);

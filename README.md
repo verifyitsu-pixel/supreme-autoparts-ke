@@ -185,3 +185,17 @@ Huge `products.ndjson` is gitignored — mount a Railway volume at `/var/www/htm
 ## License / branding
 
 Storefront code in this repo is for Supreme Autoparts. Visible copy must say **Supreme Autoparts** / **supremeautoparts.co.ke** only — never “Supreme Mods”.
+
+## Brevo email
+
+Plugin `sa-brevo-mail` sends WooCommerce / WordPress mail through the Brevo Transactional API when `BREVO_API_KEY` is set (Railway env). Optional SMTP fallback: `BREVO_SMTP_USER` / `BREVO_SMTP_PASS`.
+
+Admin: **WooCommerce → Supreme Brevo** (connection status, list ID, test email).
+
+Marketing opt-in checkbox on register/checkout syncs contacts to `BREVO_LIST_ID`.
+
+Webhook stub: `POST /wp-json/sa-brevo/v1/webhook` (optional `BREVO_WEBHOOK_SECRET`).
+
+## Admin Ultra dashboard
+
+**Supreme Autoparts** menu in wp-admin: KPIs, quick links (Orders, Products, Customers, Import, Brevo, Whop, Policies), and invoice links on recent orders. Order edit screen shows copyable invoice/pay URLs (`?sa_invoice=ORDER_ID`).

@@ -47,6 +47,10 @@ sync_custom_content() {
     rm -rf /var/www/html/wp-content/plugins/whop-payments
     cp -a /usr/src/wordpress/wp-content/plugins/whop-payments /var/www/html/wp-content/plugins/
   fi
+  if [[ -d /usr/src/wordpress/wp-content/plugins/sa-brevo-mail ]]; then
+    rm -rf /var/www/html/wp-content/plugins/sa-brevo-mail
+    cp -a /usr/src/wordpress/wp-content/plugins/sa-brevo-mail /var/www/html/wp-content/plugins/
+  fi
   if [[ -f /usr/src/wordpress/wp-content/mu-plugins/supreme-loader.php ]]; then
     cp -f /usr/src/wordpress/wp-content/mu-plugins/supreme-loader.php /var/www/html/wp-content/mu-plugins/ || true
   fi
@@ -62,7 +66,8 @@ sync_custom_content() {
   chown -R www-data:www-data \
     /var/www/html/wp-content/themes/supreme-autoparts \
     /var/www/html/wp-content/plugins/supreme-autoparts-core \
-    /var/www/html/wp-content/plugins/whop-payments 2>/dev/null || true
+    /var/www/html/wp-content/plugins/whop-payments \
+    /var/www/html/wp-content/plugins/sa-brevo-mail 2>/dev/null || true
 }
 
 wait_for_db() {
@@ -124,6 +129,7 @@ bootstrap_wordpress() {
 
   wp_as plugin activate supreme-autoparts-core || true
   wp_as plugin activate whop-payments || true
+  wp_as plugin activate sa-brevo-mail || true
   wp_as theme activate supreme-autoparts || true
 
   wp_as option update woocommerce_currency "$WOO_CURRENCY" || true
@@ -152,16 +158,23 @@ bootstrap_wordpress() {
   wp_as option update woocommerce_enable_signup_and_login_from_checkout yes || true
   wp_as option update users_can_register 1 || true
   wp_as option update woocommerce_enable_checkout_login_reminder yes || true
-  # SMTP note: From address is set above; deliverability needs SPF/DKIM + SMTP plugin.
-  echo "[supreme] Email From: Supreme Autoparts <${WORDPRESS_ADMIN_EMAIL}> — configure SMTP for production deliverability"
+  # Email: Brevo plugin reads BREVO_API_KEY / BREVO_SMTP_* from env.
+  echo "[supreme] Email From: Supreme Autoparts <${WORDPRESS_ADMIN_EMAIL}> — set BREVO_API_KEY for transactional delivery"
 
   # Optional catalog import from baked scrape chunk (Shopify CDN photos only).
-  # Set SUPREME_IMPORT_ON_BOOT=1 on Railway to load the first real batch after deploy.
-  BOOT_IMPORT_DONE="$(wp_as option get sa_boot_import_batch50 2>/dev/null || true)"
+  # Prefer batch-with-images-400 when present, else batch-with-images-50.
+  # Set SUPREME_IMPORT_ON_BOOT=1 on Railway (or leave default path auto-import once).
+  BOOT_IMPORT_DONE="$(wp_as option get sa_boot_import_done 2>/dev/null || true)"
+  if [[ -z "$BOOT_IMPORT_DONE" ]]; then
+    BOOT_IMPORT_DONE="$(wp_as option get sa_boot_import_batch50 2>/dev/null || true)"
+  fi
   if [[ "${SUPREME_IMPORT_ON_BOOT:-0}" == "1" || -z "${BOOT_IMPORT_DONE}" ]]; then
     IMPORT_FILE="${SUPREME_IMPORT_FILE:-}"
     if [[ -z "$IMPORT_FILE" ]]; then
       for c in \
+        /var/www/html/wp-content/plugins/supreme-autoparts-core/data/scrape/chunks/batch-with-images-400.ndjson \
+        /usr/src/supreme-data/scrape/chunks/batch-with-images-400.ndjson \
+        /var/www/html/data/scrape/chunks/batch-with-images-400.ndjson \
         /var/www/html/wp-content/plugins/supreme-autoparts-core/data/scrape/chunks/batch-with-images-50.ndjson \
         /usr/src/supreme-data/scrape/chunks/batch-with-images-50.ndjson \
         /var/www/html/data/scrape/chunks/batch-with-images-50.ndjson
@@ -169,7 +182,16 @@ bootstrap_wordpress() {
         if [[ -r "$c" ]]; then IMPORT_FILE="$c"; break; fi
       done
     fi
-    IMPORT_LIMIT="${SUPREME_IMPORT_LIMIT:-50}"
+    # Default limit: 400 when using 400-batch, else 50.
+    if [[ -z "${SUPREME_IMPORT_LIMIT:-}" ]]; then
+      if [[ "$IMPORT_FILE" == *batch-with-images-400* ]]; then
+        IMPORT_LIMIT=400
+      else
+        IMPORT_LIMIT=50
+      fi
+    else
+      IMPORT_LIMIT="${SUPREME_IMPORT_LIMIT}"
+    fi
     SKIP_IMG_FLAG=()
     # Default: store CDN meta + sideload. Set SUPREME_IMPORT_SKIP_IMAGES=1 for CDN-meta-only (faster boot).
     if [[ "${SUPREME_IMPORT_SKIP_IMAGES:-1}" == "1" ]]; then
@@ -183,11 +205,12 @@ bootstrap_wordpress() {
         wp_as supreme import-ndjson --file="$IMPORT_FILE" --limit="$IMPORT_LIMIT" --require-images "${SKIP_IMG_FLAG[@]}" \
           >> /var/www/html/wp-content/uploads/sa-boot-import.log 2>&1 \
           || echo "[supreme] Boot import finished with errors (see sa-boot-import.log)."
+        wp_as option update sa_boot_import_done 1 >/dev/null 2>&1 || true
         wp_as option update sa_boot_import_batch50 1 >/dev/null 2>&1 || true
         echo "[supreme] Boot import finished at $(date -Iseconds)" >> /var/www/html/wp-content/uploads/sa-boot-import.log
       ) &
     else
-      echo "[supreme] SUPREME_IMPORT_ON_BOOT=1 but batch NDJSON not found." >&2
+      echo "[supreme] Boot import requested but batch NDJSON not found." >&2
     fi
   fi
 

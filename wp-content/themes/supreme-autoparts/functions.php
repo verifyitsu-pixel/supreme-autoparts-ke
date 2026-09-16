@@ -20,3 +20,7 @@ require_once SA_THEME_DIR . '/inc/assets.php';
 require_once SA_THEME_DIR . '/inc/megamenu.php';
 require_once SA_THEME_DIR . '/inc/woocommerce.php';
 require_once SA_THEME_DIR . '/inc/helpers.php';
+
+add_action('after_switch_theme', static function (): void {
+    flush_rewrite_rules();
+});

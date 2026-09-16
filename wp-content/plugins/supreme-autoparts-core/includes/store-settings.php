@@ -60,6 +60,11 @@ function sa_core_apply_store_settings(): void
     update_option('users_can_register', 1);
     update_option('woocommerce_enable_checkout_login_reminder', 'yes');
     update_option('woocommerce_myaccount_lost_password_endpoint', 'lost-password');
+    update_option('woocommerce_myaccount_orders_endpoint', 'orders');
+    update_option('woocommerce_myaccount_downloads_endpoint', 'downloads');
+    update_option('woocommerce_myaccount_edit_address_endpoint', 'edit-address');
+    update_option('woocommerce_myaccount_payment_methods_endpoint', 'payment-methods');
+    update_option('woocommerce_myaccount_edit_account_endpoint', 'edit-account');
 
     // Checkout must accept terms
     update_option('woocommerce_checkout_privacy_policy_text',
@@ -86,7 +91,7 @@ function sa_core_apply_store_settings(): void
     // Mail from filters (wp_mail)
     update_option('sa_store_email', $email);
     update_option('sa_store_settings_applied', time());
-    update_option('sa_smtp_note', 'Configure SPF/DKIM for supremeautoparts.co.ke and an SMTP plugin (e.g. WP Mail SMTP). Until then WordPress uses PHP mail with From=calvin@supremeautoparts.co.ke.');
+    update_option('sa_smtp_note', 'Set BREVO_API_KEY (or BREVO_SMTP_*) on Railway. From=calvin@supremeautoparts.co.ke via sa-brevo-mail.');
 }
 
 add_filter('wp_mail_from', static function ($from) {
@@ -100,7 +105,7 @@ add_filter('wp_mail_from_name', static function ($name) {
 
 // Apply lightly on admin/init once per version bump.
 add_action('init', static function (): void {
-    if (get_option('sa_store_settings_ver') === '3') {
+    if (get_option('sa_store_settings_ver') === '4') {
         return;
     }
     if (!function_exists('WC') && !class_exists('WooCommerce')) {
@@ -108,5 +113,5 @@ add_action('init', static function (): void {
         update_option('admin_email', sa_core_store_email());
     }
     sa_core_apply_store_settings();
-    update_option('sa_store_settings_ver', '3');
+    update_option('sa_store_settings_ver', '4');
 }, 20);
