@@ -8,8 +8,9 @@ if (!defined('ABSPATH')) {
 /**
  * Import products from a Shopify products.json-style file OR NDJSON stream.
  *
- * Images: only real http(s) Shopify/CDN URLs from the scrape are used.
- * Never invents, generates, or substitutes placeholder/stock imagery.
+ * Images: prefer real Shopify CDN URLs from the scrape; enforce cross-product
+ * uniqueness (no shared photo URL/attachment). If none unique, fetch a real
+ * matching product photo from the web (manufacturer/retail). Never AI/placeholder.
  *
  * @param string $path File path (.json with {products:[...]} or .ndjson)
  * @param array{limit?:int,offset?:int,skip_images?:bool,require_images?:bool,category?:string,dry_run?:bool,mapping?:string,mapping_file?:string} $opts
@@ -23,6 +24,7 @@ function sa_core_import_shopify_products_file(string $path, array $opts = []): a
         'skipped'  => 0,
         'errors'   => 0,
         'filtered' => 0,
+        'web_fallback' => 0,
         'messages' => [],
     ];
 
@@ -100,12 +102,7 @@ function sa_core_import_shopify_products_file(string $path, array $opts = []): a
         if ($limit > 0 && $processed >= $limit) {
             break;
         }
-        if ($require_images && !sa_core_shopify_item_has_images($item)) {
-            $result['skipped']++;
-            $processed++;
-            continue;
-        }
-        sa_core_import_one_shopify_product($item, $result, $skip_images, $dry_run);
+        sa_core_import_one_shopify_product($item, $result, $skip_images, $dry_run, $require_images);
         $processed++;
     }
 
@@ -174,12 +171,7 @@ function sa_core_import_shopify_ndjson(
         if ($limit > 0 && $processed >= $limit) {
             break;
         }
-        if ($require_images && !sa_core_shopify_item_has_images($item)) {
-            $result['skipped']++;
-            $processed++;
-            continue;
-        }
-        sa_core_import_one_shopify_product($item, $result, $skip_images, $dry_run);
+        sa_core_import_one_shopify_product($item, $result, $skip_images, $dry_run, $require_images);
         $processed++;
     }
     fclose($fh);
@@ -288,7 +280,7 @@ function sa_core_collect_shopify_image_urls(array $item): array
  *
  * @param array{imported:int,updated:int,skipped:int,errors:int,messages:array<int,string>} $result
  */
-function sa_core_import_one_shopify_product(array $item, array &$result, bool $skip_images = false, bool $dry_run = false): void
+function sa_core_import_one_shopify_product(array $item, array &$result, bool $skip_images = false, bool $dry_run = false, bool $require_images = false): void
 {
     try {
         $handle = sanitize_title((string) ($item['handle'] ?? ''));
@@ -478,11 +470,31 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
             wp_set_object_terms($id, array_values(array_unique(array_map('intval', $term_ids))), 'product_cat', false);
         }
 
-        $image_urls = sa_core_collect_shopify_image_urls($item);
-        // Always persist real CDN URLs for display/backfill — never invent images.
+        // Resolve unique images: Shopify CDN first, then web fallback. Never share URLs.
+        $image_urls = sa_core_resolve_unique_product_images($item, (int) $id);
+        $used_web = !empty($GLOBALS['sa_core_last_image_used_web_fallback']);
+        $reject_no_image = false;
         if ($image_urls) {
             update_post_meta($id, '_sa_shopify_image_urls', wp_json_encode($image_urls));
             update_post_meta($id, '_sa_shopify_image_src', $image_urls[0]);
+            if ($used_web) {
+                update_post_meta($id, '_sa_web_fallback_image_url', $image_urls[0]);
+                update_post_meta($id, '_sa_image_source', 'web_fallback');
+                $result['web_fallback'] = (int) ($result['web_fallback'] ?? 0) + 1;
+            } else {
+                update_post_meta($id, '_sa_image_source', 'shopify_cdn');
+            }
+            sa_core_claim_image_urls_for_product((int) $id, $image_urls);
+        } else {
+            delete_post_meta($id, '_sa_shopify_image_urls');
+            delete_post_meta($id, '_sa_shopify_image_src');
+            if ($require_images) {
+                $reject_no_image = true;
+                wp_update_post(['ID' => $id, 'post_status' => 'draft']);
+                if (count($result['messages']) < 50) {
+                    $result['messages'][] = 'No unique image for ' . $handle . ' — left draft';
+                }
+            }
         }
 
         if (!$skip_images && $image_urls) {
@@ -502,7 +514,9 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
             update_post_meta($id, '_sa_shopify_updated_at', (string) $item['updated_at']);
         }
 
-        if ($is_update) {
+        if (!empty($reject_no_image)) {
+            $result['skipped']++;
+        } elseif ($is_update) {
             $result['updated']++;
         } else {
             $result['imported']++;
@@ -847,10 +861,19 @@ function sa_core_sideload_product_gallery(int $product_id, array $urls): void
         if (!sa_core_is_valid_remote_image_url($url)) {
             continue;
         }
+        // Never attach a URL already owned by a different product.
+        if (sa_core_is_image_url_claimed_by_other($url, $product_id)) {
+            continue;
+        }
         // Avoid re-downloading the same CDN URL onto this product.
         $existing = sa_core_find_attachment_by_source_url($product_id, $url);
         if ($existing) {
             $attachment_ids[] = $existing;
+            continue;
+        }
+        // Also refuse to reuse another product's attachment GUID/source.
+        $stolen = sa_core_find_attachment_claimed_globally($url, $product_id);
+        if ($stolen) {
             continue;
         }
         $att_id = media_sideload_image($url, $product_id, null, 'id');
@@ -914,6 +937,432 @@ function sa_core_find_attachment_by_source_url(int $product_id, string $url): in
     }
     return 0;
 }
+
+/**
+ * Canonical key for image URL uniqueness (strip query + Shopify size suffix).
+ */
+function sa_core_image_url_identity_key(string $url): string
+{
+    $url = sa_core_normalize_shopify_image_url(trim($url));
+    $key = strtok($url, '?') ?: $url;
+    return strtolower($key);
+}
+
+/**
+ * @return array<string,int> url_key => product_id
+ */
+function &sa_core_image_claim_registry(): array
+{
+    if (!isset($GLOBALS['sa_core_image_claim_registry']) || !is_array($GLOBALS['sa_core_image_claim_registry'])) {
+        $GLOBALS['sa_core_image_claim_registry'] = [];
+        $GLOBALS['sa_core_image_claim_registry_bootstrapped'] = false;
+    }
+    return $GLOBALS['sa_core_image_claim_registry'];
+}
+
+/**
+ * Load existing claims from product meta + attachment source URLs (once per request).
+ */
+function sa_core_bootstrap_image_claim_registry(): void
+{
+    if (!empty($GLOBALS['sa_core_image_claim_registry_bootstrapped'])) {
+        return;
+    }
+    $reg = &sa_core_image_claim_registry();
+    $ids = get_posts([
+        'post_type'      => 'product',
+        'post_status'    => 'any',
+        'posts_per_page' => -1,
+        'fields'         => 'ids',
+        'no_found_rows'  => true,
+    ]);
+    foreach ($ids as $pid) {
+        $pid = (int) $pid;
+        $single = (string) get_post_meta($pid, '_sa_shopify_image_src', true);
+        if ($single !== '') {
+            $reg[sa_core_image_url_identity_key($single)] = $pid;
+        }
+        $raw = get_post_meta($pid, '_sa_shopify_image_urls', true);
+        if (is_string($raw) && $raw !== '') {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                foreach ($decoded as $u) {
+                    if (is_string($u) && $u !== '') {
+                        $reg[sa_core_image_url_identity_key($u)] = $pid;
+                    }
+                }
+            }
+        }
+        $web = (string) get_post_meta($pid, '_sa_web_fallback_image_url', true);
+        if ($web !== '') {
+            $reg[sa_core_image_url_identity_key($web)] = $pid;
+        }
+    }
+    // Attachment-level source URLs / GUIDs.
+    global $wpdb;
+    if (isset($wpdb) && $wpdb instanceof wpdb) {
+        $rows = $wpdb->get_results(
+            "SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = '_sa_source_image_url' AND meta_value <> '' LIMIT 50000",
+            ARRAY_A
+        );
+        if (is_array($rows)) {
+            foreach ($rows as $row) {
+                $att_id = (int) ($row['post_id'] ?? 0);
+                $url = (string) ($row['meta_value'] ?? '');
+                if ($att_id <= 0 || $url === '') {
+                    continue;
+                }
+                $parent = (int) wp_get_post_parent_id($att_id);
+                if ($parent <= 0) {
+                    continue;
+                }
+                $reg[sa_core_image_url_identity_key($url)] = $parent;
+            }
+        }
+    }
+    $GLOBALS['sa_core_image_claim_registry_bootstrapped'] = true;
+}
+
+function sa_core_is_image_url_claimed_by_other(string $url, int $product_id): bool
+{
+    sa_core_bootstrap_image_claim_registry();
+    $reg = &sa_core_image_claim_registry();
+    $key = sa_core_image_url_identity_key($url);
+    if ($key === '') {
+        return true;
+    }
+    if (!isset($reg[$key])) {
+        return false;
+    }
+    return (int) $reg[$key] !== (int) $product_id;
+}
+
+/**
+ * @param list<string> $urls
+ */
+function sa_core_claim_image_urls_for_product(int $product_id, array $urls): void
+{
+    sa_core_bootstrap_image_claim_registry();
+    $reg = &sa_core_image_claim_registry();
+    foreach ($urls as $u) {
+        if (!is_string($u) || $u === '') {
+            continue;
+        }
+        $reg[sa_core_image_url_identity_key($u)] = $product_id;
+    }
+}
+
+/**
+ * @param list<string> $urls
+ * @return list<string>
+ */
+function sa_core_filter_urls_unique_for_product(array $urls, int $product_id): array
+{
+    $out = [];
+    $seen = [];
+    foreach ($urls as $u) {
+        if (!is_string($u) || !sa_core_is_valid_remote_image_url($u)) {
+            continue;
+        }
+        $u = sa_core_normalize_shopify_image_url($u);
+        $key = sa_core_image_url_identity_key($u);
+        if ($key === '' || isset($seen[$key])) {
+            continue;
+        }
+        if (sa_core_is_image_url_claimed_by_other($u, $product_id)) {
+            continue;
+        }
+        $seen[$key] = true;
+        $out[] = $u;
+    }
+    return $out;
+}
+
+function sa_core_find_attachment_claimed_globally(string $url, int $exclude_product_id): int
+{
+    $key = sa_core_image_url_identity_key($url);
+    if ($key === '') {
+        return 0;
+    }
+    global $wpdb;
+    if (!isset($wpdb) || !($wpdb instanceof wpdb)) {
+        return 0;
+    }
+    // Match source meta without query string variance via LIKE on path basename when possible.
+    $rows = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = '_sa_source_image_url' AND meta_value LIKE %s LIMIT 20",
+            '%' . $wpdb->esc_like(basename(strtok($url, '?') ?: $url)) . '%'
+        ),
+        ARRAY_A
+    );
+    if (!is_array($rows)) {
+        return 0;
+    }
+    foreach ($rows as $row) {
+        $att_id = (int) ($row['post_id'] ?? 0);
+        $stored = (string) ($row['meta_value'] ?? '');
+        if ($att_id <= 0 || sa_core_image_url_identity_key($stored) !== $key) {
+            continue;
+        }
+        $parent = (int) wp_get_post_parent_id($att_id);
+        if ($parent > 0 && $parent !== $exclude_product_id) {
+            return $att_id;
+        }
+    }
+    return 0;
+}
+
+/**
+ * Shopify CDN first (unique), else web fallback (unique). Sets
+ * $GLOBALS['sa_core_last_image_used_web_fallback'].
+ *
+ * @param array<string,mixed> $item
+ * @return list<string>
+ */
+function sa_core_resolve_unique_product_images(array $item, int $product_id): array
+{
+    $GLOBALS['sa_core_last_image_used_web_fallback'] = false;
+    $shopify = sa_core_filter_urls_unique_for_product(sa_core_collect_shopify_image_urls($item), $product_id);
+    if ($shopify !== []) {
+        return $shopify;
+    }
+    $fb = sa_core_fetch_web_fallback_image_url($item, $product_id);
+    if ($fb !== '' && sa_core_is_valid_remote_image_url($fb) && !sa_core_is_image_url_claimed_by_other($fb, $product_id)) {
+        $GLOBALS['sa_core_last_image_used_web_fallback'] = true;
+        return [$fb];
+    }
+    return [];
+}
+
+/**
+ * Fetch a real matching product image from the public web when Shopify CDN is missing
+ * or entirely claimed. Prefers manufacturer/retail CDNs; rejects placeholders.
+ *
+ * @param array<string,mixed> $item
+ */
+function sa_core_fetch_web_fallback_image_url(array $item, int $product_id): string
+{
+    $vendor = trim((string) ($item['vendor'] ?? ''));
+    $title = trim(wp_strip_all_tags((string) ($item['title'] ?? '')));
+    $variant = $item['variants'][0] ?? [];
+    $sku = trim((string) ($variant['sku'] ?? ''));
+    $parts = array_filter([$vendor, $sku !== '' ? $sku : null, $title]);
+    if ($parts === []) {
+        return '';
+    }
+    $query = implode(' ', $parts) . ' product photo';
+    $candidates = sa_core_web_search_image_candidates($query, 8);
+    foreach ($candidates as $url) {
+        if (!sa_core_is_valid_remote_image_url($url)) {
+            continue;
+        }
+        if (sa_core_is_image_url_claimed_by_other($url, $product_id)) {
+            continue;
+        }
+        // Prefer image-looking URLs from retail/CDN hosts.
+        if (!preg_match('#\.(jpe?g|png|webp|gif)(\?|$)#i', $url) && !preg_match('#/(cdn|images|img|media|product)#i', $url)) {
+            continue;
+        }
+        return sa_core_normalize_shopify_image_url($url);
+    }
+    return '';
+}
+
+/**
+ * @return list<string>
+ */
+function sa_core_web_search_image_candidates(string $query, int $limit = 8): array
+{
+    $limit = max(1, min(15, $limit));
+    $urls = [];
+    // 1) DuckDuckGo HTML results → follow top links for og:image
+    $ddg = 'https://html.duckduckgo.com/html/?q=' . rawurlencode($query);
+    $html = sa_core_http_get_body($ddg, 12);
+    $page_links = [];
+    if ($html !== '') {
+        if (preg_match_all('#class="result__a"[^>]*href="([^"]+)"#i', $html, $m)) {
+            foreach ($m[1] as $href) {
+                $href = html_entity_decode($href, ENT_QUOTES);
+                // DDG redirect URLs: //duckduckgo.com/l/?uddg=<encoded>
+                if (preg_match('#uddg=([^&]+)#', $href, $mm)) {
+                    $href = rawurldecode($mm[1]);
+                }
+                if (preg_match('#^https?://#i', $href)) {
+                    $page_links[] = $href;
+                }
+                if (count($page_links) >= 5) {
+                    break;
+                }
+            }
+        }
+    }
+    foreach ($page_links as $page) {
+        // Skip social noise
+        if (preg_match('#(facebook\.com|twitter\.com|x\.com|youtube\.com|instagram\.com|pinterest\.com)#i', $page)) {
+            continue;
+        }
+        $body = sa_core_http_get_body($page, 10);
+        if ($body === '') {
+            continue;
+        }
+        $og = sa_core_extract_og_image($body);
+        if ($og !== '') {
+            $urls[] = $og;
+        }
+        if (count($urls) >= $limit) {
+            break;
+        }
+    }
+    // 2) DuckDuckGo image-like direct links in HTML ( occasional )
+    if ($html !== '' && count($urls) < $limit) {
+        if (preg_match_all('#https?://[^"\s<>]+\.(?:jpe?g|png|webp)#i', $html, $im)) {
+            foreach ($im[0] as $u) {
+                if (preg_match('#(placehold|placeholder|picsum|dummyimage|lorempixel)#i', $u)) {
+                    continue;
+                }
+                $urls[] = $u;
+                if (count($urls) >= $limit) {
+                    break;
+                }
+            }
+        }
+    }
+    return array_values(array_unique($urls));
+}
+
+function sa_core_extract_og_image(string $html): string
+{
+    if (preg_match('#<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']#i', $html, $m)) {
+        return trim(html_entity_decode($m[1], ENT_QUOTES));
+    }
+    if (preg_match('#<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']#i', $html, $m)) {
+        return trim(html_entity_decode($m[1], ENT_QUOTES));
+    }
+    if (preg_match('#<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\']([^"\']+)["\']#i', $html, $m)) {
+        return trim(html_entity_decode($m[1], ENT_QUOTES));
+    }
+    return '';
+}
+
+function sa_core_http_get_body(string $url, int $timeout = 12): string
+{
+    $args = [
+        'timeout'     => $timeout,
+        'redirection' => 3,
+        'user-agent'  => 'SupremeAutopartsBot/1.0 (+https://www.supremeautoparts.co.ke)',
+        'headers'     => ['Accept' => 'text/html,application/xhtml+xml'],
+    ];
+    $res = wp_remote_get($url, $args);
+    if (is_wp_error($res)) {
+        return '';
+    }
+    $code = (int) wp_remote_retrieve_response_code($res);
+    if ($code < 200 || $code >= 400) {
+        return '';
+    }
+    $body = (string) wp_remote_retrieve_body($res);
+    return $body;
+}
+
+/**
+ * Audit + fix published products: sideload unique CDN/web images; draft if none.
+ *
+ * @param array{limit?:int,dry_run?:bool,allow_web?:bool} $opts
+ * @return array{examined:int,fixed:int,drafted:int,shared_fixed:int,web_fallback:int,ok:int,messages:list<string>}
+ */
+function sa_core_audit_fix_product_images(array $opts = []): array
+{
+    $limit = isset($opts['limit']) ? max(1, (int) $opts['limit']) : 500;
+    $dry = !empty($opts['dry_run']);
+    $allow_web = !array_key_exists('allow_web', $opts) || !empty($opts['allow_web']);
+    $out = [
+        'examined' => 0,
+        'fixed' => 0,
+        'drafted' => 0,
+        'shared_fixed' => 0,
+        'web_fallback' => 0,
+        'ok' => 0,
+        'messages' => [],
+    ];
+    sa_core_bootstrap_image_claim_registry();
+    $ids = get_posts([
+        'post_type' => 'product',
+        'post_status' => 'publish',
+        'posts_per_page' => $limit,
+        'fields' => 'ids',
+        'orderby' => 'ID',
+        'order' => 'DESC',
+    ]);
+    foreach ($ids as $id) {
+        $id = (int) $id;
+        $out['examined']++;
+        $thumb = (int) get_post_thumbnail_id($id);
+        $urls = [];
+        if (function_exists('sa_core_get_stored_shopify_image_urls')) {
+            $urls = sa_core_get_stored_shopify_image_urls($id);
+        }
+        $urls = sa_core_filter_urls_unique_for_product($urls, $id);
+        $needs = !$thumb || sa_core_product_needs_image_backfill($id);
+        // Detect shared featured attachment across products
+        if ($thumb) {
+            $src_meta = (string) get_post_meta($thumb, '_sa_source_image_url', true);
+            $guid = (string) get_the_guid($thumb);
+            foreach ([$src_meta, $guid] as $u) {
+                if ($u && sa_core_is_image_url_claimed_by_other($u, $id)) {
+                    $needs = true;
+                    $out['shared_fixed']++;
+                    break;
+                }
+            }
+        }
+        if (!$needs && $thumb) {
+            $out['ok']++;
+            continue;
+        }
+        if ($urls === [] && $allow_web) {
+            $title = get_the_title($id);
+            $sku = get_post_meta($id, '_sku', true);
+            $item = [
+                'title' => $title,
+                'vendor' => '',
+                'variants' => [['sku' => (string) $sku]],
+            ];
+            $fb = sa_core_fetch_web_fallback_image_url($item, $id);
+            if ($fb !== '') {
+                $urls = [$fb];
+                $out['web_fallback']++;
+            }
+        }
+        if ($urls === []) {
+            if (!$dry) {
+                wp_update_post(['ID' => $id, 'post_status' => 'draft']);
+            }
+            $out['drafted']++;
+            if (count($out['messages']) < 40) {
+                $out['messages'][] = "draft #$id (no unique image)";
+            }
+            continue;
+        }
+        if (!$dry) {
+            update_post_meta($id, '_sa_shopify_image_urls', wp_json_encode($urls));
+            update_post_meta($id, '_sa_shopify_image_src', $urls[0]);
+            sa_core_claim_image_urls_for_product($id, $urls);
+            sa_core_sideload_product_gallery($id, array_slice($urls, 0, 3));
+        }
+        if ($dry || get_post_thumbnail_id($id)) {
+            $out['fixed']++;
+        } else {
+            if (!$dry) {
+                wp_update_post(['ID' => $id, 'post_status' => 'draft']);
+            }
+            $out['drafted']++;
+        }
+    }
+    return $out;
+}
+
+
 
 
 

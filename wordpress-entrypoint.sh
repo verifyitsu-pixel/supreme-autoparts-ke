@@ -164,7 +164,7 @@ echo "whop_enabled\n";
   REPAIR_DONE="$(wp_as option get sa_price_usd_repair_v1 2>/dev/null || true)"
   if [[ "${REPAIR_DONE}" != "1" ]]; then
     echo "[supreme] Repairing inflated USD catalog prices (legacy ×KES import)..."
-    if wp_as supreme repair-prices 2>/dev/null; then
+    if wp_as supreme repair_prices 2>/dev/null; then
       echo "[supreme] Price repair finished (flag sa_price_usd_repair_v1)."
     else
       echo "[supreme] Price repair CLI unavailable — PHP init hook will retry."
@@ -180,8 +180,8 @@ echo "whop_enabled\n";
   wp_as option update woocommerce_enable_guest_checkout "yes" || true
 
   if [[ "${SUPREME_SEED_ON_BOOT:-1}" == "1" ]]; then
-    wp_as supreme seed-categories 2>/dev/null || true
-    wp_as supreme seed-pages 2>/dev/null || true
+    wp_as supreme seed_categories 2>/dev/null || true
+    wp_as supreme seed_pages 2>/dev/null || true
   fi
 
   # Force customer-service email + www URLs (apex may be unbound on Railway).
@@ -200,7 +200,7 @@ echo "whop_enabled\n";
   echo "[supreme] Email From: Supreme Autoparts <${WORDPRESS_ADMIN_EMAIL}> — set BREVO_API_KEY for transactional delivery"
 
   # Ensure product_cat terms exist before rewrite flush / import.
-  wp_as supreme seed-categories 2>/dev/null || true
+  wp_as supreme seed_categories 2>/dev/null || true
 
   # Catalog recovery: wipe stuck boot-import flags when products are gone or forced.
   # SUPREME_FORCE_IMPORT=1 → clear sa_boot_import_* and re-import even if catalog non-empty.
@@ -270,7 +270,7 @@ echo "whop_enabled\n";
     fi
     SKIP_IMG_FLAG=()
     # Default: store CDN meta + sideload. Set SUPREME_IMPORT_SKIP_IMAGES=1 for CDN-meta-only (faster boot).
-    if [[ "${SUPREME_IMPORT_SKIP_IMAGES:-1}" == "1" ]]; then
+    if [[ "${SUPREME_IMPORT_SKIP_IMAGES:-0}" == "1" ]]; then
       SKIP_IMG_FLAG=(--skip-images)
     fi
     CATEGORY_FLAG=()
@@ -290,8 +290,8 @@ echo "whop_enabled\n";
       (
         mkdir -p /var/www/html/wp-content/uploads
         wp_as option update sa_boot_import_running_at "$(date +%s)" >/dev/null 2>&1 || true
-        wp_as supreme seed-categories >> /var/www/html/wp-content/uploads/sa-boot-import.log 2>&1 || true
-        wp_as supreme import-ndjson --file="$IMPORT_FILE" --limit="$IMPORT_LIMIT" --require-images "${CATEGORY_FLAG[@]}" "${MAPPING_FLAG[@]}" "${SKIP_IMG_FLAG[@]}" \
+        wp_as supreme seed_categories >> /var/www/html/wp-content/uploads/sa-boot-import.log 2>&1 || true
+        wp_as supreme import_ndjson --file="$IMPORT_FILE" --limit="$IMPORT_LIMIT" --require-images "${CATEGORY_FLAG[@]}" "${MAPPING_FLAG[@]}" "${SKIP_IMG_FLAG[@]}" \
           >> /var/www/html/wp-content/uploads/sa-boot-import.log 2>&1 \
           || echo "[supreme] Boot import finished with errors (see sa-boot-import.log)."
         wp_as rewrite flush --hard >> /var/www/html/wp-content/uploads/sa-boot-import.log 2>&1 || true

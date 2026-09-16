@@ -130,13 +130,14 @@ class SA_Core_CLI_Command
             'mapping'        => $mapping,
         ]);
         WP_CLI::success(sprintf(
-            'NDJSON import%s: imported=%d updated=%d skipped=%d filtered=%d errors=%d category=%s file=%s',
+            'NDJSON import%s: imported=%d updated=%d skipped=%d filtered=%d errors=%d web_fallback=%d category=%s file=%s',
             !empty($result['dry_run']) ? ' (dry-run)' : '',
             $result['imported'],
             $result['updated'] ?? 0,
             $result['skipped'],
             $result['filtered'] ?? 0,
             $result['errors'],
+            (int) ($result['web_fallback'] ?? 0),
             ($result['category'] ?? '') !== '' ? $result['category'] : 'all',
             $file
         ));
@@ -201,6 +202,50 @@ class SA_Core_CLI_Command
         }
         foreach ($result['messages'] as $m) {
             WP_CLI::warning($m);
+        }
+    }
+
+    /**
+     * Audit published products for missing/shared images; sideload unique CDN/web photos or draft.
+     *
+     * ## OPTIONS
+     * [--limit=<n>]
+     * : Max products (default 500)
+     * [--dry-run]
+     * : Report only
+     * [--no-web]
+     * : Do not use web fallback
+     *
+     * ## EXAMPLES
+     *     wp supreme fix-images
+     *     wp supreme fix-images --dry-run --limit=100
+     *
+     * @param array $args
+     * @param array $assoc_args
+     */
+    public function fix_images(array $args, array $assoc_args): void
+    {
+        require_once SA_CORE_DIR . 'includes/import-shopify.php';
+        if (!function_exists('sa_core_get_stored_shopify_image_urls')) {
+            require_once SA_CORE_DIR . 'includes/product-images.php';
+        }
+        $result = sa_core_audit_fix_product_images([
+            'limit'     => isset($assoc_args['limit']) ? (int) $assoc_args['limit'] : 500,
+            'dry_run'   => isset($assoc_args['dry-run']),
+            'allow_web' => !isset($assoc_args['no-web']),
+        ]);
+        WP_CLI::success(sprintf(
+            'Image audit%s: examined=%d ok=%d fixed=%d drafted=%d shared_flagged=%d web_fallback=%d',
+            !empty($assoc_args['dry-run']) ? ' (dry-run)' : '',
+            $result['examined'],
+            $result['ok'],
+            $result['fixed'],
+            $result['drafted'],
+            $result['shared_fixed'],
+            $result['web_fallback']
+        ));
+        foreach (array_slice($result['messages'], 0, 30) as $m) {
+            WP_CLI::log($m);
         }
     }
 
