@@ -202,6 +202,7 @@ function sa_core_shopify_item_has_images(array $item): bool
 /**
  * Reject non-http(s) URLs, data URIs, blanks, and obvious fake/placeholder schemes.
  */
+if (!function_exists('sa_core_is_valid_remote_image_url')) {
 function sa_core_is_valid_remote_image_url(string $url): bool
 {
     $url = trim($url);
@@ -220,6 +221,8 @@ function sa_core_is_valid_remote_image_url(string $url): bool
     }
     return true;
 }
+}
+
 
 /**
  * Prefer full-size Shopify CDN URLs by stripping size suffixes before the extension.
