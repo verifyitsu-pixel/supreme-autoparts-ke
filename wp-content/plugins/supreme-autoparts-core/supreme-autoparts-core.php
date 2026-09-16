@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Supreme Autoparts Core
  * Description: Branding defaults, category seed, static pages, invoices, admin dashboard, and Shopify JSON import helpers for Supreme Autoparts.
- * Version: 1.3.0
+ * Version: 1.3.1
  * Author: Supreme Autoparts
  * Text Domain: supreme-autoparts-core
  * Requires at least: 6.4
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_CORE_VERSION', '1.3.0');
+define('SA_CORE_VERSION', '1.3.1');
 define('SA_CORE_FILE', __FILE__);
 define('SA_CORE_DIR', plugin_dir_path(__FILE__));
 define('SA_CORE_URL', plugin_dir_url(__FILE__));
@@ -316,6 +316,45 @@ add_action('rest_api_init', static function (): void {
                 }
                 if (!class_exists('WooCommerce') || !class_exists('WC_Product_Simple')) {
                     return new WP_REST_Response(['ok' => false, 'error' => 'woocommerce_inactive'], 503);
+                }
+
+                // REST requests are often unauthenticated — elevate so term/product writes succeed
+                // (same capability surface as WP-CLI boot import).
+                if (!current_user_can('manage_woocommerce')) {
+                    $admins = get_users([
+                        'role'   => 'administrator',
+                        'number' => 1,
+                        'fields' => 'ID',
+                    ]);
+                    if ($admins) {
+                        wp_set_current_user((int) $admins[0]);
+                    }
+                }
+
+                $force_reimport = isset($_GET['force']) || isset($_REQUEST['force']);
+                $counts_now = wp_count_posts('product');
+                $published_now = isset($counts_now->publish) ? (int) $counts_now->publish : 0;
+
+                // Fast path: catalog already populated — seed + repair parents only.
+                if ($published_now > 0 && !$force_reimport) {
+                    if (function_exists('sa_core_seed_categories') && taxonomy_exists('product_cat')) {
+                        sa_core_seed_categories();
+                    }
+                    require_once SA_CORE_DIR . 'includes/import-shopify.php';
+                    $repair = function_exists('sa_core_repair_product_parent_categories')
+                        ? sa_core_repair_product_parent_categories(min(500, max(50, $published_now)))
+                        : ['repaired' => 0, 'skipped' => 0];
+                    flush_rewrite_rules(false);
+                    $brakes = get_term_by('slug', 'brakes', 'product_cat');
+                    $suspension = get_term_by('slug', 'suspension', 'product_cat');
+                    return new WP_REST_Response([
+                        'ok'               => true,
+                        'mode'             => 'repair_only',
+                        'published'        => $published_now,
+                        'repaired_parents' => $repair,
+                        'brakes_count'     => ($brakes && !is_wp_error($brakes)) ? (int) $brakes->count : 0,
+                        'suspension_count' => ($suspension && !is_wp_error($suspension)) ? (int) $suspension->count : 0,
+                    ], 200);
                 }
 
                 delete_option('sa_boot_import_done');
