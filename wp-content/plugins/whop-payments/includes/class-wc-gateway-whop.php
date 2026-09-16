@@ -30,18 +30,32 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
         if ($this->enabled !== 'yes' && $this->env('WHOP_API_KEY') !== '' && $this->env('WHOP_COMPANY_ID') !== '') {
             $this->enabled = 'yes';
         }
-        $this->title       = $this->get_option('title', __('Whop Checkout', 'whop-payments'));
-        $this->description = $this->get_option(
-            'description',
-            __('Pay securely with Whop — cards (Visa, Mastercard) and supported local methods. You will complete payment on the Whop secure checkout page.', 'whop-payments')
-        );
+        $this->title             = $this->get_option('title', __('Card', 'whop-payments'));
+        $this->description       = $this->get_option('description', '');
+        $this->order_button_text = __('Pay', 'whop-payments');
 
-        // Upgrade legacy bare title so checkout clearly labels the gateway.
-        if (in_array(trim((string) $this->title), ['', 'Whop'], true)) {
-            $this->title = __('Whop Checkout', 'whop-payments');
+        // Keep checkout label clean (no processor branding for shoppers).
+        $legacy = ['', 'Whop', 'Whop Checkout'];
+        if (in_array(trim((string) $this->title), $legacy, true)) {
+            $this->title = __('Card', 'whop-payments');
         }
 
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, [$this, 'process_admin_options']);
+
+        // One-time shopper-facing cleanup (drop Whop branding at checkout).
+        if (get_option('sa_whop_checkout_clean_v1') !== '1') {
+            $s = get_option('woocommerce_whop_settings', []);
+            if (!is_array($s)) {
+                $s = [];
+            }
+            $s['title'] = 'Card';
+            $s['description'] = '';
+            $s['enabled'] = 'yes';
+            update_option('woocommerce_whop_settings', $s);
+            update_option('sa_whop_checkout_clean_v1', '1');
+            $this->title = 'Card';
+            $this->description = '';
+        }
         add_action('woocommerce_thankyou_' . $this->id, [$this, 'thankyou_page']);
     }
 
@@ -49,20 +63,17 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
      * Badge shown next to the payment method title at checkout.
      */
     public function get_icon(): string {
-        $badge = '<span class="sa-whop-badge" aria-hidden="true">Whop</span>';
-        return apply_filters('woocommerce_gateway_icon', $badge, $this->id);
+        return apply_filters('woocommerce_gateway_icon', '', $this->id);
     }
 
     /**
-     * Extra copy under the Whop radio so shoppers know how payment works.
+     * Minimal payment box — card entry happens on the secure pay page after Pay.
      */
     public function payment_fields(): void {
-        if ($this->description) {
+        // Intentionally empty: no processor badges or redirect marketing copy.
+        if ($this->description !== '') {
             echo wpautop(wp_kses_post($this->description));
         }
-        echo '<p class="sa-whop-payment-note">'
-            . esc_html__('After you place the order you will be redirected to Whop Checkout to pay securely.', 'whop-payments')
-            . '</p>';
     }
 
     public function init_form_fields(): void {
@@ -79,14 +90,14 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
                 'title'       => __('Title', 'whop-payments'),
                 'type'        => 'text',
                 'description' => __('Payment method title shown at checkout.', 'whop-payments'),
-                'default'     => __('Whop Checkout', 'whop-payments'),
+                'default'     => __('Card', 'whop-payments'),
                 'desc_tip'    => true,
             ],
             'description' => [
                 'title'       => __('Description', 'whop-payments'),
                 'type'        => 'textarea',
                 'description' => __('Payment method description shown at checkout.', 'whop-payments'),
-                'default'     => __('Pay securely with Whop — cards (Visa, Mastercard) and supported local methods.', 'whop-payments'),
+                'default'     => '',
             ],
             'company_id' => [
                 'title'       => __('Company / Account ID', 'whop-payments'),

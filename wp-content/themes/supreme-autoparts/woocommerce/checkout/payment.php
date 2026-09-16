@@ -52,7 +52,7 @@ if (!wp_doing_ajax()) {
     <?php wp_nonce_field('woocommerce-process_checkout', 'woocommerce-process-checkout-nonce'); ?>
 
     <p class="sa-checkout-place__hint" data-sa-terms-hint hidden>
-      <?php esc_html_e('Tick the policies checkbox above to enable Place order.', 'supreme-autoparts'); ?>
+      <?php esc_html_e('Accept the terms above to enable Pay.', 'supreme-autoparts'); ?>
     </p>
   </div>
 </div>

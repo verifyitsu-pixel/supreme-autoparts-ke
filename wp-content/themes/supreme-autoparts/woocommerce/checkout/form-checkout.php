@@ -24,7 +24,7 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
     <p class="sa-checkout-hero__eyebrow"><?php esc_html_e('Secure checkout', 'supreme-autoparts'); ?></p>
     <h1 class="sa-checkout-hero__title"><?php esc_html_e('Checkout', 'supreme-autoparts'); ?></h1>
     <p class="sa-checkout-hero__lead">
-      <?php esc_html_e('Complete your details, review the order, then pay securely with Whop (USD).', 'supreme-autoparts'); ?>
+      <?php esc_html_e('Enter your details, then pay by card.', 'supreme-autoparts'); ?>
     </p>
     <ol class="sa-checkout-steps" aria-label="<?php esc_attr_e('Checkout steps', 'supreme-autoparts'); ?>">
       <li class="sa-checkout-steps__item is-active"><span>1</span> <?php esc_html_e('Contact', 'supreme-autoparts'); ?></li>
@@ -75,14 +75,9 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
             <span class="sa-checkout-section__num" aria-hidden="true">3</span>
             <div>
               <h2 id="sa-checkout-payment-title" class="sa-checkout-section__title"><?php esc_html_e('Payment', 'supreme-autoparts'); ?></h2>
-              <p class="sa-checkout-section__sub"><?php esc_html_e('You will complete payment on Whop’s secure checkout after placing the order.', 'supreme-autoparts'); ?></p>
+              <p class="sa-checkout-section__sub"><?php esc_html_e('Pay by card. Charged in USD.', 'supreme-autoparts'); ?></p>
             </div>
           </header>
-          <div class="sa-checkout-section__body sa-checkout-section__body--hint">
-            <p class="sa-checkout-usd-note">
-              <?php esc_html_e('Charged in USD at checkout. Local currency on the site is an estimate only.', 'supreme-autoparts'); ?>
-            </p>
-          </div>
         </section>
       </div>
 

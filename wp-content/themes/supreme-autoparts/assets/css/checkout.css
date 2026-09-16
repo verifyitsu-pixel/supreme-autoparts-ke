@@ -617,3 +617,38 @@
     width: 100%;
   }
 }
+
+
+/* Clean pay UI: one gateway — no radio/badge clutter */
+.sa-checkout-payment ul.payment_methods:has(li:only-child) {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.sa-checkout-payment ul.payment_methods:has(li:only-child) > li {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.sa-checkout-payment ul.payment_methods:has(li:only-child) > li > input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.sa-checkout-payment ul.payment_methods:has(li:only-child) > li > label {
+  display: none;
+}
+.sa-checkout-payment .payment_box {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+}
+.sa-checkout-place__btn {
+  width: 100%;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+}
+.sa-whop-badge,
+.sa-whop-payment-note { display: none !important; }
