@@ -147,21 +147,19 @@ function sa_core_get_product_email_image_url($product, int $width = 80): string
     if (!$product instanceof WC_Product) {
         return '';
     }
-    $thumb = (int) $product->get_image_id();
-    if ($thumb > 0) {
-        $file = (string) get_post_meta($thumb, '_wp_attached_file', true);
-        if ($file === '' || stripos($file, 'woocommerce-placeholder') === false) {
-            $size = $width <= 100 ? 'woocommerce_gallery_thumbnail' : 'woocommerce_thumbnail';
-            $src  = wp_get_attachment_image_url($thumb, $size);
-            if (!$src) {
-                $src = wp_get_attachment_image_url($thumb, 'thumbnail');
+    // Prefer local only when the attachment file exists on disk (uploads volume may be sparse).
+    if (sa_core_product_has_real_local_image($product)) {
+        $thumb = (int) $product->get_image_id();
+        $size  = $width <= 100 ? 'woocommerce_gallery_thumbnail' : 'woocommerce_thumbnail';
+        $src   = wp_get_attachment_image_url($thumb, $size);
+        if (!$src) {
+            $src = wp_get_attachment_image_url($thumb, 'thumbnail');
+        }
+        if (is_string($src) && $src !== '') {
+            if (str_starts_with($src, '//')) {
+                $src = 'https:' . $src;
             }
-            if (is_string($src) && $src !== '') {
-                if (str_starts_with($src, '//')) {
-                    $src = 'https:' . $src;
-                }
-                return preg_replace('#^http://#i', 'https://', $src) ?: $src;
-            }
+            return preg_replace('#^http://#i', 'https://', $src) ?: $src;
         }
     }
     $urls = sa_core_get_stored_shopify_image_urls($product->get_id());
@@ -234,13 +232,19 @@ add_filter('woocommerce_product_get_image', static function ($image, $product, $
     if (!empty($GLOBALS['sa_in_wc_email'])) {
         return $image;
     }
-    $prefer_cdn = (function_exists('is_shop') && is_shop())
+    // Cart / checkout / mini-cart: always prefer CDN while uploads volume may be sparse.
+    $in_cart_context = (function_exists('is_cart') && is_cart())
+        || (function_exists('is_checkout') && is_checkout())
+        || !empty($GLOBALS['sa_rendering_cart_item_thumbnail'])
+        || (!empty($GLOBALS['woocommerce_loop']['name']) && $GLOBALS['woocommerce_loop']['name'] === 'mini-cart');
+    $prefer_cdn = $in_cart_context
+        || (function_exists('is_shop') && is_shop())
         || (function_exists('is_product_taxonomy') && is_product_taxonomy())
         || (function_exists('is_front_page') && is_front_page())
         || (function_exists('is_home') && is_home())
         || (!empty($GLOBALS['woocommerce_loop']['name']));
-    // Single product keeps local-when-present path in the later filter.
-    if (function_exists('is_product') && is_product() && empty($GLOBALS['woocommerce_loop']['name'])) {
+    // Single product keeps local-when-present path in the later filter (not cart thumbs).
+    if (!$in_cart_context && function_exists('is_product') && is_product() && empty($GLOBALS['woocommerce_loop']['name'])) {
         return $image;
     }
     if (!$prefer_cdn) {

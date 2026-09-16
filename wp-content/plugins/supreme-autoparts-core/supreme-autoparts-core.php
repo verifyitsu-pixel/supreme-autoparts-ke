@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Supreme Autoparts Core
  * Description: Branding defaults, category seed, static pages, invoices, admin dashboard, and Shopify JSON import helpers for Supreme Autoparts.
- * Version: 1.3.6
+ * Version: 1.3.7
  * Author: Supreme Autoparts
  * Text Domain: supreme-autoparts-core
  * Requires at least: 6.4
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_CORE_VERSION', '1.3.6');
+define('SA_CORE_VERSION', '1.3.7');
 define('SA_CORE_FILE', __FILE__);
 define('SA_CORE_DIR', plugin_dir_path(__FILE__));
 define('SA_CORE_URL', plugin_dir_url(__FILE__));
@@ -83,7 +83,7 @@ add_action('plugins_loaded', static function (): void {
  * Force page seed when sa_pages_seed_ver bumps (creates missing policy pages on deploy).
  */
 add_action('init', static function (): void {
-    if (get_option('sa_pages_seed_ver') === '7') {
+    if (get_option('sa_pages_seed_ver') === '8') {
         return;
     }
     if (!function_exists('sa_core_seed_pages')) {
@@ -95,6 +95,32 @@ add_action('init', static function (): void {
     }
     flush_rewrite_rules(false);
 }, 25);
+
+/**
+ * Keep cart/checkout on classic shortcodes after deploy (Blocks cart breaks CDN thumbs).
+ */
+add_action('init', static function (): void {
+    if (get_option('sa_classic_woo_pages_ver') === '1') {
+        // Still re-check cart page cheaply if Blocks markup sneaks back.
+        $cart_id = (int) get_option('woocommerce_cart_page_id');
+        if ($cart_id > 0) {
+            $page = get_post($cart_id);
+            if ($page && function_exists('sa_core_page_needs_classic_woo_shortcode')
+                && sa_core_page_needs_classic_woo_shortcode((string) $page->post_content, '[woocommerce_cart]')
+                && function_exists('sa_core_ensure_classic_woo_pages')) {
+                sa_core_ensure_classic_woo_pages();
+            }
+        }
+        return;
+    }
+    if (!function_exists('sa_core_ensure_classic_woo_pages')) {
+        return;
+    }
+    sa_core_ensure_classic_woo_pages();
+    update_option('sa_classic_woo_pages_ver', '1');
+}, 26);
+
+
 
 /**
  * On core version bump: re-seed product_cat hierarchy + flush product/product_cat rewrites.

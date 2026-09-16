@@ -317,9 +317,40 @@ add_filter('woocommerce_cart_item_thumbnail', static function ($image, $cart_ite
     if (!$product instanceof WC_Product) {
         return $image;
     }
-    return $product->get_image('woocommerce_thumbnail', sa_product_image_attrs([
-        'class' => 'attachment-woocommerce_thumbnail size-woocommerce_thumbnail',
-    ], false));
+
+    $GLOBALS['sa_rendering_cart_item_thumbnail'] = true;
+    try {
+        $thumb_w = 80;
+        $has_local = function_exists('sa_core_product_has_real_local_image')
+            && sa_core_product_has_real_local_image($product);
+        $cdn_urls = function_exists('sa_core_get_stored_shopify_image_urls')
+            ? sa_core_get_stored_shopify_image_urls($product->get_id())
+            : [];
+
+        // Prefer CDN when local file is missing (or always when CDN meta exists + no readable disk file).
+        if (!$has_local && $cdn_urls !== [] && function_exists('sa_core_shopify_cdn_width')) {
+            $src = sa_core_shopify_cdn_width($cdn_urls[0], $thumb_w);
+            $alt = esc_attr($product->get_name());
+            return sprintf(
+                '<img src="%s" alt="%s" class="attachment-woocommerce_gallery_thumbnail size-woocommerce_gallery_thumbnail sa-cart-thumb sa-shopify-cdn-photo" width="%d" height="%d" loading="lazy" decoding="async" referrerpolicy="no-referrer-when-downgrade" />',
+                esc_url($src),
+                $alt,
+                $thumb_w,
+                $thumb_w
+            );
+        }
+
+        // Local-on-disk: still use compact gallery thumb via get_image (CDN prefer filter also sees cart context).
+        return $product->get_image(
+            [ $thumb_w, $thumb_w ],
+            sa_product_image_attrs([
+                'class' => 'attachment-woocommerce_gallery_thumbnail size-woocommerce_gallery_thumbnail sa-cart-thumb',
+                'sizes' => $thumb_w . 'px',
+            ], false)
+        );
+    } finally {
+        unset($GLOBALS['sa_rendering_cart_item_thumbnail']);
+    }
 }, 20, 3);
 
 /**

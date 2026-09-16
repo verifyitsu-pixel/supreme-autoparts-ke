@@ -74,14 +74,18 @@ function sa_core_seed_pages(): void
         }
     }
 
-    // WooCommerce system pages
+    // WooCommerce system pages — classic shortcodes (never Blocks cart/checkout).
+    // Blocks cart uses Store API attachment URLs that 404 when uploads volume is sparse;
+    // classic [woocommerce_cart] uses theme cart.php + CDN thumb filters.
     $woo_pages = [
-        'shop'       => 'Shop',
-        'cart'       => 'Cart',
-        'checkout'   => 'Checkout',
-        'my-account' => 'My Account',
+        'shop'       => ['title' => 'Shop', 'content' => ''],
+        'cart'       => ['title' => 'Cart', 'content' => '[woocommerce_cart]'],
+        'checkout'   => ['title' => 'Checkout', 'content' => '[woocommerce_checkout]'],
+        'my-account' => ['title' => 'My Account', 'content' => '[woocommerce_my_account]'],
     ];
-    foreach ($woo_pages as $slug => $title) {
+    foreach ($woo_pages as $slug => $meta) {
+        $title   = $meta['title'];
+        $content = $meta['content'];
         $page = get_page_by_path($slug);
         if (!$page) {
             $id = wp_insert_post([
@@ -89,7 +93,7 @@ function sa_core_seed_pages(): void
                 'post_name'    => $slug,
                 'post_status'  => 'publish',
                 'post_type'    => 'page',
-                'post_content' => '',
+                'post_content' => $content,
             ]);
             if (!is_wp_error($id)) {
                 $created[$slug] = (int) $id;
@@ -98,6 +102,9 @@ function sa_core_seed_pages(): void
             $created[$slug] = (int) $page->ID;
         }
     }
+
+    // Force classic cart/checkout/account every seed (Blocks markup must never stick).
+    sa_core_ensure_classic_woo_pages($created);
 
     if (!empty($created['shop'])) {
         update_option('woocommerce_shop_page_id', $created['shop']);
@@ -154,7 +161,7 @@ function sa_core_seed_pages(): void
     }
 
     update_option('sa_pages_seeded', time());
-    update_option('sa_pages_seed_ver', '7');
+    update_option('sa_pages_seed_ver', '8');
 }
 
 /**
@@ -200,6 +207,78 @@ function sa_core_apply_store_options(): void
 
     update_option('sa_store_options_applied', time());
     update_option('sa_smtp_note', 'WordPress mail() / PHP mail is used until an SMTP plugin (e.g. WP Mail SMTP) is configured. Set From address to calvin@supremeautoparts.co.ke and authenticate SPF/DKIM for supremeautoparts.co.ke for deliverability.');
+}
+
+
+/**
+ * True when page content is Blocks cart/checkout or missing the classic shortcode.
+ */
+function sa_core_page_needs_classic_woo_shortcode(string $current, string $expected_shortcode): bool
+{
+    $current = trim($current);
+    $expected_shortcode = trim($expected_shortcode);
+    if ($expected_shortcode === '') {
+        return false;
+    }
+    if ($current === $expected_shortcode) {
+        return false;
+    }
+    // Blocks markup or empty / other content → replace.
+    if ($current === '' || str_contains($current, 'wp:woocommerce/cart') || str_contains($current, 'wp:woocommerce/checkout')
+        || str_contains($current, 'wp:woocommerce/filled-cart') || str_contains($current, 'woocommerce/cart-items-block')
+        || !str_contains($current, $expected_shortcode)) {
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Persist classic Woo shortcodes on cart / checkout / my-account pages.
+ *
+ * @param array<string,int> $created Optional slug=>ID map from seed.
+ */
+function sa_core_ensure_classic_woo_pages(array $created = []): void
+{
+    $map = [
+        'cart'       => '[woocommerce_cart]',
+        'checkout'   => '[woocommerce_checkout]',
+        'my-account' => '[woocommerce_my_account]',
+    ];
+    foreach ($map as $slug => $shortcode) {
+        $id = (int) ($created[$slug] ?? 0);
+        $page = null;
+        if ($id > 0) {
+            $page = get_post($id);
+        }
+        if (!$page) {
+            $page = get_page_by_path($slug);
+        }
+        // Fallback: Woo option IDs (live cart is page 6).
+        if (!$page) {
+            $opt_key = [
+                'cart'       => 'woocommerce_cart_page_id',
+                'checkout'   => 'woocommerce_checkout_page_id',
+                'my-account' => 'woocommerce_myaccount_page_id',
+            ][$slug] ?? '';
+            if ($opt_key !== '') {
+                $oid = (int) get_option($opt_key);
+                if ($oid > 0) {
+                    $page = get_post($oid);
+                }
+            }
+        }
+        if (!$page || $page->post_type !== 'page') {
+            continue;
+        }
+        if (!sa_core_page_needs_classic_woo_shortcode((string) $page->post_content, $shortcode)) {
+            continue;
+        }
+        wp_update_post([
+            'ID'           => (int) $page->ID,
+            'post_content' => $shortcode,
+            'post_status'  => 'publish',
+        ]);
+    }
 }
 
 // Allow `wp eval-file .../seed-pages.php` to run seeding when loaded in WP context.
