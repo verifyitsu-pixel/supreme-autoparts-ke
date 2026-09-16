@@ -1,6 +1,10 @@
 # Supreme Autoparts — WordPress + WooCommerce (Railway / Docker)
 FROM wordpress:php8.3-apache
 
+# Ensure only the prefork MPM is loaded (Apache otherwise may load multiple MPMs)
+RUN a2dismod mpm_event mpm_worker mpm_itk 2>/dev/null || true \
+    && a2enmod mpm_prefork
+
 # WP-CLI
 RUN curl -fsSL -o /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
     && chmod +x /usr/local/bin/wp
