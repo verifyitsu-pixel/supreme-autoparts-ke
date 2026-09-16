@@ -213,8 +213,8 @@ class SA_Core_CLI_Command
      * : Max products (default 500)
      * [--dry-run]
      * : Report only
-     * [--no-web]
-     * : Do not use web fallback
+     * [--skip-web]
+     * : Do not use web fallback (skip-web)
      *
      * ## EXAMPLES
      *     wp supreme fix-images
@@ -232,7 +232,7 @@ class SA_Core_CLI_Command
         $result = sa_core_audit_fix_product_images([
             'limit'     => isset($assoc_args['limit']) ? (int) $assoc_args['limit'] : 500,
             'dry_run'   => isset($assoc_args['dry-run']),
-            'allow_web' => !isset($assoc_args['no-web']),
+            'allow_web' => !isset($assoc_args['skip-web']),
         ]);
         WP_CLI::success(sprintf(
             'Image audit%s: examined=%d ok=%d fixed=%d drafted=%d shared_flagged=%d web_fallback=%d',
