@@ -9,10 +9,10 @@ if (!defined('ABSPATH')) {
     <div class="sa-footer__grid">
       <div>
         <h3><?php esc_html_e('Supreme Autoparts', 'supreme-autoparts'); ?></h3>
-        <p style="color:var(--sa-text-muted);font-size:.9rem;margin:0;">
+        <p class="sa-footer__blurb">
           <?php esc_html_e('Performance parts & accessories for cars, trucks, and SUVs. Serving Kenya and beyond.', 'supreme-autoparts'); ?>
         </p>
-        <p style="color:var(--sa-text-muted);font-size:.85rem;margin:.5rem 0 0;">
+        <p class="sa-footer__email">
           <a href="mailto:calvin@supremeautoparts.co.ke">calvin@supremeautoparts.co.ke</a>
         </p>
       </div>
@@ -36,10 +36,8 @@ if (!defined('ABSPATH')) {
           <li><a href="<?php echo esc_url(sa_page_url('privacy-policy')); ?>"><?php esc_html_e('Privacy Policy', 'supreme-autoparts'); ?></a></li>
           <li><a href="<?php echo esc_url(sa_page_url('shipping-policy')); ?>"><?php esc_html_e('Shipping Policy', 'supreme-autoparts'); ?></a></li>
           <li><a href="<?php echo esc_url(sa_page_url('refund-policy')); ?>"><?php esc_html_e('Refund Policy', 'supreme-autoparts'); ?></a></li>
-          <li><a href="<?php echo esc_url(sa_page_url('returns')); ?>"><?php esc_html_e('Returns Policy', 'supreme-autoparts'); ?></a></li>
           <li><a href="<?php echo esc_url(sa_page_url('chargeback-policy')); ?>"><?php esc_html_e('Chargeback & Disputes', 'supreme-autoparts'); ?></a></li>
           <li><a href="<?php echo esc_url(sa_page_url('cookie-policy')); ?>"><?php esc_html_e('Cookie Policy', 'supreme-autoparts'); ?></a></li>
-          <li><a href="<?php echo esc_url(sa_page_url('data-policy')); ?>"><?php esc_html_e('Data Policy', 'supreme-autoparts'); ?></a></li>
         </ul>
       </div>
       <div>
@@ -61,6 +59,34 @@ if (!defined('ABSPATH')) {
     </div>
   </div>
 </footer>
+
+<?php if (function_exists('WC')) : ?>
+<aside id="sa-cart-drawer" class="sa-cart-drawer" data-sa-cart-drawer aria-hidden="true">
+  <button type="button" class="sa-cart-drawer__backdrop" data-sa-cart-close aria-label="<?php esc_attr_e('Close cart', 'supreme-autoparts'); ?>"></button>
+  <div class="sa-cart-drawer__panel" role="dialog" aria-modal="true" aria-labelledby="sa-cart-drawer-title">
+    <header class="sa-cart-drawer__head">
+      <h2 id="sa-cart-drawer-title"><?php esc_html_e('Your cart', 'supreme-autoparts'); ?></h2>
+      <button type="button" class="sa-cart-drawer__close" data-sa-cart-close aria-label="<?php esc_attr_e('Close', 'supreme-autoparts'); ?>">
+        <?php echo sa_category_icon_svg('close'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+      </button>
+    </header>
+    <div class="sa-cart-drawer__body widget_shopping_cart_content">
+      <?php woocommerce_mini_cart(); ?>
+    </div>
+    <footer class="sa-cart-drawer__foot">
+      <div class="sa-cart-drawer__trust">
+        <a href="<?php echo esc_url(sa_page_url('shipping-policy')); ?>"><?php esc_html_e('Shipping', 'supreme-autoparts'); ?></a>
+        <a href="<?php echo esc_url(sa_page_url('returns')); ?>"><?php esc_html_e('Returns', 'supreme-autoparts'); ?></a>
+        <a href="<?php echo esc_url(sa_page_url('privacy-policy')); ?>"><?php esc_html_e('Privacy', 'supreme-autoparts'); ?></a>
+      </div>
+      <?php if (function_exists('wc_get_cart_url')) : ?>
+        <a class="sa-btn sa-btn--outline sa-btn--block" href="<?php echo esc_url(wc_get_cart_url()); ?>"><?php esc_html_e('View full cart', 'supreme-autoparts'); ?></a>
+      <?php endif; ?>
+    </footer>
+  </div>
+</aside>
+<?php endif; ?>
+
 <?php wp_footer(); ?>
 </body>
 </html>

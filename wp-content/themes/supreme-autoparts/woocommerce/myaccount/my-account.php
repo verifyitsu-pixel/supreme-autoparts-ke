@@ -1,18 +1,17 @@
 <?php
 /**
- * My Account page override.
+ * My Account — professional dashboard shell.
  *
  * @package Supreme_Autoparts
- * @version 3.5.0
  */
 
 defined('ABSPATH') || exit;
 ?>
 <div class="sa-my-account">
-  <?php
-  do_action('woocommerce_account_navigation');
-  ?>
-  <div class="woocommerce-MyAccount-content">
+  <aside class="sa-my-account__nav">
+    <?php do_action('woocommerce_account_navigation'); ?>
+  </aside>
+  <div class="woocommerce-MyAccount-content sa-my-account__content">
     <?php do_action('woocommerce_account_content'); ?>
   </div>
 </div>

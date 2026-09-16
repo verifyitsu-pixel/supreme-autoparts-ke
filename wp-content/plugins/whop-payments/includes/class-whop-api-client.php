@@ -1,6 +1,6 @@
 <?php
 /**
- * Whop REST API client (Checkout Configurations).
+ * Whop REST API client (Checkout Configurations + Payment Methods).
  *
  * Docs: https://docs.whop.com/api-reference/checkout-configurations/create-checkout-configuration
  * Guide: https://docs.whop.com/developer/guides/accept-payments
@@ -31,6 +31,10 @@ final class Whop_Api_Client {
 
     public function is_sandbox(): bool {
         return $this->sandbox;
+    }
+
+    public function get_company_id(): string {
+        return $this->company_id;
     }
 
     public function get_base_url(): string {
@@ -99,61 +103,175 @@ final class Whop_Api_Client {
 
         $response = $this->request('POST', '/checkout_configurations', $body);
 
-        if (is_wp_error($response)) {
+        return $this->parse_checkout_response($response);
+    }
+
+    /**
+     * Create a setup-mode checkout to save a card without charging.
+     *
+     * @param array<string,mixed> $args
+     * @return array{success:bool,checkout_id?:string,purchase_url?:string,message?:string,raw?:mixed}
+     */
+    public function create_setup_checkout(array $args): array {
+        if ($this->api_key === '' || $this->company_id === '') {
             return [
                 'success' => false,
-                'message' => $response->get_error_message(),
+                'message' => __('Whop API key or company ID is not configured.', 'whop-payments'),
             ];
         }
 
+        $currency = strtolower((string) ($args['currency'] ?? 'kes'));
+        $meta     = is_array($args['metadata'] ?? null) ? $args['metadata'] : [];
+        $meta     = array_merge([
+            'source'  => 'supreme-autoparts-myaccount',
+            'purpose' => 'save_payment_method',
+        ], $meta);
+
+        $body = [
+            'mode'         => 'setup',
+            'company_id'   => $this->company_id,
+            'account_id'   => $this->company_id,
+            'currency'     => $currency,
+            'redirect_url' => (string) ($args['redirect_url'] ?? ''),
+            'metadata'     => $meta,
+            'payment_method_configuration' => [
+                'enabled'                   => ['card'],
+                'include_platform_defaults' => false,
+            ],
+        ];
+
+        $response = $this->request('POST', '/checkout_configurations', $body);
+
+        return $this->parse_checkout_response($response);
+    }
+
+    /**
+     * List payment methods for a member (or company when member omitted).
+     *
+     * @param array<string,mixed> $args
+     * @return array{success:bool,data?:array<int,array<string,mixed>>,message?:string,raw?:mixed}
+     */
+    public function list_payment_methods(array $args = []): array {
+        $query = [];
+        if (!empty($args['member_id'])) {
+            $query['member_id'] = (string) $args['member_id'];
+        } elseif (!empty($args['account_id'])) {
+            $query['account_id'] = (string) $args['account_id'];
+        } else {
+            $query['account_id'] = $this->company_id;
+        }
+        if (isset($args['first'])) {
+            $query['first'] = (int) $args['first'];
+        }
+        if (!empty($args['after'])) {
+            $query['after'] = (string) $args['after'];
+        }
+
+        $response = $this->request('GET', '/payment_methods', [], $query);
+        return $this->parse_list_response($response, 'payment methods');
+    }
+
+    /**
+     * @return array{success:bool,data?:array<string,mixed>,message?:string,raw?:mixed}
+     */
+    public function get_payment_method(string $id): array {
+        if ($id === '') {
+            return ['success' => false, 'message' => 'Missing payment method id.'];
+        }
+        $response = $this->request('GET', '/payment_methods/' . rawurlencode($id));
+        return $this->parse_object_response($response, 'payment method');
+    }
+
+    /**
+     * Delete a saved payment method on Whop.
+     *
+     * @return array{success:bool,message?:string,raw?:mixed}
+     */
+    public function delete_payment_method(string $id, array $args = []): array {
+        if ($id === '') {
+            return ['success' => false, 'message' => 'Missing payment method id.'];
+        }
+        $query = [];
+        if (!empty($args['member_id'])) {
+            $query['member_id'] = (string) $args['member_id'];
+        } elseif (!empty($args['account_id'])) {
+            $query['account_id'] = (string) $args['account_id'];
+        }
+
+        $response = $this->request('DELETE', '/payment_methods/' . rawurlencode($id), [], $query);
+        if (is_wp_error($response)) {
+            return ['success' => false, 'message' => $response->get_error_message()];
+        }
         $code = (int) wp_remote_retrieve_response_code($response);
         $raw  = json_decode((string) wp_remote_retrieve_body($response), true);
-
-        if ($code < 200 || $code >= 300 || !is_array($raw)) {
-            $api_msg = '';
-            if (is_array($raw) && isset($raw['error']['message'])) {
-                $api_msg = (string) $raw['error']['message'];
-            }
-            return [
-                'success' => false,
-                'message' => $api_msg !== ''
-                    ? $api_msg
-                    : sprintf(
-                        /* translators: %d: HTTP status */
-                        __('Whop checkout create failed (HTTP %d).', 'whop-payments'),
-                        $code
-                    ),
-                'raw'     => $raw,
-            ];
+        if ($code >= 200 && $code < 300) {
+            return ['success' => true, 'raw' => $raw];
         }
-
-        $checkout_id  = (string) ($raw['id'] ?? '');
-        $plan_id      = (string) ($raw['plan']['id'] ?? '');
-        $purchase_url = (string) ($raw['purchase_url'] ?? '');
-
-        if ($purchase_url !== '' && str_starts_with($purchase_url, '/')) {
-            $purchase_url = $this->get_checkout_host() . $purchase_url;
-        }
-
-        if ($purchase_url === '' && $checkout_id !== '') {
-            $purchase_url = $this->get_checkout_host() . '/checkout/' . rawurlencode($checkout_id) . '/';
-        }
-
-        if ($checkout_id === '' || $purchase_url === '') {
-            return [
-                'success' => false,
-                'message' => __('Whop response missing checkout id or purchase_url.', 'whop-payments'),
-                'raw'     => $raw,
-            ];
-        }
-
+        $api_msg = is_array($raw) && isset($raw['error']['message']) ? (string) $raw['error']['message'] : '';
         return [
-            'success'      => true,
-            'checkout_id'  => $checkout_id,
-            'plan_id'      => $plan_id,
-            'purchase_url' => $purchase_url,
-            'raw'          => $raw,
+            'success' => false,
+            'message' => $api_msg !== '' ? $api_msg : sprintf('Whop delete payment method failed (HTTP %d).', $code),
+            'raw'     => $raw,
         ];
+    }
+
+    /**
+     * Find company members (search by exact email when query is an email).
+     *
+     * @param array<string,mixed> $args
+     * @return array{success:bool,data?:array<int,array<string,mixed>>,message?:string,raw?:mixed}
+     */
+    public function list_members(array $args = []): array {
+        $query = [
+            'account_id' => (string) ($args['account_id'] ?? $this->company_id),
+            'first'      => (int) ($args['first'] ?? 20),
+        ];
+        if (!empty($args['query'])) {
+            $query['query'] = (string) $args['query'];
+        }
+        if (!empty($args['status'])) {
+            $query['status'] = (string) $args['status'];
+        }
+
+        $response = $this->request('GET', '/members', [], $query);
+        return $this->parse_list_response($response, 'members');
+    }
+
+    /**
+     * Resolve Whop member id for a customer email (cached by caller).
+     */
+    public function find_member_id_by_email(string $email): ?string {
+        if (!is_email($email)) {
+            return null;
+        }
+        $result = $this->list_members([
+            'query'  => $email,
+            'status' => 'joined',
+            'first'  => 10,
+        ]);
+        if (empty($result['success']) || empty($result['data']) || !is_array($result['data'])) {
+            return null;
+        }
+        foreach ($result['data'] as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $id = (string) ($row['id'] ?? '');
+            $row_email = strtolower((string) (
+                $row['email']
+                ?? $row['user']['email']
+                ?? $row['member_email']
+                ?? ''
+            ));
+            if ($id !== '' && ($row_email === '' || $row_email === strtolower($email))) {
+                return $id;
+            }
+        }
+        $first = $result['data'][0] ?? null;
+        if (is_array($first) && !empty($first['id'])) {
+            return (string) $first['id'];
+        }
+        return null;
     }
 
     /**
@@ -213,11 +331,125 @@ final class Whop_Api_Client {
     }
 
     /**
+     * @param array|\WP_Error $response
+     * @return array{success:bool,checkout_id?:string,plan_id?:string,purchase_url?:string,message?:string,raw?:mixed}
+     */
+    private function parse_checkout_response($response): array {
+        if (is_wp_error($response)) {
+            return [
+                'success' => false,
+                'message' => $response->get_error_message(),
+            ];
+        }
+
+        $code = (int) wp_remote_retrieve_response_code($response);
+        $raw  = json_decode((string) wp_remote_retrieve_body($response), true);
+
+        if ($code < 200 || $code >= 300 || !is_array($raw)) {
+            $api_msg = '';
+            if (is_array($raw) && isset($raw['error']['message'])) {
+                $api_msg = (string) $raw['error']['message'];
+            }
+            return [
+                'success' => false,
+                'message' => $api_msg !== ''
+                    ? $api_msg
+                    : sprintf(
+                        /* translators: %d: HTTP status */
+                        __('Whop checkout create failed (HTTP %d).', 'whop-payments'),
+                        $code
+                    ),
+                'raw'     => $raw,
+            ];
+        }
+
+        $checkout_id  = (string) ($raw['id'] ?? '');
+        $plan_id      = (string) ($raw['plan']['id'] ?? '');
+        $purchase_url = (string) ($raw['purchase_url'] ?? '');
+
+        if ($purchase_url !== '' && str_starts_with($purchase_url, '/')) {
+            $purchase_url = $this->get_checkout_host() . $purchase_url;
+        }
+
+        if ($purchase_url === '' && $checkout_id !== '') {
+            $purchase_url = $this->get_checkout_host() . '/checkout/' . rawurlencode($checkout_id) . '/';
+        }
+
+        if ($checkout_id === '' || $purchase_url === '') {
+            return [
+                'success' => false,
+                'message' => __('Whop response missing checkout id or purchase_url.', 'whop-payments'),
+                'raw'     => $raw,
+            ];
+        }
+
+        return [
+            'success'      => true,
+            'checkout_id'  => $checkout_id,
+            'plan_id'      => $plan_id,
+            'purchase_url' => $purchase_url,
+            'raw'          => $raw,
+        ];
+    }
+
+    /**
+     * @param array|\WP_Error $response
+     * @return array{success:bool,data?:array<int,array<string,mixed>>,message?:string,raw?:mixed}
+     */
+    private function parse_list_response($response, string $label): array {
+        if (is_wp_error($response)) {
+            return ['success' => false, 'message' => $response->get_error_message()];
+        }
+        $code = (int) wp_remote_retrieve_response_code($response);
+        $raw  = json_decode((string) wp_remote_retrieve_body($response), true);
+        if ($code < 200 || $code >= 300 || !is_array($raw)) {
+            $api_msg = is_array($raw) && isset($raw['error']['message']) ? (string) $raw['error']['message'] : '';
+            return [
+                'success' => false,
+                'message' => $api_msg !== '' ? $api_msg : sprintf('Whop %s list failed (HTTP %d).', $label, $code),
+                'raw'     => $raw,
+            ];
+        }
+        $data = [];
+        if (isset($raw['data']) && is_array($raw['data'])) {
+            $data = $raw['data'];
+        } elseif (array_is_list($raw)) {
+            $data = $raw;
+        }
+        return ['success' => true, 'data' => $data, 'raw' => $raw];
+    }
+
+    /**
+     * @param array|\WP_Error $response
+     * @return array{success:bool,data?:array<string,mixed>,message?:string,raw?:mixed}
+     */
+    private function parse_object_response($response, string $label): array {
+        if (is_wp_error($response)) {
+            return ['success' => false, 'message' => $response->get_error_message()];
+        }
+        $code = (int) wp_remote_retrieve_response_code($response);
+        $raw  = json_decode((string) wp_remote_retrieve_body($response), true);
+        if ($code < 200 || $code >= 300 || !is_array($raw)) {
+            $api_msg = is_array($raw) && isset($raw['error']['message']) ? (string) $raw['error']['message'] : '';
+            return [
+                'success' => false,
+                'message' => $api_msg !== '' ? $api_msg : sprintf('Whop %s get failed (HTTP %d).', $label, $code),
+                'raw'     => $raw,
+            ];
+        }
+        return ['success' => true, 'data' => $raw, 'raw' => $raw];
+    }
+
+    /**
      * @param array<string,mixed> $body
+     * @param array<string,scalar> $query
      * @return array|\WP_Error
      */
-    private function request(string $method, string $path, array $body = []) {
-        $url  = untrailingslashit($this->get_base_url()) . $path;
+    private function request(string $method, string $path, array $body = [], array $query = []) {
+        $url = untrailingslashit($this->get_base_url()) . $path;
+        if ($query !== []) {
+            $url = add_query_arg($query, $url);
+        }
         $args = [
             'method'  => $method,
             'timeout' => 45,
@@ -229,8 +461,10 @@ final class Whop_Api_Client {
             ],
         ];
 
-        if ($method !== 'GET' && $method !== 'HEAD') {
-            $args['body'] = wp_json_encode($body);
+        if (!in_array($method, ['GET', 'HEAD', 'DELETE'], true) || $body !== []) {
+            if ($method !== 'GET' && $method !== 'HEAD') {
+                $args['body'] = wp_json_encode($body);
+            }
         }
 
         return wp_remote_request($url, $args);

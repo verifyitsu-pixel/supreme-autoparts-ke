@@ -113,7 +113,10 @@ class SA_Brevo_Sync
     {
         $optin = !empty($_POST['sa_brevo_optin']);
         update_user_meta($user_id, 'sa_brevo_optin', $optin ? '1' : '0');
-        if ($optin) {
+        // Always upsert name/email when BREVO_API_KEY is set so profile edits stay in sync.
+        if (function_exists('sa_brevo_is_configured') && sa_brevo_is_configured()) {
+            self::sync_user($user_id);
+        } elseif ($optin) {
             self::sync_user($user_id);
         }
     }

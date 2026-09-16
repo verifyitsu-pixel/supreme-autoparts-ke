@@ -101,6 +101,15 @@ final class Whop_Webhook {
         }
 
         $type = (string) ($event['type'] ?? '');
+        if ($type === 'setup_intent.succeeded') {
+            if (class_exists('Whop_Payment_Methods')) {
+                Whop_Payment_Methods::handle_setup_intent_succeeded($event);
+            }
+            status_header(200);
+            header('Content-Type: application/json; charset=utf-8');
+            echo wp_json_encode(['received' => true, 'type' => $type]);
+            exit;
+        }
         if ($type !== 'payment.succeeded') {
             status_header(200);
             echo 'ignored';
@@ -171,7 +180,17 @@ final class Whop_Webhook {
             $id !== '' ? $id : 'n/a'
         ));
         $order->update_meta_data('_whop_payment_id', $payment_id);
+        $pm_id = (string) ($data['payment_method_id'] ?? $data['payment_method']['id'] ?? '');
+        if ($pm_id !== '') {
+            $order->update_meta_data('_sa_whop_payment_method_id', $pm_id);
+        }
         $order->save();
+
+        $buyer_user = (int) $order->get_user_id();
+        if ($buyer_user && class_exists('Whop_Payment_Methods')) {
+            // Soft sync — reconcile Whop wallet after a successful charge.
+            Whop_Payment_Methods::sync_user_payment_methods($buyer_user);
+        }
 
         status_header(200);
         header('Content-Type: application/json; charset=utf-8');

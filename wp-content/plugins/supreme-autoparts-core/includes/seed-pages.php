@@ -16,10 +16,24 @@ function sa_core_seed_pages(): void
     $created = [];
     foreach (sa_core_page_definitions() as $slug => $def) {
         $existing = get_page_by_path($slug);
+        // Fallback: page may exist with a different slug/title — find by exact post_name.
+        if (!$existing) {
+            $by_name = get_posts([
+                'name'           => $slug,
+                'post_type'      => 'page',
+                'post_status'    => ['publish', 'draft', 'private'],
+                'numberposts'    => 1,
+                'posts_per_page' => 1,
+            ]);
+            if ($by_name) {
+                $existing = $by_name[0];
+            }
+        }
         if ($existing) {
             wp_update_post([
                 'ID'           => $existing->ID,
                 'post_title'   => $def['title'],
+                'post_name'    => $slug,
                 'post_content' => $def['content'],
                 'post_status'  => 'publish',
             ]);
@@ -35,6 +49,27 @@ function sa_core_seed_pages(): void
             ], true);
             if (!is_wp_error($id)) {
                 $created[$slug] = (int) $id;
+            }
+        }
+    }
+
+    // Hard guarantee for footer/checkout policy URLs that were 404 on live.
+    foreach (['chargeback-policy', 'cookie-policy', 'data-policy'] as $must) {
+        if (empty($created[$must]) || !get_page_by_path($must)) {
+            $defs = sa_core_page_definitions();
+            if (!isset($defs[$must])) {
+                continue;
+            }
+            $id = wp_insert_post([
+                'post_title'   => $defs[$must]['title'],
+                'post_name'    => $must,
+                'post_content' => $defs[$must]['content'],
+                'post_status'  => 'publish',
+                'post_type'    => 'page',
+                'post_author'  => 1,
+            ], true);
+            if (!is_wp_error($id)) {
+                $created[$must] = (int) $id;
             }
         }
     }
@@ -80,6 +115,7 @@ function sa_core_seed_pages(): void
     // Terms acceptance at checkout → Terms of Service
     if (!empty($created['terms'])) {
         update_option('woocommerce_terms_page_id', $created['terms']);
+        update_option('woocommerce_checkout_show_terms', 'yes');
         update_option('woocommerce_checkout_privacy_policy_text', sprintf(
             /* translators: placeholders filled by Woo with policy links when configured */
             __('Your personal data will be used to process your order, support your experience, and for other purposes described in our [privacy_policy]. By placing an order you also agree to our Terms of Service, Chargeback/Dispute Policy, and Refund/Returns Policy.', 'supreme-autoparts-core')
@@ -118,6 +154,7 @@ function sa_core_seed_pages(): void
     }
 
     update_option('sa_pages_seeded', time());
+    update_option('sa_pages_seed_ver', '5');
 }
 
 /**

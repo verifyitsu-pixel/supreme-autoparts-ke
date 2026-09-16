@@ -7,12 +7,16 @@ get_header();
 ?>
 
 <section class="sa-hero">
-  <div class="sa-container">
+  <div class="sa-container sa-hero__inner">
+    <p class="sa-hero__eyebrow"><?php esc_html_e('Supreme Autoparts · Kenya', 'supreme-autoparts'); ?></p>
     <h1><?php esc_html_e('Car Parts & Accessories', 'supreme-autoparts'); ?></h1>
-    <p><?php esc_html_e('Auto accessories and replacement parts that capture the essence of your vehicle. Explore aftermarket products for an unparalleled driving experience.', 'supreme-autoparts'); ?></p>
-    <?php if (function_exists('wc_get_page_permalink')) : ?>
-      <a class="sa-btn" href="<?php echo esc_url(wc_get_page_permalink('shop')); ?>"><?php esc_html_e('Shop Now', 'supreme-autoparts'); ?></a>
-    <?php endif; ?>
+    <p class="sa-hero__lead"><?php esc_html_e('Auto accessories and replacement parts that capture the essence of your vehicle. Explore aftermarket products for an unparalleled driving experience.', 'supreme-autoparts'); ?></p>
+    <div class="sa-hero__actions">
+      <?php if (function_exists('wc_get_page_permalink')) : ?>
+        <a class="sa-btn" href="<?php echo esc_url(wc_get_page_permalink('shop')); ?>"><?php esc_html_e('Shop Now', 'supreme-autoparts'); ?></a>
+      <?php endif; ?>
+      <a class="sa-btn sa-btn--outline" href="<?php echo esc_url(sa_term_link('product_cat', 'brakes')); ?>"><?php esc_html_e('Shop Brakes', 'supreme-autoparts'); ?></a>
+    </div>
   </div>
 </section>
 
@@ -23,19 +27,20 @@ get_header();
       <?php foreach (sa_regions() as $region) : ?>
         <a class="sa-region-card <?php echo esc_attr($region['class']); ?>" href="<?php echo esc_url(sa_term_link('product_cat', $region['slug'])); ?>">
           <span class="sa-region-card__label"><?php echo esc_html($region['title']); ?></span>
+          <span class="sa-region-card__cta"><?php esc_html_e('Browse', 'supreme-autoparts'); ?></span>
         </a>
       <?php endforeach; ?>
     </div>
   </div>
 </section>
 
-<section class="sa-section" style="padding-top:0;">
+<section class="sa-section sa-section--tight">
   <div class="sa-container">
     <h2 class="sa-section__title"><?php esc_html_e('Shop by Product Type', 'supreme-autoparts'); ?></h2>
     <div class="sa-type-grid">
       <?php foreach (sa_product_types() as $type) : ?>
         <a class="sa-type-tile" href="<?php echo esc_url(sa_term_link('product_cat', $type['slug'])); ?>">
-          <span class="sa-type-tile__icon" aria-hidden="true"><?php echo esc_html($type['icon']); ?></span>
+          <span class="sa-type-tile__icon" aria-hidden="true"><?php echo sa_category_icon_svg($type['icon']); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
           <span class="sa-type-tile__name"><?php echo esc_html($type['title']); ?></span>
         </a>
       <?php endforeach; ?>
@@ -78,15 +83,19 @@ get_header();
 </div>
 
 <?php
-// Featured / recent products if WooCommerce is active.
 if (function_exists('wc_get_products')) :
     $products = wc_get_products(['limit' => 8, 'status' => 'publish', 'orderby' => 'date', 'order' => 'DESC']);
     if ($products) :
         ?>
 <section class="sa-section">
   <div class="sa-container">
-    <h2 class="sa-section__title"><?php esc_html_e('Latest Parts', 'supreme-autoparts'); ?></h2>
-    <ul class="products sa-products">
+    <div class="sa-section__head">
+      <h2 class="sa-section__title"><?php esc_html_e('Latest Parts', 'supreme-autoparts'); ?></h2>
+      <?php if (function_exists('wc_get_page_permalink')) : ?>
+        <a class="sa-section__link" href="<?php echo esc_url(wc_get_page_permalink('shop')); ?>"><?php esc_html_e('View all', 'supreme-autoparts'); ?></a>
+      <?php endif; ?>
+    </div>
+    <ul class="products sa-products columns-4">
       <?php foreach ($products as $product) :
           $post_object = get_post($product->get_id());
           setup_postdata($GLOBALS['post'] = $post_object); // phpcs:ignore

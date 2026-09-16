@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 <head>
   <meta charset="<?php bloginfo('charset'); ?>">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#000000">
+  <meta name="theme-color" content="#0B0B0D">
   <?php wp_head(); ?>
 </head>
 <body <?php body_class(); ?>>
@@ -29,13 +29,13 @@ if (!defined('ABSPATH')) {
 <header class="sa-header" role="banner">
   <div class="sa-container sa-header__bar">
     <button type="button" class="sa-nav-toggle" data-sa-nav-toggle aria-expanded="false" aria-controls="sa-primary-nav">
-      <?php esc_html_e('Menu', 'supreme-autoparts'); ?>
+      <?php echo sa_category_icon_svg('menu'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+      <span class="screen-reader-text"><?php esc_html_e('Menu', 'supreme-autoparts'); ?></span>
     </button>
 
     <a class="sa-logo" href="<?php echo esc_url(home_url('/')); ?>">
       <?php
       if (function_exists('has_custom_logo') && has_custom_logo()) {
-          // Customizer custom logo (img only; wrap already provided by .sa-logo).
           $custom_logo_id = (int) get_theme_mod('custom_logo');
           $logo_html      = wp_get_attachment_image($custom_logo_id, 'full', false, [
               'class'   => 'sa-logo__img',
@@ -65,17 +65,23 @@ if (!defined('ABSPATH')) {
       <label class="screen-reader-text" for="sa-search-field"><?php esc_html_e('Search products', 'supreme-autoparts'); ?></label>
       <input type="search" id="sa-search-field" name="s" placeholder="<?php esc_attr_e('Search car parts & accessories…', 'supreme-autoparts'); ?>" value="<?php echo esc_attr(get_search_query()); ?>">
       <input type="hidden" name="post_type" value="product">
-      <button type="submit" aria-label="<?php esc_attr_e('Search', 'supreme-autoparts'); ?>">🔍</button>
+      <button type="submit" aria-label="<?php esc_attr_e('Search', 'supreme-autoparts'); ?>">
+        <?php echo sa_category_icon_svg('search'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+      </button>
     </form>
 
     <div class="sa-header__actions">
-      <a class="sa-hide-sm" href="<?php echo esc_url(sa_page_url('contact')); ?>"><?php esc_html_e('Contact', 'supreme-autoparts'); ?></a>
+      <a class="sa-hide-sm sa-header__link" href="<?php echo esc_url(sa_page_url('contact')); ?>"><?php esc_html_e('Contact', 'supreme-autoparts'); ?></a>
       <?php if (function_exists('wc_get_page_permalink')) : ?>
-        <a href="<?php echo esc_url(wc_get_page_permalink('myaccount')); ?>"><?php esc_html_e('Account', 'supreme-autoparts'); ?></a>
-        <a href="<?php echo esc_url(wc_get_cart_url()); ?>">
-          <?php esc_html_e('Cart', 'supreme-autoparts'); ?>
-          <span class="sa-cart-count"><?php echo esc_html((string) (function_exists('WC') && WC()->cart ? WC()->cart->get_cart_contents_count() : 0)); ?></span>
+        <a class="sa-header__icon-link" href="<?php echo esc_url(wc_get_page_permalink('myaccount')); ?>" aria-label="<?php esc_attr_e('Account', 'supreme-autoparts'); ?>">
+          <?php echo sa_category_icon_svg('user'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+          <span class="sa-hide-sm"><?php esc_html_e('Account', 'supreme-autoparts'); ?></span>
         </a>
+        <button type="button" class="sa-header__cart" data-sa-cart-open aria-controls="sa-cart-drawer" aria-expanded="false">
+          <?php echo sa_category_icon_svg('cart'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+          <span class="sa-hide-sm"><?php esc_html_e('Cart', 'supreme-autoparts'); ?></span>
+          <span class="sa-cart-count" data-sa-cart-count><?php echo esc_html((string) (function_exists('WC') && WC()->cart ? WC()->cart->get_cart_contents_count() : 0)); ?></span>
+        </button>
       <?php endif; ?>
     </div>
   </div>

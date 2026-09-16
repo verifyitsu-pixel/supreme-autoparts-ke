@@ -19,7 +19,7 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
             'whop-payments'
         );
         $this->has_fields         = false;
-        $this->supports           = ['products'];
+        $this->supports           = ['products', 'tokenization'];
 
         $this->init_form_fields();
         $this->init_settings();
@@ -88,7 +88,7 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
                 'type'        => 'title',
                 'description' => sprintf(
                     /* translators: %s: webhook URL */
-                    __('Register this URL in the Whop dashboard → Developer → Webhooks, subscribe to <code>payment.succeeded</code>, then paste the signing secret above (or set WHOP_WEBHOOK_SECRET).<br><code>%s</code>', 'whop-payments'),
+                    __('Register this URL in the Whop dashboard → Developer → Webhooks, subscribe to <code>payment.succeeded</code> and <code>setup_intent.succeeded</code>, then paste the signing secret above (or set WHOP_WEBHOOK_SECRET).<br><code>%s</code>', 'whop-payments'),
                     esc_html($callback)
                 ),
             ],

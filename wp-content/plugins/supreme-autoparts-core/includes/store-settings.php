@@ -67,6 +67,7 @@ function sa_core_apply_store_settings(): void
     update_option('woocommerce_myaccount_edit_account_endpoint', 'edit-account');
 
     // Checkout must accept terms
+    update_option('woocommerce_checkout_show_terms', 'yes');
     update_option('woocommerce_checkout_privacy_policy_text',
         sprintf(
             'Your personal data will be used to process your order, support your experience, and for other purposes described in our %s.',
@@ -105,7 +106,7 @@ add_filter('wp_mail_from_name', static function ($name) {
 
 // Apply lightly on admin/init once per version bump.
 add_action('init', static function (): void {
-    if (get_option('sa_store_settings_ver') === '4') {
+    if (get_option('sa_store_settings_ver') === '5') {
         return;
     }
     if (!function_exists('WC') && !class_exists('WooCommerce')) {
@@ -113,5 +114,5 @@ add_action('init', static function (): void {
         update_option('admin_email', sa_core_store_email());
     }
     sa_core_apply_store_settings();
-    update_option('sa_store_settings_ver', '4');
+    update_option('sa_store_settings_ver', '5');
 }, 20);
