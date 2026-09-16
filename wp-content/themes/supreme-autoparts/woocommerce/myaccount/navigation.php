@@ -1,6 +1,6 @@
 <?php
 /**
- * My Account navigation.
+ * My Account navigation — charcoal/amber, clear order.
  *
  * @package Supreme_Autoparts
  */
@@ -14,9 +14,13 @@ do_action('woocommerce_before_account_navigation');
     <?php foreach (wc_get_account_menu_items() as $endpoint => $label) : ?>
       <?php
       $classes = wc_get_account_menu_item_classes($endpoint);
-      $current = is_string($classes) ? str_contains($classes, 'is-active') : (is_array($classes) && in_array('is-active', $classes, true));
+      $class_str = is_array($classes) ? implode(' ', $classes) : (string) $classes;
+      $current = str_contains($class_str, 'is-active');
+      if ($endpoint === 'customer-logout') {
+          $class_str .= ' sa-account-nav__logout';
+      }
       ?>
-      <li class="<?php echo esc_attr(is_array($classes) ? implode(' ', $classes) : (string) $classes); ?>">
+      <li class="<?php echo esc_attr($class_str); ?>">
         <a href="<?php echo esc_url(wc_get_account_endpoint_url($endpoint)); ?>"<?php echo $current ? ' aria-current="page"' : ''; ?>>
           <?php echo esc_html($label); ?>
         </a>

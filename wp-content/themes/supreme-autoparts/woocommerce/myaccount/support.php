@@ -1,6 +1,6 @@
 <?php
 /**
- * Support endpoint — enquire + contact + policy links.
+ * Support / Enquire endpoint — form + WhatsApp + policies.
  *
  * @package Supreme_Autoparts
  */
@@ -10,8 +10,10 @@ defined('ABSPATH') || exit;
 $email   = 'calvin@supremeautoparts.co.ke';
 $contact = function_exists('sa_enquire_contact') ? sa_enquire_contact() : [
     'phone_display' => '+254 714 498 451',
+    'whatsapp'      => '254714498451',
     'email'         => $email,
 ];
+$wa      = 'https://wa.me/' . preg_replace('/\D+/', '', (string) ($contact['whatsapp'] ?? '254714498451'));
 $policies = [
     ['slug' => 'shipping-policy', 'label' => __('Shipping policy', 'supreme-autoparts')],
     ['slug' => 'refund-policy', 'label' => __('Refund policy', 'supreme-autoparts')],
@@ -25,9 +27,27 @@ $policies = [
 ?>
 <div class="sa-account-panel sa-support">
   <header class="sa-account-panel__head">
-    <h2><?php esc_html_e('Support', 'supreme-autoparts'); ?></h2>
-    <p><?php esc_html_e('Questions about fitment, delivery in Kenya, or an existing order — we are here to help.', 'supreme-autoparts'); ?></p>
+    <h2><?php esc_html_e('Support / Enquire', 'supreme-autoparts'); ?></h2>
+    <p class="sa-account-panel__lead">
+      <?php esc_html_e('Questions about fitment, delivery in Kenya, or an existing order — we are here to help.', 'supreme-autoparts'); ?>
+    </p>
   </header>
+
+  <div class="sa-support__wa">
+    <div class="sa-support__wa-copy">
+      <strong><?php esc_html_e('Fastest reply', 'supreme-autoparts'); ?></strong>
+      <span><?php esc_html_e('Message us on WhatsApp during business hours (Africa/Nairobi).', 'supreme-autoparts'); ?></span>
+    </div>
+    <a class="sa-btn" href="<?php echo esc_url($wa); ?>" target="_blank" rel="noopener noreferrer">
+      <?php
+      printf(
+          /* translators: %s: phone display */
+          esc_html__('WhatsApp %s', 'supreme-autoparts'),
+          esc_html($contact['phone_display'] ?? '+254 714 498 451')
+      );
+      ?>
+    </a>
+  </div>
 
   <div class="sa-support__grid">
     <div class="sa-support__card">
@@ -36,7 +56,9 @@ $policies = [
       <ul class="sa-support__reach">
         <li>
           <strong><?php esc_html_e('WhatsApp / SMS', 'supreme-autoparts'); ?></strong>
-          <a href="https://wa.me/254714498451"><?php echo esc_html($contact['phone_display']); ?></a>
+          <a href="<?php echo esc_url($wa); ?>" target="_blank" rel="noopener noreferrer">
+            <?php echo esc_html($contact['phone_display'] ?? '+254 714 498 451'); ?>
+          </a>
         </li>
         <li>
           <strong><?php esc_html_e('Email', 'supreme-autoparts'); ?></strong>
@@ -64,7 +86,9 @@ $policies = [
       <?php
       sa_render_enquire([
           'context' => 'account',
-          'compact' => true,
+          'compact' => false,
+          'title'   => __('Enquire about a part', 'supreme-autoparts'),
+          'lead'    => __('Describe the part and your vehicle. We will reply with availability and pricing.', 'supreme-autoparts'),
       ]);
       ?>
     </div>

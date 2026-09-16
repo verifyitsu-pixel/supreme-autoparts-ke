@@ -92,7 +92,7 @@ function sa_core_my_account_endpoints(): array
         'edit-address'    => __('Addresses', 'supreme-autoparts-core'),
         'payment-methods' => __('Payment methods', 'supreme-autoparts-core'),
         'edit-account'    => __('Account details', 'supreme-autoparts-core'),
-        'support'         => __('Support', 'supreme-autoparts-core'),
+        'support'         => __('Support / Enquire', 'supreme-autoparts-core'),
         'customer-logout' => __('Log out', 'supreme-autoparts-core'),
     ];
 }
@@ -162,7 +162,7 @@ add_action('woocommerce_account_support_endpoint', static function (): void {
         return;
     }
     $email = 'calvin@supremeautoparts.co.ke';
-    echo '<div class="sa-account-panel"><h2>' . esc_html__('Support', 'supreme-autoparts-core') . '</h2>';
+    echo '<div class="sa-account-panel"><h2>' . esc_html__('Support / Enquire', 'supreme-autoparts-core') . '</h2>';
     echo '<p>' . esc_html__('Need help with an order or fitment?', 'supreme-autoparts-core') . ' ';
     echo '<a href="mailto:' . esc_attr($email) . '">' . esc_html($email) . '</a></p></div>';
 });
@@ -171,11 +171,11 @@ add_action('woocommerce_account_support_endpoint', static function (): void {
  * Flush rewrite once after support endpoint added.
  */
 add_action('init', static function (): void {
-    if (get_option('sa_myaccount_endpoints_ver') === '3') {
+    if (get_option('sa_myaccount_endpoints_ver') === '4') {
         return;
     }
     flush_rewrite_rules(false);
-    update_option('sa_myaccount_endpoints_ver', '3');
+    update_option('sa_myaccount_endpoints_ver', '4');
 }, 99);
 
 /**

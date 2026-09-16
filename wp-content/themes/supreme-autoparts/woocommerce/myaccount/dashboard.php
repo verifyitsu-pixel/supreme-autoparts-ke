@@ -1,6 +1,6 @@
 <?php
 /**
- * My Account dashboard — greeting, recent orders, quick links.
+ * My Account dashboard — greeting, recent orders, enquire CTA, quick links.
  *
  * @package Supreme_Autoparts
  */
@@ -21,6 +21,9 @@ if (function_exists('wc_get_orders')) {
     ]);
 }
 
+$support_url = wc_get_account_endpoint_url('support');
+$wa_url      = 'https://wa.me/254714498451';
+
 $links = [
     [
         'href'  => wc_get_account_endpoint_url('orders'),
@@ -33,14 +36,14 @@ $links = [
         'desc'  => __('Download receipts', 'supreme-autoparts'),
     ],
     [
-        'href'  => wc_get_account_endpoint_url('payment-methods'),
-        'title' => __('Payment methods', 'supreme-autoparts'),
-        'desc'  => __('Saved cards via Whop', 'supreme-autoparts'),
-    ],
-    [
         'href'  => wc_get_account_endpoint_url('edit-address'),
         'title' => __('Addresses', 'supreme-autoparts'),
         'desc'  => __('Billing and shipping', 'supreme-autoparts'),
+    ],
+    [
+        'href'  => wc_get_account_endpoint_url('payment-methods'),
+        'title' => __('Payment methods', 'supreme-autoparts'),
+        'desc'  => __('Saved cards via Whop', 'supreme-autoparts'),
     ],
     [
         'href'  => wc_get_account_endpoint_url('edit-account'),
@@ -48,9 +51,9 @@ $links = [
         'desc'  => __('Name, email, password', 'supreme-autoparts'),
     ],
     [
-        'href'  => wc_get_account_endpoint_url('support'),
-        'title' => __('Support', 'supreme-autoparts'),
-        'desc'  => __('Contact and policies', 'supreme-autoparts'),
+        'href'  => $support_url,
+        'title' => __('Support / Enquire', 'supreme-autoparts'),
+        'desc'  => __('Ask about a part or order', 'supreme-autoparts'),
     ],
 ];
 ?>
@@ -140,5 +143,22 @@ $links = [
         </table>
       </div>
     <?php endif; ?>
+  </section>
+
+  <section class="sa-dash__enquire" aria-label="<?php esc_attr_e('Enquire', 'supreme-autoparts'); ?>">
+    <div class="sa-dash__enquire-card">
+      <div class="sa-dash__enquire-copy">
+        <h3><?php esc_html_e('Need a part we do not list?', 'supreme-autoparts'); ?></h3>
+        <p><?php esc_html_e('Tell us the part and your vehicle — we will check availability and pricing for Kenya delivery.', 'supreme-autoparts'); ?></p>
+      </div>
+      <div class="sa-dash__enquire-actions">
+        <a class="sa-btn" href="<?php echo esc_url($support_url); ?>">
+          <?php esc_html_e('Enquire now', 'supreme-autoparts'); ?>
+        </a>
+        <a class="sa-btn sa-btn--outline" href="<?php echo esc_url($wa_url); ?>" target="_blank" rel="noopener noreferrer">
+          <?php esc_html_e('WhatsApp +254 714 498 451', 'supreme-autoparts'); ?>
+        </a>
+      </div>
+    </div>
   </section>
 </div>
