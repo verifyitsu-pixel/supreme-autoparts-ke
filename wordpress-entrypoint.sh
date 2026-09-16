@@ -144,14 +144,10 @@ bootstrap_wordpress() {
   wp_as option update admin_email "${WORDPRESS_ADMIN_EMAIL}" || true
   wp_as option update woocommerce_email_from_address "${WORDPRESS_ADMIN_EMAIL}" || true
   wp_as option update woocommerce_email_from_name "Supreme Autoparts" || true
-  # Always prefer www in production — apex hostname is often unbound on Railway.
-  case "${WP_HOME}" in
-    https://supremeautoparts.co.ke|https://supremeautoparts.co.ke/*|https://www.supremeautoparts.co.ke|https://www.supremeautoparts.co.ke/*)
-      WWW_HOME="https://www.supremeautoparts.co.ke"
-      wp_as option update home "$WWW_HOME" || true
-      wp_as option update siteurl "$WWW_HOME" || true
-      ;;
-  esac
+  # Force www — apex is unbound on Railway (Application not found).
+  WWW_HOME="https://www.supremeautoparts.co.ke"
+  wp_as option update home "$WWW_HOME" || true
+  wp_as option update siteurl "$WWW_HOME" || true
   wp_as option update woocommerce_enable_myaccount_registration yes || true
   wp_as option update woocommerce_enable_signup_and_login_from_checkout yes || true
   wp_as option update users_can_register 1 || true
@@ -161,19 +157,19 @@ bootstrap_wordpress() {
 
   # Optional catalog import from baked scrape chunk (Shopify CDN photos only).
   # Set SUPREME_IMPORT_ON_BOOT=1 on Railway to load the first real batch after deploy.
-  BOOT_IMPORT_DONE="$(wp_as option get sa_boot_import_batch400 2>/dev/null || true)"
+  BOOT_IMPORT_DONE="$(wp_as option get sa_boot_import_batch50 2>/dev/null || true)"
   if [[ "${SUPREME_IMPORT_ON_BOOT:-0}" == "1" || -z "${BOOT_IMPORT_DONE}" ]]; then
     IMPORT_FILE="${SUPREME_IMPORT_FILE:-}"
     if [[ -z "$IMPORT_FILE" ]]; then
       for c in \
-        /var/www/html/wp-content/plugins/supreme-autoparts-core/data/scrape/chunks/batch-with-images-400.ndjson \
-        /usr/src/supreme-data/scrape/chunks/batch-with-images-400.ndjson \
-        /var/www/html/data/scrape/chunks/batch-with-images-400.ndjson
+        /var/www/html/wp-content/plugins/supreme-autoparts-core/data/scrape/chunks/batch-with-images-50.ndjson \
+        /usr/src/supreme-data/scrape/chunks/batch-with-images-50.ndjson \
+        /var/www/html/data/scrape/chunks/batch-with-images-50.ndjson
       do
         if [[ -r "$c" ]]; then IMPORT_FILE="$c"; break; fi
       done
     fi
-    IMPORT_LIMIT="${SUPREME_IMPORT_LIMIT:-400}"
+    IMPORT_LIMIT="${SUPREME_IMPORT_LIMIT:-50}"
     SKIP_IMG_FLAG=()
     # Default: store CDN meta + sideload. Set SUPREME_IMPORT_SKIP_IMAGES=1 for CDN-meta-only (faster boot).
     if [[ "${SUPREME_IMPORT_SKIP_IMAGES:-1}" == "1" ]]; then
@@ -187,7 +183,7 @@ bootstrap_wordpress() {
         wp_as supreme import-ndjson --file="$IMPORT_FILE" --limit="$IMPORT_LIMIT" --require-images "${SKIP_IMG_FLAG[@]}" \
           >> /var/www/html/wp-content/uploads/sa-boot-import.log 2>&1 \
           || echo "[supreme] Boot import finished with errors (see sa-boot-import.log)."
-        wp_as option update sa_boot_import_batch400 1 >/dev/null 2>&1 || true
+        wp_as option update sa_boot_import_batch50 1 >/dev/null 2>&1 || true
         echo "[supreme] Boot import finished at $(date -Iseconds)" >> /var/www/html/wp-content/uploads/sa-boot-import.log
       ) &
     else
