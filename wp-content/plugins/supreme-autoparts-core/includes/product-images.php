@@ -223,6 +223,62 @@ function sa_core_resolve_image_dims($size): array
 /**
  * Replace Woo placeholder / empty image HTML with first Shopify CDN photo.
  */
+/**
+ * Catalog / loops: prefer Shopify CDN for near-instant product cards when meta exists.
+ * Local attachments still used on single product when the file is on disk.
+ */
+add_filter('woocommerce_product_get_image', static function ($image, $product, $size, $attr, $placeholder, $main_image) {
+    if (!$product instanceof WC_Product) {
+        return $image;
+    }
+    if (!empty($GLOBALS['sa_in_wc_email'])) {
+        return $image;
+    }
+    $prefer_cdn = (function_exists('is_shop') && is_shop())
+        || (function_exists('is_product_taxonomy') && is_product_taxonomy())
+        || (function_exists('is_front_page') && is_front_page())
+        || (function_exists('is_home') && is_home())
+        || (!empty($GLOBALS['woocommerce_loop']['name']));
+    // Single product keeps local-when-present path in the later filter.
+    if (function_exists('is_product') && is_product() && empty($GLOBALS['woocommerce_loop']['name'])) {
+        return $image;
+    }
+    if (!$prefer_cdn) {
+        return $image;
+    }
+    $urls = sa_core_get_stored_shopify_image_urls($product->get_id());
+    if ($urls === []) {
+        return $image;
+    }
+    [$w, $h] = sa_core_resolve_image_dims($size);
+    $src = sa_core_shopify_cdn_width($urls[0], $w);
+    $alt = esc_attr($product->get_name());
+    $class = 'attachment-woocommerce_thumbnail size-woocommerce_thumbnail wp-post-image sa-shopify-cdn-photo sa-product-card__img';
+    if (is_array($attr) && !empty($attr['class'])) {
+        $class = esc_attr((string) $attr['class']) . ' sa-shopify-cdn-photo';
+    }
+    $loading = (is_array($attr) && !empty($attr['loading'])) ? (string) $attr['loading'] : 'lazy';
+    $fetch = (is_array($attr) && !empty($attr['fetchpriority']))
+        ? ' fetchpriority="' . esc_attr((string) $attr['fetchpriority']) . '"'
+        : '';
+    $srcset = sa_core_shopify_cdn_srcset($urls[0], [150, 300, 400, 600, 800]);
+    $sizes = (is_array($attr) && !empty($attr['sizes']))
+        ? (string) $attr['sizes']
+        : '(max-width: 600px) 50vw, (max-width: 1024px) 25vw, 280px';
+    return sprintf(
+        '<img src="%s" alt="%s" class="%s" width="%d" height="%d" srcset="%s" sizes="%s" loading="%s" decoding="async"%s referrerpolicy="no-referrer-when-downgrade" />',
+        esc_url($src),
+        $alt,
+        $class,
+        $w,
+        $h,
+        $srcset,
+        esc_attr($sizes),
+        esc_attr($loading),
+        $fetch
+    );
+}, 15, 6);
+
 add_filter('woocommerce_product_get_image', static function ($image, $product, $size, $attr, $placeholder, $main_image) {
     if (!$product instanceof WC_Product) {
         return $image;

@@ -592,23 +592,29 @@
 
   .sa-account-nav {
     position: static;
-    padding: .5rem;
+    padding: .45rem;
+    overflow: visible;
+    max-width: 100%;
   }
 
   .sa-account-nav ul {
     flex-direction: row;
     flex-wrap: nowrap;
     overflow-x: auto;
+    overflow-y: hidden;
     gap: .35rem;
-    padding-bottom: .15rem;
+    padding: .15rem .15rem .35rem;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
+    overscroll-behavior-x: contain;
+    max-width: 100%;
   }
 
   .sa-account-nav a {
     white-space: nowrap;
-    padding: .6rem .75rem;
-    font-size: .75rem;
+    padding: .65rem .8rem;
+    font-size: .72rem;
+    flex: 0 0 auto;
   }
 
   .sa-account-nav__logout a,
@@ -989,16 +995,43 @@
   border-collapse: collapse;
 }
 
-/* Prevent horizontal page blowout on account */
+/* Prevent horizontal page blowout on account — wrap, never clip text */
 .sa-my-account,
 .sa-my-account__content,
-.sa-account-panel {
+.sa-account-panel,
+.sa-account-panel__head,
+.sa-account-panel__lead,
+.sa-pm__head,
+.sa-pm__note,
+.sa-edit-address,
+.sa-invoices {
   max-width: 100%;
+  min-width: 0;
   overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .sa-account-panel {
-  overflow-x: clip;
+  overflow-x: visible;
+  box-sizing: border-box;
+}
+
+.sa-pm__head > div,
+.sa-account-panel__head > div {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.sa-edit-address__fields .input-text,
+.sa-edit-address__fields select,
+.sa-edit-address__fields textarea,
+.sa-my-account input.input-text,
+.sa-my-account select,
+.sa-my-account textarea {
+  max-width: 100% !important;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 900px) {
@@ -1219,5 +1252,107 @@
   }
   .sa-my-account {
     padding-top: .5rem;
+  }
+}
+
+
+/* --- v1.4.6: account mobile clip fix --- */
+body.woocommerce-account .sa-page__content {
+  padding: 1rem .85rem 1.5rem;
+  overflow: visible;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+body.woocommerce-account .sa-page__content > h1 {
+  font-size: clamp(1.25rem, 5vw, 1.75rem);
+  overflow-wrap: anywhere;
+}
+body.woocommerce-account .sa-main,
+body.woocommerce-account .sa-woo,
+body.woocommerce-account .sa-my-account {
+  overflow-x: visible;
+  max-width: 100%;
+}
+
+/* Override legacy main.css card on content shell */
+.sa-my-account__content,
+.woocommerce-MyAccount-content.sa-my-account__content {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  min-height: 0 !important;
+  max-width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 800px) {
+  .sa-my-account {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
+    width: 100%;
+  }
+  .sa-my-account__nav {
+    max-width: 100%;
+    min-width: 0;
+  }
+  .sa-account-panel__lead,
+  .sa-account-panel__head p,
+  .sa-pm__note {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+  }
+  .sa-pm__actions {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+  }
+  .sa-pm__actions .sa-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: center;
+    justify-content: center;
+  }
+  .sa-addresses__grid {
+    grid-template-columns: 1fr !important;
+  }
+  .sa-address-card {
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 390px) {
+  body.woocommerce-account .sa-container {
+    width: min(100% - 1rem, var(--sa-max));
+  }
+  .sa-account-panel {
+    padding: .95rem .8rem 1.1rem;
+  }
+  .sa-account-panel__head h2 {
+    font-size: 1.15rem;
+  }
+  .sa-account-nav a {
+    font-size: .68rem;
+    padding: .6rem .65rem;
+    letter-spacing: .02em;
+  }
+  .sa-dash__links {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (orientation: landscape) and (max-width: 960px) {
+  .sa-my-account {
+    grid-template-columns: 1fr !important;
+  }
+  .sa-account-nav ul {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  .sa-addresses__grid {
+    grid-template-columns: 1fr 1fr;
   }
 }

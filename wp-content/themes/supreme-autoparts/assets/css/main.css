@@ -644,10 +644,17 @@ body.sa-cart-open { overflow: hidden; }
   display: flex; flex-wrap: wrap; gap: .75rem; justify-content: center;
 }
 
-/* My Account */
+/* My Account — base; myaccount.css owns responsive */
 .sa-my-account {
-  display: grid; grid-template-columns: 220px 1fr; gap: 1.75rem;
+  display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr); gap: 1.75rem;
   align-items: start; padding: .5rem 0 1rem;
+  max-width: 100%;
+  min-width: 0;
+}
+@media (max-width: 800px) {
+  .sa-my-account {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .sa-my-account .woocommerce-MyAccount-navigation,
 .sa-my-account__nav .woocommerce-MyAccount-navigation {
@@ -1262,4 +1269,16 @@ img, video, svg, iframe, embed, object {
 }
 .woocommerce table.shop_table {
   table-layout: auto;
+}
+
+
+/* v1.4.6 account grid override */
+body.woocommerce-account {
+  overflow-x: clip;
+}
+body.woocommerce-account .sa-main,
+body.woocommerce-account .sa-page__content {
+  overflow-x: visible;
+  max-width: 100%;
+  min-width: 0;
 }
