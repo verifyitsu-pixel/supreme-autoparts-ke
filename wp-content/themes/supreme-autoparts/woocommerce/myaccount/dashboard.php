@@ -28,6 +28,11 @@ $links = [
         'desc'  => __('Track and review purchases', 'supreme-autoparts'),
     ],
     [
+        'href'  => wc_get_account_endpoint_url('invoices'),
+        'title' => __('Invoices', 'supreme-autoparts'),
+        'desc'  => __('Download receipts', 'supreme-autoparts'),
+    ],
+    [
         'href'  => wc_get_account_endpoint_url('payment-methods'),
         'title' => __('Payment methods', 'supreme-autoparts'),
         'desc'  => __('Saved cards via Whop', 'supreme-autoparts'),
