@@ -34,19 +34,31 @@ if (!defined('ABSPATH')) {
 
     <a class="sa-logo" href="<?php echo esc_url(home_url('/')); ?>">
       <?php
-      // Logo slot: Customizer → Site Identity → Logo (custom_logo theme_mod).
-      // Parent agent / ops can upload the brand mark; until then show text mark.
       if (function_exists('has_custom_logo') && has_custom_logo()) {
-          // Strip default link — we already wrap in .sa-logo
-          $logo_html = get_custom_logo();
-          echo preg_replace('#</?a\b[^>]*>#i', '', $logo_html); // phpcs:ignore WordPress.Security.EscapeOutput
+          // Customizer custom logo (img only; wrap already provided by .sa-logo).
+          $custom_logo_id = (int) get_theme_mod('custom_logo');
+          $logo_html      = wp_get_attachment_image($custom_logo_id, 'full', false, [
+              'class'   => 'sa-logo__img',
+              'alt'     => get_bloginfo('name'),
+              'loading' => 'eager',
+          ]);
+          echo $logo_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
       } else {
-          ?>
-      <span class="sa-logo__mark" aria-hidden="true">S</span>
-      <span class="sa-logo__text"><?php bloginfo('name'); ?></span>
-          <?php
+          $fallback = SA_THEME_DIR . '/assets/logo.png';
+          $fallback_uri = SA_THEME_URI . '/assets/logo.png';
+          if (is_readable($fallback)) {
+              printf(
+                  '<img class="sa-logo__img" src="%s" alt="%s" width="200" height="60" loading="eager" />',
+                  esc_url($fallback_uri),
+                  esc_attr(get_bloginfo('name'))
+              );
+          } else {
+              echo '<span class="sa-logo__mark" aria-hidden="true">S</span>';
+              echo '<span>' . esc_html(get_bloginfo('name')) . '</span>';
+          }
       }
       ?>
+      <span class="screen-reader-text"><?php bloginfo('name'); ?></span>
     </a>
 
     <form class="sa-search" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>">

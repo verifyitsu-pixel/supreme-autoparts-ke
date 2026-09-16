@@ -111,7 +111,9 @@ function sa_core_seed_pages(): void
         sa_core_seed_categories();
     }
 
-    if (function_exists('sa_core_apply_store_options')) {
+    if (function_exists('sa_core_apply_store_settings')) {
+        sa_core_apply_store_settings();
+    } elseif (function_exists('sa_core_apply_store_options')) {
         sa_core_apply_store_options();
     }
 

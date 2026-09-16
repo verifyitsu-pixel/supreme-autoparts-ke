@@ -58,6 +58,8 @@ function sa_core_apply_store_settings(): void
     update_option('woocommerce_registration_generate_username', 'yes');
     update_option('woocommerce_registration_generate_password', 'yes');
     update_option('users_can_register', 1);
+    update_option('woocommerce_enable_checkout_login_reminder', 'yes');
+    update_option('woocommerce_myaccount_lost_password_endpoint', 'lost-password');
 
     // Checkout must accept terms
     update_option('woocommerce_checkout_privacy_policy_text',
@@ -84,6 +86,7 @@ function sa_core_apply_store_settings(): void
     // Mail from filters (wp_mail)
     update_option('sa_store_email', $email);
     update_option('sa_store_settings_applied', time());
+    update_option('sa_smtp_note', 'Configure SPF/DKIM for supremeautoparts.co.ke and an SMTP plugin (e.g. WP Mail SMTP). Until then WordPress uses PHP mail with From=calvin@supremeautoparts.co.ke.');
 }
 
 add_filter('wp_mail_from', static function ($from) {
@@ -97,7 +100,7 @@ add_filter('wp_mail_from_name', static function ($name) {
 
 // Apply lightly on admin/init once per version bump.
 add_action('init', static function (): void {
-    if (get_option('sa_store_settings_ver') === '2') {
+    if (get_option('sa_store_settings_ver') === '3') {
         return;
     }
     if (!function_exists('WC') && !class_exists('WooCommerce')) {
@@ -105,5 +108,5 @@ add_action('init', static function (): void {
         update_option('admin_email', sa_core_store_email());
     }
     sa_core_apply_store_settings();
-    update_option('sa_store_settings_ver', '2');
+    update_option('sa_store_settings_ver', '3');
 }, 20);

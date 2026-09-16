@@ -13,13 +13,14 @@ if (!defined('ABSPATH')) {
 function sa_core_checkout_policy_links(): array
 {
     $slugs = [
-        'Terms of Service'        => 'terms',
-        'Privacy Policy'          => 'privacy-policy',
-        'Shipping Policy'         => 'shipping-policy',
-        'Refund Policy'           => 'refund-policy',
-        'Chargeback & Disputes'   => 'chargeback-policy',
-        'Cookie Policy'           => 'cookie-policy',
-        'Data Policy'             => 'data-policy',
+        'Terms of Service'      => 'terms',
+        'Privacy Policy'        => 'privacy-policy',
+        'Chargeback & Disputes' => 'chargeback-policy',
+        'Returns'               => 'returns',
+        'Refund Policy'         => 'refund-policy',
+        'Shipping Policy'       => 'shipping-policy',
+        'Cookie Policy'         => 'cookie-policy',
+        'Data Policy'           => 'data-policy',
     ];
     $out = [];
     foreach ($slugs as $label => $slug) {
@@ -31,13 +32,37 @@ function sa_core_checkout_policy_links(): array
 }
 
 /**
- * Show policy reminder block before place-order.
+ * Reminder of Terms + Privacy + Chargeback + Returns before place order / terms checkbox.
+ */
+add_action('woocommerce_checkout_before_terms_and_conditions', static function (): void {
+    $links = sa_core_checkout_policy_links();
+    echo '<div class="sa-checkout-policy-notice woocommerce-info" role="note">';
+    echo '<p><strong>' . esc_html__('Before you place your order', 'supreme-autoparts-core') . '</strong></p>';
+    echo '<p>' . esc_html__('By placing an order you confirm you have read and agree to our store policies:', 'supreme-autoparts-core') . '</p>';
+    echo '<ul class="sa-checkout-policy-notice__list">';
+    foreach ($links as $label => $url) {
+        printf(
+            '<li><a href="%s" target="_blank" rel="noopener noreferrer">%s</a></li>',
+            esc_url($url),
+            esc_html($label)
+        );
+    }
+    echo '</ul>';
+    echo '<p>' . esc_html__('Questions or payment disputes:', 'supreme-autoparts-core') . ' ';
+    echo '<a href="mailto:calvin@supremeautoparts.co.ke">calvin@supremeautoparts.co.ke</a>.</p>';
+    echo '</div>';
+}, 5);
+
+/**
+ * Also show a compact list just above Place order if the theme skips terms hooks.
  */
 add_action('woocommerce_review_order_before_submit', static function (): void {
+    if (did_action('woocommerce_checkout_before_terms_and_conditions')) {
+        return;
+    }
     $links = sa_core_checkout_policy_links();
     echo '<div class="sa-checkout-policies" style="margin:1rem 0;padding:1rem;border:1px solid #333;border-radius:8px;background:#111;font-size:.9rem;">';
     echo '<p style="margin:0 0 .5rem;"><strong>' . esc_html__('Before you place your order', 'supreme-autoparts-core') . '</strong></p>';
-    echo '<p style="margin:0 0 .75rem;color:#bbb;">' . esc_html__('Please review our store policies. You must accept the Terms of Service to continue.', 'supreme-autoparts-core') . '</p>';
     echo '<ul style="margin:0;padding-left:1.2rem;columns:2;gap:1rem;">';
     foreach ($links as $label => $url) {
         printf(
@@ -57,8 +82,6 @@ add_action('woocommerce_checkout_process', static function (): void {
     if ($terms_id <= 0) {
         return;
     }
-    // WooCommerce core already validates terms when terms page is set;
-    // add an explicit message if missing.
     // phpcs:ignore WordPress.Security.NonceVerification.Missing
     if (empty($_POST['terms'])) {
         wc_add_notice(
@@ -69,6 +92,6 @@ add_action('woocommerce_checkout_process', static function (): void {
 }, 20);
 
 /**
- * Force Woo to show terms checkbox.
+ * Force Woo to show terms checkbox when terms page is configured.
  */
 add_filter('woocommerce_checkout_show_terms', '__return_true');

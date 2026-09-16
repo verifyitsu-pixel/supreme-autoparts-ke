@@ -105,9 +105,11 @@ bootstrap_wordpress() {
       --admin_email="$WORDPRESS_ADMIN_EMAIL" \
       --skip-email || true
   else
-    echo "[supreme] WordPress already installed — syncing URLs."
+    echo "[supreme] WordPress already installed — syncing URLs and admin email."
     wp_as option update home "$WP_HOME" || true
     wp_as option update siteurl "$WP_SITEURL" || true
+    wp_as option update admin_email "$WORDPRESS_ADMIN_EMAIL" || true
+    wp_as user update "$WORDPRESS_ADMIN_USER" --user_email="$WORDPRESS_ADMIN_EMAIL" 2>/dev/null || true
   fi
 
   wp_as option update timezone_string "Africa/Nairobi" || true
@@ -152,6 +154,10 @@ bootstrap_wordpress() {
   esac
   wp_as option update woocommerce_enable_myaccount_registration yes || true
   wp_as option update woocommerce_enable_signup_and_login_from_checkout yes || true
+  wp_as option update users_can_register 1 || true
+  wp_as option update woocommerce_enable_checkout_login_reminder yes || true
+  # SMTP note: From address is set above; deliverability needs SPF/DKIM + SMTP plugin.
+  echo "[supreme] Email From: Supreme Autoparts <${WORDPRESS_ADMIN_EMAIL}> — configure SMTP for production deliverability"
 
   # Optional catalog import from baked scrape chunk (Shopify CDN photos only).
   # Set SUPREME_IMPORT_ON_BOOT=1 on Railway to load the first real batch after deploy.

@@ -94,8 +94,8 @@ HTML,
 <p>Links to third-party sites are provided for convenience. Their privacy practices are their own.</p>
 <h2>7. International Visitors</h2>
 <p>If you access the site from outside Kenya, you understand information may be processed in Kenya or other locations where our service providers operate.</p>
-<h2>8. Data Protection</h2>
-<p>We process personal data as needed to fulfil orders and operate the store. For a fuller summary of rights and safeguards, see our <a href="/data-protection/">Data Protection</a> page. Kenya’s Data Protection Act, 2019 may provide additional rights.</p>
+<h2>8. Data Policy</h2>
+<p>We process personal data as needed to fulfil orders and operate the store. For a fuller summary of rights and safeguards, see our <a href="/data-policy/">Data Policy</a> page. Kenya’s Data Protection Act, 2019 may provide additional rights.</p>
 <h2>9. Changes</h2>
 <p>We may update this policy. Continued use after changes constitutes acceptance of the updated policy.</p>
 <h2>10. Contact</h2>
@@ -121,7 +121,7 @@ HTML,
 <h2>Typographical Errors</h2>
 <p>We may correct pricing or availability errors and cancel orders placed at incorrect prices.</p>
 <h2>Payments and Chargebacks</h2>
-<p>By placing an order you agree to pay all charges. Unauthorized chargebacks or payment disputes are addressed under our <a href="/chargeback-dispute-policy/">Chargeback / Dispute Policy</a>.</p>
+<p>By placing an order you agree to pay all charges. Unauthorized chargebacks or payment disputes are addressed under our <a href="/chargeback-policy/">Chargeback / Dispute Policy</a>.</p>
 <h2>Governing Law</h2>
 <p>These terms are intended to be governed by the laws of Kenya, without regard to conflict-of-law principles, unless mandatory consumer protections require otherwise. Have local counsel confirm jurisdiction language before launch.</p>
 <p>Questions: <a href="mailto:{$email}">{$email}</a>.</p>
@@ -170,11 +170,11 @@ HTML,
 </ul>
 <h2>Your choices</h2>
 <p>Most browsers let you block or delete cookies. Blocking essential cookies may prevent login, cart, or checkout from working. For privacy questions, contact <a href="mailto:{$email}">{$email}</a>.</p>
-<p>See also our <a href="/privacy-policy/">Privacy Policy</a> and <a href="/data-protection/">Data Protection</a> pages.</p>
+<p>See also our <a href="/privacy-policy/">Privacy Policy</a> and <a href="/data-policy/">Data Policy</a> pages.</p>
 HTML,
         ],
-        'chargeback-dispute-policy' => [
-            'title'   => 'Chargeback / Dispute Policy',
+        'chargeback-policy' => [
+            'title'   => 'Chargeback & Dispute Policy',
             'content' => <<<HTML
 <p><strong>Supreme Autoparts</strong> takes payment disputes seriously. Please contact us before opening a chargeback with your bank or card issuer — we can usually resolve issues faster.</p>
 <h2>Contact us first</h2>
@@ -192,8 +192,8 @@ HTML,
 <p>Related: <a href="/terms/">Terms of Service</a>.</p>
 HTML,
         ],
-        'data-protection' => [
-            'title'   => 'Data Protection',
+        'data-policy' => [
+            'title'   => 'Data Policy',
             'content' => <<<HTML
 <p>Supreme Autoparts processes personal data to operate {$site}, fulfil orders, and support customers. This page summarizes our approach under Kenya’s Data Protection Act, 2019 and related consumer protections. It complements our <a href="/privacy-policy/">Privacy Policy</a>.</p>
 <h2>What we process</h2>

@@ -99,6 +99,25 @@ ul,ol { margin: 0 0 1em; padding-left: 1.2em; }
   width: 40px; height: 40px; border: 2px solid var(--sa-yellow); border-radius: 50%;
   display: grid; place-items: center; color: var(--sa-yellow); font-size: 1.1rem;
 }
+
+.sa-logo .custom-logo,
+.sa-logo__img {
+  display: block;
+  max-height: 52px;
+  width: auto;
+  height: auto;
+}
+.sa-checkout-policy-notice {
+  margin: 1rem 0 1.25rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--sa-border, #333);
+  border-left: 4px solid var(--sa-yellow, #f5c518);
+  background: var(--sa-bg-alt, #111);
+  border-radius: var(--sa-radius, 6px);
+}
+.sa-checkout-policy-notice p { margin: 0 0 .5rem; }
+.sa-checkout-policy-notice p:last-child { margin-bottom: 0; }
+.sa-checkout-policy-notice a { color: var(--sa-yellow, #f5c518); text-decoration: underline; }
 .sa-search {
   flex: 1; max-width: 520px; position: relative;
 }

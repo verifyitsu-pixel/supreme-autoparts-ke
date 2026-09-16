@@ -27,7 +27,6 @@ require_once SA_CORE_DIR . 'includes/seed-pages.php';
 require_once SA_CORE_DIR . 'includes/cli.php';
 require_once SA_CORE_DIR . 'includes/admin-import.php';
 require_once SA_CORE_DIR . 'includes/product-images.php';
-require_once SA_CORE_DIR . 'includes/checkout-policies.php';
 require_once SA_CORE_DIR . 'includes/checkout-terms.php';
 require_once SA_CORE_DIR . 'includes/store-settings.php';
 // import-shopify.php is loaded by CLI/admin/boot import and by product-images helpers when needed.
