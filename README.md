@@ -1,6 +1,6 @@
 # Supreme Autoparts (supremeautoparts.co.ke)
 
-WordPress + WooCommerce storefront — visual/UX replica of [supreme-mods.com](https://supreme-mods.com/), rebranded as **Supreme Autoparts** for Kenya (KES, Africa/Nairobi). Deployable on **Railway via Git auto-deploy**.
+WordPress + WooCommerce storefront — visual/UX replica of [supreme-mods.com](https://supreme-mods.com/), rebranded as **Supreme Autoparts** for Kenya (KES, Africa/Nairobi). Deployable on **Railway via Git auto-deploy**, with **Cloudflare** in front for DNS/CDN/proxy (see [Cloudflare + Railway](#cloudflare--railway)).
 
 > Catalog note: the source store has on the order of **~1M listings** and **~917 collections**. This repo ships **sample products only** plus an import helper. Full catalog migration is a later pipeline.
 
@@ -63,6 +63,14 @@ Sample USD prices are converted with `SUPREME_USD_TO_KES` (default `130`) for di
 8. After first deploy: log in, run sample import, configure shipping zones, and enable payment gateways (M-Pesa / card) — stubs only; no credentials in repo.
 
 Health check: `GET /healthz.php` → `ok`.
+
+## Cloudflare + Railway
+
+Production edge: **Cloudflare** (DNS, CDN, proxy, optional WAF) in front of **Railway** (WordPress / WooCommerce PHP origin).
+
+**Cloudflare Pages cannot run WordPress** — do not deploy this app to Pages. Point the zone at your Railway hostname with orange-cloud proxy, SSL/TLS **Full (strict)**, cache bypass for cart/checkout/account/admin/`wc-ajax`/`wc-api`/Woo cookies, and longer TTL for `/wp-content/uploads` and theme static assets. Keep the Whop webhook (`/?wc-api=whop_webhook`) publicly reachable with **no bot challenge**.
+
+Step-by-step: **[docs/cloudflare.md](docs/cloudflare.md)**. Cache rule sketch: [`cloudflare-cache-rules.json`](cloudflare-cache-rules.json).
 
 ## Project layout
 

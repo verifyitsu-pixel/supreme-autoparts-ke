@@ -1,0 +1,32 @@
+{
+  "$schema_note": "Reference only — apply equivalent Cache Rules in the Cloudflare dashboard (or API). Not consumed by Wrangler/Pages.",
+  "zone": "supremeautoparts.co.ke",
+  "rules": [
+    {
+      "name": "WooCommerce and WP admin — bypass cache",
+      "description": "Never cache cart, checkout, account, admin, login, wc-ajax, wc-api (Whop webhook), or sessions with WP/Woo cookies.",
+      "enabled": true,
+      "priority": 1,
+      "expression": "(starts_with(http.request.uri.path, \"/cart\")) or (starts_with(http.request.uri.path, \"/checkout\")) or (starts_with(http.request.uri.path, \"/my-account\")) or (starts_with(http.request.uri.path, \"/wp-admin\")) or (starts_with(http.request.uri.path, \"/wp-login.php\")) or (starts_with(http.request.uri.path, \"/wp-json/\")) or (http.request.uri.query contains \"wc-ajax=\") or (http.request.uri.query contains \"wc-api=\") or (http.cookie contains \"wordpress_logged_in_\") or (http.cookie contains \"woocommerce_items_in_cart\")",
+      "action": "bypass_cache"
+    },
+    {
+      "name": "Static uploads and theme/plugin assets — long TTL",
+      "description": "Cache media and static CSS/JS/fonts/images under wp-content with a long edge TTL. Keep priority after bypass.",
+      "enabled": true,
+      "priority": 2,
+      "expression": "(starts_with(http.request.uri.path, \"/wp-content/uploads/\")) or ((starts_with(http.request.uri.path, \"/wp-content/themes/\") or starts_with(http.request.uri.path, \"/wp-content/plugins/\")) and (ends_with(http.request.uri.path, \".css\") or ends_with(http.request.uri.path, \".js\") or ends_with(http.request.uri.path, \".woff2\") or ends_with(http.request.uri.path, \".png\") or ends_with(http.request.uri.path, \".jpg\") or ends_with(http.request.uri.path, \".jpeg\") or ends_with(http.request.uri.path, \".webp\") or ends_with(http.request.uri.path, \".svg\") or ends_with(http.request.uri.path, \".ico\")))",
+      "action": "cache_eligible",
+      "edge_ttl_seconds": 2592000,
+      "browser_ttl_seconds": 86400,
+      "notes": "2592000 = 30 days edge; tune browser TTL as needed. Prefer Ignore origin cache-control if Railway sends no-cache on static files."
+    }
+  ],
+  "waf_skip_challenges_note": {
+    "name": "Skip bot challenges on Whop webhook",
+    "expression": "(http.request.uri.query contains \"wc-api=whop_webhook\")",
+    "action": "skip",
+    "products": ["bot_fight_mode", "managed_challenge", "security_level"],
+    "why": "Whop POSTs to /?wc-api=whop_webhook must reach WordPress without an HTML challenge interstitial."
+  }
+}
