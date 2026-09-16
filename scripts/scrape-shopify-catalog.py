@@ -329,12 +329,54 @@ class Scraper:
         self.stats["errors"] = self.errors[-100:]
         self.stats["chunk_index"] = self._chunk_index
         self.stats["delay_s"] = self.limiter.min_interval
+        queued = int(self.stats.get("sitemap_handles_queued") or 0)
+        unique = len(self.seen_ids)
+        remaining = max(0, queued - unique) if queued else 0
+        delay = float(self.limiter.min_interval or 10.0)
+        self.stats["eta_remaining_handles"] = remaining
+        self.stats["eta_seconds"] = int(remaining * delay)
+        self.stats["eta_days"] = round((remaining * delay) / 86400.0, 2)
         tmp = self._progress_path.with_suffix(".json.tmp")
         tmp.write_text(json.dumps(self.stats, indent=2), encoding="utf-8")
         tmp.replace(self._progress_path)
         self._since_save = 0
 
+    def normalize_product(self, product: dict[str, Any]) -> dict[str, Any]:
+        """Keep the fields import needs; never invent images/prices/descriptions."""
+        images = product.get("images") if isinstance(product.get("images"), list) else []
+        variants = product.get("variants") if isinstance(product.get("variants"), list) else []
+        # Ensure variants always expose sku/price keys when present
+        norm_variants = []
+        for v in variants:
+            if not isinstance(v, dict):
+                continue
+            norm_variants.append({
+                **v,
+                "sku": v.get("sku") or "",
+                "price": v.get("price") or "0",
+                "compare_at_price": v.get("compare_at_price"),
+                "available": v.get("available", True),
+            })
+        tags = product.get("tags")
+        if isinstance(tags, list):
+            tags_out = tags
+        else:
+            tags_out = tags or ""
+        return {
+            **product,
+            "id": product.get("id"),
+            "title": product.get("title") or "",
+            "handle": product.get("handle") or "",
+            "body_html": product.get("body_html") or "",
+            "product_type": product.get("product_type") or "",
+            "vendor": product.get("vendor") or "",
+            "tags": tags_out,
+            "images": images,
+            "variants": norm_variants,
+        }
+
     def write_product(self, product: dict[str, Any]) -> bool:
+        product = self.normalize_product(product)
         pid = product.get("id")
         handle = product.get("handle") or ""
         if pid is None:
@@ -370,7 +412,7 @@ class Scraper:
         self.stats["products_unique"] = len(self.seen_ids)
         self.stats["ndjson_lines"] = int(self.stats.get("ndjson_lines") or 0) + 1
         self._since_save += 1
-        if self._since_save >= 50:
+        if self._since_save >= 10:
             self.flush_writers()
             self.save_progress()
         return True
@@ -614,9 +656,8 @@ Updated: {nairobi_now()}
         # Gap-fill missing handles
         missing = [h for h in handles if h not in self.seen_handles]
         print(f"[sitemap] gap-fill {len(missing)} / {len(handles)} handles not yet scraped", flush=True)
-        fetched_already = int(self.stats.get("sitemap_fetched") or 0)
-        # allow resume mid-gapfill by skipping first N successful attempts tracked
-        # simpler: skip handles already in seen_handles (done above)
+        # sitemap_fetched = successful product writes from gap-fill (monotonic).
+        fetched_ok = int(self.stats.get("sitemap_fetched") or 0)
         for n, handle in enumerate(missing):
             if handle in self.seen_handles:
                 continue
@@ -624,23 +665,36 @@ Updated: {nairobi_now()}
                 data = self.fetch_json(f"/products/{handle}.json")
             except Exception as e:
                 self.errors.append({"handle": handle, "error": str(e), "at": utc_now()})
-                if (n + 1) % 20 == 0:
+                # Keep progress.json fresh even when requests fail.
+                if (n + 1) % 5 == 0:
+                    self.stats["sitemap_gap_index"] = n + 1
+                    self.stats["sitemap_gap_total"] = len(missing)
                     self.save_progress()
                 continue
             if not data:
+                if (n + 1) % 5 == 0:
+                    self.stats["sitemap_gap_index"] = n + 1
+                    self.stats["sitemap_gap_total"] = len(missing)
+                    self.save_progress()
                 continue
             product = data.get("product") if isinstance(data, dict) else None
             if not isinstance(product, dict):
                 continue
             self.stats["products_seen_raw"] = int(self.stats.get("products_seen_raw") or 0) + 1
-            self.write_product(product)
-            self.stats["sitemap_fetched"] = fetched_already + n + 1
-            if (n + 1) % 10 == 0:
+            wrote = self.write_product(product)
+            if wrote:
+                fetched_ok += 1
+                self.stats["sitemap_fetched"] = fetched_ok
+            self.stats["sitemap_gap_index"] = n + 1
+            self.stats["sitemap_gap_total"] = len(missing)
+            # Persist progress every 5 gap-fill attempts so monitors are not stale vs ndjson.
+            if (n + 1) % 5 == 0 or wrote:
                 self.flush_writers()
                 self.save_progress()
+            if (n + 1) % 10 == 0:
                 print(
                     f"[sitemap fetch {n+1}/{len(missing)}] unique={len(self.seen_ids)} "
-                    f"last={handle!r} @ {nairobi_now()}",
+                    f"sitemap_fetched={fetched_ok} last={handle!r} @ {nairobi_now()}",
                     flush=True,
                 )
         self.flush_writers()

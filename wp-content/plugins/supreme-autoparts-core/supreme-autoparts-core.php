@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Supreme Autoparts Core
  * Description: Branding defaults, category seed, static pages, invoices, admin dashboard, and Shopify JSON import helpers for Supreme Autoparts.
- * Version: 1.3.2
+ * Version: 1.3.3
  * Author: Supreme Autoparts
  * Text Domain: supreme-autoparts-core
  * Requires at least: 6.4
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_CORE_VERSION', '1.3.2');
+define('SA_CORE_VERSION', '1.3.3');
 define('SA_CORE_FILE', __FILE__);
 define('SA_CORE_DIR', plugin_dir_path(__FILE__));
 define('SA_CORE_URL', plugin_dir_url(__FILE__));
@@ -369,6 +369,8 @@ add_action('rest_api_init', static function (): void {
 
                 // Prefer 400-with-images so parent + leaf archives fill (CDN meta only over HTTP).
                 $candidates = [
+                    SA_CORE_DIR . 'data/scrape/chunks/batch-with-images-2000.ndjson',
+                    '/usr/src/supreme-data/scrape/chunks/batch-with-images-2000.ndjson',
                     SA_CORE_DIR . 'data/scrape/chunks/batch-with-images-400.ndjson',
                     '/usr/src/supreme-data/scrape/chunks/batch-with-images-400.ndjson',
                     SA_CORE_DIR . 'data/scrape/chunks/batch-with-images-50.ndjson',
@@ -400,7 +402,7 @@ add_action('rest_api_init', static function (): void {
                 if ($limit <= 0) {
                     $limit = str_contains($file, 'batch-with-images-400') ? 400 : 50;
                 }
-                $limit = min(400, max(1, $limit));
+                $limit = min(2000, max(1, $limit));
                 require_once SA_CORE_DIR . 'includes/import-shopify.php';
                 $result = sa_core_import_shopify_products_file($file, [
                     'limit'          => $limit,

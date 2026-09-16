@@ -4,8 +4,9 @@
 
 When `SUPREME_IMPORT_ON_BOOT=1` (or first boot with no `sa_boot_import_done` flag), the entrypoint imports products that have **real Shopify CDN photos**:
 
-1. Prefer `data/scrape/chunks/batch-with-images-400.ndjson` (default path)
-2. Fallback: `batch-with-images-50.ndjson`
+1. Prefer `data/scrape/chunks/batch-with-images-2000.ndjson` when present
+2. Else `batch-with-images-400.ndjson`
+3. Fallback: `batch-with-images-50.ndjson`
 
 Env knobs:
 
@@ -56,3 +57,13 @@ When published product count is `0`, the token is optional. Response includes `p
 
 Import stores Shopify variant prices as **USD** on `_regular_price` / `_sale_price` (no KES multiply).
 `woocommerce_currency` should be `USD` (`WOO_CURRENCY=USD`). Display-currency FX by visitor IP is handled separately; catalog amounts remain USD.
+
+
+## Rolling batches from live scrape
+
+```bash
+./scripts/ensure-scrape-running.sh   # never kills an active scrape
+python3 scripts/build-import-batches.py --sizes 400,2000
+```
+
+Set `SUPREME_IMPORT_LIMIT=2000` (or higher later) on Railway; empty catalog still force-imports.

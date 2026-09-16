@@ -210,6 +210,9 @@ bootstrap_wordpress() {
     IMPORT_FILE="${SUPREME_IMPORT_FILE:-}"
     if [[ -z "$IMPORT_FILE" ]]; then
       for c in \
+        /var/www/html/wp-content/plugins/supreme-autoparts-core/data/scrape/chunks/batch-with-images-2000.ndjson \
+        /usr/src/supreme-data/scrape/chunks/batch-with-images-2000.ndjson \
+        /var/www/html/data/scrape/chunks/batch-with-images-2000.ndjson \
         /var/www/html/wp-content/plugins/supreme-autoparts-core/data/scrape/chunks/batch-with-images-400.ndjson \
         /usr/src/supreme-data/scrape/chunks/batch-with-images-400.ndjson \
         /var/www/html/data/scrape/chunks/batch-with-images-400.ndjson \
@@ -222,7 +225,9 @@ bootstrap_wordpress() {
     fi
     # Default limit: 400 when using 400-batch, else 50.
     if [[ -z "${SUPREME_IMPORT_LIMIT:-}" ]]; then
-      if [[ "$IMPORT_FILE" == *batch-with-images-400* ]]; then
+      if [[ "$IMPORT_FILE" == *batch-with-images-2000* ]]; then
+        IMPORT_LIMIT=2000
+      elif [[ "$IMPORT_FILE" == *batch-with-images-400* ]]; then
         IMPORT_LIMIT=400
       else
         IMPORT_LIMIT=50
