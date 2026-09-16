@@ -163,15 +163,20 @@ add_action('woocommerce_admin_order_data_after_order_details', static function (
     if (!$order instanceof WC_Order || !current_user_can('manage_woocommerce')) {
         return;
     }
-    $invoice = sa_core_invoice_url((int) $order->get_id());
+    $oid = (int) $order->get_id();
+    $invoice = sa_core_invoice_url($oid);
     $pay = $order->get_checkout_payment_url();
     $view = $order->get_view_order_url();
-    echo '<div class="order_data_column" style="clear:both;padding-top:1em;">';
-    echo '<h3>' . esc_html__('Supreme invoice &amp; payment links', 'supreme-autoparts-core') . '</h3>';
-    echo '<p><strong>Invoice:</strong> <input type="text" class="widefat" readonly value="' . esc_attr($invoice) . '" onclick="this.select()" /></p>';
-    echo '<p><strong>Pay:</strong> <input type="text" class="widefat" readonly value="' . esc_attr($pay) . '" onclick="this.select()" /></p>';
-    echo '<p><strong>Customer view:</strong> <input type="text" class="widefat" readonly value="' . esc_attr($view) . '" onclick="this.select()" /></p>';
-    echo '<p><a class="button" href="' . esc_url($invoice) . '" target="_blank" rel="noopener">Open invoice</a></p>';
+    $inv_id = 'sa-order-inv-' . $oid;
+    $pay_id = 'sa-order-pay-' . $oid;
+    $view_id = 'sa-order-view-' . $oid;
+    echo '<div class="order_data_column sa-invoice-box">';
+    echo '<h3>' . esc_html__('Supreme invoice & payment links', 'supreme-autoparts-core') . '</h3>';
+    echo '<div class="sa-copy-row"><label>Invoice</label><input id="' . esc_attr($inv_id) . '" type="text" class="widefat" readonly value="' . esc_attr($invoice) . '" onclick="this.select()" /><button type="button" class="button" data-sa-copy="#' . esc_attr($inv_id) . '">Copy</button></div>';
+    echo '<div class="sa-copy-row"><label>Pay</label><input id="' . esc_attr($pay_id) . '" type="text" class="widefat" readonly value="' . esc_attr($pay) . '" onclick="this.select()" /><button type="button" class="button" data-sa-copy="#' . esc_attr($pay_id) . '">Copy</button></div>';
+    echo '<div class="sa-copy-row"><label>Customer</label><input id="' . esc_attr($view_id) . '" type="text" class="widefat" readonly value="' . esc_attr($view) . '" onclick="this.select()" /><button type="button" class="button" data-sa-copy="#' . esc_attr($view_id) . '">Copy</button></div>';
+    echo '<p style="margin:8px 0 0;"><a class="button button-primary" href="' . esc_url($invoice) . '" target="_blank" rel="noopener">Open invoice</a> ';
+    echo '<a class="button" href="' . esc_url(admin_url('admin.php?page=supreme-orders')) . '">Order tools</a></p>';
     echo '</div>';
 });
 

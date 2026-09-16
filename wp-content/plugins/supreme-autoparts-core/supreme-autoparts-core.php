@@ -32,7 +32,12 @@ require_once SA_CORE_DIR . 'includes/checkout-terms.php';
 require_once SA_CORE_DIR . 'includes/store-settings.php';
 require_once SA_CORE_DIR . 'includes/customer-accounts.php';
 require_once SA_CORE_DIR . 'includes/invoices.php';
+require_once SA_CORE_DIR . 'includes/admin-ultra.php';
 require_once SA_CORE_DIR . 'includes/admin-dashboard.php';
+require_once SA_CORE_DIR . 'includes/admin-orders.php';
+require_once SA_CORE_DIR . 'includes/admin-products.php';
+require_once SA_CORE_DIR . 'includes/admin-customers.php';
+require_once SA_CORE_DIR . 'includes/admin-leads.php';
 // import-shopify.php is loaded by CLI/admin/boot import and by product-images helpers when needed.
 
 register_activation_hook(__FILE__, static function (): void {

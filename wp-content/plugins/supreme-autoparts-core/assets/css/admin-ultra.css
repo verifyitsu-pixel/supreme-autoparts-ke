@@ -1,0 +1,386 @@
+/* Supreme Autoparts — Ultra admin (wp-admin) */
+.sa-ultra {
+  --sa-ink: #1a1d21;
+  --sa-muted: #5c6570;
+  --sa-line: #d8dde3;
+  --sa-soft: #f4f6f8;
+  --sa-card: #ffffff;
+  --sa-accent: #c45c26;
+  --sa-accent-ink: #fff;
+  --sa-ok: #1b7f4e;
+  --sa-warn: #a15c00;
+  --sa-bad: #b42318;
+  --sa-radius: 10px;
+  max-width: 1180px;
+  color: var(--sa-ink);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.sa-ultra *,
+.sa-ultra *::before,
+.sa-ultra *::after {
+  box-sizing: border-box;
+}
+
+.sa-ultra__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin: 8px 0 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--sa-line);
+}
+
+.sa-ultra__title {
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.sa-ultra__sub {
+  margin: 0;
+  color: var(--sa-muted);
+  max-width: 52ch;
+}
+
+.sa-ultra__email {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--sa-soft);
+  border: 1px solid var(--sa-line);
+  border-radius: 999px;
+  color: var(--sa-ink);
+  text-decoration: none;
+  font-weight: 550;
+}
+
+.sa-ultra__email:hover {
+  border-color: #b8c0c9;
+  color: var(--sa-ink);
+}
+
+.sa-ultra__kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 22px;
+}
+
+@media (max-width: 1100px) {
+  .sa-ultra__kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .sa-ultra__kpis {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sa-kpi {
+  background: var(--sa-card);
+  border: 1px solid var(--sa-line);
+  border-radius: var(--sa-radius);
+  padding: 14px 16px;
+  box-shadow: 0 1px 0 rgba(16, 24, 40, 0.02);
+}
+
+.sa-kpi__label {
+  display: block;
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sa-muted);
+}
+
+.sa-kpi__value {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.sa-kpi__hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--sa-muted);
+}
+
+.sa-kpi--warn .sa-kpi__value {
+  color: var(--sa-warn);
+}
+
+.sa-ultra__grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 960px) {
+  .sa-ultra__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sa-panel {
+  background: var(--sa-card);
+  border: 1px solid var(--sa-line);
+  border-radius: var(--sa-radius);
+  padding: 16px 18px;
+}
+
+.sa-panel__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+
+.sa-panel__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.sa-panel__link {
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.sa-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sa-actions .button {
+  margin: 0;
+}
+
+.sa-actions .button-primary {
+  background: var(--sa-accent);
+  border-color: #a84d1f;
+  color: var(--sa-accent-ink);
+  text-shadow: none;
+  box-shadow: none;
+}
+
+.sa-actions .button-primary:hover,
+.sa-actions .button-primary:focus {
+  background: #a84d1f;
+  border-color: #8f4119;
+  color: #fff;
+}
+
+.sa-health {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sa-health li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--sa-soft);
+}
+
+.sa-health li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.sa-health__label {
+  font-weight: 550;
+}
+
+.sa-health__meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--sa-muted);
+  word-break: break-all;
+}
+
+.sa-badge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.sa-badge--ok {
+  color: var(--sa-ok);
+  background: #e8f6ee;
+  border-color: #b7e0c7;
+}
+
+.sa-badge--warn {
+  color: var(--sa-warn);
+  background: #fff4e5;
+  border-color: #f0d2a0;
+}
+
+.sa-badge--bad {
+  color: var(--sa-bad);
+  background: #fdeceb;
+  border-color: #f3c1bc;
+}
+
+.sa-table-wrap {
+  overflow-x: auto;
+}
+
+.sa-ultra table.sa-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+.sa-ultra table.sa-table th,
+.sa-ultra table.sa-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--sa-soft);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.sa-ultra table.sa-table th {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--sa-muted);
+  font-weight: 650;
+}
+
+.sa-ultra table.sa-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.sa-copy-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.sa-copy-row input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+.sa-copy-row .button {
+  flex-shrink: 0;
+}
+
+.sa-muted {
+  color: var(--sa-muted);
+}
+
+.sa-note-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sa-note-list li {
+  padding: 10px 0;
+  border-top: 1px solid var(--sa-soft);
+}
+
+.sa-note-list li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.sa-note-list__meta {
+  font-size: 12px;
+  color: var(--sa-muted);
+  margin-bottom: 4px;
+}
+
+.sa-form-grid {
+  display: grid;
+  gap: 10px;
+  max-width: 520px;
+}
+
+.sa-form-grid label {
+  display: grid;
+  gap: 4px;
+  font-weight: 550;
+}
+
+.sa-form-grid input[type="text"],
+.sa-form-grid input[type="email"],
+.sa-form-grid select,
+.sa-form-grid textarea {
+  width: 100%;
+  max-width: 100%;
+}
+
+.sa-inline-notice {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--sa-line);
+  background: var(--sa-soft);
+}
+
+.sa-inline-notice--ok {
+  background: #e8f6ee;
+  border-color: #b7e0c7;
+}
+
+.sa-inline-notice--warn {
+  background: #fff4e5;
+  border-color: #f0d2a0;
+}
+
+/* Order meta box polish */
+.sa-invoice-box {
+  clear: both;
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: #f8f9fb;
+  border: 1px solid #d8dde3;
+  border-radius: 8px;
+}
+
+.sa-invoice-box h3 {
+  margin: 0 0 10px;
+  font-size: 13px;
+}
+
+.sa-invoice-box .sa-copy-row {
+  margin: 0 0 8px;
+}
+
+.sa-invoice-box .sa-copy-row label {
+  display: block;
+  min-width: 88px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #5c6570;
+}
