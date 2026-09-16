@@ -730,3 +730,391 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ——— Addresses ——— */
+.sa-addresses__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.sa-address-card {
+  background: var(--sa-bg-alt);
+  border: 1px solid var(--sa-border);
+  border-radius: var(--sa-radius);
+  padding: 1rem 1.1rem 1.15rem;
+  min-width: 0;
+}
+
+.sa-address-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-bottom: .75rem;
+  padding-bottom: .65rem;
+  border-bottom: 1px solid var(--sa-border);
+}
+
+.sa-address-card__head h3 {
+  margin: 0;
+  font-size: 1rem;
+  text-transform: none;
+  color: var(--sa-heading);
+}
+
+.sa-address-card__body {
+  display: block;
+  font-style: normal;
+  color: var(--sa-text);
+  line-height: 1.55;
+  font-size: .9rem;
+  word-break: break-word;
+}
+
+.sa-address-card__empty {
+  color: var(--sa-text-muted);
+}
+
+.sa-edit-address__back {
+  margin: .65rem 0 0;
+  font-size: .85rem;
+}
+
+.sa-edit-address__back a {
+  color: var(--sa-accent);
+  font-weight: 600;
+}
+
+.sa-edit-address__fields .form-row {
+  margin: 0 0 .85rem;
+}
+
+.sa-edit-address__fields label {
+  display: block;
+  margin-bottom: .3rem;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--sa-heading);
+}
+
+.sa-edit-address__fields .input-text,
+.sa-edit-address__fields select,
+.sa-edit-address__fields .select2-selection {
+  width: 100%;
+  max-width: 100%;
+  background: var(--sa-bg) !important;
+  border: 1px solid var(--sa-border) !important;
+  border-radius: var(--sa-radius);
+  color: var(--sa-heading) !important;
+  padding: .65rem .75rem;
+  font: inherit;
+}
+
+.sa-edit-address__fields .form-row-first,
+.sa-edit-address__fields .form-row-last {
+  width: 100%;
+  float: none;
+}
+
+.sa-edit-address__fields .form-row-wide {
+  clear: both;
+}
+
+/* ——— Orders list ——— */
+.sa-orders__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+}
+
+.sa-orders__pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: 1rem;
+}
+
+.sa-my-account .woocommerce-orders-table,
+.sa-my-account .woocommerce-MyAccount-orders {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 !important;
+}
+
+.sa-my-account .woocommerce-orders-table th,
+.sa-my-account .woocommerce-orders-table td,
+.sa-my-account .woocommerce-MyAccount-orders th,
+.sa-my-account .woocommerce-MyAccount-orders td {
+  padding: .85rem 1rem;
+  border-bottom: 1px solid var(--sa-border);
+  vertical-align: middle;
+  text-align: left;
+}
+
+.sa-my-account .woocommerce-orders-table a,
+.sa-my-account .woocommerce-MyAccount-orders a:not(.sa-btn) {
+  color: var(--sa-accent);
+  font-weight: 600;
+}
+
+/* ——— View order ——— */
+.sa-view-order__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.sa-view-order__docs,
+.sa-order-docs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin: 0 0 1rem;
+}
+
+.sa-view-order__meta mark,
+.sa-view-order mark {
+  background: transparent;
+  color: var(--sa-accent);
+  font-weight: 700;
+}
+
+.sa-view-order__updates {
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  background: var(--sa-bg-alt);
+  border: 1px solid var(--sa-border);
+  border-radius: var(--sa-radius);
+}
+
+.sa-view-order__updates h3 {
+  margin: 0 0 .65rem;
+  font-size: 1rem;
+  text-transform: none;
+}
+
+.sa-view-order__notes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sa-view-order__notes li {
+  margin: 0 0 .75rem;
+  padding-bottom: .75rem;
+  border-bottom: 1px solid var(--sa-border);
+}
+
+.sa-view-order__notes li:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.sa-view-order__details {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sa-view-order .woocommerce-order-details,
+.sa-view-order .woocommerce-customer-details {
+  margin-top: 1.25rem;
+}
+
+.sa-view-order .woocommerce-order-details__title,
+.sa-view-order .woocommerce-column__title {
+  font-size: 1.05rem;
+  text-transform: none;
+  color: var(--sa-heading);
+  margin: 0 0 .75rem;
+}
+
+.sa-view-order table.shop_table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--sa-bg-alt);
+  border: 1px solid var(--sa-border);
+  border-radius: var(--sa-radius);
+  overflow: hidden;
+}
+
+.sa-view-order table.shop_table th,
+.sa-view-order table.shop_table td {
+  padding: .75rem .9rem;
+  border-color: var(--sa-border) !important;
+}
+
+.sa-view-order .woocommerce-customer-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.sa-view-order .woocommerce-columns--2,
+.sa-view-order .col2-set {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.sa-view-order .woocommerce-column,
+.sa-view-order .col-1,
+.sa-view-order .col-2 {
+  float: none !important;
+  width: auto !important;
+  background: var(--sa-bg-alt);
+  border: 1px solid var(--sa-border);
+  border-radius: var(--sa-radius);
+  padding: 1rem;
+}
+
+.sa-view-order address {
+  font-style: normal;
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+/* Downloads */
+.sa-my-account .woocommerce-MyAccount-downloads,
+.sa-my-account .woocommerce-table--order-downloads {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.sa-my-account .account-downloads-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Prevent horizontal page blowout on account */
+.sa-my-account,
+.sa-my-account__content,
+.sa-account-panel {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.sa-account-panel {
+  overflow-x: clip;
+}
+
+@media (max-width: 900px) {
+  .sa-addresses__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sa-view-order .woocommerce-customer-details,
+  .sa-view-order .woocommerce-columns--2,
+  .sa-view-order .col2-set {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .sa-account-panel {
+    padding: 1.1rem 1rem 1.25rem;
+  }
+
+  .sa-view-order__docs,
+  .sa-order-docs,
+  .sa-pm__actions,
+  .sa-orders__actions {
+    width: 100%;
+  }
+
+  .sa-view-order__docs .sa-btn,
+  .sa-order-docs .sa-btn,
+  .sa-pm__actions .sa-btn {
+    flex: 1 1 auto;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .sa-my-account .woocommerce-orders-table thead,
+  .sa-my-account .woocommerce-MyAccount-orders thead,
+  .sa-orders .sa-dash__table thead {
+    display: none;
+  }
+
+  .sa-my-account .woocommerce-orders-table tr,
+  .sa-my-account .woocommerce-MyAccount-orders tr,
+  .sa-orders .sa-dash__table tr {
+    display: block;
+    padding: .75rem 0;
+    border-bottom: 1px solid var(--sa-border);
+  }
+
+  .sa-my-account .woocommerce-orders-table th,
+  .sa-my-account .woocommerce-orders-table td,
+  .sa-my-account .woocommerce-MyAccount-orders th,
+  .sa-my-account .woocommerce-MyAccount-orders td,
+  .sa-orders .sa-dash__table td,
+  .sa-orders .sa-dash__table th {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    border-bottom: 0 !important;
+    padding: .35rem 1rem;
+    width: 100%;
+  }
+
+  .sa-my-account .woocommerce-orders-table td::before,
+  .sa-my-account .woocommerce-orders-table th::before,
+  .sa-my-account .woocommerce-MyAccount-orders td::before,
+  .sa-my-account .woocommerce-MyAccount-orders th::before {
+    content: attr(data-title);
+    color: var(--sa-text-muted);
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-weight: 650;
+    flex: 0 0 auto;
+  }
+
+  .sa-orders__actions {
+    justify-content: flex-end;
+  }
+
+  .sa-view-order table.shop_table thead {
+    display: none;
+  }
+
+  .sa-view-order table.shop_table tr {
+    display: block;
+    border-bottom: 1px solid var(--sa-border);
+    padding: .55rem 0;
+  }
+
+  .sa-view-order table.shop_table td,
+  .sa-view-order table.shop_table th {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    border: 0 !important;
+    padding: .3rem .9rem;
+  }
+
+  .sa-edit-address__fields .form-row-first,
+  .sa-edit-address__fields .form-row-last {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .sa-container {
+    width: min(100% - 1.25rem, var(--sa-max));
+  }
+
+  .sa-dash__links {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .sa-account-nav a {
+    font-size: .7rem;
+    padding: .55rem .65rem;
+  }
+}

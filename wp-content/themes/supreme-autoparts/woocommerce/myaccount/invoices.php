@@ -22,7 +22,7 @@ if (function_exists('wc_get_orders')) {
 <div class="sa-account-panel sa-invoices">
   <header class="sa-account-panel__head">
     <h2><?php esc_html_e('Invoices', 'supreme-autoparts'); ?></h2>
-    <p class="sa-account-panel__lead"><?php esc_html_e('Download printable invoices for your recent orders.', 'supreme-autoparts'); ?></p>
+    <p class="sa-account-panel__lead"><?php esc_html_e('Open printable invoices and receipts for your recent orders.', 'supreme-autoparts'); ?></p>
   </header>
 
   <?php if (empty($orders)) : ?>
@@ -60,7 +60,7 @@ if (function_exists('wc_get_orders')) {
               <td data-title="<?php esc_attr_e('Total', 'supreme-autoparts'); ?>"><?php echo wp_kses_post($order->get_formatted_order_total()); ?></td>
               <td>
                 <a class="sa-btn sa-btn--outline sa-btn--sm" href="<?php echo esc_url($invoice_url); ?>" target="_blank" rel="noopener">
-                  <?php esc_html_e('Invoice', 'supreme-autoparts'); ?>
+                  <?php esc_html_e('Invoice / Receipt', 'supreme-autoparts'); ?>
                 </a>
               </td>
             </tr>

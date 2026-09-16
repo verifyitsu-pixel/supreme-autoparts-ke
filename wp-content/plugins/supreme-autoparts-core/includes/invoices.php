@@ -93,22 +93,44 @@ function sa_core_render_invoice_html($order): void
   <meta charset="utf-8" />
   <title>Invoice #<?php echo esc_html($order->get_order_number()); ?> — <?php echo esc_html($store); ?></title>
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:2rem;color:#111;background:#fff}
-    h1{font-size:1.5rem;margin:0 0 .25rem}
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:1.25rem;color:#111;background:#fff;line-height:1.45}
+    .wrap{max-width:820px;margin:0 auto}
+    h1{font-size:clamp(1.2rem,4vw,1.5rem);margin:0 0 .25rem}
     .muted{color:#555;font-size:.9rem}
-    table{width:100%;border-collapse:collapse;margin:1.5rem 0}
-    th,td{border-bottom:1px solid #ddd;padding:.55rem .4rem;text-align:left}
+    table{width:100%;border-collapse:collapse;margin:1.25rem 0;font-size:.95rem}
+    th,td{border-bottom:1px solid #ddd;padding:.55rem .4rem;text-align:left;vertical-align:top}
     th{background:#f6f6f6}
     .right{text-align:right}
+    .totals{max-width:320px;margin-left:auto}
     .totals td{border:0}
     .totals tr td:last-child{text-align:right;font-weight:600}
     .box{border:1px solid #e2e2e2;padding:1rem;border-radius:8px;margin:1rem 0}
-    @media print{.no-print{display:none}}
+    .no-print{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem}
+    .no-print button,.no-print a{appearance:none;border:1px solid #ccc;background:#0B0B0D;color:#fff;border-radius:6px;padding:.55rem .9rem;font:inherit;cursor:pointer;text-decoration:none}
+    .no-print a{background:#F5A623;color:#0B0B0D;border-color:#F5A623;font-weight:600}
+    @media (max-width:520px){
+      body{padding:.85rem}
+      table,thead,tbody,th,td,tr{display:block;width:100%}
+      thead{display:none}
+      tr{border-bottom:1px solid #eee;padding:.5rem 0;margin:0 0 .35rem}
+      td{border:0;padding:.2rem 0;display:flex;justify-content:space-between;gap:1rem}
+      td:nth-child(2)::before{content:"Qty ";color:#666;font-size:.75rem;text-transform:uppercase}
+      td:nth-child(3)::before{content:"Total ";color:#666;font-size:.75rem;text-transform:uppercase}
+      .totals{max-width:none;margin:1rem 0 0}
+      .totals tr{display:flex;justify-content:space-between;border:0;padding:.25rem 0}
+      .totals td{display:block;padding:0}
+    }
+    @media print{.no-print{display:none} body{padding:0}}
   </style>
 </head>
 <body>
-  <p class="no-print"><button onclick="window.print()">Print / Save PDF</button></p>
-  <h1><?php echo esc_html($store); ?> — Invoice</h1>
+  <div class="wrap">
+  <p class="no-print">
+    <button type="button" onclick="window.print()">Print / Save PDF</button>
+    <a href="javascript:history.back()">Back</a>
+  </p>
+  <h1><?php echo esc_html($store); ?> — Invoice / Receipt</h1>
   <p class="muted"><?php echo esc_html($email); ?> · Nairobi, Kenya</p>
   <div class="box">
     <p><strong>Invoice #<?php echo esc_html($order->get_order_number()); ?></strong></p>
@@ -137,7 +159,7 @@ function sa_core_render_invoice_html($order): void
     <?php endforeach; ?>
     </tbody>
   </table>
-  <table class="totals" style="max-width:320px;margin-left:auto">
+  <table class="totals">
     <tr><td>Subtotal</td><td><?php echo wp_kses_post($order->get_subtotal_to_display()); ?></td></tr>
     <?php if ((float) $order->get_shipping_total() > 0) : ?>
       <tr><td>Shipping</td><td><?php echo wp_kses_post(wc_price((float) $order->get_shipping_total(), ['currency' => $currency])); ?></td></tr>
@@ -151,6 +173,7 @@ function sa_core_render_invoice_html($order): void
     <div class="box"><strong>Note</strong><p><?php echo esc_html($order->get_customer_note()); ?></p></div>
   <?php endif; ?>
   <p class="muted">Thank you for shopping with Supreme Autoparts.</p>
+  </div>
 </body>
 </html>
     <?php

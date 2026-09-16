@@ -171,11 +171,11 @@ add_action('woocommerce_account_support_endpoint', static function (): void {
  * Flush rewrite once after support endpoint added.
  */
 add_action('init', static function (): void {
-    if (get_option('sa_myaccount_endpoints_ver') === '4') {
+    if (get_option('sa_myaccount_endpoints_ver') === '5') {
         return;
     }
     flush_rewrite_rules(false);
-    update_option('sa_myaccount_endpoints_ver', '4');
+    update_option('sa_myaccount_endpoints_ver', '5');
 }, 99);
 
 /**
@@ -215,20 +215,27 @@ add_action('woocommerce_order_details_after_order_table', static function ($orde
     if ((int) $order->get_user_id() !== $user_id && !current_user_can('manage_woocommerce')) {
         return;
     }
-    if (!current_user_can('sa_view_invoices') && !current_user_can('manage_woocommerce')) {
+    if (!current_user_can('sa_view_invoices') && !current_user_can('manage_woocommerce') && !current_user_can('read')) {
+        return;
+    }
+    // Avoid duplicate CTAs when theme view-order already shows docs header.
+    if (is_wc_endpoint_url('view-order')) {
         return;
     }
     $url = sa_core_invoice_url((int) $order->get_id());
-    echo '<p class="sa-invoice-link"><a class="button" href="' . esc_url($url) . '" target="_blank" rel="noopener">'
-        . esc_html__('View invoice', 'supreme-autoparts-core')
-        . '</a></p>';
+    echo '<div class="sa-order-docs" role="group" aria-label="' . esc_attr__('Order documents', 'supreme-autoparts-core') . '">';
+    echo '<a class="sa-btn sa-btn--sm button" href="' . esc_url($url) . '" target="_blank" rel="noopener">'
+        . esc_html__('Invoice', 'supreme-autoparts-core') . '</a> ';
+    echo '<a class="sa-btn sa-btn--outline sa-btn--sm button" href="' . esc_url($url) . '" target="_blank" rel="noopener">'
+        . esc_html__('Receipt', 'supreme-autoparts-core') . '</a>';
+    echo '</div>';
 }, 20);
 
 add_action('woocommerce_my_account_my_orders_actions', static function (array $actions, $order): array {
     if ($order instanceof WC_Order && (current_user_can('sa_view_invoices') || current_user_can('manage_woocommerce'))) {
         $actions['sa_invoice'] = [
             'url'  => sa_core_invoice_url((int) $order->get_id()),
-            'name' => __('Invoice', 'supreme-autoparts-core'),
+            'name' => __('Invoice / Receipt', 'supreme-autoparts-core'),
         ];
     }
     return $actions;
