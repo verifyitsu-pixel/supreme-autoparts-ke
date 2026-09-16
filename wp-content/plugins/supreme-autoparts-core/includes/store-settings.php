@@ -17,6 +17,71 @@ function sa_core_store_email(): string
     return 'calvin@supremeautoparts.co.ke';
 }
 
+
+/**
+ * Enable WooCommerce emails and route admin order alerts to store email.
+ */
+function sa_core_enable_admin_store_emails(): void
+{
+    $email = sa_core_store_email();
+    update_option('woocommerce_stock_email_recipient', $email);
+
+    $admin_mail_ids = ['new_order', 'cancelled_order', 'failed_order'];
+    foreach ($admin_mail_ids as $id) {
+        $key = 'woocommerce_' . $id . '_settings';
+        $settings = get_option($key, []);
+        if (!is_array($settings)) {
+            $settings = [];
+        }
+        $settings['enabled'] = 'yes';
+        $settings['recipient'] = $email;
+        update_option($key, $settings);
+    }
+
+    // Customer-facing transactional emails stay enabled too.
+    $customer_ids = [
+        'customer_processing_order',
+        'customer_completed_order',
+        'customer_on_hold_order',
+        'customer_refunded_order',
+        'customer_invoice',
+        'customer_note',
+        'customer_reset_password',
+        'customer_new_account',
+        'customer_failed_order',
+        'customer_cancelled_order',
+    ];
+    foreach ($customer_ids as $id) {
+        $key = 'woocommerce_' . $id . '_settings';
+        $settings = get_option($key, []);
+        if (!is_array($settings)) {
+            $settings = [];
+        }
+        $settings['enabled'] = 'yes';
+        update_option($key, $settings);
+    }
+
+    update_option('sa_store_admin_notify_email', $email);
+}
+
+/** BCC store owner on customer Woo emails so all activity is visible. */
+add_filter('woocommerce_email_headers', static function ($headers, $email_id, $order) {
+    $admin = sa_core_store_email();
+    if ($admin === '' || !is_email($admin)) {
+        return $headers;
+    }
+    // Skip if this email is already addressed to the admin recipient.
+    if (in_array((string) $email_id, ['new_order', 'cancelled_order', 'failed_order'], true)) {
+        return $headers;
+    }
+    $headers = is_string($headers) ? $headers : '';
+    if (stripos($headers, 'Bcc: ' . $admin) === false) {
+        $headers .= 'Bcc: ' . $admin . "\r\n";
+    }
+    return $headers;
+}, 20, 3);
+
+
 /**
  * Apply WooCommerce + WordPress store identity for Kenya checkout flows.
  * Safe to run on every boot (idempotent).
@@ -44,6 +109,8 @@ function sa_core_apply_store_settings(): void
     update_option('woocommerce_email_from_name', 'Supreme Autoparts');
     update_option('woocommerce_email_from_address', $email);
     update_option('woocommerce_stock_email_recipient', $email);
+
+    sa_core_enable_admin_store_emails();
 
     // Store address / customer service
     update_option('woocommerce_store_address', get_option('woocommerce_store_address') ?: 'Nairobi');
@@ -107,7 +174,7 @@ add_filter('wp_mail_from_name', static function ($name) {
 
 // Apply lightly on admin/init once per version bump.
 add_action('init', static function (): void {
-    if (get_option('sa_store_settings_ver') === '8') {
+    if (get_option('sa_store_settings_ver') === '9') {
         return;
     }
     if (!function_exists('WC') && !class_exists('WooCommerce')) {
@@ -115,5 +182,5 @@ add_action('init', static function (): void {
         update_option('admin_email', sa_core_store_email());
     }
     sa_core_apply_store_settings();
-    update_option('sa_store_settings_ver', '8');
+    update_option('sa_store_settings_ver', '9');
 }, 20);
