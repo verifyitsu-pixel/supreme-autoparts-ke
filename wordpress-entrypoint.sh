@@ -127,11 +127,15 @@ bootstrap_wordpress() {
   wp_as option update timezone_string "Africa/Nairobi" || true
   wp_as rewrite structure '/%postname%/' --hard || true
 
-  if ! wp_as plugin is-installed woocommerce 2>/dev/null; then
-    echo "[supreme] Installing WooCommerce..."
+  # Woo must exist on disk — deploy volume/image sync can drop it even if DB says installed.
+  if [[ ! -d /var/www/html/wp-content/plugins/woocommerce ]] || ! wp_as plugin is-installed woocommerce 2>/dev/null; then
+    echo "[supreme] Installing WooCommerce (missing on disk or not installed)..."
     wp_as plugin install woocommerce --activate || true
   else
     wp_as plugin activate woocommerce || true
+  fi
+  if [[ ! -d /var/www/html/wp-content/plugins/woocommerce ]]; then
+    echo "[supreme] ERROR: WooCommerce still missing after install attempt" >&2
   fi
 
   wp_as plugin activate supreme-autoparts-core || true
