@@ -142,6 +142,15 @@ Sandbox: use keys from [sandbox.whop.com](https://sandbox.whop.com) and set `WHO
 
 No payment credentials are bundled in Git.
 
+## Boot import (Railway)
+
+On deploy, when `SUPREME_IMPORT_ON_BOOT=1` (default), the container imports `data/scrape/chunks/batch-with-images-400.ndjson` (products that have real Shopify CDN photos). CDN URL meta is always stored; binary sideload is controlled by `SUPREME_IMPORT_SKIP_IMAGES` (default `1` for fast boot — set `0` to download full galleries into Media Library).
+
+```bash
+wp supreme import-ndjson --file=.../batch-with-images-400.ndjson --require-images
+wp supreme import-ndjson --file=.../batch-with-images-400.ndjson --require-images  # with sideload (omit --skip-images)
+```
+
 ## Full catalog scrape + import
 
 Owner-authorized full scrape of https://supreme-mods.com/ public Shopify JSON:

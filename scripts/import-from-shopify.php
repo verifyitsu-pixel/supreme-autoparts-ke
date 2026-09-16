@@ -32,6 +32,7 @@ $opts = [
     'limit'        => 0,
     'offset'       => 0,
     'skip_images'  => false,
+    'require_images'=> false,
 ];
 
 $argv_list = $GLOBALS['argv'] ?? [];
@@ -47,6 +48,8 @@ foreach ($argv_list as $arg) {
         $opts['offset'] = (int) substr($arg, 9);
     } elseif ($arg === '--skip-images') {
         $opts['skip_images'] = true;
+    } elseif ($arg === '--require-images') {
+        $opts['require_images'] = true;
     }
 }
 
@@ -90,6 +93,7 @@ $result = sa_core_import_shopify_products_file($opts['file'], [
     'limit'        => $opts['limit'],
     'offset'       => $opts['offset'],
     'skip_images'  => $opts['skip_images'],
+    'require_images'=> $opts['require_images'],
 ]);
 
 $summary = sprintf(

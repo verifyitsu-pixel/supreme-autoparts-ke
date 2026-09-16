@@ -26,6 +26,8 @@ require_once SA_CORE_DIR . 'includes/seed-categories.php';
 require_once SA_CORE_DIR . 'includes/seed-pages.php';
 require_once SA_CORE_DIR . 'includes/cli.php';
 require_once SA_CORE_DIR . 'includes/admin-import.php';
+require_once SA_CORE_DIR . 'includes/import-shopify.php';
+require_once SA_CORE_DIR . 'includes/product-images.php';
 
 register_activation_hook(__FILE__, static function (): void {
     require_once SA_CORE_DIR . 'includes/seed-categories.php';

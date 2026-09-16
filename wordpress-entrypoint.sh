@@ -138,6 +138,41 @@ bootstrap_wordpress() {
     wp_as supreme seed-pages 2>/dev/null || true
   fi
 
+  # Optional catalog import from baked scrape chunk (Shopify CDN photos only).
+  # Set SUPREME_IMPORT_ON_BOOT=1 on Railway to load the first real batch after deploy.
+  if [[ "${SUPREME_IMPORT_ON_BOOT:-1}" == "1" ]]; then
+    IMPORT_FILE="${SUPREME_IMPORT_FILE:-}"
+    if [[ -z "$IMPORT_FILE" ]]; then
+      for c in \
+        /var/www/html/wp-content/plugins/supreme-autoparts-core/data/scrape/chunks/batch-with-images-400.ndjson \
+        /usr/src/supreme-data/scrape/chunks/batch-with-images-400.ndjson \
+        /var/www/html/data/scrape/chunks/batch-with-images-400.ndjson
+      do
+        if [[ -r "$c" ]]; then IMPORT_FILE="$c"; break; fi
+      done
+    fi
+    IMPORT_LIMIT="${SUPREME_IMPORT_LIMIT:-400}"
+    SKIP_IMG_FLAG=()
+    # Default: store CDN meta + sideload. Set SUPREME_IMPORT_SKIP_IMAGES=1 for CDN-meta-only (faster boot).
+    if [[ "${SUPREME_IMPORT_SKIP_IMAGES:-1}" == "1" ]]; then
+      SKIP_IMG_FLAG=(--skip-images)
+    fi
+    if [[ -n "$IMPORT_FILE" && -r "$IMPORT_FILE" ]]; then
+      echo "[supreme] Boot import: file=$IMPORT_FILE limit=$IMPORT_LIMIT require-images"
+      # Run in background so healthchecks stay green while images sideload.
+      (
+        mkdir -p /var/www/html/wp-content/uploads
+        wp_as supreme import-ndjson --file="$IMPORT_FILE" --limit="$IMPORT_LIMIT" --require-images "${SKIP_IMG_FLAG[@]}" \
+          >> /var/www/html/wp-content/uploads/sa-boot-import.log 2>&1 \
+          || echo "[supreme] Boot import finished with errors (see sa-boot-import.log)."
+        wp_as option update sa_boot_import_batch400 1 >/dev/null 2>&1 || true
+        echo "[supreme] Boot import finished at $(date -Iseconds)" >> /var/www/html/wp-content/uploads/sa-boot-import.log
+      ) &
+    else
+      echo "[supreme] SUPREME_IMPORT_ON_BOOT=1 but batch NDJSON not found." >&2
+    fi
+  fi
+
   wp_as rewrite flush --hard || true
   echo "[supreme] Bootstrap complete."
 }

@@ -49,11 +49,13 @@ class SA_Core_CLI_Command
      * [--offset=<n>]
      * : Skip first N
      * [--skip-images]
-     * : Skip image sideload
+     * : Skip image sideload (CDN URLs still stored)
+     * [--require-images]
+     * : Skip products with no real http(s) image src
      *
      * ## EXAMPLES
      *     wp supreme import-sample
-     *     wp supreme import-sample --file=/var/www/html/wp-content/plugins/supreme-autoparts-core/data/sample-products.json
+     *     wp supreme import-sample --require-images --limit=40
      *
      * @param array $args
      * @param array $assoc_args
@@ -63,9 +65,10 @@ class SA_Core_CLI_Command
         $file = $assoc_args['file'] ?? SA_CORE_DIR . 'data/sample-products.json';
         require_once SA_CORE_DIR . 'includes/import-shopify.php';
         $result = sa_core_import_shopify_products_file($file, [
-            'limit'       => isset($assoc_args['limit']) ? (int) $assoc_args['limit'] : 0,
-            'offset'      => isset($assoc_args['offset']) ? (int) $assoc_args['offset'] : 0,
-            'skip_images' => isset($assoc_args['skip-images']),
+            'limit'          => isset($assoc_args['limit']) ? (int) $assoc_args['limit'] : 0,
+            'offset'         => isset($assoc_args['offset']) ? (int) $assoc_args['offset'] : 0,
+            'skip_images'    => isset($assoc_args['skip-images']),
+            'require_images' => isset($assoc_args['require-images']),
         ]);
         WP_CLI::success(sprintf(
             'Imported %d, updated %d (%d skipped, %d errors).',
@@ -87,11 +90,13 @@ class SA_Core_CLI_Command
      * [--offset=<n>]
      * : Skip first N NDJSON lines
      * [--skip-images]
-     * : Skip image sideload for faster bulk pass
+     * : Skip binary sideload (still stores Shopify CDN URL meta for display)
+     * [--require-images]
+     * : Only import products that have at least one real http(s) image
      *
      * ## EXAMPLES
-     *     wp supreme import-ndjson --limit=500 --offset=0
-     *     wp supreme import-ndjson --file=/var/www/html/data/scrape/products.ndjson --limit=1000 --offset=500 --skip-images
+     *     wp supreme import-ndjson --limit=500 --require-images
+     *     wp supreme import-ndjson --file=/var/www/html/wp-content/plugins/supreme-autoparts-core/data/scrape/chunks/batch-with-images-400.ndjson --require-images
      *
      * @param array $args
      * @param array $assoc_args
@@ -102,9 +107,10 @@ class SA_Core_CLI_Command
         $file = $assoc_args['file'] ?? $default;
         require_once SA_CORE_DIR . 'includes/import-shopify.php';
         $result = sa_core_import_shopify_products_file($file, [
-            'limit'       => isset($assoc_args['limit']) ? (int) $assoc_args['limit'] : 0,
-            'offset'      => isset($assoc_args['offset']) ? (int) $assoc_args['offset'] : 0,
-            'skip_images' => isset($assoc_args['skip-images']),
+            'limit'          => isset($assoc_args['limit']) ? (int) $assoc_args['limit'] : 0,
+            'offset'         => isset($assoc_args['offset']) ? (int) $assoc_args['offset'] : 0,
+            'skip_images'    => isset($assoc_args['skip-images']),
+            'require_images' => isset($assoc_args['require-images']),
         ]);
         WP_CLI::success(sprintf(
             'NDJSON import: imported=%d updated=%d skipped=%d errors=%d file=%s',

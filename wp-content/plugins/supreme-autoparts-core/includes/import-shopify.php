@@ -8,8 +8,11 @@ if (!defined('ABSPATH')) {
 /**
  * Import products from a Shopify products.json-style file OR NDJSON stream.
  *
- * @param string               $path File path (.json with {products:[...]} or .ndjson)
- * @param array{limit?:int,offset?:int,skip_images?:bool} $opts
+ * Images: only real http(s) Shopify/CDN URLs from the scrape are used.
+ * Never invents, generates, or substitutes placeholder/stock imagery.
+ *
+ * @param string $path File path (.json with {products:[...]} or .ndjson)
+ * @param array{limit?:int,offset?:int,skip_images?:bool,require_images?:bool} $opts
  * @return array{imported:int,updated:int,skipped:int,errors:int,messages:array<int,string>}
  */
 function sa_core_import_shopify_products_file(string $path, array $opts = []): array
@@ -30,10 +33,11 @@ function sa_core_import_shopify_products_file(string $path, array $opts = []): a
     $limit = isset($opts['limit']) ? max(0, (int) $opts['limit']) : 0;
     $offset = isset($opts['offset']) ? max(0, (int) $opts['offset']) : 0;
     $skip_images = !empty($opts['skip_images']);
+    $require_images = !empty($opts['require_images']);
 
     $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
     if ($ext === 'ndjson' || $ext === 'jsonl') {
-        return sa_core_import_shopify_ndjson($path, $limit, $offset, $skip_images, $result);
+        return sa_core_import_shopify_ndjson($path, $limit, $offset, $skip_images, $require_images, $result);
     }
 
     $raw = file_get_contents($path);
@@ -62,6 +66,10 @@ function sa_core_import_shopify_products_file(string $path, array $opts = []): a
             $result['skipped']++;
             continue;
         }
+        if ($require_images && !sa_core_shopify_item_has_images($item)) {
+            $result['skipped']++;
+            continue;
+        }
         sa_core_import_one_shopify_product($item, $result, $skip_images);
     }
 
@@ -74,8 +82,14 @@ function sa_core_import_shopify_products_file(string $path, array $opts = []): a
  * @param array{imported:int,updated:int,skipped:int,errors:int,messages:array<int,string>} $result
  * @return array{imported:int,updated:int,skipped:int,errors:int,messages:array<int,string>}
  */
-function sa_core_import_shopify_ndjson(string $path, int $limit, int $offset, bool $skip_images, array $result): array
-{
+function sa_core_import_shopify_ndjson(
+    string $path,
+    int $limit,
+    int $offset,
+    bool $skip_images,
+    bool $require_images,
+    array $result
+): array {
     $fh = fopen($path, 'rb');
     if ($fh === false) {
         $result['errors']++;
@@ -106,12 +120,107 @@ function sa_core_import_shopify_ndjson(string $path, int $limit, int $offset, bo
             }
             continue;
         }
+        if ($require_images && !sa_core_shopify_item_has_images($item)) {
+            $result['skipped']++;
+            $processed++;
+            continue;
+        }
         sa_core_import_one_shopify_product($item, $result, $skip_images);
         $processed++;
     }
     fclose($fh);
-    $result['messages'][] = "NDJSON processed={$processed} offset={$offset} limit=" . ($limit ?: 'all');
+    $result['messages'][] = "NDJSON processed={$processed} offset={$offset} limit=" . ($limit ?: 'all')
+        . ' require_images=' . ($require_images ? '1' : '0');
     return $result;
+}
+
+/**
+ * @param array<string,mixed> $item
+ */
+function sa_core_shopify_item_has_images(array $item): bool
+{
+    return sa_core_collect_shopify_image_urls($item) !== [];
+}
+
+/**
+ * Reject non-http(s) URLs, data URIs, blanks, and obvious fake/placeholder schemes.
+ */
+function sa_core_is_valid_remote_image_url(string $url): bool
+{
+    $url = trim($url);
+    if ($url === '') {
+        return false;
+    }
+    if (preg_match('#^(data:|javascript:|blob:|file:)#i', $url)) {
+        return false;
+    }
+    if (!preg_match('#^https?://#i', $url)) {
+        return false;
+    }
+    // Never accept common AI / stock placeholder hosts.
+    if (preg_match('#(placehold\.co|placeholder\.com|picsum\.photos|unsplash\.com/photos/random|via\.placeholder|dummyimage\.com|lorempixel|loremflickr)#i', $url)) {
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Prefer full-size Shopify CDN URLs by stripping size suffixes before the extension.
+ * Examples: _100x100, _grande, _large, _compact, _pico, _200x
+ */
+function sa_core_normalize_shopify_image_url(string $url): string
+{
+    $url = trim($url);
+    if ($url === '') {
+        return '';
+    }
+    // Strip Shopify resized filename suffixes: name_100x100.jpg → name.jpg
+    $normalized = preg_replace(
+        '#_(?:pico|icon|thumb|small|compact|medium|large|grande|original|master|\d+x\d+|\d+x|x\d+)(?=\.(?:jpe?g|png|gif|webp|avif)(?:\?|$))#i',
+        '',
+        $url
+    );
+    return is_string($normalized) && $normalized !== '' ? $normalized : $url;
+}
+
+/**
+ * Collect unique full-size http(s) image URLs from a Shopify product payload.
+ * Order preserved: featured first, then gallery.
+ *
+ * @param array<string,mixed> $item
+ * @return list<string>
+ */
+function sa_core_collect_shopify_image_urls(array $item): array
+{
+    $out = [];
+    $seen = [];
+
+    $images = $item['images'] ?? [];
+    if (!is_array($images)) {
+        return [];
+    }
+
+    foreach ($images as $img) {
+        if (!is_array($img)) {
+            continue;
+        }
+        $src = isset($img['src']) ? (string) $img['src'] : '';
+        if (!sa_core_is_valid_remote_image_url($src)) {
+            continue;
+        }
+        $src = sa_core_normalize_shopify_image_url($src);
+        if (!sa_core_is_valid_remote_image_url($src)) {
+            continue;
+        }
+        $key = strtok($src, '?') ?: $src;
+        if (isset($seen[$key])) {
+            continue;
+        }
+        $seen[$key] = true;
+        $out[] = $src;
+    }
+
+    return $out;
 }
 
 /**
@@ -168,7 +277,6 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
         if ($is_update) {
             $product = wc_get_product($existing_id);
         } else {
-            // Variable if >1 variant with options, else simple
             $variants = $item['variants'] ?? [];
             if (is_array($variants) && count($variants) > 1) {
                 $product = new WC_Product_Variable();
@@ -234,7 +342,6 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
                 $term_ids[] = $tid;
             }
         }
-        // Tags → product_tag
         $tags_raw = $item['tags'] ?? '';
         if (is_string($tags_raw) && $tags_raw !== '') {
             $tag_names = array_filter(array_map('trim', explode(',', $tags_raw)));
@@ -246,10 +353,17 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
             wp_set_object_terms($id, array_map('intval', $term_ids), 'product_cat', false);
         }
 
-        if (!$skip_images) {
-            $images = $item['images'] ?? [];
-            if (is_array($images) && !empty($images[0]['src'])) {
-                sa_core_sideload_product_image((int) $id, (string) $images[0]['src']);
+        $image_urls = sa_core_collect_shopify_image_urls($item);
+        // Always persist real CDN URLs for display/backfill — never invent images.
+        if ($image_urls) {
+            update_post_meta($id, '_sa_shopify_image_urls', wp_json_encode($image_urls));
+            update_post_meta($id, '_sa_shopify_image_src', $image_urls[0]);
+        }
+
+        if (!$skip_images && $image_urls) {
+            $needs_gallery = sa_core_product_needs_image_backfill((int) $id);
+            if ($needs_gallery) {
+                sa_core_sideload_product_gallery((int) $id, $image_urls);
             }
         }
 
@@ -285,18 +399,122 @@ function sa_core_ensure_product_cat(string $name, string $slug): int
     return is_wp_error($r) ? 0 : (int) $r['term_id'];
 }
 
-function sa_core_sideload_product_image(int $product_id, string $url): void
+/**
+ * True when product has no featured image, or featured is Woo placeholder, or gallery empty
+ * while we expect to backfill from scrape CDN URLs.
+ */
+function sa_core_product_needs_image_backfill(int $product_id): bool
+{
+    if (!has_post_thumbnail($product_id)) {
+        return true;
+    }
+    $thumb_id = (int) get_post_thumbnail_id($product_id);
+    if ($thumb_id <= 0) {
+        return true;
+    }
+    // WooCommerce default placeholder attachment is not a real catalog photo.
+    $file = (string) get_post_meta($thumb_id, '_wp_attached_file', true);
+    if ($file !== '' && stripos($file, 'woocommerce-placeholder') !== false) {
+        return true;
+    }
+    $product = wc_get_product($product_id);
+    if ($product) {
+        $gallery = $product->get_gallery_image_ids();
+        // Has thumbnail but no gallery — still allow backfill of remaining images.
+        if (empty($gallery)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Sideload ALL valid URLs: first = featured thumbnail, rest = product gallery.
+ * Skips invalid / non-http URLs. Does not invent placeholders when list is empty.
+ *
+ * @param list<string> $urls
+ */
+function sa_core_sideload_product_gallery(int $product_id, array $urls): void
 {
     if (!function_exists('media_sideload_image')) {
         require_once ABSPATH . 'wp-admin/includes/media.php';
         require_once ABSPATH . 'wp-admin/includes/file.php';
         require_once ABSPATH . 'wp-admin/includes/image.php';
     }
-    if (has_post_thumbnail($product_id)) {
+
+    $attachment_ids = [];
+    foreach ($urls as $url) {
+        if (!sa_core_is_valid_remote_image_url($url)) {
+            continue;
+        }
+        $url = sa_core_normalize_shopify_image_url($url);
+        if (!sa_core_is_valid_remote_image_url($url)) {
+            continue;
+        }
+        // Avoid re-downloading the same CDN URL onto this product.
+        $existing = sa_core_find_attachment_by_source_url($product_id, $url);
+        if ($existing) {
+            $attachment_ids[] = $existing;
+            continue;
+        }
+        $att_id = media_sideload_image($url, $product_id, null, 'id');
+        if (is_wp_error($att_id) || !$att_id) {
+            continue;
+        }
+        $att_id = (int) $att_id;
+        update_post_meta($att_id, '_sa_source_image_url', $url);
+        $attachment_ids[] = $att_id;
+    }
+
+    if ($attachment_ids === []) {
+        // No real photos — leave product without fake imagery.
         return;
     }
-    $att_id = media_sideload_image($url, $product_id, null, 'id');
-    if (!is_wp_error($att_id) && $att_id) {
-        set_post_thumbnail($product_id, (int) $att_id);
+
+    $featured = array_shift($attachment_ids);
+    set_post_thumbnail($product_id, $featured);
+
+    $product = wc_get_product($product_id);
+    if ($product) {
+        $product->set_gallery_image_ids($attachment_ids);
+        $product->save();
+    } else {
+        update_post_meta($product_id, '_product_image_gallery', implode(',', array_map('strval', $attachment_ids)));
     }
+}
+
+/**
+ * @deprecated Use sa_core_sideload_product_gallery(); kept for callers expecting single-image API.
+ */
+function sa_core_sideload_product_image(int $product_id, string $url): void
+{
+    if (!sa_core_is_valid_remote_image_url($url)) {
+        return;
+    }
+    sa_core_sideload_product_gallery($product_id, [sa_core_normalize_shopify_image_url($url)]);
+}
+
+function sa_core_find_attachment_by_source_url(int $product_id, string $url): int
+{
+    $key = strtok($url, '?') ?: $url;
+    $children = get_children([
+        'post_parent' => $product_id,
+        'post_type'   => 'attachment',
+        'numberposts' => 50,
+        'fields'      => 'ids',
+    ]);
+    if (!$children) {
+        return 0;
+    }
+    foreach ($children as $att_id) {
+        $stored = (string) get_post_meta((int) $att_id, '_sa_source_image_url', true);
+        if ($stored === '') {
+            continue;
+        }
+        $stored_key = strtok($stored, '?') ?: $stored;
+        if ($stored_key === $key) {
+            return (int) $att_id;
+        }
+    }
+    return 0;
 }
