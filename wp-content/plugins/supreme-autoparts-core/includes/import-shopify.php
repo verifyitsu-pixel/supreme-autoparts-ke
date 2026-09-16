@@ -673,3 +673,81 @@ function sa_core_find_attachment_by_source_url(int $product_id, string $url): in
     }
     return 0;
 }
+
+
+/**
+ * Re-assign IA parent categories for all published products based on product_type-like cats.
+ * Fixes catalogs imported before parent assignment / after Collections reparent stole leaves.
+ *
+ * @return array{repaired:int,skipped:int}
+ */
+function sa_core_repair_product_parent_categories(int $limit = 500): array
+{
+    $out = ['repaired' => 0, 'skipped' => 0];
+    if (!taxonomy_exists('product_cat')) {
+        return $out;
+    }
+    $q = new WP_Query([
+        'post_type'      => 'product',
+        'post_status'    => 'publish',
+        'posts_per_page' => max(1, $limit),
+        'fields'         => 'ids',
+        'orderby'        => 'ID',
+        'order'          => 'ASC',
+    ]);
+    foreach ($q->posts as $pid) {
+        $pid = (int) $pid;
+        $terms = wp_get_post_terms($pid, 'product_cat', ['fields' => 'all']);
+        if (is_wp_error($terms) || !$terms) {
+            $out['skipped']++;
+            continue;
+        }
+        $term_ids = [];
+        $changed = false;
+        foreach ($terms as $term) {
+            $term_ids[] = (int) $term->term_id;
+            // Skip brand/region top-level helpers.
+            if (in_array($term->slug, ['brands','collections','american','european','asian'], true)) {
+                continue;
+            }
+            $parent_slug = sa_core_map_product_type_parent_slug($term->name);
+            if ($parent_slug === '') {
+                $parent_slug = sa_core_map_product_type_parent_slug(str_replace('-', ' ', $term->slug));
+            }
+            if ($parent_slug === '') {
+                continue;
+            }
+            $labels = [
+                'air-intake' => 'Air Intake',
+                'brakes' => 'Brakes',
+                'drivetrain' => 'Drivetrain',
+                'engine' => 'Engine',
+                'exhaust' => 'Exhaust',
+                'exterior' => 'Exterior',
+                'interior' => 'Interior',
+                'lighting' => 'Lighting',
+                'suspension' => 'Suspension',
+                'tires' => 'Tires',
+                'wheels' => 'Wheels',
+            ];
+            $label = $labels[$parent_slug] ?? ucwords(str_replace('-', ' ', $parent_slug));
+            $parent_id = sa_core_ensure_product_cat($label, $parent_slug, 0);
+            if ($parent_id && !in_array($parent_id, $term_ids, true)) {
+                $term_ids[] = $parent_id;
+                $changed = true;
+            }
+            // Ensure leaf sits under IA parent (not Collections).
+            if ($parent_id && (int) $term->parent !== $parent_id && $term->slug !== $parent_slug) {
+                wp_update_term((int) $term->term_id, 'product_cat', ['parent' => $parent_id]);
+                $changed = true;
+            }
+        }
+        if ($changed) {
+            wp_set_object_terms($pid, array_values(array_unique(array_map('intval', $term_ids))), 'product_cat', false);
+            $out['repaired']++;
+        } else {
+            $out['skipped']++;
+        }
+    }
+    return $out;
+}

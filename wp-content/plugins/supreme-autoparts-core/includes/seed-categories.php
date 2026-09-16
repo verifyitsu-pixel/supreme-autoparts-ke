@@ -163,6 +163,9 @@ function sa_core_seed_collections_from_json(int $limit = 80): void
         return;
     }
     $parent = sa_core_ensure_term('Collections', 'collections', 0, 'Imported Shopify collections');
+    // Never reparent existing IA terms (brakes/suspension/…) under Collections —
+    // that emptied /product-category/brakes/ even when leaf terms had products.
+    $ia_slugs = ['air-intake','brakes','drivetrain','engine','exhaust','exterior','interior','lighting','suspension','tires','wheels','brands','american','european','asian'];
     $n = 0;
     foreach ($collections as $col) {
         if ($n >= $limit) {
@@ -174,6 +177,23 @@ function sa_core_seed_collections_from_json(int $limit = 80): void
         $title = trim((string) ($col['title'] ?? ''));
         $handle = sanitize_title((string) ($col['handle'] ?? $title));
         if ($title === '' || $handle === '') {
+            continue;
+        }
+        if (in_array($handle, $ia_slugs, true)) {
+            continue;
+        }
+        $existing = get_term_by('slug', $handle, 'product_cat');
+        if ($existing && !is_wp_error($existing)) {
+            // Leave alone if already under an IA parent or is itself top-level catalog.
+            $p = (int) $existing->parent;
+            if ($p > 0) {
+                $pt = get_term($p, 'product_cat');
+                if ($pt && !is_wp_error($pt) && in_array($pt->slug, $ia_slugs, true)) {
+                    continue;
+                }
+            }
+            // Already exists (possibly under Collections) — do not create duplicate; skip.
+            $n++;
             continue;
         }
         sa_core_ensure_term($title, $handle, $parent > 0 ? $parent : 0);
