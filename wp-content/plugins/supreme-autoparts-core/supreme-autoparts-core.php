@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Supreme Autoparts Core
  * Description: Branding defaults, category seed, static pages, invoices, admin dashboard, and Shopify JSON import helpers for Supreme Autoparts.
- * Version: 1.3.1
+ * Version: 1.3.2
  * Author: Supreme Autoparts
  * Text Domain: supreme-autoparts-core
  * Requires at least: 6.4
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_CORE_VERSION', '1.3.1');
+define('SA_CORE_VERSION', '1.3.2');
 define('SA_CORE_FILE', __FILE__);
 define('SA_CORE_DIR', plugin_dir_path(__FILE__));
 define('SA_CORE_URL', plugin_dir_url(__FILE__));
@@ -309,7 +309,7 @@ add_action('rest_api_init', static function (): void {
         'callback'            => static function () {
             try {
                 if (function_exists('set_time_limit')) {
-                    @set_time_limit(300);
+                    @set_time_limit(600);
                 }
                 if (function_exists('wp_raise_memory_limit')) {
                     wp_raise_memory_limit('admin');
@@ -367,12 +367,12 @@ add_action('rest_api_init', static function (): void {
                     sa_core_seed_categories();
                 }
 
-                // Prefer small batch for HTTP recover — never pull 400 over a web request.
+                // Prefer 400-with-images so parent + leaf archives fill (CDN meta only over HTTP).
                 $candidates = [
-                    SA_CORE_DIR . 'data/scrape/chunks/batch-with-images-50.ndjson',
-                    '/usr/src/supreme-data/scrape/chunks/batch-with-images-50.ndjson',
                     SA_CORE_DIR . 'data/scrape/chunks/batch-with-images-400.ndjson',
                     '/usr/src/supreme-data/scrape/chunks/batch-with-images-400.ndjson',
+                    SA_CORE_DIR . 'data/scrape/chunks/batch-with-images-50.ndjson',
+                    '/usr/src/supreme-data/scrape/chunks/batch-with-images-50.ndjson',
                     SA_CORE_DIR . 'data/sample-products.json',
                 ];
                 $env_file = getenv('SUPREME_IMPORT_FILE') ?: '';
@@ -395,8 +395,12 @@ add_action('rest_api_init', static function (): void {
                     ], 500);
                 }
 
-                // Hard cap 50 for HTTP recover regardless of SUPREME_IMPORT_LIMIT.
-                $limit = 50;
+                // Cap: env SUPREME_IMPORT_LIMIT (default 400 for 400-batch, else 50). CDN meta only.
+                $limit = (int) (getenv('SUPREME_IMPORT_LIMIT') ?: 0);
+                if ($limit <= 0) {
+                    $limit = str_contains($file, 'batch-with-images-400') ? 400 : 50;
+                }
+                $limit = min(400, max(1, $limit));
                 require_once SA_CORE_DIR . 'includes/import-shopify.php';
                 $result = sa_core_import_shopify_products_file($file, [
                     'limit'          => $limit,

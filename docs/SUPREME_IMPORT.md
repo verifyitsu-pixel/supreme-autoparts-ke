@@ -50,3 +50,9 @@ curl -sS "https://www.supremeautoparts.co.ke/wp-json/supreme/v1/recover-catalog?
 ```
 
 When published product count is `0`, the token is optional. Response includes `published`, `brakes_count`, `suspension_count`. Caps at 50 products over HTTP (CDN photos only).
+
+
+## Pricing (USD base)
+
+Import stores Shopify variant prices as **USD** on `_regular_price` / `_sale_price` (no KES multiply).
+`woocommerce_currency` should be `USD` (`WOO_CURRENCY=USD`). Display-currency FX by visitor IP is handled separately; catalog amounts remain USD.

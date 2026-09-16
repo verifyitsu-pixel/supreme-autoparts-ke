@@ -303,7 +303,7 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
             $product->set_short_description(wp_trim_words(wp_strip_all_tags($body_html), 40));
         }
 
-        $usd_to_kes = (float) (getenv('SUPREME_USD_TO_KES') ?: '130');
+        // Store base checkout currency as USD (Shopify scrape prices). Geo display FX is handled elsewhere.
         $usd = (float) ($variant['price'] ?? 0);
         $compare = isset($variant['compare_at_price']) ? (float) $variant['compare_at_price'] : 0.0;
 
@@ -316,11 +316,11 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
                 }
             }
             if ($usd > 0) {
-                $product->set_regular_price((string) round($usd * $usd_to_kes, 2));
+                $product->set_regular_price((string) round($usd, 2));
             }
             if ($compare > $usd && $compare > 0) {
-                $product->set_sale_price((string) round($usd * $usd_to_kes, 2));
-                $product->set_regular_price((string) round($compare * $usd_to_kes, 2));
+                $product->set_sale_price((string) round($usd, 2));
+                $product->set_regular_price((string) round($compare, 2));
             }
             $product->set_manage_stock(false);
             $product->set_stock_status(!empty($variant['available']) ? 'instock' : 'outofstock');
@@ -412,6 +412,10 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
 
         update_post_meta($id, '_sa_shopify_id', $shopify_id);
         update_post_meta($id, '_sa_shopify_handle', $handle);
+        update_post_meta($id, '_sa_price_currency', 'USD');
+        if ($usd > 0) {
+            update_post_meta($id, '_sa_shopify_price_usd', (string) round($usd, 2));
+        }
         if (!empty($item['updated_at'])) {
             update_post_meta($id, '_sa_shopify_updated_at', (string) $item['updated_at']);
         }
@@ -507,14 +511,27 @@ function sa_core_assign_product_type_categories(string $ptype): array
         'brake-rotors' => ['brake rotor', 'rotor'],
         'brake-calipers' => ['caliper'],
         'brake-kits' => ['brake kit'],
+        'big-brake-kits' => ['big brake'],
         'shocks-struts' => ['shock', 'strut'],
         'coilovers' => ['coilover'],
         'sway-bars' => ['sway bar'],
+        'control-arms' => ['control arm'],
+        'lift-kits' => ['lift kit'],
+        'leveling-kits' => ['leveling'],
         'cat-back-exhaust' => ['catback', 'cat-back', 'cat back'],
         'axle-back-exhaust' => ['axle back', 'axle-back'],
+        'headers-manifolds' => ['header', 'manifold'],
+        'downpipes' => ['downpipe'],
+        'muffler' => ['muffler'],
         'air-intakes' => ['cold air', 'air intake'],
         'fog-lights' => ['fog light'],
+        'headlights' => ['headlight'],
+        'tail-lights' => ['tail light'],
         'tonneau-covers' => ['tonneau'],
+        'wheels' => ['wheel', 'rim'],
+        'tires' => ['tire', 'tyre'],
+        'oil-filters' => ['oil filter'],
+        'spark-plugs' => ['spark plug'],
     ];
     $pl = strtolower($ptype);
     foreach ($aliases as $child_slug => $needles) {
