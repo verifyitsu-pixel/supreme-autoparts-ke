@@ -13,3 +13,11 @@ wp-content/backup*/
 *.sql.gz
 .idea/
 .vscode/
+
+# Full catalog scrape (huge) — keep structure/README/progress; ignore monoliths
+data/scrape/products.ndjson
+data/scrape/products-index.csv
+data/scrape/scrape.log
+data/scrape/*.log
+data/scrape/progress.json.tmp
+__pycache__/

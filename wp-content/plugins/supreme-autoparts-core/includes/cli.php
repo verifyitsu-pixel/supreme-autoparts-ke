@@ -10,7 +10,7 @@ if (!defined('WP_CLI') || !WP_CLI) {
 }
 
 /**
- * WP-CLI commands: wp supreme seed-pages | seed-categories | import-sample
+ * WP-CLI commands: wp supreme seed-pages | seed-categories | import-sample | import-ndjson
  */
 class SA_Core_CLI_Command
 {
@@ -44,6 +44,12 @@ class SA_Core_CLI_Command
      * ## OPTIONS
      * [--file=<path>]
      * : Path to sample-products.json
+     * [--limit=<n>]
+     * : Max products
+     * [--offset=<n>]
+     * : Skip first N
+     * [--skip-images]
+     * : Skip image sideload
      *
      * ## EXAMPLES
      *     wp supreme import-sample
@@ -56,8 +62,61 @@ class SA_Core_CLI_Command
     {
         $file = $assoc_args['file'] ?? SA_CORE_DIR . 'data/sample-products.json';
         require_once SA_CORE_DIR . 'includes/import-shopify.php';
-        $result = sa_core_import_shopify_products_file($file);
-        WP_CLI::success(sprintf('Imported %d products (%d skipped, %d errors).', $result['imported'], $result['skipped'], $result['errors']));
+        $result = sa_core_import_shopify_products_file($file, [
+            'limit'       => isset($assoc_args['limit']) ? (int) $assoc_args['limit'] : 0,
+            'offset'      => isset($assoc_args['offset']) ? (int) $assoc_args['offset'] : 0,
+            'skip_images' => isset($assoc_args['skip-images']),
+        ]);
+        WP_CLI::success(sprintf(
+            'Imported %d, updated %d (%d skipped, %d errors).',
+            $result['imported'],
+            $result['updated'] ?? 0,
+            $result['skipped'],
+            $result['errors']
+        ));
+    }
+
+    /**
+     * Stream-import Shopify NDJSON catalog (idempotent by handle/SKU/shopify id).
+     *
+     * ## OPTIONS
+     * [--file=<path>]
+     * : Path to products.ndjson (default: ABSPATH/data/scrape/products.ndjson)
+     * [--limit=<n>]
+     * : Max products this run (0 = all remaining from offset)
+     * [--offset=<n>]
+     * : Skip first N NDJSON lines
+     * [--skip-images]
+     * : Skip image sideload for faster bulk pass
+     *
+     * ## EXAMPLES
+     *     wp supreme import-ndjson --limit=500 --offset=0
+     *     wp supreme import-ndjson --file=/var/www/html/data/scrape/products.ndjson --limit=1000 --offset=500 --skip-images
+     *
+     * @param array $args
+     * @param array $assoc_args
+     */
+    public function import_ndjson(array $args, array $assoc_args): void
+    {
+        $default = trailingslashit(ABSPATH) . 'data/scrape/products.ndjson';
+        $file = $assoc_args['file'] ?? $default;
+        require_once SA_CORE_DIR . 'includes/import-shopify.php';
+        $result = sa_core_import_shopify_products_file($file, [
+            'limit'       => isset($assoc_args['limit']) ? (int) $assoc_args['limit'] : 0,
+            'offset'      => isset($assoc_args['offset']) ? (int) $assoc_args['offset'] : 0,
+            'skip_images' => isset($assoc_args['skip-images']),
+        ]);
+        WP_CLI::success(sprintf(
+            'NDJSON import: imported=%d updated=%d skipped=%d errors=%d file=%s',
+            $result['imported'],
+            $result['updated'] ?? 0,
+            $result['skipped'],
+            $result['errors'],
+            $file
+        ));
+        foreach (array_slice($result['messages'], 0, 30) as $m) {
+            WP_CLI::log($m);
+        }
     }
 }
 
