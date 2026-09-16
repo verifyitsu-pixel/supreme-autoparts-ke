@@ -98,4 +98,101 @@
       bindQty(document);
     });
   }
+
+  // Part enquire — build WhatsApp / Email / SMS links from form fields
+  function saEnquireCollect(form) {
+    var get = function (name) {
+      var el = form.querySelector('[name="' + name + '"]');
+      return el ? String(el.value || '').trim() : '';
+    };
+    return {
+      product: get('product'),
+      car: get('car'),
+      brand: get('brand'),
+      year: get('year'),
+      notes: get('notes')
+    };
+  }
+
+  function saEnquireValid(fields) {
+    return !!(fields.product && fields.car && fields.year);
+  }
+
+  function saEnquireBody(fields) {
+    var lines = [
+      'Hi Supreme Autoparts — I am looking for a part:',
+      '',
+      'Product: ' + fields.product,
+      'Car / model: ' + fields.car,
+      'Brand: ' + (fields.brand || '—'),
+      'Year: ' + fields.year
+    ];
+    if (fields.notes) lines.push('Notes: ' + fields.notes);
+    lines.push('');
+    lines.push('Please let me know availability and price. Thank you.');
+    return lines.join('\n');
+  }
+
+  function saEnquireReadConfig(form) {
+    var node = form.querySelector('[data-sa-enquire-config]');
+    if (!node) return { whatsapp: '254714498451', phone: '+254714498451', email: 'calvin@supremeautoparts.co.ke', subject: 'Part enquiry — Supreme Autoparts' };
+    try { return JSON.parse(node.textContent || '{}'); } catch (e) {
+      return { whatsapp: '254714498451', phone: '+254714498451', email: 'calvin@supremeautoparts.co.ke', subject: 'Part enquiry — Supreme Autoparts' };
+    }
+  }
+
+  function saEnquireMarkInvalid(form, fields) {
+    ['product', 'car', 'year'].forEach(function (name) {
+      var el = form.querySelector('[name="' + name + '"]');
+      if (!el) return;
+      if (!fields[name]) el.classList.add('is-invalid');
+      else el.classList.remove('is-invalid');
+    });
+  }
+
+  document.querySelectorAll('[data-sa-enquire]').forEach(function (root) {
+    var form = root.querySelector('[data-sa-enquire-form]');
+    if (!form) return;
+    var err = form.querySelector('[data-sa-enquire-error]');
+    var cfg = saEnquireReadConfig(form);
+
+    form.querySelectorAll('[data-sa-enquire-channel]').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        var fields = saEnquireCollect(form);
+        if (!saEnquireValid(fields)) {
+          e.preventDefault();
+          saEnquireMarkInvalid(form, fields);
+          if (err) err.hidden = false;
+          var first = form.querySelector('.is-invalid');
+          if (first) first.focus();
+          return;
+        }
+        saEnquireMarkInvalid(form, fields);
+        if (err) err.hidden = true;
+
+        var body = saEnquireBody(fields);
+        var channel = btn.getAttribute('data-sa-enquire-channel');
+        if (channel === 'whatsapp') {
+          btn.href = 'https://wa.me/' + cfg.whatsapp + '?text=' + encodeURIComponent(body);
+        } else if (channel === 'email') {
+          var emailBody = body + '\n\n—\nSMS / WhatsApp: ' + cfg.phone;
+          btn.href = 'mailto:' + cfg.email
+            + '?subject=' + encodeURIComponent(cfg.subject || 'Part enquiry — Supreme Autoparts')
+            + '&body=' + encodeURIComponent(emailBody);
+        } else if (channel === 'sms') {
+          // iOS uses &body=, Android often accepts ?body=
+          var smsBody = encodeURIComponent(body);
+          btn.href = 'sms:' + cfg.phone + '?body=' + smsBody;
+        }
+      });
+    });
+
+    form.addEventListener('input', function () {
+      if (err) err.hidden = true;
+      form.querySelectorAll('.is-invalid').forEach(function (el) {
+        el.classList.remove('is-invalid');
+      });
+    });
+  });
+
 })();

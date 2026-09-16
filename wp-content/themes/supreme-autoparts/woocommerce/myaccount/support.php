@@ -1,13 +1,17 @@
 <?php
 /**
- * Support endpoint — contact + policy links.
+ * Support endpoint — enquire + contact + policy links.
  *
  * @package Supreme_Autoparts
  */
 
 defined('ABSPATH') || exit;
 
-$email = 'calvin@supremeautoparts.co.ke';
+$email   = 'calvin@supremeautoparts.co.ke';
+$contact = function_exists('sa_enquire_contact') ? sa_enquire_contact() : [
+    'phone_display' => '+254 714 498 451',
+    'email'         => $email,
+];
 $policies = [
     ['slug' => 'shipping-policy', 'label' => __('Shipping policy', 'supreme-autoparts')],
     ['slug' => 'refund-policy', 'label' => __('Refund policy', 'supreme-autoparts')],
@@ -15,6 +19,7 @@ $policies = [
     ['slug' => 'chargeback-policy', 'label' => __('Chargeback / disputes', 'supreme-autoparts')],
     ['slug' => 'privacy-policy', 'label' => __('Privacy policy', 'supreme-autoparts')],
     ['slug' => 'terms-of-service', 'label' => __('Terms of service', 'supreme-autoparts')],
+    ['slug' => 'enquire', 'label' => __('Can\'t find a part?', 'supreme-autoparts')],
     ['slug' => 'contact', 'label' => __('Contact', 'supreme-autoparts')],
 ];
 ?>
@@ -26,11 +31,20 @@ $policies = [
 
   <div class="sa-support__grid">
     <div class="sa-support__card">
-      <h3><?php esc_html_e('Email us', 'supreme-autoparts'); ?></h3>
+      <h3><?php esc_html_e('Reach us', 'supreme-autoparts'); ?></h3>
       <p><?php esc_html_e('Typical reply during business hours (Africa/Nairobi).', 'supreme-autoparts'); ?></p>
-      <a class="sa-btn" href="mailto:<?php echo esc_attr($email); ?>?subject=<?php echo rawurlencode('Supreme Autoparts support'); ?>">
-        <?php echo esc_html($email); ?>
-      </a>
+      <ul class="sa-support__reach">
+        <li>
+          <strong><?php esc_html_e('WhatsApp / SMS', 'supreme-autoparts'); ?></strong>
+          <a href="https://wa.me/254714498451"><?php echo esc_html($contact['phone_display']); ?></a>
+        </li>
+        <li>
+          <strong><?php esc_html_e('Email', 'supreme-autoparts'); ?></strong>
+          <a href="mailto:<?php echo esc_attr($email); ?>?subject=<?php echo rawurlencode('Supreme Autoparts support'); ?>">
+            <?php echo esc_html($email); ?>
+          </a>
+        </li>
+      </ul>
     </div>
     <div class="sa-support__card">
       <h3><?php esc_html_e('Store policies', 'supreme-autoparts'); ?></h3>
@@ -44,4 +58,15 @@ $policies = [
       </ul>
     </div>
   </div>
+
+  <?php if (function_exists('sa_render_enquire')) : ?>
+    <div class="sa-support__enquire">
+      <?php
+      sa_render_enquire([
+          'context' => 'account',
+          'compact' => true,
+      ]);
+      ?>
+    </div>
+  <?php endif; ?>
 </div>

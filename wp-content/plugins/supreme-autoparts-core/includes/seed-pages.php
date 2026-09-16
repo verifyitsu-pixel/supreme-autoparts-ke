@@ -54,7 +54,7 @@ function sa_core_seed_pages(): void
     }
 
     // Hard guarantee for footer/checkout policy URLs that were 404 on live.
-    foreach (['chargeback-policy', 'cookie-policy', 'data-policy'] as $must) {
+    foreach (['chargeback-policy', 'cookie-policy', 'data-policy', 'enquire'] as $must) {
         if (empty($created[$must]) || !get_page_by_path($must)) {
             $defs = sa_core_page_definitions();
             if (!isset($defs[$must])) {
@@ -154,7 +154,7 @@ function sa_core_seed_pages(): void
     }
 
     update_option('sa_pages_seeded', time());
-    update_option('sa_pages_seed_ver', '6');
+    update_option('sa_pages_seed_ver', '7');
 }
 
 /**

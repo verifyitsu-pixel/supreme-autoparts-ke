@@ -31,10 +31,20 @@ HTML,
 <p>Have a question about fitment, shipping to Kenya, or a special order? Reach out and our team will help.</p>
 <ul>
 <li><strong>Website:</strong> {$site}</li>
+<li><strong>WhatsApp / SMS:</strong> <a href="https://wa.me/254714498451">+254 714 498 451</a></li>
 <li><strong>Email:</strong> <a href="mailto:{$email}">{$email}</a></li>
 <li><strong>Hours:</strong> Monday–Friday, business hours (Africa/Nairobi)</li>
 </ul>
+<p>Looking for a part that is not listed? Use our <a href="/enquire/">Can&rsquo;t find a part?</a> form.</p>
 <p>For order issues, include your order number and vehicle year/make/model.</p>
+HTML,
+        ],
+        'enquire' => [
+            'title'   => 'Can\'t find a part?',
+            'content' => <<<HTML
+<p>We are updating the catalogue. If you need a specific part for your vehicle, send an enquiry and we will check availability and pricing.</p>
+<p>Fill in the form below, then choose WhatsApp, email, or SMS. Include product name, car / model, and year at minimum.</p>
+[sa_enquire context="general"]
 HTML,
         ],
         'free-shipping' => [
