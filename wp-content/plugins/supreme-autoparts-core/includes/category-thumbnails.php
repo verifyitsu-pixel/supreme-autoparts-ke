@@ -48,18 +48,25 @@ function sa_core_is_real_category_image_url(string $url): bool
  */
 function sa_core_get_category_image_url(string $slug, int $term_id = 0): string
 {
+    // Prefer theme-bundled catalog photos (Shopify CDN scrape → assets/images/categories).
+    $safe = sanitize_title($slug);
+    if ($safe !== '') {
+        if (defined('SA_THEME_DIR') && defined('SA_THEME_URI')) {
+            $path = SA_THEME_DIR . '/assets/images/categories/' . $safe . '.jpg';
+            if (is_readable($path) && filesize($path) > 1000) {
+                return SA_THEME_URI . '/assets/images/categories/' . $safe . '.jpg';
+            }
+        } elseif (function_exists('get_stylesheet_directory')) {
+            $local = get_stylesheet_directory() . '/assets/images/categories/' . $safe . '.jpg';
+            if (is_readable($local) && filesize($local) > 1000) {
+                return get_stylesheet_directory_uri() . '/assets/images/categories/' . $safe . '.jpg';
+            }
+        }
+    }
+
     if ($term_id <= 0) {
         $term = get_term_by('slug', $slug, 'product_cat');
         $term_id = ($term && !is_wp_error($term)) ? (int) $term->term_id : 0;
-    }
-
-    // Prefer theme-bundled real catalog photos (downloaded from Shopify CDN scrape).
-    $safe = sanitize_title($slug);
-    if ($safe !== '' && function_exists('get_stylesheet_directory')) {
-        $local = get_stylesheet_directory() . '/assets/images/categories/' . $safe . '.jpg';
-        if (is_readable($local)) {
-            return get_stylesheet_directory_uri() . '/assets/images/categories/' . $safe . '.jpg';
-        }
     }
 
     if ($term_id > 0) {

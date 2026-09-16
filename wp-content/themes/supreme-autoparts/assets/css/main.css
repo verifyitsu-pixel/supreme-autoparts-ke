@@ -160,13 +160,13 @@
 .sa-region-card--asian { background: linear-gradient(145deg,#161618,#121a14); }
 
 .sa-type-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: .85rem;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: .85rem;
 }
 .sa-type-tile {
   display: flex; flex-direction: column; align-items: center; gap: .7rem;
   padding: 1.15rem .65rem; background: var(--sa-bg-card); border: 1px solid var(--sa-border);
   border-radius: var(--sa-radius-lg); text-align: center; color: var(--sa-heading);
-  transition: border-color .2s, background .2s, color .2s, transform .2s;
+  transition: border-color .2s, background .2s, color .2s, transform .2s, box-shadow .2s;
   overflow: hidden;
 }
 .sa-type-tile:hover { border-color: var(--sa-accent); background: var(--sa-bg-elevated); color: var(--sa-accent); transform: translateY(-2px); }
@@ -175,26 +175,41 @@
   display: grid; place-items: center; color: var(--sa-accent); background: rgba(245,166,35,.06);
 }
 .sa-type-tile__icon .sa-icon { width: 22px; height: 22px; }
-.sa-type-tile--photo { padding: 0 0 .85rem; gap: .65rem; }
+.sa-type-tile--photo {
+  padding: 0; gap: 0; color: #fff;
+  box-shadow: 0 1px 0 rgba(255,255,255,.03) inset;
+}
+.sa-type-tile--photo:hover {
+  color: #fff; border-color: var(--sa-accent);
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+}
 .sa-type-tile__media {
-  display: block; width: 100%; aspect-ratio: 1 / 1; overflow: hidden;
-  background: #0e0e10; border-bottom: 1px solid var(--sa-border);
+  position: relative; display: block; width: 100%; aspect-ratio: 4 / 3;
+  overflow: hidden; background: #101012;
+}
+.sa-type-tile__media::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, transparent 35%, rgba(0,0,0,.55) 68%, rgba(0,0,0,.88) 100%);
 }
 .sa-type-tile__img {
-  display: block; width: 100%; height: 100%; object-fit: cover;
-  transition: transform .35s ease;
+  display: block; width: 100%; height: 100%; object-fit: cover; object-position: center;
+  transition: transform .4s ease;
 }
-.sa-type-tile--photo:hover .sa-type-tile__img { transform: scale(1.05); }
-.sa-type-tile--photo .sa-type-tile__name { padding: 0 .5rem; }
+.sa-type-tile--photo:hover .sa-type-tile__img { transform: scale(1.04); }
 .sa-type-tile__name {
-  font-weight: 600; font-size: .78rem; letter-spacing: .03em; text-transform: uppercase;
+  font-weight: 650; font-size: .78rem; letter-spacing: .04em; text-transform: uppercase;
+}
+.sa-type-tile--photo .sa-type-tile__name {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 1;
+  padding: .85rem .75rem .7rem; text-align: left; color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,.55);
 }
 
 /* Woo product category grids */
 .products .product-category a { color: inherit; }
 .products .product-category img.sa-cat-thumb,
 .products .product-category img.attachment-woocommerce_thumbnail {
-  width: 100%; height: auto; aspect-ratio: 1; object-fit: cover;
+  width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover;
   border-radius: var(--sa-radius); background: var(--sa-bg-card);
   border: 1px solid var(--sa-border);
 }
@@ -308,6 +323,22 @@
   padding: 2rem 0 1rem; border-bottom: 1px solid var(--sa-border); margin-bottom: 1.5rem;
 }
 .sa-archive-header h1 { margin: 0; font-size: 1.65rem; text-transform: none; letter-spacing: -0.02em; }
+.sa-archive-header--photo {
+  display: grid; grid-template-columns: minmax(120px, 220px) 1fr; gap: 1.25rem; align-items: center;
+  padding: 1.25rem 0 1.35rem;
+}
+.sa-archive-header__media {
+  position: relative; overflow: hidden; border-radius: var(--sa-radius-lg);
+  border: 1px solid var(--sa-border); aspect-ratio: 4 / 3; background: #101012;
+}
+.sa-archive-header__img {
+  display: block; width: 100%; height: 100%; object-fit: cover;
+}
+.sa-archive-header__body { min-width: 0; }
+@media (max-width: 600px) {
+  .sa-archive-header--photo { grid-template-columns: 1fr; }
+  .sa-archive-header__media { max-width: 280px; }
+}
 
 /* Cart layout */
 .sa-cart-layout {

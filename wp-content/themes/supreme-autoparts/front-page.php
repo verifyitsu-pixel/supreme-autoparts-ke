@@ -44,12 +44,13 @@ get_header();
         <a class="sa-type-tile<?php echo $img !== '' ? ' sa-type-tile--photo' : ''; ?>" href="<?php echo esc_url(sa_term_link('product_cat', $type['slug'])); ?>">
           <?php if ($img !== '') : ?>
             <span class="sa-type-tile__media">
-              <img src="<?php echo esc_url($img); ?>" alt="<?php echo esc_attr($type['title']); ?>" class="sa-type-tile__img" loading="lazy" decoding="async" referrerpolicy="no-referrer-when-downgrade" width="200" height="200" />
+              <img src="<?php echo esc_url($img); ?>" alt="" class="sa-type-tile__img" loading="lazy" decoding="async" width="400" height="300" />
+              <span class="sa-type-tile__name"><?php echo esc_html($type['title']); ?></span>
             </span>
           <?php else : ?>
             <span class="sa-type-tile__icon" aria-hidden="true"><?php echo sa_category_icon_svg($type['icon']); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+            <span class="sa-type-tile__name"><?php echo esc_html($type['title']); ?></span>
           <?php endif; ?>
-          <span class="sa-type-tile__name"><?php echo esc_html($type['title']); ?></span>
         </a>
       <?php endforeach; ?>
     </div>

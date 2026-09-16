@@ -3,66 +3,77 @@
     "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/728120e20c042560f54eb92709519dc0L.jpg",
     "title": "aFe 24-25 Ford Mustang GT V8 5.0L Momentum GT Cold Air Intake System w/ Pro 5R Filter",
     "product_type": "Cold Air Intakes",
-    "local": "assets/images/categories/air-intake.jpg"
+    "local": "assets/images/categories/air-intake.jpg",
+    "handle": "afe-24-25-ford-mustang-gt-v8-5-0l-momentum-gt-cold-air-intake-system-w-pro-5r-filter"
   },
   "brakes": {
     "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/c4310b15daf613d9ed8afcb3930feefaL.jpg",
     "title": "EBC Racing 21-23 Hyundai Kona N 2.0T Anodized Apollo-4 Calipers 355mm Rotors Front Big Brake Kit",
     "product_type": "Big Brake Kits",
-    "local": "assets/images/categories/brakes.jpg"
+    "local": "assets/images/categories/brakes.jpg",
+    "handle": "ebc-racing-21-23-hyundai-kona-n-2-0t-anodized-apollo-4-calipers-355mm-rotors-front-big-brake-kit"
   },
   "drivetrain": {
     "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/5e88c4d38121da8855c478e5ebd6209fL.jpg",
     "title": "McLeod 12-18 Jeep Wrangler JK 3.6L Adventure Series Trail Level Clutch Kit",
     "product_type": "Clutch Kits - Single",
-    "local": "assets/images/categories/drivetrain.jpg"
+    "local": "assets/images/categories/drivetrain.jpg",
+    "handle": "mcleod-12-18-jeep-wrangler-jk-3-6l-adventure-series-trail-level-clutch-kit"
   },
   "engine": {
     "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/a31fb1f1cb025fad21f7f9300568649cL.jpg",
     "title": "Turbosmart V-Band 0.96AR Oil Cooled TS-1-7675C Mirror Twin Turbo Package",
     "product_type": "Turbochargers",
-    "local": "assets/images/categories/engine.jpg"
+    "local": "assets/images/categories/engine.jpg",
+    "handle": "turbosmart-v-band-0-96ar-oil-cooled-ts-1-7675c-mirror-twin-turbo-package"
   },
   "exhaust": {
     "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/f08bcfab1a68ef2542dd82713370d15fL.jpg",
     "title": "Corsa 15-20 Ford F-150 5.0L (145in WB) 3.0in Lightning Exit Catback w/ 3.5in Twin Polished Pro Tips",
     "product_type": "Catback",
-    "local": "assets/images/categories/exhaust.jpg"
+    "local": "assets/images/categories/exhaust.jpg",
+    "handle": "corsa-15-20-ford-f-150-5-0l-145in-wb-3-0in-lightning-exit-catback-w-3-5in-twin-polished-pro-tips"
   },
   "exterior": {
     "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/b7431af4cef0ab2a56466b24ad11c718L.jpg",
     "title": "N-Fab Trail Slider Steps 25-26 Toyota 4Runner (excl. Limited/TRD/Nightshade) - SRW - Textured Black",
     "product_type": "Body Armor & Rock Rails",
-    "local": "assets/images/categories/exterior.jpg"
+    "local": "assets/images/categories/exterior.jpg",
+    "handle": "n-fab-trail-slider-steps-25-26-toyota-4runner-excl-limited-trd-nightshade-srw-textured-black"
   },
   "interior": {
     "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/4be514261707a07533e385a4b5b477b3L.jpg",
     "title": "PRP Comp R Leather Steering Wheel - Red",
     "product_type": "Steering Wheels",
-    "local": "assets/images/categories/interior.jpg"
+    "local": "assets/images/categories/interior.jpg",
+    "handle": "prp-comp-r-leather-steering-wheel-red"
   },
   "lighting": {
     "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/0c410940fecb39ec8f5d5be64ae75332L.jpg",
     "title": "AlphaRex 23-26 Ford F-250 SD LUXX LED Proj Headlights Blk w/Activ Light/Seq Signal/Switchback",
     "product_type": "Headlights",
-    "local": "assets/images/categories/lighting.jpg"
+    "local": "assets/images/categories/lighting.jpg",
+    "handle": "alpharex-23-26-ford-f-250-sd-luxx-led-proj-headlights-blk-w-activ-light-seq-signal-switchback"
   },
   "suspension": {
     "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/850947b4b80a6be493da5177f80f5a64L.jpg",
     "title": "Fox 2.0 Performance Elite 10in. Remote Reservoir Coilover Shock w/ DSC Adjuster - 7/8in. Shaft",
     "product_type": "Coilovers",
-    "local": "assets/images/categories/suspension.jpg"
+    "local": "assets/images/categories/suspension.jpg",
+    "handle": "fox-2-0-performance-elite-10in-remote-reservoir-coilover-shock-w-dsc-adjuster-7-8in-shaft"
   },
   "tires": {
     "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/0f3b879f8fd431789165ffd3b820bf1fL.jpg",
     "title": "Mickey Thompson Baja Belted II Tire - 18.5/39R17LT 125P C OWL - 276349",
     "product_type": "Automotive/UTV Tires - On Road",
-    "local": "assets/images/categories/tires.jpg"
+    "local": "assets/images/categories/tires.jpg",
+    "handle": "mickey-thompson-baja-belted-ii-tire-18-5-39r17lt-125p-c-owl-276349"
   },
   "wheels": {
     "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/eda35e420d08fc602eaf973f739e6442L.jpg",
     "title": "Vossen HFX-1 20x10 - 8x170 - ET18 - Super Deep Face - 125.1 - Gloss Black Wheel",
     "product_type": "Wheels - Forged",
-    "local": "assets/images/categories/wheels.jpg"
+    "local": "assets/images/categories/wheels.jpg",
+    "handle": "vossen-hfx-1-20x10-8x170-et18-super-deep-face-125-1-gloss-black-wheel"
   }
 }
