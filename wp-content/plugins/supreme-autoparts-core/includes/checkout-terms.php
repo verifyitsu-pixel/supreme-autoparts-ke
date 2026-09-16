@@ -89,21 +89,9 @@ function sa_core_render_checkout_policy_notice(string $variant = 'full'): void
 }
 
 /**
- * Reminder of Terms + Privacy + Chargeback + Cookies + Refund before place order / terms checkbox.
+ * Duplicate "Before you place your order" notice removed — policy links stay on the
+ * required terms checkbox only (avoids repeating the same list twice at checkout).
  */
-add_action('woocommerce_checkout_before_terms_and_conditions', static function (): void {
-    sa_core_render_checkout_policy_notice('full');
-}, 5);
-
-/**
- * Fallback list just above Place order if the theme skips terms hooks.
- */
-add_action('woocommerce_review_order_before_submit', static function (): void {
-    if (did_action('woocommerce_checkout_before_terms_and_conditions')) {
-        return;
-    }
-    sa_core_render_checkout_policy_notice('compact');
-}, 5);
 
 /**
  * Ensure terms checkbox is required even if theme overrides or terms page unset.
@@ -127,7 +115,7 @@ add_filter('woocommerce_checkout_show_terms', '__return_true');
  * Stronger checkbox label referencing all five required policies.
  */
 add_filter('woocommerce_get_terms_and_conditions_checkbox_text', static function (string $text): string {
-    $links = sa_core_checkout_required_policy_links();
+    $links = sa_core_checkout_policy_links();
     $parts = [];
     foreach ($links as $label => $url) {
         $parts[] = '<a href="' . esc_url($url) . '" target="_blank" rel="noopener noreferrer">' . esc_html($label) . '</a>';
