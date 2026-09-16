@@ -92,21 +92,50 @@ get_header();
 </div>
 
 <?php
-if (function_exists('wc_get_products')) :
-    $products = wc_get_products(['limit' => 8, 'status' => 'publish', 'orderby' => 'date', 'order' => 'DESC']);
-    if ($products) :
-        ?>
-<section class="sa-section">
+/* Latest Parts — shown when the catalog has published products. */
+$sa_latest = [];
+if (function_exists('wc_get_products')) {
+    $sa_latest = wc_get_products([
+        'limit'    => 8,
+        'status'   => 'publish',
+        'orderby'  => 'date',
+        'order'    => 'DESC',
+        'return'   => 'objects',
+    ]);
+}
+if (empty($sa_latest) && function_exists('wc_get_product')) {
+    $sa_ids = get_posts([
+        'post_type'      => 'product',
+        'post_status'    => 'publish',
+        'posts_per_page' => 8,
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+        'fields'         => 'ids',
+        'no_found_rows'  => true,
+    ]);
+    foreach ($sa_ids as $sa_id) {
+        $sa_p = wc_get_product((int) $sa_id);
+        if ($sa_p && $sa_p->is_visible()) {
+            $sa_latest[] = $sa_p;
+        }
+    }
+}
+if (!empty($sa_latest)) :
+    ?>
+<section class="sa-section sa-latest-parts" aria-labelledby="sa-latest-parts-title">
   <div class="sa-container">
     <div class="sa-section__head">
-      <h2 class="sa-section__title"><?php esc_html_e('Latest Parts', 'supreme-autoparts'); ?></h2>
+      <h2 id="sa-latest-parts-title" class="sa-section__title"><?php esc_html_e('Latest Parts', 'supreme-autoparts'); ?></h2>
       <?php if (function_exists('wc_get_page_permalink')) : ?>
         <a class="sa-section__link" href="<?php echo esc_url(wc_get_page_permalink('shop')); ?>"><?php esc_html_e('View all', 'supreme-autoparts'); ?></a>
       <?php endif; ?>
     </div>
     <ul class="products sa-products columns-4">
-      <?php foreach ($products as $product) :
+      <?php foreach ($sa_latest as $product) :
           $post_object = get_post($product->get_id());
+          if (!$post_object) {
+              continue;
+          }
           setup_postdata($GLOBALS['post'] = $post_object); // phpcs:ignore
           wc_get_template_part('content', 'product');
       endforeach;
@@ -115,8 +144,7 @@ if (function_exists('wc_get_products')) :
     </ul>
   </div>
 </section>
-        <?php
-    endif;
+    <?php
 endif;
 
 get_footer();

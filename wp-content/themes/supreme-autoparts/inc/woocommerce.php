@@ -49,6 +49,23 @@ add_filter('woocommerce_sale_flash', static function (string $html): string {
 });
 
 
+add_filter('woocommerce_loop_add_to_cart_args', static function (array $args): array {
+    $class = isset($args['class']) ? (string) $args['class'] : 'button';
+    if (strpos($class, 'sa-btn') === false) {
+        $class .= ' sa-btn sa-btn--block sa-product-card__atc';
+    }
+    $args['class'] = trim(preg_replace('/\s+/', ' ', $class));
+    return $args;
+});
+
+// Keep KES visible in price HTML (Woo currency code / symbol).
+add_filter('woocommerce_currency_symbol', static function (string $symbol, string $currency): string {
+    if (strtoupper($currency) === 'KES' && $symbol !== '' && stripos($symbol, 'KES') === false) {
+        return 'KES';
+    }
+    return $symbol;
+}, 10, 2);
+
 // Custom product cards — suppress default loop title/price/thumb/button (rendered in content-product.php).
 add_action('init', static function (): void {
     remove_action('woocommerce_before_shop_loop_item_title', 'woocommerce_show_product_loop_sale_flash', 10);

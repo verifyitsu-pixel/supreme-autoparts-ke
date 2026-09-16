@@ -3,7 +3,7 @@ Theme Name: Supreme Autoparts
 Theme URI: https://supremeautoparts.co.ke
 Author: Supreme Autoparts
 Description: Dark charcoal + amber automotive WooCommerce storefront for Supreme Autoparts (KES).
-Version: 1.2.6
+Version: 1.2.7
 Requires at least: 6.4
 Tested up to: 6.7
 Requires PHP: 8.1
@@ -11,7 +11,7 @@ Text Domain: supreme-autoparts
 Tags: e-commerce, woocommerce, dark, custom-menu, responsive
 */
 
-/* Design tokens — charcoal #0B0B0D + amber #F5A623 from logo */
+/* Design tokens — charcoal #0B0B0D + amber #F5A623, Inter typography */
 :root {
   --sa-bg: #0B0B0D;
   --sa-bg-alt: #121214;
@@ -37,6 +37,23 @@ Tags: e-commerce, woocommerce, dark, custom-menu, responsive
   --sa-space: 1.25rem;
   --sa-yellow: var(--sa-accent);
   --sa-red: var(--sa-danger);
+
+  /* Professional type scale (Inter) */
+  --sa-fs-xs: 0.75rem;      /* 12px */
+  --sa-fs-sm: 0.8125rem;    /* 13px */
+  --sa-fs-base: 0.9375rem;  /* 15px */
+  --sa-fs-md: 1rem;         /* 16px */
+  --sa-fs-lg: 1.125rem;     /* 18px */
+  --sa-fs-xl: 1.25rem;      /* 20px */
+  --sa-fs-2xl: 1.5rem;      /* 24px */
+  --sa-fs-3xl: clamp(1.65rem, 3vw, 2rem);
+  --sa-fs-hero: clamp(2rem, 5vw, 3.25rem);
+  --sa-lh-tight: 1.25;
+  --sa-lh-snug: 1.35;
+  --sa-lh-normal: 1.55;
+  --sa-lh-relaxed: 1.7;
+  --sa-tracking-tight: -0.02em;
+  --sa-tracking-wide: 0.04em;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -44,11 +61,12 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   font-family: var(--sa-font);
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: var(--sa-fs-base);
+  line-height: var(--sa-lh-normal);
   color: var(--sa-text);
   background: var(--sa-bg);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 img { max-width: 100%; height: auto; display: block; }
 a { color: var(--sa-link); text-decoration: none; transition: color .15s, background .15s, border-color .15s; }
@@ -57,9 +75,15 @@ h1,h2,h3,h4,h5,h6 {
   font-family: var(--sa-font-display);
   color: var(--sa-heading);
   font-weight: 650;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--sa-tracking-tight);
+  line-height: var(--sa-lh-tight);
   margin: 0 0 0.6em;
 }
+h1 { font-size: var(--sa-fs-3xl); font-weight: 700; }
+h2 { font-size: var(--sa-fs-2xl); }
+h3 { font-size: var(--sa-fs-xl); }
+h4 { font-size: var(--sa-fs-lg); }
+h5,h6 { font-size: var(--sa-fs-md); }
 p { margin: 0 0 1em; }
 ul,ol { margin: 0 0 1em; padding-left: 1.2em; }
 .sa-container { width: min(100% - 2rem, var(--sa-max)); margin-inline: auto; }
