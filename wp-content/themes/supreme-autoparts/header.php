@@ -39,17 +39,13 @@ if (!defined('ABSPATH')) {
       <?php
       if (function_exists('has_custom_logo') && has_custom_logo()) {
           $custom_logo_id = (int) get_theme_mod('custom_logo');
-          $logo_html      = wp_get_attachment_image($custom_logo_id, 'sa-logo', false, [
-              'class'          => 'sa-logo__img',
-              'alt'            => get_bloginfo('name'),
-              'loading'        => 'eager',
-              'fetchpriority'  => 'high',
-              'decoding'       => 'async',
-              'sizes'          => '(max-width: 767px) 140px, 200px',
-          ]);
-          // Fallback if sa-logo size missing (pre-regeneration).
-          if ($logo_html === '') {
-              $logo_html = wp_get_attachment_image($custom_logo_id, 'medium', false, [
+          $logo_file      = (string) get_post_meta($custom_logo_id, '_wp_attached_file', true);
+          $uploads        = wp_get_upload_dir();
+          $basedir        = (string) ($uploads['basedir'] ?? '');
+          $logo_on_disk   = $logo_file !== '' && $basedir !== '' && is_readable($basedir . '/' . ltrim($logo_file, '/'));
+          $logo_html      = '';
+          if ($logo_on_disk) {
+              $logo_html = wp_get_attachment_image($custom_logo_id, 'sa-logo', false, [
                   'class'         => 'sa-logo__img',
                   'alt'           => get_bloginfo('name'),
                   'loading'       => 'eager',
@@ -57,8 +53,28 @@ if (!defined('ABSPATH')) {
                   'decoding'      => 'async',
                   'sizes'         => '(max-width: 767px) 140px, 200px',
               ]);
+              if ($logo_html === '') {
+                  $logo_html = wp_get_attachment_image($custom_logo_id, 'medium', false, [
+                      'class'         => 'sa-logo__img',
+                      'alt'           => get_bloginfo('name'),
+                      'loading'       => 'eager',
+                      'fetchpriority' => 'high',
+                      'decoding'      => 'async',
+                      'sizes'         => '(max-width: 767px) 140px, 200px',
+                  ]);
+              }
           }
-          echo $logo_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+          if ($logo_html !== '') {
+              echo $logo_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+          } else {
+              // Fall through to theme-baked asset when uploads missing after redeploy.
+              $fallback_uri = function_exists('sa_theme_logo_url') ? sa_theme_logo_url(false) : (SA_THEME_URI . '/assets/logo.jpg');
+              printf(
+                  '<img class="sa-logo__img" src="%s" alt="%s" width="200" height="112" loading="eager" fetchpriority="high" decoding="async" sizes="(max-width: 767px) 140px, 200px" />',
+                  esc_url($fallback_uri),
+                  esc_attr(get_bloginfo('name'))
+              );
+          }
       } else {
           $fallback_uri = function_exists('sa_theme_logo_url') ? sa_theme_logo_url(false) : (SA_THEME_URI . '/assets/logo.png');
           $fallback_path = str_replace(SA_THEME_URI, SA_THEME_DIR, $fallback_uri);

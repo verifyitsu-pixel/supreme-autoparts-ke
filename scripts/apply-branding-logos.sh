@@ -30,7 +30,8 @@ FORCE="${SUPREME_FORCE_BRANDING:-0}"
 LOGO_OK=0
 if [[ -n "$CUSTOM_LOGO" && "$CUSTOM_LOGO" != "0" ]]; then
   STATUS=$("${WP[@]}" post get "$CUSTOM_LOGO" --field=post_status 2>/dev/null || true)
-  if [[ "$STATUS" == "inherit" || "$STATUS" == "publish" ]]; then
+  FILE=$("${WP[@]}" post meta get "$CUSTOM_LOGO" _wp_attached_file 2>/dev/null || true)
+  if [[ ("$STATUS" == "inherit" || "$STATUS" == "publish") && -n "${FILE:-}" && -f "/var/www/html/wp-content/uploads/${FILE}" ]]; then
     LOGO_OK=1
   fi
 fi

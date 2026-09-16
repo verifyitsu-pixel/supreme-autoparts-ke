@@ -181,10 +181,17 @@ function sa_core_product_has_real_local_image($product): bool
         return false;
     }
     $file = (string) get_post_meta($thumb, '_wp_attached_file', true);
-    if ($file !== '' && stripos($file, 'woocommerce-placeholder') !== false) {
+    if ($file === '' || stripos($file, 'woocommerce-placeholder') !== false) {
         return false;
     }
-    return true;
+    // Attachment meta can outlive ephemeral uploads — require the file on disk.
+    $uploads = wp_get_upload_dir();
+    $basedir = (string) ($uploads['basedir'] ?? '');
+    if ($basedir === '') {
+        return false;
+    }
+    $path = $basedir . '/' . ltrim($file, '/');
+    return is_readable($path);
 }
 
 /**
@@ -293,7 +300,13 @@ add_filter('woocommerce_product_get_image', static function ($image, $product, $
 add_filter('woocommerce_single_product_image_thumbnail_html', static function ($html, $post_thumbnail_id) {
     if ($post_thumbnail_id) {
         $file = (string) get_post_meta((int) $post_thumbnail_id, '_wp_attached_file', true);
-        if ($file === '' || stripos($file, 'woocommerce-placeholder') === false) {
+        $uploads = wp_get_upload_dir();
+        $basedir = (string) ($uploads['basedir'] ?? '');
+        $on_disk = $file !== ''
+            && stripos($file, 'woocommerce-placeholder') === false
+            && $basedir !== ''
+            && is_readable($basedir . '/' . ltrim($file, '/'));
+        if ($on_disk) {
             return $html;
         }
     }

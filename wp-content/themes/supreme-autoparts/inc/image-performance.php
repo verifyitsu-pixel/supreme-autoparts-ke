@@ -136,9 +136,16 @@ add_action('wp_head', static function (): void {
     if (function_exists('has_custom_logo') && has_custom_logo()) {
         $id = (int) get_theme_mod('custom_logo');
         if ($id > 0) {
-            $logo = (string) (wp_get_attachment_image_url($id, 'sa-logo') ?: wp_get_attachment_image_url($id, 'medium') ?: wp_get_attachment_image_url($id, 'full'));
+            $file = (string) get_post_meta($id, '_wp_attached_file', true);
+            $uploads = wp_get_upload_dir();
+            $basedir = (string) ($uploads['basedir'] ?? '');
+            $on_disk = $file !== '' && $basedir !== '' && is_readable($basedir . '/' . ltrim($file, '/'));
+            if ($on_disk) {
+                $logo = (string) (wp_get_attachment_image_url($id, 'sa-logo') ?: wp_get_attachment_image_url($id, 'medium') ?: wp_get_attachment_image_url($id, 'full'));
+            }
         }
     }
+    // Theme-baked JPEG always survives redeploys (no uploads volume dependency).
     if ($logo === '') {
         $logo = sa_theme_logo_url(false);
     }

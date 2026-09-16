@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_THEME_VERSION', '1.4.4');
+define('SA_THEME_VERSION', '1.4.5');
 define('SA_THEME_DIR', get_template_directory());
 define('SA_THEME_URI', get_template_directory_uri());
 
