@@ -6,7 +6,10 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Policy URLs for checkout reminders.
+ * Policy URLs shown before Place order (terms tick reminder).
+ *
+ * Required customer-facing set: terms, privacy, chargeback, cookies, refund.
+ * Extra store policies (returns, shipping, data) stay linked for clarity.
  *
  * @return array<string, string> label => url
  */
@@ -16,10 +19,10 @@ function sa_core_checkout_policy_links(): array
         'Terms of Service'      => 'terms',
         'Privacy Policy'        => 'privacy-policy',
         'Chargeback & Disputes' => 'chargeback-policy',
-        'Returns'               => 'returns',
-        'Refund Policy'         => 'refund-policy',
-        'Shipping Policy'       => 'shipping-policy',
         'Cookie Policy'         => 'cookie-policy',
+        'Refund Policy'         => 'refund-policy',
+        'Returns'               => 'returns',
+        'Shipping Policy'       => 'shipping-policy',
         'Data Policy'           => 'data-policy',
     ];
     $out = [];
@@ -32,13 +35,18 @@ function sa_core_checkout_policy_links(): array
 }
 
 /**
- * Reminder of Terms + Privacy + Chargeback + Returns before place order / terms checkbox.
+ * Compact policy list markup shared by checkout hooks.
  */
-add_action('woocommerce_checkout_before_terms_and_conditions', static function (): void {
+function sa_core_render_checkout_policy_notice(string $variant = 'full'): void
+{
     $links = sa_core_checkout_policy_links();
-    echo '<div class="sa-checkout-policy-notice woocommerce-info" role="note">';
+    $class = $variant === 'compact'
+        ? 'sa-checkout-policy-notice sa-checkout-policy-notice--compact'
+        : 'sa-checkout-policy-notice woocommerce-info';
+
+    echo '<div class="' . esc_attr($class) . '" role="note">';
     echo '<p><strong>' . esc_html__('Before you place your order', 'supreme-autoparts-core') . '</strong></p>';
-    echo '<p>' . esc_html__('By placing an order you confirm you have read and agree to our store policies:', 'supreme-autoparts-core') . '</p>';
+    echo '<p>' . esc_html__('By placing an order you confirm you have read and agree to our store policies. Tick the terms box below to continue.', 'supreme-autoparts-core') . '</p>';
     echo '<ul class="sa-checkout-policy-notice__list">';
     foreach ($links as $label => $url) {
         printf(
@@ -48,40 +56,34 @@ add_action('woocommerce_checkout_before_terms_and_conditions', static function (
         );
     }
     echo '</ul>';
-    echo '<p>' . esc_html__('Questions or payment disputes:', 'supreme-autoparts-core') . ' ';
-    echo '<a href="mailto:calvin@supremeautoparts.co.ke">calvin@supremeautoparts.co.ke</a>.</p>';
+    if ($variant === 'full') {
+        echo '<p>' . esc_html__('Questions or payment disputes:', 'supreme-autoparts-core') . ' ';
+        echo '<a href="mailto:calvin@supremeautoparts.co.ke">calvin@supremeautoparts.co.ke</a>.</p>';
+    }
     echo '</div>';
+}
+
+/**
+ * Reminder of Terms + Privacy + Chargeback + Cookies + Refund before place order / terms checkbox.
+ */
+add_action('woocommerce_checkout_before_terms_and_conditions', static function (): void {
+    sa_core_render_checkout_policy_notice('full');
 }, 5);
 
 /**
- * Also show a compact list just above Place order if the theme skips terms hooks.
+ * Fallback list just above Place order if the theme skips terms hooks.
  */
 add_action('woocommerce_review_order_before_submit', static function (): void {
     if (did_action('woocommerce_checkout_before_terms_and_conditions')) {
         return;
     }
-    $links = sa_core_checkout_policy_links();
-    echo '<div class="sa-checkout-policies" style="margin:1rem 0;padding:1rem;border:1px solid #333;border-radius:8px;background:#111;font-size:.9rem;">';
-    echo '<p style="margin:0 0 .5rem;"><strong>' . esc_html__('Before you place your order', 'supreme-autoparts-core') . '</strong></p>';
-    echo '<ul style="margin:0;padding-left:1.2rem;columns:2;gap:1rem;">';
-    foreach ($links as $label => $url) {
-        printf(
-            '<li style="margin:.2rem 0;"><a href="%s" target="_blank" rel="noopener noreferrer">%s</a></li>',
-            esc_url($url),
-            esc_html($label)
-        );
-    }
-    echo '</ul></div>';
+    sa_core_render_checkout_policy_notice('compact');
 }, 5);
 
 /**
- * Ensure terms checkbox is required even if theme overrides.
+ * Ensure terms checkbox is required even if theme overrides or terms page unset.
  */
 add_action('woocommerce_checkout_process', static function (): void {
-    $terms_id = (int) get_option('woocommerce_terms_page_id');
-    if ($terms_id <= 0) {
-        return;
-    }
     // phpcs:ignore WordPress.Security.NonceVerification.Missing
     if (empty($_POST['terms'])) {
         wc_add_notice(
@@ -92,6 +94,24 @@ add_action('woocommerce_checkout_process', static function (): void {
 }, 20);
 
 /**
- * Force Woo to show terms checkbox when terms page is configured.
+ * Force Woo to show terms checkbox when a terms page is configured.
  */
 add_filter('woocommerce_checkout_show_terms', '__return_true');
+
+/**
+ * Keep guest checkout + checkout login reminder enabled (idempotent soft enforce).
+ */
+add_action('init', static function (): void {
+    if (!class_exists('WooCommerce')) {
+        return;
+    }
+    if (get_option('woocommerce_enable_guest_checkout') !== 'yes') {
+        update_option('woocommerce_enable_guest_checkout', 'yes');
+    }
+    if (get_option('woocommerce_enable_checkout_login_reminder') !== 'yes') {
+        update_option('woocommerce_enable_checkout_login_reminder', 'yes');
+    }
+    if (get_option('woocommerce_enable_signup_and_login_from_checkout') !== 'yes') {
+        update_option('woocommerce_enable_signup_and_login_from_checkout', 'yes');
+    }
+}, 30);

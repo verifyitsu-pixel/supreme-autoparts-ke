@@ -75,7 +75,7 @@ function sa_core_apply_store_settings(): void
         )
     );
     update_option('woocommerce_checkout_terms_and_conditions_checkbox_text',
-        'I have read and agree to the website [terms] and acknowledge the store policies linked below.'
+        'I have read and agree to the website [terms] and the Privacy, Chargeback, Cookie, and Refund policies linked above.'
     );
 
     // Assign Woo terms + privacy pages when seeded
@@ -106,7 +106,7 @@ add_filter('wp_mail_from_name', static function ($name) {
 
 // Apply lightly on admin/init once per version bump.
 add_action('init', static function (): void {
-    if (get_option('sa_store_settings_ver') === '5') {
+    if (get_option('sa_store_settings_ver') === '6') {
         return;
     }
     if (!function_exists('WC') && !class_exists('WooCommerce')) {
@@ -114,5 +114,5 @@ add_action('init', static function (): void {
         update_option('admin_email', sa_core_store_email());
     }
     sa_core_apply_store_settings();
-    update_option('sa_store_settings_ver', '5');
+    update_option('sa_store_settings_ver', '6');
 }, 20);

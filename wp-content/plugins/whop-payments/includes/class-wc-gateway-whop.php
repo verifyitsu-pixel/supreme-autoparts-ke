@@ -13,23 +13,52 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
 
     public function __construct() {
         $this->id                 = 'whop';
-        $this->method_title       = __('Whop', 'whop-payments');
+        $this->method_title       = __('Whop Checkout', 'whop-payments');
         $this->method_description = __(
             'Accept payments via Whop Checkout (one-time plans created from the cart total). Configure secrets via Railway env vars WHOP_* or below.',
             'whop-payments'
         );
-        $this->has_fields         = false;
+        $this->has_fields         = true;
         $this->supports           = ['products', 'tokenization'];
+        $this->icon               = ''; // Custom badge rendered in get_icon() / payment_fields().
 
         $this->init_form_fields();
         $this->init_settings();
 
         $this->enabled     = $this->get_option('enabled', 'no');
-        $this->title       = $this->get_option('title', __('Whop', 'whop-payments'));
-        $this->description = $this->get_option('description', __('Pay securely with Whop Checkout.', 'whop-payments'));
+        $this->title       = $this->get_option('title', __('Whop Checkout', 'whop-payments'));
+        $this->description = $this->get_option(
+            'description',
+            __('Pay securely with Whop — cards (Visa, Mastercard) and supported local methods. You will complete payment on the Whop secure checkout page.', 'whop-payments')
+        );
+
+        // Upgrade legacy bare title so checkout clearly labels the gateway.
+        if (in_array(trim((string) $this->title), ['', 'Whop'], true)) {
+            $this->title = __('Whop Checkout', 'whop-payments');
+        }
 
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, [$this, 'process_admin_options']);
         add_action('woocommerce_thankyou_' . $this->id, [$this, 'thankyou_page']);
+    }
+
+    /**
+     * Badge shown next to the payment method title at checkout.
+     */
+    public function get_icon(): string {
+        $badge = '<span class="sa-whop-badge" aria-hidden="true">Whop</span>';
+        return apply_filters('woocommerce_gateway_icon', $badge, $this->id);
+    }
+
+    /**
+     * Extra copy under the Whop radio so shoppers know how payment works.
+     */
+    public function payment_fields(): void {
+        if ($this->description) {
+            echo wpautop(wp_kses_post($this->description));
+        }
+        echo '<p class="sa-whop-payment-note">'
+            . esc_html__('After you place the order you will be redirected to Whop Checkout to pay securely.', 'whop-payments')
+            . '</p>';
     }
 
     public function init_form_fields(): void {
@@ -46,14 +75,14 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
                 'title'       => __('Title', 'whop-payments'),
                 'type'        => 'text',
                 'description' => __('Payment method title shown at checkout.', 'whop-payments'),
-                'default'     => __('Whop', 'whop-payments'),
+                'default'     => __('Whop Checkout', 'whop-payments'),
                 'desc_tip'    => true,
             ],
             'description' => [
                 'title'       => __('Description', 'whop-payments'),
                 'type'        => 'textarea',
                 'description' => __('Payment method description shown at checkout.', 'whop-payments'),
-                'default'     => __('Pay securely with Whop Checkout (cards & local methods).', 'whop-payments'),
+                'default'     => __('Pay securely with Whop — cards (Visa, Mastercard) and supported local methods.', 'whop-payments'),
             ],
             'company_id' => [
                 'title'       => __('Company / Account ID', 'whop-payments'),
