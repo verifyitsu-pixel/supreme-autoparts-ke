@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
 <html <?php language_attributes(); ?> class="no-js">
 <head>
   <meta charset="<?php bloginfo('charset'); ?>">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0B0B0D">
   <link rel="icon" href="<?php echo esc_url(SA_THEME_URI . '/assets/favicon.png'); ?>" type="image/png" sizes="any">
   <link rel="apple-touch-icon" href="<?php echo esc_url(SA_THEME_URI . '/assets/icon.png'); ?>">

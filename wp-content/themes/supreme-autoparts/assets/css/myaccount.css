@@ -1118,3 +1118,106 @@
     padding: .55rem .65rem;
   }
 }
+
+
+/* --- v1.4.4: account touch targets, cards, landscape, 360px --- */
+.sa-account-nav a,
+.sa-pm__actions .sa-btn,
+.sa-pm__item-actions .sa-btn,
+.sa-orders__actions .sa-btn,
+.sa-view-order__docs .sa-btn,
+.sa-order-docs .sa-btn,
+.sa-address-card a.sa-btn,
+.sa-edit-address__form .button,
+.sa-dash__links .sa-dash__card,
+.sa-invoices .sa-btn {
+  min-height: 44px;
+  box-sizing: border-box;
+}
+.sa-account-nav a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
+.sa-pm__item-actions .sa-btn,
+.sa-pm__actions .sa-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: .65rem 1rem;
+}
+.sa-pm__item {
+  min-height: 44px;
+}
+.sa-edit-address__fields .input-text,
+.sa-edit-address__fields select,
+.sa-edit-address__fields .select2-selection,
+.sa-my-account .woocommerce-address-fields .input-text,
+.sa-my-account .woocommerce-EditAccountForm .input-text {
+  min-height: 44px;
+  font-size: 16px; /* avoid iOS zoom */
+}
+.sa-invoices .sa-dash__table-wrap,
+.sa-orders .sa-dash__table-wrap,
+.sa-my-account .woocommerce-orders-table {
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 360px) {
+  .sa-my-account {
+    padding: .75rem 0 2rem;
+  }
+  .sa-account-panel {
+    padding: .9rem .75rem 1rem;
+  }
+  .sa-dash__links {
+    grid-template-columns: 1fr;
+  }
+  .sa-account-nav a {
+    font-size: .68rem;
+    padding: .55rem .55rem;
+  }
+  .sa-pm__item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .sa-pm__item-actions {
+    width: 100%;
+  }
+  .sa-pm__item-actions .sa-btn {
+    width: 100%;
+  }
+  .sa-address-card__head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .5rem;
+  }
+}
+
+@media (orientation: landscape) and (max-width: 960px) {
+  .sa-my-account {
+    grid-template-columns: 1fr;
+  }
+  .sa-account-nav ul {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sa-account-nav a {
+    white-space: nowrap;
+    min-height: 44px;
+  }
+  .sa-addresses__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .sa-account-nav {
+    position: static;
+  }
+  .sa-my-account {
+    padding-top: .5rem;
+  }
+}

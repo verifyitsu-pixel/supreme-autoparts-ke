@@ -20,7 +20,7 @@ $delete_confirm = esc_js(__('Remove this payment method from your account? This 
     <div>
       <h2><?php esc_html_e('Payment methods', 'supreme-autoparts'); ?></h2>
       <p class="sa-account-panel__lead">
-        <?php esc_html_e('Cards are saved securely with Whop for faster checkout. No charge when you add a method.', 'supreme-autoparts'); ?>
+        <?php esc_html_e('Save a card securely with Whop for one-tap checkout. Adding a method opens Whop in setup mode — you are not charged.', 'supreme-autoparts'); ?>
       </p>
       <?php if ($synced) : ?>
         <p class="sa-pm__synced">
@@ -40,7 +40,7 @@ $delete_confirm = esc_js(__('Remove this payment method from your account? This 
           <?php esc_html_e('Refresh from Whop', 'supreme-autoparts'); ?>
         </a>
         <a class="sa-btn sa-btn--sm" href="<?php echo esc_url($add_url); ?>">
-          <?php esc_html_e('Add payment method', 'supreme-autoparts'); ?>
+          <?php esc_html_e('Add card via Whop', 'supreme-autoparts'); ?>
         </a>
       </div>
     <?php endif; ?>
@@ -57,7 +57,7 @@ $delete_confirm = esc_js(__('Remove this payment method from your account? This 
     <div class="sa-dash__empty">
       <p><?php esc_html_e('No saved payment methods yet.', 'supreme-autoparts'); ?></p>
       <a class="sa-btn" href="<?php echo esc_url($add_url); ?>">
-        <?php esc_html_e('Save a card with Whop', 'supreme-autoparts'); ?>
+        <?php esc_html_e('Add card via Whop (no charge)', 'supreme-autoparts'); ?>
       </a>
     </div>
   <?php else : ?>

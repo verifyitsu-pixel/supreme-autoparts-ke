@@ -73,6 +73,19 @@ sync_custom_content() {
   if [[ -d /usr/src/supreme-scripts ]]; then
     mkdir -p /var/www/html/wp-content/plugins/supreme-autoparts-core/scripts
     cp -a /usr/src/supreme-scripts/. /var/www/html/wp-content/plugins/supreme-autoparts-core/scripts/ || true
+    # Also expose at /var/www/html/scripts for ops + boot (symlink preferred, copy fallback).
+    mkdir -p /var/www/html/scripts
+    if [[ ! -e /var/www/html/scripts/apply-branding-logos.sh ]]; then
+      ln -sfn /usr/src/supreme-scripts/apply-branding-logos.sh /var/www/html/scripts/apply-branding-logos.sh 2>/dev/null \
+        || cp -f /usr/src/supreme-scripts/apply-branding-logos.sh /var/www/html/scripts/apply-branding-logos.sh || true
+    else
+      # Refresh symlink/copy so deploys pick up script updates.
+      ln -sfn /usr/src/supreme-scripts/apply-branding-logos.sh /var/www/html/scripts/apply-branding-logos.sh 2>/dev/null \
+        || cp -f /usr/src/supreme-scripts/apply-branding-logos.sh /var/www/html/scripts/apply-branding-logos.sh || true
+    fi
+    chmod +x /usr/src/supreme-scripts/apply-branding-logos.sh \
+      /var/www/html/scripts/apply-branding-logos.sh \
+      /var/www/html/wp-content/plugins/supreme-autoparts-core/scripts/apply-branding-logos.sh 2>/dev/null || true
   fi
   chown -R www-data:www-data \
     /var/www/html/wp-content/themes/supreme-autoparts \
@@ -355,6 +368,22 @@ echo "whop_enabled\n";
     fi
   else
     echo "[supreme] Boot import skipped (catalog has ${PRODUCT_COUNT} products; flags present)."
+  fi
+
+  # Idempotent sports-car logos + email header (scripts live under /usr/src/supreme-scripts).
+  BRAND_SCRIPT=""
+  for cand in \
+    /usr/src/supreme-scripts/apply-branding-logos.sh \
+    /var/www/html/scripts/apply-branding-logos.sh \
+    /var/www/html/wp-content/plugins/supreme-autoparts-core/scripts/apply-branding-logos.sh
+  do
+    if [[ -x "$cand" || -f "$cand" ]]; then BRAND_SCRIPT="$cand"; break; fi
+  done
+  if [[ -n "$BRAND_SCRIPT" ]]; then
+    echo "[supreme] Applying branding logos via $BRAND_SCRIPT"
+    bash "$BRAND_SCRIPT" || echo "[supreme] Branding logos script finished with warnings." >&2
+  else
+    echo "[supreme] apply-branding-logos.sh not found — skipped."
   fi
 
   # Flush product / product_cat rewrite rules after seed (and again after import in bg).

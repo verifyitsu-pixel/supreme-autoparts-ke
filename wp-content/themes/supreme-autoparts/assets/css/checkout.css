@@ -652,3 +652,41 @@
 }
 .sa-whop-badge,
 .sa-whop-payment-note { display: none !important; }
+
+
+/* --- v1.4.4: checkout overflow + landscape + 360px --- */
+.woocommerce-checkout,
+.sa-checkout,
+.sa-checkout-layout {
+  max-width: 100%;
+  overflow-x: clip;
+}
+.sa-checkout-place__btn,
+.woocommerce-checkout #place_order,
+.woocommerce-checkout .button.alt {
+  min-height: 48px;
+}
+.woocommerce-checkout .input-text,
+.woocommerce-checkout select,
+.woocommerce-checkout .select2-selection {
+  min-height: 44px;
+  font-size: 16px;
+}
+
+@media (max-width: 360px) {
+  .sa-checkout-hero,
+  .sa-checkout-section__body,
+  .sa-checkout-layout__summary {
+    padding-left: .75rem;
+    padding-right: .75rem;
+  }
+  .sa-checkout-section__title {
+    font-size: 1rem;
+  }
+}
+
+@media (orientation: landscape) and (max-width: 960px) {
+  .sa-checkout-layout {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 # Apply custom_logo, site_icon, and WooCommerce email header logo on the live WP.
-# Forces fresh media import for sports-car charcoal+amber lockup (replaces Apex attachments).
+# Idempotent: skips re-import when sports-car branding flag + custom_logo already set.
 set -euo pipefail
 cd /var/www/html
 THEME_ASSETS="wp-content/themes/supreme-autoparts/assets"
 WP=(wp --allow-root --path=/var/www/html)
+FLAG_KEY="sa_branding_logos_ver"
+FLAG_VAL="sports-car-v1"
 
 logo_dark="${THEME_ASSETS}/logo.jpg"
 [[ -f "$logo_dark" ]] || logo_dark="${THEME_ASSETS}/logo.png"
@@ -18,6 +20,37 @@ for f in "$logo_dark" "$logo_light" "$icon"; do
     exit 1
   fi
 done
+
+CURRENT_FLAG=$("${WP[@]}" option get "$FLAG_KEY" 2>/dev/null || true)
+CUSTOM_LOGO=$("${WP[@]}" theme mod get custom_logo 2>/dev/null || true)
+CUSTOM_LOGO="$(echo "${CUSTOM_LOGO:-}" | tr -cd '0-9')"
+FORCE="${SUPREME_FORCE_BRANDING:-0}"
+
+# Skip when already flagged, or when a live custom_logo attachment already exists (unless forced).
+LOGO_OK=0
+if [[ -n "$CUSTOM_LOGO" && "$CUSTOM_LOGO" != "0" ]]; then
+  STATUS=$("${WP[@]}" post get "$CUSTOM_LOGO" --field=post_status 2>/dev/null || true)
+  if [[ "$STATUS" == "inherit" || "$STATUS" == "publish" ]]; then
+    LOGO_OK=1
+  fi
+fi
+
+if [[ "$FORCE" != "1" ]] && { [[ "$CURRENT_FLAG" == "$FLAG_VAL" && "$LOGO_OK" == "1" ]] || [[ "$LOGO_OK" == "1" ]]; }; then
+  if [[ "$CURRENT_FLAG" != "$FLAG_VAL" ]]; then
+    "${WP[@]}" option update "$FLAG_KEY" "$FLAG_VAL" || true
+  fi
+  LIGHT_URL=$("${WP[@]}" option get woocommerce_email_header_image 2>/dev/null || true)
+  if [[ -z "${LIGHT_URL:-}" ]]; then
+    LIGHT_URL="https://www.supremeautoparts.co.ke/wp-content/themes/supreme-autoparts/assets/logo-light.jpg"
+    "${WP[@]}" option update woocommerce_email_header_image "$LIGHT_URL" || true
+    "${WP[@]}" option update sa_email_logo_url "$LIGHT_URL" || true
+  fi
+  "${WP[@]}" option update sa_brevo_sender_name "Supreme Autoparts" || true
+  "${WP[@]}" option update woocommerce_email_from_name "Supreme Autoparts" || true
+  echo "BRANDING_ALREADY_APPLIED flag=$FLAG_VAL custom_logo=$CUSTOM_LOGO"
+  echo "BRANDING_APPLY_OK"
+  exit 0
+fi
 
 # Drop prior brand attachments so we do not keep old S-monogram / Bauhaus / AI-car files.
 for title in \
@@ -63,6 +96,7 @@ LIGHT_URL="${LIGHT_URL/http:\/\//https:\/\/}"
 "${WP[@]}" option update sa_email_logo_url "$LIGHT_URL"
 "${WP[@]}" option update sa_brevo_sender_name "Supreme Autoparts"
 "${WP[@]}" option update woocommerce_email_from_name "Supreme Autoparts"
+"${WP[@]}" option update "$FLAG_KEY" "$FLAG_VAL"
 
 "${WP[@]}" cache flush 2>/dev/null || true
 "${WP[@]}" rewrite flush 2>/dev/null || true

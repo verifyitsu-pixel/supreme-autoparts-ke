@@ -144,9 +144,13 @@ add_action('wp_head', static function (): void {
     }
     $logo = sa_absolute_url($logo);
     if ($logo !== '') {
+        $type_attr = str_ends_with(strtolower(parse_url($logo, PHP_URL_PATH) ?: ''), '.webp')
+            ? ' type="image/webp"'
+            : '';
         printf(
-            '<link rel="preload" as="image" href="%s" fetchpriority="high" />' . "\n",
-            esc_url($logo)
+            '<link rel="preload" as="image" href="%s"%s fetchpriority="high" />' . "\n",
+            esc_url($logo),
+            $type_attr
         );
     }
 
@@ -197,10 +201,35 @@ add_action('wp_head', static function (): void {
 
     $lcp = sa_absolute_url($lcp);
     if ($lcp !== '' && $lcp !== $logo) {
-        printf(
-            '<link rel="preload" as="image" href="%s" fetchpriority="high" />' . "\n",
-            esc_url($lcp)
-        );
+        $type_attr = str_ends_with(strtolower(parse_url($lcp, PHP_URL_PATH) ?: ''), '.webp')
+            ? ' type="image/webp"'
+            : '';
+        $srcset = '';
+        // Prefer responsive preload when attachment known on PDP.
+        if (function_exists('is_product') && is_product()) {
+            global $product;
+            $p = ($product instanceof WC_Product) ? $product : (function_exists('wc_get_product') ? wc_get_product(get_the_ID()) : null);
+            if ($p instanceof WC_Product) {
+                $img_id = (int) $p->get_image_id();
+                if ($img_id > 0) {
+                    $srcset = (string) (wp_get_attachment_image_srcset($img_id, 'woocommerce_single') ?: '');
+                }
+            }
+        }
+        if ($srcset !== '') {
+            printf(
+                '<link rel="preload" as="image" href="%s" imagesrcset="%s" imagesizes="(max-width: 768px) 100vw, 600px"%s fetchpriority="high" />' . "\n",
+                esc_url($lcp),
+                esc_attr($srcset),
+                $type_attr
+            );
+        } else {
+            printf(
+                '<link rel="preload" as="image" href="%s"%s fetchpriority="high" />' . "\n",
+                esc_url($lcp),
+                $type_attr
+            );
+        }
     }
 }, 2);
 
@@ -300,3 +329,33 @@ add_filter('woocommerce_order_item_thumbnail', static function ($image, $item = 
     }
     return $image;
 }, 20, 2);
+
+
+/**
+ * Order emails: always show product thumbnails (defense in depth; core plugin also sets this).
+ *
+ * @param array<string,mixed> $args
+ * @return array<string,mixed>
+ */
+add_filter('woocommerce_email_order_items_args', static function (array $args): array {
+    $args['show_image'] = true;
+    if (empty($args['image_size'])) {
+        $args['image_size'] = [64, 64];
+    }
+    return $args;
+}, 5);
+
+
+/**
+ * Treat WebP as a displayable image in media library / srcset generation.
+ *
+ * @param bool   $result
+ * @param string $path
+ */
+add_filter('file_is_displayable_image', static function ($result, $path) {
+    if ($result) {
+        return $result;
+    }
+    $ext = strtolower(pathinfo((string) $path, PATHINFO_EXTENSION));
+    return $ext === 'webp' ? true : $result;
+}, 10, 2);
