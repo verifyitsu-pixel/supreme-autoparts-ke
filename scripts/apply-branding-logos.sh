@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Apply custom_logo, site_icon, and WooCommerce email header logo on the live WP.
+# Forces fresh media import for Apex Concept A assets (does not reuse old titled attachments).
 set -euo pipefail
 cd /var/www/html
 THEME_ASSETS="wp-content/themes/supreme-autoparts/assets"
@@ -16,20 +17,31 @@ for f in "$logo_dark" "$logo_light" "$icon"; do
   fi
 done
 
+# Drop prior brand attachments so we do not keep old S-monogram / Bauhaus / AI-car files.
+for title in \
+  "Supreme Autoparts Logo Dark" \
+  "Supreme Autoparts Logo Light" \
+  "Supreme Autoparts Icon" \
+  "Supreme Autoparts Apex Logo Dark" \
+  "Supreme Autoparts Apex Logo Light" \
+  "Supreme Autoparts Apex Icon"
+do
+  ids=$("${WP[@]}" post list --post_type=attachment --title="$title" --field=ID --posts_per_page=20 2>/dev/null || true)
+  for id in $ids; do
+    if [[ "$id" =~ ^[0-9]+$ ]]; then
+      "${WP[@]}" post delete "$id" --force 2>/dev/null || true
+    fi
+  done
+done
+
 import_file() {
   local file="$1" title="$2"
-  local id
-  id=$("${WP[@]}" post list --post_type=attachment --title="$title" --field=ID --posts_per_page=1 2>/dev/null | head -1 || true)
-  if [[ -n "${id:-}" && "$id" =~ ^[0-9]+$ ]]; then
-    echo "$id"
-    return 0
-  fi
   "${WP[@]}" media import "$file" --title="$title" --porcelain
 }
 
-LOGO_ID=$(import_file "$logo_dark" "Supreme Autoparts Logo Dark")
-LIGHT_ID=$(import_file "$logo_light" "Supreme Autoparts Logo Light")
-ICON_ID=$(import_file "$icon" "Supreme Autoparts Icon")
+LOGO_ID=$(import_file "$logo_dark" "Supreme Autoparts Apex Logo Dark")
+LIGHT_ID=$(import_file "$logo_light" "Supreme Autoparts Apex Logo Light")
+ICON_ID=$(import_file "$icon" "Supreme Autoparts Apex Icon")
 
 echo "LOGO_ID=$LOGO_ID LIGHT_ID=$LIGHT_ID ICON_ID=$ICON_ID"
 
@@ -51,4 +63,5 @@ LIGHT_URL="${LIGHT_URL/http:\/\//https:\/\/}"
 echo "CUSTOM_LOGO=$("${WP[@]}" theme mod get custom_logo)"
 echo "SITE_ICON=$("${WP[@]}" option get site_icon)"
 echo "EMAIL_LOGO_URL=$LIGHT_URL"
+echo "WOO_ACTIVE=$("${WP[@]}" plugin is-active woocommerce && echo yes || echo no)"
 echo "BRANDING_APPLY_OK"
