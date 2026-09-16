@@ -19,7 +19,7 @@ final class SA_Geo_Display
         // Convert formatted prices on storefront (shop / PDP / cart / mini-cart).
         add_filter('wc_price', [self::class, 'filter_wc_price'], 20, 4);
 
-        // Checkout / cart note.
+        // Checkout / cart / PDP note — once per request via $note_printed.
         add_action('woocommerce_before_add_to_cart_form', [self::class, 'render_charge_note'], 5);
         add_action('woocommerce_single_product_summary', [self::class, 'render_charge_note_near_price'], 11);
         add_action('woocommerce_before_cart_totals', [self::class, 'render_charge_note'], 5);
@@ -43,6 +43,10 @@ final class SA_Geo_Display
             return false;
         }
 
+        if (!function_exists('sa_geo_currency_enabled') || !sa_geo_currency_enabled()) {
+            return false;
+        }
+
         if (is_admin() && !wp_doing_ajax()) {
             return false;
         }
@@ -62,12 +66,15 @@ final class SA_Geo_Display
 
         $display = SA_Geo_Detector::display_currency();
         $checkout = sa_geo_checkout_currency();
+
+        // Display currency === checkout (USD): skip conversion cleanly.
         if (strtoupper($display) === strtoupper($checkout)) {
             return false;
         }
 
-        // Need a valid rate; else fall back to USD display.
-        if (SA_FX_Rates::rate_for($display) === null) {
+        // Need a valid positive rate; else fall back to USD display.
+        $rate = SA_FX_Rates::rate_for($display);
+        if ($rate === null || !is_finite($rate) || $rate <= 0) {
             return false;
         }
 
@@ -93,27 +100,43 @@ final class SA_Geo_Display
             return (string) $html;
         }
 
-        $usd = (float) $unformatted_price;
-        $display = SA_Geo_Detector::display_currency();
-        $converted = SA_FX_Rates::convert_usd($usd, $display);
-        if ($converted === null) {
+        $usd = is_numeric($unformatted_price) ? (float) $unformatted_price : NAN;
+        if (!is_finite($usd) || $usd < 0) {
             return (string) $html;
         }
 
+        $display = SA_Geo_Detector::display_currency();
+        // When display is USD, never re-enter conversion.
+        if (strtoupper($display) === 'USD' || strtoupper($display) === strtoupper($checkout)) {
+            return (string) $html;
+        }
+
+        $converted = SA_FX_Rates::convert_usd($usd, $display);
+        if ($converted === null || !is_finite($converted) || $converted < 0) {
+            return (string) $html;
+        }
+
+        // Prevent recursive wc_price filter (calling wc_price inside this filter).
         self::$busy = true;
+        $out = (string) $html;
         try {
+            remove_filter('wc_price', [self::class, 'filter_wc_price'], 20);
             $new_args = is_array($args) ? $args : [];
             $new_args['currency'] = $display;
-            $out = wc_price($converted, $new_args);
+            $out = (string) wc_price($converted, $new_args);
         } finally {
+            add_filter('wc_price', [self::class, 'filter_wc_price'], 20, 4);
             self::$busy = false;
         }
 
-        return (string) $out;
+        return $out;
     }
 
     public static function render_charge_note(): void
     {
+        if (self::$note_printed) {
+            return;
+        }
         if (!self::should_show_note()) {
             return;
         }
@@ -124,9 +147,6 @@ final class SA_Geo_Display
     public static function render_charge_note_near_price(): void
     {
         // Only once on PDP (summary already has price at priority 10).
-        if (self::$note_printed) {
-            return;
-        }
         self::render_charge_note();
     }
 
@@ -135,10 +155,26 @@ final class SA_Geo_Display
         if (!function_exists('is_woocommerce')) {
             return false;
         }
-        // Show whenever geo display is active OR always on cart/checkout so shoppers know.
         if (is_admin() && !wp_doing_ajax()) {
             return false;
         }
+        if (!function_exists('sa_geo_currency_enabled') || !sa_geo_currency_enabled()) {
+            return false;
+        }
+        // One note on shop/product/cart/checkout contexts.
+        if (function_exists('is_cart') && is_cart()) {
+            return true;
+        }
+        if (function_exists('is_checkout') && is_checkout()) {
+            return true;
+        }
+        if (function_exists('is_product') && is_product()) {
+            return true;
+        }
+        if (function_exists('is_shop') && (is_shop() || is_product_category() || is_product_tag())) {
+            return true;
+        }
+        // Mini-cart / fragments may not set those conditionals.
         return true;
     }
 
@@ -212,8 +248,10 @@ final class SA_Geo_Display
         // Soft inject after first .price on shop cards when note missing.
         $html = wp_json_encode(self::note_html());
         echo '<script>(function(){try{var n=' . $html // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-            . ';if(!n)return;var p=document.querySelector(".summary .price, .sa-product-card__price");'
-            . 'if(p&&!document.querySelector(".sa-geo-currency-note")){p.insertAdjacentHTML("afterend",n);}'
+            . ';if(!n)return;if(document.querySelector(".sa-geo-currency-note"))return;'
+            . 'var p=document.querySelector(".summary .price, .sa-product-card__price");'
+            . 'if(p){p.insertAdjacentHTML("afterend",n);}'
             . '}catch(e){}})();</script>';
+        self::$note_printed = true;
     }
 }

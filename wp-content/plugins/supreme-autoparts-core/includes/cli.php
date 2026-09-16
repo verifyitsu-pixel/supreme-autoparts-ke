@@ -144,6 +144,66 @@ class SA_Core_CLI_Command
             WP_CLI::log($m);
         }
     }
+
+    /**
+     * Repair catalog prices inflated by legacy USD→KES multiply after store switched to USD.
+     *
+     * ## OPTIONS
+     * [--limit=<n>]
+     * : Max products to examine (default 5000)
+     * [--dry-run]
+     * : Report only
+     * [--force]
+     * : Re-apply NDJSON/meta USD even when heuristic does not flag inflation
+     * [--rate=<n>]
+     * : Legacy multiply rate (default SUPREME_USD_TO_KES or 130)
+     *
+     * ## EXAMPLES
+     *     wp supreme repair-prices --dry-run
+     *     wp supreme repair-prices
+     *
+     * @param array $args
+     * @param array $assoc_args
+     */
+    public function repair_prices(array $args, array $assoc_args): void
+    {
+        require_once SA_CORE_DIR . 'includes/import-shopify.php';
+        $result = sa_core_repair_inflated_usd_prices([
+            'limit'   => isset($assoc_args['limit']) ? (int) $assoc_args['limit'] : 5000,
+            'dry_run' => isset($assoc_args['dry-run']),
+            'force'   => isset($assoc_args['force']),
+            'rate'    => isset($assoc_args['rate']) ? (float) $assoc_args['rate'] : 0.0,
+        ]);
+        WP_CLI::success(sprintf(
+            'Price repair%s: examined=%d repaired=%d skipped=%d rate=%s ndjson_files=%d',
+            !empty($result['dry_run']) ? ' (dry-run)' : '',
+            $result['examined'],
+            $result['repaired'],
+            $result['skipped'],
+            (string) $result['rate'],
+            count($result['ndjson_files'])
+        ));
+        foreach ($result['ndjson_files'] as $f) {
+            WP_CLI::log('NDJSON: ' . $f);
+        }
+        foreach ($result['samples'] as $s) {
+            WP_CLI::log(sprintf(
+                '  #%d %s [%s] regular %s → %s (sale %s → %s) usd=%s',
+                $s['id'],
+                $s['handle'] ?: '-',
+                $s['source'],
+                $s['before_regular'],
+                $s['after_regular'],
+                $s['before_sale'] ?? '-',
+                $s['after_sale'] ?? '-',
+                $s['usd']
+            ));
+        }
+        foreach ($result['messages'] as $m) {
+            WP_CLI::warning($m);
+        }
+    }
+
 }
 
 WP_CLI::add_command('supreme', 'SA_Core_CLI_Command');

@@ -123,6 +123,39 @@ function sa_core_render_import_page(): void
         }
     }
 
+
+    if (isset($_POST['sa_repair_prices']) && check_admin_referer('sa_repair_prices')) {
+        require_once SA_CORE_DIR . 'includes/import-shopify.php';
+        $result = sa_core_repair_inflated_usd_prices([
+            'limit'   => isset($_POST['sa_repair_limit']) ? max(1, (int) $_POST['sa_repair_limit']) : 5000,
+            'dry_run' => !empty($_POST['sa_repair_dry_run']),
+            'force'   => !empty($_POST['sa_repair_force']),
+        ]);
+        $sample = '';
+        if (!empty($result['samples'][0])) {
+            $s = $result['samples'][0];
+            $sample = sprintf(
+                ' Sample: %s regular %s → %s.',
+                $s['handle'] ?: ('#' . $s['id']),
+                $s['before_regular'],
+                $s['after_regular']
+            );
+        }
+        $message = sprintf(
+            'Price repair%s: examined=%d repaired=%d skipped=%d rate=%s.%s',
+            !empty($result['dry_run']) ? ' [dry-run]' : '',
+            $result['examined'],
+            $result['repaired'],
+            $result['skipped'],
+            (string) $result['rate'],
+            $sample
+        );
+        $is_error = false;
+        if (!empty($result['repaired']) && empty($result['dry_run'])) {
+            update_option('sa_price_usd_repair_v1', '1');
+        }
+    }
+
     if (isset($_POST['sa_seed_tax']) && check_admin_referer('sa_seed_tax')) {
         sa_core_seed_categories();
         sa_core_seed_pages();
@@ -180,6 +213,20 @@ function sa_core_render_import_page(): void
           <label style="margin-left:1em;"><input type="checkbox" name="sa_dry_run" value="1"> Dry-run</label>
         </p>
         <p><button class="button" name="sa_import_sample" value="1">Import sample products</button></p>
+      </form>
+
+
+      <form method="post" style="margin:1em 0;padding:1em;border:1px solid #c3c4c7;background:#fff;max-width:720px;">
+        <?php wp_nonce_field('sa_repair_prices'); ?>
+        <h2 style="margin-top:0;">Repair inflated USD prices</h2>
+        <p>Fixes catalogs imported as Shopify&nbsp;USD × <code>SUPREME_USD_TO_KES</code> (~130) after the store switched to USD checkout. Prefers NDJSON / <code>_sa_shopify_price_usd</code>; otherwise divides when amounts look like ×130.</p>
+        <p>
+          <label>Limit <input type="number" name="sa_repair_limit" value="5000" min="1" max="50000"></label>
+          <label style="margin-left:1em;"><input type="checkbox" name="sa_repair_dry_run" value="1"> Dry-run</label>
+          <label style="margin-left:1em;"><input type="checkbox" name="sa_repair_force" value="1"> Force from NDJSON/meta</label>
+        </p>
+        <p><button class="button button-secondary" name="sa_repair_prices" value="1">Repair prices</button></p>
+        <p class="description">WP-CLI: <code>wp supreme repair-prices</code> · <code>wp supreme repair-prices --dry-run</code></p>
       </form>
 
       <form method="post">

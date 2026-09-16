@@ -379,9 +379,12 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
             $product->set_short_description(wp_trim_words(wp_strip_all_tags($body_html), 40));
         }
 
-        // Store base checkout currency as USD (Shopify scrape prices). Geo display FX is handled elsewhere.
+        // Shopify scrape amounts are USD. Store as USD when checkout currency is USD;
+        // only multiply by SUPREME_USD_TO_KES when WOO/SA currency is KES (legacy).
         $usd = (float) ($variant['price'] ?? 0);
         $compare = isset($variant['compare_at_price']) ? (float) $variant['compare_at_price'] : 0.0;
+        $store_regular = sa_core_shopify_usd_to_store_amount($usd);
+        $store_compare = $compare > 0 ? sa_core_shopify_usd_to_store_amount($compare) : 0.0;
 
         if ($product instanceof WC_Product_Simple || $product->is_type('simple')) {
             if ($sku !== '') {
@@ -391,12 +394,12 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
                     // SKU collision — keep existing
                 }
             }
-            if ($usd > 0) {
-                $product->set_regular_price((string) round($usd, 2));
+            if ($store_regular > 0) {
+                $product->set_regular_price((string) $store_regular);
             }
-            if ($compare > $usd && $compare > 0) {
-                $product->set_sale_price((string) round($usd, 2));
-                $product->set_regular_price((string) round($compare, 2));
+            if ($store_compare > $store_regular && $store_compare > 0) {
+                $product->set_sale_price((string) $store_regular);
+                $product->set_regular_price((string) $store_compare);
             }
             $product->set_manage_stock(false);
             $product->set_stock_status(!empty($variant['available']) ? 'instock' : 'outofstock');
@@ -488,7 +491,7 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
 
         update_post_meta($id, '_sa_shopify_id', $shopify_id);
         update_post_meta($id, '_sa_shopify_handle', $handle);
-        update_post_meta($id, '_sa_price_currency', 'USD');
+        update_post_meta($id, '_sa_price_currency', sa_core_import_store_currency());
         if ($usd > 0) {
             update_post_meta($id, '_sa_shopify_price_usd', (string) round($usd, 2));
         }
@@ -907,6 +910,347 @@ function sa_core_find_attachment_by_source_url(int $product_id, string $url): in
         }
     }
     return 0;
+}
+
+
+
+/**
+ * Checkout / catalog store currency for imports (WOO_CURRENCY / SA_CHECKOUT_CURRENCY).
+ */
+function sa_core_import_store_currency(): string
+{
+    $env = getenv('SA_CHECKOUT_CURRENCY') ?: getenv('WOO_CURRENCY') ?: 'USD';
+    if (is_string($env) && preg_match('/^[A-Za-z]{3}$/', trim($env))) {
+        return strtoupper(trim($env));
+    }
+    return 'USD';
+}
+
+/**
+ * Convert Shopify USD variant amount into store currency units.
+ * USD (default): store as-is. KES (legacy): multiply by SUPREME_USD_TO_KES (~130).
+ */
+function sa_core_shopify_usd_to_store_amount(float $usd): float
+{
+    if (!is_finite($usd) || $usd <= 0) {
+        return 0.0;
+    }
+    $currency = sa_core_import_store_currency();
+    if ($currency === 'KES') {
+        $rate = (float) (getenv('SUPREME_USD_TO_KES') ?: '130');
+        if (!is_finite($rate) || $rate <= 0) {
+            $rate = 130.0;
+        }
+        return round($usd * $rate, 2);
+    }
+    return round($usd, 2);
+}
+
+/**
+ * Candidate NDJSON paths for price repair (baked chunks + live scrape).
+ *
+ * @return list<string>
+ */
+function sa_core_price_repair_ndjson_candidates(): array
+{
+    $paths = [
+        SA_CORE_DIR . 'data/scrape/chunks/batch-with-images-400.ndjson',
+        SA_CORE_DIR . 'data/scrape/chunks/batch-with-images-50.ndjson',
+        SA_CORE_DIR . 'data/scrape/chunks/batch-with-images-1000.ndjson',
+        SA_CORE_DIR . 'data/scrape/chunks/batch-with-images-2000.ndjson',
+        trailingslashit(ABSPATH) . 'data/scrape/chunks/batch-with-images-400.ndjson',
+        trailingslashit(ABSPATH) . 'data/scrape/chunks/batch-with-images-50.ndjson',
+        trailingslashit(ABSPATH) . 'data/scrape/chunks/batch-with-images-1000.ndjson',
+        trailingslashit(ABSPATH) . 'data/scrape/products.ndjson',
+        '/usr/src/supreme-data/scrape/chunks/batch-with-images-400.ndjson',
+        '/usr/src/supreme-data/scrape/chunks/batch-with-images-50.ndjson',
+        '/usr/src/supreme-data/scrape/products.ndjson',
+    ];
+    $env = getenv('SUPREME_IMPORT_FILE');
+    if (is_string($env) && $env !== '') {
+        array_unshift($paths, $env);
+    }
+    return array_values(array_unique($paths));
+}
+
+/**
+ * Build shopify_id / handle → {price, compare_at_price} from NDJSON files.
+ *
+ * @param list<string>|null $files
+ * @return array{by_id: array<string, array{price:float,compare:float}>, by_handle: array<string, array{price:float,compare:float}>, files: list<string>}
+ */
+function sa_core_load_shopify_usd_price_map(?array $files = null): array
+{
+    $by_id = [];
+    $by_handle = [];
+    $used = [];
+    $candidates = $files ?? sa_core_price_repair_ndjson_candidates();
+    foreach ($candidates as $path) {
+        if (!is_string($path) || $path === '' || !is_readable($path)) {
+            continue;
+        }
+        $fh = fopen($path, 'rb');
+        if ($fh === false) {
+            continue;
+        }
+        $used[] = $path;
+        while (($line = fgets($fh)) !== false) {
+            $line = trim($line);
+            if ($line === '' || $line[0] !== '{') {
+                continue;
+            }
+            $item = json_decode($line, true);
+            if (!is_array($item)) {
+                continue;
+            }
+            $variants = $item['variants'] ?? null;
+            if (!is_array($variants) || !$variants) {
+                continue;
+            }
+            $variant = $variants[0];
+            if (!is_array($variant)) {
+                continue;
+            }
+            $price = isset($variant['price']) ? (float) $variant['price'] : 0.0;
+            if (!is_finite($price) || $price <= 0) {
+                continue;
+            }
+            $compare = isset($variant['compare_at_price']) && $variant['compare_at_price'] !== null && $variant['compare_at_price'] !== ''
+                ? (float) $variant['compare_at_price']
+                : 0.0;
+            if (!is_finite($compare) || $compare < 0) {
+                $compare = 0.0;
+            }
+            $row = ['price' => round($price, 2), 'compare' => round($compare, 2)];
+            $sid = isset($item['id']) ? (string) $item['id'] : '';
+            $handle = isset($item['handle']) ? (string) $item['handle'] : '';
+            if ($sid !== '') {
+                $by_id[$sid] = $row;
+            }
+            if ($handle !== '') {
+                $by_handle[$handle] = $row;
+            }
+        }
+        fclose($fh);
+    }
+    return ['by_id' => $by_id, 'by_handle' => $by_handle, 'files' => $used];
+}
+
+/**
+ * True when a Woo price looks like a Shopify USD amount multiplied by $rate.
+ */
+function sa_core_price_looks_usd_times_rate(float $stored, float $rate): bool
+{
+    if (!is_finite($stored) || !is_finite($rate) || $stored <= 0 || $rate <= 1) {
+        return false;
+    }
+    $usd = round($stored / $rate, 2);
+    if ($usd < 1.0) {
+        return false;
+    }
+    $rebuilt = round($usd * $rate, 2);
+    return abs($rebuilt - round($stored, 2)) < 0.05;
+}
+
+/**
+ * One-shot repair: products imported as USD*SUPREME_USD_TO_KES while store currency is USD.
+ * Prefers NDJSON / _sa_shopify_price_usd; falls back to divide-by-rate when prices look inflated.
+ *
+ * @param array{limit?:int,dry_run?:bool,rate?:float,force?:bool} $opts
+ * @return array{repaired:int,skipped:int,examined:int,dry_run:bool,rate:float,ndjson_files:list<string>,samples:list<array<string,mixed>>,messages:list<string>}
+ */
+function sa_core_repair_inflated_usd_prices(array $opts = []): array
+{
+    $limit = isset($opts['limit']) ? max(1, (int) $opts['limit']) : 5000;
+    $dry = !empty($opts['dry_run']);
+    $force = !empty($opts['force']);
+    $rate = isset($opts['rate']) ? (float) $opts['rate'] : (float) (getenv('SUPREME_USD_TO_KES') ?: '130');
+    if (!is_finite($rate) || $rate <= 1) {
+        $rate = 130.0;
+    }
+
+    $out = [
+        'repaired' => 0,
+        'skipped' => 0,
+        'examined' => 0,
+        'dry_run' => $dry,
+        'rate' => $rate,
+        'ndjson_files' => [],
+        'samples' => [],
+        'messages' => [],
+    ];
+
+    if (!class_exists('WooCommerce') || !function_exists('wc_get_product')) {
+        $out['messages'][] = 'WooCommerce inactive';
+        return $out;
+    }
+
+    $map = sa_core_load_shopify_usd_price_map();
+    $out['ndjson_files'] = $map['files'];
+    $by_id = $map['by_id'];
+    $by_handle = $map['by_handle'];
+
+    $q = new WP_Query([
+        'post_type' => 'product',
+        'post_status' => ['publish', 'draft', 'pending', 'private'],
+        'posts_per_page' => $limit,
+        'fields' => 'ids',
+        'orderby' => 'ID',
+        'order' => 'ASC',
+        'meta_query' => [
+            [
+                'key' => '_sa_shopify_id',
+                'compare' => 'EXISTS',
+            ],
+        ],
+    ]);
+
+    foreach ($q->posts as $pid) {
+        $pid = (int) $pid;
+        $out['examined']++;
+        $product = wc_get_product($pid);
+        if (!$product) {
+            $out['skipped']++;
+            continue;
+        }
+
+        $shopify_id = (string) get_post_meta($pid, '_sa_shopify_id', true);
+        $handle = (string) get_post_meta($pid, '_sa_shopify_handle', true);
+        $meta_usd = (float) get_post_meta($pid, '_sa_shopify_price_usd', true);
+        $currency_meta = strtoupper((string) get_post_meta($pid, '_sa_price_currency', true));
+
+        $row = null;
+        if ($shopify_id !== '' && isset($by_id[$shopify_id])) {
+            $row = $by_id[$shopify_id];
+        } elseif ($handle !== '' && isset($by_handle[$handle])) {
+            $row = $by_handle[$handle];
+        }
+
+        $target_usd = 0.0;
+        $target_compare = 0.0;
+        $source = '';
+
+        if (is_array($row) && ($row['price'] ?? 0) > 0) {
+            $target_usd = (float) $row['price'];
+            $target_compare = (float) ($row['compare'] ?? 0);
+            $source = 'ndjson';
+        } elseif (is_finite($meta_usd) && $meta_usd > 0) {
+            $target_usd = round($meta_usd, 2);
+            $source = 'meta';
+        }
+
+        $regular = (float) $product->get_regular_price();
+        $sale = (float) $product->get_sale_price();
+        if (!is_finite($regular)) {
+            $regular = 0.0;
+        }
+        if (!is_finite($sale)) {
+            $sale = 0.0;
+        }
+
+        // Already correct USD (matches target or meta).
+        if (!$force && $target_usd > 0 && abs($regular - $target_usd) < 0.02) {
+            if ($currency_meta !== 'USD' && !$dry) {
+                update_post_meta($pid, '_sa_price_currency', 'USD');
+                update_post_meta($pid, '_sa_shopify_price_usd', (string) $target_usd);
+            }
+            $out['skipped']++;
+            continue;
+        }
+
+        if ($target_usd <= 0) {
+            // Heuristic: stored amount looks like USD * rate.
+            if (!sa_core_price_looks_usd_times_rate($regular, $rate)) {
+                $out['skipped']++;
+                continue;
+            }
+            if (!$force && $currency_meta === 'USD' && $meta_usd > 0 && abs($regular - $meta_usd) < 0.02) {
+                $out['skipped']++;
+                continue;
+            }
+            // Woo on-sale: sale = Shopify price, regular = compare_at (both previously * rate).
+            if ($sale > 0 && sa_core_price_looks_usd_times_rate($sale, $rate) && $sale < $regular) {
+                $target_usd = round($sale / $rate, 2);
+                $target_compare = round($regular / $rate, 2);
+            } else {
+                $target_usd = round($regular / $rate, 2);
+                $target_compare = 0.0;
+            }
+            $source = 'divide';
+        } else {
+            // Authoritative USD from NDJSON/meta — rewrite when inflated or forced.
+            $looks_inflated = sa_core_price_looks_usd_times_rate($regular, $rate)
+                || ($meta_usd > 0 && abs($regular - round($meta_usd * $rate, 2)) < 0.05)
+                || ($currency_meta === 'KES')
+                || ($currency_meta === '' && $regular > $target_usd * ($rate * 0.9));
+            if (!$force && !$looks_inflated) {
+                $out['skipped']++;
+                continue;
+            }
+            if ($target_compare <= $target_usd) {
+                $target_compare = 0.0;
+            }
+        }
+
+        if ($target_usd <= 0 || !is_finite($target_usd)) {
+            $out['skipped']++;
+            continue;
+        }
+
+        $new_regular = $target_usd;
+        $new_sale = '';
+        if ($target_compare > $target_usd && $target_compare > 0) {
+            $new_regular = $target_compare;
+            $new_sale = (string) $target_usd;
+        }
+
+        $before_regular = $regular;
+        $before_sale = $sale;
+
+        if (!$dry) {
+            if ($new_sale !== '') {
+                $product->set_regular_price((string) round((float) $new_regular, 2));
+                $product->set_sale_price((string) round((float) $new_sale, 2));
+            } else {
+                $product->set_regular_price((string) round((float) $new_regular, 2));
+                $product->set_sale_price('');
+            }
+            $product->save();
+            update_post_meta($pid, '_sa_price_currency', 'USD');
+            update_post_meta($pid, '_sa_shopify_price_usd', (string) round($target_usd, 2));
+            if (function_exists('wc_delete_product_transients')) {
+                wc_delete_product_transients($pid);
+            }
+        }
+
+        $out['repaired']++;
+        if (count($out['samples']) < 15) {
+            $out['samples'][] = [
+                'id' => $pid,
+                'handle' => $handle,
+                'source' => $source,
+                'before_regular' => $before_regular,
+                'before_sale' => $before_sale > 0 ? $before_sale : null,
+                'after_regular' => (float) $new_regular,
+                'after_sale' => $new_sale !== '' ? (float) $new_sale : null,
+                'usd' => $target_usd,
+            ];
+        }
+    }
+
+    if (!$dry && function_exists('update_option')) {
+        update_option('sa_price_usd_repair_v1', '1');
+        if ($out['repaired'] > 0) {
+            update_option('sa_price_usd_repair_v1_stats', [
+                'at' => time(),
+                'repaired' => $out['repaired'],
+                'examined' => $out['examined'],
+                'samples' => array_slice($out['samples'], 0, 5),
+            ]);
+        }
+    }
+
+    return $out;
 }
 
 

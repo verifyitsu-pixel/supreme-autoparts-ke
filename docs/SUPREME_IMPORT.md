@@ -127,8 +127,26 @@ When published product count is `0`, the token is optional. Response includes `p
 
 ## Pricing (USD base)
 
-Import stores Shopify variant prices as **USD** on `_regular_price` / `_sale_price` (no KES multiply).
-`woocommerce_currency` should be `USD` (`WOO_CURRENCY=USD`). Display-currency FX by visitor IP is handled separately; catalog amounts remain USD.
+**Model:** catalog + checkout amounts are **USD** (Shopify scrape prices). Front-end `sa-geo-currency` may *display* KES/EUR/etc. from visitor geo (CF-IPCountry); Whop/Woo order currency stays USD.
+
+### Import
+
+- When `WOO_CURRENCY` / `SA_CHECKOUT_CURRENCY` is **USD** (default): store Shopify variant `price` / `compare_at_price` **as USD** on `_regular_price` / `_sale_price`. **Do not** multiply by `SUPREME_USD_TO_KES`.
+- When currency is **KES** (legacy only): multiply Shopify USD by `SUPREME_USD_TO_KES` (default `130`).
+- Meta: `_sa_shopify_price_usd` always holds the raw Shopify USD; `_sa_price_currency` records the store currency used at import.
+
+### Repair inflated prices
+
+Older imports multiplied by ~130 then the store switched to USD, so PDPs showed absurd amounts (e.g. Energy Suspension Tundra body mount `$46,035` / `$68,777` instead of `~$354` / `~$529`).
+
+One-shot fix (prefers NDJSON USD, else `_sa_shopify_price_usd`, else ÷130 when amounts look like USD×rate):
+
+```bash
+wp supreme repair-prices --dry-run
+wp supreme repair-prices
+```
+
+Also: **Tools → Supreme Import → Repair inflated USD prices**, and boot hook `sa_price_usd_repair_v1` (runs once on `init`).
 
 ---
 

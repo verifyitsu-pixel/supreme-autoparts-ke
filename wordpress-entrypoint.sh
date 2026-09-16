@@ -159,6 +159,18 @@ echo "whop_enabled\n";
   fi
 
   wp_as option update woocommerce_currency "${SA_CHECKOUT_CURRENCY:-$WOO_CURRENCY}" || true
+
+  # One-shot: fix catalog amounts stored as Shopify USD × SUPREME_USD_TO_KES after USD switch.
+  REPAIR_DONE="$(wp_as option get sa_price_usd_repair_v1 2>/dev/null || true)"
+  if [[ "${REPAIR_DONE}" != "1" ]]; then
+    echo "[supreme] Repairing inflated USD catalog prices (legacy ×KES import)..."
+    if wp_as supreme repair-prices 2>/dev/null; then
+      echo "[supreme] Price repair finished (flag sa_price_usd_repair_v1)."
+    else
+      echo "[supreme] Price repair CLI unavailable — PHP init hook will retry."
+    fi
+  fi
+
   wp_as option update woocommerce_default_country "KE" || true
   wp_as option update woocommerce_currency_pos "left" || true
   wp_as option update woocommerce_price_thousand_sep "," || true

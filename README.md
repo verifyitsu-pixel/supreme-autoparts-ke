@@ -80,6 +80,8 @@ Plugin `sa-geo-currency` keeps WooCommerce **order currency = USD** (Whop expect
 
 Set `SA_GEO_CURRENCY=1`, `SA_CHECKOUT_CURRENCY=USD`, `WOO_CURRENCY=USD` on Railway.
 
+If catalog prices look like Shopify USD × ~130 (legacy KES import), run `wp supreme repair-prices` (or wait for the one-shot boot repair). Base catalog stays USD; geo only changes display.
+
 ## Cloudflare + Railway
 
 Production edge: **Cloudflare** (DNS, CDN, proxy, optional WAF) in front of **Railway** (WordPress / WooCommerce PHP origin).

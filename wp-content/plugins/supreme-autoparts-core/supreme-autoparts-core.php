@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Supreme Autoparts Core
  * Description: Branding defaults, category seed, static pages, invoices, admin dashboard, and Shopify JSON import helpers for Supreme Autoparts.
- * Version: 1.3.4
+ * Version: 1.3.5
  * Author: Supreme Autoparts
  * Text Domain: supreme-autoparts-core
  * Requires at least: 6.4
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_CORE_VERSION', '1.3.4');
+define('SA_CORE_VERSION', '1.3.5');
 define('SA_CORE_FILE', __FILE__);
 define('SA_CORE_DIR', plugin_dir_path(__FILE__));
 define('SA_CORE_URL', plugin_dir_url(__FILE__));
@@ -479,3 +479,30 @@ add_action('rest_api_init', static function (): void {
 add_action('after_switch_theme', static function (): void {
     flush_rewrite_rules();
 });
+
+
+/**
+ * One-shot: repair USD prices that were stored as Shopify USD × SUPREME_USD_TO_KES
+ * before the store currency switched to USD. Idempotent via sa_price_usd_repair_v1.
+ */
+add_action('init', static function (): void {
+    if (get_option('sa_price_usd_repair_v1') === '1') {
+        return;
+    }
+    if (!class_exists('WooCommerce') || !function_exists('wc_get_product')) {
+        return;
+    }
+    // Avoid running during REST recover / heavy imports already in progress.
+    if ((string) get_option('sa_boot_import_running', '') === '1') {
+        return;
+    }
+    if (defined('WP_INSTALLING') && WP_INSTALLING) {
+        return;
+    }
+    require_once SA_CORE_DIR . 'includes/import-shopify.php';
+    if (!function_exists('sa_core_repair_inflated_usd_prices')) {
+        return;
+    }
+    sa_core_repair_inflated_usd_prices(['limit' => 5000, 'dry_run' => false]);
+}, 35);
+

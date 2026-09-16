@@ -130,11 +130,19 @@ final class SA_FX_Rates
 
     public static function convert_usd(float $usd, string $currency): ?float
     {
-        $rate = self::rate_for($currency);
-        if ($rate === null) {
+        if (!is_finite($usd) || $usd < 0) {
             return null;
         }
-        return round($usd * $rate, self::decimals_for($currency));
+        $currency = strtoupper(trim($currency));
+        if ($currency === '' || $currency === 'USD') {
+            return round($usd, self::decimals_for('USD'));
+        }
+        $rate = self::rate_for($currency);
+        if ($rate === null || !is_finite($rate) || $rate <= 0) {
+            return null;
+        }
+        $out = round($usd * $rate, self::decimals_for($currency));
+        return is_finite($out) && $out >= 0 ? $out : null;
     }
 
     public static function decimals_for(string $currency): int
