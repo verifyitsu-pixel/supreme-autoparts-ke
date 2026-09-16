@@ -10,6 +10,25 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Lightweight URL check if import helpers not loaded yet.
+if (!function_exists('sa_core_is_valid_remote_image_url')) {
+    function sa_core_is_valid_remote_image_url(string $url): bool
+    {
+        $url = trim($url);
+        if ($url === '' || preg_match('#^(data:|javascript:|blob:|file:)#i', $url)) {
+            return false;
+        }
+        if (!preg_match('#^https?://#i', $url)) {
+            return false;
+        }
+        if (preg_match('#(placehold\.co|placeholder\.com|picsum\.photos|unsplash\.com/photos/random|via\.placeholder|dummyimage\.com|lorempixel|loremflickr)#i', $url)) {
+            return false;
+        }
+        return true;
+    }
+}
+
+
 /**
  * @return list<string>
  */
@@ -45,8 +64,11 @@ function sa_core_get_stored_shopify_image_urls(int $product_id): array
     return array_values(array_unique($clean));
 }
 
-function sa_core_product_has_real_local_image(WC_Product $product): bool
+function sa_core_product_has_real_local_image($product): bool
 {
+    if (!is_object($product) || !method_exists($product, 'get_image_id')) {
+        return false;
+    }
     $thumb = (int) $product->get_image_id();
     if ($thumb <= 0) {
         return false;

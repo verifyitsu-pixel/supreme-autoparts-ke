@@ -140,7 +140,7 @@ bootstrap_wordpress() {
 
   # Optional catalog import from baked scrape chunk (Shopify CDN photos only).
   # Set SUPREME_IMPORT_ON_BOOT=1 on Railway to load the first real batch after deploy.
-  if [[ "${SUPREME_IMPORT_ON_BOOT:-1}" == "1" ]]; then
+  if [[ "${SUPREME_IMPORT_ON_BOOT:-0}" == "1" ]]; then
     IMPORT_FILE="${SUPREME_IMPORT_FILE:-}"
     if [[ -z "$IMPORT_FILE" ]]; then
       for c in \
