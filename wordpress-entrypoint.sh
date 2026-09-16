@@ -10,6 +10,9 @@ fi
 [[ -z "${WORDPRESS_DB_USER:-}" && -n "${MYSQLUSER:-}" ]] && export WORDPRESS_DB_USER="$MYSQLUSER"
 [[ -z "${WORDPRESS_DB_PASSWORD:-}" && -n "${MYSQLPASSWORD:-}" ]] && export WORDPRESS_DB_PASSWORD="$MYSQLPASSWORD"
 [[ -z "${WORDPRESS_DB_NAME:-}" && -n "${MYSQLDATABASE:-}" ]] && export WORDPRESS_DB_NAME="$MYSQLDATABASE"
+# Runtime guard: ensure Apache starts with only prefork MPM.
+rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf 2>/dev/null || true
+a2enmod mpm_prefork >/dev/null 2>&1 || true
 
 export WORDPRESS_DB_HOST="${WORDPRESS_DB_HOST:-db:3306}"
 export WORDPRESS_DB_USER="${WORDPRESS_DB_USER:-wordpress}"
