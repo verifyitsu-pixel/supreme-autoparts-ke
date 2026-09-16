@@ -37,6 +37,11 @@ if (!defined('FS_METHOD')) define('FS_METHOD', 'direct');
 
 sync_custom_content() {
   mkdir -p /var/www/html/wp-content/themes /var/www/html/wp-content/plugins /var/www/html/wp-content/mu-plugins
+  # WooCommerce baked into image — always restore onto runtime volume first.
+  if [[ -d /usr/src/wordpress/wp-content/plugins/woocommerce ]]; then
+    rm -rf /var/www/html/wp-content/plugins/woocommerce
+    cp -a /usr/src/wordpress/wp-content/plugins/woocommerce /var/www/html/wp-content/plugins/
+  fi
   if [[ -d /usr/src/wordpress/wp-content/themes/supreme-autoparts ]]; then
     rm -rf /var/www/html/wp-content/themes/supreme-autoparts
     cp -a /usr/src/wordpress/wp-content/themes/supreme-autoparts /var/www/html/wp-content/themes/
@@ -71,6 +76,7 @@ sync_custom_content() {
   fi
   chown -R www-data:www-data \
     /var/www/html/wp-content/themes/supreme-autoparts \
+    /var/www/html/wp-content/plugins/woocommerce \
     /var/www/html/wp-content/plugins/supreme-autoparts-core \
     /var/www/html/wp-content/plugins/whop-payments \
     /var/www/html/wp-content/plugins/sa-brevo-mail \
@@ -96,6 +102,42 @@ wait_for_db() {
 
 wp_as() {
   wp --allow-root --path=/var/www/html "$@"
+}
+
+
+ensure_woocommerce() {
+  # Never skip: missing on disk OR not active → restore/install then activate.
+  # Always re-sync baked Woo from image first (volume can lag behind new deploys).
+  if [[ -d /usr/src/wordpress/wp-content/plugins/woocommerce ]]; then
+    echo "[supreme] Syncing baked WooCommerce from image onto volume..."
+    mkdir -p /var/www/html/wp-content/plugins
+    rm -rf /var/www/html/wp-content/plugins/woocommerce
+    cp -a /usr/src/wordpress/wp-content/plugins/woocommerce /var/www/html/wp-content/plugins/
+    chown -R www-data:www-data /var/www/html/wp-content/plugins/woocommerce 2>/dev/null || true
+  fi
+
+  if [[ ! -f /var/www/html/wp-content/plugins/woocommerce/woocommerce.php ]]; then
+    echo "[supreme] WooCommerce missing on disk — installing from wordpress.org (11.1.0)..."
+    wp_as plugin install woocommerce --version=11.1.0 --force || wp_as plugin install woocommerce --force || true
+  fi
+
+  # Activate if missing from active list — never skip this check.
+  if ! wp_as plugin is-active woocommerce 2>/dev/null; then
+    echo "[supreme] Activating WooCommerce..."
+    wp_as plugin activate woocommerce || true
+  else
+    echo "[supreme] WooCommerce already active."
+  fi
+
+  if [[ ! -f /var/www/html/wp-content/plugins/woocommerce/woocommerce.php ]]; then
+    echo "[supreme] ERROR: WooCommerce still missing after ensure_woocommerce" >&2
+    return 1
+  fi
+  if ! wp_as plugin is-active woocommerce 2>/dev/null; then
+    echo "[supreme] ERROR: WooCommerce present but not active — retrying activate" >&2
+    wp_as plugin activate woocommerce || true
+  fi
+  echo "[supreme] WooCommerce on disk + active check done."
 }
 
 bootstrap_wordpress() {
@@ -127,16 +169,8 @@ bootstrap_wordpress() {
   wp_as option update timezone_string "Africa/Nairobi" || true
   wp_as rewrite structure '/%postname%/' --hard || true
 
-  # Woo must exist on disk — deploy volume/image sync can drop it even if DB says installed.
-  if [[ ! -d /var/www/html/wp-content/plugins/woocommerce ]] || ! wp_as plugin is-installed woocommerce 2>/dev/null; then
-    echo "[supreme] Installing WooCommerce (missing on disk or not installed)..."
-    wp_as plugin install woocommerce --activate || true
-  else
-    wp_as plugin activate woocommerce || true
-  fi
-  if [[ ! -d /var/www/html/wp-content/plugins/woocommerce ]]; then
-    echo "[supreme] ERROR: WooCommerce still missing after install attempt" >&2
-  fi
+  # Woo MUST be on disk + active before any other boot work (never skip).
+  ensure_woocommerce
 
   wp_as plugin activate supreme-autoparts-core || true
   wp_as plugin activate whop-payments || true

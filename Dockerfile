@@ -15,6 +15,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         less mariadb-client unzip curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Bake WooCommerce into the image (pin ~11.1.0) so every deploy has it on disk
+# immediately — avoids race where volume/redeploy drops plugins while DB still
+# thinks Woo is installed.
+ARG WOOCOMMERCE_VERSION=11.1.0
+RUN mkdir -p /usr/src/wordpress/wp-content/plugins \
+    && curl -fsSL -o /tmp/woocommerce.zip \
+        "https://downloads.wordpress.org/plugin/woocommerce.${WOOCOMMERCE_VERSION}.zip" \
+    && unzip -q /tmp/woocommerce.zip -d /usr/src/wordpress/wp-content/plugins \
+    && rm -f /tmp/woocommerce.zip \
+    && test -f /usr/src/wordpress/wp-content/plugins/woocommerce/woocommerce.php \
+    && chown -R www-data:www-data /usr/src/wordpress/wp-content/plugins/woocommerce
+
 # Custom theme + plugins (baked into image for Git auto-deploy)
 COPY wp-content/themes/supreme-autoparts /usr/src/wordpress/wp-content/themes/supreme-autoparts
 COPY wp-content/plugins/supreme-autoparts-core /usr/src/wordpress/wp-content/plugins/supreme-autoparts-core
@@ -30,6 +42,7 @@ COPY wordpress-entrypoint.sh /usr/local/bin/wordpress-entrypoint.sh
 RUN chmod +x /usr/local/bin/wordpress-entrypoint.sh \
     && chown -R www-data:www-data \
         /usr/src/wordpress/wp-content/themes/supreme-autoparts \
+        /usr/src/wordpress/wp-content/plugins/woocommerce \
         /usr/src/wordpress/wp-content/plugins/supreme-autoparts-core \
         /usr/src/wordpress/wp-content/plugins/whop-payments \
         /usr/src/wordpress/wp-content/plugins/sa-brevo-mail \
