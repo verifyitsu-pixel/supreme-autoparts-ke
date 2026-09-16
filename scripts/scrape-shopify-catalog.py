@@ -137,6 +137,7 @@ class Scraper:
             "sitemap_handles_queued": 0,
             "sitemap_fetched": 0,
             "products_unique": 0,
+            "ndjson_lines": 0,
             "products_seen_raw": 0,
             "requests": 0,
             "delay_s": self.limiter.min_interval,
@@ -198,6 +199,7 @@ class Scraper:
         if self._ndjson_path.exists():
             paths.append(self._ndjson_path)
         paths.extend(sorted((self.out / "chunks").glob("products-*.ndjson")))
+        ndjson_lines = 0
         for p in paths:
             try:
                 with p.open("r", encoding="utf-8") as fh:
@@ -205,6 +207,8 @@ class Scraper:
                         line = line.strip()
                         if not line:
                             continue
+                        if p == self._ndjson_path:
+                            ndjson_lines += 1
                         try:
                             obj = json.loads(line)
                             pid = obj.get("id")
@@ -218,6 +222,7 @@ class Scraper:
             except Exception as e:
                 print(f"[resume] scan {p}: {e}", flush=True)
         self.stats["products_unique"] = len(self.seen_ids)
+        self.stats["ndjson_lines"] = ndjson_lines
         print(f"[resume] seen ids={len(self.seen_ids)} handles={len(self.seen_handles)}", flush=True)
 
     def _open_writers(self, append: bool) -> None:
@@ -363,6 +368,7 @@ class Scraper:
             product.get("updated_at") or "",
         ])
         self.stats["products_unique"] = len(self.seen_ids)
+        self.stats["ndjson_lines"] = int(self.stats.get("ndjson_lines") or 0) + 1
         self._since_save += 1
         if self._since_save >= 50:
             self.flush_writers()
@@ -430,6 +436,15 @@ Updated: {nairobi_now()}
             try:
                 data = self.fetch_json(f"/products.json?limit={LIMIT}&page={page}")
             except Exception as e:
+                # Shopify's legacy public JSON endpoint rejects page 101 with
+                # HTTP 400 even when pages 1-100 were fully consumed. Treat
+                # that endpoint cap as completion rather than a resumable
+                # error, otherwise every restart retries page 101 forever.
+                if isinstance(e, HTTPError) and e.code == 400 and page > 100:
+                    self.stats["products_json_done"] = True
+                    self.save_progress()
+                    print(f"[products.json] endpoint page cap reached at page={page}", flush=True)
+                    return
                 print(f"[products.json] stop page={page}: {e}", flush=True)
                 self.errors.append({"phase": "products_json", "page": page, "error": str(e), "at": utc_now()})
                 # don't mark done — allow resume retry
@@ -634,6 +649,9 @@ Updated: {nairobi_now()}
     def run(self, resume: bool = False) -> None:
         append = resume and (self._ndjson_path.exists() or len(self.seen_ids) > 0)
         self._open_writers(append=append)
+        # A resumed process must advertise its live state even when the
+        # previous process checkpointed as interrupted or errored.
+        self.stats["status"] = "running"
         self.write_readme()
         self.save_progress()
         try:
