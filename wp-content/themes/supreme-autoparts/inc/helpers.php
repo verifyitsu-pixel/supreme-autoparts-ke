@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Product-type tiles for the homepage (SVG icons — no emoji).
+ * Product-type tiles for the homepage (real category photos preferred).
  *
  * @return array<int, array{title:string,slug:string,icon:string}>
  */
@@ -25,6 +25,52 @@ function sa_product_types(): array
         ['title' => 'Tires', 'slug' => 'tires', 'icon' => 'tires'],
         ['title' => 'Wheels', 'slug' => 'wheels', 'icon' => 'wheels'],
     ];
+}
+
+/**
+ * Local theme asset for a product-type category (baked Shopify product photos).
+ */
+function sa_category_theme_image_url(string $slug): string
+{
+    $slug = sanitize_title($slug);
+    if ($slug === '') {
+        return '';
+    }
+    $rel = '/assets/images/categories/' . $slug . '.jpg';
+    $path = SA_THEME_DIR . $rel;
+    if (!is_readable($path) || filesize($path) < 1000) {
+        return '';
+    }
+    return SA_THEME_URI . $rel;
+}
+
+/**
+ * Real category thumbnail URL (theme asset → core CDN map / term meta / product).
+ */
+function sa_category_image_url(string $slug): string
+{
+    $local = sa_category_theme_image_url($slug);
+    if ($local !== '') {
+        return $local;
+    }
+    if (function_exists('sa_core_get_category_image_url')) {
+        return sa_core_get_category_image_url($slug);
+    }
+    $term = get_term_by('slug', $slug, 'product_cat');
+    if ($term && !is_wp_error($term)) {
+        $stored = (string) get_term_meta((int) $term->term_id, 'sa_image_url', true);
+        if ($stored !== '' && preg_match('#^https?://#i', $stored)) {
+            return $stored;
+        }
+        $thumb_id = (int) get_term_meta((int) $term->term_id, 'thumbnail_id', true);
+        if ($thumb_id > 0) {
+            $src = wp_get_attachment_image_url($thumb_id, 'woocommerce_thumbnail');
+            if (is_string($src) && $src !== '') {
+                return $src;
+            }
+        }
+    }
+    return '';
 }
 
 /**

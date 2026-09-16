@@ -112,6 +112,10 @@ function sa_core_seed_categories(): void
     // Seed top Shopify collections / product-type style categories for catalog parity.
     sa_core_seed_collections_from_json();
 
+    if (function_exists('sa_core_seed_category_thumbnails')) {
+        sa_core_seed_category_thumbnails();
+    }
+
     update_option('sa_categories_seeded', time());
 }
 

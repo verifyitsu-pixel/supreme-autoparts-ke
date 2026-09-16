@@ -38,9 +38,17 @@ get_header();
   <div class="sa-container">
     <h2 class="sa-section__title"><?php esc_html_e('Shop by Product Type', 'supreme-autoparts'); ?></h2>
     <div class="sa-type-grid">
-      <?php foreach (sa_product_types() as $type) : ?>
-        <a class="sa-type-tile" href="<?php echo esc_url(sa_term_link('product_cat', $type['slug'])); ?>">
-          <span class="sa-type-tile__icon" aria-hidden="true"><?php echo sa_category_icon_svg($type['icon']); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+      <?php foreach (sa_product_types() as $type) :
+          $img = sa_category_image_url($type['slug']);
+          ?>
+        <a class="sa-type-tile<?php echo $img !== '' ? ' sa-type-tile--photo' : ''; ?>" href="<?php echo esc_url(sa_term_link('product_cat', $type['slug'])); ?>">
+          <?php if ($img !== '') : ?>
+            <span class="sa-type-tile__media">
+              <img src="<?php echo esc_url($img); ?>" alt="<?php echo esc_attr($type['title']); ?>" class="sa-type-tile__img" loading="lazy" decoding="async" referrerpolicy="no-referrer-when-downgrade" width="200" height="200" />
+            </span>
+          <?php else : ?>
+            <span class="sa-type-tile__icon" aria-hidden="true"><?php echo sa_category_icon_svg($type['icon']); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+          <?php endif; ?>
           <span class="sa-type-tile__name"><?php echo esc_html($type['title']); ?></span>
         </a>
       <?php endforeach; ?>
