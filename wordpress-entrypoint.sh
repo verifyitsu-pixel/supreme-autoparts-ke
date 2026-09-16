@@ -161,14 +161,42 @@ bootstrap_wordpress() {
   # Email: Brevo plugin reads BREVO_API_KEY / BREVO_SMTP_* from env.
   echo "[supreme] Email From: Supreme Autoparts <${WORDPRESS_ADMIN_EMAIL}> — set BREVO_API_KEY for transactional delivery"
 
+  # Ensure product_cat terms exist before rewrite flush / import.
+  wp_as supreme seed-categories 2>/dev/null || true
+
+  # Catalog recovery: wipe stuck boot-import flags when products are gone or forced.
+  # SUPREME_FORCE_IMPORT=1 → clear sa_boot_import_* and re-import even if catalog non-empty.
+  PRODUCT_COUNT="$(wp_as post list --post_type=product --post_status=publish --format=count 2>/dev/null || echo 0)"
+  PRODUCT_COUNT="$(echo "$PRODUCT_COUNT" | tr -cd "0-9")"
+  PRODUCT_COUNT="${PRODUCT_COUNT:-0}"
+  echo "[supreme] Published product count: ${PRODUCT_COUNT}"
+
+  if [[ "${SUPREME_FORCE_IMPORT:-0}" == "1" ]]; then
+    echo "[supreme] SUPREME_FORCE_IMPORT=1 — clearing sa_boot_import_* flags"
+    wp_as option delete sa_boot_import_done >/dev/null 2>&1 || true
+    wp_as option delete sa_boot_import_batch50 >/dev/null 2>&1 || true
+    wp_as option delete sa_boot_import_running >/dev/null 2>&1 || true
+  elif [[ "$PRODUCT_COUNT" -eq 0 ]]; then
+    echo "[supreme] Catalog empty — resetting sa_boot_import_* so boot re-import runs"
+    wp_as option delete sa_boot_import_done >/dev/null 2>&1 || true
+    wp_as option delete sa_boot_import_batch50 >/dev/null 2>&1 || true
+    wp_as option delete sa_boot_import_running >/dev/null 2>&1 || true
+  fi
+
   # Optional catalog import from baked scrape chunk (Shopify CDN photos only).
   # Prefer batch-with-images-400 when present, else batch-with-images-50.
-  # Set SUPREME_IMPORT_ON_BOOT=1 on Railway (or leave default path auto-import once).
+  # Triggers when: SUPREME_FORCE_IMPORT=1, SUPREME_IMPORT_ON_BOOT=1, catalog empty, or first boot.
   BOOT_IMPORT_DONE="$(wp_as option get sa_boot_import_done 2>/dev/null || true)"
   if [[ -z "$BOOT_IMPORT_DONE" ]]; then
     BOOT_IMPORT_DONE="$(wp_as option get sa_boot_import_batch50 2>/dev/null || true)"
   fi
-  if [[ "${SUPREME_IMPORT_ON_BOOT:-0}" == "1" || -z "${BOOT_IMPORT_DONE}" ]]; then
+  NEED_IMPORT=0
+  if [[ "${SUPREME_FORCE_IMPORT:-0}" == "1" ]]; then NEED_IMPORT=1; fi
+  if [[ "${SUPREME_IMPORT_ON_BOOT:-0}" == "1" ]]; then NEED_IMPORT=1; fi
+  if [[ "$PRODUCT_COUNT" -eq 0 ]]; then NEED_IMPORT=1; fi
+  if [[ -z "${BOOT_IMPORT_DONE}" ]]; then NEED_IMPORT=1; fi
+
+  if [[ "$NEED_IMPORT" == "1" ]]; then
     IMPORT_FILE="${SUPREME_IMPORT_FILE:-}"
     if [[ -z "$IMPORT_FILE" ]]; then
       for c in \
@@ -198,22 +226,29 @@ bootstrap_wordpress() {
       SKIP_IMG_FLAG=(--skip-images)
     fi
     if [[ -n "$IMPORT_FILE" && -r "$IMPORT_FILE" ]]; then
-      echo "[supreme] Boot import: file=$IMPORT_FILE limit=$IMPORT_LIMIT require-images"
+      echo "[supreme] Boot import: file=$IMPORT_FILE limit=$IMPORT_LIMIT require-images force=${SUPREME_FORCE_IMPORT:-0}"
+      wp_as option update sa_boot_import_running 1 >/dev/null 2>&1 || true
       # Run in background so healthchecks stay green while images sideload.
       (
         mkdir -p /var/www/html/wp-content/uploads
+        wp_as supreme seed-categories >> /var/www/html/wp-content/uploads/sa-boot-import.log 2>&1 || true
         wp_as supreme import-ndjson --file="$IMPORT_FILE" --limit="$IMPORT_LIMIT" --require-images "${SKIP_IMG_FLAG[@]}" \
           >> /var/www/html/wp-content/uploads/sa-boot-import.log 2>&1 \
           || echo "[supreme] Boot import finished with errors (see sa-boot-import.log)."
+        wp_as rewrite flush --hard >> /var/www/html/wp-content/uploads/sa-boot-import.log 2>&1 || true
         wp_as option update sa_boot_import_done 1 >/dev/null 2>&1 || true
         wp_as option update sa_boot_import_batch50 1 >/dev/null 2>&1 || true
+        wp_as option delete sa_boot_import_running >/dev/null 2>&1 || true
         echo "[supreme] Boot import finished at $(date -Iseconds)" >> /var/www/html/wp-content/uploads/sa-boot-import.log
       ) &
     else
       echo "[supreme] Boot import requested but batch NDJSON not found." >&2
     fi
+  else
+    echo "[supreme] Boot import skipped (catalog has ${PRODUCT_COUNT} products; flags present)."
   fi
 
+  # Flush product / product_cat rewrite rules after seed (and again after import in bg).
   wp_as rewrite flush --hard || true
   echo "[supreme] Bootstrap complete."
 }

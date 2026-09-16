@@ -12,7 +12,14 @@ function sa_core_ensure_term(string $name, string $slug, int $parent = 0, string
 {
     $existing = get_term_by('slug', $slug, 'product_cat');
     if ($existing && !is_wp_error($existing)) {
-        return (int) $existing->term_id;
+        $tid = (int) $existing->term_id;
+        // Attach orphan leaf under the intended parent so parent archives include children.
+        if ($parent > 0 && (int) $existing->parent !== $parent) {
+            wp_update_term($tid, 'product_cat', [
+                'parent' => $parent,
+            ]);
+        }
+        return $tid;
     }
     $result = wp_insert_term($name, 'product_cat', [
         'slug'        => $slug,

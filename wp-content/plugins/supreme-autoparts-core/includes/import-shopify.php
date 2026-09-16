@@ -332,13 +332,16 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
             return;
         }
 
-        // Categories from product_type AND collections (if present) + vendor.
+        // Categories: leaf product_type under IA parent + parent itself so
+        // /product-category/brakes/ lists products (include_children + direct assign).
         $term_ids = [];
         $ptype = (string) ($item['product_type'] ?? '');
         if ($ptype !== '') {
-            $tid = sa_core_ensure_product_cat($ptype, sanitize_title($ptype));
-            if ($tid) {
-                $term_ids[] = $tid;
+            $mapped = sa_core_assign_product_type_categories($ptype);
+            foreach ($mapped as $tid) {
+                if ($tid) {
+                    $term_ids[] = $tid;
+                }
             }
         }
         // Collections: array of {title,handle} or handles/titles as strings.
@@ -365,7 +368,12 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
         }
         $vendor = (string) ($item['vendor'] ?? '');
         if ($vendor !== '') {
-            $tid = sa_core_ensure_product_cat($vendor, sanitize_title($vendor));
+            // Keep vendors under Brands parent when possible (not top-level orphans).
+            $brands_parent = 0;
+            if (function_exists('sa_core_ensure_term')) {
+                $brands_parent = sa_core_ensure_term('Brands', 'brands');
+            }
+            $tid = sa_core_ensure_product_cat($vendor, sanitize_title($vendor), $brands_parent > 0 ? $brands_parent : 0);
             if ($tid) {
                 $term_ids[] = $tid;
             }
@@ -421,16 +429,128 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
     }
 }
 
-function sa_core_ensure_product_cat(string $name, string $slug): int
+/**
+ * Map Shopify product_type string → IA parent slug (brakes, engine, …).
+ */
+function sa_core_map_product_type_parent_slug(string $ptype): string
+{
+    $p = strtolower($ptype);
+    $rules = [
+        'brakes'     => ['brake', 'rotor', 'caliper'],
+        'air-intake' => ['air filter', 'air intake', 'cold air', 'cabin air'],
+        'suspension' => ['shock', 'strut', 'coilover', 'sway', 'spring', 'control arm', 'lift', 'leveling', 'camber', 'bushing', 'torsion', 'panhard', 'traction'],
+        'exhaust'    => ['exhaust', 'catback', 'cat-back', 'axle back', 'axle-back', 'muffler', 'header', 'manifold', 'downpipe', 'wrap'],
+        'lighting'   => ['light', 'bulb', 'fog', 'led', 'headlight', 'tail light', 'signal'],
+        'drivetrain' => ['clutch', 'axle', 'differential', 'driveshaft', 'transmission', 'torque converter', 'transfer case'],
+        'tires'      => ['tire', 'tyre'],
+        'wheels'     => ['wheel', 'rim'],
+        'exterior'   => ['tonneau', 'bed', 'skid', 'body', 'grille', 'bumper', 'winch', 'wiper', 'fender', 'spoiler', 'hood', 'mirror', 'mud flap', 'running board', 'roof rack', 'chrome', 'armor', 'topper', 'truck cap', 'cover'],
+        'interior'   => ['steering wheel', 'seat', 'floor mat', 'gauge', 'pedal', 'dash', 'organizer', 'cargo liner', 'shift knob', 'sun shade'],
+        'engine'     => ['filter', 'intake', 'oil', 'spark', 'intercooler', 'fuel', 'push rod', 'blow off', 'bearing', 'bolt', 'thermal', 'cooling', 'ignition', 'turbo', 'supercharg'],
+    ];
+    foreach ($rules as $parent => $kws) {
+        foreach ($kws as $kw) {
+            if (str_contains($p, $kw)) {
+                return $parent;
+            }
+        }
+    }
+    return '';
+}
+
+/**
+ * Ensure leaf + parent product_cat terms and return term IDs to assign.
+ *
+ * @return array<int,int>
+ */
+function sa_core_assign_product_type_categories(string $ptype): array
+{
+    $ptype = trim($ptype);
+    if ($ptype === '') {
+        return [];
+    }
+    $leaf_slug = sanitize_title($ptype);
+    $parent_slug = sa_core_map_product_type_parent_slug($ptype);
+    $ids = [];
+
+    $parent_id = 0;
+    if ($parent_slug !== '') {
+        $parent_labels = [
+            'air-intake' => 'Air Intake',
+            'brakes' => 'Brakes',
+            'drivetrain' => 'Drivetrain',
+            'engine' => 'Engine',
+            'exhaust' => 'Exhaust',
+            'exterior' => 'Exterior',
+            'interior' => 'Interior',
+            'lighting' => 'Lighting',
+            'suspension' => 'Suspension',
+            'tires' => 'Tires',
+            'wheels' => 'Wheels',
+        ];
+        $label = $parent_labels[$parent_slug] ?? ucwords(str_replace('-', ' ', $parent_slug));
+        $parent_id = sa_core_ensure_product_cat($label, $parent_slug, 0);
+        if ($parent_id) {
+            $ids[] = $parent_id;
+        }
+    }
+
+    $leaf_id = sa_core_ensure_product_cat($ptype, $leaf_slug, $parent_id);
+    if ($leaf_id) {
+        $ids[] = $leaf_id;
+    }
+
+    // Also attach common megamenu child slug when product_type is a variant
+    // e.g. "Brake Pads - Performance" → also "brake-pads".
+    $aliases = [
+        'brake-pads' => ['brake pad'],
+        'brake-rotors' => ['brake rotor', 'rotor'],
+        'brake-calipers' => ['caliper'],
+        'brake-kits' => ['brake kit'],
+        'shocks-struts' => ['shock', 'strut'],
+        'coilovers' => ['coilover'],
+        'sway-bars' => ['sway bar'],
+        'cat-back-exhaust' => ['catback', 'cat-back', 'cat back'],
+        'axle-back-exhaust' => ['axle back', 'axle-back'],
+        'air-intakes' => ['cold air', 'air intake'],
+        'fog-lights' => ['fog light'],
+        'tonneau-covers' => ['tonneau'],
+    ];
+    $pl = strtolower($ptype);
+    foreach ($aliases as $child_slug => $needles) {
+        foreach ($needles as $n) {
+            if (str_contains($pl, $n)) {
+                $child_name = ucwords(str_replace('-', ' ', $child_slug));
+                $cid = sa_core_ensure_product_cat($child_name, $child_slug, $parent_id);
+                if ($cid) {
+                    $ids[] = $cid;
+                }
+                break;
+            }
+        }
+    }
+
+    return array_values(array_unique(array_map('intval', $ids)));
+}
+
+function sa_core_ensure_product_cat(string $name, string $slug, int $parent = 0): int
 {
     if (function_exists('sa_core_ensure_term')) {
-        return sa_core_ensure_term($name, $slug);
+        return sa_core_ensure_term($name, $slug, $parent);
     }
     $existing = get_term_by('slug', $slug, 'product_cat');
     if ($existing && !is_wp_error($existing)) {
-        return (int) $existing->term_id;
+        $tid = (int) $existing->term_id;
+        if ($parent > 0 && (int) $existing->parent !== $parent) {
+            wp_update_term($tid, 'product_cat', ['parent' => $parent]);
+        }
+        return $tid;
     }
-    $r = wp_insert_term($name, 'product_cat', ['slug' => $slug]);
+    $args = ['slug' => $slug];
+    if ($parent > 0) {
+        $args['parent'] = $parent;
+    }
+    $r = wp_insert_term($name, 'product_cat', $args);
     return is_wp_error($r) ? 0 : (int) $r['term_id'];
 }
 
