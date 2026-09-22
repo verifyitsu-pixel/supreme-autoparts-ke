@@ -171,7 +171,7 @@ function sa_core_invoice_key_valid($order, string $key, string $order_key_param 
     return false;
 }
 
-add_action('init', static function (): void {
+add_action('template_redirect', static function (): void {
     if (empty($_GET['sa_invoice'])) {
         return;
     }

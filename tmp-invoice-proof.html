@@ -1,23 +1,127 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"/><title>Receipt #PROOF — Supreme Autoparts</title>
-<style>
-body{font-family:Inter,system-ui,sans-serif;background:#f4f4f5;padding:1.25rem;margin:0}
-.wrap{max-width:800px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(11,11,13,.08)}
-.header{background:#0B0B0D;color:#F4F4F5;padding:1.35rem 1.5rem;display:flex;justify-content:space-between;align-items:center}
-.header__logo{height:48px;border-radius:4px}
-.header__doc{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:#F5A623;font-weight:700;margin:0}
-.accent{height:4px;background:#F5A623}
-.body{padding:1.5rem}
-</style></head><body>
-<div class="wrap">
-<header class="header">
-  <div style="display:flex;gap:.85rem;align-items:center">
-    <img class="header__logo" src="https://www.supremeautoparts.co.ke/wp-content/themes/supreme-autoparts/assets/logo-light.jpg" alt="Supreme Autoparts" width="160" height="48"/>
-    <div><strong>Supreme Autoparts</strong><div style="color:#A0A0A8;font-size:.8rem">calvin@supremeautoparts.co.ke · Nairobi, Kenya</div></div>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Receipt #816 — Supreme Autoparts</title>
+  <style>
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;padding:1.25rem;color:#1a1a1c;background:#f4f4f5;line-height:1.5}
+    .wrap{max-width:800px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(11,11,13,.08)}
+    .header{background:#0B0B0D;color:#F4F4F5;padding:1.35rem 1.5rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem}
+    .header__brand{display:flex;align-items:center;gap:.85rem}
+    .header__logo{height:48px;width:auto;max-width:160px;object-fit:contain;display:block;border-radius:4px}
+    .header__meta{text-align:right}
+    .header__doc{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:#F5A623;font-weight:700;margin:0 0 .15rem}
+    .header__num{font-size:1.35rem;font-weight:700;margin:0;color:#fff}
+    .accent{height:4px;background:#F5A623}
+    .body{padding:1.5rem}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem}
+    .card{border:1px solid #e8e8ea;border-radius:10px;padding:1rem 1.1rem;background:#fafafa}
+    .card h3{margin:0 0 .5rem;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:#8A8A90;font-weight:700}
+    .card p{margin:.2rem 0;font-size:.95rem}
+    .muted{color:#555;font-size:.88rem}
+    table.items{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.95rem}
+    table.items th{background:#0B0B0D;color:#F4F4F5;text-align:left;padding:.65rem .55rem;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase}
+    table.items th.right,table.items td.right{text-align:right}
+    table.items td{border-bottom:1px solid #ececee;padding:.65rem .55rem;vertical-align:top}
+    table.items tr:last-child td{border-bottom:0}
+    .totals{max-width:300px;margin-left:auto;width:100%}
+    .totals td{border:0;padding:.35rem .4rem;font-size:.95rem}
+    .totals tr td:last-child{text-align:right;font-weight:600}
+    .totals .grand td{border-top:2px solid #0B0B0D;padding-top:.65rem;font-size:1.05rem;color:#0B0B0D}
+    .totals .grand td:last-child{color:#F5A623}
+    .badge{display:inline-block;padding:.2rem .55rem;border-radius:999px;font-size:.75rem;font-weight:700;background:#E8F8EF;color:#0B7A3B}
+    .footer{padding:1rem 1.5rem 1.4rem;border-top:1px solid #ececee;color:#666;font-size:.85rem}
+    .no-print{display:flex;flex-wrap:wrap;gap:.5rem;margin:0 auto 1rem;max-width:800px}
+    .no-print a,.no-print button{appearance:none;border:0;border-radius:8px;padding:.6rem 1rem;font:inherit;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:.35rem}
+    .btn-primary{background:#0B0B0D;color:#fff}
+    .btn-amber{background:#F5A623;color:#0B0B0D}
+    .btn-outline{background:#fff;color:#0B0B0D;border:1px solid #ccc!important}
+    @media (max-width:560px){
+      body{padding:.65rem}
+      .grid{grid-template-columns:1fr}
+      .header{flex-direction:column;align-items:flex-start}
+      .header__meta{text-align:left}
+      table.items,table.items thead,table.items tbody,table.items th,table.items td,table.items tr{display:block;width:100%}
+      table.items thead{display:none}
+      table.items tr{border-bottom:1px solid #eee;padding:.55rem 0;margin:0}
+      table.items td{border:0;padding:.15rem 0;display:flex;justify-content:space-between;gap:1rem}
+      table.items td.right{text-align:left}
+      .totals{max-width:none}
+    }
+    @media print{
+      body{background:#fff;padding:0}
+      .no-print{display:none!important}
+      .wrap{box-shadow:none;border-radius:0}
+    }
+  </style>
+</head>
+<body>
+  <p class="no-print">
+    <button type="button" class="btn-primary" onclick="window.print()">Print / Save PDF</button>
+    <a class="btn-amber" href="https://www.supremeautoparts.co.ke/wp-admin/admin-post.php?action=sa_email_invoice&#038;sa_invoice=816&#038;_wpnonce=ac90c6cdca">Email me this receipt</a>
+    <a class="btn-outline" href="https://www.supremeautoparts.co.ke/my-account/view-order/816/">Back to order</a>
+  </p>
+  <div class="wrap">
+    <header class="header">
+      <div class="header__brand">
+        <img class="header__logo" src="https://www.supremeautoparts.co.ke/wp-content/uploads/2026/09/logo.jpg" alt="Supreme Autoparts" width="160" height="48" />
+        <div>
+          <strong>Supreme Autoparts</strong>
+          <div class="muted" style="color:#A0A0A8;font-size:.8rem">calvin@supremeautoparts.co.ke · Nairobi, Kenya</div>
+        </div>
+      </div>
+      <div class="header__meta">
+        <p class="header__doc">Receipt</p>
+        <p class="header__num">#816</p>
+      </div>
+    </header>
+    <div class="accent"></div>
+    <div class="body">
+      <div class="grid">
+        <div class="card">
+          <h3>Bill to</h3>
+          <p>JOSEPH CRAWFORD<br />256 Towerview Drive West<br />Haines City, FL 33844<br />United States (US)</p>
+          <p class="muted">mileslandish@gmail.com             · 9438885343          </p>
+        </div>
+        <div class="card">
+          <h3>Order details</h3>
+          <p><strong>Date:</strong> September 16, 2026</p>
+          <p><strong>Status:</strong> <span class="badge">Processing</span></p>
+          <p><strong>Payment:</strong> Card</p>
+        </div>
+      </div>
+
+      <table class="items">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Qty</th>
+            <th class="right">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+                  <tr>
+            <td>Free shipping service. Do not order</td>
+            <td>1</td>
+            <td class="right"><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">&#036;</span>1.00</span></td>
+          </tr>
+                </tbody>
+      </table>
+
+      <table class="totals">
+        <tr><td>Subtotal</td><td><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">&#036;</span>1.00</span></td></tr>
+                                <tr class="grand"><td>Total</td><td><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">&#036;</span>1.00</span></td></tr>
+      </table>
+
+          </div>
+    <footer class="footer">
+      <p>Thank you for shopping with Supreme Autoparts.</p>
+      <p class="muted">Supreme Autoparts · calvin@supremeautoparts.co.ke · Nairobi, Kenya
+              </p>
+    </footer>
   </div>
-  <div style="text-align:right"><p class="header__doc">Receipt</p><p style="font-size:1.35rem;font-weight:700;margin:0;color:#fff">#PROOF</p></div>
-</header>
-<div class="accent"></div>
-<div class="body"><p>Branded invoice/receipt proof — logo + charcoal header + amber accent.</p>
-<p class="no-print"><strong>Buttons:</strong> Print / Save PDF · Email me this receipt · Back to order</p></div>
-</div></body></html>
+</body>
+</html>
+    
