@@ -83,7 +83,7 @@ final class Whop_Payment_Methods {
 
         if (in_array($status, ['error', 'cancel', 'failed'], true)) {
             wc_add_notice(
-                __('Verification payment was cancelled or failed. No $0.50 charge was completed. You can try again.', 'whop-payments'),
+                __('Verification payment was cancelled or failed. No $1.00 charge was completed. You can try again.', 'whop-payments'),
                 'error'
             );
             wp_safe_redirect($redirect);
@@ -95,12 +95,12 @@ final class Whop_Payment_Methods {
             $count = (int) ($sync['count'] ?? 0);
             if ($count > 0) {
                 wc_add_notice(
-                    __('Verification payment received ($0.50). Your payment method is saved.', 'whop-payments'),
+                    __('Verification payment received ($1.00). Your payment method is saved.', 'whop-payments'),
                     'success'
                 );
             } else {
                 wc_add_notice(
-                    __('Verification payment received ($0.50). If your method is not listed yet, tap Refresh — sync may take a moment.', 'whop-payments'),
+                    __('Verification payment received ($1.00). If your method is not listed yet, tap Refresh — sync may take a moment.', 'whop-payments'),
                     'success'
                 );
             }
@@ -174,7 +174,7 @@ final class Whop_Payment_Methods {
     }
 
     /** Non-refundable verification fee charged when adding a card/bank (USD). */
-    public const VERIFY_FEE_USD = 0.50;
+    public const VERIFY_FEE_USD = 1.00;
 
     public static function start_add_payment_method(int $user_id): void {
         $client = self::client_from_gateway();
@@ -187,7 +187,7 @@ final class Whop_Payment_Methods {
         $user  = get_userdata($user_id);
         $email = $user ? (string) $user->user_email : '';
 
-        // Live Add button: $0.50 USD payment-mode verification (saves method after charge).
+        // Live Add button: $1.00 USD payment-mode verification (saves method after charge).
         $result = $client->create_verify_checkout([
             'amount'       => self::VERIFY_FEE_USD,
             'wp_user_id'   => (string) $user_id,

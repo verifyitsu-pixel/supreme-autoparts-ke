@@ -20,7 +20,7 @@ $delete_confirm = esc_js(__('Remove this payment method from your account? This 
     <div>
       <h2><?php esc_html_e('Payment methods', 'supreme-autoparts'); ?></h2>
       <p class="sa-account-panel__lead">
-        <?php esc_html_e('Save a card or US bank account for faster checkout. Adding a method charges a $0.50 USD verification fee (non-refundable) to confirm it is active — no other charge at this step.', 'supreme-autoparts'); ?>
+        <?php esc_html_e('Save a card or US bank account for faster checkout. Adding a method charges a $1.00 USD verification fee (non-refundable) to confirm it is active — no other charge at this step.', 'supreme-autoparts'); ?>
       </p>
       <?php if ($synced) : ?>
         <p class="sa-pm__synced">
@@ -40,14 +40,14 @@ $delete_confirm = esc_js(__('Remove this payment method from your account? This 
           <?php esc_html_e('Refresh from Whop', 'supreme-autoparts'); ?>
         </a>
         <a class="sa-btn sa-btn--sm" href="<?php echo esc_url($add_url); ?>">
-          <?php esc_html_e('Add card or bank ($0.50 verify)', 'supreme-autoparts'); ?>
+          <?php esc_html_e('Add card or bank ($1.00 verify)', 'supreme-autoparts'); ?>
         </a>
       </div>
     <?php endif; ?>
   </header>
   <?php if ($whop_ready) : ?>
     <p class="sa-pm__fee-notice" role="note">
-      <?php esc_html_e('Verification fee: $0.50 USD · Non-refundable · Confirms your card or bank is active. No other charge when adding a method.', 'supreme-autoparts'); ?>
+      <?php esc_html_e('Verification fee: $1.00 USD · Non-refundable · Confirms your card or bank is active. No other charge when adding a method.', 'supreme-autoparts'); ?>
     </p>
   <?php endif; ?>
 
@@ -62,10 +62,10 @@ $delete_confirm = esc_js(__('Remove this payment method from your account? This 
     <div class="sa-dash__empty">
       <p><?php esc_html_e('No saved payment methods yet.', 'supreme-autoparts'); ?></p>
       <a class="sa-btn" href="<?php echo esc_url($add_url); ?>">
-        <?php esc_html_e('Add card or bank ($0.50 verify)', 'supreme-autoparts'); ?>
+        <?php esc_html_e('Add card or bank ($1.00 verify)', 'supreme-autoparts'); ?>
       </a>
       <p class="sa-pm__fee-notice sa-pm__fee-notice--empty" role="note">
-        <?php esc_html_e('$0.50 USD non-refundable verification fee. No other charge at this step.', 'supreme-autoparts'); ?>
+        <?php esc_html_e('$1.00 USD non-refundable verification fee. No other charge at this step.', 'supreme-autoparts'); ?>
       </p>
     </div>
   <?php else : ?>
@@ -119,7 +119,7 @@ $delete_confirm = esc_js(__('Remove this payment method from your account? This 
 
   <?php if ($whop_ready) : ?>
     <p class="sa-pm__note">
-      <?php esc_html_e('Adding a card or bank opens checkout to collect a $0.50 USD non-refundable verification fee. After payment succeeds, we sync your saved method into this account. You can remove a method anytime.', 'supreme-autoparts'); ?>
+      <?php esc_html_e('Adding a card or bank opens checkout to collect a $1.00 USD non-refundable verification fee. After payment succeeds, we sync your saved method into this account. You can remove a method anytime.', 'supreme-autoparts'); ?>
     </p>
   <?php endif; ?>
 </div>

@@ -196,7 +196,7 @@ final class Whop_Api_Client {
     }
 
     /**
-     * Create a $0.50 USD one-time payment checkout to verify & save a card/bank.
+     * Create a $1.00 USD one-time payment checkout to verify & save a card/bank.
      *
      * @param array<string,mixed> $args
      * @return array{success:bool,checkout_id?:string,plan_id?:string,purchase_url?:string,message?:string,raw?:mixed}
@@ -209,9 +209,9 @@ final class Whop_Api_Client {
             ];
         }
 
-        $amount   = round((float) ($args['amount'] ?? 0.50), 2);
+        $amount   = round((float) ($args['amount'] ?? 1.00), 2);
         if ($amount <= 0) {
-            $amount = 0.50;
+            $amount = 1.00;
         }
         $user_id  = (string) ($args['wp_user_id'] ?? '');
         $email    = (string) ($args['email'] ?? '');
@@ -251,7 +251,7 @@ final class Whop_Api_Client {
                 'initial_price'         => $amount,
                 'plan_type'             => 'one_time',
                 'title'                 => $title,
-                'description'           => (string) ($args['description'] ?? __('Non-refundable $0.50 USD fee to verify your card or bank is active. No other charge at this step.', 'whop-payments')),
+                'description'           => (string) ($args['description'] ?? __('Non-refundable $1.00 USD fee to verify your card or bank is active. No other charge at this step.', 'whop-payments')),
                 'visibility'            => 'hidden',
                 'force_create_new_plan' => true,
                 'payment_method_configuration' => $pmc,
