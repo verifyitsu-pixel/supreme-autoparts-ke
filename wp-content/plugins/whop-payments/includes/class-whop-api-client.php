@@ -144,7 +144,8 @@ final class Whop_Api_Client {
             ];
         }
 
-        $currency = strtolower((string) ($args['currency'] ?? 'usd'));
+        // Setup always uses USD (Whop charges in USD); do not pass Woo store KES.
+        $currency = 'usd';
         $meta     = is_array($args['metadata'] ?? null) ? $args['metadata'] : [];
         $meta     = array_merge([
             'source'  => 'supreme-autoparts-myaccount',
@@ -153,20 +154,143 @@ final class Whop_Api_Client {
 
         $body = [
             'mode'         => 'setup',
-            'company_id'   => $this->company_id,
             'account_id'   => $this->company_id,
             'currency'     => $currency,
             'redirect_url' => (string) ($args['redirect_url'] ?? ''),
             'metadata'     => $meta,
             'payment_method_configuration' => [
-                'enabled'                   => ['card'],
+                'enabled'                   => ['card', 'us_bank_account'],
+                // Whop API requires `disabled` as an array of type strings (HTTP 400 if omitted).
+                'disabled'                  => [],
                 'include_platform_defaults' => false,
             ],
         ];
 
         $response = $this->request('POST', '/checkout_configurations', $body);
+        $parsed   = $this->parse_checkout_response($response);
 
-        return $this->parse_checkout_response($response);
+        if (empty($parsed['success'])) {
+            $msg = strtolower((string) ($parsed['message'] ?? ''));
+            $raw = $parsed['raw'] ?? null;
+            if (is_array($raw)) {
+                error_log('[whop-payments] setup checkout failed: ' . wp_json_encode($raw));
+            }
+            if (function_exists('wc_get_logger')) {
+                wc_get_logger()->error(
+                    'Whop setup checkout failed: ' . (string) ($parsed['message'] ?? 'unknown'),
+                    ['source' => 'whop-payments']
+                );
+            }
+            // Fallback once without PMC if configuration fields are rejected.
+            if (
+                str_contains($msg, 'payment_method_configuration')
+                || str_contains($msg, 'disabled')
+            ) {
+                unset($body['payment_method_configuration']);
+                $response = $this->request('POST', '/checkout_configurations', $body);
+                $parsed   = $this->parse_checkout_response($response);
+            }
+        }
+
+        return $parsed;
+    }
+
+    /**
+     * Create a $0.50 USD one-time payment checkout to verify & save a card/bank.
+     *
+     * @param array<string,mixed> $args
+     * @return array{success:bool,checkout_id?:string,plan_id?:string,purchase_url?:string,message?:string,raw?:mixed}
+     */
+    public function create_verify_checkout(array $args): array {
+        if ($this->api_key === '' || $this->company_id === '') {
+            return [
+                'success' => false,
+                'message' => __('Whop API key or company ID is not configured.', 'whop-payments'),
+            ];
+        }
+
+        $amount   = round((float) ($args['amount'] ?? 0.50), 2);
+        if ($amount <= 0) {
+            $amount = 0.50;
+        }
+        $user_id  = (string) ($args['wp_user_id'] ?? '');
+        $email    = (string) ($args['email'] ?? '');
+        $redirect = (string) ($args['redirect_url'] ?? '');
+
+        $meta = [
+            'source'     => 'supreme-autoparts-myaccount',
+            'purpose'    => 'verify_payment_method',
+            'wp_user_id' => $user_id,
+            'email'      => $email,
+            'fee_usd'    => (string) $amount,
+            'non_refundable' => '1',
+        ];
+        if (is_array($args['metadata'] ?? null)) {
+            $meta = array_merge($meta, $args['metadata']);
+        }
+
+        $external_id = 'woo-pm-verify-' . ($user_id !== '' ? $user_id : 'anon') . '-' . gmdate('YmdHis');
+        $title = (string) ($args['title'] ?? __('Card verification — Supreme Autoparts', 'whop-payments'));
+
+        $pmc = [
+            'enabled'                   => ['card', 'us_bank_account'],
+            'disabled'                  => [],
+            'include_platform_defaults' => false,
+        ];
+
+        $body = [
+            'mode'         => 'payment',
+            'company_id'   => $this->company_id,
+            'account_id'   => $this->company_id,
+            'redirect_url' => $redirect,
+            'metadata'     => $meta,
+            'payment_method_configuration' => $pmc,
+            'plan'         => [
+                'company_id'            => $this->company_id,
+                'currency'              => 'usd',
+                'initial_price'         => $amount,
+                'plan_type'             => 'one_time',
+                'title'                 => $title,
+                'description'           => (string) ($args['description'] ?? __('Non-refundable $0.50 USD fee to verify your card or bank is active. No other charge at this step.', 'whop-payments')),
+                'visibility'            => 'hidden',
+                'force_create_new_plan' => true,
+                'payment_method_configuration' => $pmc,
+                'product'               => [
+                    'external_identifier'   => $external_id,
+                    'title'                 => $title,
+                    'redirect_purchase_url' => $redirect,
+                    'visibility'            => 'hidden',
+                ],
+            ],
+        ];
+
+        $response = $this->request('POST', '/checkout_configurations', $body);
+        $parsed   = $this->parse_checkout_response($response);
+
+        if (empty($parsed['success'])) {
+            $msg = strtolower((string) ($parsed['message'] ?? ''));
+            $raw = $parsed['raw'] ?? null;
+            if (is_array($raw)) {
+                error_log('[whop-payments] verify checkout failed: ' . wp_json_encode($raw));
+            }
+            if (function_exists('wc_get_logger')) {
+                wc_get_logger()->error(
+                    'Whop verify checkout failed: ' . (string) ($parsed['message'] ?? 'unknown'),
+                    ['source' => 'whop-payments']
+                );
+            }
+            // Fallback once without PMC if configuration fields are rejected.
+            if (
+                str_contains($msg, 'payment_method_configuration')
+                || str_contains($msg, 'disabled')
+            ) {
+                unset($body['payment_method_configuration'], $body['plan']['payment_method_configuration']);
+                $response = $this->request('POST', '/checkout_configurations', $body);
+                $parsed   = $this->parse_checkout_response($response);
+            }
+        }
+
+        return $parsed;
     }
 
     /**

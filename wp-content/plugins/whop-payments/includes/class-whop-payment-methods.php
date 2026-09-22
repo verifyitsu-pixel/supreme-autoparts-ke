@@ -82,24 +82,31 @@ final class Whop_Payment_Methods {
         }
 
         if (in_array($status, ['error', 'cancel', 'failed'], true)) {
-            wc_add_notice(__('Card setup was cancelled or failed. You can try again.', 'whop-payments'), 'notice');
+            wc_add_notice(
+                __('Verification payment was cancelled or failed. No $0.50 charge was completed. You can try again.', 'whop-payments'),
+                'error'
+            );
             wp_safe_redirect($redirect);
             exit;
         }
 
-        $sync = self::sync_user_payment_methods($user_id);
+        $sync = self::sync_user_payment_methods($user_id, true);
         if (!empty($sync['success'])) {
-            wc_add_notice(
-                sprintf(
-                    /* translators: %d: number of methods */
-                    __('Payment methods updated (%d on file).', 'whop-payments'),
-                    (int) ($sync['count'] ?? 0)
-                ),
-                'success'
-            );
+            $count = (int) ($sync['count'] ?? 0);
+            if ($count > 0) {
+                wc_add_notice(
+                    __('Verification payment received ($0.50). Your payment method is saved.', 'whop-payments'),
+                    'success'
+                );
+            } else {
+                wc_add_notice(
+                    __('Verification payment received ($0.50). If your method is not listed yet, tap Refresh — sync may take a moment.', 'whop-payments'),
+                    'success'
+                );
+            }
         } else {
             wc_add_notice(
-                (string) ($sync['message'] ?? __('Returned from Whop; sync will retry when you refresh.', 'whop-payments')),
+                (string) ($sync['message'] ?? __('Returned from verification; sync will retry when you refresh.', 'whop-payments')),
                 'notice'
             );
         }
@@ -166,6 +173,9 @@ final class Whop_Payment_Methods {
         }
     }
 
+    /** Non-refundable verification fee charged when adding a card/bank (USD). */
+    public const VERIFY_FEE_USD = 0.50;
+
     public static function start_add_payment_method(int $user_id): void {
         $client = self::client_from_gateway();
         if (!$client) {
@@ -174,31 +184,44 @@ final class Whop_Payment_Methods {
             exit;
         }
 
-        $user = get_userdata($user_id);
-        $currency = strtolower((string) get_woocommerce_currency());
-        if ($currency === '') {
-            $currency = 'kes';
-        }
+        $user  = get_userdata($user_id);
+        $email = $user ? (string) $user->user_email : '';
 
-        $result = $client->create_setup_checkout([
-            'currency'     => $currency,
+        // Live Add button: $0.50 USD payment-mode verification (saves method after charge).
+        $result = $client->create_verify_checkout([
+            'amount'       => self::VERIFY_FEE_USD,
+            'wp_user_id'   => (string) $user_id,
+            'email'        => $email,
             'redirect_url' => self::setup_return_url($user_id),
-            'metadata'     => [
-                'wp_user_id' => (string) $user_id,
-                'email'      => $user ? (string) $user->user_email : '',
-            ],
+            'title'        => __('Card verification — Supreme Autoparts', 'whop-payments'),
         ]);
 
+        // Optional fallback: free setup-only if payment-mode verify cannot be created.
+        if (empty($result['success']) && method_exists($client, 'create_setup_checkout')) {
+            error_log('[whop-payments] verify checkout failed, falling back to setup: ' . (string) ($result['message'] ?? ''));
+            $result = $client->create_setup_checkout([
+                'currency'     => 'usd',
+                'redirect_url' => self::setup_return_url($user_id),
+                'metadata'     => [
+                    'wp_user_id' => (string) $user_id,
+                    'email'      => $email,
+                    'fallback'   => 'setup_after_verify_fail',
+                ],
+            ]);
+        }
+
         if (empty($result['success'])) {
-            wc_add_notice(
-                (string) ($result['message'] ?? __('Could not start Whop card setup.', 'whop-payments')),
-                'error'
-            );
+            $err = (string) ($result['message'] ?? __('Could not start card/bank verification.', 'whop-payments'));
+            if (!empty($result['raw']) && is_array($result['raw'])) {
+                error_log('[whop-payments] start_add_payment_method: ' . wp_json_encode($result['raw']));
+            }
+            wc_add_notice($err, 'error');
             wp_safe_redirect(wc_get_account_endpoint_url('payment-methods'));
             exit;
         }
 
         update_user_meta($user_id, '_sa_whop_pending_setup_checkout', (string) $result['checkout_id']);
+        update_user_meta($user_id, '_sa_whop_pending_verify_fee', (string) self::VERIFY_FEE_USD);
         wp_safe_redirect((string) $result['purchase_url']);
         exit;
     }
@@ -271,6 +294,66 @@ final class Whop_Payment_Methods {
     /**
      * @param array<string,mixed> $pm
      */
+    /**
+     * Detect bank / ACH payment method payloads from Whop.
+     *
+     * @param array<string,mixed> $pm
+     */
+    private static function is_bank_payment_method(array $pm): bool {
+        $type = strtolower((string) ($pm['type'] ?? $pm['payment_method_type'] ?? ''));
+        if (in_array($type, ['us_bank_account', 'bank', 'bank_account', 'ach', 'ach_debit'], true)) {
+            return true;
+        }
+        if (is_array($pm['us_bank_account'] ?? null) || is_array($pm['bank'] ?? null) || is_array($pm['bank_account'] ?? null)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @param array<string,mixed> $pm
+     * @return array{brand:string,last4:string,exp_m:string,exp_y:string,is_bank:bool}
+     */
+    private static function extract_pm_display_fields(array $pm): array {
+        $is_bank = self::is_bank_payment_method($pm);
+        $card    = is_array($pm['card'] ?? null) ? $pm['card'] : [];
+        $bank    = [];
+        if (is_array($pm['us_bank_account'] ?? null)) {
+            $bank = $pm['us_bank_account'];
+        } elseif (is_array($pm['bank'] ?? null)) {
+            $bank = $pm['bank'];
+        } elseif (is_array($pm['bank_account'] ?? null)) {
+            $bank = $pm['bank_account'];
+        }
+
+        if ($is_bank) {
+            $brand = strtolower((string) ($bank['bank_name'] ?? $bank['brand'] ?? $pm['brand'] ?? 'bank'));
+            if ($brand === '' || $brand === 'us_bank_account') {
+                $brand = 'bank';
+            }
+            $last4 = (string) ($bank['last4'] ?? $bank['last_four'] ?? $pm['last4'] ?? '****');
+            return [
+                'brand'   => $brand,
+                'last4'   => $last4,
+                'exp_m'   => '',
+                'exp_y'   => '',
+                'is_bank' => true,
+            ];
+        }
+
+        $brand = strtolower((string) ($card['brand'] ?? $pm['card_brand'] ?? $pm['brand'] ?? 'card'));
+        $last4 = (string) ($card['last4'] ?? $pm['last4'] ?? $card['last_four'] ?? '****');
+        $exp_m = (string) ($card['exp_month'] ?? $card['expiry_month'] ?? $pm['exp_month'] ?? '');
+        $exp_y = (string) ($card['exp_year'] ?? $card['expiry_year'] ?? $pm['exp_year'] ?? '');
+        return [
+            'brand'   => $brand !== '' ? $brand : 'card',
+            'last4'   => $last4,
+            'exp_m'   => $exp_m,
+            'exp_y'   => $exp_y,
+            'is_bank' => false,
+        ];
+    }
+
     public static function upsert_token_from_whop(int $user_id, array $pm): void {
         $whop_id = (string) ($pm['id'] ?? '');
         if ($whop_id === '') {
@@ -278,45 +361,67 @@ final class Whop_Payment_Methods {
         }
 
         $existing = self::find_token_by_whop_id($user_id, $whop_id);
-        $card     = is_array($pm['card'] ?? null) ? $pm['card'] : [];
-        $brand    = strtolower((string) ($card['brand'] ?? $pm['card_brand'] ?? $pm['brand'] ?? 'card'));
-        $last4    = (string) ($card['last4'] ?? $pm['last4'] ?? $card['last_four'] ?? '****');
-        $exp_m    = (string) ($card['exp_month'] ?? $card['expiry_month'] ?? $pm['exp_month'] ?? '');
-        $exp_y    = (string) ($card['exp_year'] ?? $card['expiry_year'] ?? $pm['exp_year'] ?? '');
+        $fields   = self::extract_pm_display_fields($pm);
+        $last4    = preg_replace('/\D/', '', $fields['last4']) ?: '0000';
+        $is_bank  = $fields['is_bank'];
 
-        if ($existing instanceof WC_Payment_Token_CC) {
-            $token = $existing;
-        } else {
-            $token = new WC_Payment_Token_CC();
-            $token->set_user_id($user_id);
-            $token->set_gateway_id('whop');
-        }
+        $use_echeck = $is_bank && class_exists('WC_Payment_Token_ECheck');
 
-        $token->set_card_type($brand !== '' ? $brand : 'card');
-        $token->set_last4(preg_replace('/\D/', '', $last4) ?: '0000');
-        if ($exp_m !== '') {
-            $token->set_expiry_month(str_pad(preg_replace('/\D/', '', $exp_m) ?: '01', 2, '0', STR_PAD_LEFT));
-        } else {
-            $token->set_expiry_month('01');
-        }
-        if ($exp_y !== '') {
-            $y = preg_replace('/\D/', '', $exp_y) ?: '';
-            if (strlen($y) === 2) {
-                $y = '20' . $y;
+        if ($use_echeck) {
+            if ($existing instanceof WC_Payment_Token_ECheck) {
+                $token = $existing;
+            } else {
+                if ($existing) {
+                    WC_Payment_Tokens::delete($existing->get_id());
+                }
+                $token = new WC_Payment_Token_ECheck();
+                $token->set_user_id($user_id);
+                $token->set_gateway_id('whop');
             }
-            $token->set_expiry_year($y !== '' ? $y : (string) ((int) gmdate('Y') + 3));
+            $token->set_last4($last4);
+            $token->update_meta_data('_sa_whop_pm_kind', 'bank');
+            $token->update_meta_data('_sa_whop_pm_brand', $fields['brand']);
         } else {
-            $token->set_expiry_year((string) ((int) gmdate('Y') + 3));
+            if ($existing instanceof WC_Payment_Token_CC) {
+                $token = $existing;
+            } else {
+                if ($existing) {
+                    WC_Payment_Tokens::delete($existing->get_id());
+                }
+                $token = new WC_Payment_Token_CC();
+                $token->set_user_id($user_id);
+                $token->set_gateway_id('whop');
+            }
+            $brand = $is_bank ? 'bank' : $fields['brand'];
+            $token->set_card_type($brand !== '' ? $brand : 'card');
+            $token->set_last4($last4);
+            if (!$is_bank && $fields['exp_m'] !== '') {
+                $token->set_expiry_month(str_pad(preg_replace('/\D/', '', $fields['exp_m']) ?: '01', 2, '0', STR_PAD_LEFT));
+            } else {
+                $token->set_expiry_month('01');
+            }
+            if (!$is_bank && $fields['exp_y'] !== '') {
+                $y = preg_replace('/\D/', '', $fields['exp_y']) ?: '';
+                if (strlen($y) === 2) {
+                    $y = '20' . $y;
+                }
+                $token->set_expiry_year($y !== '' ? $y : (string) ((int) gmdate('Y') + 3));
+            } else {
+                $token->set_expiry_year((string) ((int) gmdate('Y') + 3));
+            }
+            $token->update_meta_data('_sa_whop_pm_kind', $is_bank ? 'bank' : 'card');
+            $token->update_meta_data('_sa_whop_pm_brand', $fields['brand']);
         }
+
         $token->set_token($whop_id);
         $token->update_meta_data(self::TOKEN_META_WHOP_ID, $whop_id);
         $token->save();
     }
 
-    public static function find_token_by_whop_id(int $user_id, string $whop_id): ?WC_Payment_Token_CC {
+    public static function find_token_by_whop_id(int $user_id, string $whop_id): ?WC_Payment_Token {
         $tokens = WC_Payment_Tokens::get_customer_tokens($user_id, 'whop');
         foreach ($tokens as $token) {
-            if (!$token instanceof WC_Payment_Token_CC) {
+            if (!$token instanceof WC_Payment_Token) {
                 continue;
             }
             $meta = (string) $token->get_meta(self::TOKEN_META_WHOP_ID);
@@ -404,17 +509,44 @@ final class Whop_Payment_Methods {
                     $whop_id = (string) $token->get_token();
                 }
             }
+            $kind  = (string) $token->get_meta('_sa_whop_pm_kind');
+            $brand_meta = (string) $token->get_meta('_sa_whop_pm_brand');
             $row = [
                 'token_id'   => $token->get_id(),
                 'gateway'    => $token->get_gateway_id(),
                 'is_default' => $token->is_default(),
                 'whop_id'    => $whop_id,
                 'label'      => $token->get_display_name(),
+                'kind'       => $kind !== '' ? $kind : 'card',
             ];
-            if ($token instanceof WC_Payment_Token_CC) {
-                $row['brand']  = $token->get_card_type();
-                $row['last4']  = $token->get_last4();
-                $row['exp']    = $token->get_expiry_month() . '/' . $token->get_expiry_year();
+            if ($token instanceof WC_Payment_Token_ECheck || $kind === 'bank') {
+                $last4 = method_exists($token, 'get_last4') ? (string) $token->get_last4() : '';
+                $brand = $brand_meta !== '' ? $brand_meta : 'bank';
+                $row['brand'] = $brand;
+                $row['last4'] = $last4;
+                $row['kind']  = 'bank';
+                $row['label'] = sprintf(
+                    /* translators: %s: last 4 digits */
+                    __('Bank •••• %s', 'whop-payments'),
+                    $last4 !== '' ? $last4 : '****'
+                );
+            } elseif ($token instanceof WC_Payment_Token_CC) {
+                $card_type = (string) $token->get_card_type();
+                $last4     = (string) $token->get_last4();
+                if (strtolower($card_type) === 'bank' || $kind === 'bank') {
+                    $row['brand'] = $brand_meta !== '' ? $brand_meta : 'bank';
+                    $row['last4'] = $last4;
+                    $row['kind']  = 'bank';
+                    $row['label'] = sprintf(
+                        /* translators: %s: last 4 digits */
+                        __('Bank •••• %s', 'whop-payments'),
+                        $last4 !== '' ? $last4 : '****'
+                    );
+                } else {
+                    $row['brand'] = $card_type;
+                    $row['last4'] = $last4;
+                    $row['exp']   = $token->get_expiry_month() . '/' . $token->get_expiry_year();
+                }
             }
             $out[] = $row;
         }

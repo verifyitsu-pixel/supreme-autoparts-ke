@@ -477,6 +477,23 @@
   line-height: 1.45;
 }
 
+.sa-pm__fee-notice {
+  margin: 0 0 1rem;
+  padding: .65rem .85rem;
+  border: 1px solid var(--sa-border-strong, #3A3A40);
+  border-left: 3px solid var(--sa-accent, #F5A623);
+  background: var(--sa-bg-elevated, #1C1C1F);
+  color: var(--sa-text, #C8C8CC);
+  font-size: .82rem;
+  line-height: 1.45;
+  border-radius: var(--sa-radius, 6px);
+}
+
+.sa-pm__fee-notice--empty {
+  margin-top: .85rem;
+  text-align: center;
+}
+
 .sa-pm__unavailable p {
   margin-bottom: .5rem;
 }

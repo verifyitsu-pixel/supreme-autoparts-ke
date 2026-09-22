@@ -20,7 +20,7 @@ $delete_confirm = esc_js(__('Remove this payment method from your account? This 
     <div>
       <h2><?php esc_html_e('Payment methods', 'supreme-autoparts'); ?></h2>
       <p class="sa-account-panel__lead">
-        <?php esc_html_e('Save a card securely with Whop for one-tap checkout. Adding a method opens Whop in setup mode — you are not charged.', 'supreme-autoparts'); ?>
+        <?php esc_html_e('Save a card or US bank account for faster checkout. Adding a method charges a $0.50 USD verification fee (non-refundable) to confirm it is active — no other charge at this step.', 'supreme-autoparts'); ?>
       </p>
       <?php if ($synced) : ?>
         <p class="sa-pm__synced">
@@ -40,11 +40,16 @@ $delete_confirm = esc_js(__('Remove this payment method from your account? This 
           <?php esc_html_e('Refresh from Whop', 'supreme-autoparts'); ?>
         </a>
         <a class="sa-btn sa-btn--sm" href="<?php echo esc_url($add_url); ?>">
-          <?php esc_html_e('Add card via Whop', 'supreme-autoparts'); ?>
+          <?php esc_html_e('Add card or bank ($0.50 verify)', 'supreme-autoparts'); ?>
         </a>
       </div>
     <?php endif; ?>
   </header>
+  <?php if ($whop_ready) : ?>
+    <p class="sa-pm__fee-notice" role="note">
+      <?php esc_html_e('Verification fee: $0.50 USD · Non-refundable · Confirms your card or bank is active. No other charge when adding a method.', 'supreme-autoparts'); ?>
+    </p>
+  <?php endif; ?>
 
   <?php if (!$whop_ready) : ?>
     <div class="sa-dash__empty sa-pm__unavailable">
@@ -57,20 +62,27 @@ $delete_confirm = esc_js(__('Remove this payment method from your account? This 
     <div class="sa-dash__empty">
       <p><?php esc_html_e('No saved payment methods yet.', 'supreme-autoparts'); ?></p>
       <a class="sa-btn" href="<?php echo esc_url($add_url); ?>">
-        <?php esc_html_e('Add card via Whop (no charge)', 'supreme-autoparts'); ?>
+        <?php esc_html_e('Add card or bank ($0.50 verify)', 'supreme-autoparts'); ?>
       </a>
+      <p class="sa-pm__fee-notice sa-pm__fee-notice--empty" role="note">
+        <?php esc_html_e('$0.50 USD non-refundable verification fee. No other charge at this step.', 'supreme-autoparts'); ?>
+      </p>
     </div>
   <?php else : ?>
     <ul class="sa-pm__list" role="list">
       <?php foreach ($methods as $m) :
-          $brand   = strtoupper((string) ($m['brand'] ?? $m['gateway'] ?? 'CARD'));
+          $kind    = (string) ($m['kind'] ?? 'card');
+          $is_bank = ($kind === 'bank' || strtolower((string) ($m['brand'] ?? '')) === 'bank');
+          $brand   = strtoupper((string) ($m['brand'] ?? ($is_bank ? 'BANK' : ($m['gateway'] ?? 'CARD'))));
           $label   = (string) ($m['label'] ?? '');
           $last4   = (string) ($m['last4'] ?? '');
-          $exp     = (string) ($m['exp'] ?? '');
+          $exp     = $is_bank ? '' : (string) ($m['exp'] ?? '');
           $whop_id = (string) ($m['whop_id'] ?? '');
           $token_id = (int) ($m['token_id'] ?? 0);
           $is_whop = $whop_id !== '' || (($m['gateway'] ?? '') === 'whop');
-          if ($last4 !== '' && $label === '') {
+          if ($is_bank && $label === '' && $last4 !== '') {
+              $label = 'Bank •••• ' . $last4;
+          } elseif ($last4 !== '' && $label === '') {
               $label = '•••• ' . $last4;
           } elseif ($last4 !== '' && !str_contains($label, $last4)) {
               $label = trim($label . ' •••• ' . $last4);
@@ -80,7 +92,7 @@ $delete_confirm = esc_js(__('Remove this payment method from your account? This 
           <div class="sa-pm__icon" aria-hidden="true"><?php echo esc_html(substr($brand, 0, 4)); ?></div>
           <div class="sa-pm__meta">
             <span class="sa-pm__brand"><?php echo esc_html($brand); ?></span>
-            <span class="sa-pm__label"><?php echo esc_html($label !== '' ? $label : __('Saved card', 'supreme-autoparts')); ?></span>
+            <span class="sa-pm__label"><?php echo esc_html($label !== '' ? $label : ($is_bank ? __('Saved bank account', 'supreme-autoparts') : __('Saved card', 'supreme-autoparts'))); ?></span>
             <?php if ($exp !== '') : ?>
               <span class="sa-pm__exp"><?php echo esc_html(sprintf(/* translators: %s: MM/YYYY */ __('Exp %s', 'supreme-autoparts'), $exp)); ?></span>
             <?php endif; ?>
@@ -107,7 +119,7 @@ $delete_confirm = esc_js(__('Remove this payment method from your account? This 
 
   <?php if ($whop_ready) : ?>
     <p class="sa-pm__note">
-      <?php esc_html_e('Adding a method opens Whop Checkout in setup mode (no charge). After you return, we sync your Whop wallet into this account. You can remove a method anytime.', 'supreme-autoparts'); ?>
+      <?php esc_html_e('Adding a card or bank opens checkout to collect a $0.50 USD non-refundable verification fee. After payment succeeds, we sync your saved method into this account. You can remove a method anytime.', 'supreme-autoparts'); ?>
     </p>
   <?php endif; ?>
 </div>

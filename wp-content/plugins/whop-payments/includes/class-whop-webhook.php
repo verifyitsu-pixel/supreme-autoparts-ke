@@ -128,14 +128,56 @@ final class Whop_Webhook {
 
         $data       = is_array($event['data'] ?? null) ? $event['data'] : [];
         $metadata   = is_array($data['metadata'] ?? null) ? $data['metadata'] : [];
+        if ($metadata === [] && is_array($event['metadata'] ?? null)) {
+            $metadata = $event['metadata'];
+        }
         $order_id   = absint($metadata['order_id'] ?? 0);
         $payment_id = (string) ($data['id'] ?? '');
         $company    = (string) ($event['company_id'] ?? $event['account_id'] ?? $data['company_id'] ?? '');
+        $purpose    = (string) ($metadata['purpose'] ?? '');
 
         $expected_company = $gateway->get_company_id();
         if ($expected_company !== '' && $company !== '' && !hash_equals($expected_company, $company)) {
             status_header(403);
             echo 'company_mismatch';
+            exit;
+        }
+
+        // My Account $0.50 verify fee — no Woo order; sync saved payment method to WP user.
+        if ($purpose === 'verify_payment_method') {
+            $user_id = absint($metadata['wp_user_id'] ?? 0);
+            $email   = sanitize_email((string) ($metadata['email'] ?? $data['email'] ?? ''));
+            if (!$user_id && $email !== '' && is_email($email)) {
+                $user = get_user_by('email', $email);
+                if ($user) {
+                    $user_id = (int) $user->ID;
+                }
+            }
+
+            $pm = is_array($data['payment_method'] ?? null) ? $data['payment_method'] : null;
+            $pm_id = (string) ($data['payment_method_id'] ?? ($pm['id'] ?? ''));
+
+            if ($user_id && class_exists('Whop_Payment_Methods')) {
+                if ($pm_id !== '' && is_array($pm)) {
+                    Whop_Payment_Methods::upsert_token_from_whop($user_id, $pm);
+                } elseif ($pm_id !== '') {
+                    Whop_Payment_Methods::upsert_token_from_whop($user_id, ['id' => $pm_id]);
+                }
+                Whop_Payment_Methods::sync_user_payment_methods($user_id, true);
+                error_log(sprintf(
+                    '[whop-payments] verify_payment_method succeeded payment=%s user=%d',
+                    $payment_id !== '' ? $payment_id : 'n/a',
+                    $user_id
+                ));
+            }
+
+            status_header(200);
+            header('Content-Type: application/json; charset=utf-8');
+            echo wp_json_encode([
+                'received' => true,
+                'type'     => 'verify_payment_method',
+                'user_id'  => $user_id,
+            ]);
             exit;
         }
 
