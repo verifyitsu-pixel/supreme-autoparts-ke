@@ -193,11 +193,11 @@ add_action('template_redirect', static function (): void {
     $key_ok   = sa_core_invoice_key_valid($order, $key, $order_key_param);
 
     // Guest with valid order_key / stable token: allow without login (Woo thank-you pattern).
+    // Never mint a fresh token into a login redirect — that would leak access to anyone who knows an order ID.
     if (!$is_staff && !$is_owner && !$key_ok) {
-        if (!is_user_logged_in()) {
-            // Prompt login then return to this invoice URL.
-            $redirect = sa_core_invoice_url($order_id, true);
-            wp_safe_redirect(wp_login_url($redirect));
+        if (!is_user_logged_in() && $key === '' && $order_key_param === '') {
+            $account = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : wp_login_url();
+            wp_safe_redirect(wp_login_url($account ?: home_url('/my-account/')));
             exit;
         }
         wp_die(
