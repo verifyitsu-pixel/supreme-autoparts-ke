@@ -181,10 +181,11 @@ function sa_free_shipping_threshold(): string
 }
 
 /**
- * Homepage "Latest Parts" — distinct products with real photos (no spam repeats).
+ * Homepage "Latest Parts" — mega-store merchandising across car-part departments.
  *
- * Pulls a larger recent pool, skips broken/missing images, dedupes by Shopify id /
- * handle / normalized title, and prefers category diversity.
+ * Round-robins parent categories (Brakes, Suspension, Engine, …), requires a real
+ * photo, and dedupes by normalized title so near-identical springs/clones never
+ * spam the grid. Recency is a tie-breaker inside each department, not the only sort.
  *
  * @return array<int, \WC_Product>
  */
@@ -195,34 +196,25 @@ function sa_get_homepage_latest_products(int $limit = 8): array
         return [];
     }
 
-    $pool = wc_get_products([
-        'limit'   => max(64, $limit * 16),
-        'status'  => 'publish',
-        'orderby' => 'date',
-        'order'   => 'DESC',
-        'type'    => ['simple', 'variable', 'external', 'grouped'],
-        'return'  => 'objects',
-    ]);
-
-    $fingerprint = static function ($product): string {
-        $sid = (string) $product->get_meta('_sa_shopify_id', true);
-        if ($sid !== '') {
-            return 'sid:' . $sid;
-        }
-        $handle = strtolower(trim((string) $product->get_meta('_sa_shopify_handle', true)));
-        if ($handle !== '') {
-            return 'h:' . $handle;
-        }
+    /**
+     * Collapse near-identical catalog clones (same spring / pad family).
+     */
+    $title_key = static function ($product): string {
         $title = strtolower(wp_strip_all_tags($product->get_name()));
         $title = preg_replace('/[^a-z0-9]+/', ' ', $title) ?? '';
         $title = trim(preg_replace('/\s+/', ' ', $title) ?? '');
-        // Collapse near-duplicates that only differ after size/length tails.
-        $title = preg_replace('/\b(length|size|mm|inch|inches|in|cm)\b.*$/', '', $title) ?? $title;
+        // Drop trailing size / length / option noise so variants share one key.
+        $title = preg_replace(
+            '/\b(length|size|colour|color|option|mm|inch|inches|in|cm|id|od)\b.*$/',
+            '',
+            $title
+        ) ?? $title;
         $title = trim($title);
-        if ($title === '') {
-            return 'id:' . (string) $product->get_id();
-        }
-        return 't:' . substr($title, 0, 56);
+        // First ~6 tokens ≈ brand + product family for parts titles.
+        $parts = array_values(array_filter(explode(' ', $title)));
+        $parts = array_slice($parts, 0, 6);
+        $key = implode(' ', $parts);
+        return $key !== '' ? $key : ('id:' . (string) $product->get_id());
     };
 
     $has_image = static function ($product): bool {
@@ -233,54 +225,95 @@ function sa_get_homepage_latest_products(int $limit = 8): array
         return $cdn !== '' && str_starts_with($cdn, 'http');
     };
 
-    $candidates = [];
-    $seen_keys = [];
-    foreach ($pool as $product) {
+    $seen_titles = [];
+    $accept = static function ($product) use ($has_image, $title_key, &$seen_titles): bool {
         if (!$product instanceof \WC_Product || !$product->is_visible()) {
-            continue;
+            return false;
         }
         if (!$has_image($product)) {
+            return false;
+        }
+        $tk = $title_key($product);
+        if (isset($seen_titles[$tk])) {
+            return false;
+        }
+        $seen_titles[$tk] = true;
+        return true;
+    };
+
+    $queues = []; // slug => list of WC_Product
+
+    $departments = function_exists('sa_product_types') ? sa_product_types() : [];
+    foreach ($departments as $dept) {
+        $slug = sanitize_title((string) ($dept['slug'] ?? ''));
+        if ($slug === '') {
             continue;
         }
-        $key = $fingerprint($product);
-        if (isset($seen_keys[$key])) {
+        $term = get_term_by('slug', $slug, 'product_cat');
+        if (!$term || is_wp_error($term)) {
             continue;
         }
-        $seen_keys[$key] = true;
-        $candidates[] = $product;
+        $batch = wc_get_products([
+            'limit'    => 12,
+            'status'   => 'publish',
+            'orderby'  => 'date',
+            'order'    => 'DESC',
+            'type'     => ['simple', 'variable', 'external', 'grouped'],
+            'category' => [$slug],
+            'return'   => 'objects',
+        ]);
+        $q = [];
+        foreach ($batch as $product) {
+            if ($accept($product)) {
+                $q[] = $product;
+            }
+        }
+        if ($q) {
+            $queues[$slug] = $q;
+        }
     }
 
     $picked = [];
-    $seen_cats = [];
-    $remaining = $candidates;
-
-    $take_next = static function (array &$remaining, array $seen_cats, bool $require_new_cat) {
-        foreach ($remaining as $i => $product) {
-            $cats = $product->get_category_ids();
-            $primary = (int) ($cats[0] ?? 0);
-            $is_new = $primary === 0 || !isset($seen_cats[$primary]);
-            if ($require_new_cat && !$is_new) {
+    // Round-robin across departments — AutoZone / RockAuto style aisle mix.
+    while (count($picked) < $limit && $queues) {
+        $progress = false;
+        foreach (array_keys($queues) as $slug) {
+            if (count($picked) >= $limit) {
+                break;
+            }
+            if (empty($queues[$slug])) {
+                unset($queues[$slug]);
                 continue;
             }
-            unset($remaining[$i]);
-            return [$product, $primary];
+            $picked[] = array_shift($queues[$slug]);
+            $progress = true;
+            if (empty($queues[$slug])) {
+                unset($queues[$slug]);
+            }
         }
-        return null;
-    };
-
-    while (count($picked) < $limit && $remaining) {
-        $row = $take_next($remaining, $seen_cats, true);
-        if ($row === null) {
-            $row = $take_next($remaining, $seen_cats, false);
-        }
-        if ($row === null) {
+        if (!$progress) {
             break;
         }
-        [$product, $primary] = $row;
-        if ($primary > 0) {
-            $seen_cats[$primary] = true;
+    }
+
+    // Fallback fill from recent catalog if some departments were empty.
+    if (count($picked) < $limit) {
+        $extra = wc_get_products([
+            'limit'   => max(48, $limit * 12),
+            'status'  => 'publish',
+            'orderby' => 'date',
+            'order'   => 'DESC',
+            'type'    => ['simple', 'variable', 'external', 'grouped'],
+            'return'  => 'objects',
+        ]);
+        foreach ($extra as $product) {
+            if (count($picked) >= $limit) {
+                break;
+            }
+            if ($accept($product)) {
+                $picked[] = $product;
+            }
         }
-        $picked[] = $product;
     }
 
     return $picked;

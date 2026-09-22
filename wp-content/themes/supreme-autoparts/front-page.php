@@ -101,7 +101,7 @@ if (!empty($sa_latest)) :
 <section class="sa-section sa-latest-parts" aria-labelledby="sa-latest-parts-title">
   <div class="sa-container">
     <div class="sa-section__head">
-      <h2 id="sa-latest-parts-title" class="sa-section__title"><?php esc_html_e('Latest Parts', 'supreme-autoparts'); ?></h2>
+      <h2 id="sa-latest-parts-title" class="sa-section__title"><?php esc_html_e('Featured parts', 'supreme-autoparts'); ?></h2>
       <?php if (function_exists('wc_get_page_permalink')) : ?>
         <a class="sa-section__link" href="<?php echo esc_url(wc_get_page_permalink('shop')); ?>"><?php esc_html_e('View all', 'supreme-autoparts'); ?></a>
       <?php endif; ?>

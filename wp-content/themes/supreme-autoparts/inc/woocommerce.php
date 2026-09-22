@@ -23,6 +23,25 @@ add_filter('woocommerce_enqueue_styles', static function (array $styles): array 
 add_filter('loop_shop_per_page', static fn (): int => 24);
 add_filter('loop_shop_columns', static fn (): int => 4);
 
+// Mega-store default: popularity, then newest — not random clone dumps.
+add_filter('woocommerce_default_catalog_orderby', static fn (): string => 'popularity');
+add_filter('woocommerce_catalog_orderby', static function (array $options): array {
+    // Lead with shopper-familiar labels; keep Woo keys intact.
+    $ordered = [];
+    foreach (['popularity' => __('Best selling', 'supreme-autoparts'), 'date' => __('Newest', 'supreme-autoparts'), 'price' => __('Price: low to high', 'supreme-autoparts'), 'price-desc' => __('Price: high to low', 'supreme-autoparts')] as $key => $label) {
+        if (isset($options[$key])) {
+            $ordered[$key] = $label;
+        }
+    }
+    foreach ($options as $key => $label) {
+        if (!isset($ordered[$key])) {
+            $ordered[$key] = $label;
+        }
+    }
+    return $ordered;
+});
+
+
 add_filter('woocommerce_product_add_to_cart_text', static function (string $text): string {
     return __('Add to cart', 'supreme-autoparts');
 });
