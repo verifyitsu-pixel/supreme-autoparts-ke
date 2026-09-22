@@ -512,7 +512,15 @@ final class Whop_Api_Client {
         }
 
         $checkout_id  = (string) ($raw['id'] ?? '');
-        $plan_id      = (string) ($raw['plan']['id'] ?? '');
+        $plan_raw     = $raw['plan'] ?? null;
+        $plan_id      = '';
+        if (is_array($plan_raw) && isset($plan_raw['id'])) {
+            $plan_id = (string) $plan_raw['id'];
+        } elseif (is_string($plan_raw) && $plan_raw !== '') {
+            $plan_id = $plan_raw;
+        } elseif (!empty($raw['plan_id'])) {
+            $plan_id = (string) $raw['plan_id'];
+        }
         $purchase_url = (string) ($raw['purchase_url'] ?? '');
 
         if ($purchase_url !== '' && str_starts_with($purchase_url, '/')) {
@@ -523,10 +531,26 @@ final class Whop_Api_Client {
             $purchase_url = $this->get_checkout_host() . '/checkout/' . rawurlencode($checkout_id) . '/';
         }
 
-        if ($checkout_id === '' || $purchase_url === '') {
+        if ($checkout_id === '') {
             return [
                 'success' => false,
-                'message' => __('Whop response missing checkout id or purchase_url.', 'whop-payments'),
+                'message' => __('Whop response missing checkout id.', 'whop-payments'),
+                'raw'     => $raw,
+            ];
+        }
+
+        if ($plan_id === '') {
+            return [
+                'success' => false,
+                'message' => __('Whop response missing plan_id (required for embedded checkout).', 'whop-payments'),
+                'raw'     => $raw,
+            ];
+        }
+
+        if ($purchase_url === '') {
+            return [
+                'success' => false,
+                'message' => __('Whop response missing purchase_url.', 'whop-payments'),
                 'raw'     => $raw,
             ];
         }

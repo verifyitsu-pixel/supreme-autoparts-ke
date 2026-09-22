@@ -23,7 +23,11 @@ final class Whop_Payment_Methods {
     public static function init(): void {
         add_action('woocommerce_api_whop_setup_return', [self::class, 'handle_setup_return']);
         add_action('template_redirect', [self::class, 'maybe_handle_account_actions'], 5);
+        add_action('template_redirect', [self::class, 'maybe_handle_embed_done'], 6);
         add_action('wp_ajax_sa_whop_sync_payment_methods', [self::class, 'ajax_sync']);
+        add_action('wp_ajax_sa_whop_start_embed_verify', [self::class, 'ajax_start_embed_verify']);
+        add_action('wp_enqueue_scripts', [self::class, 'enqueue_embed_assets']);
+        add_filter('wp_headers', [self::class, 'filter_csp_headers'], 20);
     }
 
     public static function client_from_gateway(): ?Whop_Api_Client {
@@ -176,23 +180,29 @@ final class Whop_Payment_Methods {
     /** Non-refundable verification fee charged when adding a card/bank (USD). */
     public const VERIFY_FEE_USD = 1.00;
 
-    public static function start_add_payment_method(int $user_id): void {
+    /**
+     * Create a $1.00 verify checkout session for embedded My Account add-card.
+     *
+     * @return array{success:bool,plan_id?:string,session_id?:string,checkout_id?:string,return_url?:string,email?:string,fee?:float,message?:string,raw?:mixed}
+     */
+    public static function create_embed_verify_session(int $user_id): array {
         $client = self::client_from_gateway();
         if (!$client) {
-            wc_add_notice(__('Whop payments are not configured.', 'whop-payments'), 'error');
-            wp_safe_redirect(wc_get_account_endpoint_url('payment-methods'));
-            exit;
+            return [
+                'success' => false,
+                'message' => __('Whop payments are not configured.', 'whop-payments'),
+            ];
         }
 
         $user  = get_userdata($user_id);
         $email = $user ? (string) $user->user_email : '';
+        $return_url = self::embed_return_url($user_id);
 
-        // Live Add button: $1.00 USD payment-mode verification (saves method after charge).
         $result = $client->create_verify_checkout([
             'amount'       => self::VERIFY_FEE_USD,
             'wp_user_id'   => (string) $user_id,
             'email'        => $email,
-            'redirect_url' => self::setup_return_url($user_id),
+            'redirect_url' => $return_url,
             'title'        => __('Card/bank verify $1', 'whop-payments'),
         ]);
 
@@ -201,7 +211,7 @@ final class Whop_Payment_Methods {
             error_log('[whop-payments] verify checkout failed, falling back to setup: ' . (string) ($result['message'] ?? ''));
             $result = $client->create_setup_checkout([
                 'currency'     => 'usd',
-                'redirect_url' => self::setup_return_url($user_id),
+                'redirect_url' => $return_url,
                 'metadata'     => [
                     'wp_user_id' => (string) $user_id,
                     'email'      => $email,
@@ -211,35 +221,215 @@ final class Whop_Payment_Methods {
         }
 
         if (empty($result['success'])) {
-            $err = (string) ($result['message'] ?? __('Could not start card/bank verification.', 'whop-payments'));
             if (!empty($result['raw']) && is_array($result['raw'])) {
-                error_log('[whop-payments] start_add_payment_method: ' . wp_json_encode($result['raw']));
+                error_log('[whop-payments] create_embed_verify_session: ' . wp_json_encode($result['raw']));
             }
-            wc_add_notice($err, 'error');
+            return [
+                'success' => false,
+                'message' => (string) ($result['message'] ?? __('Could not start card/bank verification.', 'whop-payments')),
+                'raw'     => $result['raw'] ?? null,
+            ];
+        }
+
+        $plan_id     = (string) ($result['plan_id'] ?? '');
+        $checkout_id = (string) ($result['checkout_id'] ?? '');
+        if ($plan_id === '' || $checkout_id === '') {
+            return [
+                'success' => false,
+                'message' => __('Whop did not return plan_id and checkout session for embed.', 'whop-payments'),
+                'raw'     => $result['raw'] ?? null,
+            ];
+        }
+
+        update_user_meta($user_id, '_sa_whop_embed_plan_id', $plan_id);
+        update_user_meta($user_id, '_sa_whop_embed_session_id', $checkout_id);
+        update_user_meta($user_id, '_sa_whop_pending_setup_checkout', $checkout_id);
+        update_user_meta($user_id, '_sa_whop_pending_verify_fee', (string) self::VERIFY_FEE_USD);
+
+        return [
+            'success'     => true,
+            'plan_id'     => $plan_id,
+            'session_id'  => $checkout_id,
+            'checkout_id' => $checkout_id,
+            'return_url'  => $return_url,
+            'email'       => $email,
+            'fee'         => self::VERIFY_FEE_USD,
+        ];
+    }
+
+    /**
+     * Return URL after 3DS / external auth — always lands back on My Account.
+     */
+    public static function embed_return_url(int $user_id): string {
+        // Prefer wc-api setup return (sync + notice), which then redirects to payment-methods.
+        return self::setup_return_url($user_id);
+    }
+
+    public static function start_add_payment_method(int $user_id): void {
+        $result = self::create_embed_verify_session($user_id);
+        if (empty($result['success'])) {
+            wc_add_notice(
+                (string) ($result['message'] ?? __('Could not start card/bank verification.', 'whop-payments')),
+                'error'
+            );
             wp_safe_redirect(wc_get_account_endpoint_url('payment-methods'));
             exit;
         }
 
-        update_user_meta($user_id, '_sa_whop_pending_setup_checkout', (string) $result['checkout_id']);
-        update_user_meta($user_id, '_sa_whop_pending_verify_fee', (string) self::VERIFY_FEE_USD);
-        self::redirect_to_whop_checkout((string) $result['purchase_url']);
+        // Stay on supremeautoparts.co.ke — open embedded checkout panel (no redirect to whop.com).
+        wp_safe_redirect(
+            add_query_arg('sa_whop_embed', '1', wc_get_account_endpoint_url('payment-methods'))
+        );
+        exit;
     }
 
     /**
-     * Redirect to Whop hosted checkout. wp_safe_redirect blocks external hosts
-     * (whop.com), which made Add card appear broken — match open-pay allowlist.
+     * Soft-sync when returning with ?sa_whop_embed_done=1 (3DS / skip-redirect fallback).
      */
-    private static function redirect_to_whop_checkout(string $purchase_url): void {
-        $host = wp_parse_url($purchase_url, PHP_URL_HOST);
-        $allowed = ['whop.com', 'www.whop.com', 'sandbox.whop.com'];
-        if (is_string($host) && in_array(strtolower($host), $allowed, true)) {
-            // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect
-            wp_redirect($purchase_url, 302);
-            exit;
+    public static function maybe_handle_embed_done(): void {
+        if (!is_account_page() || !is_user_logged_in()) {
+            return;
         }
-        wc_add_notice(__('Invalid checkout URL returned. Please try again.', 'whop-payments'), 'error');
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if (empty($_GET['sa_whop_embed_done'])) {
+            return;
+        }
+        $user_id = get_current_user_id();
+        $sync    = self::sync_user_payment_methods($user_id, true);
+        if (!empty($sync['success']) && (int) ($sync['count'] ?? 0) > 0) {
+            wc_add_notice(
+                __('Verification payment received ($1.00). Your payment method is saved.', 'whop-payments'),
+                'success'
+            );
+        } elseif (!empty($sync['success'])) {
+            wc_add_notice(
+                __('Verification complete. If your method is not listed yet, tap Refresh — sync may take a moment.', 'whop-payments'),
+                'success'
+            );
+        }
+        delete_user_meta($user_id, '_sa_whop_embed_plan_id');
+        delete_user_meta($user_id, '_sa_whop_embed_session_id');
         wp_safe_redirect(wc_get_account_endpoint_url('payment-methods'));
         exit;
+    }
+
+    public static function ajax_start_embed_verify(): void {
+        if (!is_user_logged_in() || !check_ajax_referer('sa_whop_embed', 'nonce', false)) {
+            wp_send_json_error(['message' => 'forbidden'], 403);
+        }
+        $result = self::create_embed_verify_session(get_current_user_id());
+        if (!empty($result['success'])) {
+            wp_send_json_success([
+                'plan_id'    => $result['plan_id'],
+                'session_id' => $result['session_id'],
+                'return_url' => $result['return_url'],
+                'email'      => $result['email'],
+                'fee'        => $result['fee'],
+            ]);
+        }
+        wp_send_json_error([
+            'message' => (string) ($result['message'] ?? 'Could not start verification.'),
+        ]);
+    }
+
+    public static function enqueue_embed_assets(): void {
+        if (!function_exists('is_account_page') || !is_account_page()) {
+            return;
+        }
+        if (!function_exists('is_wc_endpoint_url') || !is_wc_endpoint_url('payment-methods')) {
+            return;
+        }
+        if (!is_user_logged_in()) {
+            return;
+        }
+
+        wp_enqueue_script(
+            'whop-checkout-loader',
+            'https://js.whop.com/static/checkout/loader.js',
+            [],
+            WHOP_PAYMENTS_VERSION,
+            true
+        );
+        // loader.js uses async/defer in Whop docs; mark strategy if WP supports it.
+        if (function_exists('wp_script_add_data')) {
+            wp_script_add_data('whop-checkout-loader', 'strategy', 'defer');
+        }
+
+        wp_enqueue_script(
+            'sa-whop-pm-embed',
+            WHOP_PAYMENTS_URL . 'assets/js/sa-whop-pm-embed.js',
+            ['whop-checkout-loader'],
+            WHOP_PAYMENTS_VERSION,
+            true
+        );
+
+        $user = wp_get_current_user();
+        $plan = (string) get_user_meta($user->ID, '_sa_whop_embed_plan_id', true);
+        $sess = (string) get_user_meta($user->ID, '_sa_whop_embed_session_id', true);
+
+        wp_localize_script('sa-whop-pm-embed', 'saWhopPmEmbed', [
+            'ajaxUrl'    => admin_url('admin-ajax.php'),
+            'nonce'      => wp_create_nonce('sa_whop_embed'),
+            'syncNonce'  => wp_create_nonce('sa_whop_sync'),
+            'returnUrl'  => self::embed_return_url((int) $user->ID),
+            'email'      => (string) $user->user_email,
+            'fee'        => self::VERIFY_FEE_USD,
+            'autoOpen'   => (!empty($_GET['sa_whop_embed']) || ($plan !== '' && $sess !== '')), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            'planId'     => $plan,
+            'sessionId'  => $sess,
+            'fallbackAdd'=> self::add_url(),
+            'i18n'       => [
+                'starting'   => __('Preparing secure card form…', 'whop-payments'),
+                'error'      => __('Could not start verification. Please try again.', 'whop-payments'),
+                'success'    => __('Payment method saved. Refreshing…', 'whop-payments'),
+                'syncing'    => __('Saving your payment method…', 'whop-payments'),
+            ],
+        ]);
+    }
+
+    /**
+     * Allow Whop embed script + iframe if a CSP header is already present.
+     *
+     * @param array<string,string> $headers
+     * @return array<string,string>
+     */
+    public static function filter_csp_headers(array $headers): array {
+        $key = '';
+        foreach (array_keys($headers) as $k) {
+            if (strtolower((string) $k) === 'content-security-policy') {
+                $key = (string) $k;
+                break;
+            }
+        }
+        if ($key === '') {
+            return $headers;
+        }
+        $csp = (string) $headers[$key];
+        $additions = [
+            'script-src' => ['https://js.whop.com', 'https://*.whop.com'],
+            'frame-src'  => ['https://whop.com', 'https://*.whop.com', 'https://js.whop.com'],
+            'connect-src'=> ['https://whop.com', 'https://*.whop.com', 'https://js.whop.com'],
+            'img-src'    => ['https://*.whop.com'],
+        ];
+        foreach ($additions as $dir => $hosts) {
+            foreach ($hosts as $host) {
+                if (stripos($csp, $host) === false) {
+                    // Append host to existing directive if present, else append a new directive clause.
+                    if (preg_match('/\b' . preg_quote($dir, '/') . '\s([^;]*)/i', $csp, $m)) {
+                        $csp = preg_replace(
+                            '/\b' . preg_quote($dir, '/') . '\s([^;]*)/i',
+                            $dir . ' ' . trim($m[1]) . ' ' . $host,
+                            $csp,
+                            1
+                        );
+                    } else {
+                        $csp = rtrim($csp, '; ') . '; ' . $dir . ' ' . $host;
+                    }
+                }
+            }
+        }
+        $headers[$key] = $csp;
+        return $headers;
     }
 
     /**

@@ -1,6 +1,6 @@
 <?php
 /**
- * Payment methods — Woo tokens + Whop sync UI (hardened).
+ * Payment methods — Woo tokens + Whop embedded verify checkout (same-page).
  *
  * @package Supreme_Autoparts
  */
@@ -8,12 +8,15 @@
 defined('ABSPATH') || exit;
 
 $user_id     = get_current_user_id();
+$user        = wp_get_current_user();
 $whop_ready  = class_exists('Whop_Payment_Methods');
 $methods     = $whop_ready ? Whop_Payment_Methods::get_methods_for_display($user_id) : [];
 $synced      = (int) get_user_meta($user_id, '_sa_whop_payment_methods_synced_at', true);
 $add_url     = $whop_ready ? Whop_Payment_Methods::add_url() : '';
 $refresh     = $whop_ready ? Whop_Payment_Methods::refresh_url() : '';
+$account_email = is_email($user->user_email) ? (string) $user->user_email : '';
 $delete_confirm = esc_js(__('Remove this payment method from your account? This cannot be undone.', 'supreme-autoparts'));
+$embed_open = !empty($_GET['sa_whop_embed']); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 ?>
 <div class="sa-account-panel sa-pm">
   <header class="sa-account-panel__head sa-pm__head">
@@ -37,11 +40,12 @@ $delete_confirm = esc_js(__('Remove this payment method from your account? This 
     <?php if ($whop_ready) : ?>
       <div class="sa-pm__actions">
         <a class="sa-btn sa-btn--outline sa-btn--sm" href="<?php echo esc_url($refresh); ?>">
-          <?php esc_html_e('Refresh from Whop', 'supreme-autoparts'); ?>
+          <?php esc_html_e('Refresh methods', 'supreme-autoparts'); ?>
         </a>
-        <a class="sa-btn sa-btn--sm" href="<?php echo esc_url($add_url); ?>">
-          <?php esc_html_e('Add card or bank ($1.00 verify)', 'supreme-autoparts'); ?>
-        </a>
+        <button type="button" class="sa-btn sa-btn--sm" data-sa-whop-add-card
+                data-fallback-href="<?php echo esc_url($add_url); ?>">
+          <?php esc_html_e('Add card or bank', 'supreme-autoparts'); ?>
+        </button>
       </div>
     <?php endif; ?>
   </header>
@@ -51,19 +55,48 @@ $delete_confirm = esc_js(__('Remove this payment method from your account? This 
     </p>
   <?php endif; ?>
 
+  <?php if ($whop_ready) : ?>
+    <section id="sa-whop-embed" class="sa-pm-embed" <?php echo $embed_open ? '' : 'hidden'; ?> aria-hidden="<?php echo $embed_open ? 'false' : 'true'; ?>" aria-label="<?php esc_attr_e('Add payment method', 'supreme-autoparts'); ?>">
+      <div class="sa-pm-embed__head">
+        <h3 class="sa-pm-embed__title"><?php esc_html_e('Add payment method', 'supreme-autoparts'); ?></h3>
+        <button type="button" class="sa-btn sa-btn--outline sa-btn--sm" id="sa-whop-embed-cancel">
+          <?php esc_html_e('Cancel', 'supreme-autoparts'); ?>
+        </button>
+      </div>
+      <p class="sa-pm-embed__note" role="note">
+        <?php esc_html_e('$1.00 USD non-refundable verify — charged when you submit. Card and bank fields appear below; you stay on this page.', 'supreme-autoparts'); ?>
+      </p>
+      <?php if ($account_email !== '') : ?>
+        <p class="sa-pm-embed__email">
+          <span class="sa-pm-embed__email-label"><?php esc_html_e('Account email', 'supreme-autoparts'); ?></span>
+          <span id="sa-whop-embed-email" class="sa-pm-embed__email-value"><?php echo esc_html($account_email); ?></span>
+        </p>
+      <?php endif; ?>
+      <p id="sa-whop-embed-status" class="sa-pm-embed__status" role="status" aria-live="polite"></p>
+      <div id="sa-whop-pm-embed" class="sa-pm-embed__mount" style="min-height:420px;"></div>
+      <noscript>
+        <p class="sa-pm-embed__noscript">
+          <?php esc_html_e('JavaScript is required to add a card on this page.', 'supreme-autoparts'); ?>
+          <a href="<?php echo esc_url($add_url); ?>"><?php esc_html_e('Continue', 'supreme-autoparts'); ?></a>
+        </p>
+      </noscript>
+    </section>
+  <?php endif; ?>
+
   <?php if (!$whop_ready) : ?>
     <div class="sa-dash__empty sa-pm__unavailable">
-      <p><?php esc_html_e('Whop payment methods are temporarily unavailable. Please try again later or contact support.', 'supreme-autoparts'); ?></p>
+      <p><?php esc_html_e('Payment methods are temporarily unavailable. Please try again later or contact support.', 'supreme-autoparts'); ?></p>
       <a class="sa-btn sa-btn--outline" href="<?php echo esc_url(wc_get_account_endpoint_url('support')); ?>">
         <?php esc_html_e('Contact support', 'supreme-autoparts'); ?>
       </a>
     </div>
   <?php elseif (empty($methods)) : ?>
-    <div class="sa-dash__empty">
+    <div class="sa-dash__empty" id="sa-pm-empty">
       <p><?php esc_html_e('No saved payment methods yet.', 'supreme-autoparts'); ?></p>
-      <a class="sa-btn" href="<?php echo esc_url($add_url); ?>">
-        <?php esc_html_e('Add card or bank ($1.00 verify)', 'supreme-autoparts'); ?>
-      </a>
+      <button type="button" class="sa-btn" data-sa-whop-add-card
+              data-fallback-href="<?php echo esc_url($add_url); ?>">
+        <?php esc_html_e('Add card or bank', 'supreme-autoparts'); ?>
+      </button>
       <p class="sa-pm__fee-notice sa-pm__fee-notice--empty" role="note">
         <?php esc_html_e('$1.00 USD non-refundable verification fee. No other charge at this step.', 'supreme-autoparts'); ?>
       </p>
@@ -96,9 +129,6 @@ $delete_confirm = esc_js(__('Remove this payment method from your account? This 
             <?php if ($exp !== '') : ?>
               <span class="sa-pm__exp"><?php echo esc_html(sprintf(/* translators: %s: MM/YYYY */ __('Exp %s', 'supreme-autoparts'), $exp)); ?></span>
             <?php endif; ?>
-            <?php if ($is_whop) : ?>
-              <span class="sa-pm__whop"><?php esc_html_e('Whop', 'supreme-autoparts'); ?></span>
-            <?php endif; ?>
             <?php if (!empty($m['is_default'])) : ?>
               <span class="sa-pm__default"><?php esc_html_e('Default', 'supreme-autoparts'); ?></span>
             <?php endif; ?>
@@ -119,7 +149,7 @@ $delete_confirm = esc_js(__('Remove this payment method from your account? This 
 
   <?php if ($whop_ready) : ?>
     <p class="sa-pm__note">
-      <?php esc_html_e('Adding a card or bank opens checkout to collect a $1.00 USD non-refundable verification fee. After payment succeeds, we sync your saved method into this account. You can remove a method anytime.', 'supreme-autoparts'); ?>
+      <?php esc_html_e('When you add a card or bank, fields appear on this page. A $1.00 USD non-refundable verification fee is charged on submit, then the method is saved to your account. You can remove a method anytime.', 'supreme-autoparts'); ?>
     </p>
   <?php endif; ?>
 </div>
