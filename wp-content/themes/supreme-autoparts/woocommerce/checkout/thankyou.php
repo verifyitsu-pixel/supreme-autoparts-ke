@@ -97,8 +97,22 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
           </ol>
         </section>
 
+        <?php
+        $invoice_url = '';
+        if (function_exists('sa_core_invoice_url')) {
+            $invoice_url = sa_core_invoice_url((int) $order->get_id(), true);
+        }
+        $doc_label = function_exists('sa_core_invoice_doc_title')
+            ? sa_core_invoice_doc_title($order)
+            : ($paid ? __('Receipt', 'supreme-autoparts') : __('Invoice', 'supreme-autoparts'));
+        ?>
         <div class="sa-thankyou__actions">
-          <a class="sa-btn" href="<?php echo esc_url($shop_url); ?>">
+          <?php if ($invoice_url) : ?>
+            <a class="sa-btn" href="<?php echo esc_url($invoice_url); ?>" target="_blank" rel="noopener">
+              <?php echo esc_html(sprintf(/* translators: Invoice or Receipt */ __('View %s', 'supreme-autoparts'), $doc_label)); ?>
+            </a>
+          <?php endif; ?>
+          <a class="sa-btn<?php echo $invoice_url ? ' sa-btn--outline' : ''; ?>" href="<?php echo esc_url($shop_url); ?>">
             <?php esc_html_e('Continue shopping', 'supreme-autoparts'); ?>
           </a>
           <?php if (is_user_logged_in()) : ?>

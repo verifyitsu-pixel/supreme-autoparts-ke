@@ -83,6 +83,8 @@ do_action('woocommerce_before_account_orders', $has_orders);
                                 $btn_class .= ' sa-btn--outline';
                             } elseif ($key === 'sa_invoice') {
                                 $btn_class .= ' sa-btn--outline sa-btn--invoice';
+                            } elseif ($key === 'sa_email_invoice') {
+                                $btn_class .= ' sa-btn--invoice';
                             } else {
                                 $btn_class .= ' sa-btn--outline';
                             }

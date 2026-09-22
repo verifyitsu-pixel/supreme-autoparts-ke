@@ -50,11 +50,11 @@ function sa_core_ensure_customer_capabilities(): void
         }
     }
 
-    update_option('sa_customer_caps_ver', '3');
+    update_option('sa_customer_caps_ver', '4');
 }
 
 add_action('init', static function (): void {
-    if (get_option('sa_customer_caps_ver') === '3') {
+    if (get_option('sa_customer_caps_ver') === '4') {
         return;
     }
     sa_core_ensure_customer_capabilities();
@@ -208,35 +208,53 @@ add_action('woocommerce_order_details_after_order_table', static function ($orde
     if (!$order instanceof WC_Order) {
         return;
     }
-    if (!is_user_logged_in()) {
-        return;
-    }
     $user_id = get_current_user_id();
-    if ((int) $order->get_user_id() !== $user_id && !current_user_can('manage_woocommerce')) {
-        return;
-    }
-    if (!current_user_can('sa_view_invoices') && !current_user_can('manage_woocommerce') && !current_user_can('read')) {
+    $is_owner = $user_id && (int) $order->get_user_id() === $user_id;
+    $is_staff = current_user_can('manage_woocommerce') || current_user_can('edit_shop_orders');
+    if (!$is_owner && !$is_staff) {
         return;
     }
     // Avoid duplicate CTAs when theme view-order already shows docs header.
     if (is_wc_endpoint_url('view-order')) {
         return;
     }
-    $url = sa_core_invoice_url((int) $order->get_id());
+    $oid = (int) $order->get_id();
+    $url = sa_core_invoice_url($oid);
+    $email_url = function_exists('sa_core_invoice_email_url') ? sa_core_invoice_email_url($oid) : '';
+    $doc = function_exists('sa_core_invoice_doc_title') ? sa_core_invoice_doc_title($order) : __('Invoice', 'supreme-autoparts-core');
     echo '<div class="sa-order-docs" role="group" aria-label="' . esc_attr__('Order documents', 'supreme-autoparts-core') . '">';
     echo '<a class="sa-btn sa-btn--sm button" href="' . esc_url($url) . '" target="_blank" rel="noopener">'
-        . esc_html__('Invoice', 'supreme-autoparts-core') . '</a> ';
-    echo '<a class="sa-btn sa-btn--outline sa-btn--sm button" href="' . esc_url($url) . '" target="_blank" rel="noopener">'
-        . esc_html__('Receipt', 'supreme-autoparts-core') . '</a>';
+        . esc_html(sprintf(/* translators: Invoice or Receipt */ __('View %s', 'supreme-autoparts-core'), $doc)) . '</a> ';
+    echo '<a class="sa-btn sa-btn--outline sa-btn--sm button" href="' . esc_url(add_query_arg('download', '1', $url)) . '">'
+        . esc_html__('Download', 'supreme-autoparts-core') . '</a>';
+    if ($email_url) {
+        echo ' <a class="sa-btn sa-btn--outline sa-btn--sm button" href="' . esc_url($email_url) . '">'
+            . esc_html__('Email me', 'supreme-autoparts-core') . '</a>';
+    }
     echo '</div>';
 }, 20);
 
-add_action('woocommerce_my_account_my_orders_actions', static function (array $actions, $order): array {
-    if ($order instanceof WC_Order && (current_user_can('sa_view_invoices') || current_user_can('manage_woocommerce'))) {
+add_filter('woocommerce_my_account_my_orders_actions', static function (array $actions, $order): array {
+    if (!$order instanceof WC_Order) {
+        return $actions;
+    }
+    $user_id = get_current_user_id();
+    $is_owner = $user_id && (int) $order->get_user_id() === $user_id;
+    $is_staff = current_user_can('manage_woocommerce') || current_user_can('edit_shop_orders');
+    $has_cap = current_user_can('sa_view_invoices');
+    if ($is_owner || $is_staff || $has_cap) {
+        $oid = (int) $order->get_id();
+        $doc = function_exists('sa_core_invoice_doc_title') ? sa_core_invoice_doc_title($order) : __('Invoice', 'supreme-autoparts-core');
         $actions['sa_invoice'] = [
-            'url'  => sa_core_invoice_url((int) $order->get_id()),
-            'name' => __('Invoice / Receipt', 'supreme-autoparts-core'),
+            'url'  => sa_core_invoice_url($oid),
+            'name' => $doc,
         ];
+        if (function_exists('sa_core_invoice_email_url')) {
+            $actions['sa_email_invoice'] = [
+                'url'  => sa_core_invoice_email_url($oid),
+                'name' => __('Email', 'supreme-autoparts-core'),
+            ];
+        }
     }
     return $actions;
 }, 20, 2);

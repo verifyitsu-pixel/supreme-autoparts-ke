@@ -3,16 +3,20 @@
  * View Order — status, docs, and order details.
  *
  * @package Supreme_Autoparts
- * @version 3.0.0
+ * @version 3.1.0
  */
 
 defined('ABSPATH') || exit;
 
 $notes = $order->get_customer_order_notes();
-$invoice_url = function_exists('sa_core_invoice_url') ? sa_core_invoice_url((int) $order->get_id()) : '';
+$oid = (int) $order->get_id();
+$invoice_url = function_exists('sa_core_invoice_url') ? sa_core_invoice_url($oid) : '';
+$email_url = function_exists('sa_core_invoice_email_url') ? sa_core_invoice_email_url($oid) : '';
+$doc = function_exists('sa_core_invoice_doc_title') ? sa_core_invoice_doc_title($order) : __('Invoice', 'supreme-autoparts');
 $can_invoice = $invoice_url && (
     current_user_can('sa_view_invoices')
     || current_user_can('manage_woocommerce')
+    || current_user_can('edit_shop_orders')
     || (int) $order->get_user_id() === get_current_user_id()
 );
 ?>
@@ -43,11 +47,16 @@ $can_invoice = $invoice_url && (
     <?php if ($can_invoice) : ?>
       <div class="sa-view-order__docs" role="group" aria-label="<?php esc_attr_e('Order documents', 'supreme-autoparts'); ?>">
         <a class="sa-btn sa-btn--sm" href="<?php echo esc_url($invoice_url); ?>" target="_blank" rel="noopener">
-          <?php esc_html_e('Invoice', 'supreme-autoparts'); ?>
+          <?php echo esc_html(sprintf(/* translators: Invoice or Receipt */ __('View %s', 'supreme-autoparts'), $doc)); ?>
         </a>
-        <a class="sa-btn sa-btn--outline sa-btn--sm" href="<?php echo esc_url($invoice_url); ?>" target="_blank" rel="noopener">
-          <?php esc_html_e('Receipt', 'supreme-autoparts'); ?>
+        <a class="sa-btn sa-btn--outline sa-btn--sm" href="<?php echo esc_url(add_query_arg('download', '1', $invoice_url)); ?>">
+          <?php esc_html_e('Download', 'supreme-autoparts'); ?>
         </a>
+        <?php if ($email_url) : ?>
+          <a class="sa-btn sa-btn--outline sa-btn--sm" href="<?php echo esc_url($email_url); ?>">
+            <?php esc_html_e('Email me', 'supreme-autoparts'); ?>
+          </a>
+        <?php endif; ?>
       </div>
     <?php endif; ?>
   </header>
