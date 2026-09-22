@@ -254,6 +254,55 @@ class SA_Core_CLI_Command
         }
     }
 
+
+    /**
+     * Draft near-duplicate published products (keep one per title fingerprint).
+     *
+     * Prefer: featured image / _sa_shopify_image_src, then total_sales DESC, then oldest ID.
+     * Sets draft + meta _sa_deduped_into = kept ID.
+     *
+     * ## OPTIONS
+     * [--category=<slug>]
+     * : Limit to a product_cat (and children), e.g. suspension
+     * [--dry-run]
+     * : Report only
+     * [--limit=<n>]
+     * : Max published products to scan (0 = all)
+     *
+     * ## EXAMPLES
+     *     wp supreme dedupe-products --dry-run
+     *     wp supreme dedupe-products --category=suspension
+     *     wp supreme dedupe-products
+     *
+     * @param array $args
+     * @param array $assoc_args
+     */
+    public function dedupe_products(array $args, array $assoc_args): void
+    {
+        if (!function_exists('sa_core_dedupe_published_products')) {
+            require_once SA_CORE_DIR . 'includes/product-fingerprint.php';
+        }
+        $result = sa_core_dedupe_published_products([
+            'category' => (string) ($assoc_args['category'] ?? ''),
+            'dry_run'  => isset($assoc_args['dry-run']),
+            'limit'    => isset($assoc_args['limit']) ? (int) $assoc_args['limit'] : 0,
+        ]);
+        WP_CLI::success(sprintf(
+            'Dedupe%s: published %d→%d, suspension %d→%d, drafted=%d groups=%d',
+            !empty($result['dry_run']) ? ' (dry-run)' : '',
+            $result['published_before'],
+            $result['published_after'],
+            $result['suspension_before'],
+            $result['suspension_after'],
+            $result['drafted'],
+            $result['groups'] ?? 0
+        ));
+        WP_CLI::log('Sample fingerprints kept: ' . implode(' | ', array_slice($result['samples'], 0, 12)));
+        foreach (array_slice($result['messages'], 0, 30) as $m) {
+            WP_CLI::log($m);
+        }
+    }
+
 }
 
 WP_CLI::add_command('supreme', 'SA_Core_CLI_Command');

@@ -325,6 +325,27 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
             }
         }
 
+        // 4) By title fingerprint — stop near-identical clones (H&R spring ×4).
+        // Only when we would otherwise CREATE a new product. True distinct titles pass.
+        $title_preview = wp_strip_all_tags((string) ($item['title'] ?? $handle));
+        if (!$existing_id && function_exists('sa_product_loop_fingerprint') && function_exists('sa_core_find_published_by_fingerprint')) {
+            $fp = sa_product_loop_fingerprint($title_preview);
+            if ($fp !== '' && $fp !== 'empty' && !str_starts_with($fp, 'id:')) {
+                $by_fp = sa_core_find_published_by_fingerprint($fp, 0);
+                if ($by_fp > 0) {
+                    $existing_id = $by_fp;
+                    if (count($result['messages']) < 50) {
+                        $result['messages'][] = sprintf(
+                            'fingerprint-match update #%d [%s] handle=%s',
+                            $by_fp,
+                            $fp,
+                            $handle
+                        );
+                    }
+                }
+            }
+        }
+
         $is_update = $existing_id > 0;
         if ($dry_run) {
             if ($is_update) {
@@ -506,6 +527,9 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
 
         update_post_meta($id, '_sa_shopify_id', $shopify_id);
         update_post_meta($id, '_sa_shopify_handle', $handle);
+        if (function_exists('sa_product_loop_fingerprint')) {
+            update_post_meta($id, '_sa_title_fingerprint', sa_product_loop_fingerprint($title));
+        }
         update_post_meta($id, '_sa_price_currency', sa_core_import_store_currency());
         if ($usd > 0) {
             update_post_meta($id, '_sa_shopify_price_usd', (string) round($usd, 2));

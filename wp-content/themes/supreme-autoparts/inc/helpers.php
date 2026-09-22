@@ -6,6 +6,54 @@ if (!defined('ABSPATH')) {
 }
 
 /**
+ * Normalize a product title into a fingerprint for near-duplicate detection.
+ *
+ * Strips size/length/mm/cm/id/od/colour tails; first 7 tokens.
+ * Core plugin may already define this — keep a theme fallback.
+ *
+ * @param WC_Product|WP_Post|string|int $source
+ */
+if (!function_exists('sa_product_loop_fingerprint')) {
+    function sa_product_loop_fingerprint($source): string
+    {
+        $title = '';
+        if ($source instanceof WC_Product) {
+            $title = (string) $source->get_name();
+        } elseif ($source instanceof WP_Post) {
+            $title = (string) $source->post_title;
+        } elseif (is_numeric($source)) {
+            $post = get_post((int) $source);
+            $title = $post ? (string) $post->post_title : '';
+        } else {
+            $title = (string) $source;
+        }
+        $title = strtolower(wp_strip_all_tags($title));
+        $title = preg_replace('/[^a-z0-9]+/', ' ', $title) ?? '';
+        $title = trim(preg_replace('/\s+/', ' ', $title) ?? '');
+        $title = preg_replace(
+            '/\b(length|size|colour|color|option|mm|inch|inches|in|cm|id|od)\b.*$/',
+            '',
+            $title
+        ) ?? $title;
+        $title = trim($title);
+        $parts = array_values(array_filter(explode(' ', $title), static fn ($tok) => $tok !== ''));
+        $parts = array_slice($parts, 0, 7);
+        $key = implode(' ', $parts);
+        if ($key !== '') {
+            return $key;
+        }
+        if (is_object($source) && method_exists($source, 'get_id')) {
+            return 'id:' . (string) $source->get_id();
+        }
+        if ($source instanceof WP_Post) {
+            return 'id:' . (string) $source->ID;
+        }
+        return 'empty';
+    }
+}
+
+
+/**
  * Product-type tiles for the homepage (real category photos preferred).
  *
  * @return array<int, array{title:string,slug:string,icon:string}>
@@ -196,25 +244,8 @@ function sa_get_homepage_latest_products(int $limit = 8): array
         return [];
     }
 
-    /**
-     * Collapse near-identical catalog clones (same spring / pad family).
-     */
     $title_key = static function ($product): string {
-        $title = strtolower(wp_strip_all_tags($product->get_name()));
-        $title = preg_replace('/[^a-z0-9]+/', ' ', $title) ?? '';
-        $title = trim(preg_replace('/\s+/', ' ', $title) ?? '');
-        // Drop trailing size / length / option noise so variants share one key.
-        $title = preg_replace(
-            '/\b(length|size|colour|color|option|mm|inch|inches|in|cm|id|od)\b.*$/',
-            '',
-            $title
-        ) ?? $title;
-        $title = trim($title);
-        // First ~6 tokens ≈ brand + product family for parts titles.
-        $parts = array_values(array_filter(explode(' ', $title)));
-        $parts = array_slice($parts, 0, 6);
-        $key = implode(' ', $parts);
-        return $key !== '' ? $key : ('id:' . (string) $product->get_id());
+        return sa_product_loop_fingerprint($product);
     };
 
     $has_image = static function ($product): bool {

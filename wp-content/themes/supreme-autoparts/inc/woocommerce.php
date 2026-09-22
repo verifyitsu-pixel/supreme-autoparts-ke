@@ -179,3 +179,41 @@ add_filter('woocommerce_email_text_color', static fn (): string => '#0B0B0D');
 /** Friendly From name — never the mailbox address as the visible label. */
 add_filter('woocommerce_email_from_name', static fn (): string => 'Supreme Autoparts', 100);
 
+/**
+ * Storefront product-loop dedupe: hide near-identical titles on one page of results.
+ * Instant relief while DB cleanup drafts the clones. Keep first occurrence.
+ */
+add_filter('the_posts', static function (array $posts, $query) {
+    if (is_admin() || !($query instanceof WP_Query) || !$query->is_main_query()) {
+        return $posts;
+    }
+    if (!function_exists('is_shop')) {
+        return $posts;
+    }
+    $on_catalog = is_shop() || is_product_category() || is_product_tag() || is_search();
+    if (!$on_catalog) {
+        return $posts;
+    }
+    if (!function_exists('sa_product_loop_fingerprint')) {
+        return $posts;
+    }
+
+    $seen = [];
+    $out = [];
+    foreach ($posts as $post) {
+        if (!($post instanceof WP_Post) || $post->post_type !== 'product') {
+            $out[] = $post;
+            continue;
+        }
+        $fp = sa_product_loop_fingerprint($post);
+        if ($fp !== '' && isset($seen[$fp])) {
+            continue; // drop near-duplicate
+        }
+        if ($fp !== '') {
+            $seen[$fp] = true;
+        }
+        $out[] = $post;
+    }
+    return $out;
+}, 20, 2);
+
