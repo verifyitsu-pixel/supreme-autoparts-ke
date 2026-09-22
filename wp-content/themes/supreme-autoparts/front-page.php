@@ -92,34 +92,10 @@ get_header();
 </div>
 
 <?php
-/* Latest Parts — shown when the catalog has published products. */
-$sa_latest = [];
-if (function_exists('wc_get_products')) {
-    $sa_latest = wc_get_products([
-        'limit'    => 8,
-        'status'   => 'publish',
-        'orderby'  => 'date',
-        'order'    => 'DESC',
-        'return'   => 'objects',
-    ]);
-}
-if (empty($sa_latest) && function_exists('wc_get_product')) {
-    $sa_ids = get_posts([
-        'post_type'      => 'product',
-        'post_status'    => 'publish',
-        'posts_per_page' => 8,
-        'orderby'        => 'date',
-        'order'          => 'DESC',
-        'fields'         => 'ids',
-        'no_found_rows'  => true,
-    ]);
-    foreach ($sa_ids as $sa_id) {
-        $sa_p = wc_get_product((int) $sa_id);
-        if ($sa_p && $sa_p->is_visible()) {
-            $sa_latest[] = $sa_p;
-        }
-    }
-}
+/* Latest Parts — distinct recent products with real photos (no spam duplicates). */
+$sa_latest = function_exists('sa_get_homepage_latest_products')
+    ? sa_get_homepage_latest_products(8)
+    : [];
 if (!empty($sa_latest)) :
     ?>
 <section class="sa-section sa-latest-parts" aria-labelledby="sa-latest-parts-title">

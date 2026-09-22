@@ -180,6 +180,112 @@ function sa_free_shipping_threshold(): string
     return $currency . ' ' . number_format($usd, 0);
 }
 
+/**
+ * Homepage "Latest Parts" — distinct products with real photos (no spam repeats).
+ *
+ * Pulls a larger recent pool, skips broken/missing images, dedupes by Shopify id /
+ * handle / normalized title, and prefers category diversity.
+ *
+ * @return array<int, \WC_Product>
+ */
+function sa_get_homepage_latest_products(int $limit = 8): array
+{
+    $limit = max(1, min(24, $limit));
+    if (!function_exists('wc_get_products')) {
+        return [];
+    }
+
+    $pool = wc_get_products([
+        'limit'   => max(64, $limit * 16),
+        'status'  => 'publish',
+        'orderby' => 'date',
+        'order'   => 'DESC',
+        'type'    => ['simple', 'variable', 'external', 'grouped'],
+        'return'  => 'objects',
+    ]);
+
+    $fingerprint = static function ($product): string {
+        $sid = (string) $product->get_meta('_sa_shopify_id', true);
+        if ($sid !== '') {
+            return 'sid:' . $sid;
+        }
+        $handle = strtolower(trim((string) $product->get_meta('_sa_shopify_handle', true)));
+        if ($handle !== '') {
+            return 'h:' . $handle;
+        }
+        $title = strtolower(wp_strip_all_tags($product->get_name()));
+        $title = preg_replace('/[^a-z0-9]+/', ' ', $title) ?? '';
+        $title = trim(preg_replace('/\s+/', ' ', $title) ?? '');
+        // Collapse near-duplicates that only differ after size/length tails.
+        $title = preg_replace('/\b(length|size|mm|inch|inches|in|cm)\b.*$/', '', $title) ?? $title;
+        $title = trim($title);
+        if ($title === '') {
+            return 'id:' . (string) $product->get_id();
+        }
+        return 't:' . substr($title, 0, 56);
+    };
+
+    $has_image = static function ($product): bool {
+        if ((int) $product->get_image_id() > 0) {
+            return true;
+        }
+        $cdn = trim((string) $product->get_meta('_sa_shopify_image_src', true));
+        return $cdn !== '' && str_starts_with($cdn, 'http');
+    };
+
+    $candidates = [];
+    $seen_keys = [];
+    foreach ($pool as $product) {
+        if (!$product instanceof \WC_Product || !$product->is_visible()) {
+            continue;
+        }
+        if (!$has_image($product)) {
+            continue;
+        }
+        $key = $fingerprint($product);
+        if (isset($seen_keys[$key])) {
+            continue;
+        }
+        $seen_keys[$key] = true;
+        $candidates[] = $product;
+    }
+
+    $picked = [];
+    $seen_cats = [];
+    $remaining = $candidates;
+
+    $take_next = static function (array &$remaining, array $seen_cats, bool $require_new_cat) {
+        foreach ($remaining as $i => $product) {
+            $cats = $product->get_category_ids();
+            $primary = (int) ($cats[0] ?? 0);
+            $is_new = $primary === 0 || !isset($seen_cats[$primary]);
+            if ($require_new_cat && !$is_new) {
+                continue;
+            }
+            unset($remaining[$i]);
+            return [$product, $primary];
+        }
+        return null;
+    };
+
+    while (count($picked) < $limit && $remaining) {
+        $row = $take_next($remaining, $seen_cats, true);
+        if ($row === null) {
+            $row = $take_next($remaining, $seen_cats, false);
+        }
+        if ($row === null) {
+            break;
+        }
+        [$product, $primary] = $row;
+        if ($primary > 0) {
+            $seen_cats[$primary] = true;
+        }
+        $picked[] = $product;
+    }
+
+    return $picked;
+}
+
 function sa_page_url(string $slug): string
 {
     $page = get_page_by_path($slug);
