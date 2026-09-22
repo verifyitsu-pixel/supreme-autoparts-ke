@@ -57,6 +57,45 @@ if (!defined('ABSPATH')) {
         </ul>
       </div>
     </div>
+
+    <section id="sa-footer-contact" class="sa-footer-contact" aria-labelledby="sa-footer-contact-title">
+      <div class="sa-footer-contact__head">
+        <h3 id="sa-footer-contact-title"><?php esc_html_e('Contact us', 'supreme-autoparts'); ?></h3>
+        <p class="sa-footer-contact__lead"><?php esc_html_e('Send a message — we usually reply within one business day.', 'supreme-autoparts'); ?></p>
+      </div>
+      <?php echo sa_footer_contact_notice_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+      <form class="sa-footer-contact__form sa-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" novalidate>
+        <input type="hidden" name="action" value="sa_footer_contact" />
+        <input type="hidden" name="sa_contact_redirect" value="<?php echo esc_url(is_singular() ? (string) get_permalink() : home_url('/')); ?>" />
+        <?php wp_nonce_field('sa_footer_contact', 'sa_footer_contact_nonce'); ?>
+        <p class="sa-footer-contact__hp" aria-hidden="true">
+          <label for="sa-contact-company"><?php esc_html_e('Company', 'supreme-autoparts'); ?></label>
+          <input type="text" id="sa-contact-company" name="sa_company" value="" tabindex="-1" autocomplete="off" />
+        </p>
+        <div class="sa-footer-contact__grid">
+          <p class="sa-footer-contact__field">
+            <label for="sa-contact-name"><?php esc_html_e('Name', 'supreme-autoparts'); ?> <span aria-hidden="true">*</span></label>
+            <input type="text" id="sa-contact-name" name="sa_name" class="input-text" required maxlength="120" autocomplete="name" />
+          </p>
+          <p class="sa-footer-contact__field">
+            <label for="sa-contact-email"><?php esc_html_e('Email', 'supreme-autoparts'); ?> <span aria-hidden="true">*</span></label>
+            <input type="email" id="sa-contact-email" name="sa_email" class="input-text" required maxlength="190" autocomplete="email" />
+          </p>
+          <p class="sa-footer-contact__field">
+            <label for="sa-contact-phone"><?php esc_html_e('Phone', 'supreme-autoparts'); ?> <span class="sa-footer-contact__opt"><?php esc_html_e('(optional)', 'supreme-autoparts'); ?></span></label>
+            <input type="tel" id="sa-contact-phone" name="sa_phone" class="input-text" maxlength="40" autocomplete="tel" />
+          </p>
+          <p class="sa-footer-contact__field sa-footer-contact__field--full">
+            <label for="sa-contact-message"><?php esc_html_e('Message', 'supreme-autoparts'); ?> <span aria-hidden="true">*</span></label>
+            <textarea id="sa-contact-message" name="sa_message" class="input-text" rows="3" required maxlength="5000" placeholder="<?php esc_attr_e('How can we help?', 'supreme-autoparts'); ?>"></textarea>
+          </p>
+        </div>
+        <p class="sa-footer-contact__actions">
+          <button type="submit" class="sa-btn sa-btn--sm"><?php esc_html_e('Send message', 'supreme-autoparts'); ?></button>
+        </p>
+      </form>
+    </section>
+
     <div class="sa-footer__bottom">
       <span>&copy; <?php echo esc_html(gmdate('Y')); ?> Supreme Autoparts · supremeautoparts.co.ke</span>
       <span><?php esc_html_e('Prices shown in local currency where available; charged in USD at checkout. *Free shipping terms apply.', 'supreme-autoparts'); ?></span>

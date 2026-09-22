@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_THEME_VERSION', '1.4.11');
+define('SA_THEME_VERSION', '1.4.12');
 define('SA_THEME_DIR', get_template_directory());
 define('SA_THEME_URI', get_template_directory_uri());
 
@@ -22,6 +22,7 @@ require_once SA_THEME_DIR . '/inc/megamenu.php';
 require_once SA_THEME_DIR . '/inc/woocommerce.php';
 require_once SA_THEME_DIR . '/inc/helpers.php';
 require_once SA_THEME_DIR . '/inc/enquire.php';
+require_once SA_THEME_DIR . '/inc/contact-form.php';
 
 add_action('after_switch_theme', static function (): void {
     flush_rewrite_rules();
