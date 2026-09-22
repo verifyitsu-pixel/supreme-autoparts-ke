@@ -198,6 +198,12 @@ HTML,
 <p>Related: <a href="/terms/">Terms of Service</a>.</p>
 HTML,
         ],
+        'pay' => [
+            'title'   => 'Pay',
+            'content' => <<<'HTML'
+[sa_open_pay]
+HTML,
+        ],
         'data-policy' => [
             'title'   => 'Data Policy',
             'content' => <<<HTML

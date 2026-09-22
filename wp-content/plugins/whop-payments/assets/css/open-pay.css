@@ -1,0 +1,211 @@
+/* Supreme Autoparts — open amount pay form (charcoal + amber). No Whop badges. */
+.sa-open-pay {
+  --op-bg: #0B0B0D;
+  --op-card: #141418;
+  --op-border: #2a2a30;
+  --op-text: #f2f2f4;
+  --op-muted: #a0a0a8;
+  --op-amber: #F5A623;
+  --op-amber-ink: #0B0B0D;
+  --op-err: #ff6b6b;
+  --op-ok: #3dd68c;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 440px;
+  margin: 2rem auto 3rem;
+  padding: 0 1rem;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: var(--op-text);
+}
+
+.sa-open-pay *,
+.sa-open-pay *::before,
+.sa-open-pay *::after {
+  box-sizing: border-box;
+}
+
+.sa-open-pay__card {
+  background: var(--op-card);
+  border: 1px solid var(--op-border);
+  border-radius: 16px;
+  padding: 1.75rem 1.5rem 1.5rem;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.sa-open-pay__brand {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.sa-open-pay__logo {
+  display: inline-block;
+  max-width: 180px;
+  height: auto;
+  margin: 0 auto 0.75rem;
+}
+
+.sa-open-pay__title {
+  margin: 0 0 0.4rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--op-text);
+}
+
+.sa-open-pay__sub {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--op-muted);
+}
+
+.sa-open-pay__notice {
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.sa-open-pay__notice--err {
+  background: rgba(255, 107, 107, 0.12);
+  border: 1px solid rgba(255, 107, 107, 0.35);
+  color: #ffb4b4;
+}
+
+.sa-open-pay__notice--ok {
+  background: rgba(61, 214, 140, 0.12);
+  border: 1px solid rgba(61, 214, 140, 0.35);
+  color: #9aefc4;
+}
+
+.sa-open-pay__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sa-open-pay__label {
+  display: block;
+  margin-top: 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--op-muted);
+}
+
+.sa-open-pay__amount-wrap {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--op-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--op-bg);
+}
+
+.sa-open-pay__amount-wrap:focus-within {
+  border-color: var(--op-amber);
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.22);
+}
+
+.sa-open-pay__currency {
+  display: flex;
+  align-items: center;
+  padding: 0 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--op-amber);
+  background: rgba(245, 166, 35, 0.08);
+  border-right: 1px solid var(--op-border);
+}
+
+.sa-open-pay__input {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--op-text);
+  font-size: 1.35rem;
+  font-weight: 600;
+  padding: 0.85rem 0.9rem;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.sa-open-pay__input::-webkit-outer-spin-button,
+.sa-open-pay__input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.sa-open-pay__input--note {
+  font-size: 1rem;
+  font-weight: 500;
+  border: 1px solid var(--op-border);
+  border-radius: 12px;
+  background: var(--op-bg);
+  margin-bottom: 0.25rem;
+}
+
+.sa-open-pay__input--note:focus {
+  border-color: var(--op-amber);
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.22);
+}
+
+.sa-open-pay__hint {
+  margin: 0.15rem 0 0.5rem;
+  font-size: 0.78rem;
+  color: var(--op-muted);
+}
+
+.sa-open-pay__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 0.85rem;
+  padding: 0.95rem 1.25rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--op-amber);
+  color: var(--op-amber-ink);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
+  box-shadow: 0 6px 20px rgba(245, 166, 35, 0.28);
+}
+
+.sa-open-pay__btn:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.sa-open-pay__btn:active {
+  transform: translateY(0);
+  filter: brightness(0.97);
+}
+
+.sa-open-pay__btn:focus-visible {
+  outline: 2px solid var(--op-amber);
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  .sa-open-pay {
+    margin: 1.25rem auto 2rem;
+    padding: 0 0.75rem;
+  }
+  .sa-open-pay__card {
+    padding: 1.35rem 1.1rem 1.2rem;
+    border-radius: 14px;
+  }
+  .sa-open-pay__title {
+    font-size: 1.2rem;
+  }
+  .sa-open-pay__input {
+    font-size: 1.2rem;
+  }
+}

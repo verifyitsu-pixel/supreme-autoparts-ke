@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 240" role="img" aria-label="Supreme Autoparts">
+  <rect width="800" height="240" fill="#0B0B0D"/>
+  <!-- Flat geometric car mark -->
+  <g transform="translate(40,70)" fill="#F4F4F5">
+    <rect x="8" y="52" width="150" height="48" rx="6"/>
+    <polygon points="40,52 70,10 130,10 160,52"/>
+    <rect x="142" y="60" width="14" height="16" fill="#F5A623"/>
+    <circle cx="48" cy="100" r="22" fill="#0B0B0D" stroke="#F4F4F5" stroke-width="0"/>
+    <circle cx="48" cy="100" r="22" fill="#0B0B0D"/>
+    <circle cx="48" cy="100" r="22" fill="#0B0B0D"/>
+  </g>
+  <g transform="translate(40,70)">
+    <circle cx="48" cy="100" r="22" fill="#0B0B0D"/>
+    <circle cx="48" cy="100" r="9" fill="#F5A623"/>
+    <circle cx="128" cy="100" r="22" fill="#0B0B0D"/>
+    <circle cx="128" cy="100" r="9" fill="#F5A623"/>
+    <!-- wheels need contrast: draw white rings then hubs -->
+    <circle cx="48" cy="100" r="22" fill="none" stroke="#F4F4F5" stroke-width="6"/>
+    <circle cx="128" cy="100" r="22" fill="none" stroke="#F4F4F5" stroke-width="6"/>
+    <circle cx="48" cy="100" r="8" fill="#F5A623"/>
+    <circle cx="128" cy="100" r="8" fill="#F5A623"/>
+  </g>
+  <text x="230" y="120" font-family="Bebas Neue, Inter, Arial Black, sans-serif" font-size="92" fill="#F4F4F5" letter-spacing="2">SUPREME</text>
+  <rect x="230" y="132" width="280" height="3" fill="#F5A623"/>
+  <text x="230" y="175" font-family="Inter, Helvetica, Arial, sans-serif" font-size="28" font-weight="600" fill="#F5A623" letter-spacing="10">AUTOPARTS</text>
+</svg>

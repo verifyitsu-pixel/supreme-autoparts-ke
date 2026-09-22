@@ -64,37 +64,61 @@ final class Whop_Api_Client {
         $currency = strtolower((string) ($args['currency'] ?? 'usd'));
         $amount   = round((float) $args['amount'], 2);
         $order_id = (string) $args['order_id'];
+        $source   = (string) ($args['source'] ?? 'supreme-autoparts-woocommerce');
+
+        $plan_title = (string) ($args['title'] ?? '');
+        if ($plan_title === '') {
+            $plan_title = sprintf(
+                /* translators: %s: order number */
+                __('Order #%s — Supreme Autoparts', 'whop-payments'),
+                $order_id
+            );
+        }
+
+        $product_title = (string) ($args['product_title'] ?? '');
+        if ($product_title === '') {
+            $product_title = sprintf(
+                /* translators: %s: order number */
+                __('WooCommerce Order #%s', 'whop-payments'),
+                $order_id
+            );
+        }
+
+        $external_id = (string) ($args['product_external_id'] ?? '');
+        if ($external_id === '') {
+            $external_id = 'woo-order-' . $order_id;
+        }
+
+        $metadata = [
+            'order_id'  => $order_id,
+            'order_key' => (string) ($args['order_key'] ?? ''),
+            'source'    => $source,
+        ];
+        if (!empty($args['note'])) {
+            $metadata['note'] = (string) $args['note'];
+        }
+        if (is_array($args['metadata'] ?? null)) {
+            $metadata = array_merge($metadata, $args['metadata']);
+        }
 
         $body = [
             'mode'         => 'payment',
             'company_id'   => $this->company_id,
             'account_id'   => $this->company_id,
             'redirect_url' => $args['redirect_url'],
-            'metadata'     => [
-                'order_id'  => $order_id,
-                'order_key' => (string) ($args['order_key'] ?? ''),
-                'source'    => 'supreme-autoparts-woocommerce',
-            ],
+            'metadata'     => $metadata,
             'plan'         => [
                 'company_id'            => $this->company_id,
                 'currency'              => $currency,
                 'initial_price'         => $amount,
                 'plan_type'             => 'one_time',
-                'title'                 => sprintf(
-                    /* translators: %s: order number */
-                    __('Order #%s — Supreme Autoparts', 'whop-payments'),
-                    $order_id
-                ),
+                'title'                 => $plan_title,
                 'description'           => (string) ($args['description'] ?? ''),
                 'visibility'            => 'hidden',
                 'force_create_new_plan' => true,
                 'product'               => [
-                    'external_identifier'   => 'woo-order-' . $order_id,
-                    'title'                 => sprintf(
-                        /* translators: %s: order number */
-                        __('WooCommerce Order #%s', 'whop-payments'),
-                        $order_id
-                    ),
+                    'external_identifier'   => $external_id,
+                    'title'                 => $product_title,
                     'redirect_purchase_url' => $args['redirect_url'],
                     'visibility'            => 'hidden',
                 ],
