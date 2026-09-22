@@ -64,6 +64,9 @@ class SA_Core_CLI_Command
     {
         $file = $assoc_args['file'] ?? SA_CORE_DIR . 'data/sample-products.json';
         require_once SA_CORE_DIR . 'includes/import-shopify.php';
+        if (isset($assoc_args['fast'])) {
+            $GLOBALS['sa_core_fast_import'] = true;
+        }
         $result = sa_core_import_shopify_products_file($file, [
             'limit'          => isset($assoc_args['limit']) ? (int) $assoc_args['limit'] : 0,
             'offset'         => isset($assoc_args['offset']) ? (int) $assoc_args['offset'] : 0,
@@ -104,6 +107,8 @@ class SA_Core_CLI_Command
      * : Skip binary sideload (still stores Shopify CDN URL meta for display)
      * [--require-images]
      * : Only import products that have at least one real http(s) image
+     * [--fast]
+     * : Skip web image fallback; keep Shopify CDN URLs even if uniqueness claims collide
      *
      * ## EXAMPLES
      *     wp supreme import-ndjson --category=brakes --limit=50 --require-images --dry-run

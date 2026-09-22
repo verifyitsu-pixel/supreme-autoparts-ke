@@ -1123,9 +1123,14 @@ function sa_core_find_attachment_claimed_globally(string $url, int $exclude_prod
 function sa_core_resolve_unique_product_images(array $item, int $product_id): array
 {
     $GLOBALS['sa_core_last_image_used_web_fallback'] = false;
-    $shopify = sa_core_filter_urls_unique_for_product(sa_core_collect_shopify_image_urls($item), $product_id);
+    $all = sa_core_collect_shopify_image_urls($item);
+    $shopify = sa_core_filter_urls_unique_for_product($all, $product_id);
     if ($shopify !== []) {
         return $shopify;
+    }
+    // Prefer raw Shopify CDN URLs over slow web search when uniqueness claims collide (bulk import).
+    if (!empty($GLOBALS['sa_core_fast_import']) && $all !== []) {
+        return array_values(array_unique($all));
     }
     $fb = sa_core_fetch_web_fallback_image_url($item, $product_id);
     if ($fb !== '' && sa_core_is_valid_remote_image_url($fb) && !sa_core_is_image_url_claimed_by_other($fb, $product_id)) {
@@ -1143,6 +1148,10 @@ function sa_core_resolve_unique_product_images(array $item, int $product_id): ar
  */
 function sa_core_fetch_web_fallback_image_url(array $item, int $product_id): string
 {
+    // Skip DuckDuckGo/web search during bulk CDN imports (set $GLOBALS['sa_core_fast_import']=true).
+    if (!empty($GLOBALS['sa_core_fast_import'])) {
+        return '';
+    }
     $vendor = trim((string) ($item['vendor'] ?? ''));
     $title = trim(wp_strip_all_tags((string) ($item['title'] ?? '')));
     $variant = $item['variants'][0] ?? [];
