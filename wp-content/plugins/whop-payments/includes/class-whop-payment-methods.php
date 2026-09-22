@@ -222,7 +222,23 @@ final class Whop_Payment_Methods {
 
         update_user_meta($user_id, '_sa_whop_pending_setup_checkout', (string) $result['checkout_id']);
         update_user_meta($user_id, '_sa_whop_pending_verify_fee', (string) self::VERIFY_FEE_USD);
-        wp_safe_redirect((string) $result['purchase_url']);
+        self::redirect_to_whop_checkout((string) $result['purchase_url']);
+    }
+
+    /**
+     * Redirect to Whop hosted checkout. wp_safe_redirect blocks external hosts
+     * (whop.com), which made Add card appear broken — match open-pay allowlist.
+     */
+    private static function redirect_to_whop_checkout(string $purchase_url): void {
+        $host = wp_parse_url($purchase_url, PHP_URL_HOST);
+        $allowed = ['whop.com', 'www.whop.com', 'sandbox.whop.com'];
+        if (is_string($host) && in_array(strtolower($host), $allowed, true)) {
+            // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect
+            wp_redirect($purchase_url, 302);
+            exit;
+        }
+        wc_add_notice(__('Invalid checkout URL returned. Please try again.', 'whop-payments'), 'error');
+        wp_safe_redirect(wc_get_account_endpoint_url('payment-methods'));
         exit;
     }
 
