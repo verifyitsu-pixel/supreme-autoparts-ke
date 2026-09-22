@@ -85,7 +85,7 @@ get_header();
 <div class="sa-ship-banner">
   <?php
   printf(
-      esc_html__('Orders over %s* may qualify for free shipping — see policy for details.', 'supreme-autoparts'),
+      esc_html__('Complimentary shipping on orders over %s* — see policy for details.', 'supreme-autoparts'),
       esc_html(sa_free_shipping_threshold())
   );
   ?>

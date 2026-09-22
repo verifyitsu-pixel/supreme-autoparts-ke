@@ -25,10 +25,34 @@ add_action('init', static function (): void {
         update_option('blogdescription', 'Auto Parts & Accessories | Car, Truck, SUV, Jeep — supremeautoparts.co.ke');
     }
     if (!get_option('sa_free_shipping_threshold')) {
-        update_option('sa_free_shipping_threshold', getenv('SUPREME_FREE_SHIPPING_THRESHOLD') ?: '15000');
+        update_option('sa_free_shipping_threshold', getenv('SUPREME_FREE_SHIPPING_THRESHOLD') ?: '99');
     }
     update_option('sa_branding_applied', 1);
 });
+
+/**
+ * Migrate legacy free-shipping threshold: values > 1000 were stored as KES but
+ * passed through wc_price as USD (producing absurd local display amounts).
+ * New canonical unit is USD (checkout currency); default $99.
+ */
+add_action('init', static function (): void {
+    if (get_option('sa_free_shipping_threshold_migrated_usd99')) {
+        return;
+    }
+    $env = getenv('SUPREME_FREE_SHIPPING_THRESHOLD');
+    if ($env !== false && $env !== '') {
+        // Explicit env wins; just mark migrated so we do not fight deploys.
+        update_option('sa_free_shipping_threshold_migrated_usd99', 1);
+        return;
+    }
+    $current = get_option('sa_free_shipping_threshold', '');
+    if ($current === '' || $current === false) {
+        update_option('sa_free_shipping_threshold', '99');
+    } elseif ((float) $current > 1000) {
+        update_option('sa_free_shipping_threshold', '99');
+    }
+    update_option('sa_free_shipping_threshold_migrated_usd99', 1);
+}, 5);
 
 /** Remove any accidental Supreme Mods branding from titles. */
 add_filter('document_title_parts', static function (array $parts): array {

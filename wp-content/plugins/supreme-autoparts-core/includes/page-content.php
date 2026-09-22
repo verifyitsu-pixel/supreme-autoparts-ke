@@ -50,7 +50,7 @@ HTML,
         'free-shipping' => [
             'title'   => 'Free Shipping Details',
             'content' => <<<'HTML'
-<p>Qualifying products may be eligible for free shipping when your order meets the store threshold of <strong>KES 15,000</strong> (or the current threshold shown on the site banner and at checkout).</p>
+<p>Qualifying products may be eligible for complimentary shipping when your order meets the threshold shown in the site banner (USD equivalent ~$99, or the local amount displayed for your region). Always confirm the live figure on the banner and at checkout.</p>
 <p>Free-shipping eligibility, carriers, and any exclusions for oversized or direct-ship items are defined by Supreme Autoparts’ live shipping settings. Always check the product page and checkout totals for the final shipping charge.</p>
 <ul>
 <li>Oversized or heavy items may be excluded unless otherwise noted on the product page.</li>

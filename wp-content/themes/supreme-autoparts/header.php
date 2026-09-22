@@ -20,11 +20,11 @@ if (!defined('ABSPATH')) {
   <?php
   printf(
       /* translators: %s: formatted free-shipping threshold */
-      esc_html__('Free shipping on qualifying orders over %s*', 'supreme-autoparts'),
+      esc_html__('Complimentary shipping on orders over %s*', 'supreme-autoparts'),
       esc_html(sa_free_shipping_threshold())
   );
   ?>
-  &nbsp;—&nbsp;
+  <span class="sa-announce__sep" aria-hidden="true"> · </span>
   <a href="<?php echo esc_url(sa_page_url('free-shipping')); ?>"><?php esc_html_e('Details', 'supreme-autoparts'); ?></a>
 </div>
 

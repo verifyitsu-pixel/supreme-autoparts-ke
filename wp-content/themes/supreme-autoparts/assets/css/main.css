@@ -22,12 +22,26 @@
 }
 .sa-badge--sale { position: absolute; top: .65rem; left: .65rem; z-index: 2; }
 
-/* Announce */
+/* Announce — quiet luxury (charcoal bar, soft amber edge) */
 .sa-announce {
-  background: var(--sa-accent); color: var(--sa-accent-ink); text-align: center;
-  font-size: .8rem; font-weight: 600; padding: .4rem 1rem; letter-spacing: .01em;
+  background: var(--sa-bg, #0B0B0D);
+  color: rgba(255, 255, 255, 0.72);
+  text-align: center;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 0.52rem 1rem;
+  border-bottom: 1px solid rgba(245, 166, 35, 0.22);
 }
-.sa-announce a { color: var(--sa-accent-ink); text-decoration: underline; text-underline-offset: 2px; }
+.sa-announce a {
+  color: var(--sa-accent, #F5A623);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+.sa-announce a:hover {
+  text-decoration: underline;
+}
 
 /* Header */
 .sa-header {
@@ -1218,8 +1232,10 @@ img, video, svg, iframe, embed, object {
     max-height: 38px;
   }
   .sa-announce {
-    font-size: .7rem;
-    padding: .4rem .5rem;
+    font-size: 0.625rem;
+    letter-spacing: 0.06em;
+    padding: 0.5rem 0.65rem;
+    line-height: 1.45;
   }
   .sa-header__bar {
     gap: .35rem;
