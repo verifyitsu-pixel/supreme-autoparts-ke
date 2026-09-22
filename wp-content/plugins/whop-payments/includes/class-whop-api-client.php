@@ -230,7 +230,7 @@ final class Whop_Api_Client {
         }
 
         $external_id = 'woo-pm-verify-' . ($user_id !== '' ? $user_id : 'anon') . '-' . gmdate('YmdHis');
-        $title = (string) ($args['title'] ?? __('Card verification — Supreme Autoparts', 'whop-payments'));
+        $title = (string) ($args['title'] ?? __('Card/bank verify $1', 'whop-payments'));
 
         $pmc = [
             'enabled'                   => ['card', 'us_bank_account'],

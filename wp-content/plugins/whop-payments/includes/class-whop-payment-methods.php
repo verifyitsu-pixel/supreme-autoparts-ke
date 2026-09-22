@@ -193,7 +193,7 @@ final class Whop_Payment_Methods {
             'wp_user_id'   => (string) $user_id,
             'email'        => $email,
             'redirect_url' => self::setup_return_url($user_id),
-            'title'        => __('Card verification — Supreme Autoparts', 'whop-payments'),
+            'title'        => __('Card/bank verify $1', 'whop-payments'),
         ]);
 
         // Optional fallback: free setup-only if payment-mode verify cannot be created.
