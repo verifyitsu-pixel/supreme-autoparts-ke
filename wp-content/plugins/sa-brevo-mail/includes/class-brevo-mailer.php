@@ -67,8 +67,9 @@ class SA_Brevo_Mailer
             $payload['htmlContent'] = self::ensure_branded_html($message);
             $payload['textContent'] = wp_strip_all_tags($message);
         } else {
+            // Always keep a raw text part so password characters round-trip identically.
             $payload['textContent'] = $message;
-            $payload['htmlContent'] = self::ensure_branded_html(nl2br(esc_html($message)));
+            $payload['htmlContent'] = self::ensure_branded_html(self::plain_text_to_branded_html($message));
         }
 
         $cc = self::parse_header_addresses($headers, 'cc');
@@ -106,6 +107,37 @@ class SA_Brevo_Mailer
         return null;
     }
 
+
+    /**
+     * Convert plain wp_mail bodies (esp. password emails) to safe branded HTML.
+     * Password lines go in <code> via htmlspecialchars so alphanumeric passwords
+     * are byte-identical to the stored hash; special chars would entity-encode
+     * rather than being silently mangled by a partial escape.
+     */
+    private static function plain_text_to_branded_html(string $message): string
+    {
+        $lines = preg_split("/\r\n|\r|\n/", $message) ?: [];
+        $parts = [];
+        foreach ($lines as $line) {
+            if (preg_match('/^(Password:\s*)(.+)$/i', $line, $m)) {
+                $pass = $m[2];
+                $parts[] = '<p style="margin:0 0 12px 0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.5;color:#18181b;">'
+                    . htmlspecialchars($m[1], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+                    . '<code style="font-size:16px;letter-spacing:0.02em;font-family:ui-monospace,Menlo,Consolas,monospace;background:#f4f4f5;padding:2px 6px;border-radius:4px;">'
+                    . htmlspecialchars($pass, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+                    . '</code></p>';
+                continue;
+            }
+            if ($line === '') {
+                $parts[] = '<div style="height:8px;line-height:8px;">&nbsp;</div>';
+                continue;
+            }
+            $parts[] = '<p style="margin:0 0 8px 0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.5;color:#18181b;">'
+                . htmlspecialchars($line, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+                . '</p>';
+        }
+        return '<div class="sa-plain-mail">' . implode('', $parts) . '</div>';
+    }
 
     /**
      * Guarantee every outbound HTML email shows the store logo in a header strip.

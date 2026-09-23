@@ -5,7 +5,7 @@
  * (sa_core_email_customer_password) so HTML escaping cannot mangle it.
  *
  * @package Supreme_Autoparts
- * @version 1.4.27
+ * @version 1.4.28
  */
 
 defined('ABSPATH') || exit;
@@ -26,23 +26,9 @@ do_action('woocommerce_email_header', $email_heading, $email); ?>
     '<strong>' . esc_html($user_login) . '</strong>'
 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></p>
 
-<?php if (!empty($password_generated) && is_string($user_pass) && $user_pass !== '') : ?>
-	<?php
-	// Defense-in-depth: only echo if alphanumeric (email-safe). Never esc_html a password.
-	$sa_safe_pass = (bool) preg_match('/^[A-Za-z0-9]{12,64}$/', $user_pass);
-	?>
-	<?php if ($sa_safe_pass) : ?>
-		<p><?php esc_html_e('We set a secure password for you. It works right away — use it to log in:', 'supreme-autoparts'); ?></p>
-		<p style="font-size:18px;letter-spacing:0.02em;font-family:ui-monospace,Menlo,Consolas,monospace;"><code><?php echo $user_pass; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- alphanumeric-only checked above ?></code></p>
-		<p><?php esc_html_e('After you log in, you stay signed in on that browser until you use Log out. You can change this password anytime under Account details.', 'supreme-autoparts'); ?></p>
-	<?php else : ?>
-		<p><?php esc_html_e('A secure password was emailed to you in a separate message. Use that password to log in, then you can change it under Account details.', 'supreme-autoparts'); ?></p>
-	<?php endif; ?>
-<?php elseif (!empty($password_generated)) : ?>
-	<p><?php esc_html_e('A secure password was emailed to you separately. Use that password to log in. If you did not receive it, use “Email me a new password” on the login page and we will email you a new one.', 'supreme-autoparts'); ?></p>
-<?php else : ?>
-	<p><?php esc_html_e('A secure password was emailed to you separately. Use that password to log in. If you did not receive it, use “Email me a new password” on the login page.', 'supreme-autoparts'); ?></p>
-<?php endif; ?>
+<p><?php esc_html_e('A secure password was emailed to you separately. Use that password to log in. If you did not receive it, use “Email me a new password” on the login page and we will email you a new one.', 'supreme-autoparts'); ?></p>
+
+<p><?php esc_html_e('After you log in, you stay signed in on that browser until you use Log out. You can change the password anytime under Account details.', 'supreme-autoparts'); ?></p>
 
 <p>
 	<a href="<?php echo esc_url(wc_get_page_permalink('myaccount')); ?>">

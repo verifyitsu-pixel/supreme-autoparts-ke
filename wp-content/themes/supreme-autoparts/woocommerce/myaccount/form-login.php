@@ -3,7 +3,7 @@
  * My Account login / register — stay signed in until Log out; password emailed on register.
  *
  * @package Supreme_Autoparts
- * @version 1.4.27
+ * @version 1.4.28
  */
 
 defined('ABSPATH') || exit;

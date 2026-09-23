@@ -314,13 +314,13 @@ function sa_core_user_is_customer_for_password_mail(WP_User $user): bool
 /** Seconds between customer password-issue emails for the same account. */
 function sa_core_password_issue_cooldown(): int
 {
-    return (int) apply_filters('sa_core_password_issue_cooldown', 60);
+    return (int) apply_filters('sa_core_password_issue_cooldown', 20);
 }
 
 /** Max password-issue emails per customer account per hour. */
 function sa_core_password_issue_hourly_cap(): int
 {
-    return (int) apply_filters('sa_core_password_issue_hourly_cap', 5);
+    return (int) apply_filters('sa_core_password_issue_hourly_cap', 8);
 }
 
 /**
@@ -553,12 +553,51 @@ add_filter('woocommerce_lost_password_confirmation_message', static function ():
 });
 
 /**
- * Register path: re-set an email-safe password and email it via our plain Brevo mailer.
- * Woo 9+/11 fires customer_new_account via deferred hook
- * woocommerce_created_customer_notification (not the Email::trigger on created_customer),
- * and that notification still carries the *pre-insert* password — which would no longer
- * match after wp_set_password. Mark the user so the notification wrapper strips it.
- * Staff reset-link flow is untouched (lost-password handler above).
+ * Request-scoped stash: the exact password baked into wp_insert_user via
+ * woocommerce_new_customer_data. Keyed by lowercased email so created_customer
+ * can email THAT password without calling wp_set_password again (which used to
+ * mint password B while Woo still queued an email carrying password A).
+ *
+ * @return array<string,string>
+ */
+function &sa_core_registration_password_stash(): array
+{
+    static $stash = [];
+    return $stash;
+}
+
+function sa_core_stash_registration_password(string $email, string $password): void
+{
+    $email = strtolower(trim($email));
+    if ($email === '' || $password === '') {
+        return;
+    }
+    $stash = &sa_core_registration_password_stash();
+    $stash[$email] = $password;
+}
+
+function sa_core_take_registration_password(string $email): string
+{
+    $email = strtolower(trim($email));
+    $stash = &sa_core_registration_password_stash();
+    if ($email === '' || !isset($stash[$email])) {
+        return '';
+    }
+    $password = $stash[$email];
+    unset($stash[$email]);
+    return $password;
+}
+
+/**
+ * Never auto-login after register. Copy says we email a password then they log in;
+ * auto-auth + any later wp_set_password session wipe caused "logs in then drops out".
+ */
+add_filter('woocommerce_registration_auth_new_customer', '__return_false');
+
+/**
+ * Register path: email the SAME password that was inserted (from stash).
+ * Only call wp_set_password if the stash is missing (defensive fallback).
+ * Suppress Woo new-account password body so only our Brevo mail carries the working password.
  */
 add_action('woocommerce_created_customer', static function (int $customer_id, $data = [], $password_generated = false): void {
     if (!$password_generated || $customer_id <= 0) {
@@ -572,47 +611,70 @@ add_action('woocommerce_created_customer', static function (int $customer_id, $d
         return;
     }
 
-    $password = sa_core_generate_customer_password();
-    wp_set_password($password, $customer_id);
+    $email = (string) $user->user_email;
+    $password = sa_core_take_registration_password($email);
 
-    $user = get_user_by('id', $customer_id);
-    if (!$user instanceof WP_User) {
-        return;
+    // Defensive: stash miss (e.g. alternate create path) — mint once and set.
+    if ($password === '') {
+        $password = sa_core_generate_customer_password();
+        wp_set_password($password, $customer_id);
+        $user = get_user_by('id', $customer_id);
+        if (!$user instanceof WP_User) {
+            return;
+        }
     }
 
     $sent = sa_core_email_customer_password($user, $password, 'new');
     $password = '';
 
-    // Flag for notification wrapper (sync or deferred) — strip Woo password body.
+    // Flag so Woo welcome email (same hook pri 10 / deferred notification) never includes a password.
+    set_transient('sa_core_pw_mailed_' . $customer_id, $sent ? '1' : '0', 15 * MINUTE_IN_SECONDS);
+
     if ($sent) {
-        set_transient('sa_core_pw_mailed_' . $customer_id, '1', 15 * MINUTE_IN_SECONDS);
         sa_core_password_issue_mark_sent($customer_id);
-        // Store a one-shot success notice for the next page load (register often redirects).
         if (function_exists('wc_add_notice')) {
             wc_add_notice(
                 __('Account created. We emailed you a secure password — it works right away. Check your inbox (and spam), then log in. You can change the password under Account details after you sign in.', 'supreme-autoparts-core'),
                 'success'
             );
         }
-    } else {
-        if (function_exists('wc_add_notice')) {
-            wc_add_notice(
-                __('Your account was created, but we could not email your password. Use “Email me a new password” on the Lost password page, or contact calvin@supremeautoparts.co.ke.', 'supreme-autoparts-core'),
-                'error'
-            );
-        }
+    } elseif (function_exists('wc_add_notice')) {
+        wc_add_notice(
+            __('Your account was created, but we could not email your password. Use “Email me a new password” on the Lost password page, or contact calvin@supremeautoparts.co.ke.', 'supreme-autoparts-core'),
+            'error'
+        );
     }
 
     unset($data);
 }, 5, 3);
 
 /**
- * Woo queues woocommerce_created_customer → *_notification with the original user_pass.
- * If we already emailed a freshly re-set password, force welcome-without-password.
+ * Prefer skipping Woo's transactional new-account password path entirely when we
+ * already emailed (or attempted) our Brevo password mail. Welcome-without-password only.
+ */
+add_action('woocommerce_created_customer', static function (int $customer_id, $data = [], $password_generated = false): void {
+    unset($data, $password_generated);
+    // Only suppress Woo when our Brevo password email succeeded (string "1").
+    // On failure ("0") leave Woo path alone as a fallback — DB password still matches stash A.
+    if ($customer_id <= 0 || get_transient('sa_core_pw_mailed_' . $customer_id) !== '1') {
+        return;
+    }
+    if (!function_exists('WC') || !WC()->mailer()) {
+        return;
+    }
+    $mailer = WC()->mailer();
+    // Stop WC_Emails::send_transactional_email from queueing customer_new_account with user_pass.
+    remove_action('woocommerce_created_customer', [$mailer, 'send_transactional_email'], 10);
+}, 6, 3);
+
+/**
+ * Woo may still fire woocommerce_created_customer_notification (deferred / other callers).
+ * Force welcome-without-password when our Brevo password email already went out.
  */
 add_action('woocommerce_created_customer_notification', static function ($customer_id, $new_customer_data = [], $password_generated = false): void {
     $customer_id = (int) $customer_id;
-    if ($customer_id <= 0 || !get_transient('sa_core_pw_mailed_' . $customer_id)) {
+    // Only rewrite when we already sent the working password via Brevo.
+    if ($customer_id <= 0 || get_transient('sa_core_pw_mailed_' . $customer_id) !== '1') {
         return;
     }
 
@@ -623,15 +685,41 @@ add_action('woocommerce_created_customer_notification', static function ($custom
     $mailer = WC()->mailer();
     remove_action('woocommerce_created_customer_notification', [$mailer, 'customer_new_account'], 10);
 
+    // Optional welcome-without-password (never include user_pass).
     $emails = $mailer->get_emails();
     if (isset($emails['WC_Email_Customer_New_Account']) && is_object($emails['WC_Email_Customer_New_Account'])) {
-        // Welcome only — password already sent as plain text by sa_core_email_customer_password.
-        $emails['WC_Email_Customer_New_Account']->trigger($customer_id, '', false);
+        $GLOBALS['sa_core_allow_welcome_no_password'] = true;
+        try {
+            $emails['WC_Email_Customer_New_Account']->trigger($customer_id, '', false);
+        } finally {
+            unset($GLOBALS['sa_core_allow_welcome_no_password']);
+        }
     }
 
     delete_transient('sa_core_pw_mailed_' . $customer_id);
     unset($new_customer_data, $password_generated);
 }, 1, 3);
+
+/**
+ * Block Woo new-account emails that would still carry a password body when we already
+ * sent (or own) the password email — unless our welcome-without-password trigger set the allow flag.
+ */
+add_filter('woocommerce_email_enabled_customer_new_account', static function ($enabled, $object = null, $email = null) {
+    unset($email);
+    if (!empty($GLOBALS['sa_core_allow_welcome_no_password'])) {
+        return $enabled;
+    }
+    $customer_id = 0;
+    if (is_numeric($object)) {
+        $customer_id = (int) $object;
+    } elseif ($object instanceof WP_User) {
+        $customer_id = (int) $object->ID;
+    }
+    if ($customer_id > 0 && get_transient('sa_core_pw_mailed_' . $customer_id) === '1') {
+        return false;
+    }
+    return $enabled;
+}, 20, 3);
 
 /**
  * Rewrite Woo success notices that still talk about reset links / generic password emails.
@@ -717,7 +805,10 @@ add_filter('woocommerce_process_login_errors', static function ($validation_erro
 add_filter('woocommerce_new_customer_data', static function (array $data): array {
     $data['role'] = 'customer';
     if (get_option('woocommerce_registration_generate_password') === 'yes') {
-        $data['user_pass'] = sa_core_generate_customer_password();
+        $password = sa_core_generate_customer_password();
+        $data['user_pass'] = $password;
+        $email = isset($data['user_email']) ? (string) $data['user_email'] : '';
+        sa_core_stash_registration_password($email, $password);
     }
     return $data;
 }, 5);

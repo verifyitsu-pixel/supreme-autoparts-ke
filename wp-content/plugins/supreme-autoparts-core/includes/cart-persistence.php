@@ -191,12 +191,28 @@ add_action('woocommerce_set_customer_auth_cookie', static function (int $custome
         return;
     }
     // Woo may already have set cookies; re-issue once with remember for 90-day TTL.
-    if (defined('SA_CORE_CUSTOMER_AUTH_REMEMBERED')) {
+    if (!empty($GLOBALS['sa_core_customer_auth_remembered'])) {
         return;
     }
-    define('SA_CORE_CUSTOMER_AUTH_REMEMBERED', true);
+    $GLOBALS['sa_core_customer_auth_remembered'] = true;
     wp_set_auth_cookie($customer_id, true);
 }, 5);
+
+/**
+ * After successful login: ensure customers get a remember=true auth cookie (90-day).
+ * Covers any path that signed in without remember. Does not touch logout.
+ */
+add_action('wp_login', static function (string $user_login, $user): void {
+    unset($user_login);
+    if (!$user instanceof WP_User || !sa_core_user_is_store_customer($user)) {
+        return;
+    }
+    if (!empty($GLOBALS['sa_core_customer_auth_remembered'])) {
+        return;
+    }
+    $GLOBALS['sa_core_customer_auth_remembered'] = true;
+    wp_set_auth_cookie((int) $user->ID, true);
+}, 5, 2);
 
 add_filter('body_class', static function (array $classes): array {
     $classes[] = 'sa-persist-cart';
