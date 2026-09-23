@@ -279,14 +279,12 @@ add_action('init', static function (): void {
 }, 21);
 
 /**
- * Email-safe random password for customers (register + reset).
- * Alphanumeric only — no & < > " ' that HTML emails mangle via esc_html (& → &amp;).
- * Avoids ambiguous 0/O/1/l/I. Never log the value.
+ * Email-safe random password for new customer accounts (never emailed).
+ * Customers sign in with a one-time login code; they can set a password later.
  */
 function sa_core_generate_customer_password(int $length = 18): string
 {
     $length = max(16, min(32, $length));
-    // No 0 O 1 l I — copy/paste and OCR-friendly.
     $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
     $max = strlen($alphabet) - 1;
     $password = '';
@@ -311,67 +309,429 @@ function sa_core_user_is_customer_for_password_mail(WP_User $user): bool
     return true;
 }
 
+/** OTP lifetime (~12 minutes). */
+function sa_core_otp_ttl(): int
+{
+    return (int) apply_filters('sa_core_otp_ttl', 12 * MINUTE_IN_SECONDS);
+}
+
+function sa_core_otp_max_attempts(): int
+{
+    return (int) apply_filters('sa_core_otp_max_attempts', 5);
+}
+
+function sa_core_otp_resend_cooldown(): int
+{
+    return (int) apply_filters('sa_core_otp_resend_cooldown', 60);
+}
+
+function sa_core_otp_hourly_cap(): int
+{
+    return (int) apply_filters('sa_core_otp_hourly_cap', 5);
+}
+
+function sa_core_otp_generate_code(): string
+{
+    return str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+}
+
+function sa_core_otp_hash(string $code, int $user_id): string
+{
+    $pepper = wp_salt('auth');
+    return hash_hmac('sha256', $code . '|' . $user_id, $pepper);
+}
+
+function sa_core_otp_clear(int $user_id): void
+{
+    delete_user_meta($user_id, '_sa_otp_hash');
+    delete_user_meta($user_id, '_sa_otp_expires');
+    delete_user_meta($user_id, '_sa_otp_attempts');
+    delete_user_meta($user_id, '_sa_otp_sent_at');
+}
+
 /**
- * Email a working password to the customer via Brevo (wp_mail → sa-brevo-mail).
- * Does not BCC. Never logs the password.
+ * Store a hashed OTP for the user. Never stores plaintext.
  */
-function sa_core_email_customer_password(WP_User $user, string $password, string $reason = 'reset'): bool
+function sa_core_otp_store(int $user_id, string $code): void
+{
+    update_user_meta($user_id, '_sa_otp_hash', sa_core_otp_hash($code, $user_id));
+    update_user_meta($user_id, '_sa_otp_expires', (string) (time() + sa_core_otp_ttl()));
+    update_user_meta($user_id, '_sa_otp_attempts', '0');
+    update_user_meta($user_id, '_sa_otp_sent_at', (string) time());
+}
+
+/**
+ * @return true|WP_Error
+ */
+function sa_core_otp_can_send(int $user_id)
+{
+    $sent_at = (int) get_user_meta($user_id, '_sa_otp_sent_at', true);
+    $cooldown = sa_core_otp_resend_cooldown();
+    if ($sent_at > 0 && (time() - $sent_at) < $cooldown) {
+        $wait = $cooldown - (time() - $sent_at);
+        return new WP_Error(
+            'sa_otp_cooldown',
+            sprintf(
+                /* translators: %d: seconds */
+                __('Please wait %d seconds before requesting another code.', 'supreme-autoparts-core'),
+                max(1, $wait)
+            )
+        );
+    }
+
+    $hour_key = 'sa_otp_hour_' . $user_id;
+    $count = (int) get_transient($hour_key);
+    if ($count >= sa_core_otp_hourly_cap()) {
+        return new WP_Error(
+            'sa_otp_rate',
+            __('Too many login codes requested. Please try again later.', 'supreme-autoparts-core')
+        );
+    }
+
+    return true;
+}
+
+function sa_core_otp_bump_hourly(int $user_id): void
+{
+    $hour_key = 'sa_otp_hour_' . $user_id;
+    $count = (int) get_transient($hour_key);
+    set_transient($hour_key, $count + 1, HOUR_IN_SECONDS);
+}
+
+/**
+ * @return true|WP_Error
+ */
+function sa_core_otp_verify(int $user_id, string $code)
+{
+    $code = preg_replace('/\D+/', '', $code) ?? '';
+    if (strlen($code) !== 6) {
+        return new WP_Error('sa_otp_format', __('Enter the 6-digit code from your email.', 'supreme-autoparts-core'));
+    }
+
+    $hash = (string) get_user_meta($user_id, '_sa_otp_hash', true);
+    $expires = (int) get_user_meta($user_id, '_sa_otp_expires', true);
+    $attempts = (int) get_user_meta($user_id, '_sa_otp_attempts', true);
+
+    if ($hash === '' || $expires <= 0) {
+        return new WP_Error('sa_otp_missing', __('No login code is pending. Request a new code.', 'supreme-autoparts-core'));
+    }
+    if ($attempts >= sa_core_otp_max_attempts()) {
+        sa_core_otp_clear($user_id);
+        return new WP_Error('sa_otp_locked', __('Too many incorrect attempts. Request a new code.', 'supreme-autoparts-core'));
+    }
+    if (time() > $expires) {
+        sa_core_otp_clear($user_id);
+        return new WP_Error('sa_otp_expired', __('That login code has expired. Request a new one.', 'supreme-autoparts-core'));
+    }
+
+    $expected = sa_core_otp_hash($code, $user_id);
+    if (!hash_equals($hash, $expected)) {
+        update_user_meta($user_id, '_sa_otp_attempts', (string) ($attempts + 1));
+        $left = sa_core_otp_max_attempts() - ($attempts + 1);
+        if ($left <= 0) {
+            sa_core_otp_clear($user_id);
+            return new WP_Error('sa_otp_locked', __('Too many incorrect attempts. Request a new code.', 'supreme-autoparts-core'));
+        }
+        return new WP_Error(
+            'sa_otp_mismatch',
+            sprintf(
+                /* translators: %d: attempts remaining */
+                __('Incorrect code. %d attempts remaining.', 'supreme-autoparts-core'),
+                $left
+            )
+        );
+    }
+
+    sa_core_otp_clear($user_id);
+    return true;
+}
+
+/**
+ * Email a 6-digit login code via wp_mail / Brevo. Never logs the code. No BCC.
+ */
+function sa_core_email_login_code(WP_User $user, string $code): bool
 {
     $to = (string) $user->user_email;
     if (!is_email($to)) {
         return false;
     }
 
-    $login = (string) $user->user_login;
-    $site  = wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
-    $account_url = function_exists('wc_get_page_permalink')
-        ? (string) wc_get_page_permalink('myaccount')
-        : (string) wp_login_url();
-
-    if ($reason === 'new') {
-        $subject = sprintf('[%s] Your account password', $site);
-        $intro   = 'Thanks for creating an account. We generated a secure password for you — it works right away.';
-    } else {
-        $subject = sprintf('[%s] Your new password', $site);
-        $intro   = 'You requested a password reset. We generated a new secure password for you — it works right away.';
+    $site = wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
+    $mins = max(1, (int) round(sa_core_otp_ttl() / 60));
+    $subject = sprintf('[%s] Your login code', $site);
+    $name = trim((string) $user->display_name);
+    if ($name === '') {
+        $name = (string) $user->user_login;
     }
 
-    $email_login = (string) $user->user_email;
-    $login_hint = $email_login !== '' && is_email($email_login)
-        ? $email_login
-        : $login;
-
     $lines = [
-        'Hi ' . ($user->display_name ?: $login) . ',',
+        'Hi ' . $name . ',',
         '',
-        $intro,
+        'Your Supreme Autoparts login code is:',
         '',
-        'Log in with your email address (or username) and this password:',
-        'Email / username: ' . $login_hint,
-        'Password: ' . $password,
+        $code,
         '',
-        'Log in here: ' . $account_url,
-        '',
-        'You can change this password anytime after logging in under Account details.',
-        '',
-        'If you did not request this, contact us at calvin@supremeautoparts.co.ke.',
+        'This code expires in about ' . $mins . ' minutes and can be used once.',
+        'If you did not request this, you can ignore this email.',
         '',
         '— Supreme Autoparts',
+        'calvin@supremeautoparts.co.ke',
     ];
     $body = implode("\n", $lines);
 
+    $html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#0B0B0D;">'
+        . '<p>Hi ' . esc_html($name) . ',</p>'
+        . '<p>Your Supreme Autoparts login code is:</p>'
+        . '<p style="font-size:28px;font-weight:700;letter-spacing:0.2em;font-family:ui-monospace,Menlo,Consolas,monospace;color:#0B0B0D;background:#F5F5F5;padding:14px 18px;border-radius:8px;display:inline-block;border:1px solid #E5E5E5;">'
+        . esc_html($code)
+        . '</p>'
+        . '<p style="color:#444;">This code expires in about ' . (int) $mins . ' minutes and can be used once.</p>'
+        . '<p style="color:#666;font-size:14px;">If you did not request this, you can ignore this email.</p>'
+        . '<p style="margin-top:24px;color:#0B0B0D;">— Supreme Autoparts<br>'
+        . '<a href="mailto:calvin@supremeautoparts.co.ke" style="color:#F5A623;">calvin@supremeautoparts.co.ke</a></p>'
+        . '</div>';
+
     $headers = [
-        'Content-Type: text/plain; charset=UTF-8',
+        'Content-Type: text/html; charset=UTF-8',
         'From: Supreme Autoparts <calvin@supremeautoparts.co.ke>',
     ];
 
-    // wp_mail is routed through sa-brevo-mail when BREVO_API_KEY is set.
-    return (bool) wp_mail($to, $subject, $body, $headers);
+    // Prefer HTML; plain text is still in $body for clients that strip HTML via filters.
+    unset($body);
+    return (bool) wp_mail($to, $subject, $html, $headers);
 }
 
 /**
- * Replace Woo lost-password flow: set a new random password and email it.
- * Admin / shop_manager keep the default Woo reset-link behaviour.
+ * Issue a fresh OTP for a customer user (rate-limited). Does not log the code.
+ *
+ * @return true|WP_Error
+ */
+function sa_core_otp_issue_for_user(WP_User $user)
+{
+    if (!sa_core_user_is_customer_for_password_mail($user)) {
+        return new WP_Error('sa_otp_staff', __('Staff accounts use the password reset link instead.', 'supreme-autoparts-core'));
+    }
+
+    $can = sa_core_otp_can_send((int) $user->ID);
+    if (is_wp_error($can)) {
+        return $can;
+    }
+
+    $code = sa_core_otp_generate_code();
+    sa_core_otp_store((int) $user->ID, $code);
+    $sent = sa_core_email_login_code($user, $code);
+    $code = ''; // best-effort clear
+
+    if (!$sent) {
+        sa_core_otp_clear((int) $user->ID);
+        return new WP_Error(
+            'sa_otp_mail',
+            __('We could not send the login code. Please try again or contact calvin@supremeautoparts.co.ke.', 'supreme-autoparts-core')
+        );
+    }
+
+    sa_core_otp_bump_hourly((int) $user->ID);
+    return true;
+}
+
+/**
+ * Opaque browser challenge so we never put user id in the URL.
+ *
+ * @param array{user_id:int,purpose:string,redirect:string,email:string} $data
+ */
+function sa_core_otp_set_pending(array $data): void
+{
+    $token = bin2hex(random_bytes(16));
+    $payload = [
+        'user_id'  => (int) $data['user_id'],
+        'purpose'  => (string) ($data['purpose'] ?? 'login'),
+        'redirect' => (string) ($data['redirect'] ?? ''),
+        'email'    => (string) ($data['email'] ?? ''),
+    ];
+    set_transient('sa_otp_chal_' . $token, $payload, sa_core_otp_ttl() + 120);
+
+    $secure = is_ssl() || (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
+    // Cookie holds only the opaque token.
+    setcookie('sa_otp_chal', $token, [
+        'expires'  => time() + sa_core_otp_ttl() + 120,
+        'path'     => COOKIEPATH ?: '/',
+        'domain'   => COOKIE_DOMAIN ?: '',
+        'secure'   => $secure,
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+    $_COOKIE['sa_otp_chal'] = $token;
+}
+
+/**
+ * @return array{user_id:int,purpose:string,redirect:string,email:string}|null
+ */
+function sa_core_otp_get_pending(): ?array
+{
+    $token = isset($_COOKIE['sa_otp_chal']) ? sanitize_text_field(wp_unslash((string) $_COOKIE['sa_otp_chal'])) : '';
+    if ($token === '' || !preg_match('/^[a-f0-9]{32}$/', $token)) {
+        return null;
+    }
+    $data = get_transient('sa_otp_chal_' . $token);
+    if (!is_array($data) || empty($data['user_id'])) {
+        return null;
+    }
+    return [
+        'user_id'  => (int) $data['user_id'],
+        'purpose'  => (string) ($data['purpose'] ?? 'login'),
+        'redirect' => (string) ($data['redirect'] ?? ''),
+        'email'    => (string) ($data['email'] ?? ''),
+    ];
+}
+
+function sa_core_otp_clear_pending(): void
+{
+    $token = isset($_COOKIE['sa_otp_chal']) ? sanitize_text_field(wp_unslash((string) $_COOKIE['sa_otp_chal'])) : '';
+    if ($token !== '' && preg_match('/^[a-f0-9]{32}$/', $token)) {
+        delete_transient('sa_otp_chal_' . $token);
+    }
+    $secure = is_ssl() || (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
+    setcookie('sa_otp_chal', '', [
+        'expires'  => time() - YEAR_IN_SECONDS,
+        'path'     => COOKIEPATH ?: '/',
+        'domain'   => COOKIE_DOMAIN ?: '',
+        'secure'   => $secure,
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+    unset($_COOKIE['sa_otp_chal']);
+}
+
+function sa_core_otp_has_pending(): bool
+{
+    return sa_core_otp_get_pending() !== null;
+}
+
+/**
+ * Resolve login/email to a WP_User (customers only for OTP path).
+ */
+function sa_core_otp_find_user(string $login): ?WP_User
+{
+    $login = trim($login);
+    if ($login === '') {
+        return null;
+    }
+    $user = get_user_by('login', $login);
+    if (!$user && is_email($login) && apply_filters('woocommerce_get_username_from_email', true)) {
+        $user = get_user_by('email', sanitize_email($login));
+    }
+    return $user instanceof WP_User ? $user : null;
+}
+
+/**
+ * Create a customer account for email if needed (random password, never emailed).
+ *
+ * @return WP_User|WP_Error
+ */
+function sa_core_otp_ensure_customer(string $email, string $first_name = '')
+{
+    $email = sanitize_email($email);
+    if (!is_email($email)) {
+        return new WP_Error('sa_otp_email', __('Please enter a valid email address.', 'supreme-autoparts-core'));
+    }
+
+    $existing = get_user_by('email', $email);
+    if ($existing instanceof WP_User) {
+        return $existing;
+    }
+
+    if (!function_exists('wc_create_new_customer')) {
+        return new WP_Error('sa_otp_woo', __('Store registration is temporarily unavailable.', 'supreme-autoparts-core'));
+    }
+
+    // Flag so our created_customer hooks skip password emails.
+    $GLOBALS['sa_core_otp_creating'] = true;
+    $password = sa_core_generate_customer_password();
+    $customer_id = wc_create_new_customer($email, '', $password);
+    $password = '';
+    $GLOBALS['sa_core_otp_creating'] = false;
+
+    if (is_wp_error($customer_id)) {
+        return $customer_id;
+    }
+
+    $customer_id = (int) $customer_id;
+    if ($first_name !== '') {
+        $first_name = sanitize_text_field($first_name);
+        update_user_meta($customer_id, 'first_name', $first_name);
+        update_user_meta($customer_id, 'billing_first_name', $first_name);
+        wp_update_user([
+            'ID'           => $customer_id,
+            'display_name' => $first_name,
+        ]);
+    }
+    delete_user_option($customer_id, 'default_password_nag', true);
+
+    $user = get_user_by('id', $customer_id);
+    return $user instanceof WP_User ? $user : new WP_Error('sa_otp_create', __('Could not create account. Please try again.', 'supreme-autoparts-core'));
+}
+
+function sa_core_otp_default_redirect(): string
+{
+    if (function_exists('wc_get_page_permalink')) {
+        return (string) wc_get_page_permalink('myaccount');
+    }
+    return home_url('/');
+}
+
+function sa_core_otp_login_and_redirect(WP_User $user, string $redirect = ''): void
+{
+    wp_set_current_user((int) $user->ID);
+    wp_set_auth_cookie((int) $user->ID, true, is_ssl());
+    if (function_exists('wc_set_customer_auth_cookie')) {
+        wc_set_customer_auth_cookie((int) $user->ID);
+    }
+    do_action('wp_login', $user->user_login, $user);
+
+    sa_core_otp_clear_pending();
+
+    if ($redirect === '') {
+        $redirect = sa_core_otp_default_redirect();
+    }
+    $redirect = wp_validate_redirect($redirect, sa_core_otp_default_redirect());
+    wp_safe_redirect($redirect);
+    exit;
+}
+
+function sa_core_otp_generic_sent_notice(): void
+{
+    wc_add_notice(
+        __('If an account exists for that email, we sent a 6-digit login code. Enter it below.', 'supreme-autoparts-core'),
+        'success'
+    );
+}
+
+function sa_core_otp_verify_url(): string
+{
+    // Always land on My Account so both register + lost-password share one verify UI.
+    $base = function_exists('wc_get_page_permalink')
+        ? (string) wc_get_page_permalink('myaccount')
+        : home_url('/');
+    return add_query_arg('sa_otp', '1', $base);
+}
+
+/**
+ * Safe redirect target from POST (checkout / my-account).
+ */
+function sa_core_otp_redirect_from_request(): string
+{
+    $redirect = '';
+    if (isset($_POST['redirect'])) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        $redirect = esc_url_raw(wp_unslash((string) $_POST['redirect'])); // phpcs:ignore
+    }
+    if ($redirect === '' && isset($_REQUEST['redirect_to'])) { // phpcs:ignore
+        $redirect = esc_url_raw(wp_unslash((string) $_REQUEST['redirect_to'])); // phpcs:ignore
+    }
+    return $redirect !== '' ? $redirect : sa_core_otp_default_redirect();
+}
+
+/**
+ * Lost password / “email me a login code”: customers get OTP; staff keep Woo reset-link.
  */
 add_action('wp_loaded', static function (): void {
     if (!isset($_POST['wc_reset_password'], $_POST['user_login'])) {
@@ -391,29 +751,26 @@ add_action('wp_loaded', static function (): void {
         return;
     }
 
-    // Remove core handler so we fully own the customer path.
     remove_action('wp_loaded', ['WC_Form_Handler', 'process_lost_password'], 20);
 
-    $login = sanitize_user(wp_unslash((string) $_POST['user_login'])); // phpcs:ignore
+    $login = trim((string) wp_unslash($_POST['user_login'])); // phpcs:ignore
     if ($login === '') {
-        // Allow empty to fall through to a notice via a soft re-add.
         add_action('wp_loaded', ['WC_Form_Handler', 'process_lost_password'], 20);
         return;
     }
 
-    $user = get_user_by('login', $login);
-    if (!$user && is_email($login) && apply_filters('woocommerce_get_username_from_email', true)) {
-        $user = get_user_by('email', $login);
-    }
+    $user = sa_core_otp_find_user($login);
 
+    // Enumeration-safe: always show the same success path when we cannot send OTP.
     if (!$user instanceof WP_User) {
-        wc_add_notice(__('Invalid username or email.', 'supreme-autoparts-core'), 'error');
-        return;
+        sa_core_otp_generic_sent_notice();
+        // No pending challenge — still redirect to OTP screen with a soft message.
+        wp_safe_redirect(sa_core_otp_verify_url());
+        exit;
     }
 
-    // Staff: fall back to Woo's reset-link email (do not email plaintext admin passwords).
-    // Core handler already removed — call retrieve_password once (do not re-add the action).
     if (!sa_core_user_is_customer_for_password_mail($user)) {
+        // Staff: Woo reset-link email (never OTP plaintext for privileged users).
         $success = WC_Shortcode_My_Account::retrieve_password();
         if ($success) {
             wp_safe_redirect(add_query_arg('reset-link-sent', 'true', wc_get_account_endpoint_url('lost-password')));
@@ -422,139 +779,234 @@ add_action('wp_loaded', static function (): void {
         return;
     }
 
-    $allow = apply_filters('allow_password_reset', true, $user->ID);
-    if (!$allow || is_wp_error($allow)) {
-        $msg = is_wp_error($allow) ? $allow->get_error_message() : __('Password reset is not allowed for this user', 'supreme-autoparts-core');
-        wc_add_notice($msg, 'error');
-        return;
+    $issued = sa_core_otp_issue_for_user($user);
+    if (is_wp_error($issued)) {
+        // Cooldown / rate — show real error; mail failure too.
+        if (in_array($issued->get_error_code(), ['sa_otp_cooldown', 'sa_otp_rate', 'sa_otp_mail'], true)) {
+            wc_add_notice($issued->get_error_message(), 'error');
+            return;
+        }
+        sa_core_otp_generic_sent_notice();
+        wp_safe_redirect(sa_core_otp_verify_url());
+        exit;
     }
 
-    $password = sa_core_generate_customer_password();
-    wp_set_password($password, (int) $user->ID);
-
-    // Refresh user object after password change (invalidates sessions).
-    $user = get_user_by('id', (int) $user->ID);
-    if (!$user instanceof WP_User) {
-        wc_add_notice(__('Could not update password. Please try again.', 'supreme-autoparts-core'), 'error');
-        return;
-    }
-
-    $sent = sa_core_email_customer_password($user, $password, 'reset');
-    // Clear plaintext from memory as best-effort.
-    $password = '';
-
-    if (!$sent) {
-        wc_add_notice(
-            __('Your password was reset but the email could not be sent. Please contact support at calvin@supremeautoparts.co.ke.', 'supreme-autoparts-core'),
-            'error'
-        );
-        return;
-    }
-
-    wp_safe_redirect(add_query_arg('reset-link-sent', 'true', wc_get_account_endpoint_url('lost-password')));
+    sa_core_otp_set_pending([
+        'user_id'  => (int) $user->ID,
+        'purpose'  => 'login',
+        'redirect' => sa_core_otp_redirect_from_request(),
+        'email'    => (string) $user->user_email,
+    ]);
+    sa_core_otp_generic_sent_notice();
+    wp_safe_redirect(sa_core_otp_verify_url());
     exit;
 }, 19);
 
 /**
- * Friendly notice after we emailed a new password.
+ * Registration → OTP login (create customer if new; existing email treated as login-code).
  */
-add_action('template_redirect', static function (): void {
-    // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-    if (empty($_GET['password-sent'])) {
+add_action('wp_loaded', static function (): void {
+    if (!isset($_POST['register'], $_POST['email'])) {
         return;
     }
-    // Alias → Woo confirmation screen (hides the form).
-    wp_safe_redirect(add_query_arg('reset-link-sent', 'true', wc_get_account_endpoint_url('lost-password')));
-    exit;
-}, 5);
+    // Only own the My Account / Woo register form (has Woo nonce).
+    if (empty($_POST['woocommerce-register-nonce']) && empty($_POST['_wpnonce'])) {
+        return;
+    }
+    if (!class_exists('WooCommerce') || !class_exists('WC_Form_Handler')) {
+        return;
+    }
 
-/** Confirmation copy when reset-link-sent (our email-a-password flow). */
-add_filter('woocommerce_lost_password_confirmation_message', static function (): string {
-    return __('A new secure password has been sent to the email address on file for your account. It may take a few minutes to arrive. Use that password to log in, then you can change it under Account details.', 'supreme-autoparts-core');
-});
+    $nonce_value = '';
+    if (isset($_REQUEST['woocommerce-register-nonce'])) {
+        $nonce_value = (string) wp_unslash($_REQUEST['woocommerce-register-nonce']); // phpcs:ignore
+    } elseif (isset($_REQUEST['_wpnonce'])) {
+        $nonce_value = (string) wp_unslash($_REQUEST['_wpnonce']); // phpcs:ignore
+    }
+    if ($nonce_value === '' || !wp_verify_nonce($nonce_value, 'woocommerce-register')) {
+        return;
+    }
+
+    remove_action('wp_loaded', ['WC_Form_Handler', 'process_registration'], 20);
+
+    $email = sanitize_email(wp_unslash((string) $_POST['email'])); // phpcs:ignore
+    $first = isset($_POST['first_name']) ? sanitize_text_field(wp_unslash((string) $_POST['first_name'])) : ''; // phpcs:ignore
+
+    if (!is_email($email)) {
+        wc_add_notice(__('Please enter a valid email address.', 'supreme-autoparts-core'), 'error');
+        return;
+    }
+
+    // Privacy / terms if Woo requires them on register.
+    if ('yes' === get_option('woocommerce_registration_privacy_policy_check', 'no') && empty($_POST['privacy_policy_reg'])) { // phpcs:ignore
+        wc_add_notice(__('Please read and accept the privacy policy.', 'supreme-autoparts-core'), 'error');
+        return;
+    }
+
+    $existing = get_user_by('email', $email);
+    if ($existing instanceof WP_User && !sa_core_user_is_customer_for_password_mail($existing)) {
+        // Staff email on register form — do not OTP; generic message (no leak).
+        sa_core_otp_generic_sent_notice();
+        wp_safe_redirect(sa_core_otp_verify_url());
+        exit;
+    }
+
+    $user = sa_core_otp_ensure_customer($email, $first);
+    if (is_wp_error($user)) {
+        // Duplicate username etc. — still avoid leaking; show generic if email-related.
+        $code = $user->get_error_code();
+        if (in_array($code, ['registration-error-email-exists', 'existing_user_email'], true)) {
+            $again = get_user_by('email', $email);
+            if ($again instanceof WP_User && sa_core_user_is_customer_for_password_mail($again)) {
+                $user = $again;
+            } else {
+                sa_core_otp_generic_sent_notice();
+                wp_safe_redirect(sa_core_otp_verify_url());
+                exit;
+            }
+        } else {
+            wc_add_notice($user->get_error_message(), 'error');
+            return;
+        }
+    }
+
+    if (!$user instanceof WP_User || !sa_core_user_is_customer_for_password_mail($user)) {
+        sa_core_otp_generic_sent_notice();
+        wp_safe_redirect(sa_core_otp_verify_url());
+        exit;
+    }
+
+    $issued = sa_core_otp_issue_for_user($user);
+    if (is_wp_error($issued)) {
+        if (in_array($issued->get_error_code(), ['sa_otp_cooldown', 'sa_otp_rate', 'sa_otp_mail'], true)) {
+            wc_add_notice($issued->get_error_message(), 'error');
+            return;
+        }
+        sa_core_otp_generic_sent_notice();
+        wp_safe_redirect(sa_core_otp_verify_url());
+        exit;
+    }
+
+    sa_core_otp_set_pending([
+        'user_id'  => (int) $user->ID,
+        'purpose'  => 'register',
+        'redirect' => sa_core_otp_redirect_from_request(),
+        'email'    => (string) $user->user_email,
+    ]);
+    sa_core_otp_generic_sent_notice();
+    wp_safe_redirect(sa_core_otp_verify_url());
+    exit;
+}, 19);
 
 /**
- * Register path: re-set an email-safe password and email it via our plain Brevo mailer.
- * Woo 9+/11 fires customer_new_account via deferred hook
- * woocommerce_created_customer_notification (not the Email::trigger on created_customer),
- * and that notification still carries the *pre-insert* password — which would no longer
- * match after wp_set_password. Mark the user so the notification wrapper strips it.
- * Staff reset-link flow is untouched (lost-password handler above).
+ * Verify OTP + optional resend.
+ */
+add_action('wp_loaded', static function (): void {
+    if (!isset($_POST['sa_otp_action'])) {
+        return;
+    }
+    $action = sanitize_key((string) wp_unslash($_POST['sa_otp_action'])); // phpcs:ignore
+    if (!in_array($action, ['verify', 'resend'], true)) {
+        return;
+    }
+
+    $nonce = isset($_POST['sa_otp_nonce']) ? (string) wp_unslash($_POST['sa_otp_nonce']) : ''; // phpcs:ignore
+    if ($nonce === '' || !wp_verify_nonce($nonce, 'sa_otp_verify')) {
+        wc_add_notice(__('Something went wrong. Please try again.', 'supreme-autoparts-core'), 'error');
+        return;
+    }
+
+    $pending = sa_core_otp_get_pending();
+    if ($pending === null) {
+        wc_add_notice(__('Your login code session expired. Request a new code.', 'supreme-autoparts-core'), 'error');
+        return;
+    }
+
+    $user = get_user_by('id', (int) $pending['user_id']);
+    if (!$user instanceof WP_User || !sa_core_user_is_customer_for_password_mail($user)) {
+        sa_core_otp_clear_pending();
+        wc_add_notice(__('Your login code session expired. Request a new code.', 'supreme-autoparts-core'), 'error');
+        return;
+    }
+
+    if ($action === 'resend') {
+        $issued = sa_core_otp_issue_for_user($user);
+        if (is_wp_error($issued)) {
+            wc_add_notice($issued->get_error_message(), 'error');
+            return;
+        }
+        // Refresh challenge TTL.
+        sa_core_otp_set_pending($pending);
+        wc_add_notice(__('If an account exists, we sent a new login code.', 'supreme-autoparts-core'), 'success');
+        wp_safe_redirect(sa_core_otp_verify_url());
+        exit;
+    }
+
+    $code = isset($_POST['sa_otp_code']) ? (string) wp_unslash($_POST['sa_otp_code']) : ''; // phpcs:ignore
+    $ok = sa_core_otp_verify((int) $user->ID, $code);
+    if (is_wp_error($ok)) {
+        wc_add_notice($ok->get_error_message(), 'error');
+        return;
+    }
+
+    sa_core_otp_login_and_redirect($user, (string) $pending['redirect']);
+}, 18);
+
+/**
+ * Skip Woo password-in-welcome when we are creating via OTP register.
  */
 add_action('woocommerce_created_customer', static function (int $customer_id, $data = [], $password_generated = false): void {
-    if (!$password_generated || $customer_id <= 0) {
+    if (empty($GLOBALS['sa_core_otp_creating']) || $customer_id <= 0) {
         return;
     }
-
     delete_user_option($customer_id, 'default_password_nag', true);
-
-    $user = get_user_by('id', $customer_id);
-    if (!$user instanceof WP_User || !sa_core_user_is_customer_for_password_mail($user)) {
-        return;
-    }
-
-    $password = sa_core_generate_customer_password();
-    wp_set_password($password, $customer_id);
-
-    $user = get_user_by('id', $customer_id);
-    if (!$user instanceof WP_User) {
-        return;
-    }
-
-    $sent = sa_core_email_customer_password($user, $password, 'new');
-    $password = '';
-
-    // Flag for notification wrapper (sync or deferred) — strip Woo password body.
-    if ($sent) {
-        set_transient('sa_core_pw_mailed_' . $customer_id, '1', 15 * MINUTE_IN_SECONDS);
-    }
-
-    unset($data);
+    set_transient('sa_core_otp_welcome_' . $customer_id, '1', 15 * MINUTE_IN_SECONDS);
+    unset($data, $password_generated);
 }, 5, 3);
 
-/**
- * Woo queues woocommerce_created_customer → *_notification with the original user_pass.
- * If we already emailed a freshly re-set password, force welcome-without-password.
- */
 add_action('woocommerce_created_customer_notification', static function ($customer_id, $new_customer_data = [], $password_generated = false): void {
     $customer_id = (int) $customer_id;
-    if ($customer_id <= 0 || !get_transient('sa_core_pw_mailed_' . $customer_id)) {
+    if ($customer_id <= 0 || !get_transient('sa_core_otp_welcome_' . $customer_id)) {
         return;
     }
-
     if (!function_exists('WC') || !WC()->mailer()) {
         return;
     }
-
     $mailer = WC()->mailer();
     remove_action('woocommerce_created_customer_notification', [$mailer, 'customer_new_account'], 10);
-
     $emails = $mailer->get_emails();
     if (isset($emails['WC_Email_Customer_New_Account']) && is_object($emails['WC_Email_Customer_New_Account'])) {
-        // Welcome only — password already sent as plain text by sa_core_email_customer_password.
+        // Welcome only — login code already emailed separately.
         $emails['WC_Email_Customer_New_Account']->trigger($customer_id, '', false);
     }
-
-    delete_transient('sa_core_pw_mailed_' . $customer_id);
+    delete_transient('sa_core_otp_welcome_' . $customer_id);
     unset($new_customer_data, $password_generated);
 }, 1, 3);
 
-/**
- * Also rewrite Woo's default "reset link sent" copy if it still appears.
- */
+/** Confirmation copy if Woo reset-link-sent still appears (staff path). */
+add_filter('woocommerce_lost_password_confirmation_message', static function (string $message): string {
+    // Customers use OTP; staff still get reset-link wording from Woo when that path is used.
+    if (sa_core_otp_has_pending()) {
+        return __('We emailed a 6-digit login code. Enter it on the next screen to sign in.', 'supreme-autoparts-core');
+    }
+    return $message;
+});
+
 add_filter('woocommerce_add_success', static function ($message) {
     if (!is_string($message)) {
         return $message;
     }
     if (stripos($message, 'password reset email') !== false || stripos($message, 'reset link') !== false) {
-        return __('Check your email for a new password. It works right away — then you can change it under Account details.', 'supreme-autoparts-core');
+        return __('If an account exists, check your email for a login code or reset link.', 'supreme-autoparts-core');
+    }
+    if (stripos($message, 'new password') !== false && stripos($message, 'sent') !== false) {
+        return __('If an account exists, we emailed a 6-digit login code.', 'supreme-autoparts-core');
     }
     return $message;
 }, 20);
 
 /**
- * Checkout / registration: when Woo auto-generates a password, seed an email-safe one
- * before wp_insert_user. woocommerce_created_customer then re-sets + emails the final copy.
+ * Checkout / registration data: keep role=customer; random password is never emailed.
  */
 add_filter('woocommerce_new_customer_data', static function (array $data): array {
     $data['role'] = 'customer';
@@ -563,3 +1015,112 @@ add_filter('woocommerce_new_customer_data', static function (array $data): array
     }
     return $data;
 }, 5);
+
+/**
+ * Render OTP verify form (used by theme templates).
+ */
+function sa_core_render_otp_form(): void
+{
+    $pending = sa_core_otp_get_pending();
+    $email_hint = '';
+    if ($pending && $pending['email'] !== '') {
+        $email = $pending['email'];
+        $at = strpos($email, '@');
+        if ($at !== false && $at > 1) {
+            $email_hint = substr($email, 0, 1) . str_repeat('•', min(6, $at - 1)) . substr($email, $at);
+        }
+    }
+    $mins = max(1, (int) round(sa_core_otp_ttl() / 60));
+    ?>
+    <div class="sa-account-auth sa-account-auth--otp" id="sa_otp_login">
+      <section class="sa-account-auth__panel">
+        <header class="sa-account-panel__head">
+          <h2><?php esc_html_e('Enter login code', 'supreme-autoparts-core'); ?></h2>
+          <p class="sa-account-panel__lead">
+            <?php
+            if ($email_hint !== '') {
+                printf(
+                    /* translators: 1: masked email 2: minutes */
+                    esc_html__('We sent a 6-digit code to %1$s. It expires in about %2$d minutes.', 'supreme-autoparts-core'),
+                    esc_html($email_hint),
+                    $mins
+                );
+            } else {
+                printf(
+                    /* translators: %d: minutes */
+                    esc_html__('Enter the 6-digit code we emailed you. It expires in about %d minutes.', 'supreme-autoparts-core'),
+                    $mins
+                );
+            }
+            ?>
+          </p>
+        </header>
+
+        <form method="post" class="woocommerce-form sa-form sa-otp-form" novalidate>
+          <?php wp_nonce_field('sa_otp_verify', 'sa_otp_nonce'); ?>
+          <input type="hidden" name="sa_otp_action" value="verify" />
+
+          <p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
+            <label for="sa_otp_code"><?php esc_html_e('Login code', 'supreme-autoparts-core'); ?>&nbsp;<span class="required">*</span></label>
+            <input
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              maxlength="6"
+              autocomplete="one-time-code"
+              class="woocommerce-Input woocommerce-Input--text input-text sa-otp-input"
+              name="sa_otp_code"
+              id="sa_otp_code"
+              required
+            />
+          </p>
+
+          <p class="woocommerce-form-row form-row">
+            <button type="submit" class="woocommerce-Button button sa-btn<?php echo esc_attr(function_exists('wc_wp_theme_get_element_class_name') && wc_wp_theme_get_element_class_name('button') ? ' ' . wc_wp_theme_get_element_class_name('button') : ''); ?>">
+              <?php esc_html_e('Verify and log in', 'supreme-autoparts-core'); ?>
+            </button>
+          </p>
+        </form>
+
+        <form method="post" class="sa-form sa-otp-resend" style="margin-top:0.75rem;">
+          <?php wp_nonce_field('sa_otp_verify', 'sa_otp_nonce'); ?>
+          <input type="hidden" name="sa_otp_action" value="resend" />
+          <button type="submit" class="button sa-btn sa-btn--outline<?php echo esc_attr(function_exists('wc_wp_theme_get_element_class_name') && wc_wp_theme_get_element_class_name('button') ? ' ' . wc_wp_theme_get_element_class_name('button') : ''); ?>">
+            <?php esc_html_e('Resend code', 'supreme-autoparts-core'); ?>
+          </button>
+          <a class="sa-otp-back" href="<?php echo esc_url(function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : home_url('/')); ?>" style="margin-left:0.75rem;">
+            <?php esc_html_e('Back to log in', 'supreme-autoparts-core'); ?>
+          </a>
+        </form>
+      </section>
+    </div>
+    <?php
+}
+
+/**
+ * On My Account when ?sa_otp=1 (or pending cookie), show OTP form instead of login/register.
+ */
+add_action('woocommerce_before_customer_login_form', static function (): void {
+    // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+    $want = !empty($_GET['sa_otp']) || sa_core_otp_has_pending();
+    if (!$want || is_user_logged_in()) {
+        return;
+    }
+    if (!sa_core_otp_has_pending()) {
+        // Arrived with ?sa_otp=1 but no cookie — ask them to request again.
+        echo '<div class="sa-account-auth sa-account-auth--otp"><section class="sa-account-auth__panel">';
+        echo '<p>' . esc_html__('Request a login code with your email first.', 'supreme-autoparts-core') . '</p>';
+        echo '<p><a class="sa-btn" href="' . esc_url(wp_lostpassword_url()) . '">' . esc_html__('Email me a login code', 'supreme-autoparts-core') . '</a></p>';
+        echo '</section></div>';
+        // Hide default login/register markup by buffering? Simpler: set a flag templates check.
+        $GLOBALS['sa_core_otp_form_shown'] = true;
+        return;
+    }
+    sa_core_render_otp_form();
+    $GLOBALS['sa_core_otp_form_shown'] = true;
+}, 5);
+
+function sa_core_otp_form_shown(): bool
+{
+    return !empty($GLOBALS['sa_core_otp_form_shown']);
+}

@@ -1,15 +1,15 @@
 <?php
 /**
- * Lost password confirmation — we emailed a new working password.
+ * Lost password confirmation — login code or staff reset link sent.
  *
  * @package Supreme_Autoparts
- * @version 1.4.18
+ * @version 1.4.25
  */
 
 defined('ABSPATH') || exit;
 
 wc_print_notice(
-    esc_html__('Check your email for a new password. It works right away.', 'supreme-autoparts'),
+    esc_html__('If an account exists, check your email for a login code (or reset link for staff accounts).', 'supreme-autoparts'),
     'success'
 );
 ?>
@@ -20,7 +20,7 @@ wc_print_notice(
     apply_filters(
         'woocommerce_lost_password_confirmation_message',
         esc_html__(
-            'A new secure password has been sent to the email address on file for your account. It may take a few minutes to arrive. Use that password to log in, then you can change it under Account details.',
+            'We emailed a login code to the address on file when the account is a customer account. Enter that code on the login screen. Staff accounts receive a password-reset link instead.',
             'supreme-autoparts'
         )
     )
