@@ -549,7 +549,7 @@ add_action('template_redirect', static function (): void {
 
 /** Confirmation copy when reset-link-sent (our email-a-password flow). */
 add_filter('woocommerce_lost_password_confirmation_message', static function (): string {
-    return __('A new secure password has been emailed to the address on your account. It may take a few minutes — check inbox and spam. Use that password on the Log in page, then you can change it under Account details.', 'supreme-autoparts-core');
+    return __('A new secure password has been emailed to the address on your account. It may take a few minutes — check inbox and spam. Use that password on the Log in page. After you log in, you stay signed in on this browser until you tap Log out. You can change the password under Account details.', 'supreme-autoparts-core');
 });
 
 /**
