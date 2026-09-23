@@ -11,9 +11,32 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_THEME_VERSION', '1.4.21');
+define('SA_THEME_VERSION', '1.4.22');
 define('SA_THEME_DIR', get_template_directory());
 define('SA_THEME_URI', get_template_directory_uri());
+
+/** One-shot per theme version: pin Woo email header logo URL in options. */
+add_action('init', static function (): void {
+    $flag = 'sa_email_logo_pin_' . SA_THEME_VERSION;
+    if (get_option($flag) === '1') {
+        return;
+    }
+    $logo = '';
+    if (defined('SA_THEME_DIR') && defined('SA_THEME_URI')) {
+        foreach (['logo-light.jpg', 'logo-light.png'] as $f) {
+            if (is_readable(SA_THEME_DIR . '/assets/' . $f)) {
+                $logo = set_url_scheme(SA_THEME_URI . '/assets/' . $f, 'https');
+                break;
+            }
+        }
+    }
+    if ($logo !== '') {
+        update_option('woocommerce_email_header_image', $logo);
+        update_option('sa_email_logo_url', $logo);
+    }
+    update_option($flag, '1', false);
+}, 5);
+
 
 require_once SA_THEME_DIR . '/inc/setup.php';
 require_once SA_THEME_DIR . '/inc/assets.php';

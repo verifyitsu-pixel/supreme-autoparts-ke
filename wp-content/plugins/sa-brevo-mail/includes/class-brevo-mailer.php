@@ -64,11 +64,11 @@ class SA_Brevo_Mailer
             'tags'    => self::infer_tags($subject),
         ];
         if ($is_html) {
-            $payload['htmlContent'] = $message;
+            $payload['htmlContent'] = self::ensure_branded_html($message);
             $payload['textContent'] = wp_strip_all_tags($message);
         } else {
             $payload['textContent'] = $message;
-            $payload['htmlContent'] = nl2br(esc_html($message));
+            $payload['htmlContent'] = self::ensure_branded_html(nl2br(esc_html($message)));
         }
 
         $cc = self::parse_header_addresses($headers, 'cc');
@@ -104,6 +104,60 @@ class SA_Brevo_Mailer
 
         // Fall through to PHPMailer/SMTP if API failed.
         return null;
+    }
+
+
+    /**
+     * Guarantee every outbound HTML email shows the store logo in a header strip.
+     * Woo templates already include header_image; this covers plain wp_mail / password emails too.
+     */
+    private static function ensure_branded_html(string $html): string
+    {
+        if ($html === '') {
+            return $html;
+        }
+        // Already has our logo or Woo header image block — leave alone.
+        if (stripos($html, 'logo-light.') !== false
+            || stripos($html, 'sa-email-brand-header') !== false
+            || stripos($html, 'template_header_image') !== false
+        ) {
+            return $html;
+        }
+
+        $logo = '';
+        if (function_exists('sa_theme_logo_url')) {
+            $logo = (string) sa_theme_logo_url(true);
+        }
+        if ($logo === '' && defined('SA_THEME_URI') && defined('SA_THEME_DIR')) {
+            foreach (['logo-light.jpg', 'logo-light.png', 'logo.png'] as $f) {
+                $disk = SA_THEME_DIR . '/assets/' . $f;
+                if (is_readable($disk)) {
+                    $logo = SA_THEME_URI . '/assets/' . $f;
+                    break;
+                }
+            }
+        }
+        if ($logo === '') {
+            $logo = (string) get_option('sa_email_logo_url', '');
+        }
+        if ($logo === '') {
+            $logo = (string) get_option('woocommerce_email_header_image', '');
+        }
+        if ($logo === '' || !filter_var($logo, FILTER_VALIDATE_URL)) {
+            $logo = 'https://www.supremeautoparts.co.ke/wp-content/themes/supreme-autoparts/assets/logo-light.jpg';
+        }
+        $logo = set_url_scheme($logo, 'https');
+        $alt  = esc_attr(get_bloginfo('name') ?: 'Supreme Autoparts');
+        $header = '<div class="sa-email-brand-header" style="text-align:left;padding:16px 0 8px 0;border-bottom:1px solid #e4e4e7;margin-bottom:16px;">'
+            . '<img src="' . esc_url($logo) . '" alt="' . $alt . '" width="200" height="60" '
+            . 'style="display:block;max-height:64px;width:auto;max-width:220px;border:0;outline:none;text-decoration:none;" />'
+            . '</div>';
+
+        if (preg_match('/<body[^>]*>/i', $html, $m, PREG_OFFSET_CAPTURE)) {
+            $pos = $m[0][1] + strlen($m[0][0]);
+            return substr($html, 0, $pos) . $header . substr($html, $pos);
+        }
+        return $header . $html;
     }
 
     public static function configure_phpmailer($phpmailer): void
