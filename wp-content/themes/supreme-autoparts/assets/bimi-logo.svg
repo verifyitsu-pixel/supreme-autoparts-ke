@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny-ps" viewBox="0 0 512 512" width="512" height="512">
+  <title>Supreme Autoparts</title>
+  <!-- BIMI SVG Tiny PS: square mark, solid bg, no scripts/external refs -->
+  <rect width="512" height="512" fill="#0B0B0D"/>
+  <!-- Ground accent line -->
+  <rect x="96" y="360" width="140" height="14" fill="#F5A623"/>
+  <rect x="276" y="360" width="140" height="14" fill="#F5A623"/>
+  <!-- Sports-car silhouette (simplified for BIMI Tiny PS) -->
+  <path fill="#F5A623" d="M72 300 L92 268 L140 250 L190 220 L280 210 L360 220 L420 250 L448 268 L460 300 L448 318 L72 318 Z"/>
+  <!-- Cabin / window cut -->
+  <path fill="#0B0B0D" d="M196 248 L250 228 L320 232 L352 252 L300 258 L210 258 Z"/>
+  <!-- Front lip / splitter -->
+  <path fill="#F5A623" d="M72 300 L62 312 L72 318 L92 312 Z"/>
+  <!-- Rear spoiler -->
+  <path fill="#F5A623" d="M400 230 L448 224 L452 236 L408 244 Z"/>
+  <!-- Wheels (dark cutouts with hubs) -->
+  <circle cx="168" cy="318" r="36" fill="#0B0B0D"/>
+  <circle cx="168" cy="318" r="14" fill="#F5A623"/>
+  <circle cx="360" cy="318" r="36" fill="#0B0B0D"/>
+  <circle cx="360" cy="318" r="14" fill="#F5A623"/>
+</svg>

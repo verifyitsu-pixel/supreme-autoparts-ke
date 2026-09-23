@@ -136,6 +136,12 @@ add_filter('woocommerce_create_account_default_checked', static fn (): bool => f
  * WooCommerce transactional email branding (light logo on light header).
  */
 add_filter('woocommerce_email_header_image', static function ($url) {
+    // Always prefer a stable theme-hosted logo so every transactional email shows brand.
+    foreach (['logo-light.png', 'logo-light.jpg', 'logo.png', 'icon.png'] as $f) {
+        if (is_readable(SA_THEME_DIR . '/assets/' . $f)) {
+            return set_url_scheme(SA_THEME_URI . '/assets/' . $f, 'https');
+        }
+    }
     $forced = (string) get_option('sa_email_logo_url', '');
     if ($forced !== '' && filter_var($forced, FILTER_VALIDATE_URL)) {
         return set_url_scheme($forced, 'https');
@@ -146,11 +152,6 @@ add_filter('woocommerce_email_header_image', static function ($url) {
     }
     if (function_exists('sa_theme_logo_url')) {
         return set_url_scheme(sa_theme_logo_url(true), 'https');
-    }
-    foreach (['logo-light.jpg', 'logo-light.png'] as $f) {
-        if (is_readable(SA_THEME_DIR . '/assets/' . $f)) {
-            return SA_THEME_URI . '/assets/' . $f;
-        }
     }
     return $url;
 });
