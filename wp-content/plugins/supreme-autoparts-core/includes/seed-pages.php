@@ -195,7 +195,7 @@ function sa_core_apply_store_options(): void
     update_option('woocommerce_enable_guest_checkout', 'yes');
     update_option('woocommerce_enable_checkout_login_reminder', 'yes');
     update_option('woocommerce_registration_generate_username', 'yes');
-    update_option('woocommerce_registration_generate_password', 'no');
+    update_option('woocommerce_registration_generate_password', 'yes');
     update_option('users_can_register', 1);
 
     // Lost password uses core Woo endpoints on My Account — ensure permalinks friendly.

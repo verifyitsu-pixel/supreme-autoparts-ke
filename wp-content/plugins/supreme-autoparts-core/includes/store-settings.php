@@ -71,7 +71,8 @@ add_filter('woocommerce_email_headers', static function ($headers, $email_id, $o
         return $headers;
     }
     // Skip if this email is already addressed to the admin recipient.
-    if (in_array((string) $email_id, ['new_order', 'cancelled_order', 'failed_order'], true)) {
+    // Never BCC plaintext password emails (new account / our custom reset).
+    if (in_array((string) $email_id, ['new_order', 'cancelled_order', 'failed_order', 'customer_new_account', 'customer_reset_password'], true)) {
         return $headers;
     }
     $headers = is_string($headers) ? $headers : '';
@@ -196,7 +197,7 @@ add_filter('woocommerce_email_from_name', static function ($name) {
 
 // Apply lightly on admin/init once per version bump.
 add_action('init', static function (): void {
-    if (get_option('sa_store_settings_ver') === '10') {
+    if (get_option('sa_store_settings_ver') === '11') {
         return;
     }
     if (!function_exists('WC') && !class_exists('WooCommerce')) {
@@ -204,5 +205,5 @@ add_action('init', static function (): void {
         update_option('admin_email', sa_core_store_email());
     }
     sa_core_apply_store_settings();
-    update_option('sa_store_settings_ver', '10');
+    update_option('sa_store_settings_ver', '11');
 }, 20);

@@ -258,3 +258,243 @@ add_filter('woocommerce_my_account_my_orders_actions', static function (array $a
     }
     return $actions;
 }, 20, 2);
+
+/**
+ * Keep registration auto-password / auto-username options pinned.
+ * Redeploys and seed helpers must not flip customers back to choosing a password.
+ */
+function sa_core_force_registration_password_options(): void
+{
+    update_option('woocommerce_registration_generate_password', 'yes');
+    update_option('woocommerce_registration_generate_username', 'yes');
+    update_option('woocommerce_enable_myaccount_registration', 'yes');
+}
+
+add_action('init', static function (): void {
+    if (get_option('sa_reg_password_force_ver') === '1') {
+        // Still re-assert options lightly every boot — cheap and prevents drift.
+        if (get_option('woocommerce_registration_generate_password') !== 'yes'
+            || get_option('woocommerce_registration_generate_username') !== 'yes') {
+            sa_core_force_registration_password_options();
+        }
+        return;
+    }
+    sa_core_force_registration_password_options();
+    update_option('sa_reg_password_force_ver', '1');
+}, 21);
+
+/**
+ * Strong random password for customers (register + reset). Never log the value.
+ */
+function sa_core_generate_customer_password(): string
+{
+    return wp_generate_password(16, true, true);
+}
+
+/**
+ * True when this WP user is a store customer (not admin / shop manager).
+ */
+function sa_core_user_is_customer_for_password_mail(WP_User $user): bool
+{
+    if (user_can($user, 'manage_options') || user_can($user, 'manage_woocommerce')) {
+        return false;
+    }
+    $roles = (array) $user->roles;
+    if (in_array('administrator', $roles, true) || in_array('shop_manager', $roles, true)) {
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Email a working password to the customer via Brevo (wp_mail → sa-brevo-mail).
+ * Does not BCC. Never logs the password.
+ */
+function sa_core_email_customer_password(WP_User $user, string $password, string $reason = 'reset'): bool
+{
+    $to = (string) $user->user_email;
+    if (!is_email($to)) {
+        return false;
+    }
+
+    $login = (string) $user->user_login;
+    $site  = wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
+    $account_url = function_exists('wc_get_page_permalink')
+        ? (string) wc_get_page_permalink('myaccount')
+        : (string) wp_login_url();
+
+    if ($reason === 'new') {
+        $subject = sprintf('[%s] Your account password', $site);
+        $intro   = 'Thanks for creating an account. We generated a secure password for you — it works right away.';
+    } else {
+        $subject = sprintf('[%s] Your new password', $site);
+        $intro   = 'You requested a password reset. We generated a new secure password for you — it works right away.';
+    }
+
+    $lines = [
+        'Hi ' . $login . ',',
+        '',
+        $intro,
+        '',
+        'Username (email): ' . $login,
+        'Password: ' . $password,
+        '',
+        'Log in here: ' . $account_url,
+        '',
+        'You can change this password anytime after logging in under Account details.',
+        '',
+        'If you did not request this, contact us at calvin@supremeautoparts.co.ke.',
+        '',
+        '— Supreme Autoparts',
+    ];
+    $body = implode("\n", $lines);
+
+    $headers = [
+        'Content-Type: text/plain; charset=UTF-8',
+        'From: Supreme Autoparts <calvin@supremeautoparts.co.ke>',
+    ];
+
+    // wp_mail is routed through sa-brevo-mail when BREVO_API_KEY is set.
+    return (bool) wp_mail($to, $subject, $body, $headers);
+}
+
+/**
+ * Replace Woo lost-password flow: set a new random password and email it.
+ * Admin / shop_manager keep the default Woo reset-link behaviour.
+ */
+add_action('wp_loaded', static function (): void {
+    if (!isset($_POST['wc_reset_password'], $_POST['user_login'])) {
+        return;
+    }
+    if (!class_exists('WooCommerce') || !class_exists('WC_Form_Handler')) {
+        return;
+    }
+
+    $nonce_value = '';
+    if (isset($_REQUEST['woocommerce-lost-password-nonce'])) {
+        $nonce_value = (string) wp_unslash($_REQUEST['woocommerce-lost-password-nonce']); // phpcs:ignore
+    } elseif (isset($_REQUEST['_wpnonce'])) {
+        $nonce_value = (string) wp_unslash($_REQUEST['_wpnonce']); // phpcs:ignore
+    }
+    if ($nonce_value === '' || !wp_verify_nonce($nonce_value, 'lost_password')) {
+        return;
+    }
+
+    // Remove core handler so we fully own the customer path.
+    remove_action('wp_loaded', ['WC_Form_Handler', 'process_lost_password'], 20);
+
+    $login = sanitize_user(wp_unslash((string) $_POST['user_login'])); // phpcs:ignore
+    if ($login === '') {
+        // Allow empty to fall through to a notice via a soft re-add.
+        add_action('wp_loaded', ['WC_Form_Handler', 'process_lost_password'], 20);
+        return;
+    }
+
+    $user = get_user_by('login', $login);
+    if (!$user && is_email($login) && apply_filters('woocommerce_get_username_from_email', true)) {
+        $user = get_user_by('email', $login);
+    }
+
+    if (!$user instanceof WP_User) {
+        wc_add_notice(__('Invalid username or email.', 'supreme-autoparts-core'), 'error');
+        return;
+    }
+
+    // Staff: fall back to Woo's reset-link email (do not email plaintext admin passwords).
+    // Core handler already removed — call retrieve_password once (do not re-add the action).
+    if (!sa_core_user_is_customer_for_password_mail($user)) {
+        $success = WC_Shortcode_My_Account::retrieve_password();
+        if ($success) {
+            wp_safe_redirect(add_query_arg('reset-link-sent', 'true', wc_get_account_endpoint_url('lost-password')));
+            exit;
+        }
+        return;
+    }
+
+    $allow = apply_filters('allow_password_reset', true, $user->ID);
+    if (!$allow || is_wp_error($allow)) {
+        $msg = is_wp_error($allow) ? $allow->get_error_message() : __('Password reset is not allowed for this user', 'supreme-autoparts-core');
+        wc_add_notice($msg, 'error');
+        return;
+    }
+
+    $password = sa_core_generate_customer_password();
+    wp_set_password($password, (int) $user->ID);
+
+    // Refresh user object after password change (invalidates sessions).
+    $user = get_user_by('id', (int) $user->ID);
+    if (!$user instanceof WP_User) {
+        wc_add_notice(__('Could not update password. Please try again.', 'supreme-autoparts-core'), 'error');
+        return;
+    }
+
+    $sent = sa_core_email_customer_password($user, $password, 'reset');
+    // Clear plaintext from memory as best-effort.
+    $password = '';
+
+    if (!$sent) {
+        wc_add_notice(
+            __('Your password was reset but the email could not be sent. Please contact support at calvin@supremeautoparts.co.ke.', 'supreme-autoparts-core'),
+            'error'
+        );
+        return;
+    }
+
+    wp_safe_redirect(add_query_arg('reset-link-sent', 'true', wc_get_account_endpoint_url('lost-password')));
+    exit;
+}, 19);
+
+/**
+ * Friendly notice after we emailed a new password.
+ */
+add_action('template_redirect', static function (): void {
+    // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+    if (empty($_GET['password-sent'])) {
+        return;
+    }
+    // Alias → Woo confirmation screen (hides the form).
+    wp_safe_redirect(add_query_arg('reset-link-sent', 'true', wc_get_account_endpoint_url('lost-password')));
+    exit;
+}, 5);
+
+/** Confirmation copy when reset-link-sent (our email-a-password flow). */
+add_filter('woocommerce_lost_password_confirmation_message', static function (): string {
+    return __('A new secure password has been sent to the email address on file for your account. It may take a few minutes to arrive. Use that password to log in, then you can change it under Account details.', 'supreme-autoparts-core');
+});
+
+/**
+ * Generated passwords are working logins (not temporary set-link passwords).
+ * Clear Woo's "temporary password / emailed a link" nag after account creation.
+ */
+add_action('woocommerce_created_customer', static function (int $customer_id, $data = [], $password_generated = false): void {
+    if ($password_generated) {
+        delete_user_option($customer_id, 'default_password_nag', true);
+    }
+    unset($data);
+}, 20, 3);
+
+/**
+ * Also rewrite Woo's default "reset link sent" copy if it still appears.
+ */
+add_filter('woocommerce_add_success', static function ($message) {
+    if (!is_string($message)) {
+        return $message;
+    }
+    if (stripos($message, 'password reset email') !== false || stripos($message, 'reset link') !== false) {
+        return __('Check your email for a new password. It works right away — then you can change it under Account details.', 'supreme-autoparts-core');
+    }
+    return $message;
+}, 20);
+
+/**
+ * Checkout / registration: when Woo generates a password, force length >= 16 with special chars
+ * before the user is inserted, so the new-account email contains a strong working password.
+ */
+add_filter('woocommerce_new_customer_data', static function (array $data): array {
+    $data['role'] = 'customer';
+    if (get_option('woocommerce_registration_generate_password') === 'yes') {
+        // Always replace with our strong password when auto-gen is on (register + checkout account creation).
+        $data['user_pass'] = sa_core_generate_customer_password();
+    }
+    return $data;
+}, 5);

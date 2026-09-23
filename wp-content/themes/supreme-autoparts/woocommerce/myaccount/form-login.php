@@ -3,7 +3,7 @@
  * My Account login / register — Remember me checked by default.
  *
  * @package Supreme_Autoparts
- * @version 1.3.0
+ * @version 1.4.18
  */
 
 defined('ABSPATH') || exit;
@@ -71,14 +71,13 @@ do_action('woocommerce_before_customer_login_form');
             <input type="email" class="woocommerce-Input woocommerce-Input--text input-text" name="email" id="reg_email" autocomplete="email" value="<?php echo (!empty($_POST['email'])) ? esc_attr(wp_unslash($_POST['email'])) : ''; ?>" required /><?php // phpcs:ignore ?>
           </p>
 
-          <?php if ('no' === get_option('woocommerce_registration_generate_password')) : ?>
-            <p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
-              <label for="reg_password"><?php esc_html_e('Password', 'supreme-autoparts'); ?>&nbsp;<span class="required">*</span></label>
-              <input type="password" class="woocommerce-Input woocommerce-Input--text input-text" name="password" id="reg_password" autocomplete="new-password" required />
-            </p>
-          <?php else : ?>
-            <p><?php esc_html_e('A link to set your password will be sent to your email address.', 'supreme-autoparts'); ?></p>
-          <?php endif; ?>
+          <?php
+          // Store always auto-generates passwords (woocommerce_registration_generate_password = yes).
+          // Never show a password field on register — customer receives a working password by email.
+          ?>
+          <p class="sa-register-password-note" role="note">
+            <?php esc_html_e("We'll email you a secure password that works right away. You can change it later under Account details after you log in.", 'supreme-autoparts'); ?>
+          </p>
 
           <?php do_action('woocommerce_register_form'); ?>
 
