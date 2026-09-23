@@ -31,6 +31,14 @@ wc -l data/scrape/products.ndjson
 wp supreme import-ndjson --file=/var/www/html/data/scrape/products.ndjson --limit=500 --offset=0
 ```
 
+## Live status (auto)
+
+- Unique products scraped: **37,199**
+- Phase: `sitemap_fetch`
+- Sitemap gap: **3,448 / 403,337** (~399,889 handles left)
+- Adaptive delay: **45.0s**
+- Snapshot: 2026-09-23 15:06:10 EAT
+
 Huge `products.ndjson` is gitignored; use Railway volume or `chunks/` (<40MB).
 
-Updated: 2026-09-16 09:44:28 EAT
+Updated: 2026-09-23 15:06:10 EAT

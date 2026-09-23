@@ -42,7 +42,7 @@ USER_AGENTS = [
     "Mozilla/5.0 (compatible; SupremeAutopartsBot/1.2; +https://supremeautoparts.co.ke; owner-authorized catalog mirror)",
 ]
 LIMIT = 250
-DEFAULT_DELAY = 7.0  # seconds between successful requests
+DEFAULT_DELAY = 3.0  # seconds between successful requests (fast mode)
 CHUNK_BYTES = 35 * 1024 * 1024
 
 
@@ -56,7 +56,7 @@ def nairobi_now() -> str:
 
 class RateLimiter:
     def __init__(self, min_interval: float = DEFAULT_DELAY):
-        self.min_interval = max(5.0, float(min_interval))
+        self.min_interval = max(2.0, float(min_interval))
         self._last = 0.0
 
     def wait(self) -> None:
