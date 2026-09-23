@@ -6,13 +6,42 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Cart + session persistence and Remember me defaults.
+ * Cart + session persistence and always-on Remember me for customers.
  *
  * - Logged-in: WooCommerce persistent cart (cross-device when same account).
  * - Guest: longer WC session cookie so the cart survives browser restarts.
- * - Login / checkout login: Remember me checked by default; longer auth cookie.
+ * - Customers: always persistent auth cookies (~90 days) until explicit Log out.
+ * - Staff (admin / shop_manager): shorter cookies.
  * - On login / register: merge guest session cart into the user cart.
+ * - Log out still clears cookies fully (wp_logout / wp_clear_auth_cookie untouched).
  */
+
+/** Customer auth cookie lifetime (stay signed in until Log out). */
+function sa_core_customer_auth_days(): int
+{
+    return (int) apply_filters('sa_core_customer_auth_days', 90);
+}
+
+/** Staff auth cookie when Remember me is checked. */
+function sa_core_staff_auth_days(): int
+{
+    return (int) apply_filters('sa_core_staff_auth_days', 14);
+}
+
+function sa_core_user_is_store_customer(?WP_User $user): bool
+{
+    if (!$user instanceof WP_User || !$user->exists()) {
+        return false;
+    }
+    if (user_can($user, 'manage_options') || user_can($user, 'manage_woocommerce')) {
+        return false;
+    }
+    $roles = (array) $user->roles;
+    if (in_array('administrator', $roles, true) || in_array('shop_manager', $roles, true)) {
+        return false;
+    }
+    return true;
+}
 
 /**
  * Soft-enforce Woo options related to accounts + cart continuity.
@@ -23,21 +52,17 @@ function sa_core_apply_cart_persistence_settings(): void
         return;
     }
 
-    // Guest checkout + login from checkout (idempotent).
     update_option('woocommerce_enable_guest_checkout', 'yes');
     update_option('woocommerce_enable_checkout_login_reminder', 'yes');
     update_option('woocommerce_enable_signup_and_login_from_checkout', 'yes');
     update_option('woocommerce_enable_myaccount_registration', 'yes');
-
-    // Document intent for operators (Woo uses the filter, not this option, but
-    // some hosting dashboards surface it).
     update_option('woocommerce_enable_persistent_cart', 'yes');
 
-    update_option('sa_cart_persistence_ver', '1');
+    update_option('sa_cart_persistence_ver', '2');
 }
 
 add_action('init', static function (): void {
-    if (get_option('sa_cart_persistence_ver') === '1') {
+    if (get_option('sa_cart_persistence_ver') === '2') {
         return;
     }
     sa_core_apply_cart_persistence_settings();
@@ -60,72 +85,72 @@ add_filter('wc_session_expiring', static function (): int {
 });
 
 /**
- * Auth cookie lifetime when Remember me is checked (45 days).
- * When unchecked, WordPress uses ~2 days — we leave that alone.
+ * Auth cookie lifetime:
+ * - Customers: always ~90 days (persistent until Log out), whether or not Remember was checked.
+ * - Staff: 14 days when remembered, otherwise WP default (~2 days).
+ *
+ * wp_set_password on lost-password invalidates prior sessions once (expected).
+ * The next login with the emailed password gets a fresh 90-day cookie again.
  */
 add_filter('auth_cookie_expiration', static function (int $length, int $user_id, bool $remember): int {
-    if ($remember) {
-        return 45 * DAY_IN_SECONDS;
+    $user = get_userdata($user_id);
+    if (sa_core_user_is_store_customer($user instanceof WP_User ? $user : null)) {
+        return sa_core_customer_auth_days() * DAY_IN_SECONDS;
     }
-    // Still stretch "session" cookies slightly so same-browser revisits stay signed in
-    // when the browser keeps the cookie (not a true session-only cookie in all browsers).
-    return max($length, 14 * DAY_IN_SECONDS);
+    if ($remember) {
+        return sa_core_staff_auth_days() * DAY_IN_SECONDS;
+    }
+    return $length;
 }, 20, 3);
 
 /**
- * Default Remember me checked on Woo login forms (my-account + checkout).
+ * Storefront Woo login: always treat Remember me as on.
+ * Staff still get shorter TTL via auth_cookie_expiration.
  */
-add_filter('woocommerce_login_form', static function (): void {
-    // Marker for theme JS; checkbox itself is rendered by form-login templates.
-}, 1);
-
-add_filter('woocommerce_form_field_args', static function (array $args, string $key): array {
-    return $args;
-}, 10, 2);
+add_action('wp_loaded', static function (): void {
+    // phpcs:ignore WordPress.Security.NonceVerification.Missing
+    if (empty($_POST['login']) && empty($_POST['woocommerce-login-nonce'])) {
+        return;
+    }
+    $_POST['rememberme'] = 'forever'; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+}, 5);
 
 /**
- * Ensure rememberme POST defaults to on when the field is missing but a
- * custom template omitted it (defensive).
+ * Hidden remember fields so missing/unchecked checkboxes still persist.
  */
 add_action('woocommerce_login_form_end', static function (): void {
-    // Hidden fallback only if no visible checkbox rendered yet.
-    // Templates should render the visible checkbox; this is a safety net.
     static $done = false;
     if ($done) {
         return;
     }
     $done = true;
     echo '<input type="hidden" name="sa_remember_intent" value="1" />';
+    echo '<input type="hidden" name="rememberme" value="forever" />';
 }, 99);
 
-/**
- * Force remember=true for WooCommerce login when checkbox present or intent set.
- */
 add_filter('woocommerce_process_login_errors', static function ($validation, $username, $password) {
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing
-    if (empty($_POST['rememberme']) && !empty($_POST['sa_remember_intent'])) {
-        $_POST['rememberme'] = 'forever';
-    }
+    unset($username, $password);
+    $_POST['rememberme'] = 'forever'; // phpcs:ignore WordPress.Security.NonceVerification.Missing
     return $validation;
 }, 5, 3);
 
+/** Force remember flag into wp_signon credentials. */
+add_filter('woocommerce_login_credentials', static function (array $creds): array {
+    $creds['remember'] = true;
+    return $creds;
+}, 20);
+
 /**
- * After successful customer login: persist cart + set long-lived auth when remembered.
- * Woo already merges session → persistent cart; we reaffirm and clear stale guest flag.
+ * After successful login: persist cart so multi-device sync has fresh data.
  */
 add_action('wp_login', static function (string $user_login, $user): void {
+    unset($user_login);
     if (!$user instanceof WP_User || !class_exists('WooCommerce') || !function_exists('WC')) {
         return;
     }
     if (!WC()->cart || !WC()->session) {
         return;
     }
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing
-    $remember = !empty($_POST['rememberme']) || !empty($_POST['sa_remember_intent']);
-    if ($remember && !is_user_logged_in()) {
-        // wp_login fires after cookies are set; WP already handled rememberme.
-    }
-    // Trigger persistent cart save so multi-device sync has fresh data.
     if (method_exists(WC()->cart, 'get_cart_for_session')) {
         $persisted = WC()->cart->get_cart_for_session();
         if (is_array($persisted)) {
@@ -139,8 +164,8 @@ add_action('wp_login', static function (string $user_login, $user): void {
 }, 20, 2);
 
 /**
- * When a guest registers (checkout create-account or my-account), merge session cart.
- * WooCommerce does this on login; registration mid-checkout keeps the same session.
+ * When a guest registers, merge session cart into user meta.
+ * We do not auto-login after register (password is emailed); first login restores cart.
  */
 add_action('woocommerce_created_customer', static function (int $customer_id): void {
     if (!function_exists('WC') || !WC()->cart) {
@@ -157,9 +182,24 @@ add_action('woocommerce_created_customer', static function (int $customer_id): v
 }, 20);
 
 /**
- * Body class helper for checkout JS.
+ * If Woo auth-cookies a customer (rare post-register path), force remember=true.
+ * Logout remains wp_logout → wp_clear_auth_cookie (untouched).
  */
+add_action('woocommerce_set_customer_auth_cookie', static function (int $customer_id): void {
+    $user = get_userdata($customer_id);
+    if (!sa_core_user_is_store_customer($user instanceof WP_User ? $user : null)) {
+        return;
+    }
+    // Woo may already have set cookies; re-issue once with remember for 90-day TTL.
+    if (defined('SA_CORE_CUSTOMER_AUTH_REMEMBERED')) {
+        return;
+    }
+    define('SA_CORE_CUSTOMER_AUTH_REMEMBERED', true);
+    wp_set_auth_cookie($customer_id, true);
+}, 5);
+
 add_filter('body_class', static function (array $classes): array {
     $classes[] = 'sa-persist-cart';
+    $classes[] = 'sa-persist-auth';
     return $classes;
 });

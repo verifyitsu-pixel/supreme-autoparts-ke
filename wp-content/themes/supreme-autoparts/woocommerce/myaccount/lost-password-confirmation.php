@@ -3,7 +3,7 @@
  * Lost password confirmation — we emailed a new working password.
  *
  * @package Supreme_Autoparts
- * @version 1.4.18
+ * @version 1.4.27
  */
 
 defined('ABSPATH') || exit;
@@ -19,12 +19,13 @@ wc_print_notice(
 <p><?php echo esc_html(
     apply_filters(
         'woocommerce_lost_password_confirmation_message',
-        esc_html__(
-            'A new secure password has been sent to the email address on file for your account. It may take a few minutes to arrive. Use that password to log in, then you can change it under Account details.',
-            'supreme-autoparts'
-        )
+        __('A new secure password has been emailed to the address on your account. It may take a few minutes — check inbox and spam. Use that password on the Log in page. After you log in, you stay signed in on this browser until you tap Log out. You can change the password under Account details.', 'supreme-autoparts')
     )
 ); ?></p>
+
+<p class="sa-lost-help">
+  <?php esc_html_e('Did not get the email? Wait a few minutes, check spam, then try again — or contact calvin@supremeautoparts.co.ke.', 'supreme-autoparts'); ?>
+</p>
 
 <p><a class="sa-btn" href="<?php echo esc_url(wc_get_page_permalink('myaccount')); ?>"><?php esc_html_e('Back to log in', 'supreme-autoparts'); ?></a></p>
 

@@ -3,7 +3,7 @@
  * Lost password form — we email a new working password (not a set-password link).
  *
  * @package Supreme_Autoparts
- * @version 1.4.18
+ * @version 1.4.27
  */
 
 defined('ABSPATH') || exit;
@@ -14,15 +14,15 @@ do_action('woocommerce_before_lost_password_form');
 <div class="sa-account-auth sa-account-auth--lost">
   <section class="sa-account-auth__panel">
     <header class="sa-account-panel__head">
-      <h2><?php esc_html_e('Lost your password?', 'supreme-autoparts'); ?></h2>
+      <h2><?php esc_html_e('Email me a new password', 'supreme-autoparts'); ?></h2>
       <p class="sa-account-panel__lead">
-        <?php esc_html_e('Enter your account email. We will generate a new secure password and email it to you — it works right away. You can change it later under Account details after you log in.', 'supreme-autoparts'); ?>
+        <?php esc_html_e('Enter the email on your account. We will set a new secure password and email it to you — it works right away. After you log in, you stay signed in on this browser until you tap Log out. You can change the password later under Account details.', 'supreme-autoparts'); ?>
       </p>
     </header>
 
     <form method="post" class="woocommerce-ResetPassword lost_reset_password sa-form">
       <p class="woocommerce-form-row woocommerce-form-row--first form-row form-row-first">
-        <label for="user_login"><?php esc_html_e('Username or email', 'supreme-autoparts'); ?>&nbsp;<span class="required">*</span></label>
+        <label for="user_login"><?php esc_html_e('Email or username', 'supreme-autoparts'); ?>&nbsp;<span class="required">*</span></label>
         <input class="woocommerce-Input woocommerce-Input--text input-text" type="text" name="user_login" id="user_login" autocomplete="username" required />
       </p>
 
@@ -37,6 +37,10 @@ do_action('woocommerce_before_lost_password_form');
 
       <?php wp_nonce_field('lost_password', 'woocommerce-lost-password-nonce'); ?>
     </form>
+
+    <p class="sa-lost-back">
+      <a href="<?php echo esc_url(wc_get_page_permalink('myaccount')); ?>"><?php esc_html_e('Back to log in', 'supreme-autoparts'); ?></a>
+    </p>
   </section>
 </div>
 <?php

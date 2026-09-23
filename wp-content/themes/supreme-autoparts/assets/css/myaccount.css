@@ -1490,3 +1490,27 @@ body.woocommerce-account .sa-my-account {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* Register / login helper notes (password-email + stay signed in) */
+.sa-register-password-note,
+.sa-login-persist-note {
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: #3a3a3e;
+  background: #f7f7f8;
+  border: 1px solid #e8e8ea;
+  border-radius: 8px;
+}
+.sa-lost-back,
+.sa-lost-help {
+  margin-top: 1rem;
+  font-size: 0.92rem;
+  color: #555;
+}
+.sa-account-auth--lost .sa-lost-back a {
+  color: inherit;
+  text-decoration: underline;
+}
+

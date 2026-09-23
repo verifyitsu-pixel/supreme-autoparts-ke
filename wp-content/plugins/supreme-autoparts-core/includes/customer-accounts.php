@@ -311,9 +311,62 @@ function sa_core_user_is_customer_for_password_mail(WP_User $user): bool
     return true;
 }
 
+/** Seconds between customer password-issue emails for the same account. */
+function sa_core_password_issue_cooldown(): int
+{
+    return (int) apply_filters('sa_core_password_issue_cooldown', 60);
+}
+
+/** Max password-issue emails per customer account per hour. */
+function sa_core_password_issue_hourly_cap(): int
+{
+    return (int) apply_filters('sa_core_password_issue_hourly_cap', 5);
+}
+
+/**
+ * Rate-limit lost-password / issue-password for customers.
+ *
+ * @return true|WP_Error
+ */
+function sa_core_password_issue_can_send(int $user_id)
+{
+    $sent_at = (int) get_user_meta($user_id, '_sa_pw_issued_at', true);
+    $cooldown = sa_core_password_issue_cooldown();
+    if ($sent_at > 0 && (time() - $sent_at) < $cooldown) {
+        $wait = $cooldown - (time() - $sent_at);
+        return new WP_Error(
+            'sa_pw_cooldown',
+            sprintf(
+                /* translators: %d: seconds */
+                __('Please wait %d seconds before requesting another password email. Check your inbox and spam folder first.', 'supreme-autoparts-core'),
+                max(1, $wait)
+            )
+        );
+    }
+
+    $hour_key = 'sa_pw_hour_' . $user_id;
+    $count = (int) get_transient($hour_key);
+    if ($count >= sa_core_password_issue_hourly_cap()) {
+        return new WP_Error(
+            'sa_pw_rate',
+            __('Too many password emails requested for this account. Please try again later, or contact calvin@supremeautoparts.co.ke for help.', 'supreme-autoparts-core')
+        );
+    }
+
+    return true;
+}
+
+function sa_core_password_issue_mark_sent(int $user_id): void
+{
+    update_user_meta($user_id, '_sa_pw_issued_at', (string) time());
+    $hour_key = 'sa_pw_hour_' . $user_id;
+    $count = (int) get_transient($hour_key);
+    set_transient($hour_key, $count + 1, HOUR_IN_SECONDS);
+}
+
 /**
  * Email a working password to the customer via Brevo (wp_mail → sa-brevo-mail).
- * Does not BCC. Never logs the password.
+ * Plain text so the password is never HTML-escaped. Does not BCC. Never logs the password.
  */
 function sa_core_email_customer_password(WP_User $user, string $password, string $reason = 'reset'): bool
 {
@@ -328,12 +381,9 @@ function sa_core_email_customer_password(WP_User $user, string $password, string
         ? (string) wc_get_page_permalink('myaccount')
         : (string) wp_login_url();
 
-    if ($reason === 'new') {
-        $subject = sprintf('[%s] Your account password', $site);
-        $intro   = 'Thanks for creating an account. We generated a secure password for you — it works right away.';
-    } else {
-        $subject = sprintf('[%s] Your new password', $site);
-        $intro   = 'You requested a password reset. We generated a new secure password for you — it works right away.';
+    $name = trim((string) $user->display_name);
+    if ($name === '') {
+        $name = $login;
     }
 
     $email_login = (string) $user->user_email;
@@ -341,22 +391,31 @@ function sa_core_email_customer_password(WP_User $user, string $password, string
         ? $email_login
         : $login;
 
+    if ($reason === 'new') {
+        $subject = sprintf('[%s] Your account password', $site);
+        $intro   = 'Thanks for creating an account on ' . $site . '. We set a secure password for you — it works right away.';
+    } else {
+        $subject = sprintf('[%s] Your new password', $site);
+        $intro   = 'You asked us to issue a new password for your ' . $site . ' account. We set a secure password for you — it works right away.';
+    }
+
     $lines = [
-        'Hi ' . ($user->display_name ?: $login) . ',',
+        'Hi ' . $name . ',',
         '',
         $intro,
         '',
-        'Log in with your email address (or username) and this password:',
-        'Email / username: ' . $login_hint,
+        'Log in with:',
+        'Email: ' . $login_hint,
         'Password: ' . $password,
         '',
         'Log in here: ' . $account_url,
         '',
-        'You can change this password anytime after logging in under Account details.',
+        'After you log in, you can change this password anytime under Account details.',
         '',
-        'If you did not request this, contact us at calvin@supremeautoparts.co.ke.',
+        'If you did not request this, contact us right away at calvin@supremeautoparts.co.ke.',
         '',
         '— Supreme Autoparts',
+        'calvin@supremeautoparts.co.ke',
     ];
     $body = implode("\n", $lines);
 
@@ -394,25 +453,32 @@ add_action('wp_loaded', static function (): void {
     // Remove core handler so we fully own the customer path.
     remove_action('wp_loaded', ['WC_Form_Handler', 'process_lost_password'], 20);
 
-    $login = sanitize_user(wp_unslash((string) $_POST['user_login'])); // phpcs:ignore
+    $login = trim(sanitize_text_field(wp_unslash((string) $_POST['user_login']))); // phpcs:ignore
     if ($login === '') {
-        // Allow empty to fall through to a notice via a soft re-add.
-        add_action('wp_loaded', ['WC_Form_Handler', 'process_lost_password'], 20);
+        wc_add_notice(
+            __('Enter the email address (or username) for your account so we can email you a new password.', 'supreme-autoparts-core'),
+            'error'
+        );
         return;
     }
 
-    $user = get_user_by('login', $login);
-    if (!$user && is_email($login) && apply_filters('woocommerce_get_username_from_email', true)) {
+    $user = null;
+    if (is_email($login) && apply_filters('woocommerce_get_username_from_email', true)) {
         $user = get_user_by('email', $login);
+    }
+    if (!$user) {
+        $user = get_user_by('login', sanitize_user($login, true));
     }
 
     if (!$user instanceof WP_User) {
-        wc_add_notice(__('Invalid username or email.', 'supreme-autoparts-core'), 'error');
+        wc_add_notice(
+            __('We could not find an account with that email or username. Check the spelling, or create an account on the Log in page. Need help? calvin@supremeautoparts.co.ke', 'supreme-autoparts-core'),
+            'error'
+        );
         return;
     }
 
     // Staff: fall back to Woo's reset-link email (do not email plaintext admin passwords).
-    // Core handler already removed — call retrieve_password once (do not re-add the action).
     if (!sa_core_user_is_customer_for_password_mail($user)) {
         $success = WC_Shortcode_My_Account::retrieve_password();
         if ($success) {
@@ -424,8 +490,16 @@ add_action('wp_loaded', static function (): void {
 
     $allow = apply_filters('allow_password_reset', true, $user->ID);
     if (!$allow || is_wp_error($allow)) {
-        $msg = is_wp_error($allow) ? $allow->get_error_message() : __('Password reset is not allowed for this user', 'supreme-autoparts-core');
+        $msg = is_wp_error($allow)
+            ? $allow->get_error_message()
+            : __('Password reset is not allowed for this account. Contact calvin@supremeautoparts.co.ke for help.', 'supreme-autoparts-core');
         wc_add_notice($msg, 'error');
+        return;
+    }
+
+    $can = sa_core_password_issue_can_send((int) $user->ID);
+    if (is_wp_error($can)) {
+        wc_add_notice($can->get_error_message(), 'error');
         return;
     }
 
@@ -435,7 +509,10 @@ add_action('wp_loaded', static function (): void {
     // Refresh user object after password change (invalidates sessions).
     $user = get_user_by('id', (int) $user->ID);
     if (!$user instanceof WP_User) {
-        wc_add_notice(__('Could not update password. Please try again.', 'supreme-autoparts-core'), 'error');
+        wc_add_notice(
+            __('We could not update your password. Please try again, or contact calvin@supremeautoparts.co.ke.', 'supreme-autoparts-core'),
+            'error'
+        );
         return;
     }
 
@@ -445,11 +522,13 @@ add_action('wp_loaded', static function (): void {
 
     if (!$sent) {
         wc_add_notice(
-            __('Your password was reset but the email could not be sent. Please contact support at calvin@supremeautoparts.co.ke.', 'supreme-autoparts-core'),
+            __('Your password was updated, but we could not send the email. Contact calvin@supremeautoparts.co.ke and we will help you log in.', 'supreme-autoparts-core'),
             'error'
         );
         return;
     }
+
+    sa_core_password_issue_mark_sent((int) $user->ID);
 
     wp_safe_redirect(add_query_arg('reset-link-sent', 'true', wc_get_account_endpoint_url('lost-password')));
     exit;
@@ -470,7 +549,7 @@ add_action('template_redirect', static function (): void {
 
 /** Confirmation copy when reset-link-sent (our email-a-password flow). */
 add_filter('woocommerce_lost_password_confirmation_message', static function (): string {
-    return __('A new secure password has been sent to the email address on file for your account. It may take a few minutes to arrive. Use that password to log in, then you can change it under Account details.', 'supreme-autoparts-core');
+    return __('A new secure password has been emailed to the address on your account. It may take a few minutes — check inbox and spam. Use that password on the Log in page, then you can change it under Account details.', 'supreme-autoparts-core');
 });
 
 /**
@@ -507,6 +586,21 @@ add_action('woocommerce_created_customer', static function (int $customer_id, $d
     // Flag for notification wrapper (sync or deferred) — strip Woo password body.
     if ($sent) {
         set_transient('sa_core_pw_mailed_' . $customer_id, '1', 15 * MINUTE_IN_SECONDS);
+        sa_core_password_issue_mark_sent($customer_id);
+        // Store a one-shot success notice for the next page load (register often redirects).
+        if (function_exists('wc_add_notice')) {
+            wc_add_notice(
+                __('Account created. We emailed you a secure password — it works right away. Check your inbox (and spam), then log in. You can change the password under Account details after you sign in.', 'supreme-autoparts-core'),
+                'success'
+            );
+        }
+    } else {
+        if (function_exists('wc_add_notice')) {
+            wc_add_notice(
+                __('Your account was created, but we could not email your password. Use “Email me a new password” on the Lost password page, or contact calvin@supremeautoparts.co.ke.', 'supreme-autoparts-core'),
+                'error'
+            );
+        }
     }
 
     unset($data);
@@ -540,17 +634,81 @@ add_action('woocommerce_created_customer_notification', static function ($custom
 }, 1, 3);
 
 /**
- * Also rewrite Woo's default "reset link sent" copy if it still appears.
+ * Rewrite Woo success notices that still talk about reset links / generic password emails.
  */
 add_filter('woocommerce_add_success', static function ($message) {
     if (!is_string($message)) {
         return $message;
     }
-    if (stripos($message, 'password reset email') !== false || stripos($message, 'reset link') !== false) {
-        return __('Check your email for a new password. It works right away — then you can change it under Account details.', 'supreme-autoparts-core');
+    $lower = strtolower($message);
+    if (str_contains($lower, 'password reset email')
+        || str_contains($lower, 'reset link')
+        || str_contains($lower, 'password reset')
+        || (str_contains($lower, 'check your email') && str_contains($lower, 'password'))
+    ) {
+        return __('Check your email for a new password. It works right away — then you can change it under Account details after you log in.', 'supreme-autoparts-core');
+    }
+    if (str_contains($lower, 'login details have been sent')
+        || str_contains($lower, 'account was created successfully')
+        || (str_contains($lower, 'registered successfully') && str_contains($lower, 'email'))
+    ) {
+        return __('Account created. We emailed you a secure password — it works right away. Check your inbox (and spam), then log in. You can change the password under Account details after you sign in.', 'supreme-autoparts-core');
     }
     return $message;
 }, 20);
+
+/**
+ * Rewrite Woo / WP login + lost-password error notices into clear, actionable copy.
+ */
+add_filter('woocommerce_add_error', static function ($message) {
+    if (!is_string($message) || $message === '') {
+        return $message;
+    }
+    $lower = strtolower(wp_strip_all_tags($message));
+    $lost = function_exists('wp_lostpassword_url') ? wp_lostpassword_url() : '/my-account/lost-password/';
+
+    if (str_contains($lower, 'lost your password')
+        || str_contains($lower, 'incorrect username')
+        || str_contains($lower, 'incorrect password')
+        || str_contains($lower, 'the password you entered')
+        || str_contains($lower, 'unknown email')
+        || str_contains($lower, 'unknown username')
+        || str_contains($lower, 'invalid username')
+        || str_contains($lower, 'a user could not be found')
+    ) {
+        return sprintf(
+            /* translators: %s: lost-password URL */
+            __('That email/username or password did not work. Try again, or <a href="%s">email me a new password</a>. Need help? calvin@supremeautoparts.co.ke', 'supreme-autoparts-core'),
+            esc_url($lost)
+        );
+    }
+
+    if (str_contains($lower, 'enter a username') || str_contains($lower, 'username is required') || str_contains($lower, 'email address is required')) {
+        return __('Enter your email address (or username) and password to log in.', 'supreme-autoparts-core');
+    }
+
+    if (str_contains($lower, 'valid email') || str_contains($lower, 'provide a valid email')) {
+        return __('Please enter a valid email address. Need help? calvin@supremeautoparts.co.ke', 'supreme-autoparts-core');
+    }
+
+    if (str_contains($lower, 'account is already registered') || str_contains($lower, 'already registered')) {
+        return sprintf(
+            /* translators: %s: lost-password URL */
+            __('An account with that email already exists. Log in, or <a href="%s">email me a new password</a> if you cannot sign in.', 'supreme-autoparts-core'),
+            esc_url($lost)
+        );
+    }
+
+    return $message;
+}, 20);
+
+/**
+ * WP-login style errors (rare on storefront, but keep consistent).
+ */
+add_filter('woocommerce_process_login_errors', static function ($validation_error, $username = '', $password = '') {
+    unset($username, $password);
+    return $validation_error;
+}, 10, 3);
 
 /**
  * Checkout / registration: when Woo auto-generates a password, seed an email-safe one
