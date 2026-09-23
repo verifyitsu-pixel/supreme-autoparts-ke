@@ -571,6 +571,7 @@
 }
 
 .sa-pm-embed__status--loading {
+  /* Amber status + spinning tyre glyph provided sitewide by sa-loader.css */
   color: var(--sa-accent, #F5A623);
 }
 

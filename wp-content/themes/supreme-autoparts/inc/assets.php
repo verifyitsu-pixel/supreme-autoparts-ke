@@ -19,6 +19,12 @@ add_action('wp_enqueue_scripts', static function (): void {
         ['supreme-autoparts'],
         SA_THEME_VERSION
     );
+    wp_enqueue_style(
+        'supreme-autoparts-loader',
+        SA_THEME_URI . '/assets/css/sa-loader.css',
+        ['supreme-autoparts-main'],
+        SA_THEME_VERSION
+    );
     wp_enqueue_script(
         'supreme-autoparts',
         SA_THEME_URI . '/assets/js/theme.js',
@@ -26,12 +32,22 @@ add_action('wp_enqueue_scripts', static function (): void {
         SA_THEME_VERSION,
         true
     );
+    wp_enqueue_script(
+        'supreme-autoparts-loader',
+        SA_THEME_URI . '/assets/js/sa-loader.js',
+        ['jquery', 'supreme-autoparts'],
+        SA_THEME_VERSION,
+        true
+    );
     wp_localize_script('supreme-autoparts', 'saTheme', [
         'ajaxUrl' => admin_url('admin-ajax.php'),
         'cartUrl' => function_exists('wc_get_cart_url') ? wc_get_cart_url() : '',
         'i18n'    => [
-            'cart'          => __('Cart', 'supreme-autoparts'),
-            'termsRequired' => __('Please accept the store policies to place your order.', 'supreme-autoparts'),
+            'cart'               => __('Cart', 'supreme-autoparts'),
+            'termsRequired'      => __('Please accept the store policies to place your order.', 'supreme-autoparts'),
+            'loading'            => __('Loading…', 'supreme-autoparts'),
+            'processing'         => __('Processing…', 'supreme-autoparts'),
+            'processingPayment'  => __('Processing payment…', 'supreme-autoparts'),
         ],
     ]);
 

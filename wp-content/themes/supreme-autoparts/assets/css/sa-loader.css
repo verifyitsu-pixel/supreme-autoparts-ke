@@ -1,0 +1,137 @@
+/**
+ * Supreme Autoparts — branded tyre loading overlay.
+ * Charcoal backdrop + amber accents. Original 5-spoke wheel SVG (not a stock asset).
+ */
+
+.sa-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(11, 11, 13, 0.82);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.sa-loader.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.sa-loader__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem 1.75rem;
+  border-radius: 12px;
+  background: rgba(22, 22, 24, 0.92);
+  border: 1px solid rgba(245, 166, 35, 0.28);
+  box-shadow:
+    0 0 0 1px rgba(11, 11, 13, 0.6),
+    0 18px 48px rgba(0, 0, 0, 0.55),
+    0 0 32px rgba(245, 166, 35, 0.08);
+  max-width: min(90vw, 280px);
+  text-align: center;
+}
+
+.sa-loader__wheel {
+  width: 72px;
+  height: 72px;
+  display: block;
+  color: #F5A623;
+  transform-origin: 50% 50%;
+  animation: sa-tyre-spin 0.85s linear infinite;
+  will-change: transform;
+  filter: drop-shadow(0 0 10px rgba(245, 166, 35, 0.35));
+}
+
+.sa-loader__label {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #F4F4F5;
+  min-height: 1.35em;
+}
+
+.sa-loader__label-accent {
+  color: #F5A623;
+}
+
+/* Inline tyre for Whop embed / compact status lines */
+.sa-tyre-inline {
+  display: inline-block;
+  width: 1.1em;
+  height: 1.1em;
+  vertical-align: -0.15em;
+  margin-right: 0.4em;
+  color: #F5A623;
+  animation: sa-tyre-spin 0.9s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+.sa-pm-embed__status--loading {
+  color: var(--sa-accent, #F5A623);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.sa-pm-embed__status--loading::before {
+  content: '';
+  display: inline-block;
+  width: 1.05em;
+  height: 1.05em;
+  flex-shrink: 0;
+  background-color: currentColor;
+  /* Simple tyre glyph via mask — rubber ring + hub */
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='none' stroke='%23000' stroke-width='8'/%3E%3Ccircle cx='32' cy='32' r='28' fill='none' stroke='%23000' stroke-width='2.5' stroke-dasharray='3.5 5'/%3E%3Ccircle cx='32' cy='32' r='14' fill='none' stroke='%23000' stroke-width='2'/%3E%3Cg stroke='%23000' stroke-width='3.5' stroke-linecap='round'%3E%3Cline x1='32' y1='18' x2='32' y2='28'/%3E%3Cline x1='45.3' y1='26.7' x2='36.5' y2='31'/%3E%3Cline x1='40.2' y1='42.9' x2='34.2' y2='34.8'/%3E%3Cline x1='23.8' y1='42.9' x2='29.8' y2='34.8'/%3E%3Cline x1='18.7' y1='26.7' x2='27.5' y2='31'/%3E%3C/g%3E%3Ccircle cx='32' cy='32' r='4.5' fill='%23000'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='none' stroke='%23000' stroke-width='8'/%3E%3Ccircle cx='32' cy='32' r='28' fill='none' stroke='%23000' stroke-width='2.5' stroke-dasharray='3.5 5'/%3E%3Ccircle cx='32' cy='32' r='14' fill='none' stroke='%23000' stroke-width='2'/%3E%3Cg stroke='%23000' stroke-width='3.5' stroke-linecap='round'%3E%3Cline x1='32' y1='18' x2='32' y2='28'/%3E%3Cline x1='45.3' y1='26.7' x2='36.5' y2='31'/%3E%3Cline x1='40.2' y1='42.9' x2='34.2' y2='34.8'/%3E%3Cline x1='23.8' y1='42.9' x2='29.8' y2='34.8'/%3E%3Cline x1='18.7' y1='26.7' x2='27.5' y2='31'/%3E%3C/g%3E%3Ccircle cx='32' cy='32' r='4.5' fill='%23000'/%3E%3C/svg%3E") center / contain no-repeat;
+  animation: sa-tyre-spin 0.9s linear infinite;
+}
+
+@keyframes sa-tyre-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes sa-tyre-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sa-loader__wheel,
+  .sa-tyre-inline,
+  .sa-pm-embed__status--loading::before {
+    animation: sa-tyre-pulse 1.6s ease-in-out infinite;
+  }
+
+  .sa-loader {
+    transition: none;
+  }
+}
+
+/* Soften WooCommerce blockUI so our branded overlay owns the wait state */
+body.sa-loader-active .blockUI.blockOverlay {
+  opacity: 0 !important;
+  background: transparent !important;
+}
