@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Supreme Autoparts Core
  * Description: Branding defaults, category seed, static pages, invoices, admin dashboard, and Shopify JSON import helpers for Supreme Autoparts.
- * Version: 1.3.13
+ * Version: 1.3.14
  * Author: Supreme Autoparts
  * Text Domain: supreme-autoparts-core
  * Requires at least: 6.4
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_CORE_VERSION', '1.3.13');
+define('SA_CORE_VERSION', '1.3.14');
 define('SA_CORE_FILE', __FILE__);
 define('SA_CORE_DIR', plugin_dir_path(__FILE__));
 define('SA_CORE_URL', plugin_dir_url(__FILE__));
@@ -32,6 +32,7 @@ require_once SA_CORE_DIR . 'includes/product-images.php';
 require_once SA_CORE_DIR . 'includes/checkout-terms.php';
 require_once SA_CORE_DIR . 'includes/cart-persistence.php';
 require_once SA_CORE_DIR . 'includes/store-settings.php';
+require_once SA_CORE_DIR . 'includes/seo.php';
 require_once SA_CORE_DIR . 'includes/customer-accounts.php';
 require_once SA_CORE_DIR . 'includes/invoices.php';
 require_once SA_CORE_DIR . 'includes/admin-ultra.php';
@@ -84,13 +85,16 @@ add_action('plugins_loaded', static function (): void {
  * Force page seed when sa_pages_seed_ver bumps (creates missing policy pages on deploy).
  */
 add_action('init', static function (): void {
-    if (get_option('sa_pages_seed_ver') === '9') {
+    if (get_option('sa_pages_seed_ver') === '10') {
         return;
     }
     if (!function_exists('sa_core_seed_pages')) {
         return;
     }
     sa_core_seed_pages();
+    if (function_exists('sa_seo_seed_page_meta')) {
+        sa_seo_seed_page_meta();
+    }
     if (function_exists('sa_core_apply_store_settings')) {
         sa_core_apply_store_settings();
     }

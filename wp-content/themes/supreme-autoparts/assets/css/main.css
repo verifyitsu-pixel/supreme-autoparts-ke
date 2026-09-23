@@ -1343,3 +1343,67 @@ body.woocommerce-account .sa-page__content {
 @media (max-width: 800px) {
   .sa-footer-contact__grid { grid-template-columns: 1fr; }
 }
+
+/* —— SEO / share + guides (organic) —— */
+.sa-share {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--sa-border);
+  display: flex;
+  flex-direction: column;
+  gap: .65rem;
+}
+.sa-share__label {
+  font-size: .75rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--sa-text-muted);
+  font-weight: 600;
+}
+.sa-share__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+.sa-share__status {
+  font-size: .8rem;
+  color: var(--sa-accent);
+}
+
+.sa-guides-strip__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+.sa-guides-strip__card {
+  display: flex;
+  flex-direction: column;
+  gap: .45rem;
+  padding: 1.1rem 1.15rem;
+  background: var(--sa-bg-card);
+  border: 1px solid var(--sa-border);
+  border-radius: var(--sa-radius, 8px);
+  color: var(--sa-text);
+  text-decoration: none;
+  transition: border-color .15s, transform .15s;
+}
+.sa-guides-strip__card:hover {
+  border-color: var(--sa-accent);
+  color: var(--sa-heading);
+  transform: translateY(-1px);
+}
+.sa-guides-strip__card strong {
+  color: var(--sa-heading);
+  font-size: .95rem;
+}
+.sa-guides-strip__card span {
+  font-size: .8rem;
+  color: var(--sa-text-muted);
+  line-height: 1.45;
+}
+@media (max-width: 900px) {
+  .sa-guides-strip__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+  .sa-guides-strip__grid { grid-template-columns: 1fr; }
+}

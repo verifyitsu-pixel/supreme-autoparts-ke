@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
         </a>
         <h3 class="screen-reader-text"><?php esc_html_e('Supreme Autoparts', 'supreme-autoparts'); ?></h3>
         <p class="sa-footer__blurb">
-          <?php esc_html_e('Performance parts & accessories for cars, trucks, and SUVs. Serving Kenya and beyond.', 'supreme-autoparts'); ?>
+          <?php esc_html_e('Performance parts & accessories for cars, trucks, and SUVs. US-spec fitments · shipping to Kenya and beyond.', 'supreme-autoparts'); ?>
         </p>
         <p class="sa-footer__email">
           <a href="mailto:calvin@supremeautoparts.co.ke">calvin@supremeautoparts.co.ke</a>
@@ -28,6 +28,10 @@ if (!defined('ABSPATH')) {
           <li><a href="<?php echo esc_url(sa_page_url('free-shipping')); ?>"><?php esc_html_e('Free Shipping', 'supreme-autoparts'); ?></a></li>
           <li><a href="<?php echo esc_url(sa_page_url('price-match')); ?>"><?php esc_html_e('Price Match', 'supreme-autoparts'); ?></a></li>
           <li><a href="<?php echo esc_url(sa_page_url('returns')); ?>"><?php esc_html_e('Returns', 'supreme-autoparts'); ?></a></li>
+          <li><a href="<?php echo esc_url(sa_page_url('guides')); ?>"><?php esc_html_e('Guides', 'supreme-autoparts'); ?></a></li>
+          <li><a href="<?php echo esc_url(sa_page_url('how-to-order')); ?>"><?php esc_html_e('How to order', 'supreme-autoparts'); ?></a></li>
+          <li><a href="<?php echo esc_url(sa_page_url('shipping-to-kenya')); ?>"><?php esc_html_e('Shipping to Kenya', 'supreme-autoparts'); ?></a></li>
+          <li><a href="<?php echo esc_url(sa_page_url('fitment-guide')); ?>"><?php esc_html_e('Fitment guide', 'supreme-autoparts'); ?></a></li>
           <?php if (function_exists('wc_get_page_permalink')) : ?>
             <li><a href="<?php echo esc_url(wc_get_page_permalink('myaccount')); ?>"><?php esc_html_e('My Account', 'supreme-autoparts'); ?></a></li>
           <?php endif; ?>

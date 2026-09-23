@@ -10,7 +10,7 @@ get_header();
   <div class="sa-container sa-hero__inner">
     <p class="sa-hero__eyebrow"><?php esc_html_e('Supreme Autoparts · Kenya', 'supreme-autoparts'); ?></p>
     <h1><?php esc_html_e('Car Parts & Accessories', 'supreme-autoparts'); ?></h1>
-    <p class="sa-hero__lead"><?php esc_html_e('Auto accessories and replacement parts that capture the essence of your vehicle. Explore aftermarket products for an unparalleled driving experience.', 'supreme-autoparts'); ?></p>
+    <p class="sa-hero__lead"><?php esc_html_e('US-spec performance and aftermarket parts for cars, trucks, and SUVs — USD checkout, shipping to Kenya and beyond.', 'supreme-autoparts'); ?></p>
     <div class="sa-hero__actions">
       <?php if (function_exists('wc_get_page_permalink')) : ?>
         <a class="sa-btn" href="<?php echo esc_url(wc_get_page_permalink('shop')); ?>"><?php esc_html_e('Shop Now', 'supreme-autoparts'); ?></a>
@@ -122,5 +122,33 @@ if (!empty($sa_latest)) :
 </section>
     <?php
 endif;
+
+
+<section class="sa-section sa-guides-strip" aria-labelledby="sa-guides-title">
+  <div class="sa-container">
+    <div class="sa-section__head">
+      <h2 id="sa-guides-title" class="sa-section__title"><?php esc_html_e('Guides for US & Kenya buyers', 'supreme-autoparts'); ?></h2>
+      <a class="sa-section__link" href="<?php echo esc_url(sa_page_url('guides')); ?>"><?php esc_html_e('All guides', 'supreme-autoparts'); ?></a>
+    </div>
+    <div class="sa-guides-strip__grid">
+      <a class="sa-guides-strip__card" href="<?php echo esc_url(sa_page_url('how-to-order')); ?>">
+        <strong><?php esc_html_e('How to order', 'supreme-autoparts'); ?></strong>
+        <span><?php esc_html_e('USD checkout, accounts, and what happens after you pay.', 'supreme-autoparts'); ?></span>
+      </a>
+      <a class="sa-guides-strip__card" href="<?php echo esc_url(sa_page_url('fitment-guide')); ?>">
+        <strong><?php esc_html_e('Fitment guide', 'supreme-autoparts'); ?></strong>
+        <span><?php esc_html_e('Year / make / model checks for US-spec trucks and SUVs.', 'supreme-autoparts'); ?></span>
+      </a>
+      <a class="sa-guides-strip__card" href="<?php echo esc_url(sa_page_url('shipping-to-kenya')); ?>">
+        <strong><?php esc_html_e('Shipping to Kenya', 'supreme-autoparts'); ?></strong>
+        <span><?php esc_html_e('Import delivery, free-shipping threshold, WhatsApp support.', 'supreme-autoparts'); ?></span>
+      </a>
+      <a class="sa-guides-strip__card" href="<?php echo esc_url(sa_page_url('performance-truck-parts')); ?>">
+        <strong><?php esc_html_e('Truck & off-road', 'supreme-autoparts'); ?></strong>
+        <span><?php esc_html_e('Suspension, brakes, wheels, lighting — performance categories.', 'supreme-autoparts'); ?></span>
+      </a>
+    </div>
+  </div>
+</section>
 
 get_footer();

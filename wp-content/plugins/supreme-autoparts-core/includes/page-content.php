@@ -19,8 +19,8 @@ function sa_core_page_definitions(): array
         'about-us' => [
             'title'   => 'About Us',
             'content' => <<<HTML
-<p>Welcome to <strong>Supreme Autoparts</strong>, your destination for performance parts and accessories for cars, trucks, and SUVs. We are committed to competitive prices and helpful service across our product range.</p>
-<p>Supreme Autoparts is built by enthusiasts for enthusiasts. We aim to supply just about any car part you might need for popular American, European, and Asian vehicles. If you are searching for something specific that is not listed online, please contact us — odds are we can help source it.</p>
+<p>Welcome to <strong>Supreme Autoparts</strong>, your destination for performance parts and accessories for cars, trucks, and SUVs. We serve buyers in the <strong>United States</strong> and <strong>Kenya</strong> with US-spec fitments, USD checkout, and responsive support.</p>
+<p>Supreme Autoparts is built by enthusiasts for enthusiasts. We aim to supply parts for popular American, European, and Asian vehicles — especially trucks and SUVs. If you are searching for something specific that is not listed online, please contact us — odds are we can help source it.</p>
 <p>Thanks for reading. We look forward to getting quality parts to you soon.</p>
 <p><em>{$site}</em> · <a href="mailto:{$email}">{$email}</a></p>
 HTML,
@@ -222,6 +222,126 @@ HTML,
 <h2>Retention and security</h2>
 <p>We retain order and account records as needed for legal and operational purposes, then delete or anonymize when no longer required. We use reasonable technical and organizational measures; no method of transmission is perfectly secure.</p>
 <p>Processors (hosting, payment, email delivery) only receive data needed to perform their services.</p>
+HTML,
+        ],
+        'guides' => [
+            'title'   => 'Guides',
+            'content' => <<<HTML
+<p>Practical guides for <strong>US</strong> and <strong>Kenya</strong> customers shopping Supreme Autoparts — fitment, ordering, and shipping without the fluff.</p>
+<ul>
+<li><a href="/how-to-order/"><strong>How to order</strong></a> — cart, USD checkout, accounts</li>
+<li><a href="/fitment-guide/"><strong>Fitment guide</strong></a> — year / make / model checks for US-spec trucks &amp; SUVs</li>
+<li><a href="/shipping-to-kenya/"><strong>Shipping to Kenya</strong></a> — import delivery, free-shipping threshold, local support</li>
+<li><a href="/auto-parts-kenya/"><strong>Auto parts Kenya</strong></a> — buy US-spec parts with Kenya support</li>
+<li><a href="/performance-truck-parts/"><strong>Performance truck &amp; off-road</strong></a> — suspension, brakes, wheels, lighting</li>
+</ul>
+<p>Need a human? WhatsApp <a href="https://wa.me/254714498451">+254 714 498 451</a> or email <a href="mailto:{$email}">{$email}</a>.</p>
+HTML,
+        ],
+        'how-to-order' => [
+            'title'   => 'How to Order',
+            'content' => <<<HTML
+<p>Supreme Autoparts is built for buyers in the <strong>United States</strong> and <strong>Kenya</strong> (and other destinations we ship to). Catalog fitments skew US-spec — popular trucks, SUVs, and performance platforms — with <strong>USD checkout</strong> and local Kenya support on WhatsApp.</p>
+<h2>1. Find the right part</h2>
+<ol>
+<li>Use <a href="/shop/">Shop</a> or search by brand / part name.</li>
+<li>Open category hubs: <a href="/product-category/brakes/">Brakes</a>, <a href="/product-category/suspension/">Suspension</a>, <a href="/product-category/wheels/">Wheels</a>, and more.</li>
+<li>Confirm <strong>year, make, model</strong> (and engine/trim when listed). See the <a href="/fitment-guide/">Fitment guide</a>.</li>
+</ol>
+<h2>2. Add to cart &amp; check out</h2>
+<ul>
+<li>Prices are charged in <strong>USD</strong> at payment. Geo display may show a local estimate for convenience.</li>
+<li>Checkout as a guest or create a <a href="/my-account/">My Account</a> login to track orders and invoices.</li>
+<li>Review shipping lines before paying — free shipping may apply above the banner threshold (see <a href="/free-shipping/">Free Shipping Details</a>).</li>
+</ul>
+<h2>3. After you order</h2>
+<p>You will get email confirmation from <a href="mailto:{$email}">{$email}</a>. For fitment or delivery questions:</p>
+<ul>
+<li><strong>WhatsApp / SMS:</strong> <a href="https://wa.me/254714498451">+254 714 498 451</a></li>
+<li><strong>Email:</strong> <a href="mailto:{$email}">{$email}</a></li>
+</ul>
+<p>Cannot find a listing? Use <a href="/enquire/">Can&rsquo;t find a part?</a> with vehicle details.</p>
+<h2>Quick FAQ</h2>
+<ul>
+<li><strong>US buyers:</strong> Shop US-spec performance and aftermarket parts; confirm shipping to your address at checkout.</li>
+<li><strong>Kenya buyers:</strong> Same catalog and USD payment — see <a href="/shipping-to-kenya/">Shipping to Kenya</a> and <a href="/auto-parts-kenya/">Auto parts Kenya</a>.</li>
+</ul>
+HTML,
+        ],
+        'shipping-to-kenya' => [
+            'title'   => 'Shipping to Kenya',
+            'content' => <<<HTML
+<p>Ordering performance or replacement parts from abroad is normal for Kenya builds. Here is how Supreme Autoparts handles <strong>shipping to Kenya</strong>.</p>
+<h2>What to expect</h2>
+<ul>
+<li><strong>Rates at checkout:</strong> Carrier options and totals depend on weight, dimensions, and destination. Always use the live checkout figure.</li>
+<li><strong>Free shipping:</strong> Qualifying carts over the USD threshold in the site banner (often ~$99 equivalent) may ship complimentary — oversized, heavy, or supplier-direct items can be excluded. Details: <a href="/free-shipping/">Free Shipping</a> and <a href="/shipping-policy/">Shipping Policy</a>.</li>
+<li><strong>Inspect on arrival:</strong> Check parts before installation; contact us immediately if the wrong item or damage shows up.</li>
+</ul>
+<h2>Duties &amp; import notes</h2>
+<p>Customs duties, VAT, or brokerage for Kenya imports are the buyer&rsquo;s responsibility unless we explicitly state otherwise on an order. Keep your invoice handy for clearance. Questions before you buy: WhatsApp <a href="https://wa.me/254714498451">+254 714 498 451</a>.</p>
+<h2>US buyers</h2>
+<p>This page focuses on Kenya delivery. If you are ordering to a US address, select your shipping address at checkout — available methods appear there. Currency at payment remains <strong>USD</strong>.</p>
+<h2>Support</h2>
+<p>Email <a href="mailto:{$email}">{$email}</a> with your order number. Related guides: <a href="/how-to-order/">How to order</a> · <a href="/auto-parts-kenya/">Auto parts Kenya</a> · <a href="/fitment-guide/">Fitment</a>.</p>
+HTML,
+        ],
+        'fitment-guide' => [
+            'title'   => 'Fitment Guide',
+            'content' => <<<HTML
+<p>Wrong fitment is the #1 return driver. Spend two minutes here before you click buy — whether you are building a truck in the <strong>US</strong> or running an import platform in <strong>Kenya</strong>.</p>
+<h2>Match these fields</h2>
+<ol>
+<li><strong>Year</strong> — cab/chassis changes mid-generation; do not assume “close enough.”</li>
+<li><strong>Make &amp; model</strong> — F-150 vs F-250, Tacoma vs Tundra, Wrangler vs Gladiator, etc.</li>
+<li><strong>Drive / cab / bed</strong> — 4WD, crew cab, bed length, and trim often change suspension and bumper kits.</li>
+<li><strong>Engine / powertrain</strong> — exhaust, intake, and some drivetrain parts are engine-specific.</li>
+</ol>
+<h2>US-spec catalog</h2>
+<p>Most listings follow North American fitment language (years and models as sold in the US). That is intentional: popular performance brands publish US applications first. If your vehicle is a grey import in Kenya, compare VIN/trim to the US twin carefully or ask us.</p>
+<h2>When to ask us</h2>
+<p>Send year, make, model, trim, and the part link (or SKU) to <a href="mailto:{$email}">{$email}</a> or WhatsApp <a href="https://wa.me/254714498451">+254 714 498 451</a>. For parts not listed, use <a href="/enquire/">Can&rsquo;t find a part?</a>.</p>
+<p>Browse: <a href="/product-category/suspension/">Suspension</a> · <a href="/product-category/brakes/">Brakes</a> · <a href="/performance-truck-parts/">Performance truck parts</a>.</p>
+HTML,
+        ],
+        'auto-parts-kenya' => [
+            'title'   => 'Auto Parts Kenya',
+            'content' => <<<HTML
+<p>Looking for <strong>auto parts in Kenya</strong> without settling for random marketplace quality? Supreme Autoparts lets you order <strong>US-spec and popular aftermarket parts</strong> online — brakes, suspension, wheels, lighting, and more — with <strong>USD checkout</strong> and support that picks up WhatsApp.</p>
+<h2>Why shop with us</h2>
+<ul>
+<li>Catalog built around real performance brands and fitments common on trucks and SUVs.</li>
+<li>Secure USD payment; optional local currency display for readability.</li>
+<li>Kenya-aware shipping narrative and human support: <a href="https://wa.me/254714498451">+254 714 498 451</a> · <a href="mailto:{$email}">{$email}</a>.</li>
+</ul>
+<h2>Popular starting points</h2>
+<ul>
+<li><a href="/product-category/brakes/">Brakes</a></li>
+<li><a href="/product-category/suspension/">Suspension</a></li>
+<li><a href="/product-category/wheels/">Wheels</a></li>
+<li><a href="/product-category/lighting/">Lighting</a></li>
+<li><a href="/performance-truck-parts/">Performance truck &amp; off-road</a></li>
+</ul>
+<h2>How ordering works</h2>
+<p>Follow <a href="/how-to-order/">How to order</a>, confirm fitment with the <a href="/fitment-guide/">Fitment guide</a>, then read <a href="/shipping-to-kenya/">Shipping to Kenya</a> before you pay. Policies: <a href="/returns/">Returns</a> · <a href="/shipping-policy/">Shipping</a>.</p>
+<p><em>US customers:</em> same storefront and catalog — choose your US shipping address at checkout.</p>
+HTML,
+        ],
+        'performance-truck-parts' => [
+            'title'   => 'Performance Truck & Off-Road Parts',
+            'content' => <<<HTML
+<p>Supreme Autoparts stocks <strong>performance truck and off-road parts</strong> aimed at serious drivers — lift-ready suspension, braking upgrades, wheels, lighting, drivetrain, and exterior armor. Fitment language follows <strong>US-spec</strong> applications used across North America and by import builders in Kenya.</p>
+<h2>Shop by system</h2>
+<ul>
+<li><a href="/product-category/suspension/"><strong>Suspension</strong></a> — shocks, coils, kits</li>
+<li><a href="/product-category/brakes/"><strong>Brakes</strong></a> — pads, rotors, big-brake related parts</li>
+<li><a href="/product-category/wheels/"><strong>Wheels</strong></a> &amp; <a href="/product-category/tires/">Tires</a></li>
+<li><a href="/product-category/lighting/"><strong>Lighting</strong></a> — driving lights and related</li>
+<li><a href="/product-category/drivetrain/"><strong>Drivetrain</strong></a> · <a href="/product-category/exhaust/">Exhaust</a> · <a href="/product-category/exterior/">Exterior</a></li>
+</ul>
+<h2>US &amp; Kenya</h2>
+<p>Checkout is <strong>USD</strong>. US buyers select domestic shipping at checkout when available; Kenya buyers should review <a href="/shipping-to-kenya/">Shipping to Kenya</a>. Support: WhatsApp <a href="https://wa.me/254714498451">+254 714 498 451</a> · <a href="mailto:{$email}">{$email}</a>.</p>
+<p>New here? Start with <a href="/how-to-order/">How to order</a> and the <a href="/fitment-guide/">Fitment guide</a>.</p>
 HTML,
         ],
     ];

@@ -161,7 +161,10 @@ function sa_core_seed_pages(): void
     }
 
     update_option('sa_pages_seeded', time());
-    update_option('sa_pages_seed_ver', '9');
+    update_option('sa_pages_seed_ver', '10');
+    if (function_exists('sa_seo_seed_page_meta')) {
+        sa_seo_seed_page_meta();
+    }
 }
 
 /**
