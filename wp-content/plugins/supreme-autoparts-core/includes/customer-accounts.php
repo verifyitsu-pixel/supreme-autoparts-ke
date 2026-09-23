@@ -60,11 +60,6 @@ add_action('init', static function (): void {
     sa_core_ensure_customer_capabilities();
 }, 5);
 
-add_filter('woocommerce_new_customer_data', static function (array $data): array {
-    $data['role'] = 'customer';
-    return $data;
-});
-
 add_action('user_register', static function (int $user_id): void {
     $user = new WP_User($user_id);
     if (!$user->exists()) {
@@ -284,11 +279,21 @@ add_action('init', static function (): void {
 }, 21);
 
 /**
- * Strong random password for customers (register + reset). Never log the value.
+ * Email-safe random password for customers (register + reset).
+ * Alphanumeric only — no & < > " ' that HTML emails mangle via esc_html (& → &amp;).
+ * Avoids ambiguous 0/O/1/l/I. Never log the value.
  */
-function sa_core_generate_customer_password(): string
+function sa_core_generate_customer_password(int $length = 18): string
 {
-    return wp_generate_password(16, true, true);
+    $length = max(16, min(32, $length));
+    // No 0 O 1 l I — copy/paste and OCR-friendly.
+    $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    $max = strlen($alphabet) - 1;
+    $password = '';
+    for ($i = 0; $i < $length; $i++) {
+        $password .= $alphabet[random_int(0, $max)];
+    }
+    return $password;
 }
 
 /**
@@ -331,12 +336,18 @@ function sa_core_email_customer_password(WP_User $user, string $password, string
         $intro   = 'You requested a password reset. We generated a new secure password for you — it works right away.';
     }
 
+    $email_login = (string) $user->user_email;
+    $login_hint = $email_login !== '' && is_email($email_login)
+        ? $email_login
+        : $login;
+
     $lines = [
-        'Hi ' . $login . ',',
+        'Hi ' . ($user->display_name ?: $login) . ',',
         '',
         $intro,
         '',
-        'Username (email): ' . $login,
+        'Log in with your email address (or username) and this password:',
+        'Email / username: ' . $login_hint,
         'Password: ' . $password,
         '',
         'Log in here: ' . $account_url,
@@ -463,15 +474,70 @@ add_filter('woocommerce_lost_password_confirmation_message', static function ():
 });
 
 /**
- * Generated passwords are working logins (not temporary set-link passwords).
- * Clear Woo's "temporary password / emailed a link" nag after account creation.
+ * Register path: re-set an email-safe password and email it via our plain Brevo mailer.
+ * Woo 9+/11 fires customer_new_account via deferred hook
+ * woocommerce_created_customer_notification (not the Email::trigger on created_customer),
+ * and that notification still carries the *pre-insert* password — which would no longer
+ * match after wp_set_password. Mark the user so the notification wrapper strips it.
+ * Staff reset-link flow is untouched (lost-password handler above).
  */
 add_action('woocommerce_created_customer', static function (int $customer_id, $data = [], $password_generated = false): void {
-    if ($password_generated) {
-        delete_user_option($customer_id, 'default_password_nag', true);
+    if (!$password_generated || $customer_id <= 0) {
+        return;
     }
+
+    delete_user_option($customer_id, 'default_password_nag', true);
+
+    $user = get_user_by('id', $customer_id);
+    if (!$user instanceof WP_User || !sa_core_user_is_customer_for_password_mail($user)) {
+        return;
+    }
+
+    $password = sa_core_generate_customer_password();
+    wp_set_password($password, $customer_id);
+
+    $user = get_user_by('id', $customer_id);
+    if (!$user instanceof WP_User) {
+        return;
+    }
+
+    $sent = sa_core_email_customer_password($user, $password, 'new');
+    $password = '';
+
+    // Flag for notification wrapper (sync or deferred) — strip Woo password body.
+    if ($sent) {
+        set_transient('sa_core_pw_mailed_' . $customer_id, '1', 15 * MINUTE_IN_SECONDS);
+    }
+
     unset($data);
-}, 20, 3);
+}, 5, 3);
+
+/**
+ * Woo queues woocommerce_created_customer → *_notification with the original user_pass.
+ * If we already emailed a freshly re-set password, force welcome-without-password.
+ */
+add_action('woocommerce_created_customer_notification', static function ($customer_id, $new_customer_data = [], $password_generated = false): void {
+    $customer_id = (int) $customer_id;
+    if ($customer_id <= 0 || !get_transient('sa_core_pw_mailed_' . $customer_id)) {
+        return;
+    }
+
+    if (!function_exists('WC') || !WC()->mailer()) {
+        return;
+    }
+
+    $mailer = WC()->mailer();
+    remove_action('woocommerce_created_customer_notification', [$mailer, 'customer_new_account'], 10);
+
+    $emails = $mailer->get_emails();
+    if (isset($emails['WC_Email_Customer_New_Account']) && is_object($emails['WC_Email_Customer_New_Account'])) {
+        // Welcome only — password already sent as plain text by sa_core_email_customer_password.
+        $emails['WC_Email_Customer_New_Account']->trigger($customer_id, '', false);
+    }
+
+    delete_transient('sa_core_pw_mailed_' . $customer_id);
+    unset($new_customer_data, $password_generated);
+}, 1, 3);
 
 /**
  * Also rewrite Woo's default "reset link sent" copy if it still appears.
@@ -487,13 +553,12 @@ add_filter('woocommerce_add_success', static function ($message) {
 }, 20);
 
 /**
- * Checkout / registration: when Woo generates a password, force length >= 16 with special chars
- * before the user is inserted, so the new-account email contains a strong working password.
+ * Checkout / registration: when Woo auto-generates a password, seed an email-safe one
+ * before wp_insert_user. woocommerce_created_customer then re-sets + emails the final copy.
  */
 add_filter('woocommerce_new_customer_data', static function (array $data): array {
     $data['role'] = 'customer';
     if (get_option('woocommerce_registration_generate_password') === 'yes') {
-        // Always replace with our strong password when auto-gen is on (register + checkout account creation).
         $data['user_pass'] = sa_core_generate_customer_password();
     }
     return $data;
