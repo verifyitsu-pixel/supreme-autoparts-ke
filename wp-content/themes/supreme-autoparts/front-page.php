@@ -122,7 +122,7 @@ if (!empty($sa_latest)) :
 </section>
     <?php
 endif;
-
+?>
 
 <section class="sa-section sa-guides-strip" aria-labelledby="sa-guides-title">
   <div class="sa-container">
@@ -151,4 +151,5 @@ endif;
   </div>
 </section>
 
+<?php
 get_footer();
