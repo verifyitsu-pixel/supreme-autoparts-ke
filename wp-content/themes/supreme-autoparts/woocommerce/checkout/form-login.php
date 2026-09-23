@@ -3,7 +3,7 @@
  * Checkout login form — Remember me checked by default.
  *
  * @package Supreme_Autoparts
- * @version 1.4.25
+ * @version 1.3.0
  */
 
 defined('ABSPATH') || exit;
@@ -45,7 +45,7 @@ if (is_user_logged_in() || 'no' === get_option('woocommerce_enable_checkout_logi
     <button type="submit" class="woocommerce-button button sa-btn woocommerce-form-login__submit<?php echo esc_attr(wc_wp_theme_get_element_class_name('button') ? ' ' . wc_wp_theme_get_element_class_name('button') : ''); ?>" name="login" value="<?php esc_attr_e('Login', 'supreme-autoparts'); ?>"><?php esc_html_e('Login', 'supreme-autoparts'); ?></button>
   </p>
   <p class="lost_password">
-    <a href="<?php echo esc_url(wp_lostpassword_url()); ?>"><?php esc_html_e('Email me a login code', 'supreme-autoparts'); ?></a>
+    <a href="<?php echo esc_url(wp_lostpassword_url()); ?>"><?php esc_html_e('Lost your password?', 'supreme-autoparts'); ?></a>
   </p>
 
   <?php do_action('woocommerce_login_form_end'); ?>

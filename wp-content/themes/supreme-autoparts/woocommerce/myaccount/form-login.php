@@ -1,20 +1,14 @@
 <?php
 /**
- * My Account login / register — password login + email OTP for customers.
+ * My Account login / register — Remember me checked by default.
  *
  * @package Supreme_Autoparts
- * @version 1.4.25
+ * @version 1.4.18
  */
 
 defined('ABSPATH') || exit;
 
 do_action('woocommerce_before_customer_login_form');
-
-// OTP verify UI rendered by core on ?sa_otp=1 / pending challenge.
-if (function_exists('sa_core_otp_form_shown') && sa_core_otp_form_shown()) {
-    do_action('woocommerce_after_customer_login_form');
-    return;
-}
 ?>
 <div class="sa-account-auth" id="customer_login">
   <div class="sa-account-auth__grid<?php echo ('yes' === get_option('woocommerce_enable_myaccount_registration')) ? ' sa-account-auth__grid--2' : ''; ?>">
@@ -48,8 +42,6 @@ if (function_exists('sa_core_otp_form_shown') && sa_core_otp_form_shown()) {
           <button type="submit" class="woocommerce-button button sa-btn woocommerce-form-login__submit<?php echo esc_attr(wc_wp_theme_get_element_class_name('button') ? ' ' . wc_wp_theme_get_element_class_name('button') : ''); ?>" name="login" value="<?php esc_attr_e('Log in', 'supreme-autoparts'); ?>"><?php esc_html_e('Log in', 'supreme-autoparts'); ?></button>
         </p>
         <p class="woocommerce-LostPassword lost_password">
-          <a href="<?php echo esc_url(wp_lostpassword_url()); ?>"><?php esc_html_e('Email me a login code', 'supreme-autoparts'); ?></a>
-          <span class="sa-auth-sep" aria-hidden="true"> · </span>
           <a href="<?php echo esc_url(wp_lostpassword_url()); ?>"><?php esc_html_e('Lost your password?', 'supreme-autoparts'); ?></a>
         </p>
 
@@ -79,15 +71,19 @@ if (function_exists('sa_core_otp_form_shown') && sa_core_otp_form_shown()) {
             <input type="email" class="woocommerce-Input woocommerce-Input--text input-text" name="email" id="reg_email" autocomplete="email" value="<?php echo (!empty($_POST['email'])) ? esc_attr(wp_unslash($_POST['email'])) : ''; ?>" required /><?php // phpcs:ignore ?>
           </p>
 
+          <?php
+          // Store always auto-generates passwords (woocommerce_registration_generate_password = yes).
+          // Never show a password field on register — customer receives a working password by email.
+          ?>
           <p class="sa-register-password-note" role="note">
-            <?php esc_html_e("We'll email you a 6-digit login code. Enter it on the next screen to finish signing in. No password needed.", 'supreme-autoparts'); ?>
+            <?php esc_html_e("We'll email you a secure password that works right away. You can change it later under Account details after you log in.", 'supreme-autoparts'); ?>
           </p>
 
           <?php do_action('woocommerce_register_form'); ?>
 
           <p class="woocommerce-form-row form-row">
             <?php wp_nonce_field('woocommerce-register', 'woocommerce-register-nonce'); ?>
-            <button type="submit" class="woocommerce-Button woocommerce-button button sa-btn<?php echo esc_attr(wc_wp_theme_get_element_class_name('button') ? ' ' . wc_wp_theme_get_element_class_name('button') : ''); ?> woocommerce-form-register__submit" name="register" value="<?php esc_attr_e('Email me a login code', 'supreme-autoparts'); ?>"><?php esc_html_e('Email me a login code', 'supreme-autoparts'); ?></button>
+            <button type="submit" class="woocommerce-Button woocommerce-button button sa-btn<?php echo esc_attr(wc_wp_theme_get_element_class_name('button') ? ' ' . wc_wp_theme_get_element_class_name('button') : ''); ?> woocommerce-form-register__submit" name="register" value="<?php esc_attr_e('Register', 'supreme-autoparts'); ?>"><?php esc_html_e('Register', 'supreme-autoparts'); ?></button>
           </p>
 
           <?php do_action('woocommerce_register_form_end'); ?>

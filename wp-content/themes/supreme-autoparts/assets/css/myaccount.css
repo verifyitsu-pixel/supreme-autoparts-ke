@@ -1490,24 +1490,3 @@ body.woocommerce-account .sa-my-account {
     grid-template-columns: 1fr 1fr;
   }
 }
-
-
-/* ——— OTP login code ——— */
-.sa-account-auth--otp .sa-otp-input {
-  font-size: 1.35rem;
-  letter-spacing: 0.35em;
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  text-align: center;
-  max-width: 12rem;
-  font-weight: 600;
-}
-
-.sa-otp-resend .sa-otp-back,
-.sa-account-auth--lost .sa-otp-back a {
-  color: var(--sa-accent);
-  font-size: .88rem;
-}
-
-.sa-auth-sep {
-  color: var(--sa-muted, #888);
-}
