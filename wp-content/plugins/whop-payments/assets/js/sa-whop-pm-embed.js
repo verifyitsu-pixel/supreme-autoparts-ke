@@ -58,6 +58,7 @@
       'data-whop-checkout-prefill-email',
       'data-whop-checkout-hide-email',
       'data-whop-checkout-hide-address',
+      'data-whop-checkout-hide-price',
       'data-whop-checkout-style-container-padding-x',
       'data-whop-checkout-style-container-padding-y',
     ].forEach(function (a) {
@@ -86,6 +87,7 @@
     }
     // Card-first: hide shipping/address chrome Whop may show.
     el.setAttribute('data-whop-checkout-hide-address', 'true');
+    el.setAttribute('data-whop-checkout-hide-price', 'true');
     el.setAttribute('data-whop-checkout-style-container-padding-x', '0');
     el.setAttribute('data-whop-checkout-style-container-padding-y', '8');
     el.style.width = '100%';
