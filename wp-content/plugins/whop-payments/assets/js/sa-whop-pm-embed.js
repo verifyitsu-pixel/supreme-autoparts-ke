@@ -88,6 +88,8 @@
   function buildCheckoutEl(data) {
     var el = document.createElement('div');
     el.className = 'sa-pm-embed__checkout';
+    // wco.submit() expects the element id STRING, never the HTMLElement itself.
+    el.id = 'sa-whop-pm-checkout';
     el.setAttribute('data-whop-checkout-plan-id', data.plan_id);
     if (data.session_id) {
       el.setAttribute('data-whop-checkout-session', data.session_id);
@@ -209,15 +211,26 @@
 
   function ensureWhopIndex() {
     if (window.wco && window.wco.listening) return;
-    var existing = document.querySelector(
-      'script[src*="js.whop.com/static/checkout/index.js"]'
+    // Prefer loader.js (official embed entry); it injects index.js.
+    var loader = document.querySelector(
+      'script[src*="js.whop.com/static/checkout/loader.js"]'
     );
-    if (existing) return;
-    var s = document.createElement('script');
-    s.src = 'https://js.whop.com/static/checkout/index.js';
-    s.async = true;
-    s.defer = true;
-    document.head.appendChild(s);
+    if (!loader) {
+      var s = document.createElement('script');
+      s.src = 'https://js.whop.com/static/checkout/loader.js';
+      s.async = true;
+      s.defer = true;
+      document.head.appendChild(s);
+      return;
+    }
+    // Fallback if only index is present / loader already ran but wco not listening yet.
+    if (!document.querySelector('script[src*="js.whop.com/static/checkout/index.js"]')) {
+      var s2 = document.createElement('script');
+      s2.src = 'https://js.whop.com/static/checkout/index.js';
+      s2.async = true;
+      s2.defer = true;
+      document.head.appendChild(s2);
+    }
   }
 
   function fetchEmbedSession(method) {
@@ -340,8 +353,23 @@
       });
   }
 
+  function resolveEmbedId() {
+    // Whop docs: wco.submit("element-id-string"). Passing a DOM node becomes
+    // "[object HTMLDivElement]" and throws "No embed with identifier … found."
+    if (checkoutEl && checkoutEl.id) {
+      return String(checkoutEl.id);
+    }
+    var el = document.getElementById('sa-whop-pm-checkout');
+    if (el && el.id) {
+      checkoutEl = el;
+      return String(el.id);
+    }
+    return '';
+  }
+
   function submitCheckout() {
-    if (!checkoutEl) {
+    var embedId = resolveEmbedId();
+    if (!embedId || typeof embedId !== 'string') {
       setStatus(i18n('error', 'Form not ready yet.'), 'error');
       return;
     }
@@ -349,7 +377,7 @@
     if (verifyBtn) verifyBtn.disabled = true;
     try {
       if (window.wco && typeof window.wco.submit === 'function') {
-        var ret = window.wco.submit(checkoutEl);
+        var ret = window.wco.submit(embedId);
         if (ret && typeof ret.then === 'function') {
           ret.catch(function (err) {
             setStatus(
@@ -361,7 +389,14 @@
         }
         return;
       }
-    } catch (e) {}
+    } catch (e) {
+      setStatus(
+        (e && e.message) || i18n('error', 'Could not submit. Please reload and try again.'),
+        'error'
+      );
+      if (verifyBtn) verifyBtn.disabled = false;
+      return;
+    }
     setStatus(i18n('error', 'Could not submit. Please reload and try again.'), 'error');
     if (verifyBtn) verifyBtn.disabled = false;
   }
