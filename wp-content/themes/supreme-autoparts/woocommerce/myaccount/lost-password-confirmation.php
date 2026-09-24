@@ -3,7 +3,7 @@
  * Lost password confirmation — we emailed a new working password.
  *
  * @package Supreme_Autoparts
- * @version 1.4.28
+ * @version 1.4.29
  */
 
 defined('ABSPATH') || exit;

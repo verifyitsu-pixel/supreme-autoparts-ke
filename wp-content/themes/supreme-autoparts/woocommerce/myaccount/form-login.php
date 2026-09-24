@@ -3,7 +3,7 @@
  * My Account login / register — stay signed in until Log out; password emailed on register.
  *
  * @package Supreme_Autoparts
- * @version 1.4.28
+ * @version 1.4.29
  */
 
 defined('ABSPATH') || exit;
@@ -72,7 +72,7 @@ do_action('woocommerce_before_customer_login_form');
           </p>
 
           <p class="sa-register-password-note" role="note">
-            <?php esc_html_e('We will email you a secure password that works right away. After you log in, you stay signed in on this browser until you tap Log out. You can change the password anytime under Account details.', 'supreme-autoparts'); ?>
+            <?php esc_html_e('We will email you a secure password that works right away. Check inbox and spam, then log in. After you log in, you stay signed in on this browser until you tap Log out. You can change the password anytime under Account details.', 'supreme-autoparts'); ?>
           </p>
 
           <?php do_action('woocommerce_register_form'); ?>

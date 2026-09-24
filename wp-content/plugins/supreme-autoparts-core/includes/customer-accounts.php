@@ -508,7 +508,7 @@ add_action('wp_loaded', static function (): void {
 
     // Refresh user object after password change (invalidates sessions).
     $user = get_user_by('id', (int) $user->ID);
-    if (!$user instanceof WP_User) {
+    if (!$user instanceof WP_User || !wp_check_password($password, (string) $user->user_pass, (int) $user->ID)) {
         wc_add_notice(
             __('We could not update your password. Please try again, or contact calvin@supremeautoparts.co.ke.', 'supreme-autoparts-core'),
             'error'
@@ -624,23 +624,31 @@ add_action('woocommerce_created_customer', static function (int $customer_id, $d
         }
     }
 
+    // Guarantee the string we email is the one hashed in the DB (race-free).
+    if ($password !== '' && !wp_check_password($password, (string) $user->user_pass, $customer_id)) {
+        wp_set_password($password, $customer_id);
+        $user = get_user_by('id', $customer_id);
+        if (!$user instanceof WP_User) {
+            return;
+        }
+    }
+
     $sent = sa_core_email_customer_password($user, $password, 'new');
     $password = '';
 
     // Flag so Woo welcome email (same hook pri 10 / deferred notification) never includes a password.
     set_transient('sa_core_pw_mailed_' . $customer_id, $sent ? '1' : '0', 15 * MINUTE_IN_SECONDS);
 
+    // Request-scoped: woocommerce_add_success rewrites Woo's single registration notice.
+    // Do NOT wc_add_notice(success) here — that duplicated the banner. On Brevo failure,
+    // suppress Woo's "password sent" success and show one clear error instead.
+    $GLOBALS['sa_core_reg_pw_mail_ok'] = $sent;
+
     if ($sent) {
         sa_core_password_issue_mark_sent($customer_id);
-        if (function_exists('wc_add_notice')) {
-            wc_add_notice(
-                __('Account created. We emailed you a secure password — it works right away. Check your inbox (and spam), then log in. You can change the password under Account details after you sign in.', 'supreme-autoparts-core'),
-                'success'
-            );
-        }
     } elseif (function_exists('wc_add_notice')) {
         wc_add_notice(
-            __('Your account was created, but we could not email your password. Use “Email me a new password” on the Lost password page, or contact calvin@supremeautoparts.co.ke.', 'supreme-autoparts-core'),
+            __('Your account was created, but we could not email your password. Wait a moment, then use “Email me a new password” on the Log in page, or contact calvin@supremeautoparts.co.ke.', 'supreme-autoparts-core'),
             'error'
         );
     }
@@ -739,8 +747,13 @@ add_filter('woocommerce_add_success', static function ($message) {
     if (str_contains($lower, 'login details have been sent')
         || str_contains($lower, 'account was created successfully')
         || (str_contains($lower, 'registered successfully') && str_contains($lower, 'email'))
+        || (str_contains($lower, 'password has been sent') && str_contains($lower, 'account'))
     ) {
-        return __('Account created. We emailed you a secure password — it works right away. Check your inbox (and spam), then log in. You can change the password under Account details after you sign in.', 'supreme-autoparts-core');
+        // Brevo failed this request — do not claim the password was emailed.
+        if (array_key_exists('sa_core_reg_pw_mail_ok', $GLOBALS) && !$GLOBALS['sa_core_reg_pw_mail_ok']) {
+            return '';
+        }
+        return __('Account created. We emailed you a secure password — it works right away. Check your inbox (and spam), then log in. If it does not arrive in a few minutes, use “Email me a new password”. You can change the password under Account details after you sign in.', 'supreme-autoparts-core');
     }
     return $message;
 }, 20);
