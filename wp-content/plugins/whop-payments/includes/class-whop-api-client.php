@@ -159,9 +159,9 @@ final class Whop_Api_Client {
             'redirect_url' => (string) ($args['redirect_url'] ?? ''),
             'metadata'     => $meta,
             'payment_method_configuration' => [
-                'enabled'                   => ['card', 'us_bank_account'],
+                'enabled'                   => ['card'],
                 // Whop API requires `disabled` as an array of type strings (HTTP 400 if omitted).
-                'disabled'                  => [],
+                'disabled'                  => ['us_bank_account'],
                 'include_platform_defaults' => false,
             ],
         ];
@@ -230,11 +230,12 @@ final class Whop_Api_Client {
         }
 
         $external_id = 'woo-pm-verify-' . ($user_id !== '' ? $user_id : 'anon') . '-' . gmdate('YmdHis');
-        $title = (string) ($args['title'] ?? __('Card/bank verify $1', 'whop-payments'));
+        $title = (string) ($args['title'] ?? __('Add card', 'whop-payments'));
 
+        // Card-only on My Account verify — bank/ACH fields clutter the embed.
         $pmc = [
-            'enabled'                   => ['card', 'us_bank_account'],
-            'disabled'                  => [],
+            'enabled'                   => ['card'],
+            'disabled'                  => ['us_bank_account'],
             'include_platform_defaults' => false,
         ];
 
@@ -251,7 +252,7 @@ final class Whop_Api_Client {
                 'initial_price'         => $amount,
                 'plan_type'             => 'one_time',
                 'title'                 => $title,
-                'description'           => (string) ($args['description'] ?? __('Non-refundable $1.00 USD fee to verify your card or bank is active. No other charge at this step.', 'whop-payments')),
+                'description'           => (string) ($args['description'] ?? __('Card verification', 'whop-payments')),
                 'visibility'            => 'hidden',
                 'force_create_new_plan' => true,
                 'payment_method_configuration' => $pmc,

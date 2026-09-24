@@ -203,7 +203,7 @@ final class Whop_Payment_Methods {
             'wp_user_id'   => (string) $user_id,
             'email'        => $email,
             'redirect_url' => $return_url,
-            'title'        => __('Card/bank verify $1', 'whop-payments'),
+            'title'        => __('Add card', 'whop-payments'),
         ]);
 
         // Optional fallback: free setup-only if payment-mode verify cannot be created.
@@ -364,8 +364,8 @@ final class Whop_Payment_Methods {
         );
 
         $user = wp_get_current_user();
-        $plan = (string) get_user_meta($user->ID, '_sa_whop_embed_plan_id', true);
-        $sess = (string) get_user_meta($user->ID, '_sa_whop_embed_session_id', true);
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $auto_open = !empty($_GET['sa_whop_embed']);
 
         wp_localize_script('sa-whop-pm-embed', 'saWhopPmEmbed', [
             'ajaxUrl'    => admin_url('admin-ajax.php'),
@@ -374,15 +374,15 @@ final class Whop_Payment_Methods {
             'returnUrl'  => self::embed_return_url((int) $user->ID),
             'email'      => (string) $user->user_email,
             'fee'        => self::VERIFY_FEE_USD,
-            'autoOpen'   => (!empty($_GET['sa_whop_embed']) || ($plan !== '' && $sess !== '')), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            'planId'     => $plan,
-            'sessionId'  => $sess,
+            // Only auto-open when ?sa_whop_embed=1 — never from leftover meta (expired → empty box).
+            'autoOpen'   => $auto_open,
             'fallbackAdd'=> self::add_url(),
             'i18n'       => [
-                'starting'   => __('Preparing secure card form…', 'whop-payments'),
-                'error'      => __('Could not start verification. Please try again.', 'whop-payments'),
-                'success'    => __('Payment method saved. Refreshing…', 'whop-payments'),
-                'syncing'    => __('Saving your payment method…', 'whop-payments'),
+                'starting'    => __('Preparing…', 'whop-payments'),
+                'loadingForm' => __('Loading card form…', 'whop-payments'),
+                'error'       => __('Could not load card form. Please try again.', 'whop-payments'),
+                'success'     => __('Card saved. Refreshing…', 'whop-payments'),
+                'syncing'     => __('Saving…', 'whop-payments'),
             ],
         ]);
     }

@@ -584,20 +584,32 @@
 }
 
 .sa-pm-embed__mount {
-  min-height: 420px;
+  min-height: 480px;
   width: 100%;
-  overflow: hidden;
+  overflow: visible;
   border-radius: var(--sa-radius, 6px);
   background: #0B0B0D;
   border: 1px solid var(--sa-border-strong, #3A3A40);
+  /* Avoid empty black void looking "broken" while Whop loads */
+  position: relative;
+}
+
+.sa-pm-embed__checkout {
+  width: 100%;
+  min-height: 460px;
+  height: fit-content;
+  overflow: hidden;
 }
 
 .sa-pm-embed__mount .whop-checkout-wrapper,
-.sa-pm-embed__mount iframe {
+.sa-pm-embed__mount iframe,
+.sa-pm-embed__checkout iframe {
   width: 100% !important;
   max-width: 100%;
+  min-height: 420px;
   border: 0;
   background: #0B0B0D;
+  display: block;
 }
 
 .sa-pm-embed__noscript {
@@ -611,7 +623,10 @@
     padding: .9rem .85rem 1rem;
   }
   .sa-pm-embed__mount {
-    min-height: 480px;
+    min-height: 520px;
+  }
+  .sa-pm-embed__checkout {
+    min-height: 500px;
   }
 }
 

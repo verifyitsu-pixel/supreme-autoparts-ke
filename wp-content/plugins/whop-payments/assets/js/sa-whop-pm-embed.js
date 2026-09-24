@@ -1,6 +1,12 @@
 /**
- * My Account — embedded Whop verify checkout (Add card / bank).
+ * My Account — embedded Whop verify checkout (Add card).
  * Mounts Whop loader iframe on-page; never redirects the top window to whop.com.
+ *
+ * Whop's loader only mounts on:
+ *  1) initial querySelectorAll of [data-whop-checkout-plan-id], or
+ *  2) MutationObserver childList addedNodes that already have the attrs.
+ * Setting attrs on an existing empty div does NOT remount — so we always
+ * append a fresh child element with attrs pre-set.
  */
 (function () {
   'use strict';
@@ -11,6 +17,8 @@
   var statusEl = null;
   var addBtns = [];
   var busy = false;
+  var iframeWatch = null;
+  var mountGeneration = 0;
 
   function $(sel, root) {
     return (root || document).querySelector(sel);
@@ -30,7 +38,12 @@
 
   function clearMount() {
     if (!mount) return;
+    if (iframeWatch) {
+      window.clearInterval(iframeWatch);
+      iframeWatch = null;
+    }
     mount.innerHTML = '';
+    mount.removeAttribute('data-whop-checkout-mounted');
     [
       'data-whop-checkout-plan-id',
       'data-whop-checkout-session',
@@ -44,6 +57,7 @@
       'data-whop-checkout-on-payment-error',
       'data-whop-checkout-prefill-email',
       'data-whop-checkout-hide-email',
+      'data-whop-checkout-hide-address',
       'data-whop-checkout-style-container-padding-x',
       'data-whop-checkout-style-container-padding-y',
     ].forEach(function (a) {
@@ -51,37 +65,114 @@
     });
   }
 
-  function mountEmbed(data) {
-    if (!mount) return;
-    clearMount();
-    mount.setAttribute('data-whop-checkout-plan-id', data.plan_id);
-    mount.setAttribute('data-whop-checkout-session', data.session_id);
-    mount.setAttribute('data-whop-checkout-return-url', data.return_url || cfg.returnUrl || '');
-    mount.setAttribute('data-whop-checkout-theme', 'dark');
-    mount.setAttribute('data-whop-checkout-theme-accent-color', 'amber');
-    mount.setAttribute('data-whop-checkout-theme-background-color', '#0B0B0D');
-    mount.setAttribute('data-whop-checkout-setup-future-usage', 'off_session');
-    mount.setAttribute('data-whop-checkout-skip-redirect', 'true');
-    mount.setAttribute('data-whop-checkout-on-complete', 'saWhopPmComplete');
-    mount.setAttribute('data-whop-checkout-on-payment-error', 'saWhopPmPaymentError');
+  function buildCheckoutEl(data) {
+    var el = document.createElement('div');
+    el.className = 'sa-pm-embed__checkout';
+    el.setAttribute('data-whop-checkout-plan-id', data.plan_id);
+    if (data.session_id) {
+      el.setAttribute('data-whop-checkout-session', data.session_id);
+    }
+    el.setAttribute('data-whop-checkout-return-url', data.return_url || cfg.returnUrl || '');
+    el.setAttribute('data-whop-checkout-theme', 'dark');
+    el.setAttribute('data-whop-checkout-theme-accent-color', 'amber');
+    el.setAttribute('data-whop-checkout-theme-background-color', '#0B0B0D');
+    el.setAttribute('data-whop-checkout-setup-future-usage', 'off_session');
+    el.setAttribute('data-whop-checkout-skip-redirect', 'true');
+    el.setAttribute('data-whop-checkout-on-complete', 'saWhopPmComplete');
+    el.setAttribute('data-whop-checkout-on-payment-error', 'saWhopPmPaymentError');
     if (data.email || cfg.email) {
-      mount.setAttribute('data-whop-checkout-prefill-email', data.email || cfg.email);
-      mount.setAttribute('data-whop-checkout-hide-email', 'true');
+      el.setAttribute('data-whop-checkout-prefill-email', data.email || cfg.email);
+      el.setAttribute('data-whop-checkout-hide-email', 'true');
     }
-    mount.setAttribute('data-whop-checkout-style-container-padding-x', '0');
-    mount.setAttribute('data-whop-checkout-style-container-padding-y', '8');
-    // Nudge loader to (re)scan if already loaded.
-    if (window.wco && typeof window.wco.loadCheckouts === 'function') {
-      try {
-        window.wco.loadCheckouts();
-      } catch (e) {}
+    // Card-first: hide shipping/address chrome Whop may show.
+    el.setAttribute('data-whop-checkout-hide-address', 'true');
+    el.setAttribute('data-whop-checkout-style-container-padding-x', '0');
+    el.setAttribute('data-whop-checkout-style-container-padding-y', '8');
+    el.style.width = '100%';
+    el.style.minHeight = '460px';
+    el.style.height = 'fit-content';
+    el.style.overflow = 'hidden';
+    return el;
+  }
+
+  function watchForIframe(el, gen) {
+    if (iframeWatch) {
+      window.clearInterval(iframeWatch);
+      iframeWatch = null;
     }
+    var ticks = 0;
+    iframeWatch = window.setInterval(function () {
+      if (gen !== mountGeneration) {
+        window.clearInterval(iframeWatch);
+        iframeWatch = null;
+        return;
+      }
+      ticks += 1;
+      var frame = el && el.querySelector && el.querySelector('iframe');
+      if (frame) {
+        window.clearInterval(iframeWatch);
+        iframeWatch = null;
+        setStatus('');
+        // Ensure mobile viewport gets a usable height even before Whop posts resize.
+        try {
+          if (!frame.style.minHeight) {
+            frame.style.minHeight = '420px';
+          }
+          frame.style.width = '100%';
+        } catch (e) {}
+        return;
+      }
+      // Every ~2s, re-append a fresh node to retrigger MutationObserver
+      // (covers race where index.js scanned before attrs existed).
+      if (ticks === 5 || ticks === 10 || ticks === 15) {
+        if (!mount || !el.parentNode) return;
+        var data = {
+          plan_id: el.getAttribute('data-whop-checkout-plan-id'),
+          session_id: el.getAttribute('data-whop-checkout-session'),
+          return_url: el.getAttribute('data-whop-checkout-return-url'),
+          email:
+            el.getAttribute('data-whop-checkout-prefill-email') || cfg.email || '',
+        };
+        if (!data.plan_id) return;
+        var fresh = buildCheckoutEl(data);
+        mount.innerHTML = '';
+        mount.appendChild(fresh);
+        el = fresh;
+      }
+      if (ticks >= 25) {
+        window.clearInterval(iframeWatch);
+        iframeWatch = null;
+        setStatus(
+          (cfg.i18n && cfg.i18n.error) ||
+            'Could not load card form. Please try again.',
+          'error'
+        );
+        busy = false;
+        addBtns.forEach(function (b) {
+          b.disabled = false;
+        });
+      }
+    }, 400);
+  }
+
+  function mountEmbed(data) {
+    if (!mount || !data || !data.plan_id) return;
+    clearMount();
+    mountGeneration += 1;
+    var gen = mountGeneration;
+    var el = buildCheckoutEl(data);
+    // Append AFTER attrs are set so Whop MutationObserver / initial scan sees them.
+    mount.appendChild(el);
+    setStatus((cfg.i18n && cfg.i18n.loadingForm) || 'Loading card form…', 'loading');
+    watchForIframe(el, gen);
   }
 
   function openPanel() {
     if (!panel) return;
     show(panel, true);
-    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    try {
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (e) {}
   }
 
   function closePanel() {
@@ -95,7 +186,7 @@
     });
   }
 
-  function startSession(prefetched) {
+  function startSession() {
     if (busy) return;
     busy = true;
     addBtns.forEach(function (b) {
@@ -103,24 +194,6 @@
     });
     openPanel();
     setStatus((cfg.i18n && cfg.i18n.starting) || 'Preparing…', 'loading');
-
-    function apply(data) {
-      var emailEl = $('#sa-whop-embed-email');
-      if (emailEl && (data.email || cfg.email)) {
-        emailEl.textContent = data.email || cfg.email;
-      }
-      mountEmbed(data);
-      setStatus('');
-      busy = false;
-      addBtns.forEach(function (b) {
-        b.disabled = false;
-      });
-    }
-
-    if (prefetched && prefetched.plan_id && prefetched.session_id) {
-      apply(prefetched);
-      return;
-    }
 
     var body = new FormData();
     body.append('action', 'sa_whop_start_embed_verify');
@@ -142,7 +215,12 @@
               'error'
           );
         }
-        apply(json.data);
+        // Always mount a fresh session — never reuse stale cookie/meta IDs.
+        mountEmbed(json.data);
+        busy = false;
+        addBtns.forEach(function (b) {
+          b.disabled = false;
+        });
       })
       .catch(function (err) {
         setStatus(
@@ -153,12 +231,6 @@
         addBtns.forEach(function (b) {
           b.disabled = false;
         });
-        // Hard fallback: full-page flow that still stays on-site (?sa_whop_embed=1).
-        if (cfg.fallbackAdd) {
-          window.setTimeout(function () {
-            window.location.href = cfg.fallbackAdd;
-          }, 1200);
-        }
       });
   }
 
@@ -188,7 +260,6 @@
         }, 600);
       })
       .catch(function () {
-        // Still reload via embed_done so server can sync.
         var url = new URL(window.location.href);
         url.searchParams.set('sa_whop_embed_done', '1');
         window.location.href = url.toString();
@@ -198,7 +269,7 @@
   window.saWhopPmPaymentError = function (error) {
     var msg =
       (error && (error.message || error.code)) ||
-      'Payment failed. Please try another card or bank.';
+      'Payment failed. Please try another card.';
     setStatus(String(msg), 'error');
   };
 
@@ -214,7 +285,7 @@
     addBtns.forEach(function (btn) {
       btn.addEventListener('click', function (e) {
         e.preventDefault();
-        startSession(null);
+        startSession();
       });
     });
 
@@ -226,17 +297,10 @@
       });
     }
 
+    // Only auto-open when explicitly requested (?sa_whop_embed=1).
+    // Never auto-open from leftover user-meta session IDs (those expire → empty box).
     if (cfg.autoOpen) {
-      var pref = null;
-      if (cfg.planId && cfg.sessionId) {
-        pref = {
-          plan_id: cfg.planId,
-          session_id: cfg.sessionId,
-          return_url: cfg.returnUrl,
-          email: cfg.email,
-        };
-      }
-      startSession(pref);
+      startSession();
     }
   }
 
