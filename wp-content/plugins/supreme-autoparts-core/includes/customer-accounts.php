@@ -87,7 +87,8 @@ function sa_core_my_account_endpoints(): array
         'edit-address'    => __('Addresses', 'supreme-autoparts-core'),
         'payment-methods' => __('Payment methods', 'supreme-autoparts-core'),
         'edit-account'    => __('Account details', 'supreme-autoparts-core'),
-        'support'         => __('Support / Enquire', 'supreme-autoparts-core'),
+        'tickets'         => __('Support / Tickets', 'supreme-autoparts-core'),
+        'support'         => __('Enquire', 'supreme-autoparts-core'),
         'customer-logout' => __('Log out', 'supreme-autoparts-core'),
     ];
 }
@@ -105,11 +106,13 @@ add_action('init', static function (): void {
     // Custom support endpoint query var.
     add_rewrite_endpoint('support', EP_ROOT | EP_PAGES);
     add_rewrite_endpoint('invoices', EP_ROOT | EP_PAGES);
+    add_rewrite_endpoint('tickets', EP_ROOT | EP_PAGES);
 }, 11);
 
 add_filter('woocommerce_get_query_vars', static function (array $vars): array {
     $vars['support']  = 'support';
     $vars['invoices'] = 'invoices';
+    $vars['tickets']  = 'tickets';
     return $vars;
 });
 
@@ -150,6 +153,84 @@ add_action('woocommerce_account_invoices_endpoint', static function (): void {
     echo '<div class="sa-account-panel"><h2>' . esc_html__('Invoices', 'supreme-autoparts-core') . '</h2></div>';
 });
 
+
+add_action('woocommerce_account_tickets_endpoint', static function (): void {
+    $template = locate_template('woocommerce/myaccount/tickets.php');
+    if ($template) {
+        include $template;
+        return;
+    }
+    // Inline fallback if theme template missing.
+    if (!is_user_logged_in()) {
+        echo '<p>' . esc_html__('Please log in to view tickets.', 'supreme-autoparts-core') . '</p>';
+        return;
+    }
+    $user = wp_get_current_user();
+    $view = isset($_GET['ticket']) ? absint($_GET['ticket']) : 0; // phpcs:ignore
+    if ($view && function_exists('sa_core_ticket_get')) {
+        $ticket = sa_core_ticket_get($view);
+        if ($ticket && function_exists('sa_core_ticket_user_can_access') && sa_core_ticket_user_can_access($ticket, $user)) {
+            if (isset($_POST['sa_customer_ticket_reply']) && check_admin_referer('sa_customer_ticket_' . $view)) {
+                $body = sanitize_textarea_field(wp_unslash((string) ($_POST['reply_body'] ?? '')));
+                if ($body !== '') {
+                    sa_core_ticket_add_reply($view, $body, (int) $user->ID, false);
+                    echo '<div class="woocommerce-message" role="status">' . esc_html__('Reply sent.', 'supreme-autoparts-core') . '</div>';
+                }
+            }
+            $replies = sa_core_ticket_replies($view);
+            echo '<div class="sa-account-panel"><p><a href="' . esc_url(wc_get_account_endpoint_url('tickets')) . '">&larr; ' . esc_html__('All tickets', 'supreme-autoparts-core') . '</a></p>';
+            echo '<h2>#' . esc_html((string) $ticket->id) . ' — ' . esc_html((string) $ticket->subject) . '</h2>';
+            echo '<p>' . esc_html__('Status:', 'supreme-autoparts-core') . ' <strong>' . esc_html((string) $ticket->status) . '</strong></p>';
+            foreach ($replies as $rep) {
+                $who = ((int) $rep->is_staff) ? __('Support', 'supreme-autoparts-core') : __('You', 'supreme-autoparts-core');
+                echo '<div class="sa-ticket-msg"><strong>' . esc_html($who) . '</strong> · ' . esc_html((string) $rep->created_at);
+                echo '<div>' . nl2br(esc_html((string) $rep->body)) . '</div></div>';
+            }
+            if ((string) $ticket->status !== 'closed') {
+                echo '<form method="post" style="margin-top:16px;">';
+                wp_nonce_field('sa_customer_ticket_' . $view);
+                echo '<p><label>' . esc_html__('Reply', 'supreme-autoparts-core') . '<br/><textarea name="reply_body" rows="4" required style="width:100%"></textarea></label></p>';
+                echo '<p><button type="submit" class="button" name="sa_customer_ticket_reply" value="1">' . esc_html__('Send reply', 'supreme-autoparts-core') . '</button></p>';
+                echo '</form>';
+            }
+            echo '</div>';
+            return;
+        }
+    }
+    $list = function_exists('sa_core_tickets_list')
+        ? sa_core_tickets_list(['user_id' => (int) $user->ID, 'limit' => 50])
+        : [];
+    // Also match by email for guest-origin tickets later linked.
+    if (function_exists('sa_core_tickets_list') && is_email($user->user_email)) {
+        $by_email = sa_core_tickets_list(['email' => $user->user_email, 'limit' => 50]);
+        $seen = [];
+        $merged = [];
+        foreach (array_merge($list, $by_email) as $row) {
+            if (isset($seen[(int) $row->id])) {
+                continue;
+            }
+            $seen[(int) $row->id] = true;
+            $merged[] = $row;
+        }
+        $list = $merged;
+    }
+    echo '<div class="sa-account-panel"><h2>' . esc_html__('Support / Tickets', 'supreme-autoparts-core') . '</h2>';
+    echo '<p>' . esc_html__('Track messages sent via Contact us and replies from our team.', 'supreme-autoparts-core') . '</p>';
+    if (!$list) {
+        echo '<p>' . esc_html__('No tickets yet.', 'supreme-autoparts-core') . '</p></div>';
+        return;
+    }
+    echo '<ul class="sa-ticket-list">';
+    foreach ($list as $row) {
+        $url = wc_get_account_endpoint_url('tickets');
+        $url = add_query_arg('ticket', (int) $row->id, $url);
+        echo '<li><a href="' . esc_url($url) . '">#' . esc_html((string) $row->id) . ' — ' . esc_html((string) $row->subject) . '</a>';
+        echo ' <span class="sa-muted">(' . esc_html((string) $row->status) . ')</span></li>';
+    }
+    echo '</ul></div>';
+});
+
+
 add_action('woocommerce_account_support_endpoint', static function (): void {
     $template = locate_template('woocommerce/myaccount/support.php');
     if ($template) {
@@ -166,11 +247,11 @@ add_action('woocommerce_account_support_endpoint', static function (): void {
  * Flush rewrite once after support endpoint added.
  */
 add_action('init', static function (): void {
-    if (get_option('sa_myaccount_endpoints_ver') === '5') {
+    if (get_option('sa_myaccount_endpoints_ver') === '6') {
         return;
     }
     flush_rewrite_rules(false);
-    update_option('sa_myaccount_endpoints_ver', '5');
+    update_option('sa_myaccount_endpoints_ver', '6');
 }, 99);
 
 /**

@@ -1,12 +1,12 @@
 /* Supreme Autoparts — Ultra admin (wp-admin) */
 .sa-ultra {
-  --sa-ink: #1a1d21;
+  --sa-ink: #0B0B0D;
   --sa-muted: #5c6570;
   --sa-line: #d8dde3;
   --sa-soft: #f4f6f8;
   --sa-card: #ffffff;
-  --sa-accent: #c45c26;
-  --sa-accent-ink: #fff;
+  --sa-accent: #F5A623;
+  --sa-accent-ink: #0B0B0D;
   --sa-ok: #1b7f4e;
   --sa-warn: #a15c00;
   --sa-bad: #b42318;
@@ -67,7 +67,7 @@
 
 .sa-ultra__kpis {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
   margin: 0 0 22px;
 }
@@ -171,7 +171,7 @@
 
 .sa-actions .button-primary {
   background: var(--sa-accent);
-  border-color: #a84d1f;
+  border-color: #d4890f;
   color: var(--sa-accent-ink);
   text-shadow: none;
   box-shadow: none;
@@ -179,8 +179,8 @@
 
 .sa-actions .button-primary:hover,
 .sa-actions .button-primary:focus {
-  background: #a84d1f;
-  border-color: #8f4119;
+  background: #d4890f;
+  border-color: #b8740c;
   color: #fff;
 }
 
@@ -383,4 +383,81 @@
   font-size: 12px;
   font-weight: 600;
   color: #5c6570;
+}
+
+
+/* Super Admin Phase 1 extras */
+.sa-super-eyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #F5A623;
+}
+
+.sa-coming {
+  border-left: 4px solid #F5A623;
+}
+
+.sa-ticket-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.sa-ticket-msg {
+  background: var(--sa-soft);
+  border: 1px solid var(--sa-line);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.sa-ticket-msg--staff {
+  background: #fff8eb;
+  border-color: #f0d2a0;
+}
+
+.sa-ticket-msg__meta {
+  font-size: 12px;
+  color: var(--sa-muted);
+  margin-bottom: 6px;
+}
+
+.sa-ticket-msg__body {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.sa-form-grid {
+  display: grid;
+  gap: 10px;
+  max-width: 640px;
+}
+
+.sa-form-grid label {
+  display: grid;
+  gap: 4px;
+  font-weight: 550;
+}
+
+.sa-form-grid textarea,
+.sa-form-grid input[type="text"],
+.sa-form-grid select {
+  width: 100%;
+  max-width: 100%;
+}
+
+.sa-inline-notice {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--sa-line);
+}
+
+.sa-inline-notice--ok {
+  background: #e8f6ee;
+  border-color: #b7e0c7;
+  color: var(--sa-ok);
 }

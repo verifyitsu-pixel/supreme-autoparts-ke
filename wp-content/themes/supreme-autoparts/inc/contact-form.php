@@ -142,15 +142,25 @@ function sa_handle_footer_contact(): void
 
     $sent = wp_mail($to, $subject, $body, $headers);
 
+    // Always open a support ticket so Super Admin + My Account can track it,
+    // even if mail transport hiccups (ticket is the system of record).
+    $ticket_id = 0;
+    if (function_exists('sa_core_ticket_from_contact')) {
+        $ticket_id = sa_core_ticket_from_contact($name, $email, $phone, $message, $page_url);
+    }
+
     // Rate-limit after attempt (even on failure) to reduce abuse.
     set_transient($rate_key, 1, MINUTE_IN_SECONDS);
 
-    if (!$sent) {
+    if (!$sent && !$ticket_id) {
         $fail('error');
     }
 
     $url = remove_query_arg(['sa_contact'], $base);
     $url = add_query_arg('sa_contact', 'sent', $url);
+    if ($ticket_id) {
+        $url = add_query_arg('sa_ticket', (string) $ticket_id, $url);
+    }
     wp_safe_redirect($url . '#sa-footer-contact');
     exit;
 }

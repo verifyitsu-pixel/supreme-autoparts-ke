@@ -2,8 +2,8 @@
 /**
  * Public open-amount Whop pay page: [sa_open_pay]
  *
- * Customer enters a USD amount → server creates checkout_configurations → redirect to purchase_url.
- * Does not touch WooCommerce cart checkout.
+ * Customer enters USD amount + email → pending Woo order + Whop checkout.
+ * payment.succeeded webhook marks the Woo order paid (processing/completed).
  */
 
 declare(strict_types=1);
@@ -31,7 +31,7 @@ final class Whop_Open_Pay {
      * Idempotent: ensure /pay/ page exists with the shortcode (even if core seed lag).
      */
     public static function maybe_seed_pay_page(): void {
-        if (get_option('sa_whop_open_pay_page_ver') === '1') {
+        if (get_option('sa_whop_open_pay_page_ver') === '2') {
             return;
         }
         $existing = get_page_by_path('pay');
@@ -67,7 +67,7 @@ final class Whop_Open_Pay {
                 'post_author'  => 1,
             ], true);
         }
-        update_option('sa_whop_open_pay_page_ver', '1');
+        update_option('sa_whop_open_pay_page_ver', '2');
         flush_rewrite_rules(false);
     }
 
@@ -77,7 +77,6 @@ final class Whop_Open_Pay {
         }
         $post = get_post();
         if (!$post || !has_shortcode((string) $post->post_content, 'sa_open_pay')) {
-            // Also allow slug pay even if content was filtered.
             if (!$post || $post->post_name !== 'pay') {
                 return;
             }
@@ -96,9 +95,31 @@ final class Whop_Open_Pay {
     public static function render_shortcode($atts = []): string {
         $error   = isset($_GET['sa_pay_err']) ? sanitize_text_field(wp_unslash((string) $_GET['sa_pay_err'])) : '';
         $paid    = isset($_GET['paid']) && (string) $_GET['paid'] === '1';
+        $order_q = isset($_GET['order']) ? absint($_GET['order']) : 0;
         $logo    = WHOP_PAYMENTS_URL . 'assets/img/logo-light.png';
         $action  = esc_url(admin_url('admin-post.php'));
         $nonce   = wp_nonce_field(self::ACTION, 'sa_open_pay_nonce', true, false);
+        $prefill_email = '';
+        if (is_user_logged_in()) {
+            $u = wp_get_current_user();
+            $prefill_email = (string) $u->user_email;
+        }
+
+        $paid_notice = '';
+        if ($paid && $order_q > 0) {
+            $ord = wc_get_order($order_q);
+            if ($ord) {
+                $paid_notice = sprintf(
+                    /* translators: 1: order number 2: formatted total */
+                    __('Payment received for order #%1$s — %2$s. A confirmation email is on the way.', 'whop-payments'),
+                    $ord->get_order_number(),
+                    wp_strip_all_tags($ord->get_formatted_order_total())
+                );
+            }
+        }
+        if ($paid && $paid_notice === '') {
+            $paid_notice = __('Thank you. If payment completed successfully, your order will appear in the store shortly.', 'whop-payments');
+        }
 
         ob_start();
         ?>
@@ -107,12 +128,12 @@ final class Whop_Open_Pay {
                 <div class="sa-open-pay__brand">
                     <img class="sa-open-pay__logo" src="<?php echo esc_url($logo); ?>" alt="Supreme Autoparts" width="180" height="48" loading="eager" />
                     <h1 class="sa-open-pay__title"><?php echo esc_html__('Make a payment', 'whop-payments'); ?></h1>
-                    <p class="sa-open-pay__sub"><?php echo esc_html__('Enter the amount in US dollars (USD). You will be redirected to a secure checkout to complete payment.', 'whop-payments'); ?></p>
+                    <p class="sa-open-pay__sub"><?php echo esc_html__('Enter the amount in US dollars (USD). You will be redirected to a secure checkout. Paid amounts create an order in our store.', 'whop-payments'); ?></p>
                 </div>
 
-                <?php if ($paid) : ?>
+                <?php if ($paid_notice !== '') : ?>
                     <div class="sa-open-pay__notice sa-open-pay__notice--ok" role="status">
-                        <?php echo esc_html__('Thank you. If payment completed successfully, confirmation may take a few seconds.', 'whop-payments'); ?>
+                        <?php echo esc_html($paid_notice); ?>
                     </div>
                 <?php endif; ?>
 
@@ -125,6 +146,20 @@ final class Whop_Open_Pay {
                 <form class="sa-open-pay__form" method="post" action="<?php echo $action; ?>" novalidate>
                     <input type="hidden" name="action" value="<?php echo esc_attr(self::ACTION); ?>" />
                     <?php echo $nonce; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+
+                    <label class="sa-open-pay__label" for="sa_open_pay_email">
+                        <?php echo esc_html__('Email (for receipt)', 'whop-payments'); ?>
+                    </label>
+                    <input
+                        class="sa-open-pay__input sa-open-pay__input--note"
+                        type="email"
+                        name="email"
+                        id="sa_open_pay_email"
+                        required
+                        autocomplete="email"
+                        value="<?php echo esc_attr($prefill_email); ?>"
+                        placeholder="<?php echo esc_attr__('you@example.com', 'whop-payments'); ?>"
+                    />
 
                     <label class="sa-open-pay__label" for="sa_open_pay_amount">
                         <?php echo esc_html__('Amount (USD)', 'whop-payments'); ?>
@@ -191,6 +226,11 @@ final class Whop_Open_Pay {
             );
         }
 
+        $email = isset($_POST['email']) ? sanitize_email(wp_unslash((string) $_POST['email'])) : '';
+        if ($email === '' || !is_email($email)) {
+            self::redirect_error($pay_url, __('Enter a valid email address for your receipt.', 'whop-payments'));
+        }
+
         $note = isset($_POST['note']) ? sanitize_text_field(wp_unslash((string) $_POST['note'])) : '';
         if (strlen($note) > self::NOTE_MAX) {
             $note = substr($note, 0, self::NOTE_MAX);
@@ -201,38 +241,67 @@ final class Whop_Open_Pay {
             self::redirect_error($pay_url, __('Payments are temporarily unavailable. Please try again later.', 'whop-payments'));
         }
 
-        $order_id = 'openpay-' . uniqid('', false);
-        $redirect = home_url('/pay/?paid=1');
+        $order = self::create_pending_order($amount, $email, $note);
+        if (!$order instanceof WC_Order) {
+            self::redirect_error($pay_url, __('Could not create order. Please try again.', 'whop-payments'));
+        }
+
+        $order_id  = (string) $order->get_id();
+        $order_key = $order->get_order_key();
+        $redirect  = add_query_arg(
+            [
+                'paid'  => '1',
+                'order' => $order_id,
+                'key'   => $order_key,
+            ],
+            home_url('/pay/')
+        );
 
         $description = $note !== ''
             ? $note
-            : __('Open amount payment — Supreme Autoparts', 'whop-payments');
+            : sprintf(
+                /* translators: %s: order number */
+                __('Custom payment — Order #%s — Supreme Autoparts', 'whop-payments'),
+                $order->get_order_number()
+            );
 
         $result = $client->create_checkout_configuration([
-            'amount'               => $amount,
-            'currency'             => 'usd',
-            'order_id'             => $order_id,
-            'order_key'            => '',
-            'title'                => 'Payment — Supreme Autoparts',
-            'product_title'        => 'Payment — Supreme Autoparts',
-            'product_external_id'  => $order_id,
-            'description'          => $description,
-            'redirect_url'         => $redirect,
-            'source'               => 'supreme-autoparts-open-pay',
-            'note'                 => $note,
-            'metadata'             => [
+            'amount'              => $amount,
+            'currency'            => 'usd',
+            'order_id'            => $order_id,
+            'order_key'           => $order_key,
+            'title'               => sprintf('Payment — Order #%s', $order->get_order_number()),
+            'product_title'       => 'Custom payment — Supreme Autoparts',
+            'product_external_id' => 'open-pay-' . $order_id,
+            'description'         => $description,
+            'redirect_url'        => $redirect,
+            'source'              => 'supreme-autoparts-open-pay',
+            'note'                => $note,
+            'metadata'            => [
                 'amount_usd' => (string) $amount,
                 'open_pay'   => '1',
+                'email'      => $email,
             ],
         ]);
 
         if (empty($result['success']) || empty($result['purchase_url'])) {
+            $order->update_status('cancelled', __('Whop checkout creation failed; order cancelled.', 'whop-payments'));
             $msg = (string) ($result['message'] ?? __('Could not start checkout. Please try again.', 'whop-payments'));
             self::redirect_error($pay_url, $msg);
         }
 
+        $checkout_id = (string) ($result['checkout_id'] ?? '');
+        if ($checkout_id !== '') {
+            $order->update_meta_data('_whop_checkout_id', $checkout_id);
+            $order->save();
+        }
+        $order->add_order_note(sprintf(
+            /* translators: %s: Whop purchase URL host */
+            __('Open-pay: redirected customer to Whop checkout (%s).', 'whop-payments'),
+            (string) wp_parse_url((string) $result['purchase_url'], PHP_URL_HOST)
+        ));
+
         $purchase_url = (string) $result['purchase_url'];
-        // External Whop checkout host — allowlist then hard redirect.
         $host = wp_parse_url($purchase_url, PHP_URL_HOST);
         $allowed = ['whop.com', 'www.whop.com', 'sandbox.whop.com'];
         if (is_string($host) && in_array(strtolower($host), $allowed, true)) {
@@ -241,6 +310,84 @@ final class Whop_Open_Pay {
             exit;
         }
         self::redirect_error($pay_url, __('Invalid checkout URL returned. Please try again.', 'whop-payments'));
+    }
+
+    /**
+     * Create a pending Woo order for an open-amount payment.
+     */
+    public static function create_pending_order(float $amount, string $email, string $note = '', array $extra_meta = []): ?WC_Order {
+        if (!function_exists('wc_create_order')) {
+            return null;
+        }
+
+        try {
+            $order = wc_create_order([
+                'status'      => 'pending',
+                'customer_id' => self::resolve_customer_id($email),
+                'created_via' => 'sa_open_pay',
+            ]);
+        } catch (Throwable $e) {
+            error_log('[whop-payments] open-pay create order failed: ' . $e->getMessage());
+            return null;
+        }
+
+        if (!$order instanceof WC_Order) {
+            return null;
+        }
+
+        $item = new WC_Order_Item_Fee();
+        $item->set_name(__('Custom payment', 'whop-payments'));
+        $item->set_total($amount);
+        $item->set_tax_status('none');
+        $order->add_item($item);
+
+        $order->set_currency('USD');
+        $order->set_billing_email($email);
+        if (is_user_logged_in()) {
+            $user = wp_get_current_user();
+            if ($user->user_email === $email) {
+                $order->set_billing_first_name((string) $user->first_name);
+                $order->set_billing_last_name((string) $user->last_name);
+            }
+        }
+
+        $order->set_payment_method('whop');
+        $order->set_payment_method_title(__('Whop', 'whop-payments'));
+        $order->update_meta_data('_sa_open_pay', '1');
+        $order->update_meta_data('_sa_open_pay_amount_usd', (string) $amount);
+        if ($note !== '') {
+            $order->update_meta_data('_sa_open_pay_note', $note);
+            $order->add_order_note(
+                sprintf(
+                    /* translators: %s: customer note */
+                    __('Customer note: %s', 'whop-payments'),
+                    $note
+                ),
+                false,
+                true
+            );
+        }
+        foreach ($extra_meta as $k => $v) {
+            $order->update_meta_data((string) $k, $v);
+        }
+
+        $order->calculate_totals(false);
+        $order->set_total($amount);
+        $order->save();
+
+        return $order;
+    }
+
+    private static function resolve_customer_id(string $email): int {
+        if (is_user_logged_in()) {
+            $uid = get_current_user_id();
+            $user = get_userdata($uid);
+            if ($user && strcasecmp((string) $user->user_email, $email) === 0) {
+                return $uid;
+            }
+        }
+        $by_email = get_user_by('email', $email);
+        return $by_email ? (int) $by_email->ID : 0;
     }
 
     private static function redirect_error(string $pay_url, string $message): void {
@@ -261,7 +408,6 @@ final class Whop_Open_Pay {
         $api_key    = self::env('WHOP_API_KEY');
         $company_id = self::env('WHOP_COMPANY_ID');
         if ($api_key === '' || $company_id === '') {
-            // Fallback to gateway options if env missing (local/dev).
             if (class_exists('WC_Gateway_Whop')) {
                 $gw = new WC_Gateway_Whop();
                 $api_key    = $gw->get_api_key();

@@ -2,6 +2,7 @@
 /**
  * Whop webhook endpoint via WooCommerce WC API: ?wc-api=whop_webhook
  * Listens for payment.succeeded and marks the matching order paid.
+ * Open-amount /pay creates pending Woo orders; webhook completes them.
  */
 
 declare(strict_types=1);
@@ -182,6 +183,41 @@ final class Whop_Webhook {
         }
 
         $order = $order_id ? wc_get_order($order_id) : false;
+
+        // Open-amount /pay: create Woo order from webhook if pending order missing
+        // (legacy checkouts used openpay-* synthetic ids before WC order wiring).
+        $is_open_pay = ((string) ($metadata['open_pay'] ?? '') === '1')
+            || ((string) ($metadata['source'] ?? '') === 'supreme-autoparts-open-pay')
+            || str_starts_with((string) ($metadata['order_id'] ?? ''), 'openpay-');
+
+        if (!$order && $is_open_pay && class_exists('Whop_Open_Pay')) {
+            $amount = null;
+            foreach (['total', 'final_amount', 'amount', 'subtotal'] as $field) {
+                if (isset($data[$field]) && is_numeric($data[$field])) {
+                    $amount = (float) $data[$field];
+                    break;
+                }
+            }
+            if ($amount === null && isset($metadata['amount_usd']) && is_numeric($metadata['amount_usd'])) {
+                $amount = (float) $metadata['amount_usd'];
+            }
+            $email = sanitize_email((string) ($metadata['email'] ?? $data['email'] ?? $data['user_email'] ?? ''));
+            if ($email === '' || !is_email($email)) {
+                $email = 'openpay+' . substr(md5($payment_id !== '' ? $payment_id : wp_generate_password(8, false)), 0, 10) . '@supremeautoparts.co.ke';
+            }
+            $note = sanitize_text_field((string) ($metadata['note'] ?? ''));
+            if ($amount !== null && $amount >= 1) {
+                $order = Whop_Open_Pay::create_pending_order($amount, $email, $note, [
+                    '_whop_payment_id_pending' => $payment_id,
+                    '_sa_open_pay_legacy'      => '1',
+                ]);
+                if ($order instanceof WC_Order) {
+                    $order_id = (int) $order->get_id();
+                    $order->add_order_note(__('Open-pay: Woo order created from payment.succeeded webhook (no prior pending order).', 'whop-payments'));
+                }
+            }
+        }
+
         if (!$order) {
             status_header(404);
             echo 'order_not_found';
@@ -215,6 +251,10 @@ final class Whop_Webhook {
 
         $txn = $payment_id !== '' ? $payment_id : ('whop_' . ($id !== '' ? $id : wp_generate_password(8, false)));
         $order->payment_complete($txn);
+        if ($order->get_meta('_sa_open_pay') === '1' && $order->has_status('processing')) {
+            // Digital/custom payment — no shipping fulfillment required.
+            $order->update_status('completed', __('Open-pay custom payment marked completed.', 'whop-payments'));
+        }
         $order->add_order_note(sprintf(
             /* translators: 1: Whop payment id 2: webhook message id */
             __('Whop payment.succeeded — payment %1$s (webhook %2$s).', 'whop-payments'),

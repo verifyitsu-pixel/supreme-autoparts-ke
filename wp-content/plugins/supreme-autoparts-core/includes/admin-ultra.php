@@ -21,8 +21,13 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
         'supreme-autoparts_page_supreme-leads',
         'supreme-autoparts_page_supreme-policies',
         'supreme-autoparts_page_supreme-import',
+        'supreme-autoparts_page_sa-super-tickets',
+        'supreme-autoparts_page_sa-super-security',
+        'supreme-autoparts_page_sa-super-fraud',
     ];
-    $on_ultra = in_array($hook, $pages, true);
+    $on_ultra = in_array($hook, $pages, true)
+        || str_contains($hook, 'sa-super')
+        || str_contains($hook, 'supreme-autoparts_page_sa-');
     $on_order = $hook === 'woocommerce_page_wc-orders'
         || $hook === 'post.php'
         || $hook === 'edit.php';
@@ -249,8 +254,9 @@ function sa_core_ultra_render_dashboard(): void
     <div class="wrap sa-ultra">
       <div class="sa-ultra__header">
         <div>
-          <h1 class="sa-ultra__title">Supreme Autoparts — Ultra</h1>
-          <p class="sa-ultra__sub">Ops console for orders, catalog, customers, payments, mail, and part enquiries.</p>
+          <p class="sa-super-eyebrow">Super Admin · Phase 1</p>
+          <h1 class="sa-ultra__title">Supreme Autoparts — Super Admin</h1>
+          <p class="sa-ultra__sub">Platform control: real Woo metrics, tickets, fraud/audit foundations. Deeper ops in Phases 2–4.</p>
         </div>
         <a class="sa-ultra__email" href="mailto:<?php echo esc_attr($email); ?>"><?php echo esc_html($email); ?></a>
       </div>
@@ -262,7 +268,7 @@ function sa_core_ultra_render_dashboard(): void
           <p class="sa-kpi__hint">Africa/Nairobi midnight → now</p>
         </div>
         <div class="sa-kpi">
-          <span class="sa-kpi__label">Revenue (stub)</span>
+          <span class="sa-kpi__label">Revenue today</span>
           <p class="sa-kpi__value"><?php echo esc_html($kpis['revenue_label']); ?></p>
           <p class="sa-kpi__hint">Processing / completed / on-hold today</p>
         </div>
@@ -275,6 +281,26 @@ function sa_core_ultra_render_dashboard(): void
           <span class="sa-kpi__label">Low stock</span>
           <p class="sa-kpi__value"><?php echo esc_html((string) $kpis['low_stock']); ?></p>
           <p class="sa-kpi__hint">Managed stock ≤ notify threshold</p>
+        </div>
+        <?php
+        $open_tickets = function_exists('sa_core_tickets_open_count') ? sa_core_tickets_open_count() : 0;
+        $pending_orders = function_exists('wc_orders_count') ? (int) wc_orders_count('pending') : 0;
+        $onhold_orders = function_exists('wc_orders_count') ? (int) wc_orders_count('on-hold') : 0;
+        ?>
+        <div class="sa-kpi<?php echo $open_tickets > 0 ? ' sa-kpi--warn' : ''; ?>">
+          <span class="sa-kpi__label">Open tickets</span>
+          <p class="sa-kpi__value"><?php echo esc_html((string) $open_tickets); ?></p>
+          <p class="sa-kpi__hint"><a href="<?php echo esc_url(admin_url('admin.php?page=sa-super-tickets')); ?>">Support tickets</a></p>
+        </div>
+        <div class="sa-kpi">
+          <span class="sa-kpi__label">Orders by status</span>
+          <p class="sa-kpi__value" style="font-size:16px;line-height:1.35;">
+            P <?php echo esc_html((string) $pending_orders); ?>
+            · H <?php echo esc_html((string) $onhold_orders); ?>
+            · R <?php echo esc_html((string) $kpis['processing']); ?>
+            · C <?php echo esc_html((string) $kpis['completed']); ?>
+          </p>
+          <p class="sa-kpi__hint">Pending · On-hold · Processing · Completed</p>
         </div>
       </div>
 
