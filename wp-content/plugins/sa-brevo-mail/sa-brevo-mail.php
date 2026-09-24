@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Supreme Brevo Mail
  * Description: Brevo (Sendinblue) transactional email + contact sync for Supreme Autoparts WooCommerce.
- * Version: 1.0.3
+ * Version: 1.0.4
  * Author: Supreme Autoparts
  * Text Domain: sa-brevo-mail
  * Requires at least: 6.4
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_BREVO_VERSION', '1.0.3');
+define('SA_BREVO_VERSION', '1.0.4');
 define('SA_BREVO_FILE', __FILE__);
 define('SA_BREVO_DIR', plugin_dir_path(__FILE__));
 define('SA_BREVO_URL', plugin_dir_url(__FILE__));

@@ -44,7 +44,7 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
           ? __('Thank you — payment received', 'supreme-autoparts')
           : __('Thank you — we have your order', 'supreme-autoparts');
       $lead = $paid
-          ? __('A confirmation email is on its way. We will prepare your parts and update you on shipping.', 'supreme-autoparts')
+          ? __('A confirmation email with your order details is on its way. Check inbox and spam. We will prepare your parts and update you on shipping.', 'supreme-autoparts')
           : __('If you just paid on Whop, confirmation can take a few seconds. Refresh this page if the status does not update.', 'supreme-autoparts');
       ?>
       <div class="sa-thankyou__card<?php echo $paid ? ' sa-thankyou__card--success' : ''; ?>">
@@ -144,7 +144,7 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
     <div class="sa-thankyou__card">
       <p class="sa-thankyou__eyebrow"><?php esc_html_e('Order received', 'supreme-autoparts'); ?></p>
       <h1 class="sa-thankyou__title"><?php esc_html_e('Thank you', 'supreme-autoparts'); ?></h1>
-      <p class="sa-thankyou__lead"><?php esc_html_e('Your order has been received. Check your email for confirmation.', 'supreme-autoparts'); ?></p>
+      <p class="sa-thankyou__lead"><?php esc_html_e('Your order was submitted. If payment completed, a confirmation email is on its way — check inbox and spam.', 'supreme-autoparts'); ?></p>
       <div class="sa-thankyou__actions">
         <a class="sa-btn" href="<?php echo esc_url($shop_url); ?>"><?php esc_html_e('Continue shopping', 'supreme-autoparts'); ?></a>
         <a class="sa-btn sa-btn--outline" href="<?php echo esc_url($wa_url); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('WhatsApp support', 'supreme-autoparts'); ?></a>

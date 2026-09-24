@@ -280,20 +280,34 @@ add_action('init', static function (): void {
 
 /**
  * Email-safe random password for customers (register + reset).
- * Alphanumeric only — no & < > " ' that HTML emails mangle via esc_html (& → &amp;).
- * Avoids ambiguous 0/O/1/l/I. Never log the value.
+ * Letters and digits ONLY (A–Z a–z 0–9) — no special characters.
+ * Avoids ambiguous 0/O/1/l/I. Guarantees ≥1 upper, ≥1 lower, ≥1 digit.
+ * Length 12–16 (default 14). Never log the value.
  */
-function sa_core_generate_customer_password(int $length = 18): string
+function sa_core_generate_customer_password(int $length = 14): string
 {
-    $length = max(16, min(32, $length));
-    // No 0 O 1 l I — copy/paste and OCR-friendly.
-    $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    $length = max(12, min(16, $length));
+    $upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    $lower = 'abcdefghjkmnpqrstuvwxyz';
+    $digits = '23456789';
+    $alphabet = $upper . $lower . $digits;
     $max = strlen($alphabet) - 1;
-    $password = '';
-    for ($i = 0; $i < $length; $i++) {
-        $password .= $alphabet[random_int(0, $max)];
+
+    // Ensure required character classes, then fill the rest.
+    $chars = [
+        $upper[random_int(0, strlen($upper) - 1)],
+        $lower[random_int(0, strlen($lower) - 1)],
+        $digits[random_int(0, strlen($digits) - 1)],
+    ];
+    for ($i = count($chars); $i < $length; $i++) {
+        $chars[] = $alphabet[random_int(0, $max)];
     }
-    return $password;
+    // Shuffle without relying on mt_rand seed quirks.
+    for ($i = count($chars) - 1; $i > 0; $i--) {
+        $j = random_int(0, $i);
+        [$chars[$i], $chars[$j]] = [$chars[$j], $chars[$i]];
+    }
+    return implode('', $chars);
 }
 
 /**
@@ -424,7 +438,57 @@ function sa_core_email_customer_password(WP_User $user, string $password, string
         'From: Supreme Autoparts <calvin@supremeautoparts.co.ke>',
     ];
 
-    // wp_mail is routed through sa-brevo-mail when BREVO_API_KEY is set.
+    // Prefer direct Brevo API so we never claim success on a silent PHPMailer no-op.
+    if (class_exists('SA_Brevo_API') && function_exists('sa_brevo_is_configured') && sa_brevo_is_configured()) {
+        $html = '<div class="sa-plain-mail">';
+        foreach (preg_split("/\r\n|\r|\n/", $body) ?: [] as $line) {
+            if (preg_match('/^(Password:\s*)(.+)$/i', $line, $m)) {
+                $html .= '<p style="margin:0 0 12px 0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.5;color:#18181b;">'
+                    . esc_html($m[1])
+                    . '<code style="font-size:16px;letter-spacing:0.02em;font-family:ui-monospace,Menlo,Consolas,monospace;background:#f4f4f5;padding:2px 6px;border-radius:4px;">'
+                    . esc_html($m[2])
+                    . '</code></p>';
+                continue;
+            }
+            if ($line === '') {
+                $html .= '<div style="height:8px;line-height:8px;">&nbsp;</div>';
+                continue;
+            }
+            $html .= '<p style="margin:0 0 8px 0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.5;color:#18181b;">'
+                . esc_html($line) . '</p>';
+        }
+        $html .= '</div>';
+
+        $payload = [
+            'to'          => [['email' => $to, 'name' => $name]],
+            'subject'     => $subject,
+            'textContent' => $body,
+            'htmlContent' => $html,
+            'tags'        => ['supreme-autoparts', 'woocommerce', 'password-reset'],
+        ];
+        $result = SA_Brevo_API::send_transactional($payload);
+        if (!empty($result['ok'])) {
+            $mid = '';
+            if (is_array($result['body'] ?? null) && !empty($result['body']['messageId'])) {
+                $mid = (string) $result['body']['messageId'];
+            }
+            update_user_meta((int) $user->ID, '_sa_pw_last_brevo_ok', (string) time());
+            if ($mid !== '') {
+                update_user_meta((int) $user->ID, '_sa_pw_last_brevo_mid', $mid);
+            }
+            update_option('sa_brevo_last_send_ok', time());
+            delete_option('sa_brevo_last_send_error');
+            return true;
+        }
+        $err = (string) ($result['error'] ?? 'brevo_password_send_failed');
+        update_option('sa_brevo_last_send_error', $err);
+        update_user_meta((int) $user->ID, '_sa_pw_last_brevo_err', substr($err, 0, 200));
+        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+        error_log('[sa-core] password email Brevo failed for user ' . (int) $user->ID . ': ' . $err);
+        return false;
+    }
+
+    // Fallback when Brevo plugin/key missing — still route via wp_mail.
     return (bool) wp_mail($to, $subject, $body, $headers);
 }
 
@@ -593,6 +657,20 @@ function sa_core_take_registration_password(string $email): string
  * auto-auth + any later wp_set_password session wipe caused "logs in then drops out".
  */
 add_filter('woocommerce_registration_auth_new_customer', '__return_false');
+
+/**
+ * Storefront customers never get Woo's "reset link" email — we email a working
+ * alphanumeric password instead. Staff still use retrieve_password() in our handler.
+ */
+add_filter('woocommerce_email_enabled_customer_reset_password', '__return_false');
+
+/** Unhook Woo lost-password processor early so it cannot race our wp_loaded:19 handler. */
+add_action('init', static function (): void {
+    if (class_exists('WC_Form_Handler')) {
+        remove_action('wp_loaded', ['WC_Form_Handler', 'process_lost_password'], 20);
+    }
+}, 1);
+
 
 /**
  * Register path: email the SAME password that was inserted (from stash).

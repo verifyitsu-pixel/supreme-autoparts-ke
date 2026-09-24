@@ -228,6 +228,11 @@ final class Whop_Webhook {
         }
         $order->save();
 
+        // Whop buyer receipts are off — store must email the customer confirmation.
+        if (function_exists('sa_core_ensure_customer_order_email')) {
+            sa_core_ensure_customer_order_email($order);
+        }
+
         $buyer_user = (int) $order->get_user_id();
         if ($buyer_user && class_exists('Whop_Payment_Methods')) {
             // Soft sync — reconcile Whop wallet after a successful charge.

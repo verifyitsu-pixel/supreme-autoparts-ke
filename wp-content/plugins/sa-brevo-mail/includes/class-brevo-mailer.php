@@ -95,6 +95,9 @@ class SA_Brevo_Mailer
         if (!empty($result['ok'])) {
             update_option('sa_brevo_last_send_ok', time());
             delete_option('sa_brevo_last_send_error');
+            if (is_array($result['body'] ?? null) && !empty($result['body']['messageId'])) {
+                update_option('sa_brevo_last_message_id', (string) $result['body']['messageId'], false);
+            }
             return true;
         }
 
@@ -103,8 +106,13 @@ class SA_Brevo_Mailer
         // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
         error_log('[sa-brevo] send failed: ' . $err);
 
-        // Fall through to PHPMailer/SMTP if API failed.
-        return null;
+        // Only fall through to PHPMailer when Brevo SMTP creds are present.
+        // Otherwise return false so callers (password / order) never claim success.
+        $smtp = sa_brevo_smtp_config();
+        if ($smtp['user'] !== '' && $smtp['pass'] !== '') {
+            return null;
+        }
+        return false;
     }
 
 

@@ -227,6 +227,9 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
 
         if ($amount <= 0) {
             $order->payment_complete();
+            if (function_exists('sa_core_ensure_customer_order_email')) {
+                sa_core_ensure_customer_order_email($order);
+            }
             return [
                 'result'   => 'success',
                 'redirect' => $this->get_return_url($order),

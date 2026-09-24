@@ -3,7 +3,7 @@
  * Lost password form — we email a new working password (not a set-password link).
  *
  * @package Supreme_Autoparts
- * @version 1.4.29
+ * @version 1.4.30
  */
 
 defined('ABSPATH') || exit;
