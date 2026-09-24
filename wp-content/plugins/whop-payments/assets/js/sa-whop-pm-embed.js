@@ -113,13 +113,15 @@
         window.clearInterval(iframeWatch);
         iframeWatch = null;
         setStatus('');
-        // Ensure mobile viewport gets a usable height even before Whop posts resize.
         try {
           if (!frame.style.minHeight) {
             frame.style.minHeight = '420px';
           }
           frame.style.width = '100%';
         } catch (e) {}
+        try {
+          document.dispatchEvent(new CustomEvent('sa-whop-embed-ready'));
+        } catch (e2) {}
         return;
       }
       // Every ~2s, re-append a fresh node to retrigger MutationObserver

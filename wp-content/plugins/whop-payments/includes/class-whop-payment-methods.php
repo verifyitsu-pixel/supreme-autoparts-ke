@@ -384,8 +384,8 @@ final class Whop_Payment_Methods {
             'fallbackAdd'=> self::add_url(),
             'i18n'       => [
                 'starting'    => __('Preparing…', 'whop-payments'),
-                'loadingForm' => __('Loading card form…', 'whop-payments'),
-                'error'       => __('Could not load card form. Please try again.', 'whop-payments'),
+                'loadingForm' => __('Almost ready…', 'whop-payments'),
+                'error'       => __('Could not load the form. Please try again.', 'whop-payments'),
                 'success'     => __('Card saved. Refreshing…', 'whop-payments'),
                 'syncing'     => __('Saving…', 'whop-payments'),
             ],

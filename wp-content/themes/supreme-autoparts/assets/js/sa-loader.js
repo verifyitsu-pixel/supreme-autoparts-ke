@@ -318,24 +318,35 @@
 
   function bindWhopEmbed() {
     var statusEl = document.getElementById('sa-whop-embed-status');
+    var mountEl = document.getElementById('sa-whop-pm-embed');
     if (!statusEl || !window.MutationObserver) return;
 
+    function embedHasIframe() {
+      return !!(mountEl && mountEl.querySelector('iframe'));
+    }
+
     var mo = new MutationObserver(function () {
+      // Once Whop iframe is mounted, never cover it with the full-page overlay.
+      if (embedHasIframe()) {
+        if (!navPending && !statusEl.classList.contains('sa-pm-embed__status--success')) {
+          hide();
+        }
+        return;
+      }
       if (statusEl.classList.contains('sa-pm-embed__status--loading')) {
         var msg = (statusEl.textContent || '').toLowerCase();
-        if (/sav|sync|verif|payment|card/.test(msg)) {
+        // Only full-page "payment" after submit/sync — not while the form is loading.
+        if (/sav|sync/.test(msg)) {
           show('payment');
-        } else if (/prepar|start|load/.test(msg)) {
-          show('loading');
         } else {
-          show('processing');
+          // Preparing / loading form: light overlay or none (inline status is enough).
+          show('loading');
         }
       } else if (
         statusEl.classList.contains('sa-pm-embed__status--error') ||
         statusEl.classList.contains('sa-pm-embed__status--success') ||
         !statusEl.textContent
       ) {
-        // Success often followed by redirect — keep briefly if navigating.
         if (statusEl.classList.contains('sa-pm-embed__status--success')) {
           show('processing');
           navPending = true;
@@ -351,6 +362,16 @@
       characterData: true,
       subtree: true,
     });
+
+    // Hide overlay as soon as Whop injects its iframe into the mount.
+    if (mountEl) {
+      var mountMo = new MutationObserver(function () {
+        if (embedHasIframe() && !navPending) {
+          hide();
+        }
+      });
+      mountMo.observe(mountEl, { childList: true, subtree: true });
+    }
 
     // Add-card buttons also kick off embed load
     document.querySelectorAll('[data-sa-whop-add-card]').forEach(function (btn) {
