@@ -203,31 +203,62 @@ final class Whop_Payment_Methods {
         $email = $user ? (string) $user->user_email : '';
         $return_url = self::embed_return_url($user_id);
 
-        $result = $client->create_verify_checkout([
-            'amount'       => self::VERIFY_FEE_USD,
-            'wp_user_id'   => (string) $user_id,
-            'email'        => $email,
-            'redirect_url' => $return_url,
-            'method'       => $method,
-            'title'        => $method === 'bank'
-                ? __('Add bank', 'whop-payments')
-                : __('Add card', 'whop-payments'),
-        ]);
+        $title = $method === 'bank'
+            ? __('Add bank', 'whop-payments')
+            : __('Add card', 'whop-payments');
 
-        // Optional fallback: free setup-only if payment-mode verify cannot be created.
-        if (empty($result['success']) && method_exists($client, 'create_setup_checkout')) {
-            error_log('[whop-payments] verify checkout failed, falling back to setup: ' . (string) ($result['message'] ?? ''));
+        // Bank: prefer setup-mode us_bank_account (routing/account fields, no Plaid Link
+        // required on our side). Multiple banks allowed — each Add bank creates a new session.
+        // Card: $1 payment verify first, setup fallback.
+        if ($method === 'bank' && method_exists($client, 'create_setup_checkout')) {
             $result = $client->create_setup_checkout([
                 'currency'     => 'usd',
                 'redirect_url' => $return_url,
-                'method'       => $method,
+                'method'       => 'bank',
                 'metadata'     => [
                     'wp_user_id' => (string) $user_id,
                     'email'      => $email,
-                    'fallback'   => 'setup_after_verify_fail',
-                    'pm_method'  => $method,
+                    'purpose'    => 'save_bank_account',
+                    'pm_method'  => 'bank',
+                    'no_plaid'   => '1',
                 ],
             ]);
+            if (empty($result['success'])) {
+                error_log('[whop-payments] bank setup failed, trying $1 verify: ' . (string) ($result['message'] ?? ''));
+                $result = $client->create_verify_checkout([
+                    'amount'       => self::VERIFY_FEE_USD,
+                    'wp_user_id'   => (string) $user_id,
+                    'email'        => $email,
+                    'redirect_url' => $return_url,
+                    'method'       => 'bank',
+                    'title'        => $title,
+                ]);
+            }
+        } else {
+            $result = $client->create_verify_checkout([
+                'amount'       => self::VERIFY_FEE_USD,
+                'wp_user_id'   => (string) $user_id,
+                'email'        => $email,
+                'redirect_url' => $return_url,
+                'method'       => $method,
+                'title'        => $title,
+            ]);
+
+            // Optional fallback: free setup-only if payment-mode verify cannot be created.
+            if (empty($result['success']) && method_exists($client, 'create_setup_checkout')) {
+                error_log('[whop-payments] verify checkout failed, falling back to setup: ' . (string) ($result['message'] ?? ''));
+                $result = $client->create_setup_checkout([
+                    'currency'     => 'usd',
+                    'redirect_url' => $return_url,
+                    'method'       => $method,
+                    'metadata'     => [
+                        'wp_user_id' => (string) $user_id,
+                        'email'      => $email,
+                        'fallback'   => 'setup_after_verify_fail',
+                        'pm_method'  => $method,
+                    ],
+                ]);
+            }
         }
 
         if (empty($result['success'])) {
@@ -446,7 +477,11 @@ final class Whop_Payment_Methods {
                 'verifyCard'  => __('Verify card', 'whop-payments'),
                 'verifyBank'  => __('Verify bank', 'whop-payments'),
                 'feeCard'     => __('You will be charged $1.00 USD once to verify this card is active. The charge is non-refundable.', 'whop-payments'),
-                'feeBank'     => __('You will be charged $1.00 USD once to verify this bank account is active. The charge is non-refundable.', 'whop-payments'),
+                'feeBank'     => __('Enter your US bank routing and account numbers below (no Plaid Link). Multiple banks allowed. Whop may charge $1.00 USD once to verify.', 'whop-payments'),
+                'notReady'    => __('Form not ready yet. Wait a moment and try again.', 'whop-payments'),
+                'checkForm'   => __('Complete the highlighted fields, then tap Verify.', 'whop-payments'),
+                'tryAgain'    => __('Form reloaded. Fill details and tap Verify.', 'whop-payments'),
+                'reloadForm'  => __('Form lost connection. Reloading…', 'whop-payments'),
             ],
         ]);
     }
@@ -592,19 +627,22 @@ final class Whop_Payment_Methods {
         }
 
         $remote_ids = [];
+        $seen_remote = [];
         foreach ($list['data'] ?? [] as $pm) {
             if (!is_array($pm)) {
                 continue;
             }
             $id = (string) ($pm['id'] ?? '');
-            if ($id === '') {
+            if ($id === '' || isset($seen_remote[$id])) {
                 continue;
             }
+            $seen_remote[$id] = true;
             $remote_ids[] = $id;
             self::upsert_token_from_whop($user_id, $pm);
         }
 
         self::prune_whop_tokens_not_in($user_id, $remote_ids);
+        self::dedupe_local_tokens($user_id);
         update_user_meta($user_id, self::USER_META_SYNCED, time());
 
         return ['success' => true, 'count' => count($remote_ids)];
@@ -737,6 +775,91 @@ final class Whop_Payment_Methods {
         $token->save();
     }
 
+
+    /**
+     * Fingerprint for idempotent display / local collapse (not a Whop id).
+     */
+    private static function token_fingerprint(WC_Payment_Token $token): string {
+        $kind = (string) $token->get_meta('_sa_whop_pm_kind');
+        if ($kind === '') {
+            $kind = ($token instanceof WC_Payment_Token_ECheck) ? 'bank' : 'card';
+        }
+        $brand = strtolower((string) $token->get_meta('_sa_whop_pm_brand'));
+        if ($brand === '' && $token instanceof WC_Payment_Token_CC) {
+            $brand = strtolower((string) $token->get_card_type());
+        }
+        $last4 = method_exists($token, 'get_last4') ? (string) $token->get_last4() : '';
+        $exp = '';
+        if ($token instanceof WC_Payment_Token_CC && $kind !== 'bank') {
+            $exp = (string) $token->get_expiry_month() . '/' . (string) $token->get_expiry_year();
+        }
+        return strtolower($kind . '|' . $brand . '|' . $last4 . '|' . $exp);
+    }
+
+    /**
+     * Collapse duplicate local Whop tokens (same whop_id or same fingerprint).
+     * Refresh must be idempotent — never leave clones on file.
+     */
+    public static function dedupe_local_tokens(int $user_id): int {
+        $tokens = WC_Payment_Tokens::get_customer_tokens($user_id, 'whop');
+        if (!$tokens) {
+            return 0;
+        }
+        $by_whop = [];
+        $by_fp = [];
+        $drop = [];
+        foreach ($tokens as $token) {
+            if (!$token instanceof WC_Payment_Token) {
+                continue;
+            }
+            $whop_id = (string) $token->get_meta(self::TOKEN_META_WHOP_ID);
+            if ($whop_id === '') {
+                $whop_id = (string) $token->get_token();
+            }
+            $tid = (int) $token->get_id();
+            if ($whop_id !== '') {
+                if (isset($by_whop[$whop_id])) {
+                    $keep = $by_whop[$whop_id];
+                    $drop_id = max($keep, $tid);
+                    $stay = min($keep, $tid);
+                    $drop[$drop_id] = true;
+                    $by_whop[$whop_id] = $stay;
+                    continue;
+                }
+                $by_whop[$whop_id] = $tid;
+            }
+            $fp = self::token_fingerprint($token);
+            if ($fp === 'card||0000|' || $fp === 'bank||0000|' || str_ends_with($fp, '||')) {
+                continue;
+            }
+            if (isset($by_fp[$fp])) {
+                $keep = $by_fp[$fp];
+                $other_whop = '';
+                foreach ($tokens as $cand) {
+                    if ((int) $cand->get_id() === $keep) {
+                        $other_whop = (string) $cand->get_meta(self::TOKEN_META_WHOP_ID);
+                        if ($other_whop === '') {
+                            $other_whop = (string) $cand->get_token();
+                        }
+                        break;
+                    }
+                }
+                if ($other_whop === '' && $whop_id !== '') {
+                    $drop[$keep] = true;
+                    $by_fp[$fp] = $tid;
+                } else {
+                    $drop[$tid] = true;
+                }
+                continue;
+            }
+            $by_fp[$fp] = $tid;
+        }
+        foreach (array_keys($drop) as $id) {
+            WC_Payment_Tokens::delete((int) $id);
+        }
+        return count($drop);
+    }
+
     public static function find_token_by_whop_id(int $user_id, string $whop_id): ?WC_Payment_Token {
         $tokens = WC_Payment_Tokens::get_customer_tokens($user_id, 'whop');
         foreach ($tokens as $token) {
@@ -818,7 +941,12 @@ final class Whop_Payment_Methods {
      * @return list<array<string,mixed>>
      */
     public static function get_methods_for_display(int $user_id): array {
+        // Opportunistic local collapse so Refresh never paints clones.
+        self::dedupe_local_tokens($user_id);
+
         $out = [];
+        $seen_whop = [];
+        $seen_fp = [];
         $tokens = WC_Payment_Tokens::get_customer_tokens($user_id);
         foreach ($tokens as $token) {
             $whop_id = '';
@@ -827,6 +955,12 @@ final class Whop_Payment_Methods {
                 if ($whop_id === '') {
                     $whop_id = (string) $token->get_token();
                 }
+            }
+            if ($whop_id !== '') {
+                if (isset($seen_whop[$whop_id])) {
+                    continue;
+                }
+                $seen_whop[$whop_id] = true;
             }
             $kind  = (string) $token->get_meta('_sa_whop_pm_kind');
             $brand_meta = (string) $token->get_meta('_sa_whop_pm_brand');
@@ -867,6 +1001,16 @@ final class Whop_Payment_Methods {
                     $row['exp']   = $token->get_expiry_month() . '/' . $token->get_expiry_year();
                 }
             }
+            $fp = strtolower(
+                (string) ($row['kind'] ?? 'card') . '|' .
+                (string) ($row['brand'] ?? '') . '|' .
+                (string) ($row['last4'] ?? '') . '|' .
+                (string) ($row['exp'] ?? '')
+            );
+            if ($whop_id === '' && isset($seen_fp[$fp])) {
+                continue;
+            }
+            $seen_fp[$fp] = true;
             $out[] = $row;
         }
         return $out;

@@ -157,17 +157,19 @@ final class Whop_Api_Client {
             'pm_method' => $method,
         ], $meta);
 
+        // Bank: us_bank_account only (Whop renders routing/account fields).
+        // Do NOT enable card / link / apple_pay — avoids Plaid Link-only chrome.
         if ($method === 'bank') {
             $pmc = [
                 'enabled'                   => ['us_bank_account'],
-                'disabled'                  => ['card'],
+                'disabled'                  => ['card', 'link', 'apple_pay', 'google_pay', 'paypal'],
                 'include_platform_defaults' => false,
             ];
         } else {
             $pmc = [
                 'enabled'                   => ['card'],
                 // Whop API requires `disabled` as an array of type strings (HTTP 400 if omitted).
-                'disabled'                  => ['us_bank_account'],
+                'disabled'                  => ['us_bank_account', 'link'],
                 'include_platform_defaults' => false,
             ];
         }
@@ -255,16 +257,17 @@ final class Whop_Api_Client {
             : __('Add card', 'whop-payments')));
 
         // Separate PMC: card-only OR bank-only — never combine in one embed.
+        // Bank uses Whop us_bank_account (routing/account). No Plaid Link dependency on our side.
         if ($method === 'bank') {
             $pmc = [
                 'enabled'                   => ['us_bank_account'],
-                'disabled'                  => ['card'],
+                'disabled'                  => ['card', 'link', 'apple_pay', 'google_pay', 'paypal'],
                 'include_platform_defaults' => false,
             ];
         } else {
             $pmc = [
                 'enabled'                   => ['card'],
-                'disabled'                  => ['us_bank_account'],
+                'disabled'                  => ['us_bank_account', 'link'],
                 'include_platform_defaults' => false,
             ];
         }

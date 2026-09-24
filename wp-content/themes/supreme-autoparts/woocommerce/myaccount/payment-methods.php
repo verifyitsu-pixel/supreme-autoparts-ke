@@ -68,7 +68,7 @@ if (!in_array($embed_method, ['card', 'bank'], true)) {
         </button>
       </div>
       <p class="sa-pm-embed__fee-note" id="sa-whop-embed-fee" role="note">
-        <?php esc_html_e('You will be charged $1.00 USD once to verify this payment method is active. The charge is non-refundable.', 'supreme-autoparts'); ?>
+        <?php esc_html_e('Card: $1.00 USD verify charge (non-refundable). Bank: enter routing/account in the form (no Plaid Link); multiple banks allowed.', 'supreme-autoparts'); ?>
       </p>
       <p id="sa-whop-embed-status" class="sa-pm-embed__status" role="status" aria-live="polite"></p>
       <div class="sa-pm-embed__frame-wrap">

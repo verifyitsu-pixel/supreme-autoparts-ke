@@ -1,6 +1,7 @@
 /**
  * My Account — embedded Whop verify (Add card / Add bank, separate).
  * Clean chrome: hide ToS / Join; our Verify CTA; $1 fee note.
+ * Submit uses wco.submit(embedId STRING). Errors + watchdog always surface.
  */
 (function () {
   'use strict';
@@ -15,9 +16,11 @@
   var addBtns = [];
   var busy = false;
   var iframeWatch = null;
+  var submitWatchdog = null;
   var mountGeneration = 0;
   var activeMethod = 'card';
   var checkoutEl = null;
+  var embedReady = false;
   var warmByMethod = { card: null, bank: null };
   var warmPromiseByMethod = { card: null, bank: null };
 
@@ -42,6 +45,19 @@
     return (cfg.i18n && cfg.i18n[key]) || fallback;
   }
 
+  function clearSubmitWatchdog() {
+    if (submitWatchdog) {
+      window.clearTimeout(submitWatchdog);
+      submitWatchdog = null;
+    }
+  }
+
+  function setVerifyEnabled(on) {
+    if (!verifyBtn) return;
+    verifyBtn.hidden = !on;
+    verifyBtn.disabled = !on;
+  }
+
   function applyMethodChrome(method) {
     activeMethod = method === 'bank' ? 'bank' : 'card';
     if (panel) panel.setAttribute('data-sa-whop-method', activeMethod);
@@ -56,7 +72,7 @@
         activeMethod === 'bank'
           ? i18n(
               'feeBank',
-              'You will be charged $1.00 USD once to verify this bank account is active. The charge is non-refundable.'
+              'Enter your US bank routing and account numbers in the form below (no Plaid Link). Whop may charge $1.00 USD once to verify the account is active. Multiple banks are allowed.'
             )
           : i18n(
               'feeCard',
@@ -77,19 +93,18 @@
       window.clearInterval(iframeWatch);
       iframeWatch = null;
     }
+    clearSubmitWatchdog();
     mount.innerHTML = '';
     checkoutEl = null;
-    if (verifyBtn) {
-      verifyBtn.hidden = true;
-      verifyBtn.disabled = true;
-    }
+    embedReady = false;
+    setVerifyEnabled(false);
   }
 
-  function buildCheckoutEl(data) {
+  function buildCheckoutEl(data, gen) {
     var el = document.createElement('div');
     el.className = 'sa-pm-embed__checkout';
-    // wco.submit() expects the element id STRING, never the HTMLElement itself.
-    el.id = 'sa-whop-pm-checkout';
+    // Unique id per mount so remounts never collide in wco.identifiedFrames.
+    el.id = 'sa-whop-pm-checkout-' + String(gen || mountGeneration || 1);
     el.setAttribute('data-whop-checkout-plan-id', data.plan_id);
     if (data.session_id) {
       el.setAttribute('data-whop-checkout-session', data.session_id);
@@ -111,6 +126,13 @@
     el.setAttribute('data-whop-checkout-skip-redirect', 'true');
     el.setAttribute('data-whop-checkout-on-complete', 'saWhopPmComplete');
     el.setAttribute('data-whop-checkout-on-payment-error', 'saWhopPmPaymentError');
+    el.setAttribute('data-whop-checkout-on-state-change', 'saWhopPmStateChange');
+    if (activeMethod === 'bank') {
+      // Belt-and-suspenders with server PMC: bank fields only, never Plaid-only card mix.
+      el.setAttribute('data-whop-checkout-methods', 'us_bank_account');
+    } else {
+      el.setAttribute('data-whop-checkout-methods', 'card');
+    }
     if (data.email || cfg.email) {
       el.setAttribute(
         'data-whop-checkout-prefill-email',
@@ -131,12 +153,28 @@
     return el;
   }
 
+  function embedIsRegistered(embedId) {
+    try {
+      if (!window.wco || !window.wco.identifiedFrames) return false;
+      if (typeof window.wco.identifiedFrames.get === 'function') {
+        return !!window.wco.identifiedFrames.get(embedId);
+      }
+      if (window.wco.identifiedFrames instanceof Map) {
+        return window.wco.identifiedFrames.has(embedId);
+      }
+      return !!window.wco.identifiedFrames[embedId];
+    } catch (e) {
+      return false;
+    }
+  }
+
   function watchForIframe(el, gen) {
     if (iframeWatch) {
       window.clearInterval(iframeWatch);
       iframeWatch = null;
     }
     var ticks = 0;
+    var remounted = false;
     iframeWatch = window.setInterval(function () {
       if (gen !== mountGeneration) {
         window.clearInterval(iframeWatch);
@@ -145,26 +183,27 @@
       }
       ticks += 1;
       var frame = el && el.querySelector && el.querySelector('iframe');
-      if (frame) {
+      var registered = el && el.id && embedIsRegistered(el.id);
+      if (frame || registered) {
         window.clearInterval(iframeWatch);
         iframeWatch = null;
+        embedReady = true;
         setStatus('');
         try {
-          if (!frame.style.minHeight) {
+          if (frame && !frame.style.minHeight) {
             frame.style.minHeight = activeMethod === 'bank' ? '400px' : '260px';
           }
-          frame.style.width = '100%';
+          if (frame) frame.style.width = '100%';
         } catch (e) {}
-        if (verifyBtn) {
-          verifyBtn.hidden = false;
-          verifyBtn.disabled = false;
-        }
+        setVerifyEnabled(true);
         try {
           document.dispatchEvent(new CustomEvent('sa-whop-embed-ready'));
         } catch (e2) {}
         return;
       }
-      if (ticks === 5 || ticks === 10 || ticks === 15) {
+      // One gentle remount only (avoid thrashing that breaks wco registration).
+      if (!remounted && ticks === 20) {
+        remounted = true;
         if (!mount || !el.parentNode) return;
         var data = {
           plan_id: el.getAttribute('data-whop-checkout-plan-id'),
@@ -176,13 +215,15 @@
             '',
         };
         if (!data.plan_id) return;
-        var fresh = buildCheckoutEl(data);
+        var fresh = buildCheckoutEl(data, gen);
         mount.innerHTML = '';
         mount.appendChild(fresh);
         checkoutEl = fresh;
         el = fresh;
+        ensureWhopIndex();
+        return;
       }
-      if (ticks >= 25) {
+      if (ticks >= 50) {
         window.clearInterval(iframeWatch);
         iframeWatch = null;
         setStatus(i18n('error', 'Could not load form. Please try again.'), 'error');
@@ -191,7 +232,7 @@
           b.disabled = false;
         });
       }
-    }, 400);
+    }, 200);
   }
 
   function preloadWhopAssets() {
@@ -211,7 +252,6 @@
 
   function ensureWhopIndex() {
     if (window.wco && window.wco.listening) return;
-    // Prefer loader.js (official embed entry); it injects index.js.
     var loader = document.querySelector(
       'script[src*="js.whop.com/static/checkout/loader.js"]'
     );
@@ -223,7 +263,6 @@
       document.head.appendChild(s);
       return;
     }
-    // Fallback if only index is present / loader already ran but wco not listening yet.
     if (!document.querySelector('script[src*="js.whop.com/static/checkout/index.js"]')) {
       var s2 = document.createElement('script');
       s2.src = 'https://js.whop.com/static/checkout/index.js';
@@ -231,6 +270,25 @@
       s2.defer = true;
       document.head.appendChild(s2);
     }
+  }
+
+  function waitForWco(maxMs) {
+    maxMs = maxMs || 8000;
+    return new Promise(function (resolve, reject) {
+      var start = Date.now();
+      (function tick() {
+        if (window.wco && typeof window.wco.submit === 'function') {
+          resolve(window.wco);
+          return;
+        }
+        ensureWhopIndex();
+        if (Date.now() - start >= maxMs) {
+          reject(new Error(i18n('error', 'Payment form script did not load.')));
+          return;
+        }
+        window.setTimeout(tick, 100);
+      })();
+    });
   }
 
   function fetchEmbedSession(method) {
@@ -280,9 +338,10 @@
     clearMount();
     mountGeneration += 1;
     var gen = mountGeneration;
-    var el = buildCheckoutEl(data);
+    var el = buildCheckoutEl(data, gen);
     mount.appendChild(el);
     checkoutEl = el;
+    embedReady = false;
     setStatus(i18n('loadingForm', 'Loading secure form…'), 'loading');
     watchForIframe(el, gen);
   }
@@ -336,8 +395,10 @@
           b.disabled = false;
         });
         warmPromiseByMethod[method] = null;
+        // Pre-warm the *other* method only; avoid stacking stale same-method sessions.
         window.setTimeout(function () {
-          warmEmbedSession(method);
+          var other = method === 'bank' ? 'card' : 'bank';
+          warmEmbedSession(other);
         }, 1500);
       })
       .catch(function (err) {
@@ -354,12 +415,10 @@
   }
 
   function resolveEmbedId() {
-    // Whop docs: wco.submit("element-id-string"). Passing a DOM node becomes
-    // "[object HTMLDivElement]" and throws "No embed with identifier … found."
     if (checkoutEl && checkoutEl.id) {
       return String(checkoutEl.id);
     }
-    var el = document.getElementById('sa-whop-pm-checkout');
+    var el = mount && mount.querySelector('[id^="sa-whop-pm-checkout"]');
     if (el && el.id) {
       checkoutEl = el;
       return String(el.id);
@@ -367,41 +426,91 @@
     return '';
   }
 
+  function unhideNativeSubmit() {
+    if (!checkoutEl) return;
+    try {
+      checkoutEl.removeAttribute('data-whop-checkout-hide-submit-button');
+      // Nudge Whop to refresh chrome so native Pay appears as fallback.
+      checkoutEl.setAttribute('data-whop-checkout-hide-submit-button', 'false');
+    } catch (e) {}
+  }
+
   function submitCheckout() {
+    clearSubmitWatchdog();
     var embedId = resolveEmbedId();
     if (!embedId || typeof embedId !== 'string') {
-      setStatus(i18n('error', 'Form not ready yet.'), 'error');
-      return;
-    }
-    setStatus(i18n('syncing', 'Verifying…'), 'loading');
-    if (verifyBtn) verifyBtn.disabled = true;
-    try {
-      if (window.wco && typeof window.wco.submit === 'function') {
-        var ret = window.wco.submit(embedId);
-        if (ret && typeof ret.then === 'function') {
-          ret.catch(function (err) {
-            setStatus(
-              (err && err.message) || i18n('error', 'Verification failed.'),
-              'error'
-            );
-            if (verifyBtn) verifyBtn.disabled = false;
-          });
-        }
-        return;
-      }
-    } catch (e) {
       setStatus(
-        (e && e.message) || i18n('error', 'Could not submit. Please reload and try again.'),
+        i18n('notReady', 'Form not ready yet. Wait a moment and try again.'),
         'error'
       );
-      if (verifyBtn) verifyBtn.disabled = false;
+      setVerifyEnabled(true);
       return;
     }
-    setStatus(i18n('error', 'Could not submit. Please reload and try again.'), 'error');
-    if (verifyBtn) verifyBtn.disabled = false;
+
+    setStatus(i18n('syncing', 'Verifying…'), 'loading');
+    if (verifyBtn) verifyBtn.disabled = true;
+
+    waitForWco(6000)
+      .then(function (wco) {
+        if (!embedIsRegistered(embedId) && !embedReady) {
+          throw new Error(
+            i18n('notReady', 'Form not ready yet. Wait a moment and try again.')
+          );
+        }
+        // Docs: wco.submit("element-id-string") — never a DOM node.
+        var ret = wco.submit(String(embedId));
+        if (ret && typeof ret.then === 'function') {
+          return ret;
+        }
+        return undefined;
+      })
+      .then(function () {
+        // Submit accepted by embed; completion arrives via saWhopPmComplete.
+        // Watchdog covers silent validation / hung iframe cases.
+        submitWatchdog = window.setTimeout(function () {
+          setStatus(
+            i18n(
+              'checkForm',
+              'Still waiting. Check the form for missing fields, then try Verify again — or use the Pay button inside the form.'
+            ),
+            'error'
+          );
+          if (verifyBtn) verifyBtn.disabled = false;
+          unhideNativeSubmit();
+        }, 12000);
+      })
+      .catch(function (err) {
+        var msg =
+          (err && err.message) ||
+          i18n('error', 'Verification failed. Please try again.');
+        // Common Whop miss after remount — remount fresh session once.
+        if (/No embed with identifier/i.test(String(msg))) {
+          setStatus(
+            i18n('reloadForm', 'Form lost connection. Reloading…'),
+            'loading'
+          );
+          fetchEmbedSession(activeMethod)
+            .then(function (data) {
+              mountEmbed(data);
+              setStatus(
+                i18n('tryAgain', 'Form reloaded. Fill details and tap Verify.'),
+                'error'
+              );
+            })
+            .catch(function (e2) {
+              setStatus((e2 && e2.message) || msg, 'error');
+              if (verifyBtn) verifyBtn.disabled = false;
+            });
+          return;
+        }
+        setStatus(msg, 'error');
+        if (verifyBtn) verifyBtn.disabled = false;
+        unhideNativeSubmit();
+      });
   }
 
   window.saWhopPmComplete = function (planId, receiptId) {
+    clearSubmitWatchdog();
     setStatus(i18n('syncing', 'Saving…'), 'loading');
     if (verifyBtn) verifyBtn.disabled = true;
     var body = new FormData();
@@ -435,11 +544,33 @@
   };
 
   window.saWhopPmPaymentError = function (error) {
+    clearSubmitWatchdog();
     var msg =
       (error && (error.message || error.code)) ||
       'Payment failed. Please try another method.';
     setStatus(String(msg), 'error');
     if (verifyBtn) verifyBtn.disabled = false;
+  };
+
+  window.saWhopPmStateChange = function (state) {
+    // Surface actionable states so Verify never feels like a dead click.
+    if (!state) return;
+    var s = String(state);
+    if (s === 'error' || s === 'failed') {
+      clearSubmitWatchdog();
+      setStatus(
+        i18n('error', 'Something went wrong in the form. Please try again.'),
+        'error'
+      );
+      if (verifyBtn) verifyBtn.disabled = false;
+    } else if (s === 'needs_info' || s === 'requires_action') {
+      clearSubmitWatchdog();
+      setStatus(
+        i18n('checkForm', 'Complete the highlighted fields, then tap Verify.'),
+        'error'
+      );
+      if (verifyBtn) verifyBtn.disabled = false;
+    }
   };
 
   function bind() {
@@ -474,6 +605,7 @@
     if (verifyBtn) {
       verifyBtn.addEventListener('click', function (e) {
         e.preventDefault();
+        e.stopPropagation();
         submitCheckout();
       });
     }
