@@ -343,17 +343,22 @@ final class Whop_Payment_Methods {
             return;
         }
 
+        // CRITICAL: do NOT append ?ver= to Whop loader.js.
+        // loader.js does: src.replace(/loader\.js$/, "index.js") — a query string
+        // breaks that, index.js never loads, and the embed stays an empty black box.
         wp_enqueue_script(
             'whop-checkout-loader',
             'https://js.whop.com/static/checkout/loader.js',
             [],
-            WHOP_PAYMENTS_VERSION,
+            null,
             true
         );
-        // loader.js uses async/defer in Whop docs; mark strategy if WP supports it.
         if (function_exists('wp_script_add_data')) {
             wp_script_add_data('whop-checkout-loader', 'strategy', 'defer');
         }
+        // Belt-and-suspenders: strip any ver/ query WP or other filters may add.
+        add_filter('script_loader_src', [self::class, 'strip_whop_loader_ver'], 100, 2);
+        add_filter('script_loader_tag', [self::class, 'tag_whop_loader_async_defer'], 100, 3);
 
         wp_enqueue_script(
             'sa-whop-pm-embed',
@@ -385,6 +390,40 @@ final class Whop_Payment_Methods {
                 'syncing'     => __('Saving…', 'whop-payments'),
             ],
         ]);
+    }
+
+
+    /**
+     * Whop loader.js bootstraps index.js via /loader.js$/ replace — query strings break it.
+     */
+    public static function strip_whop_loader_ver(string $src, string $handle): string {
+        if ($handle !== 'whop-checkout-loader') {
+            return $src;
+        }
+        // Keep only the clean CDN path (no ?ver= / &ver=).
+        $q = strpos($src, '?');
+        if ($q !== false) {
+            $src = substr($src, 0, $q);
+        }
+        return $src;
+    }
+
+    /**
+     * Match Whop docs: async + defer on the loader script tag.
+     *
+     * @param string $tag
+     */
+    public static function tag_whop_loader_async_defer(string $tag, string $handle, string $src): string {
+        if ($handle !== 'whop-checkout-loader') {
+            return $tag;
+        }
+        if (!str_contains($tag, ' async')) {
+            $tag = str_replace('<script ', '<script async ', $tag);
+        }
+        if (!str_contains($tag, ' defer')) {
+            $tag = str_replace('<script ', '<script defer ', $tag);
+        }
+        return $tag;
     }
 
     /**

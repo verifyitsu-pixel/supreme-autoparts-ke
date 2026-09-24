@@ -155,8 +155,23 @@
     }, 400);
   }
 
+
+  function ensureWhopIndex() {
+    if (window.wco && window.wco.listening) return;
+    // WP ?ver= on loader.js breaks Whop's replace(/loader\.js$/, "index.js").
+    // Ensure index.js is present even when the stub failed to inject it.
+    var existing = document.querySelector('script[src*="js.whop.com/static/checkout/index.js"]');
+    if (existing) return;
+    var s = document.createElement('script');
+    s.src = 'https://js.whop.com/static/checkout/index.js';
+    s.async = true;
+    s.defer = true;
+    document.head.appendChild(s);
+  }
+
   function mountEmbed(data) {
     if (!mount || !data || !data.plan_id) return;
+    ensureWhopIndex();
     clearMount();
     mountGeneration += 1;
     var gen = mountGeneration;
