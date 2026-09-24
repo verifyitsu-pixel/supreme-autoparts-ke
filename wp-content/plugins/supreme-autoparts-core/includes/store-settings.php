@@ -64,23 +64,115 @@ function sa_core_enable_admin_store_emails(): void
     update_option('sa_store_admin_notify_email', $email);
 }
 
-/** BCC store owner on customer Woo emails so all activity is visible. */
+/**
+ * Email routing (strict):
+ * - Customer transactional mail (order confirm, invoice, password, note) → customer only.
+ * - Admin/shop notices (new_order, cancelled_order, failed_order, low stock) → store owner only.
+ * No BCC of customer mail to admin (was causing "admins get customer emails").
+ * No customer billing address on admin recipient lists.
+ */
 add_filter('woocommerce_email_headers', static function ($headers, $email_id, $order) {
+    unset($order);
+    // Strip any Bcc that would leak customer mail into the store inbox (or vice versa).
+    $headers = is_string($headers) ? $headers : (is_array($headers) ? implode("\r\n", $headers) . "\r\n" : '');
     $admin = sa_core_store_email();
-    if ($admin === '' || !is_email($admin)) {
-        return $headers;
+    $customer_ids = [
+        'customer_processing_order',
+        'customer_completed_order',
+        'customer_on_hold_order',
+        'customer_refunded_order',
+        'customer_invoice',
+        'customer_note',
+        'customer_reset_password',
+        'customer_new_account',
+        'customer_failed_order',
+        'customer_cancelled_order',
+    ];
+    if (in_array((string) $email_id, $customer_ids, true)) {
+        // Drop Bcc/Cc entirely on customer mail.
+        $lines = preg_split('/\r\n|\n|\r/', $headers) ?: [];
+        $kept = [];
+        foreach ($lines as $line) {
+            $trim = ltrim($line);
+            if ($trim === '') {
+                continue;
+            }
+            if (stripos($trim, 'Bcc:') === 0 || stripos($trim, 'Cc:') === 0) {
+                continue;
+            }
+            $kept[] = $line;
+        }
+        return $kept === [] ? '' : (implode("\r\n", $kept) . "\r\n");
     }
-    // Skip if this email is already addressed to the admin recipient.
-    // Never BCC plaintext password emails (new account / our custom reset).
-    if (in_array((string) $email_id, ['new_order', 'cancelled_order', 'failed_order', 'customer_new_account', 'customer_reset_password'], true)) {
-        return $headers;
-    }
-    $headers = is_string($headers) ? $headers : '';
-    if (stripos($headers, 'Bcc: ' . $admin) === false) {
-        $headers .= 'Bcc: ' . $admin . "\r\n";
+    // Admin emails: ensure no stray customer Bcc; leave To to Woo recipient setting.
+    if ($admin !== '' && is_email($admin)) {
+        $lines = preg_split('/\r\n|\n|\r/', $headers) ?: [];
+        $kept = [];
+        foreach ($lines as $line) {
+            $trim = ltrim($line);
+            if ($trim === '') {
+                continue;
+            }
+            if (stripos($trim, 'Bcc:') === 0) {
+                // Keep only Bcc that is the store email (rare); drop others.
+                if (stripos($trim, $admin) === false) {
+                    continue;
+                }
+            }
+            $kept[] = $line;
+        }
+        return $kept === [] ? '' : (implode("\r\n", $kept) . "\r\n");
     }
     return $headers;
 }, 20, 3);
+
+/** Force admin order emails To: store owner only (never customer billing). */
+add_filter('woocommerce_email_recipient_new_order', 'sa_core_admin_email_recipient_only', 50, 2);
+add_filter('woocommerce_email_recipient_cancelled_order', 'sa_core_admin_email_recipient_only', 50, 2);
+add_filter('woocommerce_email_recipient_failed_order', 'sa_core_admin_email_recipient_only', 50, 2);
+
+function sa_core_admin_email_recipient_only($recipient, $order = null): string
+{
+    unset($order);
+    $admin = sa_core_store_email();
+    return is_email($admin) ? $admin : (string) $recipient;
+}
+
+/**
+ * Customer order emails must go to the order billing email only — never admin.
+ *
+ * @param string $recipient
+ * @param WC_Order|false|null $order
+ */
+function sa_core_customer_order_email_recipient(string $recipient, $order = null): string
+{
+    $admin = strtolower(sa_core_store_email());
+    if ($order instanceof WC_Order) {
+        $billing = strtolower((string) $order->get_billing_email());
+        if ($billing !== '' && is_email($billing)) {
+            return $billing;
+        }
+    }
+    // If Woo left recipient empty/wrong, never fall through to admin.
+    $recipient = strtolower(trim((string) $recipient));
+    if ($recipient !== '' && is_email($recipient) && $recipient !== $admin) {
+        return $recipient;
+    }
+    return '';
+}
+
+foreach ([
+    'customer_processing_order',
+    'customer_completed_order',
+    'customer_on_hold_order',
+    'customer_refunded_order',
+    'customer_invoice',
+    'customer_note',
+    'customer_failed_order',
+    'customer_cancelled_order',
+] as $sa_eid) {
+    add_filter('woocommerce_email_recipient_' . $sa_eid, 'sa_core_customer_order_email_recipient', 50, 2);
+}
 
 
 /**
@@ -197,7 +289,7 @@ add_filter('woocommerce_email_from_name', static function ($name) {
 
 // Apply lightly on admin/init once per version bump.
 add_action('init', static function (): void {
-    if (get_option('sa_store_settings_ver') === '11') {
+    if (get_option('sa_store_settings_ver') === '12') {
         return;
     }
     if (!function_exists('WC') && !class_exists('WooCommerce')) {
@@ -205,5 +297,5 @@ add_action('init', static function (): void {
         update_option('admin_email', sa_core_store_email());
     }
     sa_core_apply_store_settings();
-    update_option('sa_store_settings_ver', '11');
+    update_option('sa_store_settings_ver', '12');
 }, 20);

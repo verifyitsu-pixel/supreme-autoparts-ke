@@ -147,10 +147,30 @@ final class Whop_Api_Client {
         // Setup always uses USD (Whop charges in USD); do not pass Woo store KES.
         $currency = 'usd';
         $meta     = is_array($args['metadata'] ?? null) ? $args['metadata'] : [];
+        $method   = strtolower((string) ($args['method'] ?? 'card'));
+        if (!in_array($method, ['card', 'bank'], true)) {
+            $method = 'card';
+        }
         $meta     = array_merge([
             'source'  => 'supreme-autoparts-myaccount',
             'purpose' => 'save_payment_method',
+            'pm_method' => $method,
         ], $meta);
+
+        if ($method === 'bank') {
+            $pmc = [
+                'enabled'                   => ['us_bank_account'],
+                'disabled'                  => ['card'],
+                'include_platform_defaults' => false,
+            ];
+        } else {
+            $pmc = [
+                'enabled'                   => ['card'],
+                // Whop API requires `disabled` as an array of type strings (HTTP 400 if omitted).
+                'disabled'                  => ['us_bank_account'],
+                'include_platform_defaults' => false,
+            ];
+        }
 
         $body = [
             'mode'         => 'setup',
@@ -158,12 +178,7 @@ final class Whop_Api_Client {
             'currency'     => $currency,
             'redirect_url' => (string) ($args['redirect_url'] ?? ''),
             'metadata'     => $meta,
-            'payment_method_configuration' => [
-                'enabled'                   => ['card'],
-                // Whop API requires `disabled` as an array of type strings (HTTP 400 if omitted).
-                'disabled'                  => ['us_bank_account'],
-                'include_platform_defaults' => false,
-            ],
+            'payment_method_configuration' => $pmc,
         ];
 
         $response = $this->request('POST', '/checkout_configurations', $body);
@@ -216,6 +231,10 @@ final class Whop_Api_Client {
         $user_id  = (string) ($args['wp_user_id'] ?? '');
         $email    = (string) ($args['email'] ?? '');
         $redirect = (string) ($args['redirect_url'] ?? '');
+        $method = strtolower((string) ($args['method'] ?? 'card'));
+        if (!in_array($method, ['card', 'bank'], true)) {
+            $method = 'card';
+        }
 
         $meta = [
             'source'     => 'supreme-autoparts-myaccount',
@@ -224,20 +243,31 @@ final class Whop_Api_Client {
             'email'      => $email,
             'fee_usd'    => (string) $amount,
             'non_refundable' => '1',
+            'pm_method'  => $method,
         ];
         if (is_array($args['metadata'] ?? null)) {
             $meta = array_merge($meta, $args['metadata']);
         }
 
-        $external_id = 'woo-pm-verify-' . ($user_id !== '' ? $user_id : 'anon') . '-' . gmdate('YmdHis');
-        $title = (string) ($args['title'] ?? __('Add card', 'whop-payments'));
+        $external_id = 'woo-pm-verify-' . ($user_id !== '' ? $user_id : 'anon') . '-' . $method . '-' . gmdate('YmdHis');
+        $title = (string) ($args['title'] ?? ($method === 'bank'
+            ? __('Add bank', 'whop-payments')
+            : __('Add card', 'whop-payments')));
 
-        // Card-only on My Account verify — bank/ACH fields clutter the embed.
-        $pmc = [
-            'enabled'                   => ['card'],
-            'disabled'                  => ['us_bank_account'],
-            'include_platform_defaults' => false,
-        ];
+        // Separate PMC: card-only OR bank-only — never combine in one embed.
+        if ($method === 'bank') {
+            $pmc = [
+                'enabled'                   => ['us_bank_account'],
+                'disabled'                  => ['card'],
+                'include_platform_defaults' => false,
+            ];
+        } else {
+            $pmc = [
+                'enabled'                   => ['card'],
+                'disabled'                  => ['us_bank_account'],
+                'include_platform_defaults' => false,
+            ];
+        }
 
         $body = [
             'mode'         => 'payment',
@@ -252,7 +282,7 @@ final class Whop_Api_Client {
                 'initial_price'         => $amount,
                 'plan_type'             => 'one_time',
                 'title'                 => $title,
-                'description'           => (string) ($args['description'] ?? __('Card verification', 'whop-payments')),
+                'description'           => (string) ($args['description'] ?? ($method === 'bank' ? __('Bank verification', 'whop-payments') : __('Card verification', 'whop-payments'))),
                 'visibility'            => 'hidden',
                 'force_create_new_plan' => true,
                 'payment_method_configuration' => $pmc,

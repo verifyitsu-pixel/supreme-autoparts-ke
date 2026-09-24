@@ -185,7 +185,12 @@ final class Whop_Payment_Methods {
      *
      * @return array{success:bool,plan_id?:string,session_id?:string,checkout_id?:string,return_url?:string,email?:string,fee?:float,message?:string,raw?:mixed}
      */
-    public static function create_embed_verify_session(int $user_id): array {
+    public static function create_embed_verify_session(int $user_id, string $method = 'card'): array {
+        $method = strtolower($method);
+        if (!in_array($method, ['card', 'bank'], true)) {
+            $method = 'card';
+        }
+
         $client = self::client_from_gateway();
         if (!$client) {
             return [
@@ -203,7 +208,10 @@ final class Whop_Payment_Methods {
             'wp_user_id'   => (string) $user_id,
             'email'        => $email,
             'redirect_url' => $return_url,
-            'title'        => __('Add card', 'whop-payments'),
+            'method'       => $method,
+            'title'        => $method === 'bank'
+                ? __('Add bank', 'whop-payments')
+                : __('Add card', 'whop-payments'),
         ]);
 
         // Optional fallback: free setup-only if payment-mode verify cannot be created.
@@ -212,10 +220,12 @@ final class Whop_Payment_Methods {
             $result = $client->create_setup_checkout([
                 'currency'     => 'usd',
                 'redirect_url' => $return_url,
+                'method'       => $method,
                 'metadata'     => [
                     'wp_user_id' => (string) $user_id,
                     'email'      => $email,
                     'fallback'   => 'setup_after_verify_fail',
+                    'pm_method'  => $method,
                 ],
             ]);
         }
@@ -245,6 +255,7 @@ final class Whop_Payment_Methods {
         update_user_meta($user_id, '_sa_whop_embed_session_id', $checkout_id);
         update_user_meta($user_id, '_sa_whop_pending_setup_checkout', $checkout_id);
         update_user_meta($user_id, '_sa_whop_pending_verify_fee', (string) self::VERIFY_FEE_USD);
+        update_user_meta($user_id, '_sa_whop_embed_method', $method);
 
         return [
             'success'     => true,
@@ -254,6 +265,7 @@ final class Whop_Payment_Methods {
             'return_url'  => $return_url,
             'email'       => $email,
             'fee'         => self::VERIFY_FEE_USD,
+            'method'      => $method,
         ];
     }
 
@@ -317,7 +329,11 @@ final class Whop_Payment_Methods {
         if (!is_user_logged_in() || !check_ajax_referer('sa_whop_embed', 'nonce', false)) {
             wp_send_json_error(['message' => 'forbidden'], 403);
         }
-        $result = self::create_embed_verify_session(get_current_user_id());
+        $method = isset($_POST['method']) ? sanitize_key((string) wp_unslash($_POST['method'])) : 'card'; // phpcs:ignore
+        if (!in_array($method, ['card', 'bank'], true)) {
+            $method = 'card';
+        }
+        $result = self::create_embed_verify_session(get_current_user_id(), $method);
         if (!empty($result['success'])) {
             wp_send_json_success([
                 'plan_id'    => $result['plan_id'],
@@ -325,6 +341,7 @@ final class Whop_Payment_Methods {
                 'return_url' => $result['return_url'],
                 'email'      => $result['email'],
                 'fee'        => $result['fee'],
+                'method'     => $method,
             ]);
         }
         wp_send_json_error([
@@ -336,12 +353,21 @@ final class Whop_Payment_Methods {
         if (!function_exists('is_account_page') || !is_account_page()) {
             return;
         }
-        if (!function_exists('is_wc_endpoint_url') || !is_wc_endpoint_url('payment-methods')) {
-            return;
+        // Payment methods endpoint, or any My Account view that exposes Add card.
+        $on_pm = function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('payment-methods');
+        $on_account = is_account_page() && is_user_logged_in();
+        if (!$on_account || (!$on_pm && !is_wc_endpoint_url(''))) {
+            // Still allow dashboard/payment-methods; skip checkout-only noise.
+            if (!$on_pm) {
+                return;
+            }
         }
         if (!is_user_logged_in()) {
             return;
         }
+
+        // Preload Whop CDN scripts in <head> so Add card is not cold-start.
+        add_action('wp_head', [self::class, 'print_whop_preloads'], 2);
 
         // CRITICAL: do NOT append ?ver= to Whop loader.js.
         // loader.js does: src.replace(/loader\.js$/, "index.js") — a query string
@@ -351,10 +377,19 @@ final class Whop_Payment_Methods {
             'https://js.whop.com/static/checkout/loader.js',
             [],
             null,
-            true
+            false // head — start loading before footer paint
+        );
+        // Also enqueue index.js directly (loader normally injects it; we warm it ourselves).
+        wp_enqueue_script(
+            'whop-checkout-index',
+            'https://js.whop.com/static/checkout/index.js',
+            ['whop-checkout-loader'],
+            null,
+            false
         );
         if (function_exists('wp_script_add_data')) {
             wp_script_add_data('whop-checkout-loader', 'strategy', 'defer');
+            wp_script_add_data('whop-checkout-index', 'strategy', 'defer');
         }
         // Belt-and-suspenders: strip any ver/ query WP or other filters may add.
         add_filter('script_loader_src', [self::class, 'strip_whop_loader_ver'], 100, 2);
@@ -363,7 +398,7 @@ final class Whop_Payment_Methods {
         wp_enqueue_script(
             'sa-whop-pm-embed',
             WHOP_PAYMENTS_URL . 'assets/js/sa-whop-pm-embed.js',
-            ['whop-checkout-loader'],
+            ['whop-checkout-loader', 'whop-checkout-index'],
             WHOP_PAYMENTS_VERSION,
             true
         );
@@ -371,6 +406,23 @@ final class Whop_Payment_Methods {
         $user = wp_get_current_user();
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         $auto_open = !empty($_GET['sa_whop_embed']);
+
+        // Server-side warm: create embed session during page render so Add card
+        // can mount immediately without waiting on a post-click AJAX round-trip.
+        $warm = null;
+        if ($on_pm && (int) $user->ID > 0) {
+            $warm_result = self::create_embed_verify_session((int) $user->ID);
+            if (!empty($warm_result['success'])) {
+                $warm = [
+                    'plan_id'    => (string) ($warm_result['plan_id'] ?? ''),
+                    'session_id' => (string) ($warm_result['session_id'] ?? ''),
+                    'return_url' => (string) ($warm_result['return_url'] ?? ''),
+                    'email'      => (string) ($warm_result['email'] ?? $user->user_email),
+                    'fee'        => (float) ($warm_result['fee'] ?? self::VERIFY_FEE_USD),
+                    'method'     => 'card',
+                ];
+            }
+        }
 
         wp_localize_script('sa-whop-pm-embed', 'saWhopPmEmbed', [
             'ajaxUrl'    => admin_url('admin-ajax.php'),
@@ -382,14 +434,36 @@ final class Whop_Payment_Methods {
             // Only auto-open when ?sa_whop_embed=1 — never from leftover meta (expired → empty box).
             'autoOpen'   => $auto_open,
             'fallbackAdd'=> self::add_url(),
+            'warm'       => $warm,
             'i18n'       => [
                 'starting'    => __('Preparing…', 'whop-payments'),
-                'loadingForm' => __('Almost ready…', 'whop-payments'),
+                'loadingForm' => __('Loading secure form…', 'whop-payments'),
                 'error'       => __('Could not load the form. Please try again.', 'whop-payments'),
-                'success'     => __('Card saved. Refreshing…', 'whop-payments'),
+                'success'     => __('Saved. Refreshing…', 'whop-payments'),
                 'syncing'     => __('Saving…', 'whop-payments'),
+                'titleCard'   => __('Add card', 'whop-payments'),
+                'titleBank'   => __('Add bank', 'whop-payments'),
+                'verifyCard'  => __('Verify card', 'whop-payments'),
+                'verifyBank'  => __('Verify bank', 'whop-payments'),
+                'feeCard'     => __('You will be charged $1.00 USD once to verify this card is active. The charge is non-refundable.', 'whop-payments'),
+                'feeBank'     => __('You will be charged $1.00 USD once to verify this bank account is active. The charge is non-refundable.', 'whop-payments'),
             ],
         ]);
+    }
+
+    /** Print <link rel=preload> for Whop checkout scripts early in <head>. */
+    public static function print_whop_preloads(): void {
+        static $done = false;
+        if ($done) {
+            return;
+        }
+        $done = true;
+        echo '<link rel="preload" href="https://js.whop.com/static/checkout/loader.js" as="script" crossorigin />' . "\n";
+        echo '<link rel="preload" href="https://js.whop.com/static/checkout/index.js" as="script" crossorigin />' . "\n";
+        echo '<link rel="dns-prefetch" href="https://js.whop.com" />' . "\n";
+        echo '<link rel="preconnect" href="https://js.whop.com" crossorigin />' . "\n";
+        echo '<link rel="dns-prefetch" href="https://whop.com" />' . "\n";
+        echo '<link rel="preconnect" href="https://whop.com" crossorigin />' . "\n";
     }
 
 
@@ -397,7 +471,7 @@ final class Whop_Payment_Methods {
      * Whop loader.js bootstraps index.js via /loader.js$/ replace — query strings break it.
      */
     public static function strip_whop_loader_ver(string $src, string $handle): string {
-        if ($handle !== 'whop-checkout-loader') {
+        if ($handle !== 'whop-checkout-loader' && $handle !== 'whop-checkout-index') {
             return $src;
         }
         // Keep only the clean CDN path (no ?ver= / &ver=).
@@ -414,7 +488,7 @@ final class Whop_Payment_Methods {
      * @param string $tag
      */
     public static function tag_whop_loader_async_defer(string $tag, string $handle, string $src): string {
-        if ($handle !== 'whop-checkout-loader') {
+        if ($handle !== 'whop-checkout-loader' && $handle !== 'whop-checkout-index') {
             return $tag;
         }
         if (!str_contains($tag, ' async')) {

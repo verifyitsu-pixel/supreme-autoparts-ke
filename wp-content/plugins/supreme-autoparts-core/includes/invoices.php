@@ -452,12 +452,8 @@ function sa_core_email_invoice_to_customer($order)
         'Content-Type: text/html; charset=UTF-8',
         'From: Supreme Autoparts <' . $from_email . '>',
     ];
-    // Store BCC already applied by woocommerce_email_headers for WC emails;
-    // for wp_mail, optionally BCC store if policy option set.
-    $bcc = (string) get_option('sa_store_admin_notify_email', $from_email);
-    if (is_email($bcc) && strcasecmp($bcc, $to) !== 0) {
-        $headers[] = 'Bcc: ' . $bcc;
-    }
+    // Do NOT BCC store owner on customer invoices — keeps admin/customer mailboxes separated.
+    unset($from_email);
 
     $sent = wp_mail($to, $subject, $body, $headers);
     if (!$sent) {

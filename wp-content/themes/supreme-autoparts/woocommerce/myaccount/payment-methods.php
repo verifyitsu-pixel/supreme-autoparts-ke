@@ -1,6 +1,6 @@
 <?php
 /**
- * Payment methods — Woo tokens + Whop embedded verify checkout (same-page).
+ * Payment methods — separate Add card / Add bank Whop embeds (same-page).
  *
  * @package Supreme_Autoparts
  */
@@ -15,13 +15,17 @@ $add_url     = $whop_ready ? Whop_Payment_Methods::add_url() : '';
 $refresh     = $whop_ready ? Whop_Payment_Methods::refresh_url() : '';
 $delete_confirm = esc_js(__('Remove this payment method from your account? This cannot be undone.', 'supreme-autoparts'));
 $embed_open = !empty($_GET['sa_whop_embed']); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$embed_method = isset($_GET['sa_whop_method']) ? sanitize_key((string) wp_unslash($_GET['sa_whop_method'])) : 'card'; // phpcs:ignore
+if (!in_array($embed_method, ['card', 'bank'], true)) {
+    $embed_method = 'card';
+}
 ?>
 <div class="sa-account-panel sa-pm">
   <header class="sa-account-panel__head sa-pm__head">
     <div>
       <h2><?php esc_html_e('Payment methods', 'supreme-autoparts'); ?></h2>
       <p class="sa-account-panel__lead">
-        <?php esc_html_e('Save a card for faster checkout.', 'supreme-autoparts'); ?>
+        <?php esc_html_e('Save a card or bank account for faster checkout.', 'supreme-autoparts'); ?>
       </p>
       <?php if ($synced) : ?>
         <p class="sa-pm__synced">
@@ -40,27 +44,44 @@ $embed_open = !empty($_GET['sa_whop_embed']); // phpcs:ignore WordPress.Security
         <a class="sa-btn sa-btn--outline sa-btn--sm" href="<?php echo esc_url($refresh); ?>">
           <?php esc_html_e('Refresh methods', 'supreme-autoparts'); ?>
         </a>
-        <button type="button" class="sa-btn sa-btn--sm" data-sa-whop-add-card
+        <button type="button" class="sa-btn sa-btn--sm" data-sa-whop-add-card data-sa-whop-method="card"
                 data-fallback-href="<?php echo esc_url($add_url); ?>">
           <?php esc_html_e('Add card', 'supreme-autoparts'); ?>
+        </button>
+        <button type="button" class="sa-btn sa-btn--outline sa-btn--sm" data-sa-whop-add-bank data-sa-whop-method="bank"
+                data-fallback-href="<?php echo esc_url($add_url); ?>">
+          <?php esc_html_e('Add bank', 'supreme-autoparts'); ?>
         </button>
       </div>
     <?php endif; ?>
   </header>
 
   <?php if ($whop_ready) : ?>
-    <section id="sa-whop-embed" class="sa-pm-embed" <?php echo $embed_open ? '' : 'hidden'; ?> aria-hidden="<?php echo $embed_open ? 'false' : 'true'; ?>" aria-label="<?php esc_attr_e('Add payment method', 'supreme-autoparts'); ?>">
+    <section id="sa-whop-embed" class="sa-pm-embed" <?php echo $embed_open ? '' : 'hidden'; ?>
+             aria-hidden="<?php echo $embed_open ? 'false' : 'true'; ?>"
+             aria-label="<?php esc_attr_e('Add payment method', 'supreme-autoparts'); ?>"
+             data-sa-whop-method="<?php echo esc_attr($embed_method); ?>">
       <div class="sa-pm-embed__head">
-        <h3 class="sa-pm-embed__title"><?php esc_html_e('Add card', 'supreme-autoparts'); ?></h3>
+        <h3 class="sa-pm-embed__title" id="sa-whop-embed-title"><?php esc_html_e('Add card', 'supreme-autoparts'); ?></h3>
         <button type="button" class="sa-btn sa-btn--outline sa-btn--sm" id="sa-whop-embed-cancel">
           <?php esc_html_e('Cancel', 'supreme-autoparts'); ?>
         </button>
       </div>
+      <p class="sa-pm-embed__fee-note" id="sa-whop-embed-fee" role="note">
+        <?php esc_html_e('You will be charged $1.00 USD once to verify this payment method is active. The charge is non-refundable.', 'supreme-autoparts'); ?>
+      </p>
       <p id="sa-whop-embed-status" class="sa-pm-embed__status" role="status" aria-live="polite"></p>
-      <div id="sa-whop-pm-embed" class="sa-pm-embed__mount" style="min-height:480px;"></div>
+      <div class="sa-pm-embed__frame-wrap">
+        <div id="sa-whop-pm-embed" class="sa-pm-embed__mount" style="min-height:320px;"></div>
+      </div>
+      <div class="sa-pm-embed__actions">
+        <button type="button" class="sa-btn sa-btn--primary sa-pm-embed__verify" id="sa-whop-embed-verify" hidden>
+          <?php esc_html_e('Verify card', 'supreme-autoparts'); ?>
+        </button>
+      </div>
       <noscript>
         <p class="sa-pm-embed__noscript">
-          <?php esc_html_e('JavaScript is required to add a card on this page.', 'supreme-autoparts'); ?>
+          <?php esc_html_e('JavaScript is required to add a payment method on this page.', 'supreme-autoparts'); ?>
           <a href="<?php echo esc_url($add_url); ?>"><?php esc_html_e('Continue', 'supreme-autoparts'); ?></a>
         </p>
       </noscript>
@@ -77,10 +98,16 @@ $embed_open = !empty($_GET['sa_whop_embed']); // phpcs:ignore WordPress.Security
   <?php elseif (empty($methods)) : ?>
     <div class="sa-dash__empty" id="sa-pm-empty">
       <p><?php esc_html_e('No saved payment methods yet.', 'supreme-autoparts'); ?></p>
-      <button type="button" class="sa-btn" data-sa-whop-add-card
-              data-fallback-href="<?php echo esc_url($add_url); ?>">
-        <?php esc_html_e('Add card', 'supreme-autoparts'); ?>
-      </button>
+      <div class="sa-pm__empty-actions">
+        <button type="button" class="sa-btn" data-sa-whop-add-card data-sa-whop-method="card"
+                data-fallback-href="<?php echo esc_url($add_url); ?>">
+          <?php esc_html_e('Add card', 'supreme-autoparts'); ?>
+        </button>
+        <button type="button" class="sa-btn sa-btn--outline" data-sa-whop-add-bank data-sa-whop-method="bank"
+                data-fallback-href="<?php echo esc_url($add_url); ?>">
+          <?php esc_html_e('Add bank', 'supreme-autoparts'); ?>
+        </button>
+      </div>
     </div>
   <?php else : ?>
     <ul class="sa-pm__list" role="list">

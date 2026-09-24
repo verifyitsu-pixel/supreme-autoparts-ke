@@ -278,6 +278,36 @@ add_action('init', static function (): void {
     update_option('sa_reg_password_force_ver', '1');
 }, 21);
 
+
+/**
+ * Set a customer password WITHOUT wiping other device sessions.
+ * wp_set_password() destroys all sessions — that forced re-login every password email.
+ * We hash + update user_pass directly and leave session tokens intact.
+ * Staff / security-sensitive paths can still call wp_set_password().
+ */
+function sa_core_set_customer_password_keep_sessions(int $user_id, string $password): bool
+{
+    if ($user_id <= 0 || $password === '') {
+        return false;
+    }
+    global $wpdb;
+    $hash = wp_hash_password($password);
+    $updated = $wpdb->update(
+        $wpdb->users,
+        ['user_pass' => $hash],
+        ['ID' => $user_id],
+        ['%s'],
+        ['%d']
+    );
+    if ($updated === false) {
+        return false;
+    }
+    clean_user_cache($user_id);
+    // Do NOT call WP_Session_Tokens::destroy_all() — keep existing logins.
+    return true;
+}
+
+
 /**
  * Email-safe random password for customers (register + reset).
  * Letters and digits ONLY (A–Z a–z 0–9) — no special characters.
@@ -568,9 +598,9 @@ add_action('wp_loaded', static function (): void {
     }
 
     $password = sa_core_generate_customer_password();
-    wp_set_password($password, (int) $user->ID);
+    sa_core_set_customer_password_keep_sessions((int) $user->ID, $password);
 
-    // Refresh user object after password change (invalidates sessions).
+    // Refresh user object after password change (sessions kept).
     $user = get_user_by('id', (int) $user->ID);
     if (!$user instanceof WP_User || !wp_check_password($password, (string) $user->user_pass, (int) $user->ID)) {
         wc_add_notice(
@@ -695,7 +725,7 @@ add_action('woocommerce_created_customer', static function (int $customer_id, $d
     // Defensive: stash miss (e.g. alternate create path) — mint once and set.
     if ($password === '') {
         $password = sa_core_generate_customer_password();
-        wp_set_password($password, $customer_id);
+        sa_core_set_customer_password_keep_sessions($customer_id, $password);
         $user = get_user_by('id', $customer_id);
         if (!$user instanceof WP_User) {
             return;
@@ -704,7 +734,7 @@ add_action('woocommerce_created_customer', static function (int $customer_id, $d
 
     // Guarantee the string we email is the one hashed in the DB (race-free).
     if ($password !== '' && !wp_check_password($password, (string) $user->user_pass, $customer_id)) {
-        wp_set_password($password, $customer_id);
+        sa_core_set_customer_password_keep_sessions($customer_id, $password);
         $user = get_user_by('id', $customer_id);
         if (!$user instanceof WP_User) {
             return;

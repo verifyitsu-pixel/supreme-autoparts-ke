@@ -89,8 +89,8 @@ add_filter('wc_session_expiring', static function (): int {
  * - Customers: always ~90 days (persistent until Log out), whether or not Remember was checked.
  * - Staff: 14 days when remembered, otherwise WP default (~2 days).
  *
- * wp_set_password on lost-password invalidates prior sessions once (expected).
- * The next login with the emailed password gets a fresh 90-day cookie again.
+ * Password emails use sa_core_set_customer_password_keep_sessions() so existing
+ * device sessions stay valid — customers are not force-logged-out on reset.
  */
 add_filter('auth_cookie_expiration', static function (int $length, int $user_id, bool $remember): int {
     $user = get_userdata($user_id);
