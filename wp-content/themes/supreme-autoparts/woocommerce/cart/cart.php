@@ -52,6 +52,9 @@ do_action('woocommerce_before_cart');
                     <td class="product-thumbnail">
                       <?php
                       $thumbnail = apply_filters('woocommerce_cart_item_thumbnail', $_product->get_image('woocommerce_thumbnail', ['class' => 'sa-cart-thumb attachment-woocommerce_thumbnail size-woocommerce_thumbnail', 'loading' => 'lazy', 'decoding' => 'async', 'sizes' => '72px']), $cart_item, $cart_item_key);
+                      if (!is_string($thumbnail) || strpos($thumbnail, '<img') === false) {
+                          $thumbnail = '<span class="sa-cart-thumb sa-cart-thumb--empty" aria-hidden="true"></span>';
+                      }
                       if (!$product_permalink) {
                           echo $thumbnail; // phpcs:ignore
                       } else {

@@ -1628,14 +1628,24 @@ body.woocommerce-account .sa-page__content {
   gap: .75rem;
   align-items: center;
 }
-.sa-checkout-review-table .sa-checkout-line__thumb {
-  width: 48px;
-  height: 48px;
+.sa-checkout-review-table .sa-checkout-line__thumb,
+.sa-checkout-review-table .sa-checkout-line img,
+.sa-checkout-review-table .sa-cart-thumb {
+  width: 48px !important;
+  height: 48px !important;
   object-fit: contain;
   border-radius: 8px;
   background: #101012;
   border: 1px solid var(--sa-border);
   flex-shrink: 0;
+}
+.sa-cart-thumb--empty {
+  display: inline-block;
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  background: #101012;
+  border: 1px dashed var(--sa-border);
 }
 .sa-checkout-review-table .sa-checkout-line__meta {
   min-width: 0;
