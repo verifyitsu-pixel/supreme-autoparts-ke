@@ -63,6 +63,18 @@
     });
   }
 
+
+  function saScheduleCartUpdate() {
+    var form = document.querySelector('form.woocommerce-cart-form');
+    if (!form) return;
+    var btn = form.querySelector('button[name="update_cart"]');
+    if (!btn) return;
+    btn.disabled = false;
+    clearTimeout(window.__saCartUpdateT);
+    window.__saCartUpdateT = setTimeout(function () {
+      if (typeof btn.click === 'function') btn.click();
+    }, 350);
+  }
   function bindQty(root) {
     (root || document).querySelectorAll('[data-sa-qty]').forEach(function (wrap) {
       if (wrap.dataset.saQtyBound) return;
@@ -78,6 +90,7 @@
           if (isNaN(min)) min = 0;
           input.value = Math.max(min, v - 1);
           input.dispatchEvent(new Event('change', { bubbles: true }));
+          saScheduleCartUpdate();
         });
       }
       if (plus) {
@@ -88,6 +101,7 @@
           if (!isNaN(max) && max > 0) next = Math.min(max, next);
           input.value = next;
           input.dispatchEvent(new Event('change', { bubbles: true }));
+          saScheduleCartUpdate();
         });
       }
     });

@@ -1,4 +1,4 @@
-/* Supreme Autoparts — storefront components (v1.4.1) */
+/* Supreme Autoparts — storefront components (v1.4.37) */
 
 .sa-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
@@ -1407,3 +1407,251 @@ body.woocommerce-account .sa-page__content {
 @media (max-width: 520px) {
   .sa-guides-strip__grid { grid-template-columns: 1fr; }
 }
+
+
+/* —— Modern cart marketplace polish (v1.4.37) —— */
+.sa-cart-layout {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+.sa-cart-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.sa-cart-table thead th {
+  font-size: .72rem;
+  font-weight: 650;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--sa-text-muted);
+  padding: .85rem 1rem !important;
+  background: rgba(0,0,0,.22);
+}
+.sa-cart-table td {
+  padding: 1rem !important;
+  vertical-align: middle !important;
+}
+.sa-cart-table img,
+.sa-cart-table .sa-cart-thumb,
+.sa-cart-table .attachment-woocommerce_thumbnail {
+  width: 72px !important;
+  height: 72px !important;
+  object-fit: contain;
+  background: #101012;
+  border-radius: 10px;
+  border: 1px solid var(--sa-border);
+}
+.sa-cart-table .product-name a {
+  color: var(--sa-heading);
+  font-weight: 600;
+  text-decoration: none;
+}
+.sa-cart-table .product-name a:hover { color: var(--sa-accent); }
+.sa-cart-table .product-remove .remove {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px solid var(--sa-border);
+  color: var(--sa-text-muted) !important;
+  background: var(--sa-bg-alt);
+  font-size: 1.05rem;
+  line-height: 1;
+  text-decoration: none !important;
+}
+.sa-cart-table .product-remove .remove:hover {
+  color: var(--sa-danger) !important;
+  border-color: var(--sa-danger);
+}
+.sa-cart-summary__title {
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+  text-transform: none;
+  color: var(--sa-heading);
+}
+.sa-cart-coupon {
+  margin: 0 0 1rem;
+  border: 1px solid var(--sa-border);
+  border-radius: var(--sa-radius);
+  background: var(--sa-bg-alt);
+}
+.sa-cart-coupon__summary {
+  cursor: pointer;
+  padding: .7rem .85rem;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--sa-heading);
+  list-style: none;
+}
+.sa-cart-coupon__summary::-webkit-details-marker { display: none; }
+.sa-cart-coupon__body {
+  display: flex;
+  gap: .5rem;
+  padding: 0 .85rem .85rem;
+}
+.sa-cart-coupon__body .input-text {
+  flex: 1;
+  min-width: 0;
+}
+.sa-cart-free-ship {
+  color: #3ecf8e;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+.sa-cart-estimated-total th,
+.sa-cart-estimated-total td {
+  font-size: 1.05rem;
+  color: var(--sa-heading) !important;
+  padding-top: .85rem !important;
+}
+.sa-cart-proceed .checkout-button {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+.sa-cart-sticky-bar {
+  display: none;
+}
+
+/* Mobile: AliExpress / Shopify-style line-item cards */
+@media (max-width: 900px) {
+  .sa-cart-layout {
+    padding: 1rem 0 5.5rem;
+    gap: 1rem;
+  }
+  .sa-cart-table thead { display: none; }
+  .sa-cart-table,
+  .sa-cart-table tbody,
+  .sa-cart-table tr.cart_item {
+    display: block;
+    width: 100%;
+  }
+  .sa-cart-table tr.cart_item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    grid-template-areas:
+      "remove remove"
+      "thumb name"
+      "thumb price"
+      "qty qty"
+      "sub sub";
+    gap: .55rem .85rem;
+    margin: 0 0 .85rem;
+    padding: 1rem;
+    background: var(--sa-bg-card);
+    border: 1px solid var(--sa-border);
+    border-radius: var(--sa-radius-lg);
+  }
+  .sa-cart-table tr.cart_item td {
+    border: 0 !important;
+    padding: 0 !important;
+    display: block;
+    text-align: left !important;
+  }
+  .sa-cart-table tr.cart_item td::before { display: none !important; content: none !important; }
+  .sa-cart-table .product-remove { grid-area: remove; justify-self: end; }
+  .sa-cart-table .product-thumbnail { grid-area: thumb; }
+  .sa-cart-table .product-name { grid-area: name; align-self: end; }
+  .sa-cart-table .product-price { grid-area: price; align-self: start; color: var(--sa-accent); font-weight: 700; }
+  .sa-cart-table .product-quantity { grid-area: qty; }
+  .sa-cart-table .product-subtotal {
+    grid-area: sub;
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: .65rem !important;
+    border-top: 1px solid var(--sa-border) !important;
+    font-weight: 700;
+    color: var(--sa-heading);
+  }
+  .sa-cart-table .product-subtotal::before {
+    display: inline !important;
+    content: attr(data-title);
+    font-weight: 500;
+    color: var(--sa-text-muted);
+    font-size: .8rem;
+  }
+  .sa-cart-table tr.actions {
+    display: block;
+    background: transparent;
+    border: 0;
+    padding: .25rem 0;
+  }
+  .sa-cart-table tr.actions td {
+    display: block;
+    padding: 0 !important;
+    border: 0 !important;
+  }
+  .sa-cart-sticky-bar {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1200;
+    gap: .75rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: .85rem 1rem calc(.85rem + env(safe-area-inset-bottom, 0px));
+    background: rgba(11, 11, 13, 0.94);
+    border-top: 1px solid var(--sa-border);
+    backdrop-filter: blur(10px);
+  }
+  .sa-cart-sticky-bar__total {
+    color: var(--sa-heading);
+    font-weight: 700;
+  }
+  .sa-cart-sticky-bar__total small {
+    display: block;
+    font-weight: 500;
+    color: var(--sa-text-muted);
+    font-size: .72rem;
+  }
+  .sa-cart-sticky-bar .checkout-button,
+  .sa-cart-sticky-bar .sa-btn {
+    margin: 0;
+    white-space: nowrap;
+    min-height: 2.75rem;
+    padding: .65rem 1.15rem !important;
+  }
+  body.woocommerce-cart {
+    padding-bottom: 5.5rem;
+  }
+}
+
+/* Checkout review thumbs */
+.sa-checkout-review-table .sa-checkout-line {
+  display: flex;
+  gap: .75rem;
+  align-items: center;
+}
+.sa-checkout-review-table .sa-checkout-line__thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #101012;
+  border: 1px solid var(--sa-border);
+  flex-shrink: 0;
+}
+.sa-checkout-review-table .sa-checkout-line__meta {
+  min-width: 0;
+}
+.sa-ticket-open {
+  margin: 1rem 0 1.5rem;
+  border: 1px solid var(--sa-border);
+  border-radius: 10px;
+  padding: .85rem 1rem;
+  background: var(--sa-bg-card);
+}
+.sa-ticket-open > summary {
+  cursor: pointer;
+  font-weight: 650;
+  color: var(--sa-heading);
+}
+.sa-ticket-open-form { margin-top: .85rem; }
+.sa-ticket-open-form input,
+.sa-ticket-open-form textarea { width: 100%; }

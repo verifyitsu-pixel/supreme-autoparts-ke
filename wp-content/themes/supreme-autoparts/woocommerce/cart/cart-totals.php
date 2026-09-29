@@ -113,5 +113,15 @@ $needs_shipping = WC()->cart && WC()->cart->needs_shipping() && WC()->cart->show
     <?php do_action('woocommerce_proceed_to_checkout'); ?>
   </div>
 
+
+  <div class="sa-cart-sticky-bar" data-sa-cart-sticky>
+    <div class="sa-cart-sticky-bar__total">
+      <small><?php esc_html_e('Estimated total', 'supreme-autoparts'); ?></small>
+      <?php wc_cart_totals_order_total_html(); ?>
+    </div>
+    <a href="<?php echo esc_url(wc_get_checkout_url()); ?>" class="checkout-button button alt sa-btn wc-forward">
+      <?php esc_html_e('Checkout', 'supreme-autoparts'); ?>
+    </a>
+  </div>
   <?php do_action('woocommerce_after_cart_totals'); ?>
 </div>
