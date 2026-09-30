@@ -132,6 +132,13 @@ add_action('template_redirect', static function (): void {
  */
 add_filter('woocommerce_create_account_default_checked', static fn (): bool => false);
 
+add_filter('gettext', static function ($translated, $text, $domain) {
+    if (is_string($text) && $text === 'Proceed to checkout' && in_array($domain, ['woocommerce', 'default'], true)) {
+        return __('Checkout', 'supreme-autoparts');
+    }
+    return $translated;
+}, 20, 3);
+
 /**
  * WooCommerce transactional email branding (light logo on light header).
  */

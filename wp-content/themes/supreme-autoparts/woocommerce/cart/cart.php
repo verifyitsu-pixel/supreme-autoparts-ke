@@ -163,7 +163,7 @@ $shop_url   = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('
     <aside class="sa-cart-layout__summary">
       <div class="sa-cart-summary cart-collaterals">
         <?php do_action('woocommerce_cart_collaterals'); ?>
-        <p class="sa-cart-ship-note"><?php esc_html_e('Complimentary shipping on orders over $99. Charged in USD at checkout.', 'supreme-autoparts'); ?></p>
+        <p class="sa-cart-ship-note"><?php esc_html_e('Complimentary shipping on orders over $99.', 'supreme-autoparts'); ?></p>
         <div class="sa-cart-trust">
           <a href="<?php echo esc_url(sa_page_url('shipping-policy')); ?>"><?php esc_html_e('Shipping', 'supreme-autoparts'); ?></a>
           <a href="<?php echo esc_url(sa_page_url('returns')); ?>"><?php esc_html_e('Returns', 'supreme-autoparts'); ?></a>

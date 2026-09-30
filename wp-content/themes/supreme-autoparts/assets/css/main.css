@@ -2229,3 +2229,33 @@ body.woocommerce-checkout .sa-page__content {
 @media (min-width: 901px) {
   .sa-cart-sticky-bar { display: none !important; }
 }
+
+/* v1.4.41: override Woo smallscreen hiding cart thumbs */
+@media (max-width: 900px) {
+  .woocommerce table.cart.sa-cart-table td.product-thumbnail,
+  .woocommerce-page table.cart.sa-cart-table td.product-thumbnail,
+  .woocommerce #content table.cart.sa-cart-table td.product-thumbnail,
+  .woocommerce-page #content table.cart.sa-cart-table td.product-thumbnail,
+  .sa-cart-table tr.cart_item td.product-thumbnail {
+    display: block !important;
+    text-align: left !important;
+    width: auto !important;
+  }
+  .sa-cart-table tr.cart_item td.product-thumbnail::before {
+    display: none !important;
+    content: none !important;
+  }
+  .sa-cart-table .sa-cart-thumb-wrap,
+  .sa-cart-table .sa-cart-thumb-wrap img,
+  .sa-cart-table td.product-thumbnail img {
+    display: block !important;
+    width: 72px !important;
+    height: 72px !important;
+    max-width: 72px !important;
+  }
+}
+.sa-geo-currency-note {
+  margin: 0 0 0.85rem;
+  font-size: 0.78rem;
+  color: var(--sa-text-muted);
+}

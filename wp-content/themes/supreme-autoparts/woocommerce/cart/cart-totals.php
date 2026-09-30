@@ -14,7 +14,6 @@ $needs_shipping = WC()->cart && WC()->cart->needs_shipping() && WC()->cart->show
   <?php do_action('woocommerce_before_cart_totals'); ?>
 
   <h2 class="sa-cart-summary__title"><?php esc_html_e('Order summary', 'supreme-autoparts'); ?></h2>
-  <p class="sa-cart-summary__usd"><?php esc_html_e('Charged in USD at checkout', 'supreme-autoparts'); ?></p>
 
   <?php if (wc_coupons_enabled()) : ?>
     <details class="sa-cart-coupon">
