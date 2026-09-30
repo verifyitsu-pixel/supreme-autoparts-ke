@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Lean technical SEO for Supreme Autoparts (US + Kenya discoverability).
+ * Lean technical SEO for Supreme Autoparts (US-primary storefront discoverability).
  *
  * Pure PHP in wp_head — no SEO plugin JS. Complements WooCommerce Product /
  * BreadcrumbList JSON-LD; adds Organization, WebSite, Store, FAQ, OG/Twitter,
@@ -226,7 +226,7 @@ function sa_seo_context(): array
             if (is_string($raw) && $raw !== '') {
                 $desc = sa_seo_clip($raw, 158);
             } else {
-                $desc = sa_seo_clip($name . ' — genuine aftermarket part. USD pricing, ships to Kenya and international destinations. Order at Supreme Autoparts.', 158);
+                $desc = sa_seo_clip($name . ' — genuine aftermarket part. USD pricing, ships continental US and internationally. Order at Supreme Autoparts.', 158);
             }
             $thumb = (int) $product->get_image_id();
             if ($thumb > 0) {
@@ -262,7 +262,7 @@ function sa_seo_context(): array
                 $desc = sa_seo_clip($tdesc, 158);
             } else {
                 $desc = sa_seo_clip(
-                    'Shop ' . $term->name . ' for cars, trucks, and SUVs. US-spec and popular fitments, USD checkout, shipping to Kenya. Browse ' . $term->name . ' at Supreme Autoparts.',
+                    'Shop ' . $term->name . ' for cars, trucks, and SUVs. US-spec fitments, USD checkout, free shipping on qualifying continental US orders. Browse ' . $term->name . ' at Supreme Autoparts.',
                     158
                 );
             }
@@ -309,13 +309,13 @@ function sa_seo_context(): array
         if ($override_t === '' && is_string($slug)) {
             $special = [
                 'shipping-to-kenya' => 'Shipping Auto Parts to Kenya | Import & Delivery | ' . $site,
-                'how-to-order'      => 'How to Order Auto Parts Online (US & Kenya) | ' . $site,
+                'how-to-order'      => 'How to Order Auto Parts Online | Free US Shipping | ' . $site,
                 'fitment-guide'     => 'Vehicle Fitment Guide | Year / Make / Model | ' . $site,
                 'auto-parts-kenya'  => 'Buy Auto Parts in Kenya | Import US Spec Parts | ' . $site,
                 'performance-truck-parts' => 'Performance Truck & Off-Road Parts | US Spec | ' . $site,
                 'guides'            => 'Guides: Ordering, Fitment & Shipping | ' . $site,
                 'contact'           => 'Contact Supreme Autoparts | WhatsApp +1 917 437 5121 · Email | ' . $site,
-                'about-us'          => 'About Supreme Autoparts | US Spec Parts · Kenya Support | ' . $site,
+                'about-us'          => 'About Supreme Autoparts | US Spec Parts · Ships Across the US | ' . $site,
             ];
             if (isset($special[$slug])) {
                 $title = $special[$slug];
@@ -631,8 +631,8 @@ function sa_seo_builtin_faqs(): array
                 'a' => 'Checkout is in USD. Depending on your location, the site may display an approximate local amount for convenience — the charge at payment is USD.',
             ],
             [
-                'q' => 'Can I order from the United States and from Kenya?',
-                'a' => 'Yes. The catalog is US-spec / popular North American fitments. Buyers in the US and Kenya (and other destinations we ship to) can order online. Kenya customers can also reach us on WhatsApp at ' . $wa . ' or email ' . $email . '.',
+                'q' => 'Do you ship within the United States?',
+                'a' => 'Yes. We ship across the continental United States — free shipping on qualifying orders $99+, Standard from $8, Priority $15. International delivery is also available. Support: WhatsApp ' . $wa . ' or email ' . $email . '.',
             ],
             [
                 'q' => 'What if I cannot find my part?',
@@ -642,7 +642,7 @@ function sa_seo_builtin_faqs(): array
         'shipping-to-kenya' => [
             [
                 'q' => 'Do you ship auto parts to Kenya?',
-                'a' => 'Yes. Supreme Autoparts supports shipping to Kenya. Rates and timelines appear at checkout and depend on weight, size, and carrier. See our Shipping Policy for details.',
+                'a' => 'Yes. When your checkout country is Kenya, Nairobi Delivery ($8), Upcountry ($15), and local pickup options appear. For US delivery, see our main Shipping Policy — free shipping on orders $99+ in the continental US.',
             ],
             [
                 'q' => 'Is there free shipping?',
@@ -897,8 +897,8 @@ function sa_seo_seed_page_meta(): void
 {
     $map = [
         'how-to-order' => [
-            'title' => 'How to Order Auto Parts Online (US & Kenya) | Supreme Autoparts',
-            'desc'  => 'Step-by-step ordering: find fitment, checkout in USD, shipping options for the US and Kenya, and WhatsApp support at +1 917 437 5121.',
+            'title' => 'How to Order Auto Parts Online | Free US Shipping | Supreme Autoparts',
+            'desc'  => 'Step-by-step ordering: find fitment, checkout in USD, free shipping $99+ continental US, international options, and WhatsApp support at +1 917 437 5121.',
         ],
         'shipping-to-kenya' => [
             'title' => 'Shipping Auto Parts to Kenya | Import & Delivery | Supreme Autoparts',
@@ -910,7 +910,7 @@ function sa_seo_seed_page_meta(): void
         ],
         'auto-parts-kenya' => [
             'title' => 'Buy Auto Parts in Kenya | Import US Spec Parts | Supreme Autoparts',
-            'desc'  => 'Order US-spec performance and aftermarket parts online with USD checkout and shipping to Kenya. Support: calvin@supremeautoparts.co.ke · +1 917 437 5121.',
+            'desc'  => 'Order US-spec performance and aftermarket parts online with USD checkout. Primary delivery: continental US. Support: calvin@supremeautoparts.co.ke · +1 917 437 5121.',
         ],
         'performance-truck-parts' => [
             'title' => 'Performance Truck & Off-Road Parts | US Spec | Supreme Autoparts',
@@ -918,7 +918,7 @@ function sa_seo_seed_page_meta(): void
         ],
         'guides' => [
             'title' => 'Guides: Ordering, Fitment & Shipping | Supreme Autoparts',
-            'desc'  => 'Practical guides for US and Kenya customers: how to order, fitment checks, shipping to Kenya, and buying auto parts online.',
+            'desc'  => 'Practical guides: how to order, fitment checks, continental US shipping & free shipping threshold, and buying auto parts online.',
         ],
     ];
 
