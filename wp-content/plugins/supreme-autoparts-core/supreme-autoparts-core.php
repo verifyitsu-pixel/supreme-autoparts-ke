@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Supreme Autoparts Core
  * Description: Branding defaults, category seed, static pages, invoices, admin dashboard, and Shopify JSON import helpers for Supreme Autoparts.
- * Version: 1.3.24
+ * Version: 1.3.25
  * Author: Supreme Autoparts
  * Text Domain: supreme-autoparts-core
  * Requires at least: 6.4
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_CORE_VERSION', '1.3.24');
+define('SA_CORE_VERSION', '1.3.25');
 define('SA_CORE_FILE', __FILE__);
 define('SA_CORE_DIR', plugin_dir_path(__FILE__));
 define('SA_CORE_URL', plugin_dir_url(__FILE__));
@@ -321,10 +321,10 @@ add_action('sa_core_empty_catalog_import', static function (): void {
  * Recover catalog: GET/POST /wp-json/supreme/v1/recover-catalog
  *
  * Auth (any one):
- * - SUPREME_RECOVER_TOKEN via ?token= / header X-SA-Recover-Token / Authorization: Bearer
- * - current user can manage_woocommerce
- * - published product count is 0 (emergency empty-shop recovery)
+ * - SUPREME_RECOVER_TOKEN via header X-SA-Recover-Token / Authorization: Bearer (prefer header; ?token= also accepted)
+ * - current user can manage_woocommerce / manage_options
  *
+ * Empty-catalog emergency no longer opens this route publicly — set SUPREME_RECOVER_TOKEN.
  * Always imports at most 50 rows over HTTP (CDN meta only) so the request does not fatal.
  * Assigns parent IA categories (brakes, suspension, …) and flushes rewrites.
  */
@@ -332,26 +332,25 @@ add_action('rest_api_init', static function (): void {
     register_rest_route('supreme/v1', '/recover-catalog', [
         'methods'             => ['GET', 'POST'],
         'permission_callback' => static function (): bool {
+            if (current_user_can('manage_woocommerce') || current_user_can('manage_options')) {
+                return true;
+            }
             $token = (string) (getenv('SUPREME_RECOVER_TOKEN') ?: getenv('SUPREME_IMPORT_SECRET') ?: '');
+            if ($token === '') {
+                return false;
+            }
             $provided = '';
             if (isset($_SERVER['HTTP_X_SA_RECOVER_TOKEN'])) {
                 $provided = (string) $_SERVER['HTTP_X_SA_RECOVER_TOKEN'];
             } elseif (isset($_SERVER['HTTP_X_SA_IMPORT_SECRET'])) {
                 $provided = (string) $_SERVER['HTTP_X_SA_IMPORT_SECRET'];
-            } elseif (isset($_GET['token'])) {
-                $provided = (string) $_GET['token'];
             } elseif (!empty($_SERVER['HTTP_AUTHORIZATION']) && preg_match('/Bearer\s+(\S+)/i', (string) $_SERVER['HTTP_AUTHORIZATION'], $m)) {
                 $provided = $m[1];
+            } elseif (isset($_GET['token'])) {
+                // Query token still accepted for ops curl, but prefer headers (avoids access-log leakage).
+                $provided = (string) $_GET['token'];
             }
-            if ($token !== '' && $provided !== '' && hash_equals($token, $provided)) {
-                return true;
-            }
-            if (current_user_can('manage_woocommerce') || current_user_can('manage_options')) {
-                return true;
-            }
-            $counts = wp_count_posts('product');
-            $published = isset($counts->publish) ? (int) $counts->publish : 0;
-            return $published === 0;
+            return $provided !== '' && hash_equals($token, $provided);
         },
         'callback'            => static function () {
             try {

@@ -215,6 +215,16 @@ final class Whop_Open_Pay {
             self::redirect_error($pay_url, __('Security check failed. Please try again.', 'whop-payments'));
         }
 
+        // Rate-limit open-pay checkout creation (abuse → pending Woo order spam).
+        $ip = (string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+        $ip = preg_replace('/[^0-9a-fA-F:.]/', '', $ip) ?: '0.0.0.0';
+        $rate_key = 'sa_open_pay_' . md5($ip);
+        $hits = (int) get_transient($rate_key);
+        if ($hits >= 5) {
+            self::redirect_error($pay_url, __('Too many payment attempts. Please wait a minute and try again.', 'whop-payments'));
+        }
+        set_transient($rate_key, $hits + 1, MINUTE_IN_SECONDS);
+
         $amount_raw = isset($_POST['amount']) ? wp_unslash((string) $_POST['amount']) : '';
         $amount_raw = str_replace([',', ' '], ['', ''], $amount_raw);
         $amount     = round((float) $amount_raw, 2);

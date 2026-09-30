@@ -439,13 +439,13 @@ function sa_core_user_is_customer_for_password_mail(WP_User $user): bool
 /** Seconds between customer password-issue emails for the same account. */
 function sa_core_password_issue_cooldown(): int
 {
-    return (int) apply_filters('sa_core_password_issue_cooldown', 20);
+    return (int) apply_filters('sa_core_password_issue_cooldown', 60);
 }
 
 /** Max password-issue emails per customer account per hour. */
 function sa_core_password_issue_hourly_cap(): int
 {
-    return (int) apply_filters('sa_core_password_issue_hourly_cap', 8);
+    return (int) apply_filters('sa_core_password_issue_hourly_cap', 5);
 }
 
 /**

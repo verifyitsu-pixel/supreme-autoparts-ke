@@ -26,3 +26,18 @@ __pycache__/
 data/scrape/chunks/products-*.ndjson
 data/scrape/sitemap-handles.txt
 data/scrape/progress.json
+
+# Secrets / local env / audit scratch
+.env.*
+!.env.example
+*.pem
+*.p12
+*.key
+id_rsa*
+credentials.json
+tmp/security-audit-*.md
+tmp/qa-shots/
+tmp-*.html
+branding/_bimi-*
+
+tmp/secret-rotation-*/

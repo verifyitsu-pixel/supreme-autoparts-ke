@@ -35,14 +35,15 @@ class SA_Brevo_Webhooks
     public static function permission(\WP_REST_Request $request): bool
     {
         $secret = getenv('BREVO_WEBHOOK_SECRET') ?: (string) get_option('sa_brevo_webhook_secret', '');
+        // Safe default: reject all webhook posts until a secret is configured.
         if ($secret === '') {
-            // Allow when no secret configured (stub mode) — log only.
-            return true;
+            return false;
         }
         $hdr = (string) $request->get_header('x-sa-brevo-secret');
         if ($hdr !== '' && hash_equals($secret, $hdr)) {
             return true;
         }
+        // Prefer header; query param accepted for Brevo dashboards that only support URL secrets.
         $q = (string) $request->get_param('secret');
         return $q !== '' && hash_equals($secret, $q);
     }

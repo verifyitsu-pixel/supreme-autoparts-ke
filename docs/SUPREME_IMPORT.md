@@ -118,10 +118,10 @@ See also root `README.md` § Boot import / Full catalog scrape.
 ## HTTP recover (empty shop)
 
 ```bash
-curl -sS "https://www.supremeautoparts.co.ke/wp-json/supreme/v1/recover-catalog?token=$SUPREME_RECOVER_TOKEN"
+curl -sS -H "X-SA-Recover-Token: $SUPREME_RECOVER_TOKEN" "https://www.supremeautoparts.co.ke/wp-json/supreme/v1/recover-catalog"
 ```
 
-When published product count is `0`, the token is optional. Response includes `published`, `brakes_count`, `suspension_count`. Caps at 50 products over HTTP (CDN photos only).
+Token (or logged-in Woo admin) is **required** even when the catalog is empty. Prefer `X-SA-Recover-Token` header over `?token=` (avoids access-log leakage). Response includes `published`, `brakes_count`, `suspension_count`. Caps at 50 products over HTTP (CDN photos only).
 
 ---
 

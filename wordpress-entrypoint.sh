@@ -33,6 +33,14 @@ export WORDPRESS_CONFIG_EXTRA="${WORDPRESS_CONFIG_EXTRA:-}
 if (!defined('WP_HOME')) define('WP_HOME', getenv('WP_HOME') ?: 'http://localhost:8080');
 if (!defined('WP_SITEURL')) define('WP_SITEURL', getenv('WP_SITEURL') ?: WP_HOME);
 if (!defined('FS_METHOD')) define('FS_METHOD', 'direct');
+if (!defined('DISALLOW_FILE_EDIT')) define('DISALLOW_FILE_EDIT', true);
+if (!defined('DISALLOW_FILE_MODS')) define('DISALLOW_FILE_MODS', false);
+if (!defined('FORCE_SSL_ADMIN')) {
+  $home = getenv('WP_HOME') ?: '';
+  if (is_string($home) && str_starts_with($home, 'https://')) {
+    define('FORCE_SSL_ADMIN', true);
+  }
+}
 "
 
 sync_custom_content() {
@@ -64,6 +72,9 @@ sync_custom_content() {
   fi
   if [[ -f /usr/src/wordpress/wp-content/mu-plugins/supreme-loader.php ]]; then
     cp -f /usr/src/wordpress/wp-content/mu-plugins/supreme-loader.php /var/www/html/wp-content/mu-plugins/ || true
+  fi
+  if [[ -f /usr/src/wordpress/wp-content/mu-plugins/supreme-security.php ]]; then
+    cp -f /usr/src/wordpress/wp-content/mu-plugins/supreme-security.php /var/www/html/wp-content/mu-plugins/ || true
   fi
   [[ -f /usr/src/wordpress/healthz.php ]] && cp -f /usr/src/wordpress/healthz.php /var/www/html/healthz.php
   if [[ -d /usr/src/supreme-data ]]; then
@@ -172,11 +183,17 @@ bootstrap_wordpress() {
       --admin_email="$WORDPRESS_ADMIN_EMAIL" \
       --skip-email || true
   else
-    echo "[supreme] WordPress already installed — syncing URLs and admin email."
+    echo "[supreme] WordPress already installed — syncing URLs, admin email, and admin password from env."
     wp_as option update home "$WP_HOME" || true
     wp_as option update siteurl "$WP_SITEURL" || true
     wp_as option update admin_email "$WORDPRESS_ADMIN_EMAIL" || true
     wp_as user update "$WORDPRESS_ADMIN_USER" --user_email="$WORDPRESS_ADMIN_EMAIL" 2>/dev/null || true
+    # Keep WP admin password aligned with Railway WORDPRESS_ADMIN_PASSWORD (rotation-friendly).
+    if [[ -n "${WORDPRESS_ADMIN_PASSWORD:-}" && "${WORDPRESS_ADMIN_PASSWORD}" != "adminpass" && "${WORDPRESS_ADMIN_PASSWORD}" != "change-me-strong" ]]; then
+      wp_as user update "$WORDPRESS_ADMIN_USER" --user_pass="$WORDPRESS_ADMIN_PASSWORD" 2>/dev/null \
+        && echo "[supreme] Admin password synced from WORDPRESS_ADMIN_PASSWORD." \
+        || echo "[supreme] WARN: could not sync admin password for $WORDPRESS_ADMIN_USER" >&2
+    fi
   fi
 
   wp_as option update timezone_string "Africa/Nairobi" || true

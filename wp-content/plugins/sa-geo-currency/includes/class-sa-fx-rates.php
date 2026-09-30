@@ -86,6 +86,19 @@ final class SA_FX_Rates
         if (!is_string($url) || $url === '') {
             // Free, no key: https://open.er-api.com/v6/latest/USD
             $url = 'https://open.er-api.com/v6/latest/USD';
+        } else {
+            // Only allow https public FX hosts — blocks SSRF via env misconfig.
+            $host = strtolower((string) (wp_parse_url($url, PHP_URL_HOST) ?: ''));
+            $scheme = strtolower((string) (wp_parse_url($url, PHP_URL_SCHEME) ?: ''));
+            $allowed_hosts = [
+                'open.er-api.com',
+                'api.exchangerate.host',
+                'api.frankfurter.app',
+                'cdn.jsdelivr.net',
+            ];
+            if ($scheme !== 'https' || $host === '' || !in_array($host, $allowed_hosts, true)) {
+                $url = 'https://open.er-api.com/v6/latest/USD';
+            }
         }
 
         $res = wp_remote_get($url, [

@@ -210,7 +210,7 @@ Admin: **WooCommerce → Supreme Brevo** (connection status, list ID, test email
 
 Marketing opt-in checkbox on register/checkout syncs contacts to `BREVO_LIST_ID`.
 
-Webhook stub: `POST /wp-json/sa-brevo/v1/webhook` (optional `BREVO_WEBHOOK_SECRET`).
+Webhook: `POST /wp-json/sa-brevo/v1/webhook` — **requires** `BREVO_WEBHOOK_SECRET` (header `X-SA-Brevo-Secret` or `?secret=`). Requests are rejected until the secret is set.
 
 ## Admin Ultra dashboard
 
