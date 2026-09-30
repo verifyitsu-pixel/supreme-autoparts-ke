@@ -406,8 +406,8 @@ function sa_core_email_login_otp(WP_User $user, string $code): bool
         }
     }
 
-    // No square brackets in subject (Gmail/Apple show them as noisy).
-    $subject = sprintf('Your login code: %s', $code);
+    // Readable prefix, no square brackets.
+    $subject = sprintf('%s · Login code: %s', $site, $code);
 
     $lines = [
         'Hi ' . $name . ',',
@@ -522,7 +522,7 @@ function sa_core_email_guest_account_ready(WP_User $user, WC_Order $order): void
         : home_url('/my-account/');
     $order_no = (string) $order->get_order_number();
 
-    $subject = sprintf('Order #%s — your %s account is ready', $order_no, $site);
+    $subject = sprintf('%s · Order #%s — account ready', $site, $order_no);
     $body = implode("\n", [
         'Hi ' . $name . ',',
         '',
