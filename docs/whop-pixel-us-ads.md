@@ -86,3 +86,19 @@ Owner must open this while logged into the Facebook account that admins the Page
 https://www.facebook.com/v25.0/dialog/oauth?auth_type=rerequest&client_id=3885443075092968&redirect_uri=https%3A%2F%2Fwhop.com%2Fcore%2Fapi%2Fcallback%2Fmeta%2F&response_type=code&scope=instagram_basic%2Cpages_show_list%2Cpages_read_engagement%2Cbusiness_management%2Cads_read%2Cads_management&state=eea446092b155e1d0513a35075d91ed1
 
 Or start again from Whop Ads UI / `social-accounts_connect` (platform `meta_business`, scopes `advertise`).
+
+
+## Live US Meta campaign (2026-09-30 EAT)
+
+| Field | Value |
+| --- | --- |
+| Campaign ID | `adcamp_hfeEPR6lWM6` |
+| Ad group | `adgrp_4z4C3L3lR57X` |
+| Ad | `ad_bjDDYG2Afn5Kzvu` |
+| Facebook page | `sacc_ZdkPh88howiFa` (Whop-managed, Standard Driveworks) |
+| Objective | sales (purchase / website) |
+| Spend cap | **lifetime $10 USD** (campaign-level) |
+| Ends | ~2026-10-02 13:51 UTC (~47h; Meta $5/day min) |
+| Payment | platform_balance `ldgr_0YILGy67R2mFG` |
+| Ads agreement | signed by Cavin Lugai Gwehona |
+| Meta Pixel | mu-plugin `supreme-meta-pixel.php` ID `1455607103130157` (deploy required) |
