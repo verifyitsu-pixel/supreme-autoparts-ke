@@ -131,11 +131,11 @@ add_filter('woocommerce_email_recipient_new_order', 'sa_core_admin_email_recipie
 add_filter('woocommerce_email_recipient_cancelled_order', 'sa_core_admin_email_recipient_only', 50, 2);
 add_filter('woocommerce_email_recipient_failed_order', 'sa_core_admin_email_recipient_only', 50, 2);
 
-function sa_core_admin_email_recipient_only($recipient, $order = null): string
+function sa_core_admin_email_recipient_only($recipient = '', $order = null): string
 {
     unset($order);
     $admin = sa_core_store_email();
-    return is_email($admin) ? $admin : (string) $recipient;
+    return is_email($admin) ? $admin : (string) ($recipient ?? '');
 }
 
 /**
@@ -144,7 +144,7 @@ function sa_core_admin_email_recipient_only($recipient, $order = null): string
  * @param string $recipient
  * @param WC_Order|false|null $order
  */
-function sa_core_customer_order_email_recipient(string $recipient, $order = null): string
+function sa_core_customer_order_email_recipient($recipient = '', $order = null): string
 {
     $admin = strtolower(sa_core_store_email());
     if ($order instanceof WC_Order) {
@@ -153,8 +153,8 @@ function sa_core_customer_order_email_recipient(string $recipient, $order = null
             return $billing;
         }
     }
-    // If Woo left recipient empty/wrong, never fall through to admin.
-    $recipient = strtolower(trim((string) $recipient));
+    // Woo may pass null when listing emails in admin (no order context).
+    $recipient = strtolower(trim((string) ($recipient ?? '')));
     if ($recipient !== '' && is_email($recipient) && $recipient !== $admin) {
         return $recipient;
     }

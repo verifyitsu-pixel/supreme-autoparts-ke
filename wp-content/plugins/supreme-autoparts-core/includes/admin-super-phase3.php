@@ -887,11 +887,26 @@ function sa_core_super_render_notifications(): void
             if (!is_object($email)) {
                 continue;
             }
+            // Prefer option/recipient property — avoid get_recipient() which runs
+            // filters that expect an order and can TypeError on null.
+            $recipient = '';
+            if (isset($email->recipient) && is_string($email->recipient)) {
+                $recipient = $email->recipient;
+            } elseif (method_exists($email, 'get_option')) {
+                $opt = $email->get_option('recipient');
+                if (is_string($opt)) {
+                    $recipient = $opt;
+                }
+            }
+            $title = method_exists($email, 'get_title') ? (string) $email->get_title() : (string) ($email->title ?? $email->id ?? '');
+            $enabled = method_exists($email, 'is_enabled')
+                ? (bool) $email->is_enabled()
+                : (((string) ($email->enabled ?? '')) === 'yes');
             $mail_map[] = [
-                'id'      => (string) ($email->id ?? ''),
-                'title'   => (string) ($email->get_title()),
-                'enabled' => method_exists($email, 'is_enabled') ? (bool) $email->is_enabled() : (($email->enabled ?? '') === 'yes'),
-                'recipient' => method_exists($email, 'get_recipient') ? (string) $email->get_recipient() : '',
+                'id'        => (string) ($email->id ?? ''),
+                'title'     => $title,
+                'enabled'   => $enabled,
+                'recipient' => $recipient,
             ];
         }
     }
