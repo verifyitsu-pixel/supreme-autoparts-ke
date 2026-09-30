@@ -350,6 +350,22 @@ function sa_get_homepage_latest_products(int $limit = 8): array
     return $picked;
 }
 
+
+/**
+ * Published WooCommerce product count (real catalog size).
+ */
+function sa_published_product_count(): int
+{
+    if (!post_type_exists('product')) {
+        return 0;
+    }
+    $counts = wp_count_posts('product');
+    if (!$counts || !isset($counts->publish)) {
+        return 0;
+    }
+    return max(0, (int) $counts->publish);
+}
+
 function sa_page_url(string $slug): string
 {
     $page = get_page_by_path($slug);
