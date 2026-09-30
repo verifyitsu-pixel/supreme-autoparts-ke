@@ -246,12 +246,12 @@ echo "whop_enabled\n";
     fi
   fi
 
-  wp_as option update woocommerce_default_country "KE" || true
+  wp_as option update woocommerce_default_country "US" || true
   wp_as option update woocommerce_currency_pos "left" || true
   wp_as option update woocommerce_price_thousand_sep "," || true
   wp_as option update woocommerce_price_decimal_sep "." || true
   wp_as option update woocommerce_price_num_decimals "2" || true
-  wp_as option update woocommerce_store_city "Nairobi" || true
+  wp_as option update woocommerce_store_city "" || true
   # Durable guest checkout (redeploys must not wipe — also enforced in mu-plugin/core).
   wp_as option update woocommerce_enable_guest_checkout "yes" || true
   wp_as option update woocommerce_enable_checkout_login_reminder "yes" || true

@@ -114,7 +114,7 @@ function sa_core_super_render_shipping(): void
         if (function_exists('sa_core_ensure_shipping_zones')) {
             delete_option('sa_shipping_zones_ver');
             sa_core_ensure_shipping_zones();
-            $notice = 'Shipping zones re-synced (Kenya + Rest of World rates).';
+            $notice = 'Shipping zones re-synced (US + Kenya + Rest of World rates).';
         } else {
             $notice = 'Shipping module not loaded.';
         }
@@ -126,7 +126,7 @@ function sa_core_super_render_shipping(): void
     }
 
     echo '<div class="wrap sa-ultra sa-super">';
-    sa_core_super_shell_header('Shipping', 'Kenya storefront rates (USD). Totals update when address/method changes at checkout.');
+    sa_core_super_shell_header('Shipping', 'US-primary storefront rates (USD). Totals update when address/method changes at checkout.');
     if ($notice !== '') {
         echo '<div class="sa-inline-notice sa-inline-notice--ok">' . esc_html($notice) . '</div>';
     }
@@ -136,17 +136,18 @@ function sa_core_super_render_shipping(): void
     echo '<a class="button" href="' . esc_url(admin_url('admin.php?page=wc-settings&tab=shipping&section=options')) . '">Shipping options</a>';
     echo '<form method="post" style="display:inline;">';
     wp_nonce_field('sa_resync_shipping');
-    echo '<button type="submit" name="sa_resync_shipping" class="button" value="1">Re-sync SA Kenya rates</button>';
+    echo '<button type="submit" name="sa_resync_shipping" class="button" value="1">Re-sync SA shipping rates</button>';
     echo '</form></div>';
 
     echo '<div class="sa-ultra__grid">';
     echo '<div class="sa-panel"><h2 class="sa-panel__title">Configured rates (USD)</h2><ul class="sa-note-list">';
-    echo '<li><strong>Nairobi Delivery</strong> — $8.00 flat</li>';
-    echo '<li><strong>Upcountry Kenya</strong> — $15.00 flat</li>';
-    echo '<li><strong>Free shipping</strong> — $0 when subtotal ≥ $'
-        . esc_html((string) ($doc['kenya']['free_min'] ?? (function_exists('sa_core_shipping_free_min') ? sa_core_shipping_free_min() : 99)))
-        . '</li>';
-    echo '<li><strong>Local pickup (Nairobi)</strong> — $0.00</li>';
+    $free = esc_html((string) ($doc['united_states']['free_min'] ?? $doc['kenya']['free_min'] ?? (function_exists('sa_core_shipping_free_min') ? sa_core_shipping_free_min() : 99)));
+    echo '<li><strong>Free shipping</strong> — $0 when subtotal ≥ $' . $free . '</li>';
+    echo '<li><strong>Standard Shipping (Continental US)</strong> — $8.00 flat</li>';
+    echo '<li><strong>Priority Shipping (US)</strong> — $15.00 flat</li>';
+    echo '<li><strong>Nairobi Delivery</strong> — $8.00 flat (KE)</li>';
+    echo '<li><strong>Upcountry Kenya</strong> — $15.00 flat (KE)</li>';
+    echo '<li><strong>Local pickup (Nairobi)</strong> — $0.00 (KE)</li>';
     echo '<li><strong>International</strong> — $25.00 flat (Rest of World)</li>';
     echo '</ul>';
     if (!empty($doc['updated'])) {

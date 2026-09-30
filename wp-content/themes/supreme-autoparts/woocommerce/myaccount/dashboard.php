@@ -152,7 +152,7 @@ $links = [
     <div class="sa-dash__enquire-card">
       <div class="sa-dash__enquire-copy">
         <h3><?php esc_html_e('Need a part we do not list?', 'supreme-autoparts'); ?></h3>
-        <p><?php esc_html_e('Tell us the part and your vehicle — we will check availability and pricing for Kenya delivery.', 'supreme-autoparts'); ?></p>
+        <p><?php esc_html_e('Tell us the part and your vehicle — we will check availability, pricing, and US delivery options.', 'supreme-autoparts'); ?></p>
       </div>
       <div class="sa-dash__enquire-actions">
         <a class="sa-btn" href="<?php echo esc_url($support_url); ?>">

@@ -224,9 +224,10 @@ function sa_core_apply_store_settings(): void
     sa_core_enable_admin_store_emails();
 
     // Store address / customer service
-    update_option('woocommerce_store_address', get_option('woocommerce_store_address') ?: 'Nairobi');
-    update_option('woocommerce_store_city', 'Nairobi');
-    update_option('woocommerce_default_country', 'KE');
+    // Operational address may remain KE; default customer country is US for ads/geo fallback.
+    update_option('woocommerce_store_address', get_option('woocommerce_store_address') ?: 'United States');
+    update_option('woocommerce_store_city', get_option('woocommerce_store_city') ?: '');
+    update_option('woocommerce_default_country', 'US');
     update_option('woocommerce_currency', getenv('SA_CHECKOUT_CURRENCY') ?: getenv('WOO_CURRENCY') ?: 'USD');
 
     // Customer registration + account flows

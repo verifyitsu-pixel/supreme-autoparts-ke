@@ -29,14 +29,14 @@ $policies = [
   <header class="sa-account-panel__head">
     <h2><?php esc_html_e('Support / Enquire', 'supreme-autoparts'); ?></h2>
     <p class="sa-account-panel__lead">
-      <?php esc_html_e('Questions about fitment, delivery in Kenya, or an existing order — we are here to help.', 'supreme-autoparts'); ?>
+      <?php esc_html_e('Questions about fitment, US delivery, international shipping, or an existing order — we are here to help.', 'supreme-autoparts'); ?>
     </p>
   </header>
 
   <div class="sa-support__wa">
     <div class="sa-support__wa-copy">
       <strong><?php esc_html_e('Fastest reply', 'supreme-autoparts'); ?></strong>
-      <span><?php esc_html_e('Message us on WhatsApp during business hours (Africa/Nairobi).', 'supreme-autoparts'); ?></span>
+      <span><?php esc_html_e('Message us on WhatsApp during business hours.', 'supreme-autoparts'); ?></span>
     </div>
     <a class="sa-btn" href="<?php echo esc_url($wa); ?>" target="_blank" rel="noopener noreferrer">
       <?php
@@ -52,7 +52,7 @@ $policies = [
   <div class="sa-support__grid">
     <div class="sa-support__card">
       <h3><?php esc_html_e('Reach us', 'supreme-autoparts'); ?></h3>
-      <p><?php esc_html_e('Typical reply during business hours (Africa/Nairobi).', 'supreme-autoparts'); ?></p>
+      <p><?php esc_html_e('Typical reply during business hours.', 'supreme-autoparts'); ?></p>
       <ul class="sa-support__reach">
         <li>
           <strong><?php esc_html_e('WhatsApp / SMS', 'supreme-autoparts'); ?></strong>
