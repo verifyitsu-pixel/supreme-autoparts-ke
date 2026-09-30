@@ -104,6 +104,29 @@ final class Whop_Open_Pay {
             $u = wp_get_current_user();
             $prefill_email = (string) $u->user_email;
         }
+        if (isset($_GET['email'])) {
+            $ge = sanitize_email(wp_unslash((string) $_GET['email']));
+            if ($ge !== '' && is_email($ge)) {
+                $prefill_email = $ge;
+            }
+        }
+        $prefill_amount = '';
+        if (isset($_GET['amount'])) {
+            $ga = str_replace([',', ' '], ['', ''], wp_unslash((string) $_GET['amount']));
+            if (is_numeric($ga)) {
+                $av = round((float) $ga, 2);
+                if ($av >= self::MIN_AMOUNT && $av <= self::MAX_AMOUNT) {
+                    $prefill_amount = number_format($av, 2, '.', '');
+                }
+            }
+        }
+        $prefill_note = '';
+        if (isset($_GET['note'])) {
+            $prefill_note = sanitize_text_field(wp_unslash((string) $_GET['note']));
+            if (strlen($prefill_note) > self::NOTE_MAX) {
+                $prefill_note = substr($prefill_note, 0, self::NOTE_MAX);
+            }
+        }
 
         $paid_notice = '';
         if ($paid && $order_q > 0) {
@@ -178,6 +201,7 @@ final class Whop_Open_Pay {
                             required
                             placeholder="0.00"
                             autocomplete="off"
+                            value="<?php echo esc_attr($prefill_amount); ?>"
                         />
                     </div>
                     <p class="sa-open-pay__hint"><?php echo esc_html__('Minimum $1.00 · Maximum $100,000.00', 'whop-payments'); ?></p>
@@ -193,6 +217,7 @@ final class Whop_Open_Pay {
                         maxlength="<?php echo (int) self::NOTE_MAX; ?>"
                         placeholder="<?php echo esc_attr__('Invoice #, order ref, or description', 'whop-payments'); ?>"
                         autocomplete="off"
+                        value="<?php echo esc_attr($prefill_note); ?>"
                     />
 
                     <button type="submit" class="sa-open-pay__btn">

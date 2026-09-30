@@ -481,3 +481,68 @@
 .sa-ultra .sa-kpi__value {
   display: block;
 }
+
+/* Super Admin ops console */
+.sa-ops-filters {
+  background: #fff;
+  border: 1px solid var(--sa-line, #d8dde3);
+  border-radius: 10px;
+  padding: 14px 16px;
+  align-items: end;
+}
+.sa-ops-actions .button {
+  margin: 2px;
+}
+.sa-ops-details {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 2px;
+}
+.sa-ops-details > summary {
+  list-style: none;
+  cursor: pointer;
+}
+.sa-ops-details > summary::-webkit-details-marker {
+  display: none;
+}
+.sa-ops-inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 8px;
+  background: #f7f8fa;
+  border-radius: 8px;
+  border: 1px solid var(--sa-line, #d8dde3);
+}
+.sa-ops-table td {
+  vertical-align: top;
+}
+.sa-customer-detail .sa-panel__title {
+  margin-top: 0;
+}
+.sa-copy-toast {
+  position: fixed;
+  z-index: 100000;
+  bottom: 28px;
+  right: 28px;
+  background: #0B0B0D;
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 10px;
+  border-left: 4px solid #F5A623;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 8px 28px rgba(0,0,0,.28);
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+}
+.sa-copy-toast--show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.sa-copy-toast--err {
+  border-left-color: #e74c3c;
+}

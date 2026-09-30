@@ -1,6 +1,31 @@
 (function () {
   'use strict';
 
+  function ensureToast() {
+    var el = document.getElementById('sa-copy-toast');
+    if (el) {
+      return el;
+    }
+    el = document.createElement('div');
+    el.id = 'sa-copy-toast';
+    el.className = 'sa-copy-toast';
+    el.setAttribute('role', 'status');
+    el.setAttribute('aria-live', 'polite');
+    document.body.appendChild(el);
+    return el;
+  }
+
+  function showToast(msg, ok) {
+    var el = ensureToast();
+    el.textContent = msg;
+    el.classList.toggle('sa-copy-toast--err', !ok);
+    el.classList.add('sa-copy-toast--show');
+    window.clearTimeout(el._saTimer);
+    el._saTimer = window.setTimeout(function () {
+      el.classList.remove('sa-copy-toast--show');
+    }, 1600);
+  }
+
   function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) {
       return navigator.clipboard.writeText(text);
@@ -42,32 +67,36 @@
     }
     e.preventDefault();
     var sel = btn.getAttribute('data-sa-copy');
-    if (!sel || sel === '1') {
+    var val = '';
+    var input = null;
+    if (!sel || sel === '1' || sel === '') {
       var row = btn.closest('.sa-copy-row');
-      var inp = row ? row.querySelector('input') : null;
-      if (inp) {
-        inp.select();
-        try { document.execCommand('copy'); } catch (err) {}
-        var old = btn.textContent;
-        btn.textContent = 'Copied';
-        setTimeout(function () { btn.textContent = old || 'Copy'; }, 1200);
-        return;
+      input = row ? row.querySelector('input, textarea') : null;
+      if (input) {
+        val = input.value || input.textContent || '';
+      }
+    } else {
+      input = document.querySelector(sel) || btn.previousElementSibling;
+      if (input) {
+        val = input.value || input.textContent || '';
       }
     }
-    var input = sel ? document.querySelector(sel) : btn.previousElementSibling;
-    if (!input) {
+    if (!val) {
+      showToast('Nothing to copy', false);
+      flash(btn, false);
       return;
     }
-    var val = input.value || input.textContent || '';
     copyText(val).then(
       function () {
         flash(btn, true);
-        if (input.select) {
+        showToast('Copied to clipboard', true);
+        if (input && input.select) {
           input.select();
         }
       },
       function () {
         flash(btn, false);
+        showToast('Copy failed', false);
       }
     );
   });

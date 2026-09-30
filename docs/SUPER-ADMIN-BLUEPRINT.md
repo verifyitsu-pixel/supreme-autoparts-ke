@@ -21,7 +21,7 @@ Also under Supreme Autoparts (tools): Import · Policies · Enquire leads
 3. Inventory/warehouses + discounts/marketing + roles + analytics exports
 4. Multi-store/vendor/platform controls
 
-## Phase 2 status (shipped in core 1.3.30+)
+## Phase 2 status (shipped in core 1.3.30+; ops upgrade 1.3.38+)
 
 Working Super Admin surfaces (real Woo data + deep links — not stubs):
 
@@ -29,6 +29,12 @@ Working Super Admin surfaces (real Woo data + deep links — not stubs):
 - Vendors: honest Phase 4 notice (single-store, no marketplace)
 - Woo setup task list / "Step X of 5" dismissed on admin_init
 - Legacy `supreme-orders` / `supreme-products` / `supreme-customers` redirect to Super pages
+
+### Ops console (core 1.3.38 — `admin-super-ops.php`)
+
+- **Customers** — filters (search, origin guest/register, has orders/zero, banned/active); detail `?user=ID` with email/phone/billing/LTV/last order/roles/notes; Ban/Unban via `_sa_banned` + `authenticate` filter (never staff); inline note; OTP + password-reset mail; edit user / Woo orders links.
+- **Payments** — filters (status, method, date, search); create shareable `/pay/?amount=&email=&note=` or order checkout pay URL; per-order invoice Copy/Open + pay link + edit/refunds; Whop webhook panel kept.
+- **Orders** — filters (status, s, date_from/to, payment_method, min/max total); POST+nonce status → processing/completed/on-hold/cancelled; fulfil + tracking customer note; invoice/pay copy toast.
 
 ## Phase 3 status (shipped in core 1.3.36+)
 
