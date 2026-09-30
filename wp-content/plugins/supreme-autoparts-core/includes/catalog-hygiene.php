@@ -78,11 +78,11 @@ add_action('save_post_product', static function (int $post_id, WP_Post $post): v
 }, 100, 2);
 
 /**
- * One-shot cleanup for existing live rows. The hook above remains active so
+ * One-shot cleanup for existing live rows after WooCommerce has initialized. The hook above remains active so
  * a later scrape/import cannot recreate this junk in public loops.
  */
-add_action('init', static function (): void {
-    if (get_option('sa_junk_product_cleanup_v1') === '1') {
+add_action('woocommerce_init', static function (): void {
+    if (get_option('sa_junk_product_cleanup_v2') === '1') {
         return;
     }
 
@@ -97,5 +97,5 @@ add_action('init', static function (): void {
     foreach ($ids ?: [] as $id) {
         sa_core_hide_junk_product((int) $id);
     }
-    update_option('sa_junk_product_cleanup_v1', '1');
-}, 1);
+    update_option('sa_junk_product_cleanup_v2', '1');
+}, 20);
