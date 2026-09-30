@@ -113,7 +113,7 @@ if (!defined('ABSPATH')) {
               ['file' => 'discover.svg',   'label' => 'Discover',          'w' => 40, 'h' => 26],
               ['file' => 'paypal.svg',     'label' => 'PayPal',            'w' => 40, 'h' => 26],
               ['file' => 'apple-pay.svg',  'label' => 'Apple Pay',         'w' => 40, 'h' => 26],
-              ['file' => 'google-pay.svg', 'label' => 'Google Pay',        'w' => 46, 'h' => 26],
+              ['file' => 'google-pay.svg', 'label' => 'Google Pay',        'w' => 52, 'h' => 26],
           ];
           $sa_pay_base = trailingslashit(SA_THEME_URI) . 'assets/images/payments/';
           foreach ($sa_pay_logos as $sa_pay) :
