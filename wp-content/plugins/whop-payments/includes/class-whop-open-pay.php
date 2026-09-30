@@ -93,6 +93,14 @@ final class Whop_Open_Pay {
      * @param array<string,string>|string $atts
      */
     public static function render_shortcode($atts = []): string {
+        // Paying an existing order via on-site embed — defer to Whop_Checkout_Embed markup.
+        if (class_exists('Whop_Checkout_Embed')) {
+            $pay_order = Whop_Checkout_Embed::order_from_request();
+            if ($pay_order instanceof WC_Order && Whop_Checkout_Embed::order_has_embed($pay_order) && !$pay_order->is_paid()) {
+                return Whop_Checkout_Embed::render_embed_markup($pay_order);
+            }
+        }
+
         $error   = isset($_GET['sa_pay_err']) ? sanitize_text_field(wp_unslash((string) $_GET['sa_pay_err'])) : '';
         $paid    = isset($_GET['paid']) && (string) $_GET['paid'] === '1';
         $order_q = isset($_GET['order']) ? absint($_GET['order']) : 0;
@@ -151,7 +159,7 @@ final class Whop_Open_Pay {
                 <div class="sa-open-pay__brand">
                     <img class="sa-open-pay__logo" src="<?php echo esc_url($logo); ?>" alt="Supreme Autoparts" width="180" height="48" loading="eager" />
                     <h1 class="sa-open-pay__title"><?php echo esc_html__('Make a payment', 'whop-payments'); ?></h1>
-                    <p class="sa-open-pay__sub"><?php echo esc_html__('Enter the amount in US dollars (USD). You will be redirected to a secure checkout. Paid amounts create an order in our store.', 'whop-payments'); ?></p>
+                    <p class="sa-open-pay__sub"><?php echo esc_html__('Enter the amount in US dollars (USD). Pay securely on this page — you stay on supremeautoparts.co.ke. Paid amounts create an order in our store.', 'whop-payments'); ?></p>
                 </div>
 
                 <?php if ($paid_notice !== '') : ?>
@@ -320,32 +328,38 @@ final class Whop_Open_Pay {
             ],
         ]);
 
-        if (empty($result['success']) || empty($result['purchase_url'])) {
+        if (empty($result['success']) || empty($result['plan_id'])) {
             $order->update_status('cancelled', __('Whop checkout creation failed; order cancelled.', 'whop-payments'));
             $msg = (string) ($result['message'] ?? __('Could not start checkout. Please try again.', 'whop-payments'));
             self::redirect_error($pay_url, $msg);
         }
 
         $checkout_id = (string) ($result['checkout_id'] ?? '');
+        $plan_id     = (string) ($result['plan_id'] ?? '');
         if ($checkout_id !== '') {
             $order->update_meta_data('_whop_checkout_id', $checkout_id);
-            $order->save();
         }
-        $order->add_order_note(sprintf(
-            /* translators: %s: Whop purchase URL host */
-            __('Open-pay: redirected customer to Whop checkout (%s).', 'whop-payments'),
-            (string) wp_parse_url((string) $result['purchase_url'], PHP_URL_HOST)
-        ));
+        $order->update_meta_data('_whop_plan_id', $plan_id);
+        if (!empty($result['purchase_url'])) {
+            // Stored for support/debug only — customers never redirect here.
+            $order->update_meta_data('_whop_purchase_url', (string) $result['purchase_url']);
+        }
+        $order->add_order_note(__('Open-pay: on-site Whop embed checkout created (no whop.com redirect).', 'whop-payments'));
+        $order->save();
 
-        $purchase_url = (string) $result['purchase_url'];
-        $host = wp_parse_url($purchase_url, PHP_URL_HOST);
-        $allowed = ['whop.com', 'www.whop.com', 'sandbox.whop.com'];
-        if (is_string($host) && in_array(strtolower($host), $allowed, true)) {
-            // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect
-            wp_redirect($purchase_url, 302);
-            exit;
-        }
-        self::redirect_error($pay_url, __('Invalid checkout URL returned. Please try again.', 'whop-payments'));
+        // Stay on supremeautoparts.co.ke /pay with embedded Whop element.
+        $embed_url = class_exists('Whop_Checkout_Embed')
+            ? Whop_Checkout_Embed::pay_url($order)
+            : add_query_arg(
+                [
+                    'sa_whop_pay' => '1',
+                    'order'       => $order->get_id(),
+                    'key'         => $order->get_order_key(),
+                ],
+                $pay_url
+            );
+        wp_safe_redirect($embed_url, 302);
+        exit;
     }
 
     /**

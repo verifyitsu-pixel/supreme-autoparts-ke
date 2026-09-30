@@ -631,13 +631,7 @@ final class Whop_Api_Client {
             ];
         }
 
-        if ($purchase_url === '') {
-            return [
-                'success' => false,
-                'message' => __('Whop response missing purchase_url.', 'whop-payments'),
-                'raw'     => $raw,
-            ];
-        }
+        // purchase_url kept for debug/meta only — customers use on-site embed (plan_id).
 
         return [
             'success'      => true,

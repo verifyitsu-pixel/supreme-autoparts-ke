@@ -67,7 +67,7 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
     }
 
     /**
-     * Minimal payment box — card entry happens on the secure pay page after Pay.
+     * Minimal payment box — card entry happens in on-site Whop embed after Pay.
      */
     public function payment_fields(): void {
         // Intentionally empty: no processor badges or redirect marketing copy.
@@ -309,9 +309,17 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
 
         WC()->cart->empty_cart();
 
+        // Stay on supremeautoparts.co.ke — embedded Whop checkout (never whop.com).
+        $embed_url = class_exists('Whop_Checkout_Embed')
+            ? Whop_Checkout_Embed::pay_url($order)
+            : $order->get_checkout_payment_url(false);
+
+        $order->add_order_note(__('Customer sent to on-site Whop embed payment page.', 'whop-payments'));
+        $order->save();
+
         return [
             'result'   => 'success',
-            'redirect' => (string) $result['purchase_url'],
+            'redirect' => $embed_url,
         ];
     }
 
@@ -324,6 +332,60 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
             echo '<p>' . esc_html__('Thank you — your Whop payment was received.', 'whop-payments') . '</p>';
             return;
         }
-        echo '<p>' . esc_html__('If you completed payment on Whop, confirmation can take a few seconds via webhook. Refresh this page if the status does not update.', 'whop-payments') . '</p>';
+        echo '<p>' . esc_html__('If you completed payment, confirmation can take a few seconds via webhook. Refresh this page if the status does not update.', 'whop-payments') . '</p>';
+    }
+
+    /**
+     * USD amount to charge on Whop + display snapshot for order meta/notes.
+     *
+     * @return array{amount_usd:float,display_currency:string,display_total:string}
+     */
+    public static function resolve_usd_charge(WC_Order $order): array {
+        $amount_usd = round((float) $order->get_total(), 2);
+        $display_currency = strtoupper((string) $order->get_meta('_sa_display_currency'));
+        $display_total_raw = $order->get_meta('_sa_display_total');
+
+        if ($display_currency === '' && class_exists('SA_Geo_Detector')) {
+            $display_currency = strtoupper((string) SA_Geo_Detector::display_currency());
+        }
+        if ($display_currency === '') {
+            $display_currency = 'USD';
+        }
+
+        $display_total = null;
+        if ($display_total_raw !== '' && $display_total_raw !== null && is_numeric($display_total_raw)) {
+            $display_total = (float) $display_total_raw;
+        } elseif (class_exists('SA_FX_Rates') && $display_currency !== 'USD') {
+            $converted = SA_FX_Rates::convert_usd($amount_usd, $display_currency);
+            if ($converted !== null) {
+                $display_total = (float) $converted;
+            }
+        }
+        if ($display_total === null) {
+            $display_total = $amount_usd;
+            $display_currency = 'USD';
+        }
+
+        $charge = [
+            'amount_usd'       => $amount_usd,
+            'display_currency' => $display_currency,
+            'display_total'    => (string) round((float) $display_total, 4),
+        ];
+
+        /**
+         * Filter USD charge payload before Whop checkout create.
+         *
+         * @param array{amount_usd:float,display_currency:string,display_total:string} $charge
+         * @param WC_Order $order
+         */
+        $filtered = apply_filters('whop_payments_usd_charge', $charge, $order);
+        if (is_array($filtered)) {
+            $charge = array_merge($charge, $filtered);
+            $charge['amount_usd'] = round((float) $charge['amount_usd'], 2);
+            $charge['display_currency'] = strtoupper((string) $charge['display_currency']);
+            $charge['display_total'] = (string) $charge['display_total'];
+        }
+
+        return $charge;
     }
 }

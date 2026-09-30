@@ -83,7 +83,7 @@ Dynamic checkout configs set:
 "plan": { "currency": "usd", "adaptive_pricing_enabled": true, ... }
 ```
 
-Embedded PM verify stays USD ($1); storefront redirect checkout uses API flag.
+Embedded PM verify stays USD ($1); storefront on-site embed checkout uses API flag (no whop.com redirect).
 
 ### Manual dashboard (optional — API already ON for dynamic checkouts)
 
