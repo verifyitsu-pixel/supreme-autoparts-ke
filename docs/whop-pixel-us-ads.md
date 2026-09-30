@@ -78,3 +78,11 @@ curl -sL https://www.supremeautoparts.co.ke/ | grep -E 't\.whop\.tw|whop\.setSco
 ```
 
 Or Whop: `events_validate_pixel` with `account_id=biz_9VJcCdK7G30L63` and `url=https://www.supremeautoparts.co.ke/`.
+
+## Meta connect (OAuth link generated 2026-09-30 EAT)
+
+Owner must open this while logged into the Facebook account that admins the Page:
+
+https://www.facebook.com/v25.0/dialog/oauth?auth_type=rerequest&client_id=3885443075092968&redirect_uri=https%3A%2F%2Fwhop.com%2Fcore%2Fapi%2Fcallback%2Fmeta%2F&response_type=code&scope=instagram_basic%2Cpages_show_list%2Cpages_read_engagement%2Cbusiness_management%2Cads_read%2Cads_management&state=eea446092b155e1d0513a35075d91ed1
+
+Or start again from Whop Ads UI / `social-accounts_connect` (platform `meta_business`, scopes `advertise`).
