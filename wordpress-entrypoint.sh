@@ -242,7 +242,12 @@ echo "whop_enabled\n";
   wp_as option update woocommerce_price_decimal_sep "." || true
   wp_as option update woocommerce_price_num_decimals "2" || true
   wp_as option update woocommerce_store_city "Nairobi" || true
+  # Durable guest checkout (redeploys must not wipe — also enforced in mu-plugin/core).
   wp_as option update woocommerce_enable_guest_checkout "yes" || true
+  wp_as option update woocommerce_enable_checkout_login_reminder "yes" || true
+  # Optional account from checkout (checkbox) — never require registration to place order.
+  wp_as option update woocommerce_enable_signup_and_login_from_checkout "yes" || true
+  wp_as option update woocommerce_enable_myaccount_registration "yes" || true
 
   if [[ "${SUPREME_SEED_ON_BOOT:-1}" == "1" ]]; then
     wp_as supreme seed_categories 2>/dev/null || true

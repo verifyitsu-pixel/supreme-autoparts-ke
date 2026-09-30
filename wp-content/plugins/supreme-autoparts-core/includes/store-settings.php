@@ -289,7 +289,7 @@ add_filter('woocommerce_email_from_name', static function ($name) {
 
 // Apply lightly on admin/init once per version bump.
 add_action('init', static function (): void {
-    if (get_option('sa_store_settings_ver') === '12') {
+    if (get_option('sa_store_settings_ver') === '13') {
         return;
     }
     if (!function_exists('WC') && !class_exists('WooCommerce')) {
@@ -297,5 +297,5 @@ add_action('init', static function (): void {
         update_option('admin_email', sa_core_store_email());
     }
     sa_core_apply_store_settings();
-    update_option('sa_store_settings_ver', '12');
+    update_option('sa_store_settings_ver', '13');
 }, 20);

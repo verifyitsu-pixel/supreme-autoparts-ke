@@ -131,22 +131,67 @@ add_filter('woocommerce_get_terms_and_conditions_checkbox_text', static function
 });
 
 /**
- * Keep guest checkout + checkout login reminder enabled (idempotent soft enforce).
+ * Guest checkout is mandatory store policy.
+ *
+ * Hard-force at option-read time so admin toggles / DB drift cannot require login
+ * for cart→checkout→Whop. Soft-write on init keeps wp_options aligned for WP-CLI /
+ * admin UI and survives Railway volume restores. Signup-from-checkout stays optional
+ * (create-account checkbox), never required before Place order / Whop.
  */
-add_action('init', static function (): void {
+function sa_core_force_guest_checkout_yes()
+{
+    return 'yes';
+}
+
+function sa_core_force_checkout_login_reminder_yes()
+{
+    return 'yes';
+}
+
+add_filter('pre_option_woocommerce_enable_guest_checkout', 'sa_core_force_guest_checkout_yes');
+add_filter('pre_option_woocommerce_enable_checkout_login_reminder', 'sa_core_force_checkout_login_reminder_yes');
+add_filter('woocommerce_checkout_registration_required', '__return_false', 20);
+
+/**
+ * Persist guest-checkout options into DB without pre_option short-circuiting update_option.
+ */
+function sa_core_persist_guest_checkout_options(): void
+{
     if (!class_exists('WooCommerce')) {
         return;
     }
+    // Drop all guest pre_option forces (core + mu-plugin) so get/update see raw DB.
+    remove_filter('pre_option_woocommerce_enable_guest_checkout', 'sa_core_force_guest_checkout_yes');
+    remove_filter('pre_option_woocommerce_enable_checkout_login_reminder', 'sa_core_force_checkout_login_reminder_yes');
+    if (function_exists('sa_mu_force_guest_checkout_yes')) {
+        remove_filter('pre_option_woocommerce_enable_guest_checkout', 'sa_mu_force_guest_checkout_yes');
+    }
+    if (function_exists('sa_mu_force_checkout_login_reminder_yes')) {
+        remove_filter('pre_option_woocommerce_enable_checkout_login_reminder', 'sa_mu_force_checkout_login_reminder_yes');
+    }
+
     if (get_option('woocommerce_enable_guest_checkout') !== 'yes') {
-        update_option('woocommerce_enable_guest_checkout', 'yes');
+        update_option('woocommerce_enable_guest_checkout', 'yes', true);
     }
     if (get_option('woocommerce_enable_checkout_login_reminder') !== 'yes') {
-        update_option('woocommerce_enable_checkout_login_reminder', 'yes');
+        update_option('woocommerce_enable_checkout_login_reminder', 'yes', true);
     }
+    // Optional account creation at checkout — do NOT force registration.
     if (get_option('woocommerce_enable_signup_and_login_from_checkout') !== 'yes') {
-        update_option('woocommerce_enable_signup_and_login_from_checkout', 'yes');
+        update_option('woocommerce_enable_signup_and_login_from_checkout', 'yes', true);
     }
     if (get_option('woocommerce_checkout_show_terms') !== 'yes') {
-        update_option('woocommerce_checkout_show_terms', 'yes');
+        update_option('woocommerce_checkout_show_terms', 'yes', true);
     }
-}, 30);
+
+    add_filter('pre_option_woocommerce_enable_guest_checkout', 'sa_core_force_guest_checkout_yes');
+    add_filter('pre_option_woocommerce_enable_checkout_login_reminder', 'sa_core_force_checkout_login_reminder_yes');
+    if (function_exists('sa_mu_force_guest_checkout_yes')) {
+        add_filter('pre_option_woocommerce_enable_guest_checkout', 'sa_mu_force_guest_checkout_yes');
+    }
+    if (function_exists('sa_mu_force_checkout_login_reminder_yes')) {
+        add_filter('pre_option_woocommerce_enable_checkout_login_reminder', 'sa_mu_force_checkout_login_reminder_yes');
+    }
+}
+
+add_action('init', 'sa_core_persist_guest_checkout_options', 30);
