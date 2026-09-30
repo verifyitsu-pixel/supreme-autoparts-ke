@@ -31,5 +31,5 @@ Filter bar on shop, category archives, and search. Clear all + chips. Empty stat
 
 ## Versions
 
-- Theme `supreme-autoparts` **1.4.46**
-- Core `supreme-autoparts-core` **1.3.41** (`includes/catalog-search.php`)
+- Theme `supreme-autoparts` **1.4.47**
+- Core `supreme-autoparts-core` **1.3.42** (`includes/catalog-search.php`)

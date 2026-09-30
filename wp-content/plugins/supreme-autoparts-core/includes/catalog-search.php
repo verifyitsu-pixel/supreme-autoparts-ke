@@ -312,12 +312,48 @@ function sa_core_is_catalog_product_query($query): bool
 }
 
 /**
- * Resolve SKU SQL expression after join; caches join mode on the query.
+ * SKU column expression — always the Woo lookup table (joined without alias, WC-compatible).
  */
-function sa_core_catalog_sku_expr($query): string
+function sa_core_catalog_sku_expr(): string
 {
-    $mode = (string) $query->get('sa_core_sku_join');
-    return $mode === 'lookup' ? 'sa_sku_lookup.sku' : 'sa_sku_pm.meta_value';
+    global $wpdb;
+    return $wpdb->prefix . 'wc_product_meta_lookup.sku';
+}
+
+/**
+ * Ensure wc_product_meta_lookup is joined without alias (same as WooCommerce popularity orderby).
+ */
+function sa_core_catalog_ensure_lookup_join(string $join): string
+{
+    global $wpdb;
+    $lookup = $wpdb->prefix . 'wc_product_meta_lookup';
+    if (stripos($join, $lookup) !== false) {
+        return $join;
+    }
+    static $ok = null;
+    if ($ok === null) {
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+        $ok = ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $lookup)) === $lookup);
+    }
+    if (!$ok) {
+        // Fallback postmeta join.
+        if (stripos($join, 'sa_sku_pm') === false) {
+            $join .= " LEFT JOIN {$wpdb->postmeta} AS sa_sku_pm ON ({$wpdb->posts}.ID = sa_sku_pm.post_id AND sa_sku_pm.meta_key = '_sku') ";
+        }
+        return $join;
+    }
+    $join .= " LEFT JOIN {$lookup} ON {$lookup}.product_id = {$wpdb->posts}.ID ";
+    return $join;
+}
+
+function sa_core_catalog_sku_expr_for_join(string $join): string
+{
+    global $wpdb;
+    $lookup = $wpdb->prefix . 'wc_product_meta_lookup';
+    if (stripos($join, $lookup) !== false) {
+        return $lookup . '.sku';
+    }
+    return 'sa_sku_pm.meta_value';
 }
 
 add_action('pre_get_posts', static function ($query): void {
@@ -369,75 +405,31 @@ add_filter('posts_join', static function (string $join, $query): string {
     if (!($query instanceof WP_Query) || !(int) $query->get('sa_core_catalog_search')) {
         return $join;
     }
-    global $wpdb;
-    $lookup = $wpdb->prefix . 'wc_product_meta_lookup';
-    static $lookup_ok = null;
-    if ($lookup_ok === null) {
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-        $lookup_ok = ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $lookup)) === $lookup);
-    }
-    if ($lookup_ok) {
-        $query->set('sa_core_sku_join', 'lookup');
-        if (stripos($join, 'sa_sku_lookup') === false) {
-            $join .= " LEFT JOIN {$lookup} AS sa_sku_lookup ON sa_sku_lookup.product_id = {$wpdb->posts}.ID ";
-        }
-    } else {
-        $query->set('sa_core_sku_join', 'postmeta');
-        if (stripos($join, 'sa_sku_pm') === false) {
-            $join .= " LEFT JOIN {$wpdb->postmeta} AS sa_sku_pm ON ({$wpdb->posts}.ID = sa_sku_pm.post_id AND sa_sku_pm.meta_key = '_sku') ";
-        }
-    }
-    return $join;
+    return sa_core_catalog_ensure_lookup_join($join);
 }, 20, 2);
 
 /**
  * Make WP search also match SKU (exact / prefix / contains).
+ * Note: posts_where runs BEFORE posts_join in WP_Query — use posts_clauses for SKU filters.
  */
-add_filter('posts_search', static function (string $search, $query): string {
-    if (!($query instanceof WP_Query) || !(int) $query->get('sa_core_catalog_search') || $search === '') {
-        return $search;
-    }
-    $f = $query->get('sa_core_catalog_filters');
-    if (!is_array($f)) {
-        $f = sa_core_catalog_filters_from_request();
-    }
-    $s = trim((string) ($f['s'] ?? ''));
-    if ($s === '') {
-        return $search;
-    }
-    global $wpdb;
-    $sku = sa_core_catalog_sku_expr($query);
-    $sku_or = $wpdb->prepare(
-        "({$sku} = %s OR {$sku} LIKE %s OR {$sku} LIKE %s)",
-        $s,
-        $wpdb->esc_like($s) . '%',
-        '%' . $wpdb->esc_like($s) . '%'
-    );
-    // Default: AND (((title..) OR (content..)))
-    // Become:  AND ( (sku…) OR (((title..) OR (content..))) )
-    if (preg_match('/^\s*AND\s*\(/', $search)) {
-        $patched = (string) preg_replace('/^\s*AND\s*\(/', ' AND (' . $sku_or . ' OR (', $search, 1);
-        // Extra "(" opened after OR — close it.
-        return $patched . ')';
-    }
-    return ' AND (' . $sku_or . ' OR 1=0) ';
-}, 20, 2);
-
-add_filter('posts_where', static function (string $where, $query): string {
+add_filter('posts_clauses', static function (array $clauses, $query): array {
     if (!($query instanceof WP_Query) || !(int) $query->get('sa_core_catalog_search')) {
-        return $where;
+        return $clauses;
     }
     global $wpdb;
+
+    $clauses['join'] = sa_core_catalog_ensure_lookup_join((string) ($clauses['join'] ?? ''));
+    $sku = sa_core_catalog_sku_expr_for_join($clauses['join']);
+
     $f = $query->get('sa_core_catalog_filters');
     if (!is_array($f)) {
         $f = sa_core_catalog_filters_from_request();
     }
-    $sku = sa_core_catalog_sku_expr($query);
 
-    // Keyword on shop/category archives (not a native WP search request).
-    if (($f['s'] ?? '') !== '' && !$query->is_search()) {
-        $s = (string) $f['s'];
-        $where .= $wpdb->prepare(
+    // Keyword on shop/category (not native WP search) OR reinforce search SKU match.
+    $s = trim((string) ($f['s'] ?? ''));
+    if ($s !== '' && !$query->is_search()) {
+        $clauses['where'] .= $wpdb->prepare(
             " AND (
                 {$sku} = %s OR {$sku} LIKE %s OR {$sku} LIKE %s
                 OR {$wpdb->posts}.post_title LIKE %s
@@ -453,7 +445,7 @@ add_filter('posts_where', static function (string $where, $query): string {
 
     if (($f['sa_pn'] ?? '') !== '') {
         $pn = (string) $f['sa_pn'];
-        $where .= $wpdb->prepare(
+        $clauses['where'] .= $wpdb->prepare(
             " AND ({$sku} = %s OR {$sku} LIKE %s OR {$sku} LIKE %s) ",
             $pn,
             $wpdb->esc_like($pn) . '%',
@@ -464,7 +456,7 @@ add_filter('posts_where', static function (string $where, $query): string {
     if (($f['sa_make'] ?? '') !== '') {
         $make = (string) $f['sa_make'];
         $like = '%' . $wpdb->esc_like($make) . '%';
-        $where .= $wpdb->prepare(
+        $clauses['where'] .= $wpdb->prepare(
             " AND (
                 EXISTS (
                   SELECT 1 FROM {$wpdb->postmeta} sam
@@ -482,7 +474,7 @@ add_filter('posts_where', static function (string $where, $query): string {
         $compact = str_replace(['-', ' ', '/'], '', $model);
         if ($compact !== '' && strcasecmp($compact, $model) !== 0) {
             $like2 = '%' . $wpdb->esc_like($compact) . '%';
-            $where .= $wpdb->prepare(
+            $clauses['where'] .= $wpdb->prepare(
                 " AND (
                     EXISTS (
                       SELECT 1 FROM {$wpdb->postmeta} samo
@@ -498,7 +490,7 @@ add_filter('posts_where', static function (string $where, $query): string {
                 $like2
             );
         } else {
-            $where .= $wpdb->prepare(
+            $clauses['where'] .= $wpdb->prepare(
                 " AND (
                     EXISTS (
                       SELECT 1 FROM {$wpdb->postmeta} samo
@@ -516,7 +508,7 @@ add_filter('posts_where', static function (string $where, $query): string {
         $like = '%' . $wpdb->esc_like($year) . '%';
         $yy = (preg_match('/^(?:19|20)(\d{2})$/', $year, $ym)) ? $ym[1] : '';
         if ($yy !== '') {
-            $where .= $wpdb->prepare(
+            $clauses['where'] .= $wpdb->prepare(
                 " AND (
                     EXISTS (
                       SELECT 1 FROM {$wpdb->postmeta} say
@@ -532,7 +524,7 @@ add_filter('posts_where', static function (string $where, $query): string {
                 '%-' . $wpdb->esc_like($yy) . '%'
             );
         } else {
-            $where .= $wpdb->prepare(
+            $clauses['where'] .= $wpdb->prepare(
                 " AND (
                     EXISTS (
                       SELECT 1 FROM {$wpdb->postmeta} say
@@ -545,46 +537,58 @@ add_filter('posts_where', static function (string $where, $query): string {
         }
     }
 
-    return $where;
-}, 20, 2);
+    // Ranking: exact SKU → prefix → title prefix → contains.
+    $needle = trim((string) (($f['sa_pn'] ?? '') !== '' ? $f['sa_pn'] : ($f['s'] ?? '')));
+    if ($needle !== '') {
+        $rank = $wpdb->prepare(
+            "CASE
+                WHEN {$sku} = %s THEN 0
+                WHEN {$sku} LIKE %s THEN 1
+                WHEN {$wpdb->posts}.post_title LIKE %s THEN 2
+                WHEN {$sku} LIKE %s THEN 3
+                WHEN {$wpdb->posts}.post_title LIKE %s THEN 4
+                ELSE 5
+             END ASC",
+            $needle,
+            $wpdb->esc_like($needle) . '%',
+            $wpdb->esc_like($needle) . '%',
+            '%' . $wpdb->esc_like($needle) . '%',
+            '%' . $wpdb->esc_like($needle) . '%'
+        );
+        $orderby = (string) ($clauses['orderby'] ?? '');
+        $clauses['orderby'] = $rank . ($orderby !== '' ? ', ' . $orderby : '');
+    }
 
-add_filter('posts_orderby', static function (string $orderby, $query): string {
-    if (!($query instanceof WP_Query) || !(int) $query->get('sa_core_catalog_search')) {
-        return $orderby;
+    $clauses['distinct'] = 'DISTINCT';
+    return $clauses;
+}, 30, 2);
+
+add_filter('posts_search', static function (string $search, $query): string {
+    if (!($query instanceof WP_Query) || !(int) $query->get('sa_core_catalog_search') || $search === '') {
+        return $search;
     }
     $f = $query->get('sa_core_catalog_filters');
     if (!is_array($f)) {
         $f = sa_core_catalog_filters_from_request();
     }
-    $needle = trim((string) (($f['sa_pn'] ?? '') !== '' ? $f['sa_pn'] : ($f['s'] ?? '')));
-    if ($needle === '') {
-        return $orderby;
+    $s = trim((string) ($f['s'] ?? ''));
+    if ($s === '') {
+        return $search;
     }
     global $wpdb;
-    $sku = sa_core_catalog_sku_expr($query);
-    $rank = $wpdb->prepare(
-        "CASE
-            WHEN {$sku} = %s THEN 0
-            WHEN {$sku} LIKE %s THEN 1
-            WHEN {$wpdb->posts}.post_title LIKE %s THEN 2
-            WHEN {$sku} LIKE %s THEN 3
-            WHEN {$wpdb->posts}.post_title LIKE %s THEN 4
-            ELSE 5
-         END ASC",
-        $needle,
-        $wpdb->esc_like($needle) . '%',
-        $wpdb->esc_like($needle) . '%',
-        '%' . $wpdb->esc_like($needle) . '%',
-        '%' . $wpdb->esc_like($needle) . '%'
+    // posts_search runs before join — reference lookup table name; posts_clauses ensures join.
+    $sku = $wpdb->prefix . 'wc_product_meta_lookup.sku';
+    $sku_or = $wpdb->prepare(
+        "({$sku} = %s OR {$sku} LIKE %s OR {$sku} LIKE %s)",
+        $s,
+        $wpdb->esc_like($s) . '%',
+        '%' . $wpdb->esc_like($s) . '%'
     );
-    return $rank . ($orderby !== '' ? ', ' . $orderby : '');
-}, 20, 2);
-
-add_filter('posts_distinct', static function (string $distinct, $query): string {
-    if (!($query instanceof WP_Query) || !(int) $query->get('sa_core_catalog_search')) {
-        return $distinct;
+    if (preg_match('/^\s*AND\s*\(/', $search)) {
+        $patched = (string) preg_replace('/^\s*AND\s*\(/', ' AND (' . $sku_or . ' OR (', $search, 1);
+        return $patched . ')';
     }
-    return 'DISTINCT';
+    return ' AND (' . $sku_or . ' OR 1=0) ';
 }, 20, 2);
 
 add_action('set_object_terms', static function ($object_id, $terms, $tt_ids, $taxonomy): void {

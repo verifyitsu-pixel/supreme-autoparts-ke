@@ -7,4 +7,10 @@
 
 defined('ABSPATH') || exit;
 
-get_template_part('template-parts/catalog', 'empty');
+$empty = get_template_directory() . '/template-parts/catalog-empty.php';
+if (is_readable($empty)) {
+    include $empty;
+    return;
+}
+
+echo '<p class="woocommerce-info">' . esc_html__('No products were found matching your selection.', 'supreme-autoparts') . '</p>';
