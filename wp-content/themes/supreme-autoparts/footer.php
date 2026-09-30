@@ -102,7 +102,35 @@ if (!defined('ABSPATH')) {
 
     <div class="sa-footer__bottom">
       <span>&copy; <?php echo esc_html(gmdate('Y')); ?> Supreme Autoparts · supremeautoparts.co.ke</span>
-      <span><?php esc_html_e('Prices shown in local currency where available; charged in USD at checkout. *Free shipping terms apply.', 'supreme-autoparts'); ?></span>
+      <div class="sa-footer__payments" role="group" aria-label="<?php echo esc_attr__('Accepted payment methods', 'supreme-autoparts'); ?>">
+        <span class="sa-footer__payments-label"><?php esc_html_e('Secure checkout via Whop', 'supreme-autoparts'); ?></span>
+        <ul class="sa-footer__pay-logos">
+          <?php
+          $sa_pay_logos = [
+              ['file' => 'visa.svg',       'label' => 'Visa',              'w' => 40, 'h' => 26],
+              ['file' => 'mastercard.svg', 'label' => 'Mastercard',        'w' => 40, 'h' => 26],
+              ['file' => 'amex.svg',       'label' => 'American Express',  'w' => 40, 'h' => 26],
+              ['file' => 'discover.svg',   'label' => 'Discover',          'w' => 40, 'h' => 26],
+              ['file' => 'paypal.svg',     'label' => 'PayPal',            'w' => 40, 'h' => 26],
+              ['file' => 'apple-pay.svg',  'label' => 'Apple Pay',         'w' => 40, 'h' => 26],
+              ['file' => 'google-pay.svg', 'label' => 'Google Pay',        'w' => 46, 'h' => 26],
+          ];
+          $sa_pay_base = trailingslashit(SA_THEME_URI) . 'assets/images/payments/';
+          foreach ($sa_pay_logos as $sa_pay) :
+              ?>
+            <li>
+              <img
+                src="<?php echo esc_url($sa_pay_base . $sa_pay['file']); ?>"
+                alt="<?php echo esc_attr($sa_pay['label']); ?>"
+                width="<?php echo (int) $sa_pay['w']; ?>"
+                height="<?php echo (int) $sa_pay['h']; ?>"
+                loading="lazy"
+                decoding="async"
+              />
+            </li>
+          <?php endforeach; ?>
+        </ul>
+      </div>
     </div>
   </div>
 </footer>

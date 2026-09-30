@@ -212,11 +212,16 @@ function sa_enquire_shortcode($atts = []): string
 add_shortcode('sa_enquire', 'sa_enquire_shortcode');
 
 /**
- * Empty shop / category: replace Woo bare message with enquire UI.
+ * Empty shop / category / filters: filter-aware empty state + enquire.
  */
 add_action('init', static function (): void {
     remove_action('woocommerce_no_products_found', 'wc_no_products_found', 10);
     add_action('woocommerce_no_products_found', static function (): void {
+        $empty = get_template_directory() . '/template-parts/catalog-empty.php';
+        if (is_readable($empty)) {
+            include $empty;
+            return;
+        }
         $context = 'empty-shop';
         if (function_exists('is_product_category') && is_product_category()) {
             $context = 'empty-category';

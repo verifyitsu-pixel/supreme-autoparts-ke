@@ -935,8 +935,38 @@ body.sa-cart-open { overflow: hidden; }
 .sa-footer__email { margin-top: .5rem; }
 .sa-footer__bottom {
   border-top: 1px solid var(--sa-border); padding-top: 1.25rem;
-  display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between;
+  display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; justify-content: space-between;
+  align-items: center;
   color: var(--sa-text-muted); font-size: .78rem;
+}
+.sa-footer__payments {
+  display: flex; flex-direction: column; align-items: flex-end; gap: .45rem;
+}
+.sa-footer__payments-label {
+  font-size: .68rem; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--sa-text-muted); opacity: .9;
+}
+.sa-footer__pay-logos {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end;
+  align-items: center;
+}
+.sa-footer__pay-logos li {
+  margin: 0; line-height: 0;
+}
+.sa-footer__pay-logos img {
+  display: block; height: 26px; width: auto;
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.06);
+  background: transparent;
+}
+@media (max-width: 640px) {
+  .sa-footer__bottom {
+    flex-direction: column; align-items: stretch; gap: .85rem;
+  }
+  .sa-footer__payments { align-items: flex-start; }
+  .sa-footer__pay-logos { justify-content: flex-start; }
+  .sa-footer__pay-logos img { height: 24px; }
 }
 
 @media (max-width: 960px) {

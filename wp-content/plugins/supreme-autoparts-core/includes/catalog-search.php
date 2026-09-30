@@ -316,42 +316,40 @@ function sa_core_is_catalog_product_query($query): bool
  */
 function sa_core_catalog_sku_expr(): string
 {
-    global $wpdb;
-    return $wpdb->prefix . 'wc_product_meta_lookup.sku';
+    return 'wc_product_meta_lookup.sku';
 }
 
 /**
- * Ensure wc_product_meta_lookup is joined without alias (same as WooCommerce popularity orderby).
+ * Ensure Woo lookup join uses the same alias WC orderby expects: `wc_product_meta_lookup`.
  */
 function sa_core_catalog_ensure_lookup_join(string $join): string
 {
     global $wpdb;
-    $lookup = $wpdb->prefix . 'wc_product_meta_lookup';
-    if (stripos($join, $lookup) !== false) {
+    // Already joined with WC alias or table name.
+    if (preg_match('/\bwc_product_meta_lookup\b/i', $join)) {
         return $join;
     }
+    $table = $wpdb->prefix . 'wc_product_meta_lookup';
     static $ok = null;
     if ($ok === null) {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-        $ok = ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $lookup)) === $lookup);
+        $ok = ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) === $table);
     }
     if (!$ok) {
-        // Fallback postmeta join.
         if (stripos($join, 'sa_sku_pm') === false) {
             $join .= " LEFT JOIN {$wpdb->postmeta} AS sa_sku_pm ON ({$wpdb->posts}.ID = sa_sku_pm.post_id AND sa_sku_pm.meta_key = '_sku') ";
         }
         return $join;
     }
-    $join .= " LEFT JOIN {$lookup} ON {$lookup}.product_id = {$wpdb->posts}.ID ";
+    // Match WooCommerce\WC_Query join shape exactly.
+    $join .= " LEFT JOIN {$table} wc_product_meta_lookup ON {$wpdb->posts}.ID = wc_product_meta_lookup.product_id ";
     return $join;
 }
 
 function sa_core_catalog_sku_expr_for_join(string $join): string
 {
-    global $wpdb;
-    $lookup = $wpdb->prefix . 'wc_product_meta_lookup';
-    if (stripos($join, $lookup) !== false) {
-        return $lookup . '.sku';
+    if (preg_match('/\bwc_product_meta_lookup\b/i', $join)) {
+        return 'wc_product_meta_lookup.sku';
     }
     return 'sa_sku_pm.meta_value';
 }
@@ -577,7 +575,7 @@ add_filter('posts_search', static function (string $search, $query): string {
     }
     global $wpdb;
     // posts_search runs before join — reference lookup table name; posts_clauses ensures join.
-    $sku = $wpdb->prefix . 'wc_product_meta_lookup.sku';
+    $sku = 'wc_product_meta_lookup.sku';
     $sku_or = $wpdb->prepare(
         "({$sku} = %s OR {$sku} LIKE %s OR {$sku} LIKE %s)",
         $s,
