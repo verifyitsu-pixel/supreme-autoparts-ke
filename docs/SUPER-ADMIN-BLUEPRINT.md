@@ -18,3 +18,14 @@ Dashboard · Orders · Products · Inventory · Customers · Vendors · Payments
 2. Orders/shipping/fulfilment/labels + customers CRM + payments/invoices/payment links
 3. Inventory/warehouses + discounts/marketing + roles + analytics exports
 4. Multi-store/vendor/platform controls
+
+
+## Phase 2 status (shipped in core 1.3.30+)
+
+Working Super Admin surfaces (real Woo data + deep links — not stubs):
+
+- Orders, Customers (deduped menu), Payments, Shipping, Products, Content, Integrations, Settings
+- Inventory, Discounts, Marketing, Analytics, Reviews, Admins, Notifications (useful lists + Woo links)
+- Vendors: honest Phase 4 notice (single-store, no marketplace)
+- Woo setup task list / "Step X of 5" dismissed on admin_init
+- Legacy `supreme-orders` / `supreme-products` / `supreme-customers` redirect to Super pages

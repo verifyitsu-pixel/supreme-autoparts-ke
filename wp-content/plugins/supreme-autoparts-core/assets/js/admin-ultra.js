@@ -42,6 +42,18 @@
     }
     e.preventDefault();
     var sel = btn.getAttribute('data-sa-copy');
+    if (!sel || sel === '1') {
+      var row = btn.closest('.sa-copy-row');
+      var inp = row ? row.querySelector('input') : null;
+      if (inp) {
+        inp.select();
+        try { document.execCommand('copy'); } catch (err) {}
+        var old = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(function () { btn.textContent = old || 'Copy'; }, 1200);
+        return;
+      }
+    }
     var input = sel ? document.querySelector(sel) : btn.previousElementSibling;
     if (!input) {
       return;

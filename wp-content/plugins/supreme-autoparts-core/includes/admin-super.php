@@ -22,48 +22,45 @@ function sa_core_super_nav(): array {
         $orders_url = admin_url('edit.php?post_type=shop_order');
     }
     return [
-        ['slug' => 'supreme-autoparts', 'label' => 'Dashboard', 'phase' => 1, 'built' => true],
-        ['slug' => 'sa-super-orders', 'label' => 'Orders', 'phase' => 2, 'built' => false, 'woo' => $orders_url],
-        ['slug' => 'sa-super-products', 'label' => 'Products', 'phase' => 2, 'built' => false, 'woo' => admin_url('edit.php?post_type=product')],
-        ['slug' => 'sa-super-inventory', 'label' => 'Inventory', 'phase' => 3, 'built' => false, 'woo' => admin_url('edit.php?post_type=product&orderby=stock&order=asc')],
-        ['slug' => 'sa-super-customers', 'label' => 'Customers', 'phase' => 2, 'built' => false, 'woo' => admin_url('admin.php?page=supreme-customers')],
-        ['slug' => 'sa-super-vendors', 'label' => 'Vendors', 'phase' => 4, 'built' => false],
-        ['slug' => 'sa-super-payments', 'label' => 'Payments', 'phase' => 2, 'built' => false, 'woo' => admin_url('admin.php?page=wc-settings&tab=checkout')],
-        ['slug' => 'sa-super-shipping', 'label' => 'Shipping', 'phase' => 2, 'built' => false, 'woo' => admin_url('admin.php?page=wc-settings&tab=shipping')],
-        ['slug' => 'sa-super-discounts', 'label' => 'Discounts', 'phase' => 3, 'built' => false, 'woo' => admin_url('edit.php?post_type=shop_coupon')],
-        ['slug' => 'sa-super-marketing', 'label' => 'Marketing', 'phase' => 3, 'built' => false, 'woo' => admin_url('admin.php?page=sa-brevo-settings')],
-        ['slug' => 'sa-super-analytics', 'label' => 'Analytics', 'phase' => 3, 'built' => false, 'woo' => admin_url('admin.php?page=wc-admin&path=/analytics/overview')],
-        ['slug' => 'sa-super-reviews', 'label' => 'Reviews', 'phase' => 3, 'built' => false, 'woo' => admin_url('edit-comments.php')],
-        ['slug' => 'sa-super-content', 'label' => 'Content', 'phase' => 2, 'built' => false, 'woo' => admin_url('edit.php?post_type=page')],
-        ['slug' => 'sa-super-admins', 'label' => 'Admins & Roles', 'phase' => 3, 'built' => false, 'woo' => admin_url('users.php')],
-        ['slug' => 'sa-super-notifications', 'label' => 'Notifications', 'phase' => 3, 'built' => false],
-        ['slug' => 'sa-super-integrations', 'label' => 'Integrations', 'phase' => 2, 'built' => false, 'woo' => admin_url('admin.php?page=wc-settings&tab=checkout&section=whop')],
-        ['slug' => 'sa-super-settings', 'label' => 'Settings', 'phase' => 2, 'built' => false, 'woo' => admin_url('admin.php?page=wc-settings')],
-        ['slug' => 'sa-super-security', 'label' => 'Security & Audit', 'phase' => 1, 'built' => true],
-        ['slug' => 'sa-super-tickets', 'label' => 'Support Tickets', 'phase' => 1, 'built' => true],
-        ['slug' => 'sa-super-fraud', 'label' => 'Fraud', 'phase' => 1, 'built' => true],
+        ['slug' => 'supreme-autoparts', 'label' => 'Dashboard', 'phase' => 1, 'built' => true, 'cb' => 'sa_core_render_ultra_dashboard'],
+        ['slug' => 'sa-super-orders', 'label' => 'Orders', 'phase' => 2, 'built' => true, 'cb' => 'sa_core_super_render_orders', 'woo' => $orders_url],
+        ['slug' => 'sa-super-products', 'label' => 'Products', 'phase' => 2, 'built' => true, 'cb' => 'sa_core_super_render_products', 'woo' => admin_url('edit.php?post_type=product')],
+        ['slug' => 'sa-super-inventory', 'label' => 'Inventory', 'phase' => 3, 'built' => true, 'cb' => 'sa_core_super_render_inventory', 'woo' => admin_url('edit.php?post_type=product&orderby=stock&order=asc')],
+        ['slug' => 'sa-super-customers', 'label' => 'Customers', 'phase' => 2, 'built' => true, 'cb' => 'sa_core_super_render_customers'],
+        ['slug' => 'sa-super-vendors', 'label' => 'Vendors', 'phase' => 4, 'built' => true, 'cb' => 'sa_core_super_render_vendors'],
+        ['slug' => 'sa-super-payments', 'label' => 'Payments', 'phase' => 2, 'built' => true, 'cb' => 'sa_core_super_render_payments', 'woo' => admin_url('admin.php?page=wc-settings&tab=checkout')],
+        ['slug' => 'sa-super-shipping', 'label' => 'Shipping', 'phase' => 2, 'built' => true, 'cb' => 'sa_core_super_render_shipping', 'woo' => admin_url('admin.php?page=wc-settings&tab=shipping')],
+        ['slug' => 'sa-super-discounts', 'label' => 'Discounts', 'phase' => 3, 'built' => true, 'cb' => 'sa_core_super_render_discounts', 'woo' => admin_url('edit.php?post_type=shop_coupon')],
+        ['slug' => 'sa-super-marketing', 'label' => 'Marketing', 'phase' => 3, 'built' => true, 'cb' => 'sa_core_super_render_marketing', 'woo' => admin_url('admin.php?page=sa-brevo-settings')],
+        ['slug' => 'sa-super-analytics', 'label' => 'Analytics', 'phase' => 3, 'built' => true, 'cb' => 'sa_core_super_render_analytics', 'woo' => admin_url('admin.php?page=wc-admin&path=/analytics/overview')],
+        ['slug' => 'sa-super-reviews', 'label' => 'Reviews', 'phase' => 3, 'built' => true, 'cb' => 'sa_core_super_render_reviews', 'woo' => admin_url('edit-comments.php')],
+        ['slug' => 'sa-super-content', 'label' => 'Content', 'phase' => 2, 'built' => true, 'cb' => 'sa_core_super_render_content', 'woo' => admin_url('edit.php?post_type=page')],
+        ['slug' => 'sa-super-admins', 'label' => 'Admins & Roles', 'phase' => 3, 'built' => true, 'cb' => 'sa_core_super_render_admins', 'woo' => admin_url('users.php')],
+        ['slug' => 'sa-super-notifications', 'label' => 'Notifications', 'phase' => 3, 'built' => true, 'cb' => 'sa_core_super_render_notifications'],
+        ['slug' => 'sa-super-integrations', 'label' => 'Integrations', 'phase' => 2, 'built' => true, 'cb' => 'sa_core_super_render_integrations', 'woo' => admin_url('admin.php?page=wc-settings&tab=checkout&section=whop')],
+        ['slug' => 'sa-super-settings', 'label' => 'Settings', 'phase' => 2, 'built' => true, 'cb' => 'sa_core_super_render_settings', 'woo' => admin_url('admin.php?page=wc-settings')],
+        ['slug' => 'sa-super-security', 'label' => 'Security & Audit', 'phase' => 1, 'built' => true, 'cb' => 'sa_core_super_render_security'],
+        ['slug' => 'sa-super-tickets', 'label' => 'Support Tickets', 'phase' => 1, 'built' => true, 'cb' => 'sa_core_super_render_tickets'],
+        ['slug' => 'sa-super-fraud', 'label' => 'Fraud', 'phase' => 1, 'built' => true, 'cb' => 'sa_core_super_render_fraud'],
     ];
 }
 
 add_action('admin_menu', static function (): void {
-    // Rebuild submenu under Supreme Autoparts — keep existing tool pages, add Super Admin sections.
+    // Super Admin sections under Supreme Autoparts (working UIs — no fake stubs).
     foreach (sa_core_super_nav() as $item) {
         if ($item['slug'] === 'supreme-autoparts') {
             continue; // root dashboard already registered
         }
-        $cb = 'sa_core_super_render_placeholder';
-        if ($item['slug'] === 'sa-super-tickets') {
-            $cb = 'sa_core_super_render_tickets';
-        } elseif ($item['slug'] === 'sa-super-security') {
-            $cb = 'sa_core_super_render_security';
-        } elseif ($item['slug'] === 'sa-super-fraud') {
-            $cb = 'sa_core_super_render_fraud';
+        $cb = $item['cb'] ?? 'sa_core_super_render_placeholder';
+        if (!is_string($cb) || !function_exists($cb)) {
+            $cb = 'sa_core_super_render_placeholder';
         }
+        $cap = ($item['slug'] === 'sa-super-admins') ? 'manage_options' : 'manage_woocommerce';
         add_submenu_page(
             'supreme-autoparts',
             $item['label'],
             $item['label'],
-            'manage_woocommerce',
+            $cap,
             $item['slug'],
             $cb
         );
@@ -87,7 +84,7 @@ add_action('admin_enqueue_scripts', static function (string $hook): void {
 function sa_core_super_shell_header(string $title, string $sub = ''): void {
     $email = function_exists('sa_core_store_email') ? sa_core_store_email() : 'calvin@supremeautoparts.co.ke';
     echo '<div class="sa-ultra__header"><div>';
-    echo '<p class="sa-super-eyebrow">Super Admin · Phase 1</p>';
+    echo '<p class="sa-super-eyebrow">Super Admin</p>';
     echo '<h1 class="sa-ultra__title">' . esc_html($title) . '</h1>';
     if ($sub !== '') {
         echo '<p class="sa-ultra__sub">' . esc_html($sub) . '</p>';
@@ -288,3 +285,22 @@ function sa_core_super_render_fraud(): void {
 add_action('admin_footer', static function (): void {
     // no-op placeholder — dashboard render is overridden below via filter-friendly wrapper
 });
+
+
+/** Legacy tool slugs → Super Admin pages (bookmarks / old links). */
+add_action('admin_init', static function (): void {
+    if (!is_admin() || !isset($_GET['page'])) { // phpcs:ignore
+        return;
+    }
+    $page = sanitize_key((string) $_GET['page']); // phpcs:ignore
+    $map = [
+        'supreme-customers' => 'sa-super-customers',
+        'supreme-orders'    => 'sa-super-orders',
+        'supreme-products'  => 'sa-super-products',
+    ];
+    if (!isset($map[$page])) {
+        return;
+    }
+    wp_safe_redirect(admin_url('admin.php?page=' . $map[$page]));
+    exit;
+}, 1);
