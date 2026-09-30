@@ -73,6 +73,12 @@ sync_custom_content() {
   if [[ -f /usr/src/wordpress/wp-content/mu-plugins/supreme-security.php ]]; then
     cp -f /usr/src/wordpress/wp-content/mu-plugins/supreme-security.php /var/www/html/wp-content/mu-plugins/ || true
   fi
+  if [[ -f /usr/src/wordpress/wp-content/mu-plugins/supreme-whop-pixel.php ]]; then
+    cp -f /usr/src/wordpress/wp-content/mu-plugins/supreme-whop-pixel.php /var/www/html/wp-content/mu-plugins/ || true
+  fi
+  if [[ -f /usr/src/wordpress/wp-content/mu-plugins/supreme-meta-pixel.php ]]; then
+    cp -f /usr/src/wordpress/wp-content/mu-plugins/supreme-meta-pixel.php /var/www/html/wp-content/mu-plugins/ || true
+  fi
   [[ -f /usr/src/wordpress/healthz.php ]] && cp -f /usr/src/wordpress/healthz.php /var/www/html/healthz.php
   if [[ -d /usr/src/supreme-data ]]; then
     mkdir -p /var/www/html/wp-content/plugins/supreme-autoparts-core/data
