@@ -489,6 +489,12 @@
   border-radius: 10px;
   padding: 14px 16px;
   align-items: end;
+  max-width: none !important;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+}
+.sa-ops-filters .button {
+  align-self: end;
+  height: fit-content;
 }
 .sa-ops-actions .button {
   margin: 2px;
