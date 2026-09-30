@@ -32,6 +32,11 @@ final class SA_Geo_Display
 
         // Expose display currency for theme tweaks.
         add_filter('body_class', [self::class, 'body_class']);
+
+        // Soft re-detect when HTML was edge-cached or cookie was stale after IP change.
+        add_action('wp_ajax_sa_geo_resolve', [self::class, 'ajax_resolve']);
+        add_action('wp_ajax_nopriv_sa_geo_resolve', [self::class, 'ajax_resolve']);
+        add_action('wc_ajax_sa_geo_resolve', [self::class, 'ajax_resolve']);
     }
 
     /**
@@ -211,6 +216,48 @@ final class SA_Geo_Display
         wp_register_style('sa-geo-currency', false, [], SA_GEO_CURRENCY_VERSION);
         wp_enqueue_style('sa-geo-currency');
         wp_add_inline_style('sa-geo-currency', $css);
+
+        $ajax = admin_url('admin-ajax.php');
+        $js = <<<'JS'
+(function(){try{
+var KEY='sa_geo_reload';
+if(sessionStorage.getItem(KEY)==='1'){sessionStorage.removeItem(KEY);return;}
+var body=document.body;
+if(!body||!body.classList.contains('sa-geo-currency'))return;
+var shown=(body.className.match(/sa-geo-cc-([a-z]{2})/)||[])[1]||'';
+var url=AJAX_URL+(AJAX_URL.indexOf('?')>=0?'&':'?')+'action=sa_geo_resolve&_='+Date.now();
+fetch(url,{credentials:'same-origin',headers:{'Accept':'application/json'}})
+.then(function(r){return r.json();})
+.then(function(d){
+if(!d||!d.country)return;
+var live=String(d.country).toLowerCase();
+if(shown&&live&&shown!==live){sessionStorage.setItem(KEY,'1');location.reload();}
+}).catch(function(){});
+}catch(e){}})();
+JS;
+        $js = str_replace('AJAX_URL', wp_json_encode($ajax), $js);
+        wp_register_script('sa-geo-currency', false, [], SA_GEO_CURRENCY_VERSION, true);
+        wp_enqueue_script('sa-geo-currency');
+        wp_add_inline_script('sa-geo-currency', $js);
+    }
+
+    /**
+     * JSON: current country/currency from CF-IPCountry / IP (never sticky-only).
+     * Used by front-end to reload when VPN/IP changes under a cached HTML shell.
+     */
+    public static function ajax_resolve(): void
+    {
+        // Bust any intermediary caches on this AJAX response.
+        if (!headers_sent()) {
+            nocache_headers();
+            header('Vary: CF-IPCountry', false);
+        }
+        $resolved = SA_Geo_Detector::resolve();
+        wp_send_json([
+            'country'  => $resolved['country'],
+            'currency' => $resolved['currency'],
+            'checkout' => function_exists('sa_geo_checkout_currency') ? sa_geo_checkout_currency() : 'USD',
+        ]);
     }
 
     public static function send_vary_header(): void

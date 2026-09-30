@@ -13,6 +13,8 @@ if (!defined('ABSPATH')) {
 final class SA_Geo_Detector
 {
     private const COOKIE = 'sa_geo_cc';
+    /** Pairs with COOKIE: short hash of client IP so a VPN/IP change invalidates sticky country. */
+    private const COOKIE_IP = 'sa_geo_ip';
     private const TRANSIENT_PREFIX = 'sa_geo_ip_';
 
     /** @var array{country:string,currency:string}|null */
@@ -316,7 +318,8 @@ final class SA_Geo_Detector
     }
 
     /**
-     * Prefer CF-IPCountry, then cookie, then free IP geo API.
+     * Prefer CF-IPCountry (every request), then IP-bound cookie, then free IP geo API.
+     * Cookie alone must not stick across IP/VPN changes — pair with sa_geo_ip hash.
      */
     public static function detect_country(): string
     {
@@ -326,13 +329,15 @@ final class SA_Geo_Detector
             return $cf;
         }
 
+        $ip = self::client_ip();
         $cookie = self::cookie_country();
-        if ($cookie !== '') {
+        // Honor sticky cookie only while the client IP fingerprint still matches.
+        if ($cookie !== '' && self::cookie_matches_current_ip($ip)) {
             return $cookie;
         }
 
-        $ip = self::client_ip();
         if ($ip === '' || self::is_private_ip($ip)) {
+            // No reliable IP — do not invent from a stale cookie.
             return 'KE'; // store default audience
         }
 
@@ -375,19 +380,50 @@ final class SA_Geo_Detector
         if (headers_sent()) {
             return;
         }
+        $ip = self::client_ip();
+        $ip_hash = self::ip_fingerprint($ip);
         $existing = self::cookie_country();
-        if ($existing === $cc) {
+        $existing_ip = isset($_COOKIE[self::COOKIE_IP]) ? (string) $_COOKIE[self::COOKIE_IP] : '';
+        if ($existing === $cc && $existing_ip === $ip_hash && $ip_hash !== '') {
             return;
         }
-        // 12h sticky — aligns with FX cache window.
-        setcookie(self::COOKIE, $cc, [
-            'expires'  => time() + 12 * HOUR_IN_SECONDS,
+        // Short sticky for fallback-only paths; CF-IPCountry always re-evaluated first.
+        // Bound to IP fingerprint so VPN / network change forces re-detect.
+        $opts = [
+            'expires'  => time() + 2 * HOUR_IN_SECONDS,
             'path'     => '/',
             'secure'   => is_ssl(),
             'httponly' => true,
             'samesite' => 'Lax',
-        ]);
+        ];
+        setcookie(self::COOKIE, $cc, $opts);
         $_COOKIE[self::COOKIE] = $cc;
+        if ($ip_hash !== '') {
+            setcookie(self::COOKIE_IP, $ip_hash, $opts);
+            $_COOKIE[self::COOKIE_IP] = $ip_hash;
+        }
+    }
+
+    /**
+     * True when sa_geo_ip cookie matches the current client IP fingerprint.
+     */
+    private static function cookie_matches_current_ip(string $ip): bool
+    {
+        $want = self::ip_fingerprint($ip);
+        if ($want === '') {
+            return false;
+        }
+        $have = isset($_COOKIE[self::COOKIE_IP]) ? (string) $_COOKIE[self::COOKIE_IP] : '';
+        return hash_equals($want, $have);
+    }
+
+    private static function ip_fingerprint(string $ip): string
+    {
+        if ($ip === '' || !filter_var($ip, FILTER_VALIDATE_IP)) {
+            return '';
+        }
+        // Short non-reversible tag (not a secret) — enough to detect IP change.
+        return substr(hash('sha256', 'sa-geo|' . $ip), 0, 12);
     }
 
     private static function client_ip(): string

@@ -23,8 +23,10 @@ Why not WCPBC:
 
 `SA_Geo_Detector::country_currency_map()` maps **~250** ISO-3166-1 countries/territories → ISO-4217.
 
-- Cloudflare `CF-IPCountry` preferred (CDN Vary: `CF-IPCountry`).
-- Fallback: sticky cookie `sa_geo_cc`, then ipapi.co.
+- Cloudflare `CF-IPCountry` preferred on **every** request (CDN Vary: `CF-IPCountry`).
+- Fallback cookie `sa_geo_cc` is **IP-bound** via `sa_geo_ip` (2h). VPN/IP change invalidates it — not stuck on first visit.
+- Soft AJAX `sa_geo_resolve` reloads once if HTML body country ≠ live CF/IP (page-cache safety).
+- Further fallback: ipapi.co (per-IP transient).
 - **Unmapped / unknown → USD** (“rest of world”).
 - FX: `https://open.er-api.com/v6/latest/USD` (override `SA_FX_API_URL`), cached ~8h.
 - If FX missing for a currency → display falls back to USD (no broken prices).
@@ -83,17 +85,19 @@ Dynamic checkout configs set:
 
 Embedded PM verify stays USD ($1); storefront redirect checkout uses API flag.
 
-### Manual dashboard (Standard Driveworks — needs Whop login)
+### Manual dashboard (optional — API already ON for dynamic checkouts)
 
-If account-level / static checkout links should default ON:
+Whop docs: Adaptive Pricing is **per checkout link / plan**. Our plugin sets `adaptive_pricing_enabled: true` on every dynamic config (verified on live `ch_*` for Standard Driveworks).
 
-1. Open [Whop Dashboard](https://whop.com/dashboard) as **Standard Driveworks**
-2. **Payments → Settings → Advanced** (or open the specific **Checkout link** settings)
+If you also want the dashboard Advanced default for static links:
+
+1. Open [Whop Dashboard](https://whop.com/dashboard) as **owner** (Cavin Lugai / `verifyitsu` — not a limited teammate)
+2. **Payments → Settings → Advanced** (or the specific **Checkout link** settings)
 3. Toggle **Accept local currency payments** / **Adaptive Pricing** → **ON**
 
 Docs: https://docs.whop.com/payments-and-billing/fees/adaptive-pricing
 
-We cannot toggle this without the user’s Whop login; surface the three clicks above to them.
+2026-09-30: browser session on agent desktop was **DI** (`user_W1KnXrx9v9WEE`) — **permission denied** on Payments Settings. MCP/API as owner already has Adaptive ON for storefront checkouts.
 
 ### Embed note
 
@@ -112,6 +116,6 @@ SA_GEO_CURRENCY=1
 
 | Package | Version |
 |---------|---------|
-| sa-geo-currency | 1.1.0 |
+| sa-geo-currency | 1.1.1 |
 | whop-payments | 1.2.18 |
 | supreme-autoparts-core | 1.3.40 (geolocation_ajax) |
