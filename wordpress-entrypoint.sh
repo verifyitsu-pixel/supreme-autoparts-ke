@@ -35,11 +35,8 @@ if (!defined('WP_SITEURL')) define('WP_SITEURL', getenv('WP_SITEURL') ?: WP_HOME
 if (!defined('FS_METHOD')) define('FS_METHOD', 'direct');
 if (!defined('DISALLOW_FILE_EDIT')) define('DISALLOW_FILE_EDIT', true);
 if (!defined('DISALLOW_FILE_MODS')) define('DISALLOW_FILE_MODS', false);
-if (!defined('FORCE_SSL_ADMIN')) {
-  $home = getenv('WP_HOME') ?: '';
-  if (is_string($home) && str_starts_with($home, 'https://')) {
-    define('FORCE_SSL_ADMIN', true);
-  }
+if (!defined('FORCE_SSL_ADMIN') && str_starts_with((string) (getenv('WP_HOME') ?: ''), 'https://')) {
+  define('FORCE_SSL_ADMIN', true);
 }
 "
 
