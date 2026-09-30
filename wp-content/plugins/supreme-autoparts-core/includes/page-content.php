@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Static page bodies — customer-facing copy for Supreme Autoparts (Kenya).
+ * Static page bodies — customer-facing copy for Supreme Autoparts (US-primary storefront).
  *
  * @return array<string, array{title:string,content:string}>
  */
@@ -19,7 +19,7 @@ function sa_core_page_definitions(): array
         'about-us' => [
             'title'   => 'About Us',
             'content' => <<<HTML
-<p>Welcome to <strong>Supreme Autoparts</strong> — a Kenya-based shop for aftermarket and performance parts. We cover <strong>Japanese, American, and British</strong> cars and trucks, plus <strong>electric vehicles</strong> and <strong>motorcycles</strong>. Checkout is in USD; support is local on WhatsApp and email.</p>
+<p>Welcome to <strong>Supreme Autoparts</strong> — aftermarket and performance parts built for US drivers and builders. We cover <strong>Japanese, American, and British</strong> cars and trucks, plus <strong>electric vehicles</strong> and <strong>motorcycles</strong>. Checkout is in USD; we ship across the continental United States, with international delivery available.</p>
 <p>Whether you drive a JDM daily, a US truck, a UK import, an EV, or a bike, we aim to help you find the right part. If something is not listed online, contact us — odds are we can source it.</p>
 <p>Thanks for reading. We look forward to getting quality parts to you soon.</p>
 <p><em>{$site}</em> · <a href="mailto:{$email}">{$email}</a></p>
@@ -28,12 +28,12 @@ HTML,
         'contact' => [
             'title'   => 'Contact',
             'content' => <<<HTML
-<p>Have a question about fitment, shipping to Kenya, or a special order? Reach out and our team will help.</p>
+<p>Have a question about fitment, US delivery, international shipping, or a special order? Reach out and our team will help.</p>
 <ul>
 <li><strong>Website:</strong> {$site}</li>
 <li><strong>WhatsApp / SMS:</strong> <a href="https://wa.me/19174375121">+1 917 437 5121</a></li>
 <li><strong>Email:</strong> <a href="mailto:{$email}">{$email}</a></li>
-<li><strong>Hours:</strong> Monday–Friday, business hours (Africa/Nairobi)</li>
+<li><strong>Hours:</strong> Monday–Friday, business hours</li>
 </ul>
 <p>Looking for a part that is not listed? Use our <a href="/enquire/">Can&rsquo;t find a part?</a> form.</p>
 <p>For order issues, include your order number and vehicle year/make/model.</p>
@@ -50,12 +50,13 @@ HTML,
         'free-shipping' => [
             'title'   => 'Free Shipping Details',
             'content' => <<<'HTML'
-<p>Qualifying products may be eligible for complimentary shipping when your order meets the threshold shown in the site banner (USD equivalent ~$99, or the local amount displayed for your region). Always confirm the live figure on the banner and at checkout.</p>
-<p>Free-shipping eligibility, carriers, and any exclusions for oversized or direct-ship items are defined by Supreme Autoparts’ live shipping settings. Always check the product page and checkout totals for the final shipping charge.</p>
+<p><strong>Free shipping</strong> applies to qualifying orders of <strong>$99+</strong> (or the local amount shown in the site banner) within the <strong>continental United States</strong>. Always confirm the live figure on the banner and at checkout.</p>
+<p>Alaska, Hawaii, and international destinations may use different rates — see live options at checkout. Oversized, heavy, or supplier-direct items can be excluded.</p>
 <ul>
-<li>Oversized or heavy items may be excluded unless otherwise noted on the product page.</li>
+<li>Continental US: free when your cart subtotal meets the $99 threshold (eligible items).</li>
+<li>Below threshold: Standard Shipping (Continental US) from $8 · Priority Shipping (US) $15.</li>
+<li>International: flat rate shown at checkout (typically $25), with free shipping when eligible over the same threshold.</li>
 <li>Direct-ship / supplier-fulfilled items may carry separate shipping charges.</li>
-<li>If a product page does not indicate free-shipping eligibility, standard shipping rates apply.</li>
 </ul>
 <p>Inspect parts on arrival and contact us promptly if anything is incorrect or damaged.</p>
 HTML,
@@ -152,13 +153,13 @@ HTML,
         'shipping-policy' => [
             'title'   => 'Shipping Policy',
             'content' => <<<HTML
-<p>Supreme Autoparts ships using the methods shown at checkout. Rates are in <strong>USD</strong> (same as checkout). Choose the option that matches your address — totals update when you change method or address.</p>
+<p>Supreme Autoparts ships using the methods shown at checkout. Rates are in <strong>USD</strong> (same as checkout). Totals update when you change address or method.</p>
 <ul>
-<li><strong>Nairobi Delivery:</strong> $8 flat within Nairobi metro.</li>
-<li><strong>Upcountry Kenya:</strong> $15 flat for destinations outside Nairobi.</li>
+<li><strong>Standard Shipping (Continental US):</strong> $8 flat.</li>
+<li><strong>Priority Shipping (US):</strong> $15 flat.</li>
 <li><strong>Free shipping:</strong> $0 when your cart subtotal meets the threshold (usually $99+) — see <a href="/free-shipping/">Free Shipping Details</a>. Oversized, heavy, or direct-ship items may be excluded.</li>
-<li><strong>Local pickup (Nairobi):</strong> Free — arrange collection with support after you order.</li>
-<li><strong>International:</strong> $25 flat for destinations outside Kenya (free over the same threshold when eligible).</li>
+<li><strong>Kenya — Nairobi Delivery:</strong> $8 · <strong>Upcountry:</strong> $15 · <strong>Local pickup (Nairobi):</strong> free (arrange with support).</li>
+<li><strong>International (other destinations):</strong> $25 flat (free over the same threshold when eligible).</li>
 <li><strong>Direct-ship items:</strong> Some products ship from suppliers. We will notify you if an item cannot ship promptly.</li>
 <li><strong>Inspect on arrival:</strong> Check parts before installation. Contact us if anything is wrong or damaged.</li>
 </ul>
@@ -230,12 +231,12 @@ HTML,
         'guides' => [
             'title'   => 'Guides',
             'content' => <<<HTML
-<p>Practical guides for <strong>US</strong> and <strong>Kenya</strong> customers shopping Supreme Autoparts — fitment, ordering, and shipping without the fluff.</p>
+<p>Practical guides for shopping Supreme Autoparts — fitment, ordering, and <strong>US delivery</strong> without the fluff.</p>
 <ul>
 <li><a href="/how-to-order/"><strong>How to order</strong></a> — cart, USD checkout, accounts</li>
 <li><a href="/fitment-guide/"><strong>Fitment guide</strong></a> — year / make / model checks for US-spec trucks &amp; SUVs</li>
-<li><a href="/shipping-to-kenya/"><strong>Shipping to Kenya</strong></a> — import delivery, free-shipping threshold, local support</li>
-<li><a href="/auto-parts-kenya/"><strong>Auto parts Kenya</strong></a> — buy US-spec parts with Kenya support</li>
+<li><a href="/shipping-policy/"><strong>Shipping &amp; delivery</strong></a> — continental US rates, free shipping $99+, international</li>
+<li><a href="/free-shipping/"><strong>Free shipping details</strong></a> — threshold, exclusions, Alaska/Hawaii &amp; intl notes</li>
 <li><a href="/performance-truck-parts/"><strong>Performance truck &amp; off-road</strong></a> — suspension, brakes, wheels, lighting</li>
 </ul>
 <p>Need a human? WhatsApp <a href="https://wa.me/19174375121">+1 917 437 5121</a> or email <a href="mailto:{$email}">{$email}</a>.</p>
@@ -244,7 +245,7 @@ HTML,
         'how-to-order' => [
             'title'   => 'How to Order',
             'content' => <<<HTML
-<p>Supreme Autoparts is built for buyers in the <strong>United States</strong> and <strong>Kenya</strong> (and other destinations we ship to). Catalog fitments skew US-spec — popular trucks, SUVs, and performance platforms — with <strong>USD checkout</strong> and local Kenya support on WhatsApp.</p>
+<p>Supreme Autoparts is built for buyers in the <strong>United States</strong> (and other destinations we ship to). Catalog fitments skew US-spec — popular trucks, SUVs, and performance platforms — with <strong>USD checkout</strong> and free shipping on qualifying continental US orders.</p>
 <h2>1. Find the right part</h2>
 <ol>
 <li>Use <a href="/shop/">Shop</a> or search by brand / part name.</li>
@@ -266,28 +267,29 @@ HTML,
 <p>Cannot find a listing? Use <a href="/enquire/">Can&rsquo;t find a part?</a> with vehicle details.</p>
 <h2>Quick FAQ</h2>
 <ul>
-<li><strong>US buyers:</strong> Shop US-spec performance and aftermarket parts; confirm shipping to your address at checkout.</li>
-<li><strong>Kenya buyers:</strong> Same catalog and USD payment — see <a href="/shipping-to-kenya/">Shipping to Kenya</a> and <a href="/auto-parts-kenya/">Auto parts Kenya</a>.</li>
+<li><strong>US buyers:</strong> Free shipping on orders $99+ in the continental US (eligible items). Standard from $8 · Priority $15 below threshold.</li>
+<li><strong>International:</strong> Select your country at checkout — international flat rate applies when free shipping does not.</li>
+<li><strong>Kenya buyers:</strong> Same catalog and USD payment — Kenya methods appear when your address is in Kenya. See <a href="/shipping-to-kenya/">Shipping to Kenya</a> if needed.</li>
 </ul>
 HTML,
         ],
         'shipping-to-kenya' => [
             'title'   => 'Shipping to Kenya',
             'content' => <<<HTML
-<p>Ordering performance or replacement parts from abroad is normal for Kenya builds. Here is how Supreme Autoparts handles <strong>shipping to Kenya</strong>.</p>
-<h2>What to expect</h2>
+<p>Our primary storefront shipping story is <strong>continental US delivery</strong> (see <a href="/shipping-policy/">Shipping Policy</a>). This page covers the optional <strong>Kenya</strong> methods that appear when your checkout country is Kenya.</p>
+<h2>Kenya checkout rates (USD)</h2>
 <ul>
-<li><strong>Rates at checkout:</strong> Carrier options and totals depend on weight, dimensions, and destination. Always use the live checkout figure.</li>
-<li><strong>Checkout rates (USD):</strong> Nairobi Delivery $8 · Upcountry Kenya $15 · Local pickup (Nairobi) free · Free shipping when your cart meets the banner threshold (often ~$99) · International $25. Totals update when you change address or method.</li>
-<li><strong>Free shipping:</strong> Qualifying carts over the threshold may ship complimentary — oversized, heavy, or supplier-direct items can be excluded. Details: <a href="/free-shipping/">Free Shipping</a> and <a href="/shipping-policy/">Shipping Policy</a>.</li>
-<li><strong>Inspect on arrival:</strong> Check parts before installation; contact us immediately if the wrong item or damage shows up.</li>
+<li><strong>Nairobi Delivery:</strong> $8 flat</li>
+<li><strong>Upcountry Kenya:</strong> $15 flat</li>
+<li><strong>Local pickup (Nairobi):</strong> free — arrange with support after you order</li>
+<li><strong>Free shipping:</strong> when your cart meets the banner threshold (often ~$99) on eligible items — see <a href="/free-shipping/">Free Shipping</a></li>
 </ul>
 <h2>Duties &amp; import notes</h2>
 <p>Customs duties, VAT, or brokerage for Kenya imports are the buyer&rsquo;s responsibility unless we explicitly state otherwise on an order. Keep your invoice handy for clearance. Questions before you buy: WhatsApp <a href="https://wa.me/19174375121">+1 917 437 5121</a>.</p>
-<h2>US buyers</h2>
-<p>This page focuses on Kenya delivery. If you are ordering to a US address, select your shipping address at checkout — available methods appear there. Currency at payment remains <strong>USD</strong>.</p>
+<h2>US &amp; international buyers</h2>
+<p>For continental US free shipping ($99+), Standard $8, Priority $15, and international $25, use the main <a href="/shipping-policy/">Shipping Policy</a>. Currency at payment remains <strong>USD</strong>.</p>
 <h2>Support</h2>
-<p>Email <a href="mailto:{$email}">{$email}</a> with your order number. Related guides: <a href="/how-to-order/">How to order</a> · <a href="/auto-parts-kenya/">Auto parts Kenya</a> · <a href="/fitment-guide/">Fitment</a>.</p>
+<p>Email <a href="mailto:{$email}">{$email}</a> with your order number. Related: <a href="/how-to-order/">How to order</a> · <a href="/fitment-guide/">Fitment</a>.</p>
 HTML,
         ],
         'fitment-guide' => [
@@ -316,7 +318,7 @@ HTML,
 <ul>
 <li>Catalog built around real performance brands and fitments common on trucks and SUVs.</li>
 <li>Secure USD payment; optional local currency display for readability.</li>
-<li>Kenya-aware shipping narrative and human support: <a href="https://wa.me/19174375121">+1 917 437 5121</a> · <a href="mailto:{$email}">{$email}</a>.</li>
+<li>Human support on WhatsApp/email: <a href="https://wa.me/19174375121">+1 917 437 5121</a> · <a href="mailto:{$email}">{$email}</a>. Primary delivery is continental US; Kenya methods appear for KE addresses.</li>
 </ul>
 <h2>Popular starting points</h2>
 <ul>
@@ -327,8 +329,8 @@ HTML,
 <li><a href="/performance-truck-parts/">Performance truck &amp; off-road</a></li>
 </ul>
 <h2>How ordering works</h2>
-<p>Follow <a href="/how-to-order/">How to order</a>, confirm fitment with the <a href="/fitment-guide/">Fitment guide</a>, then read <a href="/shipping-to-kenya/">Shipping to Kenya</a> before you pay. Policies: <a href="/returns/">Returns</a> · <a href="/shipping-policy/">Shipping</a>.</p>
-<p><em>US customers:</em> same storefront and catalog — choose your US shipping address at checkout.</p>
+<p>Follow <a href="/how-to-order/">How to order</a>, confirm fitment with the <a href="/fitment-guide/">Fitment guide</a>, then review <a href="/shipping-policy/">Shipping &amp; delivery</a> before you pay. Policies: <a href="/returns/">Returns</a> · <a href="/shipping-to-kenya/">Kenya shipping notes</a>.</p>
+<p><em>US customers:</em> free shipping on orders $99+ in the continental US (eligible items) — choose your US address at checkout.</p>
 HTML,
         ],
         'performance-truck-parts' => [
@@ -343,8 +345,8 @@ HTML,
 <li><a href="/product-category/lighting/"><strong>Lighting</strong></a> — driving lights and related</li>
 <li><a href="/product-category/drivetrain/"><strong>Drivetrain</strong></a> · <a href="/product-category/exhaust/">Exhaust</a> · <a href="/product-category/exterior/">Exterior</a></li>
 </ul>
-<h2>US &amp; Kenya</h2>
-<p>Checkout is <strong>USD</strong>. US buyers select domestic shipping at checkout when available; Kenya buyers should review <a href="/shipping-to-kenya/">Shipping to Kenya</a>. Support: WhatsApp <a href="https://wa.me/19174375121">+1 917 437 5121</a> · <a href="mailto:{$email}">{$email}</a>.</p>
+<h2>Shipping</h2>
+<p>Checkout is <strong>USD</strong>. Free shipping on qualifying continental US orders ($99+). International available at checkout. Support: WhatsApp <a href="https://wa.me/19174375121">+1 917 437 5121</a> · <a href="mailto:{$email}">{$email}</a>.</p>
 <p>New here? Start with <a href="/how-to-order/">How to order</a> and the <a href="/fitment-guide/">Fitment guide</a>.</p>
 HTML,
         ],

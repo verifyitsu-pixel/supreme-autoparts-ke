@@ -208,14 +208,14 @@ function sa_seo_context(): array
     $img   = $brand['og_image'];
     $type  = 'website';
 
-    $default_desc = 'Auto parts for Japanese, US & UK cars, electric vehicles, and motorcycles. USD checkout, shipping to Kenya and beyond. Shop brakes, suspension, wheels, and more at Supreme Autoparts.';
+    $default_desc = 'OE/OEM and aftermarket auto parts for US drivers — Japan, US & UK cars, EVs, and bikes. Search by part #. USD checkout. Ships continental US. Free shipping on qualifying orders.';
 
     $title = $site;
     $desc  = $default_desc;
 
     if (is_front_page() || is_home()) {
-        $title = 'Auto Parts & Accessories | Cars, Trucks, SUVs — US Spec · Ship to Kenya | ' . $site;
-        $desc  = 'Shop aftermarket parts for Japan, US & UK cars, EVs, and motorcycles. USD checkout, WhatsApp support at +1 917 437 5121. Free shipping on qualifying orders.';
+        $title = 'Auto Parts & Accessories | Find Your Part # · Ships US | ' . $site;
+        $desc  = 'Find your part #. OE/OEM fit for US drivers. USD checkout · ships continental US · free shipping on qualifying orders. Support +1 917 437 5121.';
     } elseif (function_exists('is_product') && is_product()) {
         $product = function_exists('wc_get_product') ? wc_get_product(get_the_ID()) : null;
         $name    = get_the_title();
@@ -275,7 +275,7 @@ function sa_seo_context(): array
         }
     } elseif (function_exists('is_shop') && is_shop()) {
         $title = 'Shop Auto Parts Online | Performance & Aftermarket | ' . $site;
-        $desc  = 'Browse brakes, suspension, wheels, lighting, and more. US-spec truck and off-road parts with USD checkout and shipping to Kenya. Find your part at Supreme Autoparts.';
+        $desc  = 'Browse brakes, suspension, wheels, lighting, and more. Search by part number. USD checkout · ships continental US. Find your part at Supreme Autoparts.';
     } elseif (is_singular(['page', 'post'])) {
         $id    = get_the_ID();
         $name  = get_the_title();

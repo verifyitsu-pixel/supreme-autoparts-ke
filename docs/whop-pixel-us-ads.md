@@ -102,3 +102,11 @@ Or start again from Whop Ads UI / `social-accounts_connect` (platform `meta_busi
 | Payment | platform_balance `ldgr_0YILGy67R2mFG` |
 | Ads agreement | signed by Cavin Lugai Gwehona |
 | Meta Pixel | mu-plugin `supreme-meta-pixel.php` ID `1455607103130157` (deploy required) |
+
+## Optimization pass (2026-09-30 EAT ~18:20)
+
+- Ad `ad_bjDDYG2Afn5Kzvu` upgraded: genius copy + square creative `file_7geUwtVXQ2cD0`; URL `/shop/`.
+- Vertical ad `ad_ZDYcFzDEQnMjbKt` added for Stories/Reels.
+- Meta Pixel mu-plugin now fires Purchase / AddToCart / InitiateCheckout / ViewContent / Search (v1.1).
+- US shipping zone live in code (ver 3): Continental US $8 / Priority $15 / Free $99+.
+- Ads payment: platform_balance `ldgr_0YILGy67R2mFG` (~$14.98 USDT). Whop Cards •2079/•3707 exist; personal CC not used.

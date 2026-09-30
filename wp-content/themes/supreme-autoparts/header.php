@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
   <?php
   printf(
       /* translators: %s: formatted free-shipping threshold */
-      esc_html__('Complimentary shipping on orders over %s*', 'supreme-autoparts'),
+      esc_html__('Free shipping on orders over %s* · Continental US', 'supreme-autoparts'),
       esc_html(sa_free_shipping_threshold())
   );
   ?>

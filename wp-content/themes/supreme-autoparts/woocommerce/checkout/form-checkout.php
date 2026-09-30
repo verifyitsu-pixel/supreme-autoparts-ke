@@ -59,7 +59,7 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
               <span class="sa-checkout-section__num" aria-hidden="true">2</span>
               <div>
                 <h2 id="sa-checkout-shipping-title" class="sa-checkout-section__title"><?php esc_html_e('Shipping', 'supreme-autoparts'); ?></h2>
-                <p class="sa-checkout-section__sub"><?php esc_html_e('Where should we deliver your parts in Kenya or internationally?', 'supreme-autoparts'); ?></p>
+                <p class="sa-checkout-section__sub"><?php esc_html_e('Enter your delivery address — continental US, Alaska/Hawaii, or international.', 'supreme-autoparts'); ?></p>
               </div>
             </header>
             <div class="sa-checkout-section__body sa-checkout-customer__shipping">

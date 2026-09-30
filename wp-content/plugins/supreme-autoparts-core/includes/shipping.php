@@ -6,19 +6,24 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Kenya storefront shipping zones (USD rates — checkout currency).
+ * Shipping zones (USD rates — checkout currency).
+ *
+ * US-primary storefront for ads: continental US methods first, Kenya kept
+ * honest for KE addresses, Rest of World for other destinations.
  *
  * Versioned via sa_shipping_zones_ver. Idempotent: recreates SA-managed methods
  * when the version bumps; leaves unrelated custom zones alone.
  *
  * Rates (USD):
- * - Nairobi Delivery ........ $8.00  (flat_rate)
- * - Upcountry Kenya ......... $15.00 (flat_rate)
- * - Free shipping ........... $0 when cart subtotal ≥ $99 (free_shipping)
- * - Local pickup (Nairobi) .. $0.00  (local_pickup)
- * - International ........... $25.00 (Rest of World flat_rate)
+ * - Standard Shipping (Continental US) .. $8.00  (flat_rate)
+ * - Priority Shipping (US) .............. $15.00 (flat_rate)
+ * - Free shipping ....................... $0 when cart subtotal ≥ $99
+ * - Nairobi Delivery .................... $8.00  (flat_rate, KE)
+ * - Upcountry Kenya ..................... $15.00 (flat_rate, KE)
+ * - Local pickup (Nairobi) .............. $0.00  (local_pickup, KE)
+ * - International ....................... $25.00 (Rest of World flat_rate)
  */
-const SA_SHIPPING_ZONES_VER = '2';
+const SA_SHIPPING_ZONES_VER = '3';
 
 /**
  * Free-shipping minimum in store currency (USD).
@@ -37,7 +42,16 @@ function sa_core_shipping_free_min(): float
 }
 
 /**
- * Ensure Woo shipping methods exist and Kenya / ROW zones are configured.
+ * Format free-shipping method title from threshold.
+ */
+function sa_core_shipping_free_title(float $free_min): string
+{
+    $amt = rtrim(rtrim(number_format($free_min, 2, '.', ''), '0'), '.');
+    return 'Free shipping (orders $' . $amt . '+)';
+}
+
+/**
+ * Ensure Woo shipping methods exist and US / Kenya / ROW zones are configured.
  */
 function sa_core_ensure_shipping_zones(): void
 {
@@ -45,20 +59,63 @@ function sa_core_ensure_shipping_zones(): void
         return;
     }
 
-    // Enable shipping + calculator + destination defaults for Kenya.
+    // Ship worldwide; calculator on; geolocate for US-ad visitors.
     update_option('woocommerce_ship_to_countries', '');
     update_option('woocommerce_ship_to_destinations', 'billing');
     update_option('woocommerce_enable_shipping_calc', 'yes');
     update_option('woocommerce_shipping_cost_requires_address', 'no');
-    // Geolocate (with page caching support) — sa-geo-currency also uses CF-IPCountry.
     update_option('woocommerce_default_customer_address', 'geolocation_ajax');
 
-    $free_min = sa_core_shipping_free_min();
+    $free_min   = sa_core_shipping_free_min();
+    $free_title = sa_core_shipping_free_title($free_min);
 
-    // --- Kenya zone ---
+    // --- United States (primary) ---
+    $us_zone = sa_core_find_or_create_zone('United States', [['country' => 'US']], 5);
+    if ($us_zone) {
+        sa_core_sync_zone_methods($us_zone, [
+            [
+                'id'         => 'free_shipping',
+                'title'      => $free_title,
+                'requires'   => 'min_amount',
+                'min_amount' => (string) $free_min,
+                'order'      => 0,
+                'meta_key'   => '_sa_ship_code',
+                'meta_val'   => 'free_us',
+            ],
+            [
+                'id'       => 'flat_rate',
+                'title'    => 'Standard Shipping (Continental US)',
+                'cost'     => '8',
+                'tax'      => 'no',
+                'order'    => 1,
+                'meta_key' => '_sa_ship_code',
+                'meta_val' => 'us_standard',
+            ],
+            [
+                'id'       => 'flat_rate',
+                'title'    => 'Priority Shipping (US)',
+                'cost'     => '15',
+                'tax'      => 'no',
+                'order'    => 2,
+                'meta_key' => '_sa_ship_code',
+                'meta_val' => 'us_priority',
+            ],
+        ]);
+    }
+
+    // --- Kenya (honest KE rates; secondary) ---
     $ke_zone = sa_core_find_or_create_zone('Kenya', [['country' => 'KE']], 10);
     if ($ke_zone) {
         sa_core_sync_zone_methods($ke_zone, [
+            [
+                'id'         => 'free_shipping',
+                'title'      => $free_title,
+                'requires'   => 'min_amount',
+                'min_amount' => (string) $free_min,
+                'order'      => 0,
+                'meta_key'   => '_sa_ship_code',
+                'meta_val'   => 'free',
+            ],
             [
                 'id'       => 'flat_rate',
                 'title'    => 'Nairobi Delivery',
@@ -78,15 +135,6 @@ function sa_core_ensure_shipping_zones(): void
                 'meta_val' => 'upcountry',
             ],
             [
-                'id'         => 'free_shipping',
-                'title'      => 'Free shipping (orders $' . rtrim(rtrim(number_format($free_min, 2, '.', ''), '0'), '.') . '+)',
-                'requires'   => 'min_amount',
-                'min_amount' => (string) $free_min,
-                'order'      => 0,
-                'meta_key'   => '_sa_ship_code',
-                'meta_val'   => 'free',
-            ],
-            [
                 'id'       => 'local_pickup',
                 'title'    => 'Local pickup (Nairobi)',
                 'cost'     => '0',
@@ -103,6 +151,15 @@ function sa_core_ensure_shipping_zones(): void
     if ($row) {
         sa_core_sync_zone_methods($row, [
             [
+                'id'         => 'free_shipping',
+                'title'      => $free_title,
+                'requires'   => 'min_amount',
+                'min_amount' => (string) $free_min,
+                'order'      => 0,
+                'meta_key'   => '_sa_ship_code',
+                'meta_val'   => 'free_intl',
+            ],
+            [
                 'id'       => 'flat_rate',
                 'title'    => 'International shipping',
                 'cost'     => '25',
@@ -111,15 +168,6 @@ function sa_core_ensure_shipping_zones(): void
                 'meta_key' => '_sa_ship_code',
                 'meta_val' => 'intl',
             ],
-            [
-                'id'         => 'free_shipping',
-                'title'      => 'Free shipping (orders $' . rtrim(rtrim(number_format($free_min, 2, '.', ''), '0'), '.') . '+)',
-                'requires'   => 'min_amount',
-                'min_amount' => (string) $free_min,
-                'order'      => 0,
-                'meta_key'   => '_sa_ship_code',
-                'meta_val'   => 'free_intl',
-            ],
         ]);
     }
 
@@ -127,7 +175,12 @@ function sa_core_ensure_shipping_zones(): void
     update_option('sa_shipping_rates_doc', [
         'currency' => 'USD',
         'updated'  => gmdate('c'),
-        'kenya'    => [
+        'united_states' => [
+            'standard_continental' => 8.0,
+            'priority'             => 15.0,
+            'free_min'             => $free_min,
+        ],
+        'kenya' => [
             'nairobi_delivery' => 8.0,
             'upcountry'        => 15.0,
             'free_min'         => $free_min,
@@ -184,7 +237,6 @@ function sa_core_sync_zone_methods(WC_Shipping_Zone $zone, array $desired): void
         }
         $code = '';
         if (method_exists($method, 'get_option')) {
-            // Stored in instance settings under our key when present.
             $settings = get_option('woocommerce_' . $method->id . '_' . (int) $instance_id . '_settings', []);
             if (is_array($settings) && isset($settings['_sa_ship_code'])) {
                 $code = (string) $settings['_sa_ship_code'];
@@ -193,7 +245,11 @@ function sa_core_sync_zone_methods(WC_Shipping_Zone $zone, array $desired): void
         // Also match by known titles from prior boots.
         if ($code === '' && isset($method->title)) {
             $title = strtolower((string) $method->title);
-            if (str_contains($title, 'nairobi') && str_contains($title, 'deliver')) {
+            if (str_contains($title, 'continental') || (str_contains($title, 'standard') && str_contains($title, 'us'))) {
+                $code = 'us_standard';
+            } elseif (str_contains($title, 'priority') && str_contains($title, 'us')) {
+                $code = 'us_priority';
+            } elseif (str_contains($title, 'nairobi') && str_contains($title, 'deliver')) {
                 $code = 'nairobi';
             } elseif (str_contains($title, 'upcountry')) {
                 $code = 'upcountry';
@@ -202,7 +258,13 @@ function sa_core_sync_zone_methods(WC_Shipping_Zone $zone, array $desired): void
             } elseif (str_contains($title, 'international')) {
                 $code = 'intl';
             } elseif (str_contains($title, 'free shipping')) {
-                $code = str_contains($title, 'intl') ? 'free_intl' : 'free';
+                if (str_contains($title, 'intl')) {
+                    $code = 'free_intl';
+                } elseif (str_contains($title, 'us')) {
+                    $code = 'free_us';
+                } else {
+                    $code = 'free';
+                }
             }
         }
         if ($code !== '') {
@@ -242,25 +304,20 @@ function sa_core_sync_zone_methods(WC_Shipping_Zone $zone, array $desired): void
         $settings['_sa_ship_code'] = $code;
         update_option($opt_key, $settings);
 
-        // Keep method enabled at zone level.
         $methods = $zone->get_shipping_methods(true);
         if (isset($methods[$instance_id]) && is_object($methods[$instance_id])) {
-            $m = $methods[$instance_id];
-            if (method_exists($m, 'update_from_api_request') === false) {
-                // Force enabled via DB row if needed.
-                global $wpdb;
-                if (isset($wpdb) && $wpdb instanceof wpdb) {
-                    $wpdb->update(
-                        "{$wpdb->prefix}woocommerce_shipping_zone_methods",
-                        [
-                            'is_enabled' => 1,
-                            'method_order' => (int) ($spec['order'] ?? 0),
-                        ],
-                        ['instance_id' => (int) $instance_id],
-                        ['%d', '%d'],
-                        ['%d']
-                    );
-                }
+            global $wpdb;
+            if (isset($wpdb) && $wpdb instanceof wpdb) {
+                $wpdb->update(
+                    "{$wpdb->prefix}woocommerce_shipping_zone_methods",
+                    [
+                        'is_enabled'   => 1,
+                        'method_order' => (int) ($spec['order'] ?? 0),
+                    ],
+                    ['instance_id' => (int) $instance_id],
+                    ['%d', '%d'],
+                    ['%d']
+                );
             }
         }
         unset($by_code[$code]);
