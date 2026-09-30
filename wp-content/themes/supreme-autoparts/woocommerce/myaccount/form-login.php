@@ -3,7 +3,7 @@
  * My Account login / register — OTP for returning guests; password still available.
  *
  * @package Supreme_Autoparts
- * @version 1.4.43
+ * @version 1.4.45
  */
 
 defined('ABSPATH') || exit;
@@ -31,6 +31,9 @@ if ($sa_otp_email === '' && !empty($_POST['sa_otp_email'])) { // phpcs:ignore
       <div class="sa-otp-block" data-sa-otp>
         <h3 class="sa-otp-block__title"><?php esc_html_e('Email me a login code', 'supreme-autoparts'); ?></h3>
         <p class="sa-otp-block__hint"><?php esc_html_e('Best for returning guests — 6-digit code, expires in 10 minutes. No password needed.', 'supreme-autoparts'); ?></p>
+        <p class="sa-login-persist-note" role="note">
+          <?php esc_html_e('You will stay signed in on this browser for months until you use Log out.', 'supreme-autoparts'); ?>
+        </p>
 
         <?php if (!$sa_otp_step) : ?>
           <form class="woocommerce-form sa-form sa-otp-form" method="post" novalidate>
@@ -82,7 +85,7 @@ if ($sa_otp_email === '' && !empty($_POST['sa_otp_email'])) { // phpcs:ignore
           <?php do_action('woocommerce_login_form'); ?>
 
           <p class="sa-login-persist-note" role="note">
-            <?php esc_html_e('You will stay signed in on this browser until you use Log out.', 'supreme-autoparts'); ?>
+            <?php esc_html_e('You will stay signed in on this browser for months until you use Log out.', 'supreme-autoparts'); ?>
           </p>
 
           <p class="form-row sa-form__remember">

@@ -367,7 +367,12 @@ function sa_core_otp_verify_and_login(string $email, string $code)
     }
 
     wp_set_current_user((int) $user->ID);
-    wp_set_auth_cookie((int) $user->ID, true, is_ssl());
+    // Persistent remember cookie (~120 days) — same path as password login.
+    if (function_exists('sa_core_set_customer_auth_cookie')) {
+        sa_core_set_customer_auth_cookie((int) $user->ID);
+    } else {
+        wp_set_auth_cookie((int) $user->ID, true, is_ssl());
+    }
     do_action('wp_login', $user->user_login, $user);
 
     return true;

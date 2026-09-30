@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
  *
  * - Logged-in: WooCommerce persistent cart (cross-device when same account).
  * - Guest: longer WC session cookie so the cart survives browser restarts.
- * - Customers: always persistent auth cookies (~90 days) until explicit Log out.
+ * - Customers: always persistent auth cookies (~120 days / until explicit Log out).
  * - Staff (admin / shop_manager): shorter cookies.
  * - On login / register: merge guest session cart into the user cart.
  * - Log out still clears cookies fully (wp_logout / wp_clear_auth_cookie untouched).
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
 /** Customer auth cookie lifetime (stay signed in until Log out). */
 function sa_core_customer_auth_days(): int
 {
-    return (int) apply_filters('sa_core_customer_auth_days', 90);
+    return (int) apply_filters('sa_core_customer_auth_days', 120);
 }
 
 /** Staff auth cookie when Remember me is checked. */
@@ -42,6 +42,28 @@ function sa_core_user_is_store_customer(?WP_User $user): bool
     }
     return true;
 }
+
+/**
+ * Issue a persistent auth cookie for a store customer (remember=true, ~120 days).
+ * Idempotent within a request via $GLOBALS guard. Logout still clears cookies.
+ */
+function sa_core_set_customer_auth_cookie(int $user_id): void
+{
+    if ($user_id <= 0) {
+        return;
+    }
+    $user = get_userdata($user_id);
+    if (!sa_core_user_is_store_customer($user instanceof WP_User ? $user : null)) {
+        return;
+    }
+    if (!empty($GLOBALS['sa_core_customer_auth_remembered'])) {
+        // Still re-issue once per request only after first mark — skip duplicates.
+        return;
+    }
+    $GLOBALS['sa_core_customer_auth_remembered'] = true;
+    wp_set_auth_cookie($user_id, true, is_ssl());
+}
+
 
 /**
  * Soft-enforce Woo options related to accounts + cart continuity.
@@ -86,7 +108,7 @@ add_filter('wc_session_expiring', static function (): int {
 
 /**
  * Auth cookie lifetime:
- * - Customers: always ~90 days (persistent until Log out), whether or not Remember was checked.
+ * - Customers: always ~120 days (persistent until Log out), whether or not Remember was checked.
  * - Staff: 14 days when remembered, otherwise WP default (~2 days).
  *
  * Password emails use sa_core_set_customer_password_keep_sessions() so existing
@@ -186,32 +208,20 @@ add_action('woocommerce_created_customer', static function (int $customer_id): v
  * Logout remains wp_logout → wp_clear_auth_cookie (untouched).
  */
 add_action('woocommerce_set_customer_auth_cookie', static function (int $customer_id): void {
-    $user = get_userdata($customer_id);
-    if (!sa_core_user_is_store_customer($user instanceof WP_User ? $user : null)) {
-        return;
-    }
-    // Woo may already have set cookies; re-issue once with remember for 90-day TTL.
-    if (!empty($GLOBALS['sa_core_customer_auth_remembered'])) {
-        return;
-    }
-    $GLOBALS['sa_core_customer_auth_remembered'] = true;
-    wp_set_auth_cookie($customer_id, true);
+    // Woo may already have set cookies; re-issue once with remember for 120-day TTL.
+    sa_core_set_customer_auth_cookie($customer_id);
 }, 5);
 
 /**
- * After successful login: ensure customers get a remember=true auth cookie (90-day).
+ * After successful login: ensure customers get a remember=true auth cookie (120-day).
  * Covers any path that signed in without remember. Does not touch logout.
  */
 add_action('wp_login', static function (string $user_login, $user): void {
     unset($user_login);
-    if (!$user instanceof WP_User || !sa_core_user_is_store_customer($user)) {
+    if (!$user instanceof WP_User) {
         return;
     }
-    if (!empty($GLOBALS['sa_core_customer_auth_remembered'])) {
-        return;
-    }
-    $GLOBALS['sa_core_customer_auth_remembered'] = true;
-    wp_set_auth_cookie((int) $user->ID, true);
+    sa_core_set_customer_auth_cookie((int) $user->ID);
 }, 5, 2);
 
 add_filter('body_class', static function (array $classes): array {
