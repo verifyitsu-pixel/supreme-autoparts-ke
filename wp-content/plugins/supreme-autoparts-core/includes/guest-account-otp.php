@@ -388,7 +388,7 @@ function sa_core_email_login_otp(WP_User $user, string $code): bool
         return false;
     }
 
-    $site = wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
+    $site = wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES) ?: 'Supreme Autoparts';
     $name = trim((string) $user->first_name);
     if ($name === '') {
         $name = trim((string) $user->display_name) ?: 'there';
@@ -397,8 +397,18 @@ function sa_core_email_login_otp(WP_User $user, string $code): bool
     $account_url = function_exists('wc_get_page_permalink')
         ? (string) wc_get_page_permalink('myaccount')
         : home_url('/my-account/');
+    $store_email = function_exists('sa_core_store_email') ? sa_core_store_email() : 'calvin@supremeautoparts.co.ke';
+    $wa_display = '+1 917 437 5121';
+    if (function_exists('sa_enquire_contact')) {
+        $c = sa_enquire_contact();
+        if (!empty($c['phone_display'])) {
+            $wa_display = (string) $c['phone_display'];
+        }
+    }
 
-    $subject = sprintf('[%s] Your login code: %s', $site, $code);
+    // No square brackets in subject (Gmail/Apple show them as noisy).
+    $subject = sprintf('Your login code: %s', $code);
+
     $lines = [
         'Hi ' . $name . ',',
         '',
@@ -412,28 +422,22 @@ function sa_core_email_login_otp(WP_User $user, string $code): bool
         '',
         'If you did not request this, you can ignore this email. Never share the code.',
         '',
-        '— Supreme Autoparts',
-        'calvin@supremeautoparts.co.ke',
+        '— ' . $site,
+        $store_email . ' · WhatsApp ' . $wa_display,
     ];
     $body = implode("\n", $lines);
 
-    if (class_exists('SA_Brevo_API') && function_exists('sa_brevo_is_configured') && sa_brevo_is_configured()) {
-        $html = '<div class="sa-plain-mail">';
-        foreach (preg_split("/\r\n|\r|\n/", $body) ?: [] as $line) {
-            if ($line === $code) {
-                $html .= '<p style="margin:16px 0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:28px;letter-spacing:0.2em;font-weight:700;color:#0B0B0D;">'
-                    . esc_html($code) . '</p>';
-                continue;
-            }
-            if ($line === '') {
-                $html .= '<div style="height:8px;">&nbsp;</div>';
-                continue;
-            }
-            $html .= '<p style="margin:0 0 8px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.5;color:#18181b;">'
-                . esc_html($line) . '</p>';
-        }
-        $html .= '</div>';
+    $html = sa_core_otp_email_html([
+        'name'         => $name,
+        'site'         => $site,
+        'code'         => $code,
+        'mins'         => $mins,
+        'account_url'  => $account_url,
+        'store_email'  => $store_email,
+        'wa_display'   => $wa_display,
+    ]);
 
+    if (class_exists('SA_Brevo_API') && function_exists('sa_brevo_is_configured') && sa_brevo_is_configured()) {
         $result = SA_Brevo_API::send_transactional([
             'to'          => [['email' => $to, 'name' => $name]],
             'subject'     => $subject,
@@ -444,6 +448,7 @@ function sa_core_email_login_otp(WP_User $user, string $code): bool
         if (!empty($result['ok'])) {
             return true;
         }
+        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
         error_log('[sa-core] OTP email Brevo failed for user ' . (int) $user->ID . ': ' . (string) ($result['error'] ?? 'unknown'));
         return false;
     }
@@ -454,9 +459,46 @@ function sa_core_email_login_otp(WP_User $user, string $code): bool
         $body,
         [
             'Content-Type: text/plain; charset=UTF-8',
-            'From: Supreme Autoparts <calvin@supremeautoparts.co.ke>',
+            'From: Supreme Autoparts <' . $store_email . '>',
         ]
     );
+}
+
+/**
+ * Branded HTML body for login OTP (logo header added by Brevo brand_html / send_transactional).
+ *
+ * @param array{name:string,site:string,code:string,mins:int,account_url:string,store_email:string,wa_display:string} $ctx
+ */
+function sa_core_otp_email_html(array $ctx): string
+{
+    $name = esc_html((string) ($ctx['name'] ?? 'there'));
+    $site = esc_html((string) ($ctx['site'] ?? 'Supreme Autoparts'));
+    $code = esc_html((string) ($ctx['code'] ?? ''));
+    $mins = (int) ($ctx['mins'] ?? 10);
+    $url  = esc_url((string) ($ctx['account_url'] ?? ''));
+    $email = esc_html((string) ($ctx['store_email'] ?? 'calvin@supremeautoparts.co.ke'));
+    $wa = esc_html((string) ($ctx['wa_display'] ?? '+1 917 437 5121'));
+
+    return '<div class="sa-otp-mail" style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#18181b;max-width:560px;">'
+        . '<p style="margin:0 0 12px;font-size:15px;line-height:1.5;">Hi ' . $name . ',</p>'
+        . '<p style="margin:0 0 12px;font-size:15px;line-height:1.5;">Your one-time login code for <strong>' . $site . '</strong> is:</p>'
+        . '<p style="margin:20px 0;text-align:center;">'
+        . '<span style="display:inline-block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:32px;letter-spacing:0.28em;font-weight:700;color:#0B0B0D;background:#f4f4f5;border:1px solid #e4e4e7;border-radius:10px;padding:14px 22px;">'
+        . $code
+        . '</span></p>'
+        . '<p style="margin:0 0 16px;font-size:15px;line-height:1.5;">This code expires in <strong>' . $mins . ' minutes</strong>. Enter it on the My Account page to view orders, invoices, and payment methods.</p>'
+        . '<p style="margin:0 0 20px;text-align:center;">'
+        . '<a href="' . $url . '" style="display:inline-block;background:#16a34a;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:8px;">Open My Account</a>'
+        . '</p>'
+        . '<p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#52525b;">If the button does not work, use this link:<br />'
+        . '<a href="' . $url . '" style="color:#16a34a;word-break:break-all;">' . esc_html((string) ($ctx['account_url'] ?? '')) . '</a></p>'
+        . '<p style="margin:16px 0 0;font-size:13px;line-height:1.5;color:#71717a;">If you did not request this, you can ignore this email. Never share the code.</p>'
+        . '<p style="margin:20px 0 0;padding-top:14px;border-top:1px solid #e4e4e7;font-size:13px;line-height:1.5;color:#52525b;">'
+        . '— ' . $site . '<br />'
+        . '<a href="mailto:' . esc_attr((string) ($ctx['store_email'] ?? '')) . '" style="color:#16a34a;">' . $email . '</a>'
+        . ' · WhatsApp ' . $wa
+        . '</p>'
+        . '</div>';
 }
 
 /**
@@ -480,7 +522,7 @@ function sa_core_email_guest_account_ready(WP_User $user, WC_Order $order): void
         : home_url('/my-account/');
     $order_no = (string) $order->get_order_number();
 
-    $subject = sprintf('[%s] Order #%s — account ready', $site, $order_no);
+    $subject = sprintf('Order #%s — your %s account is ready', $order_no, $site);
     $body = implode("\n", [
         'Hi ' . $name . ',',
         '',
@@ -498,13 +540,13 @@ function sa_core_email_guest_account_ready(WP_User $user, WC_Order $order): void
 
     $ok = false;
     if (class_exists('SA_Brevo_API') && function_exists('sa_brevo_is_configured') && sa_brevo_is_configured()) {
-        $html = '<div class="sa-plain-mail">';
+        $html = '<div class="sa-guest-welcome-mail" style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#18181b;max-width:560px;">';
         foreach (preg_split("/\r\n|\r|\n/", $body) ?: [] as $line) {
             if ($line === '') {
                 $html .= '<div style="height:8px;">&nbsp;</div>';
                 continue;
             }
-            $html .= '<p style="margin:0 0 8px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.5;color:#18181b;">'
+            $html .= '<p style="margin:0 0 8px;font-size:15px;line-height:1.5;color:#18181b;">'
                 . esc_html($line) . '</p>';
         }
         $html .= '</div>';

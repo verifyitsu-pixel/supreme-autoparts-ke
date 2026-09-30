@@ -76,6 +76,12 @@ class SA_Brevo_API
         if (empty($payload['tags'])) {
             $payload['tags'] = ['supreme-autoparts', 'woocommerce'];
         }
+        // Direct API callers (OTP / password) must get the same logo header as wp_mail path.
+        if (!empty($payload['htmlContent']) && is_string($payload['htmlContent'])
+            && class_exists('SA_Brevo_Mailer') && method_exists('SA_Brevo_Mailer', 'brand_html')
+        ) {
+            $payload['htmlContent'] = SA_Brevo_Mailer::brand_html($payload['htmlContent']);
+        }
         return self::request('POST', '/smtp/email', $payload);
     }
 
