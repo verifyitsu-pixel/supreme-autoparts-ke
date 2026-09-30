@@ -148,10 +148,6 @@ class SA_Brevo_Mailer
     }
 
     /**
-     * Guarantee every outbound HTML email shows the store logo in a header strip.
-     * Woo templates already include header_image; this covers plain wp_mail / password emails too.
-     */
-    /**
      * Public wrapper so core OTP/password sends can brand HTML without duplicating markup.
      */
     public static function brand_html(string $html): string
@@ -159,6 +155,10 @@ class SA_Brevo_Mailer
         return self::ensure_branded_html($html);
     }
 
+    /**
+     * Guarantee every outbound HTML email shows the store logo in a header strip.
+     * Woo templates already include header_image; this covers plain wp_mail / password emails too.
+     */
     private static function ensure_branded_html(string $html): string
     {
         if ($html === '') {
