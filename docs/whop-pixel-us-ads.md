@@ -1,0 +1,80 @@
+# Whop Pixel + US Meta ads (biz_9VJcCdK7G30L63)
+
+## Pixel install (done in repo)
+
+- **mu-plugin:** `wp-content/mu-plugins/supreme-whop-pixel.php`
+- **Biz ID:** `biz_9VJcCdK7G30L63`
+- **Snippet source:** https://docs.whop.com/developer/ads/pixel  
+- **Dashboard check:** https://whop.com/dashboard/biz_9VJcCdK7G30L63/pixel  
+- Ships on every front-end page via `wp_head` (`whop.setScope("biz_9VJcCdK7G30L63"); whop.track("page");`).
+- Destination URL for ads: `https://www.supremeautoparts.co.ke/` (shop). External URL requires this pixel or Meta rejects with “Whop pixel was not detected”.
+
+WooCommerce checkouts that go through **Whop Checkout** are attributed server-side — do **not** fire `whop.track("purchase")` for Whop-processed orders (double-count).
+
+---
+
+## Blockers (do not launch spend until both clear)
+
+Checked 2026-09-30 (Africa/Nairobi):
+
+| Check | Status |
+| --- | --- |
+| Meta (Facebook/Instagram) with `advertise` scope | **NOT connected** — `social-accounts_list` empty |
+| Whop Cards (active) | **Present** — e.g. `icrd_kK0kxp7Ji8fCc` “Supreme Autoparts” …2079; also …0156, …3707 |
+| Ads payment method selected in Whop Ads UI | **Owner must confirm** in dashboard (Card selected for ads billing) |
+| Pixel live on shop | After this deploy + ~1–2 min of traffic, re-check pixel page / `events_validate_pixel` |
+
+**Rule:** Do **not** create/launch a Meta campaign that spends until Meta is connected **and** a Whop Card is selected as the ads payment method.
+
+---
+
+## Owner steps — connect Meta + Card (required before spend)
+
+1. Open https://whop.com/dashboard/biz_9VJcCdK7G30L63  
+2. Go to **Ads** (Growth / Ads).  
+3. **Connect Facebook Page + Instagram** via OAuth (needs `advertise` scope). Use a Page you admin.  
+4. Under ads **payment method**, select a Whop Card (prefer **Supreme Autoparts** `…2079` / `icrd_kK0kxp7Ji8fCc`, or another active card).  
+5. Confirm pixel status is green on https://whop.com/dashboard/biz_9VJcCdK7G30L63/pixel (domains should list `supremeautoparts.co.ke`).  
+6. Tell the agent “Meta connected + Card selected” so a **draft or live** US campaign can be created safely.
+
+---
+
+## Planned US campaign (~$9–10 lifetime) — ready to create after blockers clear
+
+| Field | Value |
+| --- | --- |
+| Platform | `meta` |
+| Title | `US shop — Supreme Autoparts $10` |
+| Objective | **`sales`** if pixel validated; else **`traffic`** |
+| Budget | Campaign-level: `budget_optimization: ad_campaign`, `budget_type: lifetime`, `budget_amount: 10` (USD) |
+| Bid | `minimum_cost` (most results for budget) |
+| Region | `regions.include.countries: ["US"]` |
+| Destination | `https://www.supremeautoparts.co.ke/` (shop) |
+| Conversion location | `website` |
+| Optimization (Sales) | `conversions` + `conversion_event: purchase` (or `landing_page_views` / `link_clicks` if Traffic) |
+| CTA | `shop_now` |
+| Creative | Owner uploads 1 image/video (`file_…`); agent attaches via `ads_create` |
+| Status at create | Prefer **draft** then `ad-campaigns_update` → active only after Meta + Card confirmed |
+
+### API sketch (after Meta + Card)
+
+1. `ad-campaigns_create` — objective sales/traffic, platform meta, lifetime $10, title as above.  
+2. `ad-groups_create` — regions US, conversion_location website, optimization_goal conversions (or link_clicks), demographics automatic optional.  
+3. `ads_create` — url shop, call_to_action shop_now, creatives + social_accounts (Facebook Page `sacc_…`), headlines/primary_texts.  
+4. Launch only when payment method connected; else leave draft.
+
+### Suggested copy (owner can edit)
+
+- Headline: `OEM-quality auto parts — ship to the US`  
+- Primary: `Shop Supreme Autoparts. Clear USD checkout. Find parts by number, brand, make & model.`  
+- Description: `Secure checkout · Worldwide display currency · Charged in USD`
+
+---
+
+## Verify after deploy
+
+```text
+curl -sL https://www.supremeautoparts.co.ke/ | grep -E 't\.whop\.tw|whop\.setScope|biz_9VJcCdK7G30L63'
+```
+
+Or Whop: `events_validate_pixel` with `account_id=biz_9VJcCdK7G30L63` and `url=https://www.supremeautoparts.co.ke/`.
