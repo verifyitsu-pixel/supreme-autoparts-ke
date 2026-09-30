@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Supreme Autoparts Security
  * Description: Baseline HTTP security headers, XML-RPC off, file-edit hardening helpers.
- * Version: 1.0.0
+ * Version: 1.0.1
  */
 
 declare(strict_types=1);
@@ -10,6 +10,15 @@ declare(strict_types=1);
 if (!defined('ABSPATH')) {
     exit;
 }
+
+// Hard-disable XML-RPC before the IXR server boots (xmlrpc.php defines XMLRPC_REQUEST pre-load).
+if (defined('XMLRPC_REQUEST') && XMLRPC_REQUEST) {
+    status_header(403);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'XML-RPC disabled';
+    exit;
+}
+
 
 /**
  * Send baseline security headers on front-end and REST (skip admin UI chrome).
