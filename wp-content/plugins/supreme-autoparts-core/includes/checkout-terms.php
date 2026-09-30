@@ -83,7 +83,7 @@ function sa_core_render_checkout_policy_notice(string $variant = 'full'): void
     if ($variant === 'full') {
         echo '<p>' . esc_html__('Questions or payment disputes:', 'supreme-autoparts-core') . ' ';
         echo '<a href="mailto:calvin@supremeautoparts.co.ke">calvin@supremeautoparts.co.ke</a>';
-        echo ' · <a href="https://wa.me/254714498451" target="_blank" rel="noopener noreferrer">WhatsApp +254 714 498 451</a>.</p>';
+        echo ' · <a href="https://wa.me/19174375121" target="_blank" rel="noopener noreferrer">WhatsApp +1 917 437 5121</a>.</p>';
     }
     echo '</div>';
 }

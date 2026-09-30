@@ -12,7 +12,10 @@ defined('ABSPATH') || exit;
 
 $shop_url    = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
 $account_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : home_url('/my-account/');
-$wa_url      = 'https://wa.me/254714498451';
+$contact     = function_exists('sa_enquire_contact') ? sa_enquire_contact() : ['whatsapp' => '19174375121', 'phone_display' => '+1 917 437 5121'];
+$wa_digits   = preg_replace('/\D+/', '', (string) ($contact['whatsapp'] ?? '19174375121')) ?: '19174375121';
+$wa_url      = 'https://wa.me/' . $wa_digits;
+$wa_display  = (string) ($contact['phone_display'] ?? '+1 917 437 5121');
 $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : home_url('/enquire/');
 ?>
 <div class="woocommerce-order sa-thankyou">
@@ -125,7 +128,7 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
             </a>
           <?php endif; ?>
           <a class="sa-btn sa-btn--outline" href="<?php echo esc_url($wa_url); ?>" target="_blank" rel="noopener noreferrer">
-            <?php esc_html_e('WhatsApp +254 714 498 451', 'supreme-autoparts'); ?>
+            <?php echo esc_html(sprintf(/* translators: %s: WhatsApp number */ __('WhatsApp %s', 'supreme-autoparts'), $wa_display)); ?>
           </a>
         </div>
 

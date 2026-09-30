@@ -19,9 +19,9 @@ if (!defined('ABSPATH')) {
 function sa_enquire_contact(): array
 {
     return [
-        'phone'         => '+254714498451',
-        'phone_display' => '+254 714 498 451',
-        'whatsapp'      => '254714498451',
+        'phone'         => '+19174375121',
+        'phone_display' => '+1 917 437 5121',
+        'whatsapp'      => '19174375121',
         'email'         => 'calvin@supremeautoparts.co.ke',
     ];
 }

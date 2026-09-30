@@ -70,8 +70,8 @@ function sa_seo_brand(): array
         'legal'        => 'Supreme Autoparts',
         'url'          => $url,
         'email'        => function_exists('sa_core_store_email') ? sa_core_store_email() : 'calvin@supremeautoparts.co.ke',
-        'phone'        => '+254 714 498 451',
-        'phone_e164'   => '+254714498451',
+        'phone'        => '+1 917 437 5121',
+        'phone_e164'   => '+19174375121',
         'logo'         => $logo,
         'og_image'     => $og,
         'same_as'      => array_values(array_filter([
@@ -215,7 +215,7 @@ function sa_seo_context(): array
 
     if (is_front_page() || is_home()) {
         $title = 'Auto Parts & Accessories | Cars, Trucks, SUVs — US Spec · Ship to Kenya | ' . $site;
-        $desc  = 'Shop aftermarket parts for Japan, US & UK cars, EVs, and motorcycles. USD checkout, WhatsApp support in Kenya (+254). Free shipping on qualifying orders.';
+        $desc  = 'Shop aftermarket parts for Japan, US & UK cars, EVs, and motorcycles. USD checkout, WhatsApp support at +1 917 437 5121. Free shipping on qualifying orders.';
     } elseif (function_exists('is_product') && is_product()) {
         $product = function_exists('wc_get_product') ? wc_get_product(get_the_ID()) : null;
         $name    = get_the_title();
@@ -314,7 +314,7 @@ function sa_seo_context(): array
                 'auto-parts-kenya'  => 'Buy Auto Parts in Kenya | Import US Spec Parts | ' . $site,
                 'performance-truck-parts' => 'Performance Truck & Off-Road Parts | US Spec | ' . $site,
                 'guides'            => 'Guides: Ordering, Fitment & Shipping | ' . $site,
-                'contact'           => 'Contact Supreme Autoparts | WhatsApp +254 · Email | ' . $site,
+                'contact'           => 'Contact Supreme Autoparts | WhatsApp +1 917 437 5121 · Email | ' . $site,
                 'about-us'          => 'About Supreme Autoparts | US Spec Parts · Kenya Support | ' . $site,
             ];
             if (isset($special[$slug])) {
@@ -618,7 +618,7 @@ function sa_seo_faqs_for_current(): array
 function sa_seo_builtin_faqs(): array
 {
     $email = 'calvin@supremeautoparts.co.ke';
-    $wa    = '+254 714 498 451';
+    $wa    = '+1 917 437 5121';
 
     return [
         'how-to-order' => [
@@ -898,7 +898,7 @@ function sa_seo_seed_page_meta(): void
     $map = [
         'how-to-order' => [
             'title' => 'How to Order Auto Parts Online (US & Kenya) | Supreme Autoparts',
-            'desc'  => 'Step-by-step ordering: find fitment, checkout in USD, shipping options for the US and Kenya, and WhatsApp support at +254 714 498 451.',
+            'desc'  => 'Step-by-step ordering: find fitment, checkout in USD, shipping options for the US and Kenya, and WhatsApp support at +1 917 437 5121.',
         ],
         'shipping-to-kenya' => [
             'title' => 'Shipping Auto Parts to Kenya | Import & Delivery | Supreme Autoparts',
@@ -910,7 +910,7 @@ function sa_seo_seed_page_meta(): void
         ],
         'auto-parts-kenya' => [
             'title' => 'Buy Auto Parts in Kenya | Import US Spec Parts | Supreme Autoparts',
-            'desc'  => 'Order US-spec performance and aftermarket parts online with USD checkout and shipping to Kenya. Support: calvin@supremeautoparts.co.ke · +254 714 498 451.',
+            'desc'  => 'Order US-spec performance and aftermarket parts online with USD checkout and shipping to Kenya. Support: calvin@supremeautoparts.co.ke · +1 917 437 5121.',
         ],
         'performance-truck-parts' => [
             'title' => 'Performance Truck & Off-Road Parts | US Spec | Supreme Autoparts',

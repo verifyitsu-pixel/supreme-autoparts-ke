@@ -31,7 +31,7 @@ HTML,
 <p>Have a question about fitment, shipping to Kenya, or a special order? Reach out and our team will help.</p>
 <ul>
 <li><strong>Website:</strong> {$site}</li>
-<li><strong>WhatsApp / SMS:</strong> <a href="https://wa.me/254714498451">+254 714 498 451</a></li>
+<li><strong>WhatsApp / SMS:</strong> <a href="https://wa.me/19174375121">+1 917 437 5121</a></li>
 <li><strong>Email:</strong> <a href="mailto:{$email}">{$email}</a></li>
 <li><strong>Hours:</strong> Monday–Friday, business hours (Africa/Nairobi)</li>
 </ul>
@@ -162,7 +162,7 @@ HTML,
 <li><strong>Direct-ship items:</strong> Some products ship from suppliers. We will notify you if an item cannot ship promptly.</li>
 <li><strong>Inspect on arrival:</strong> Check parts before installation. Contact us if anything is wrong or damaged.</li>
 </ul>
-<p>Shipping questions: <a href="mailto:{$email}">{$email}</a> · WhatsApp <a href="https://wa.me/254714498451">+254 714 498 451</a>.</p>
+<p>Shipping questions: <a href="mailto:{$email}">{$email}</a> · WhatsApp <a href="https://wa.me/19174375121">+1 917 437 5121</a>.</p>
 HTML,
         ],
         'cookie-policy' => [
@@ -238,7 +238,7 @@ HTML,
 <li><a href="/auto-parts-kenya/"><strong>Auto parts Kenya</strong></a> — buy US-spec parts with Kenya support</li>
 <li><a href="/performance-truck-parts/"><strong>Performance truck &amp; off-road</strong></a> — suspension, brakes, wheels, lighting</li>
 </ul>
-<p>Need a human? WhatsApp <a href="https://wa.me/254714498451">+254 714 498 451</a> or email <a href="mailto:{$email}">{$email}</a>.</p>
+<p>Need a human? WhatsApp <a href="https://wa.me/19174375121">+1 917 437 5121</a> or email <a href="mailto:{$email}">{$email}</a>.</p>
 HTML,
         ],
         'how-to-order' => [
@@ -260,7 +260,7 @@ HTML,
 <h2>3. After you order</h2>
 <p>You will get email confirmation from <a href="mailto:{$email}">{$email}</a>. For fitment or delivery questions:</p>
 <ul>
-<li><strong>WhatsApp / SMS:</strong> <a href="https://wa.me/254714498451">+254 714 498 451</a></li>
+<li><strong>WhatsApp / SMS:</strong> <a href="https://wa.me/19174375121">+1 917 437 5121</a></li>
 <li><strong>Email:</strong> <a href="mailto:{$email}">{$email}</a></li>
 </ul>
 <p>Cannot find a listing? Use <a href="/enquire/">Can&rsquo;t find a part?</a> with vehicle details.</p>
@@ -283,7 +283,7 @@ HTML,
 <li><strong>Inspect on arrival:</strong> Check parts before installation; contact us immediately if the wrong item or damage shows up.</li>
 </ul>
 <h2>Duties &amp; import notes</h2>
-<p>Customs duties, VAT, or brokerage for Kenya imports are the buyer&rsquo;s responsibility unless we explicitly state otherwise on an order. Keep your invoice handy for clearance. Questions before you buy: WhatsApp <a href="https://wa.me/254714498451">+254 714 498 451</a>.</p>
+<p>Customs duties, VAT, or brokerage for Kenya imports are the buyer&rsquo;s responsibility unless we explicitly state otherwise on an order. Keep your invoice handy for clearance. Questions before you buy: WhatsApp <a href="https://wa.me/19174375121">+1 917 437 5121</a>.</p>
 <h2>US buyers</h2>
 <p>This page focuses on Kenya delivery. If you are ordering to a US address, select your shipping address at checkout — available methods appear there. Currency at payment remains <strong>USD</strong>.</p>
 <h2>Support</h2>
@@ -304,7 +304,7 @@ HTML,
 <h2>US-spec catalog</h2>
 <p>Many listings use year / make / model language from the brand's home market (often US or Japan). If your vehicle is a grey import in Kenya, compare VIN/trim carefully — or WhatsApp us with the plate/chassis details and we will help check fitment for Japan, US, UK, EV, and motorcycle platforms.</p>
 <h2>When to ask us</h2>
-<p>Send year, make, model, trim, and the part link (or SKU) to <a href="mailto:{$email}">{$email}</a> or WhatsApp <a href="https://wa.me/254714498451">+254 714 498 451</a>. For parts not listed, use <a href="/enquire/">Can&rsquo;t find a part?</a>.</p>
+<p>Send year, make, model, trim, and the part link (or SKU) to <a href="mailto:{$email}">{$email}</a> or WhatsApp <a href="https://wa.me/19174375121">+1 917 437 5121</a>. For parts not listed, use <a href="/enquire/">Can&rsquo;t find a part?</a>.</p>
 <p>Browse: <a href="/product-category/suspension/">Suspension</a> · <a href="/product-category/brakes/">Brakes</a> · <a href="/performance-truck-parts/">Performance truck parts</a>.</p>
 HTML,
         ],
@@ -316,7 +316,7 @@ HTML,
 <ul>
 <li>Catalog built around real performance brands and fitments common on trucks and SUVs.</li>
 <li>Secure USD payment; optional local currency display for readability.</li>
-<li>Kenya-aware shipping narrative and human support: <a href="https://wa.me/254714498451">+254 714 498 451</a> · <a href="mailto:{$email}">{$email}</a>.</li>
+<li>Kenya-aware shipping narrative and human support: <a href="https://wa.me/19174375121">+1 917 437 5121</a> · <a href="mailto:{$email}">{$email}</a>.</li>
 </ul>
 <h2>Popular starting points</h2>
 <ul>
@@ -344,7 +344,7 @@ HTML,
 <li><a href="/product-category/drivetrain/"><strong>Drivetrain</strong></a> · <a href="/product-category/exhaust/">Exhaust</a> · <a href="/product-category/exterior/">Exterior</a></li>
 </ul>
 <h2>US &amp; Kenya</h2>
-<p>Checkout is <strong>USD</strong>. US buyers select domestic shipping at checkout when available; Kenya buyers should review <a href="/shipping-to-kenya/">Shipping to Kenya</a>. Support: WhatsApp <a href="https://wa.me/254714498451">+254 714 498 451</a> · <a href="mailto:{$email}">{$email}</a>.</p>
+<p>Checkout is <strong>USD</strong>. US buyers select domestic shipping at checkout when available; Kenya buyers should review <a href="/shipping-to-kenya/">Shipping to Kenya</a>. Support: WhatsApp <a href="https://wa.me/19174375121">+1 917 437 5121</a> · <a href="mailto:{$email}">{$email}</a>.</p>
 <p>New here? Start with <a href="/how-to-order/">How to order</a> and the <a href="/fitment-guide/">Fitment guide</a>.</p>
 HTML,
         ],

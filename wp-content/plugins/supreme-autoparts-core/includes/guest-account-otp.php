@@ -488,7 +488,7 @@ function sa_core_email_guest_account_ready(WP_User $user, WC_Order $order): void
         'My Account: ' . $account_url,
         '',
         '— Supreme Autoparts',
-        'calvin@supremeautoparts.co.ke · WhatsApp +254 714 498 451',
+        'calvin@supremeautoparts.co.ke · WhatsApp +1 917 437 5121',
     ]);
 
     $ok = false;

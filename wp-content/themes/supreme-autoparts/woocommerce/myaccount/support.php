@@ -9,11 +9,11 @@ defined('ABSPATH') || exit;
 
 $email   = 'calvin@supremeautoparts.co.ke';
 $contact = function_exists('sa_enquire_contact') ? sa_enquire_contact() : [
-    'phone_display' => '+254 714 498 451',
-    'whatsapp'      => '254714498451',
+    'phone_display' => '+1 917 437 5121',
+    'whatsapp'      => '19174375121',
     'email'         => $email,
 ];
-$wa      = 'https://wa.me/' . preg_replace('/\D+/', '', (string) ($contact['whatsapp'] ?? '254714498451'));
+$wa      = 'https://wa.me/' . preg_replace('/\D+/', '', (string) ($contact['whatsapp'] ?? '19174375121'));
 $policies = [
     ['slug' => 'shipping-policy', 'label' => __('Shipping policy', 'supreme-autoparts')],
     ['slug' => 'refund-policy', 'label' => __('Refund policy', 'supreme-autoparts')],
@@ -43,7 +43,7 @@ $policies = [
       printf(
           /* translators: %s: phone display */
           esc_html__('WhatsApp %s', 'supreme-autoparts'),
-          esc_html($contact['phone_display'] ?? '+254 714 498 451')
+          esc_html($contact['phone_display'] ?? '+1 917 437 5121')
       );
       ?>
     </a>
@@ -57,7 +57,7 @@ $policies = [
         <li>
           <strong><?php esc_html_e('WhatsApp / SMS', 'supreme-autoparts'); ?></strong>
           <a href="<?php echo esc_url($wa); ?>" target="_blank" rel="noopener noreferrer">
-            <?php echo esc_html($contact['phone_display'] ?? '+254 714 498 451'); ?>
+            <?php echo esc_html($contact['phone_display'] ?? '+1 917 437 5121'); ?>
           </a>
         </li>
         <li>

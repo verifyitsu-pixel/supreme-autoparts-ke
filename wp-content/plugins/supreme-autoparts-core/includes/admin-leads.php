@@ -68,7 +68,8 @@ function sa_core_render_leads_page(): void
 
     $leads = sa_core_ultra_leads();
     $store = function_exists('sa_core_store_email') ? sa_core_store_email() : 'calvin@supremeautoparts.co.ke';
-    $wa = '254714498451';
+    $wa = function_exists('sa_enquire_contact') ? preg_replace('/\D+/', '', (string) (sa_enquire_contact()['whatsapp'] ?? '19174375121')) : '19174375121';
+    $wa = $wa !== '' ? $wa : '19174375121';
     ?>
     <div class="wrap sa-ultra">
       <div class="sa-ultra__header">
