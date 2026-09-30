@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
  * - Local pickup (Nairobi) .............. $0.00  (local_pickup, KE)
  * - International ....................... $25.00 (Rest of World flat_rate)
  */
-const SA_SHIPPING_ZONES_VER = '3';
+const SA_SHIPPING_ZONES_VER = '4';
 
 /**
  * Free-shipping minimum in store currency (USD).
@@ -66,11 +66,13 @@ function sa_core_ensure_shipping_zones(): void
     update_option('woocommerce_shipping_cost_requires_address', 'no');
     update_option('woocommerce_default_customer_address', 'geolocation_ajax');
 
+    sa_core_cleanup_everywhere_zones();
+
     $free_min   = sa_core_shipping_free_min();
     $free_title = sa_core_shipping_free_title($free_min);
 
     // --- United States (primary) ---
-    $us_zone = sa_core_find_or_create_zone('United States', [['country' => 'US']], 5);
+    $us_zone = sa_core_find_or_create_zone('United States', [['type' => 'country', 'code' => 'US']], 5);
     if ($us_zone) {
         sa_core_sync_zone_methods($us_zone, [
             [
@@ -104,7 +106,7 @@ function sa_core_ensure_shipping_zones(): void
     }
 
     // --- Kenya (honest KE rates; secondary) ---
-    $ke_zone = sa_core_find_or_create_zone('Kenya', [['country' => 'KE']], 10);
+    $ke_zone = sa_core_find_or_create_zone('Kenya', [['type' => 'country', 'code' => 'KE']], 20);
     if ($ke_zone) {
         sa_core_sync_zone_methods($ke_zone, [
             [
@@ -194,17 +196,75 @@ function sa_core_ensure_shipping_zones(): void
 }
 
 /**
- * @param array<int, array{country?:string,state?:string}> $locations
+ * Remove legacy "Everywhere" custom zones that shadow US/KE (zone 0 remains ROW).
+ */
+function sa_core_cleanup_everywhere_zones(): void
+{
+    if (!class_exists('WC_Shipping_Zones')) {
+        return;
+    }
+    foreach (WC_Shipping_Zones::get_zones() as $z) {
+        if (!is_array($z)) {
+            continue;
+        }
+        $zone_id = (int) ($z['id'] ?? $z['zone_id'] ?? 0);
+        if ($zone_id <= 0) {
+            continue;
+        }
+        $zone_name = strtolower(trim((string) ($z['zone_name'] ?? '')));
+        $locs = $z['zone_locations'] ?? [];
+        $empty_locs = !is_array($locs) || count($locs) === 0;
+        // Custom "Everywhere" / blank-location zones (not Rest of World id 0) steal matches.
+        if ($empty_locs && ($zone_name === 'everywhere' || $zone_name === 'locations not covered by your other zones')) {
+            $zone = WC_Shipping_Zones::get_zone($zone_id);
+            if ($zone instanceof WC_Shipping_Zone) {
+                $zone->delete();
+            }
+        }
+    }
+}
+
+/**
+ * @param array<int, array{type?:string,code?:string,country?:string,state?:string}> $locations
+ */
+function sa_core_normalize_zone_locations(array $locations): array
+{
+    $out = [];
+    foreach ($locations as $loc) {
+        if (!is_array($loc)) {
+            continue;
+        }
+        if (isset($loc['type'], $loc['code']) && is_string($loc['type']) && is_string($loc['code'])) {
+            $out[] = ['type' => $loc['type'], 'code' => $loc['code']];
+            continue;
+        }
+        // Legacy [['country' => 'US']] → WC format.
+        if (!empty($loc['country'])) {
+            $code = (string) $loc['country'];
+            if (!empty($loc['state'])) {
+                $out[] = ['type' => 'state', 'code' => $code . ':' . (string) $loc['state']];
+            } else {
+                $out[] = ['type' => 'country', 'code' => $code];
+            }
+        }
+    }
+    return $out;
+}
+
+/**
+ * @param array<int, array{type?:string,code?:string,country?:string,state?:string}> $locations
  */
 function sa_core_find_or_create_zone(string $name, array $locations, int $order = 0): ?WC_Shipping_Zone
 {
+    $locations = sa_core_normalize_zone_locations($locations);
+
     foreach (WC_Shipping_Zones::get_zones() as $z) {
         if (!is_array($z)) {
             continue;
         }
         $zone_name = (string) ($z['zone_name'] ?? '');
         if (strcasecmp($zone_name, $name) === 0) {
-            $zone = WC_Shipping_Zones::get_zone((int) $z['id']);
+            $zone = WC_Shipping_Zones::get_zone((int) ($z['id'] ?? $z['zone_id'] ?? 0));
             if ($zone instanceof WC_Shipping_Zone) {
                 $zone->set_zone_order($order);
                 $zone->set_locations($locations);

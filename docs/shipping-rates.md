@@ -1,7 +1,7 @@
 # Supreme Autoparts — shipping rates (USD)
 
 Configured by `sa_core_ensure_shipping_zones()` in `wp-content/plugins/supreme-autoparts-core/includes/shipping.php`  
-(version option: `sa_shipping_zones_ver`, current **3**).
+(version option: `sa_shipping_zones_ver`, current **4**).
 
 Checkout currency is **USD**. Totals recalculate when the customer changes address or shipping method.
 
