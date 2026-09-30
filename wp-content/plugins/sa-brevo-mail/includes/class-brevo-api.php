@@ -112,4 +112,17 @@ class SA_Brevo_API
     {
         return self::request('GET', '/contacts/lists?limit=' . max(1, min(50, $limit)) . '&offset=0');
     }
+
+    /**
+     * List email campaigns (read-only for Super Admin Marketing panel).
+     */
+    public static function get_email_campaigns(int $limit = 20, string $status = ''): array
+    {
+        $limit = max(1, min(100, $limit));
+        $qs = 'limit=' . $limit . '&offset=0&sort=desc';
+        if ($status !== '') {
+            $qs .= '&status=' . rawurlencode($status);
+        }
+        return self::request('GET', '/emailCampaigns?' . $qs);
+    }
 }

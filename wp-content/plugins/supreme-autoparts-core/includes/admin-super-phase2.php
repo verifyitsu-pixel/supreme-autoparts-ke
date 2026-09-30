@@ -7,8 +7,9 @@ if (!defined('ABSPATH')) {
 
 /**
  * Super Admin Phase 2 working surfaces: Orders, Customers, Payments, Shipping,
- * Products, Integrations, Settings, Content — real Woo data, no fake stubs.
- * Also dismisses Woo setup task list and dedupes sidebar menus.
+ * Products, Integrations, Settings, Content, Vendors (Phase 4 notice).
+ * Phase 3 Inventory/Discounts/Marketing/Analytics/Reviews/Admins/Notifications
+ * live in admin-super-phase3.php. Also dismisses Woo setup nag + dedupes menus.
  */
 
 /** Dismiss WooCommerce "Step X of 5" / setup task list nags (idempotent). */
@@ -547,148 +548,6 @@ function sa_core_super_render_content(): void
         echo '<a class="button" href="' . esc_url(get_permalink($p)) . '" target="_blank" rel="noopener">View</a></td></tr>';
     }
     echo '</tbody></table></div></div></div>';
-}
-
-function sa_core_super_render_inventory(): void
-{
-    if (!current_user_can('manage_woocommerce')) {
-        return;
-    }
-    $products = function_exists('wc_get_products') ? wc_get_products([
-        'limit' => 40,
-        'status' => 'publish',
-        'stock_status' => ['outofstock', 'onbackorder', 'instock'],
-        'orderby' => 'modified',
-        'order' => 'DESC',
-    ]) : [];
-    echo '<div class="wrap sa-ultra sa-super">';
-    sa_core_super_shell_header('Inventory', 'Stock snapshot — manage quantities in Woo product editor.');
-    echo '<p><a class="button button-primary" href="' . esc_url(admin_url('edit.php?post_type=product&orderby=stock&order=asc')) . '">Woo stock list</a></p>';
-    echo '<div class="sa-panel"><div class="sa-table-wrap"><table class="sa-table"><thead><tr><th>Product</th><th>SKU</th><th>Stock status</th><th>Qty</th></tr></thead><tbody>';
-    if (!$products) {
-        echo '<tr><td colspan="4" class="sa-muted">No products.</td></tr>';
-    } else {
-        foreach ($products as $p) {
-            if (!$p instanceof WC_Product) {
-                continue;
-            }
-            echo '<tr><td><a href="' . esc_url(get_edit_post_link($p->get_id())) . '">' . esc_html($p->get_name()) . '</a></td>';
-            echo '<td>' . esc_html($p->get_sku() ?: '—') . '</td>';
-            echo '<td>' . esc_html($p->get_stock_status()) . '</td>';
-            echo '<td>' . esc_html($p->managing_stock() ? (string) $p->get_stock_quantity() : '—') . '</td></tr>';
-        }
-    }
-    echo '</tbody></table></div></div></div>';
-}
-
-function sa_core_super_render_discounts(): void
-{
-    if (!current_user_can('manage_woocommerce')) {
-        return;
-    }
-    $coupons = get_posts(['post_type' => 'shop_coupon', 'numberposts' => 30, 'post_status' => 'any']);
-    echo '<div class="wrap sa-ultra sa-super">';
-    sa_core_super_shell_header('Discounts', 'WooCommerce coupons — create and edit in Woo.');
-    echo '<p><a class="button button-primary" href="' . esc_url(admin_url('edit.php?post_type=shop_coupon')) . '">All coupons</a> ';
-    echo '<a class="button" href="' . esc_url(admin_url('post-new.php?post_type=shop_coupon')) . '">Add coupon</a></p>';
-    echo '<div class="sa-panel"><div class="sa-table-wrap"><table class="sa-table"><thead><tr><th>Code</th><th>Status</th><th>Amount</th></tr></thead><tbody>';
-    if (!$coupons) {
-        echo '<tr><td colspan="3" class="sa-muted">No coupons yet.</td></tr>';
-    } else {
-        foreach ($coupons as $c) {
-            $amount = get_post_meta($c->ID, 'coupon_amount', true);
-            $type = get_post_meta($c->ID, 'discount_type', true);
-            echo '<tr><td><a href="' . esc_url(get_edit_post_link($c->ID)) . '"><code>' . esc_html($c->post_title) . '</code></a></td>';
-            echo '<td>' . esc_html($c->post_status) . '</td>';
-            echo '<td>' . esc_html((string) $amount . ' (' . (string) $type . ')') . '</td></tr>';
-        }
-    }
-    echo '</tbody></table></div></div></div>';
-}
-
-function sa_core_super_render_marketing(): void
-{
-    if (!current_user_can('manage_woocommerce')) {
-        return;
-    }
-    echo '<div class="wrap sa-ultra sa-super">';
-    sa_core_super_shell_header('Marketing', 'Brevo lists &amp; transactional — no fake campaign builder.');
-    echo '<div class="sa-panel"><ul class="sa-note-list">';
-    echo '<li><a href="' . esc_url(admin_url('admin.php?page=sa-brevo-settings')) . '">Brevo settings</a></li>';
-    echo '<li><a href="' . esc_url(admin_url('admin.php?page=supreme-leads')) . '">Enquire leads</a></li>';
-    echo '<li><a href="' . esc_url(admin_url('edit.php?post_type=shop_coupon')) . '">Coupons</a></li>';
-    echo '</ul><p class="sa-muted">Campaign automation lives in Brevo dashboard when API key is set.</p></div></div>';
-}
-
-function sa_core_super_render_analytics(): void
-{
-    if (!current_user_can('manage_woocommerce')) {
-        return;
-    }
-    $counts = sa_core_super_order_status_counts();
-    $rev = 0.0;
-    if (function_exists('wc_get_orders')) {
-        $done = wc_get_orders(['status' => ['processing', 'completed'], 'limit' => 100, 'return' => 'objects']);
-        foreach ($done as $o) {
-            if ($o instanceof WC_Order) {
-                $rev += (float) $o->get_total();
-            }
-        }
-    }
-    echo '<div class="wrap sa-ultra sa-super">';
-    sa_core_super_shell_header('Analytics', 'Quick totals from Woo (last 100 paid-ish orders for revenue sample) + Woo Analytics deep link.');
-    echo '<div class="sa-ultra__grid">';
-    echo '<div class="sa-panel"><p class="sa-muted">Processing</p><p style="font-size:1.75rem;margin:0;font-weight:700;">' . esc_html((string) $counts['processing']) . '</p></div>';
-    echo '<div class="sa-panel"><p class="sa-muted">Completed</p><p style="font-size:1.75rem;margin:0;font-weight:700;">' . esc_html((string) $counts['completed']) . '</p></div>';
-    echo '<div class="sa-panel"><p class="sa-muted">Sample revenue (≤100 orders)</p><p style="font-size:1.75rem;margin:0;font-weight:700;">$' . esc_html(number_format($rev, 2)) . '</p></div>';
-    echo '</div>';
-    echo '<p style="margin-top:16px;"><a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=wc-admin&path=/analytics/overview')) . '">Open Woo Analytics</a></p>';
-    echo '</div>';
-}
-
-function sa_core_super_render_reviews(): void
-{
-    if (!current_user_can('manage_woocommerce')) {
-        return;
-    }
-    echo '<div class="wrap sa-ultra sa-super">';
-    sa_core_super_shell_header('Reviews', 'Product reviews are WordPress comments on products.');
-    echo '<p><a class="button button-primary" href="' . esc_url(admin_url('edit-comments.php')) . '">Moderate comments / reviews</a></p></div>';
-}
-
-function sa_core_super_render_admins(): void
-{
-    if (!current_user_can('manage_options')) {
-        echo '<div class="wrap"><p>Administrator capability required.</p></div>';
-        return;
-    }
-    $admins = get_users(['role__in' => ['administrator', 'shop_manager'], 'number' => 50]);
-    echo '<div class="wrap sa-ultra sa-super">';
-    sa_core_super_shell_header('Admins & Roles', 'Staff accounts — manage in Users. Customers never get shop_manager.');
-    echo '<p><a class="button button-primary" href="' . esc_url(admin_url('users.php')) . '">All users</a> ';
-    echo '<a class="button" href="' . esc_url(admin_url('user-new.php')) . '">Add user</a></p>';
-    echo '<div class="sa-panel"><div class="sa-table-wrap"><table class="sa-table"><thead><tr><th>User</th><th>Email</th><th>Roles</th></tr></thead><tbody>';
-    foreach ($admins as $u) {
-        echo '<tr><td><a href="' . esc_url(get_edit_user_link($u->ID)) . '">' . esc_html($u->user_login) . '</a></td>';
-        echo '<td>' . esc_html($u->user_email) . '</td>';
-        echo '<td>' . esc_html(implode(', ', $u->roles)) . '</td></tr>';
-    }
-    echo '</tbody></table></div></div></div>';
-}
-
-function sa_core_super_render_notifications(): void
-{
-    if (!current_user_can('manage_woocommerce')) {
-        return;
-    }
-    echo '<div class="wrap sa-ultra sa-super">';
-    sa_core_super_shell_header('Notifications', 'Transactional email routing is live via Brevo. In-app push is not built yet.');
-    echo '<div class="sa-panel"><ul class="sa-note-list">';
-    echo '<li><a href="' . esc_url(admin_url('admin.php?page=wc-settings&tab=email')) . '">Woo email templates</a></li>';
-    echo '<li><a href="' . esc_url(admin_url('admin.php?page=sa-brevo-settings')) . '">Brevo API / SMTP</a></li>';
-    echo '<li>Store owner alerts → <code>' . esc_html(function_exists('sa_core_store_email') ? sa_core_store_email() : '') . '</code></li>';
-    echo '<li>Customer OTP + order mail → customer only (no admin BCC)</li>';
-    echo '</ul></div></div>';
 }
 
 function sa_core_super_render_vendors(): void

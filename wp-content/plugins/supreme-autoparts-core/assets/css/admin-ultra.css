@@ -461,3 +461,23 @@
   border-color: #b7e0c7;
   color: var(--sa-ok);
 }
+
+
+/* Phase 3 inventory quick update */
+.sa-inv-quick input[type="number"],
+.sa-inv-quick select {
+  font-size: 12px;
+  height: 28px;
+  margin: 0;
+}
+.sa-super-eyebrow {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sa-muted, #5c6570);
+}
+.sa-ultra .sa-kpi__value {
+  display: block;
+}
