@@ -208,14 +208,14 @@ function sa_seo_context(): array
     $img   = $brand['og_image'];
     $type  = 'website';
 
-    $default_desc = 'Performance auto parts & accessories for cars, trucks, and SUVs. US-spec and popular fitments, USD checkout, shipping to Kenya and beyond. Shop brakes, suspension, wheels, and more at Supreme Autoparts.';
+    $default_desc = 'Auto parts for Japanese, US & UK cars, electric vehicles, and motorcycles. USD checkout, shipping to Kenya and beyond. Shop brakes, suspension, wheels, and more at Supreme Autoparts.';
 
     $title = $site;
     $desc  = $default_desc;
 
     if (is_front_page() || is_home()) {
         $title = 'Auto Parts & Accessories | Cars, Trucks, SUVs — US Spec · Ship to Kenya | ' . $site;
-        $desc  = 'Shop performance and aftermarket auto parts online. US-spec fitments for trucks and off-road builds, USD checkout via secure payments, WhatsApp support in Kenya (+254). Free shipping on qualifying orders.';
+        $desc  = 'Shop aftermarket parts for Japan, US & UK cars, EVs, and motorcycles. USD checkout, WhatsApp support in Kenya (+254). Free shipping on qualifying orders.';
     } elseif (function_exists('is_product') && is_product()) {
         $product = function_exists('wc_get_product') ? wc_get_product(get_the_ID()) : null;
         $name    = get_the_title();
@@ -471,7 +471,7 @@ function sa_seo_print_json_ld(array $ctx, array $brand, string $url): void
             'url'   => $brand['logo'],
         ],
         'areaServed'  => $brand['area_served'],
-        'description' => 'Online auto parts store for performance and aftermarket parts. US-spec fitments for cars, trucks, and SUVs; USD checkout; shipping and support for Kenya and international buyers.',
+        'description' => 'Kenya auto parts store for Japanese, American, and British vehicles — plus EVs and motorcycles. USD checkout; shipping and WhatsApp support.',
     ];
     if (!empty($brand['same_as'])) {
         $org['sameAs'] = $brand['same_as'];

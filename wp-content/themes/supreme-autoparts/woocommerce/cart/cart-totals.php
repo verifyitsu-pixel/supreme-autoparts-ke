@@ -116,7 +116,7 @@ $needs_shipping = WC()->cart && WC()->cart->needs_shipping() && WC()->cart->show
   <ul class="sa-cart-perks" aria-label="<?php esc_attr_e('Checkout benefits', 'supreme-autoparts'); ?>">
     <li><?php esc_html_e('Secure card checkout', 'supreme-autoparts'); ?></li>
     <li><?php esc_html_e('Order tracking by email', 'supreme-autoparts'); ?></li>
-    <li><?php esc_html_e('Kenya &amp; international shipping', 'supreme-autoparts'); ?></li>
+    <li><?php esc_html_e('Kenya rates at checkout · Japan/US/UK/EV/bike coverage', 'supreme-autoparts'); ?></li>
   </ul>
 
   <div class="sa-cart-sticky-bar" data-sa-cart-sticky>

@@ -1,12 +1,19 @@
 <?php
 /**
- * Review order table — sticky summary.
+ * Review order table — sticky summary with qty steppers.
  *
  * @package Supreme_Autoparts
- * @version 1.3.0
+ * @version 1.4.43
  */
 
 defined('ABSPATH') || exit;
+
+$sa_currency = function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : 'USD';
+$sa_total_label = sprintf(
+    /* translators: %s: currency code e.g. USD */
+    __('Total (%s)', 'supreme-autoparts'),
+    $sa_currency
+);
 ?>
 <table class="shop_table woocommerce-checkout-review-order-table sa-checkout-review-table">
   <thead>
@@ -22,8 +29,11 @@ defined('ABSPATH') || exit;
     foreach (WC()->cart->get_cart() as $cart_item_key => $cart_item) {
         $_product = apply_filters('woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key);
         if ($_product && $_product->exists() && $cart_item['quantity'] > 0 && apply_filters('woocommerce_checkout_cart_item_visible', true, $cart_item, $cart_item_key)) {
+            $sold_individually = $_product->is_sold_individually();
+            $min_qty = $sold_individually ? 1 : 0;
+            $max_qty = $sold_individually ? 1 : $_product->get_max_purchase_quantity();
             ?>
-            <tr class="<?php echo esc_attr(apply_filters('woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key)); ?>">
+            <tr class="<?php echo esc_attr(apply_filters('woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key)); ?>" data-sa-checkout-item="<?php echo esc_attr($cart_item_key); ?>">
               <td class="product-name">
                 <div class="sa-checkout-line">
                   <?php
@@ -46,9 +56,29 @@ defined('ABSPATH') || exit;
                   echo $thumb_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                   ?>
                   <div class="sa-checkout-line__meta">
-                    <?php echo wp_kses_post(apply_filters('woocommerce_cart_item_name', $_product->get_name(), $cart_item, $cart_item_key)) . '&nbsp;'; ?>
-                    <?php echo apply_filters('woocommerce_checkout_cart_item_quantity', ' <strong class="product-quantity">' . sprintf('&times;&nbsp;%s', $cart_item['quantity']) . '</strong>', $cart_item, $cart_item_key); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                    <?php echo wp_kses_post(apply_filters('woocommerce_cart_item_name', $_product->get_name(), $cart_item, $cart_item_key)); ?>
                     <?php echo wc_get_formatted_cart_item_data($cart_item); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                    <?php if (!$sold_individually) : ?>
+                      <div class="sa-qty sa-qty--checkout" data-sa-qty data-sa-checkout-qty="<?php echo esc_attr($cart_item_key); ?>">
+                        <button type="button" class="sa-qty__btn" data-sa-qty-minus aria-label="<?php esc_attr_e('Decrease quantity', 'supreme-autoparts'); ?>">−</button>
+                        <label class="screen-reader-text" for="sa-co-qty-<?php echo esc_attr($cart_item_key); ?>"><?php esc_html_e('Quantity', 'supreme-autoparts'); ?></label>
+                        <input
+                          type="number"
+                          id="sa-co-qty-<?php echo esc_attr($cart_item_key); ?>"
+                          class="input-text qty text"
+                          name="sa_checkout_qty[<?php echo esc_attr($cart_item_key); ?>]"
+                          value="<?php echo esc_attr((string) $cart_item['quantity']); ?>"
+                          min="<?php echo esc_attr((string) $min_qty); ?>"
+                          <?php if ($max_qty > 0) : ?>max="<?php echo esc_attr((string) $max_qty); ?>"<?php endif; ?>
+                          step="1"
+                          inputmode="numeric"
+                          data-sa-checkout-qty-input
+                        />
+                        <button type="button" class="sa-qty__btn" data-sa-qty-plus aria-label="<?php esc_attr_e('Increase quantity', 'supreme-autoparts'); ?>">+</button>
+                      </div>
+                    <?php else : ?>
+                      <strong class="product-quantity">&times;&nbsp;<?php echo esc_html((string) $cart_item['quantity']); ?></strong>
+                    <?php endif; ?>
                   </div>
                 </div>
               </td>
@@ -108,7 +138,7 @@ defined('ABSPATH') || exit;
     <?php do_action('woocommerce_review_order_before_order_total'); ?>
 
     <tr class="order-total">
-      <th><?php esc_html_e('Total (USD)', 'supreme-autoparts'); ?></th>
+      <th><?php echo esc_html($sa_total_label); ?></th>
       <td><?php wc_cart_totals_order_total_html(); ?></td>
     </tr>
 

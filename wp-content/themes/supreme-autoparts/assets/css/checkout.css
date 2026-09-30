@@ -1141,3 +1141,28 @@
   .sa-checkout-sticky-pay { display: none !important; }
   .sa-checkout-section--payment-mobile { display: none; }
 }
+
+/* Checkout order-summary qty steppers */
+.sa-qty--checkout {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+.sa-qty--checkout .qty {
+  width: 2.75rem;
+  text-align: center;
+  background: var(--sa-bg-elevated, #1C1C1F);
+  border: 1px solid var(--sa-border, #2A2A2E);
+  color: var(--sa-heading, #F4F4F5);
+  border-radius: 4px;
+  padding: 0.25rem 0.15rem;
+  font-size: 0.9rem;
+}
+html.sa-checkout-qty-busy .sa-checkout-review-table {
+  opacity: 0.55;
+  pointer-events: none;
+}
+.sa-checkout-line__meta .sa-qty--checkout {
+  max-width: 100%;
+}

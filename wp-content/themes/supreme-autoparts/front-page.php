@@ -14,9 +14,9 @@ $sa_count = function_exists('sa_published_product_count') ? sa_published_product
   <div class="sa-container sa-hero__inner">
     <div class="sa-hero__copy">
       <p class="sa-hero__eyebrow"><?php esc_html_e('Supreme Autoparts · Kenya', 'supreme-autoparts'); ?></p>
-      <h1 id="sa-hero-title"><?php esc_html_e('US-spec parts for cars, trucks & SUVs', 'supreme-autoparts'); ?></h1>
+      <h1 id="sa-hero-title"><?php esc_html_e('Parts for Japan, US & UK cars — plus EVs and bikes', 'supreme-autoparts'); ?></h1>
       <p class="sa-hero__lead">
-        <?php esc_html_e('Aftermarket performance and replacement parts — ship to Kenya and beyond. Search by part, brand, or category. Checkout in USD.', 'supreme-autoparts'); ?>
+        <?php esc_html_e('Aftermarket and replacement parts for Japanese, American, and British vehicles, electric cars, and motorcycles. Ship to Kenya and beyond. Search by part, brand, or category. Checkout in USD.', 'supreme-autoparts'); ?>
       </p>
 
       <form class="sa-hero__search" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>">
@@ -102,8 +102,8 @@ $sa_count = function_exists('sa_published_product_count') ? sa_published_product
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/><path d="M9 4.5 12 3l3 1.5"/></svg>
         </span>
         <div>
-          <strong><?php esc_html_e('Fitment help', 'supreme-autoparts'); ?></strong>
-          <span><?php esc_html_e('Year / make / model — ask before you buy', 'supreme-autoparts'); ?></span>
+          <strong><?php esc_html_e('Japan · US · UK · EV · bike', 'supreme-autoparts'); ?></strong>
+          <span><?php esc_html_e('Cars from Japan, the US & UK, plus EVs and motorcycle parts.', 'supreme-autoparts'); ?></span>
         </div>
       </li>
     </ul>
@@ -243,7 +243,7 @@ endif;
   <div class="sa-container sa-blurb__inner">
     <h2 id="sa-about-title"><?php esc_html_e('Built for builders in Kenya', 'supreme-autoparts'); ?></h2>
     <p>
-      <?php esc_html_e('We stock US-spec aftermarket and performance parts — brakes, suspension, intake, exhaust, lighting, wheels, and more. Whether you drive a daily or a weekend truck, pick the fitment that matches your vehicle and check out when you are ready.', 'supreme-autoparts'); ?>
+      <?php esc_html_e('We stock aftermarket and performance parts for Japanese, American, and British cars and trucks — plus electric vehicles and motorcycles. Brakes, suspension, intake, exhaust, lighting, wheels, and more. Pick the fitment that matches your ride and check out when you are ready.', 'supreme-autoparts'); ?>
     </p>
     <p class="sa-blurb__actions">
       <a class="sa-btn sa-btn--outline" href="<?php echo esc_url(sa_page_url('shipping-to-kenya')); ?>"><?php esc_html_e('Shipping to Kenya', 'supreme-autoparts'); ?></a>
@@ -265,7 +265,7 @@ endif;
       </a>
       <a class="sa-guides-strip__card" href="<?php echo esc_url(sa_page_url('fitment-guide')); ?>">
         <strong><?php esc_html_e('Fitment guide', 'supreme-autoparts'); ?></strong>
-        <span><?php esc_html_e('Year / make / model checks for US-spec trucks and SUVs.', 'supreme-autoparts'); ?></span>
+        <span><?php esc_html_e('Year / make / model checks for Japan, US & UK cars, EVs, and bikes.', 'supreme-autoparts'); ?></span>
       </a>
       <a class="sa-guides-strip__card" href="<?php echo esc_url(sa_page_url('shipping-to-kenya')); ?>">
         <strong><?php esc_html_e('Shipping to Kenya', 'supreme-autoparts'); ?></strong>

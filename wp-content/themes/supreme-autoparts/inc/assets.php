@@ -42,12 +42,14 @@ add_action('wp_enqueue_scripts', static function (): void {
     wp_localize_script('supreme-autoparts', 'saTheme', [
         'ajaxUrl' => admin_url('admin-ajax.php'),
         'cartUrl' => function_exists('wc_get_cart_url') ? wc_get_cart_url() : '',
+        'checkoutQtyNonce' => wp_create_nonce('sa_checkout_qty'),
         'i18n'    => [
             'cart'               => __('Cart', 'supreme-autoparts'),
             'termsRequired'      => __('Please accept the store policies to place your order.', 'supreme-autoparts'),
             'loading'            => __('Loading…', 'supreme-autoparts'),
             'processing'         => __('Processing…', 'supreme-autoparts'),
             'processingPayment'  => __('Processing payment…', 'supreme-autoparts'),
+            'qtyUpdateFailed'    => __('Could not update quantity. Please try again.', 'supreme-autoparts'),
         ],
     ]);
 

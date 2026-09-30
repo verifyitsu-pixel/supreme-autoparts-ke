@@ -3,7 +3,7 @@
  * Checkout form — multi-section contact / shipping / payment + sticky summary.
  *
  * @package Supreme_Autoparts
- * @version 1.4.40
+ * @version 1.4.43
  */
 
 defined('ABSPATH') || exit;
@@ -24,7 +24,7 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
     <p class="sa-checkout-hero__eyebrow"><?php esc_html_e('Secure checkout', 'supreme-autoparts'); ?></p>
     <h1 class="sa-checkout-hero__title"><?php esc_html_e('Checkout', 'supreme-autoparts'); ?></h1>
     <p class="sa-checkout-hero__lead">
-      <?php esc_html_e('Enter your details, then pay by card. Charged in USD.', 'supreme-autoparts'); ?>
+      <?php esc_html_e('Enter your details, then pay by card. Charged in USD. Parts for Japan, US & UK cars, EVs, and motorcycles.', 'supreme-autoparts'); ?>
     </p>
     <ol class="sa-checkout-steps" aria-label="<?php esc_attr_e('Checkout steps', 'supreme-autoparts'); ?>" data-sa-checkout-steps>
       <li class="sa-checkout-steps__item is-active" data-sa-step="contact"><span>1</span> <?php esc_html_e('Contact', 'supreme-autoparts'); ?></li>
@@ -97,7 +97,13 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
 
     <div class="sa-checkout-sticky-pay" data-sa-checkout-sticky hidden>
       <div class="sa-checkout-sticky-pay__total">
-        <small><?php esc_html_e('Total (USD)', 'supreme-autoparts'); ?></small>
+        <small><?php
+          printf(
+              /* translators: %s: currency code */
+              esc_html__('Total (%s)', 'supreme-autoparts'),
+              esc_html(function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : 'USD')
+          );
+        ?></small>
         <strong data-sa-checkout-sticky-total><?php echo wp_kses_post(WC()->cart ? WC()->cart->get_total() : ''); ?></strong>
       </div>
       <button type="button" class="button alt sa-btn sa-checkout-sticky-pay__btn" data-sa-checkout-sticky-pay>

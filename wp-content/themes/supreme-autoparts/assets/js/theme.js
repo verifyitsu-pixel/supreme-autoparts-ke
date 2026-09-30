@@ -75,14 +75,63 @@
       if (typeof btn.click === 'function') btn.click();
     }, 350);
   }
+
+  function saCheckoutQtyUpdate(cartKey, qty) {
+    var cfg = window.saTheme || {};
+    var url = cfg.ajaxUrl || '/wp-admin/admin-ajax.php';
+    var body = new FormData();
+    body.append('action', 'sa_checkout_update_qty');
+    body.append('nonce', cfg.checkoutQtyNonce || '');
+    body.append('cart_key', cartKey);
+    body.append('qty', String(qty));
+    document.documentElement.classList.add('sa-checkout-qty-busy');
+    return fetch(url, { method: 'POST', body: body, credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (json) {
+        document.documentElement.classList.remove('sa-checkout-qty-busy');
+        if (!json || !json.success) {
+          var msg = (json && json.data && json.data.message) || (cfg.i18n && cfg.i18n.qtyUpdateFailed) || 'Update failed';
+          if (window.console) console.warn('[sa] checkout qty', msg);
+          return;
+        }
+        if (json.data && json.data.empty && json.data.redirect) {
+          window.location.href = json.data.redirect;
+          return;
+        }
+        if (window.jQuery) {
+          jQuery(document.body).trigger('update_checkout');
+        }
+      })
+      .catch(function () {
+        document.documentElement.classList.remove('sa-checkout-qty-busy');
+      });
+  }
+
+  function saScheduleCheckoutQty(wrap) {
+    var key = wrap.getAttribute('data-sa-checkout-qty');
+    var input = wrap.querySelector('input.qty');
+    if (!key || !input) return;
+    clearTimeout(wrap.__saQtyT);
+    wrap.__saQtyT = setTimeout(function () {
+      var q = parseFloat(input.value);
+      if (isNaN(q)) q = 1;
+      saCheckoutQtyUpdate(key, q);
+    }, 280);
+  }
+
   function bindQty(root) {
     (root || document).querySelectorAll('[data-sa-qty]').forEach(function (wrap) {
       if (wrap.dataset.saQtyBound) return;
       wrap.dataset.saQtyBound = '1';
       var input = wrap.querySelector('input.qty');
       if (!input) return;
+      var isCheckout = !!wrap.getAttribute('data-sa-checkout-qty');
       var minus = wrap.querySelector('[data-sa-qty-minus]');
       var plus = wrap.querySelector('[data-sa-qty-plus]');
+      function afterChange() {
+        if (isCheckout) saScheduleCheckoutQty(wrap);
+        else saScheduleCartUpdate();
+      }
       if (minus) {
         minus.addEventListener('click', function () {
           var v = parseFloat(input.value) || 0;
@@ -90,7 +139,7 @@
           if (isNaN(min)) min = 0;
           input.value = Math.max(min, v - 1);
           input.dispatchEvent(new Event('change', { bubbles: true }));
-          saScheduleCartUpdate();
+          afterChange();
         });
       }
       if (plus) {
@@ -101,14 +150,19 @@
           if (!isNaN(max) && max > 0) next = Math.min(max, next);
           input.value = next;
           input.dispatchEvent(new Event('change', { bubbles: true }));
-          saScheduleCartUpdate();
+          afterChange();
+        });
+      }
+      if (isCheckout) {
+        input.addEventListener('change', function () {
+          saScheduleCheckoutQty(wrap);
         });
       }
     });
   }
   bindQty(document);
   if (window.jQuery) {
-    jQuery(document.body).on('updated_cart_totals updated_wc_div', function () {
+    jQuery(document.body).on('updated_cart_totals updated_wc_div updated_checkout', function () {
       bindQty(document);
     });
   }

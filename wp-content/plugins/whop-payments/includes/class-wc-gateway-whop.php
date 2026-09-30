@@ -238,11 +238,13 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
 
         $client = $this->client();
         $return = Whop_Webhook::return_url($order);
-        $line   = sprintf(
+        $order_num = (string) $order->get_order_number();
+        $plan_title = Whop_Api_Client::default_order_plan_title($order_num);
+        $line = sprintf(
             /* translators: 1: store name 2: order number */
             __('%1$s order #%2$s', 'whop-payments'),
             wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES),
-            $order->get_order_number()
+            $order_num
         );
 
         $result = $client->create_checkout_configuration([
@@ -250,6 +252,8 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
             'currency'       => $currency,
             'order_id'       => $order->get_id(),
             'order_key'      => $order->get_order_key(),
+            'title'          => $plan_title,
+            'product_title'  => $plan_title,
             'description'    => $line,
             'redirect_url'   => $return,
             'customer_email' => $order->get_billing_email(),

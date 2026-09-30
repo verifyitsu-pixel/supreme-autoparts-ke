@@ -19,8 +19,8 @@ function sa_core_page_definitions(): array
         'about-us' => [
             'title'   => 'About Us',
             'content' => <<<HTML
-<p>Welcome to <strong>Supreme Autoparts</strong>, your destination for performance parts and accessories for cars, trucks, and SUVs. We serve buyers in the <strong>United States</strong> and <strong>Kenya</strong> with US-spec fitments, USD checkout, and responsive support.</p>
-<p>Supreme Autoparts is built by enthusiasts for enthusiasts. We aim to supply parts for popular American, European, and Asian vehicles — especially trucks and SUVs. If you are searching for something specific that is not listed online, please contact us — odds are we can help source it.</p>
+<p>Welcome to <strong>Supreme Autoparts</strong> — a Kenya-based shop for aftermarket and performance parts. We cover <strong>Japanese, American, and British</strong> cars and trucks, plus <strong>electric vehicles</strong> and <strong>motorcycles</strong>. Checkout is in USD; support is local on WhatsApp and email.</p>
+<p>Whether you drive a JDM daily, a US truck, a UK import, an EV, or a bike, we aim to help you find the right part. If something is not listed online, contact us — odds are we can source it.</p>
 <p>Thanks for reading. We look forward to getting quality parts to you soon.</p>
 <p><em>{$site}</em> · <a href="mailto:{$email}">{$email}</a></p>
 HTML,
@@ -152,14 +152,17 @@ HTML,
         'shipping-policy' => [
             'title'   => 'Shipping Policy',
             'content' => <<<HTML
-<p>Supreme Autoparts ships using carriers available at checkout. Delivery times and rates depend on your destination within Kenya (and any international zones we enable).</p>
+<p>Supreme Autoparts ships using the methods shown at checkout. Rates are in <strong>USD</strong> (same as checkout). Choose the option that matches your address — totals update when you change method or address.</p>
 <ul>
-<li><strong>Free shipping:</strong> May apply to qualifying orders over the configured threshold — see <a href="/free-shipping/">Free Shipping Details</a>. Exclusions for oversized, heavy, or direct-ship items may apply.</li>
-<li><strong>Direct-ship items:</strong> Some products ship from suppliers. Stock is not guaranteed until the order is placed; we will notify you if an item cannot ship promptly.</li>
-<li><strong>Inspect on arrival:</strong> Check parts for accuracy before installation. Contact us immediately if boxes are mislabeled or contents are wrong.</li>
-<li><strong>Insurance:</strong> Shipping prices may not include optional insurance unless stated at checkout.</li>
+<li><strong>Nairobi Delivery:</strong> $8 flat within Nairobi metro.</li>
+<li><strong>Upcountry Kenya:</strong> $15 flat for destinations outside Nairobi.</li>
+<li><strong>Free shipping:</strong> $0 when your cart subtotal meets the threshold (usually $99+) — see <a href="/free-shipping/">Free Shipping Details</a>. Oversized, heavy, or direct-ship items may be excluded.</li>
+<li><strong>Local pickup (Nairobi):</strong> Free — arrange collection with support after you order.</li>
+<li><strong>International:</strong> $25 flat for destinations outside Kenya (free over the same threshold when eligible).</li>
+<li><strong>Direct-ship items:</strong> Some products ship from suppliers. We will notify you if an item cannot ship promptly.</li>
+<li><strong>Inspect on arrival:</strong> Check parts before installation. Contact us if anything is wrong or damaged.</li>
 </ul>
-<p>Shipping questions: <a href="mailto:{$email}">{$email}</a>.</p>
+<p>Shipping questions: <a href="mailto:{$email}">{$email}</a> · WhatsApp <a href="https://wa.me/254714498451">+254 714 498 451</a>.</p>
 HTML,
         ],
         'cookie-policy' => [
@@ -251,7 +254,7 @@ HTML,
 <h2>2. Add to cart &amp; check out</h2>
 <ul>
 <li>Prices are charged in <strong>USD</strong> at payment. Geo display may show a local estimate for convenience.</li>
-<li>Checkout as a guest or create a <a href="/my-account/">My Account</a> login to track orders and invoices.</li>
+<li>Checkout as a guest (no login required to pay) or create a <a href="/my-account/">My Account</a>. After a guest order we link an account to your email — next visit, use <strong>Email me a login code</strong> on My Account.</li>
 <li>Review shipping lines before paying — free shipping may apply above the banner threshold (see <a href="/free-shipping/">Free Shipping Details</a>).</li>
 </ul>
 <h2>3. After you order</h2>
@@ -275,7 +278,8 @@ HTML,
 <h2>What to expect</h2>
 <ul>
 <li><strong>Rates at checkout:</strong> Carrier options and totals depend on weight, dimensions, and destination. Always use the live checkout figure.</li>
-<li><strong>Free shipping:</strong> Qualifying carts over the USD threshold in the site banner (often ~$99 equivalent) may ship complimentary — oversized, heavy, or supplier-direct items can be excluded. Details: <a href="/free-shipping/">Free Shipping</a> and <a href="/shipping-policy/">Shipping Policy</a>.</li>
+<li><strong>Checkout rates (USD):</strong> Nairobi Delivery $8 · Upcountry Kenya $15 · Local pickup (Nairobi) free · Free shipping when your cart meets the banner threshold (often ~$99) · International $25. Totals update when you change address or method.</li>
+<li><strong>Free shipping:</strong> Qualifying carts over the threshold may ship complimentary — oversized, heavy, or supplier-direct items can be excluded. Details: <a href="/free-shipping/">Free Shipping</a> and <a href="/shipping-policy/">Shipping Policy</a>.</li>
 <li><strong>Inspect on arrival:</strong> Check parts before installation; contact us immediately if the wrong item or damage shows up.</li>
 </ul>
 <h2>Duties &amp; import notes</h2>
@@ -289,7 +293,7 @@ HTML,
         'fitment-guide' => [
             'title'   => 'Fitment Guide',
             'content' => <<<HTML
-<p>Wrong fitment is the #1 return driver. Spend two minutes here before you click buy — whether you are building a truck in the <strong>US</strong> or running an import platform in <strong>Kenya</strong>.</p>
+<p>Wrong fitment is the #1 return driver. Spend two minutes here before you click buy — whether you run a <strong>Japanese</strong>, <strong>US</strong>, or <strong>UK</strong> car, an <strong>EV</strong>, a motorcycle, or a truck/SUV in <strong>Kenya</strong>.</p>
 <h2>Match these fields</h2>
 <ol>
 <li><strong>Year</strong> — cab/chassis changes mid-generation; do not assume “close enough.”</li>
@@ -298,7 +302,7 @@ HTML,
 <li><strong>Engine / powertrain</strong> — exhaust, intake, and some drivetrain parts are engine-specific.</li>
 </ol>
 <h2>US-spec catalog</h2>
-<p>Most listings follow North American fitment language (years and models as sold in the US). That is intentional: popular performance brands publish US applications first. If your vehicle is a grey import in Kenya, compare VIN/trim to the US twin carefully or ask us.</p>
+<p>Many listings use year / make / model language from the brand's home market (often US or Japan). If your vehicle is a grey import in Kenya, compare VIN/trim carefully — or WhatsApp us with the plate/chassis details and we will help check fitment for Japan, US, UK, EV, and motorcycle platforms.</p>
 <h2>When to ask us</h2>
 <p>Send year, make, model, trim, and the part link (or SKU) to <a href="mailto:{$email}">{$email}</a> or WhatsApp <a href="https://wa.me/254714498451">+254 714 498 451</a>. For parts not listed, use <a href="/enquire/">Can&rsquo;t find a part?</a>.</p>
 <p>Browse: <a href="/product-category/suspension/">Suspension</a> · <a href="/product-category/brakes/">Brakes</a> · <a href="/performance-truck-parts/">Performance truck parts</a>.</p>

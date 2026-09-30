@@ -47,6 +47,36 @@ final class Whop_Api_Client {
         return $this->sandbox ? 'https://sandbox.whop.com' : 'https://whop.com';
     }
 
+
+    /**
+     * Whop dynamic plan/product titles reject values over 30 characters.
+     * Prefer a short order label; fall back to mb-safe truncate.
+     */
+    public static function sanitize_plan_title(string $title, int $max = 30): string {
+        $title = trim(preg_replace('/\s+/u', ' ', wp_strip_all_tags($title)) ?? '');
+        if ($title === '') {
+            return 'SA Order';
+        }
+        if (function_exists('mb_strlen') && function_exists('mb_substr')) {
+            if (mb_strlen($title) <= $max) {
+                return $title;
+            }
+            return rtrim(mb_substr($title, 0, $max));
+        }
+        if (strlen($title) <= $max) {
+            return $title;
+        }
+        return rtrim(substr($title, 0, $max));
+    }
+
+    /**
+     * Short default plan title for Woo orders (always ≤30).
+     */
+    public static function default_order_plan_title(string $order_id): string {
+        $id = preg_replace('/[^0-9A-Za-z\-]/', '', $order_id) ?: $order_id;
+        return self::sanitize_plan_title('SA Order #' . $id, 30);
+    }
+
     /**
      * Create a checkout configuration with an inline one-time plan for the cart total.
      *
@@ -68,21 +98,15 @@ final class Whop_Api_Client {
 
         $plan_title = (string) ($args['title'] ?? '');
         if ($plan_title === '') {
-            $plan_title = sprintf(
-                /* translators: %s: order number */
-                __('Order #%s — Supreme Autoparts', 'whop-payments'),
-                $order_id
-            );
+            $plan_title = self::default_order_plan_title($order_id);
         }
+        $plan_title = self::sanitize_plan_title($plan_title, 30);
 
         $product_title = (string) ($args['product_title'] ?? '');
         if ($product_title === '') {
-            $product_title = sprintf(
-                /* translators: %s: order number */
-                __('WooCommerce Order #%s', 'whop-payments'),
-                $order_id
-            );
+            $product_title = self::default_order_plan_title($order_id);
         }
+        $product_title = self::sanitize_plan_title($product_title, 30);
 
         $external_id = (string) ($args['product_external_id'] ?? '');
         if ($external_id === '') {
@@ -255,6 +279,7 @@ final class Whop_Api_Client {
         $title = (string) ($args['title'] ?? ($method === 'bank'
             ? __('Add bank', 'whop-payments')
             : __('Add card', 'whop-payments')));
+        $title = self::sanitize_plan_title($title, 30);
 
         // Separate PMC: card-only OR bank-only — never combine in one embed.
         // Bank uses Whop us_bank_account (routing/account). No Plaid Link dependency on our side.

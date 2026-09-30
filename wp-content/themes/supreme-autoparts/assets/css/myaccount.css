@@ -1578,3 +1578,48 @@ body.woocommerce-account .sa-my-account {
 .sa-pm-embed__verify[hidden] {
   display: none !important;
 }
+
+/* OTP login (returning guests) */
+.sa-otp-block {
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--sa-border, #2A2A2E);
+  border-radius: var(--sa-radius-lg, 10px);
+  background: var(--sa-bg-card, #161618);
+}
+.sa-otp-block__title {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  color: var(--sa-heading, #F4F4F5);
+}
+.sa-otp-block__hint {
+  margin: 0 0 0.9rem;
+  color: var(--sa-text-muted, #8A8A90);
+  font-size: 0.9rem;
+}
+.sa-otp-code {
+  letter-spacing: 0.28em;
+  font-size: 1.25rem !important;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  text-align: center;
+  max-width: 12rem;
+}
+.sa-otp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.sa-otp-back { margin-top: 0.5rem; font-size: 0.9rem; }
+.sa-password-login {
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--sa-border, #2A2A2E);
+  padding-top: 0.85rem;
+}
+.sa-password-login > summary {
+  cursor: pointer;
+  color: var(--sa-accent, #F5A623);
+  font-weight: 600;
+  list-style: none;
+}
+.sa-password-login > summary::-webkit-details-marker { display: none; }
+.sa-password-login[open] > summary { margin-bottom: 0.85rem; }

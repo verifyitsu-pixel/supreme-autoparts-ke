@@ -68,7 +68,7 @@ if ($sa_total <= 0 && isset($GLOBALS['wp_query']) && $GLOBALS['wp_query'] instan
       <?php do_action('woocommerce_archive_description'); ?>
     </div>
     <?php if ($sa_is_shop) : ?>
-      <p class="sa-archive-header__hint"><?php esc_html_e('US-spec fitments · USD checkout · shipping to Kenya', 'supreme-autoparts'); ?></p>
+      <p class="sa-archive-header__hint"><?php esc_html_e('Japan · US · UK · EV · motorcycle · USD checkout · shipping to Kenya', 'supreme-autoparts'); ?></p>
     <?php endif; ?>
   </div>
 </header>

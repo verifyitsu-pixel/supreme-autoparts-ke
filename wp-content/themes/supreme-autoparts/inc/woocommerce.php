@@ -225,3 +225,51 @@ add_filter('the_posts', static function (array $posts, $query) {
     return $out;
 }, 20, 2);
 
+
+/**
+ * Checkout order-summary qty update (AJAX) — refreshes review + shipping totals.
+ */
+function sa_theme_checkout_update_qty(): void
+{
+    if (!check_ajax_referer('sa_checkout_qty', 'nonce', false)) {
+        wp_send_json_error(['message' => 'Invalid nonce'], 403);
+    }
+    if (!function_exists('WC') || !WC()->cart) {
+        wp_send_json_error(['message' => 'Cart unavailable'], 400);
+    }
+
+    $key = isset($_POST['cart_key']) ? wc_clean(wp_unslash((string) $_POST['cart_key'])) : '';
+    $qty = isset($_POST['qty']) ? (float) wp_unslash($_POST['qty']) : -1;
+    if ($key === '' || $qty < 0) {
+        wp_send_json_error(['message' => 'Missing cart key or quantity'], 400);
+    }
+
+    $cart = WC()->cart->get_cart();
+    if (!isset($cart[$key])) {
+        wp_send_json_error(['message' => 'Item not in cart'], 404);
+    }
+
+    $qty = (int) floor($qty);
+    if ($qty <= 0) {
+        WC()->cart->remove_cart_item($key);
+    } else {
+        WC()->cart->set_quantity($key, $qty, true);
+    }
+
+    WC()->cart->calculate_totals();
+
+    if (WC()->cart->is_empty()) {
+        wp_send_json_success([
+            'empty'    => true,
+            'redirect' => wc_get_cart_url(),
+        ]);
+    }
+
+    wp_send_json_success([
+        'empty' => false,
+        'count' => (int) WC()->cart->get_cart_contents_count(),
+        'total' => wp_strip_all_tags(WC()->cart->get_cart_total()),
+    ]);
+}
+add_action('wp_ajax_sa_checkout_update_qty', 'sa_theme_checkout_update_qty');
+add_action('wp_ajax_nopriv_sa_checkout_update_qty', 'sa_theme_checkout_update_qty');
