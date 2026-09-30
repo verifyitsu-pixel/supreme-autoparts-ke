@@ -303,6 +303,61 @@ class SA_Core_CLI_Command
         }
     }
 
+    /**
+     * Import historical external gateway transactions (JSON from XLSX/PDF exports).
+     *
+     * Successful / positive → Woo completed orders (Card imported).
+     * Failed / Initiated / refunds → sa_imported_gateway_txs ledger.
+     * Dedupes by payment reference / gateway id. Brands as Supreme Autoparts.
+     *
+     * ## OPTIONS
+     * --file=<path>
+     * : Path to normalized-gateway-txs.json
+     * [--dry-run]
+     * : Report only
+     * [--limit=<n>]
+     * : Max transactions to process
+     *
+     * ## EXAMPLES
+     *     wp supreme import-gateway-txs --file=/tmp/normalized-gateway-txs.json
+     *     wp supreme import-gateway-txs --file=/tmp/normalized-gateway-txs.json --dry-run
+     *
+     * @param array $args
+     * @param array $assoc_args
+     */
+    public function import_gateway_txs(array $args, array $assoc_args): void
+    {
+        if (!function_exists('sa_core_import_gateway_txs_file')) {
+            require_once SA_CORE_DIR . 'includes/import-gateway-txs.php';
+        }
+        $file = (string) ($assoc_args['file'] ?? '');
+        if ($file === '') {
+            WP_CLI::error('Missing --file=<path> to normalized JSON.');
+        }
+        $result = sa_core_import_gateway_txs_file($file, [
+            'dry_run' => isset($assoc_args['dry-run']),
+            'limit'   => isset($assoc_args['limit']) ? (int) $assoc_args['limit'] : 0,
+        ]);
+        if (empty($result['ok']) && ($result['created'] ?? 0) === 0 && ($result['ledger'] ?? 0) === 0 && ($result['skipped_dup'] ?? 0) === 0) {
+            WP_CLI::error($result['message'] ?? 'Import failed');
+        }
+        WP_CLI::success(sprintf(
+            'Gateway import%s: created=%d skipped_dup=%d ledger=%d errors=%d',
+            !empty($assoc_args['dry-run']) ? ' (dry-run)' : '',
+            (int) $result['created'],
+            (int) $result['skipped_dup'],
+            (int) $result['ledger'],
+            (int) $result['errors']
+        ));
+        if (!empty($result['sample_order_ids'])) {
+            WP_CLI::log('Sample order IDs: ' . implode(', ', array_map('strval', $result['sample_order_ids'])));
+        }
+        if (!empty($result['counts'])) {
+            WP_CLI::log('Source counts: ' . wp_json_encode($result['counts']));
+        }
+    }
+
+
 }
 
 WP_CLI::add_command('supreme', 'SA_Core_CLI_Command');

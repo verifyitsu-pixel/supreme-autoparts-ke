@@ -858,6 +858,9 @@ function sa_core_super_render_payments(): void
             $gateways_list[$id] = $gw->get_method_title() ?: $id;
         }
     }
+    $gateways_list['sa_imported_gateway'] = 'Card (imported)';
+
+    $imported_filter = ($pay_method === 'sa_imported_gateway' || $pay_method === 'imported');
 
     $args = [
         'limit'   => 30,
@@ -869,8 +872,12 @@ function sa_core_super_render_payments(): void
     } else {
         $args['status'] = ['pending', 'on-hold', 'processing', 'completed', 'failed', 'cancelled', 'refunded'];
     }
-    if ($pay_method !== '') {
+    if ($pay_method !== '' && !$imported_filter) {
         $args['payment_method'] = $pay_method;
+    }
+    if ($imported_filter) {
+        $args['payment_method'] = 'sa_imported_gateway';
+        $args['limit'] = 50;
     }
     if ($q !== '') {
         $args['s'] = $q;
@@ -885,7 +892,7 @@ function sa_core_super_render_payments(): void
     echo '<div class="wrap sa-ultra sa-super">';
     sa_core_super_shell_header(
         'Payments',
-        'Whop status, create shareable /pay links, invoice + order pay URLs, filters. Guest checkout stays on.'
+        'Whop status, create shareable /pay links, invoice + order pay URLs, Imported gateway ledger. Guest checkout stays on.'
     );
     if ($flash['notice'] !== '') {
         echo '<div class="sa-inline-notice sa-inline-notice--' . esc_attr($flash['type']) . '">' . esc_html($flash['notice']) . '</div>';
@@ -980,6 +987,55 @@ function sa_core_super_render_payments(): void
             echo '<a class="button" href="' . esc_url($order->get_edit_order_url()) . '">Edit</a> ';
             if (in_array($st, ['processing', 'completed', 'on-hold'], true)) {
                 echo '<a class="button" href="' . esc_url($order->get_edit_order_url() . '#woocommerce-order-items') . '">Refunds</a>';
+            }
+            echo '</td></tr>';
+        }
+    }
+    echo '</tbody></table></div></div>';
+
+    // Imported gateway ledger (Failed / Initiated / refunds + order index)
+    if (!function_exists('sa_core_imported_gateway_ledger_rows')) {
+        $ledger_path = dirname(__FILE__) . '/import-gateway-txs.php';
+        if (is_readable($ledger_path)) {
+            require_once $ledger_path;
+        }
+    }
+    $ledger_kind = $imported_filter ? '' : 'ledger';
+    $ledger_rows = function_exists('sa_core_imported_gateway_ledger_rows')
+        ? sa_core_imported_gateway_ledger_rows(['limit' => 80, 'kind' => $imported_filter ? '' : 'ledger', 's' => $q, 'status' => ''])
+        : [];
+    $ledger_meta = get_option('sa_imported_gateway_txs_meta', []);
+    echo '<div class="sa-panel"><h2 class="sa-panel__title">Imported gateway ledger</h2>';
+    echo '<p class="sa-muted">Historical card exports stored as Supreme Autoparts. Successful → Woo orders (method Card imported). Failed / Initiated / refunds stay ledger-only. Filter method = Card (imported) to focus order table.</p>';
+    if (is_array($ledger_meta) && !empty($ledger_meta['last_run'])) {
+        $lr = $ledger_meta['last_run'];
+        echo '<p class="sa-muted">Last import: created ' . esc_html((string) ($lr['created'] ?? 0))
+            . ', skipped ' . esc_html((string) ($lr['skipped_dup'] ?? 0))
+            . ', ledger ' . esc_html((string) ($lr['ledger'] ?? 0))
+            . ', errors ' . esc_html((string) ($lr['errors'] ?? 0)) . '</p>';
+    }
+    echo '<div class="sa-table-wrap"><table class="sa-table"><thead><tr>';
+    echo '<th>When</th><th>Status</th><th>Customer</th><th>Amount</th><th>Ref</th><th>Kind</th><th>Order</th>';
+    echo '</tr></thead><tbody>';
+    if (!$ledger_rows) {
+        echo '<tr><td colspan="7" class="sa-muted">No imported ledger rows yet.</td></tr>';
+    } else {
+        foreach ($ledger_rows as $row) {
+            $amt = (float) ($row['amount'] ?? 0);
+            $cur = (string) ($row['currency'] ?? '');
+            $oid = (int) ($row['woo_order_id'] ?? 0);
+            echo '<tr>';
+            echo '<td>' . esc_html((string) ($row['date_created'] ?? '')) . '</td>';
+            echo '<td>' . esc_html((string) ($row['status'] ?? '')) . '</td>';
+            echo '<td>' . esc_html(trim(((string) ($row['customer_name'] ?? '')) . ' ' . ((string) ($row['customer_email'] ?? '')))) . '</td>';
+            echo '<td>' . esc_html($cur . ' ' . number_format($amt, 2)) . '</td>';
+            echo '<td><code>' . esc_html((string) ($row['payment_reference'] ?: ($row['order_reference'] ?? ''))) . '</code></td>';
+            echo '<td>' . esc_html((string) ($row['ledger_kind'] ?? 'ledger')) . '</td>';
+            echo '<td>';
+            if ($oid > 0) {
+                echo '<a href="' . esc_url(admin_url('post.php?post=' . $oid . '&action=edit')) . '">#' . esc_html((string) $oid) . '</a>';
+            } else {
+                echo '—';
             }
             echo '</td></tr>';
         }
