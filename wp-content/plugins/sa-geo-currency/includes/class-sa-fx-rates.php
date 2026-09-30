@@ -158,11 +158,33 @@ final class SA_FX_Rates
         return is_finite($out) && $out >= 0 ? $out : null;
     }
 
+
+    /**
+     * Convert a local-currency amount back to USD using the same cached rate table.
+     * Used if a display total must be rebased before Whop (orders normally already USD).
+     */
+    public static function convert_local_to_usd(float $local, string $currency): ?float
+    {
+        if (!is_finite($local) || $local < 0) {
+            return null;
+        }
+        $currency = strtoupper(trim($currency));
+        if ($currency === '' || $currency === 'USD') {
+            return round($local, self::decimals_for('USD'));
+        }
+        $rate = self::rate_for($currency);
+        if ($rate === null || !is_finite($rate) || $rate <= 0) {
+            return null;
+        }
+        $out = round($local / $rate, self::decimals_for('USD'));
+        return is_finite($out) && $out >= 0 ? $out : null;
+    }
+
     public static function decimals_for(string $currency): int
     {
         $currency = strtoupper($currency);
         // Zero-decimal currencies
-        if (in_array($currency, ['JPY', 'KRW', 'UGX', 'RWF', 'VND', 'CLP'], true)) {
+        if (in_array($currency, ['JPY', 'KRW', 'UGX', 'RWF', 'VND', 'CLP', 'ISK', 'PYG', 'XAF', 'XOF', 'XPF', 'KMF', 'DJF', 'GNF', 'VUV', 'BIF'], true)) {
             return 0;
         }
         return 2;

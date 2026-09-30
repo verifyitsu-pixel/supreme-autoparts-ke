@@ -71,14 +71,17 @@ Health check: `GET /healthz.php` → `ok`.
 
 ## Geo currency display
 
-Plugin `sa-geo-currency` keeps WooCommerce **order currency = USD** (Whop expects USD amounts) and converts **display** prices from visitor geo:
+Plugin `sa-geo-currency` is our **worldwide** WCPBC equivalent (do **not** install WCPBC). WooCommerce **order currency = USD**; Whop API always receives **`usd`**; storefront **display** converts via geo FX for ~250 countries.
 
 1. Country from Cloudflare `CF-IPCountry` (preferred), else free IP geo API, sticky cookie `sa_geo_cc`.
-2. Country → currency map (KE→KES, US→USD, …); unknown → USD.
-3. FX from `SA_FX_API_URL` or `https://open.er-api.com/v6/latest/USD`, cached in a WordPress transient (~8h). Fallback display = USD if geo/rates fail.
-4. Shop / PDP / cart show converted amounts + note **“Charged in USD at checkout”**. Order totals remain USD.
+2. Country → currency map worldwide (KE→KES, GB→GBP, DE→EUR, …); unknown / rest-of-world → USD.
+3. FX from `SA_FX_API_URL` or `https://open.er-api.com/v6/latest/USD`, cached ~8h. Missing rate → USD display.
+4. Shop / PDP / cart show converted amounts + note **“Charged in USD at checkout”**. Order totals + Whop settlement remain USD.
+5. Order meta: `_sa_display_currency`, `_sa_display_total`, `_sa_charged_usd`. Woo default customer location = geolocate (ajax).
 
 Set `SA_GEO_CURRENCY=1`, `SA_CHECKOUT_CURRENCY=USD`, `WOO_CURRENCY=USD` on Railway.
+
+Full QA + Adaptive Pricing path: **[docs/geo-currency-whop-usd.md](docs/geo-currency-whop-usd.md)**.
 
 If catalog prices look like Shopify USD × ~130 (legacy KES import), run `wp supreme repair-prices` (or wait for the one-shot boot repair). Base catalog stays USD; geo only changes display.
 
@@ -96,7 +99,7 @@ Step-by-step: **[docs/cloudflare.md](docs/cloudflare.md)**. Cache rule sketch: [
 Dockerfile                 # wordpress:php8.3-apache + theme/plugin bake-in
 railway.json               # DOCKERFILE builder + /healthz.php
 docker-compose.yml         # local wordpress + mysql
-wordpress-entrypoint.sh    # DB wait, WP install, Woo, theme, KES, Nairobi
+wordpress-entrypoint.sh    # DB wait, WP install, Woo, theme, USD, Nairobi
 .env.example
 healthz.php
 data/

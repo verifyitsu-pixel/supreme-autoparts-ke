@@ -303,6 +303,7 @@ final class Whop_Open_Pay {
         $result = $client->create_checkout_configuration([
             'amount'              => $amount,
             'currency'            => 'usd',
+            'adaptive_pricing_enabled' => true,
             'order_id'            => $order_id,
             'order_key'           => $order_key,
             'title'               => Whop_Api_Client::default_order_plan_title((string) $order->get_order_number()),

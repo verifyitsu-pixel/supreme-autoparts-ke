@@ -222,8 +222,10 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
             return ['result' => 'failure'];
         }
 
-        $amount   = (float) $order->get_total();
-        $currency = strtolower($order->get_currency() ?: get_woocommerce_currency());
+        // Whop always charges/settles in USD (plan currency). Store base is USD;
+        // sa-geo-currency only converts display — rebase if order currency ever drifts.
+        $charge = self::resolve_usd_charge($order);
+        $amount = (float) $charge['amount_usd'];
 
         if ($amount <= 0) {
             $order->payment_complete();
@@ -249,7 +251,7 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
 
         $result = $client->create_checkout_configuration([
             'amount'         => $amount,
-            'currency'       => $currency,
+            'currency'       => 'usd',
             'order_id'       => $order->get_id(),
             'order_key'      => $order->get_order_key(),
             'title'          => $plan_title,
@@ -258,6 +260,13 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
             'redirect_url'   => $return,
             'customer_email' => $order->get_billing_email(),
             'customer_name'  => trim($order->get_formatted_billing_full_name()),
+            'adaptive_pricing_enabled' => true,
+            'metadata'       => [
+                'charged_usd'       => (string) $amount,
+                'display_currency'  => (string) $charge['display_currency'],
+                'display_total'     => (string) $charge['display_total'],
+                'order_currency'    => 'USD',
+            ],
         ]);
 
         if (empty($result['success'])) {
@@ -267,11 +276,36 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
             return ['result' => 'failure'];
         }
 
+        $order->set_currency('USD');
         $order->update_meta_data('_whop_checkout_id', (string) $result['checkout_id']);
         $order->update_meta_data('_whop_plan_id', (string) ($result['plan_id'] ?? ''));
         $order->update_meta_data('_whop_purchase_url', (string) $result['purchase_url']);
+        $order->update_meta_data('_sa_charged_usd', (string) $amount);
+        $order->update_meta_data('_sa_display_currency', (string) $charge['display_currency']);
+        $order->update_meta_data('_sa_display_total', (string) $charge['display_total']);
+        $order->update_meta_data('_whop_currency_sent', 'usd');
+        $order->add_order_note(sprintf(
+            /* translators: 1: USD amount 2: display currency 3: display total */
+            __('Whop checkout created: charge %1$s USD (display %2$s %3$s).', 'whop-payments'),
+            (string) $amount,
+            (string) $charge['display_currency'],
+            (string) $charge['display_total']
+        ));
         $order->update_status('pending', __('Awaiting Whop payment.', 'whop-payments'));
         $order->save();
+
+        if (function_exists('wc_get_logger')) {
+            wc_get_logger()->info(
+                sprintf(
+                    'Whop USD charge order=%d amount_usd=%s display=%s %s',
+                    $order->get_id(),
+                    (string) $amount,
+                    (string) $charge['display_currency'],
+                    (string) $charge['display_total']
+                ),
+                ['source' => 'whop-payments']
+            );
+        }
 
         WC()->cart->empty_cart();
 

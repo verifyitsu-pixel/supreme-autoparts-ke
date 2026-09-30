@@ -224,6 +224,10 @@ echo "whop_enabled\n";
   fi
 
   wp_as option update woocommerce_currency "${SA_CHECKOUT_CURRENCY:-$WOO_CURRENCY}" || true
+  # Default customer location = Geolocate (with page caching support).
+  wp_as option update woocommerce_default_customer_address "geolocation_ajax" || true
+  # Ensure store base currency stays USD for Whop (sa-geo-currency display is separate).
+  echo "[supreme] Store currency=$(wp_as option get woocommerce_currency 2>/dev/null || echo ?) customer_address=geolocation_ajax SA_GEO_CURRENCY=${SA_GEO_CURRENCY:-1}"
 
   # One-shot: fix catalog amounts stored as Shopify USD × SUPREME_USD_TO_KES after USD switch.
   REPAIR_DONE="$(wp_as option get sa_price_usd_repair_v1 2>/dev/null || true)"

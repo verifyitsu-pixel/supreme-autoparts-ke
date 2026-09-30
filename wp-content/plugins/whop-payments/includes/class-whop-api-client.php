@@ -91,7 +91,9 @@ final class Whop_Api_Client {
             ];
         }
 
-        $currency = strtolower((string) ($args['currency'] ?? 'usd'));
+        // Hard-force USD settlement currency (Whop API expects lowercase ISO).
+        // Display / Adaptive Pricing may show local currency to the buyer; plan base stays usd.
+        $currency = 'usd';
         $amount   = round((float) $args['amount'], 2);
         $order_id = (string) $args['order_id'];
         $source   = (string) ($args['source'] ?? 'supreme-autoparts-woocommerce');
@@ -114,9 +116,11 @@ final class Whop_Api_Client {
         }
 
         $metadata = [
-            'order_id'  => $order_id,
-            'order_key' => (string) ($args['order_key'] ?? ''),
-            'source'    => $source,
+            'order_id'     => $order_id,
+            'order_key'    => (string) ($args['order_key'] ?? ''),
+            'source'       => $source,
+            'amount_usd'   => (string) $amount,
+            'currency'     => 'usd',
         ];
         if (!empty($args['note'])) {
             $metadata['note'] = (string) $args['note'];
@@ -133,13 +137,15 @@ final class Whop_Api_Client {
             'metadata'     => $metadata,
             'plan'         => [
                 'company_id'            => $this->company_id,
-                'currency'              => $currency,
+                'currency'              => 'usd',
                 'initial_price'         => $amount,
                 'plan_type'             => 'one_time',
                 'title'                 => $plan_title,
                 'description'           => (string) ($args['description'] ?? ''),
                 'visibility'            => 'hidden',
                 'force_create_new_plan' => true,
+                // Buyer may see local currency; settlement currency remains usd.
+                'adaptive_pricing_enabled' => !empty($args['adaptive_pricing_enabled']),
                 'product'               => [
                     'external_identifier'   => $external_id,
                     'title'                 => $product_title,
@@ -148,6 +154,25 @@ final class Whop_Api_Client {
                 ],
             ],
         ];
+
+        /**
+         * Filter checkout configuration body before POST (currency must remain usd).
+         *
+         * @param array<string,mixed> $body
+         * @param array<string,mixed> $args
+         */
+        $body = apply_filters('whop_payments_checkout_configuration_body', $body, $args);
+        if (!is_array($body)) {
+            $body = [];
+        }
+        // Re-assert USD after filters — never allow non-USD settlement currency.
+        if (isset($body['plan']) && is_array($body['plan'])) {
+            $body['plan']['currency'] = 'usd';
+            $body['plan']['initial_price'] = round((float) ($body['plan']['initial_price'] ?? $amount), 2);
+        }
+        if (isset($body['currency'])) {
+            $body['currency'] = 'usd';
+        }
 
         $response = $this->request('POST', '/checkout_configurations', $body);
 

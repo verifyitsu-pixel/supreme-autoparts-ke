@@ -50,7 +50,8 @@ function sa_core_ensure_shipping_zones(): void
     update_option('woocommerce_ship_to_destinations', 'billing');
     update_option('woocommerce_enable_shipping_calc', 'yes');
     update_option('woocommerce_shipping_cost_requires_address', 'no');
-    update_option('woocommerce_default_customer_address', 'base');
+    // Geolocate (with page caching support) — sa-geo-currency also uses CF-IPCountry.
+    update_option('woocommerce_default_customer_address', 'geolocation_ajax');
 
     $free_min = sa_core_shipping_free_min();
 
