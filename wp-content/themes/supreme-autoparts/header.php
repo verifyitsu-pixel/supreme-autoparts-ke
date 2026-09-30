@@ -100,7 +100,7 @@ if (!defined('ABSPATH')) {
 
     <form class="sa-search" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>">
       <label class="screen-reader-text" for="sa-search-field"><?php esc_html_e('Search products', 'supreme-autoparts'); ?></label>
-      <input type="search" id="sa-search-field" name="s" placeholder="<?php esc_attr_e('Search car parts & accessories…', 'supreme-autoparts'); ?>" value="<?php echo esc_attr(get_search_query()); ?>">
+      <input type="search" id="sa-search-field" name="s" placeholder="<?php esc_attr_e('Part number, brand, or keyword…', 'supreme-autoparts'); ?>" value="<?php echo esc_attr(get_search_query()); ?>">
       <input type="hidden" name="post_type" value="product">
       <button type="submit" aria-label="<?php esc_attr_e('Search', 'supreme-autoparts'); ?>">
         <?php echo sa_category_icon_svg('search'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
@@ -126,7 +126,7 @@ if (!defined('ABSPATH')) {
   <div class="sa-header__search-mobile sa-container">
     <form class="sa-search sa-search--mobile" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>">
       <label class="screen-reader-text" for="sa-search-field-mobile"><?php esc_html_e('Search products', 'supreme-autoparts'); ?></label>
-      <input type="search" id="sa-search-field-mobile" name="s" placeholder="<?php esc_attr_e('Search car parts & accessories…', 'supreme-autoparts'); ?>" value="<?php echo esc_attr(get_search_query()); ?>">
+      <input type="search" id="sa-search-field-mobile" name="s" placeholder="<?php esc_attr_e('Part number, brand, or keyword…', 'supreme-autoparts'); ?>" value="<?php echo esc_attr(get_search_query()); ?>">
       <input type="hidden" name="post_type" value="product">
       <button type="submit" aria-label="<?php esc_attr_e('Search', 'supreme-autoparts'); ?>">
         <?php echo sa_category_icon_svg('search'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>

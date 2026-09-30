@@ -68,11 +68,13 @@ if ($sa_total <= 0 && isset($GLOBALS['wp_query']) && $GLOBALS['wp_query'] instan
       <?php do_action('woocommerce_archive_description'); ?>
     </div>
     <?php if ($sa_is_shop) : ?>
-      <p class="sa-archive-header__hint"><?php esc_html_e('Japan · US · UK · EV · motorcycle · USD checkout · shipping to Kenya', 'supreme-autoparts'); ?></p>
+      <p class="sa-archive-header__hint"><?php esc_html_e('Search by part number first · brand · make / model · USD checkout', 'supreme-autoparts'); ?></p>
     <?php endif; ?>
   </div>
 </header>
 <?php
+get_template_part('template-parts/catalog', 'filters');
+
 if (woocommerce_product_loop()) {
     do_action('woocommerce_before_shop_loop');
     woocommerce_product_loop_start();

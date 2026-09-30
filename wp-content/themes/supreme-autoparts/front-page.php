@@ -25,7 +25,7 @@ $sa_count = function_exists('sa_published_product_count') ? sa_published_product
           type="search"
           id="sa-hero-search"
           name="s"
-          placeholder="<?php esc_attr_e('Search brakes, shocks, filters, brands…', 'supreme-autoparts'); ?>"
+          placeholder="<?php esc_attr_e('Part number, brand, make, or keyword…', 'supreme-autoparts'); ?>"
           value="<?php echo esc_attr(get_search_query()); ?>"
           autocomplete="off"
         />

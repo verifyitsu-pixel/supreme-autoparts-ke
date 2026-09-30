@@ -1,20 +1,51 @@
 <?php
+/**
+ * Product-first search results.
+ *
+ * @package Supreme_Autoparts
+ */
+
 declare(strict_types=1);
+
 get_header();
+
+$sa_total = isset($GLOBALS['wp_query']) && $GLOBALS['wp_query'] instanceof WP_Query
+    ? (int) $GLOBALS['wp_query']->found_posts
+    : 0;
+$q = get_search_query();
 ?>
-<main id="primary" class="sa-main sa-page">
+<main id="primary" class="sa-main sa-page sa-search-results">
   <div class="sa-container">
-    <header class="sa-archive-header">
+    <header class="sa-archive-header sa-archive-header--shop">
+      <p class="sa-archive-header__eyebrow"><?php esc_html_e('Search', 'supreme-autoparts'); ?></p>
       <h1>
         <?php
-        printf(
-            /* translators: %s: search query */
-            esc_html__('Search results for: %s', 'supreme-autoparts'),
-            esc_html(get_search_query())
-        );
+        if ($q !== '') {
+            printf(
+                /* translators: %s: search query */
+                esc_html__('Results for “%s”', 'supreme-autoparts'),
+                esc_html($q)
+            );
+        } else {
+            esc_html_e('Search parts', 'supreme-autoparts');
+        }
         ?>
       </h1>
+      <?php if ($sa_total > 0) : ?>
+        <p class="sa-archive-header__count">
+          <?php
+          printf(
+              esc_html(_n('%s part', '%s parts', $sa_total, 'supreme-autoparts')),
+              esc_html(number_format_i18n($sa_total))
+          );
+          ?>
+        </p>
+      <?php endif; ?>
+      <p class="sa-archive-header__hint"><?php esc_html_e('Part numbers match first, then brand and title.', 'supreme-autoparts'); ?></p>
     </header>
+
+    <?php get_template_part('template-parts/catalog', 'filters'); ?>
+
     <?php if (have_posts()) : ?>
       <?php if (function_exists('woocommerce_product_loop_start')) : ?>
         <?php woocommerce_product_loop_start(); ?>
@@ -39,9 +70,7 @@ get_header();
       <?php endif; ?>
       <?php the_posts_pagination(); ?>
     <?php else : ?>
-      <div class="sa-page__content">
-        <p><?php esc_html_e('No parts matched your search. Try another keyword or browse categories.', 'supreme-autoparts'); ?></p>
-      </div>
+      <?php get_template_part('template-parts/catalog', 'empty'); ?>
     <?php endif; ?>
   </div>
 </main>

@@ -45,6 +45,12 @@ if (function_exists('sa_product_image_attrs')) {
     <?php endif; ?>
   </div>
   <div class="sa-product-card__body">
+    <?php
+    $sa_sku = $product->get_sku();
+    if (is_string($sa_sku) && $sa_sku !== '') :
+        ?>
+      <p class="sa-product-card__sku"><span class="sa-product-card__sku-label"><?php esc_html_e('Part #', 'supreme-autoparts'); ?></span> <?php echo esc_html($sa_sku); ?></p>
+    <?php endif; ?>
     <h2 class="woocommerce-loop-product__title sa-product-card__title">
       <a href="<?php echo esc_url($permalink); ?>"><?php echo esc_html($name); ?></a>
     </h2>

@@ -2433,3 +2433,177 @@ body.woocommerce-checkout .sa-page__content {
 @media (min-width: 961px) {
   .sa-hero__copy { max-width: 44rem; }
 }
+
+/* ——— Catalog filters (part number first) ——— */
+.sa-filters {
+  margin: 0 0 1.5rem;
+  padding: 1rem 1.1rem 1.15rem;
+  background: var(--sa-bg-card);
+  border: 1px solid var(--sa-border);
+  border-radius: 14px;
+}
+.sa-filters__form { margin: 0; }
+.sa-filters__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 0.85rem;
+  align-items: end;
+}
+.sa-filters__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.sa-filters__label {
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--sa-text-muted);
+}
+.sa-filters__field input,
+.sa-filters__field select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--sa-border-strong);
+  background: var(--sa-bg);
+  color: var(--sa-heading);
+  font: inherit;
+  font-size: 0.95rem;
+}
+.sa-filters__field input::placeholder { color: var(--sa-text-muted); opacity: 0.85; }
+.sa-filters__field input:focus,
+.sa-filters__field select:focus {
+  outline: none;
+  border-color: var(--sa-accent);
+  box-shadow: 0 0 0 2px rgba(245, 166, 35, 0.22);
+}
+.sa-filters__field--pn input {
+  border-color: rgba(245, 166, 35, 0.45);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.sa-filters__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+  margin-top: 0.15rem;
+}
+.sa-filters__submit {
+  min-height: 44px;
+  padding: 0.65rem 1.15rem;
+}
+.sa-filters__clear {
+  color: var(--sa-accent);
+  font-weight: 600;
+  font-size: 0.92rem;
+  text-decoration: none;
+}
+.sa-filters__clear:hover { color: var(--sa-accent-hover); text-decoration: underline; }
+.sa-filters__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--sa-border);
+}
+.sa-filters__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(245, 166, 35, 0.12);
+  border: 1px solid rgba(245, 166, 35, 0.35);
+  color: var(--sa-heading);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.sa-filters__count {
+  margin-left: auto;
+  color: var(--sa-text-muted);
+  font-size: 0.85rem;
+  font-weight: 550;
+}
+@media (min-width: 720px) {
+  .sa-filters__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .sa-filters__field--year { max-width: 8rem; }
+}
+@media (min-width: 1100px) {
+  .sa-filters__grid {
+    grid-template-columns: 1.15fr 1fr 1fr 0.9fr 1fr 0.7fr auto;
+  }
+  .sa-filters__actions {
+    grid-column: auto;
+    flex-direction: column;
+    align-items: stretch;
+    margin-top: 0;
+  }
+  .sa-filters__clear { text-align: center; }
+}
+
+/* Product card SKU */
+.sa-product-card__sku {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  color: var(--sa-accent);
+  font-variant-numeric: tabular-nums;
+}
+.sa-product-card__sku-label {
+  color: var(--sa-text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.68rem;
+}
+
+/* Empty filter state */
+.sa-empty--filters {
+  text-align: center;
+  padding: 2.5rem 1.25rem 2rem;
+  background: var(--sa-bg-card);
+  border: 1px dashed var(--sa-border-strong);
+  border-radius: 16px;
+  margin: 0.5rem 0 1.5rem;
+}
+.sa-empty__icon {
+  font-size: 2rem;
+  color: var(--sa-accent);
+  margin-bottom: 0.5rem;
+  opacity: 0.85;
+}
+.sa-empty__title {
+  margin: 0 0 0.5rem;
+  color: var(--sa-heading);
+  font-size: 1.35rem;
+}
+.sa-empty__text {
+  margin: 0 auto 1.25rem;
+  max-width: 36rem;
+  color: var(--sa-text-muted);
+  line-height: 1.55;
+}
+.sa-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+.sa-empty__enquire { margin-top: 1.75rem; text-align: left; }
+
+.sa-search-results .products {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
