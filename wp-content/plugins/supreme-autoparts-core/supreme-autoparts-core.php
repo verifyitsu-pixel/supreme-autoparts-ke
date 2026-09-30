@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Supreme Autoparts Core
  * Description: Branding defaults, category seed, static pages, invoices, admin dashboard, and Shopify JSON import helpers for Supreme Autoparts.
- * Version: 1.3.43
+ * Version: 1.3.44
  * Author: Supreme Autoparts
  * Text Domain: supreme-autoparts-core
  * Requires at least: 6.4
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_CORE_VERSION', '1.3.43');
+define('SA_CORE_VERSION', '1.3.44');
 define('SA_CORE_FILE', __FILE__);
 define('SA_CORE_DIR', plugin_dir_path(__FILE__));
 define('SA_CORE_URL', plugin_dir_url(__FILE__));
@@ -53,6 +53,7 @@ require_once SA_CORE_DIR . 'includes/admin-super.php';
 require_once SA_CORE_DIR . 'includes/admin-super-phase2.php';
 require_once SA_CORE_DIR . 'includes/admin-super-ops.php';
 require_once SA_CORE_DIR . 'includes/admin-super-phase3.php';
+require_once SA_CORE_DIR . 'includes/welcome-coupon.php';
 // import-shopify.php is loaded by CLI/admin/boot import and by product-images helpers when needed.
 
 register_activation_hook(__FILE__, static function (): void {
@@ -76,6 +77,10 @@ register_activation_hook(__FILE__, static function (): void {
     }
     if (function_exists('sa_core_apply_store_settings')) {
         sa_core_apply_store_settings();
+    }
+    if (function_exists('sa_core_seed_welcome_coupon')) {
+        sa_core_seed_welcome_coupon();
+        update_option('sa_welcome_coupon_ver', defined('SA_WELCOME_COUPON_VER') ? SA_WELCOME_COUPON_VER : '1');
     }
     update_option('sa_core_activated', time());
     flush_rewrite_rules();

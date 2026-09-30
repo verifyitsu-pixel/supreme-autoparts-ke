@@ -1,4 +1,4 @@
-/* Supreme Autoparts — storefront components (v1.4.42) */
+/* Supreme Autoparts — storefront components (v1.4.50) */
 
 .sa-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
@@ -41,6 +41,10 @@
 }
 .sa-announce a:hover {
   text-decoration: underline;
+}
+.sa-announce strong, .sa-announce__code {
+  color: var(--sa-accent, #F5A623);
+  font-weight: 700;
 }
 
 /* Header */

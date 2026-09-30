@@ -110,3 +110,15 @@ Or start again from Whop Ads UI / `social-accounts_connect` (platform `meta_busi
 - Meta Pixel mu-plugin now fires Purchase / AddToCart / InitiateCheckout / ViewContent / Search (v1.1).
 - US shipping zone live in code (ver 3): Continental US $8 / Priority $15 / Free $99+.
 - Ads payment: platform_balance `ldgr_0YILGy67R2mFG` (~$14.98 USDT). Whop Cards •2079/•3707 exist; personal CC not used.
+
+
+## WELCOME30 new-customer offer (2026-09-30 EAT ~18:35)
+
+| Field | Value |
+| --- | --- |
+| Coupon | `WELCOME30` — 30% percent, individual use, 1× per customer |
+| Scope | **Worldwide** on site (banner + cart/checkout); Meta ads still US-targeted |
+| Seed | `includes/welcome-coupon.php` (ver `sa_welcome_coupon_ver=1`) |
+| Landing | `https://www.supremeautoparts.co.ke/shop/?coupon=WELCOME30` |
+| Ads | Updated `ad_bjDDYG2Afn5Kzvu` + `ad_ZDYcFzDEQnMjbKt` creatives `file_Gasl1vCsvHYrf` / `file_iH5qycLjSL5bN` |
+| Budget | Unchanged — campaign lifetime **$10** (`adcamp_hfeEPR6lWM6`) |
