@@ -3,7 +3,7 @@
  * Checkout form — multi-section contact / shipping / payment + sticky summary.
  *
  * @package Supreme_Autoparts
- * @version 1.3.0
+ * @version 1.4.40
  */
 
 defined('ABSPATH') || exit;
@@ -24,12 +24,12 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
     <p class="sa-checkout-hero__eyebrow"><?php esc_html_e('Secure checkout', 'supreme-autoparts'); ?></p>
     <h1 class="sa-checkout-hero__title"><?php esc_html_e('Checkout', 'supreme-autoparts'); ?></h1>
     <p class="sa-checkout-hero__lead">
-      <?php esc_html_e('Enter your details, then pay by card.', 'supreme-autoparts'); ?>
+      <?php esc_html_e('Enter your details, then pay by card. Charged in USD.', 'supreme-autoparts'); ?>
     </p>
-    <ol class="sa-checkout-steps" aria-label="<?php esc_attr_e('Checkout steps', 'supreme-autoparts'); ?>">
-      <li class="sa-checkout-steps__item is-active"><span>1</span> <?php esc_html_e('Contact', 'supreme-autoparts'); ?></li>
-      <li class="sa-checkout-steps__item"><span>2</span> <?php esc_html_e('Shipping', 'supreme-autoparts'); ?></li>
-      <li class="sa-checkout-steps__item"><span>3</span> <?php esc_html_e('Payment', 'supreme-autoparts'); ?></li>
+    <ol class="sa-checkout-steps" aria-label="<?php esc_attr_e('Checkout steps', 'supreme-autoparts'); ?>" data-sa-checkout-steps>
+      <li class="sa-checkout-steps__item is-active" data-sa-step="contact"><span>1</span> <?php esc_html_e('Contact', 'supreme-autoparts'); ?></li>
+      <li class="sa-checkout-steps__item" data-sa-step="shipping"><span>2</span> <?php esc_html_e('Shipping', 'supreme-autoparts'); ?></li>
+      <li class="sa-checkout-steps__item" data-sa-step="payment"><span>3</span> <?php esc_html_e('Payment', 'supreme-autoparts'); ?></li>
     </ol>
   </header>
 
@@ -39,7 +39,7 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
         <?php if ($checkout->get_checkout_fields()) : ?>
           <?php do_action('woocommerce_checkout_before_customer_details'); ?>
 
-          <section class="sa-checkout-section sa-checkout-section--contact" id="sa-checkout-contact" aria-labelledby="sa-checkout-contact-title">
+          <section class="sa-checkout-section sa-checkout-section--contact" id="sa-checkout-contact" data-sa-checkout-panel="contact" aria-labelledby="sa-checkout-contact-title">
             <header class="sa-checkout-section__head">
               <span class="sa-checkout-section__num" aria-hidden="true">1</span>
               <div>
@@ -54,7 +54,7 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
             </div>
           </section>
 
-          <section class="sa-checkout-section sa-checkout-section--shipping" id="sa-checkout-shipping" aria-labelledby="sa-checkout-shipping-title">
+          <section class="sa-checkout-section sa-checkout-section--shipping" id="sa-checkout-shipping" data-sa-checkout-panel="shipping" aria-labelledby="sa-checkout-shipping-title">
             <header class="sa-checkout-section__head">
               <span class="sa-checkout-section__num" aria-hidden="true">2</span>
               <div>
@@ -70,24 +70,22 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
           <?php do_action('woocommerce_checkout_after_customer_details'); ?>
         <?php endif; ?>
 
-        <section class="sa-checkout-section sa-checkout-section--payment sa-checkout-section--payment-mobile" id="sa-checkout-payment-note" aria-labelledby="sa-checkout-payment-title">
+        <section class="sa-checkout-section sa-checkout-section--payment sa-checkout-section--payment-mobile" id="sa-checkout-payment-note" data-sa-checkout-panel="payment" aria-labelledby="sa-checkout-payment-title">
           <header class="sa-checkout-section__head">
             <span class="sa-checkout-section__num" aria-hidden="true">3</span>
             <div>
               <h2 id="sa-checkout-payment-title" class="sa-checkout-section__title"><?php esc_html_e('Payment', 'supreme-autoparts'); ?></h2>
-              <p class="sa-checkout-section__sub"><?php esc_html_e('Pay by card. Charged in USD.', 'supreme-autoparts'); ?></p>
+              <p class="sa-checkout-section__sub"><?php esc_html_e('Review your order, accept policies, then pay by card.', 'supreme-autoparts'); ?></p>
             </div>
           </header>
         </section>
       </div>
 
-      <aside class="sa-checkout-layout__summary" aria-label="<?php esc_attr_e('Order summary', 'supreme-autoparts'); ?>">
+      <aside class="sa-checkout-layout__summary" aria-label="<?php esc_attr_e('Order summary', 'supreme-autoparts'); ?>" data-sa-checkout-panel="payment">
         <?php do_action('woocommerce_checkout_before_order_review_heading'); ?>
         <div class="sa-checkout-summary__head">
           <h3 id="order_review_heading"><?php esc_html_e('Your order', 'supreme-autoparts'); ?></h3>
-          <?php if ($shop_url) : ?>
-            <a class="sa-checkout-summary__edit" href="<?php echo esc_url(wc_get_cart_url()); ?>"><?php esc_html_e('Edit cart', 'supreme-autoparts'); ?></a>
-          <?php endif; ?>
+          <a class="sa-checkout-summary__edit" href="<?php echo esc_url(wc_get_cart_url()); ?>"><?php esc_html_e('Edit cart', 'supreme-autoparts'); ?></a>
         </div>
         <?php do_action('woocommerce_checkout_before_order_review'); ?>
         <div id="order_review" class="woocommerce-checkout-review-order sa-checkout-summary">
@@ -95,6 +93,16 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
         </div>
         <?php do_action('woocommerce_checkout_after_order_review'); ?>
       </aside>
+    </div>
+
+    <div class="sa-checkout-sticky-pay" data-sa-checkout-sticky hidden>
+      <div class="sa-checkout-sticky-pay__total">
+        <small><?php esc_html_e('Total (USD)', 'supreme-autoparts'); ?></small>
+        <strong data-sa-checkout-sticky-total><?php echo wp_kses_post(WC()->cart ? WC()->cart->get_total() : ''); ?></strong>
+      </div>
+      <button type="button" class="button alt sa-btn sa-checkout-sticky-pay__btn" data-sa-checkout-sticky-pay>
+        <?php esc_html_e('Place order', 'supreme-autoparts'); ?>
+      </button>
     </div>
   </form>
 </div>

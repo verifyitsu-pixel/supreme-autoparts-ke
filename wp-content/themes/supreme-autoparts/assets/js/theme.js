@@ -269,6 +269,103 @@
     });
   }
 
+
+  // Checkout: highlight steps from visible panels; mobile sticky Place order.
+  function saCheckoutSteps() {
+    var steps = document.querySelectorAll('[data-sa-checkout-steps] [data-sa-step]');
+    var panels = document.querySelectorAll('[data-sa-checkout-panel]');
+    if (!steps.length || !panels.length || !('IntersectionObserver' in window)) return;
+
+    var order = ['contact', 'shipping', 'payment'];
+    var visible = { contact: false, shipping: false, payment: false };
+
+    function paint() {
+      var active = 'contact';
+      for (var i = order.length - 1; i >= 0; i--) {
+        if (visible[order[i]]) { active = order[i]; break; }
+      }
+      var activeIdx = order.indexOf(active);
+      steps.forEach(function (el) {
+        var key = el.getAttribute('data-sa-step');
+        var idx = order.indexOf(key);
+        el.classList.toggle('is-active', key === active);
+        el.classList.toggle('is-done', idx > -1 && idx < activeIdx);
+      });
+    }
+
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        var key = entry.target.getAttribute('data-sa-checkout-panel');
+        if (!key) return;
+        visible[key] = entry.isIntersecting && entry.intersectionRatio > 0.2;
+      });
+      paint();
+    }, { rootMargin: '-20% 0px -45% 0px', threshold: [0, 0.2, 0.5, 1] });
+
+    panels.forEach(function (p) { io.observe(p); });
+  }
+
+  function saCheckoutStickyPay() {
+    var bar = document.querySelector('[data-sa-checkout-sticky]');
+    if (!bar) return;
+    var btn = bar.querySelector('[data-sa-checkout-sticky-pay]');
+    var totalEl = bar.querySelector('[data-sa-checkout-sticky-total]');
+    var mq = window.matchMedia('(max-width: 960px)');
+
+    function sync() {
+      var place = document.querySelector('#place_order');
+      var orderTotal = document.querySelector('.sa-checkout-review-table .order-total td, .order-total td');
+      if (mq.matches) {
+        bar.hidden = false;
+      } else {
+        bar.hidden = true;
+      }
+      if (place && btn) {
+        btn.disabled = !!place.disabled;
+        btn.setAttribute('aria-disabled', place.disabled ? 'true' : 'false');
+        var label = place.getAttribute('data-value') || place.textContent || 'Place order';
+        btn.textContent = label.trim();
+      }
+      if (totalEl && orderTotal) {
+        totalEl.innerHTML = orderTotal.innerHTML;
+      }
+    }
+
+    if (btn) {
+      btn.addEventListener('click', function () {
+        var place = document.querySelector('#place_order');
+        if (!place) return;
+        if (place.disabled) {
+          var terms = document.querySelector('[data-sa-terms-checkbox], #terms');
+          var hint = document.querySelector('[data-sa-terms-hint]');
+          if (hint) hint.hidden = false;
+          if (terms) {
+            terms.focus();
+            terms.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          return;
+        }
+        place.click();
+      });
+    }
+
+    sync();
+    if (mq.addEventListener) mq.addEventListener('change', sync);
+    else if (mq.addListener) mq.addListener(sync);
+
+    if (window.jQuery) {
+      jQuery(document.body).on('updated_checkout', sync);
+    }
+    // Observe place_order disabled attribute changes (terms tick).
+    var place = document.querySelector('#place_order');
+    if (place && window.MutationObserver) {
+      new MutationObserver(sync).observe(place, { attributes: true, attributeFilter: ['disabled', 'aria-disabled', 'data-value'] });
+    }
+  }
+
+  saCheckoutSteps();
+  saCheckoutStickyPay();
+
   saSyncCheckoutTerms();
   saEnsureRememberMe();
   if (window.jQuery) {

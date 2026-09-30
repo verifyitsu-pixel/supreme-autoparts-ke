@@ -1,9 +1,9 @@
 <?php
 /**
- * Checkout login form — stay signed in until Log out.
+ * Checkout login form — compact chip toggle; stay signed in until Log out.
  *
  * @package Supreme_Autoparts
- * @version 1.4.27
+ * @version 1.4.40
  */
 
 defined('ABSPATH') || exit;
@@ -13,10 +13,10 @@ if (is_user_logged_in() || 'no' === get_option('woocommerce_enable_checkout_logi
 }
 ?>
 <div class="woocommerce-form-login-toggle sa-checkout-login-toggle">
-  <?php wc_print_notice(apply_filters('woocommerce_checkout_login_message', esc_html__('Returning customer?', 'supreme-autoparts')) . ' <a href="#" class="showlogin">' . esc_html__('Click here to log in', 'supreme-autoparts') . '</a>', 'notice'); ?>
+  <a href="#" class="showlogin sa-checkout-chip"><?php esc_html_e('Returning customer? Log in', 'supreme-autoparts'); ?></a>
 </div>
 
-<form class="woocommerce-form woocommerce-form-login login sa-checkout-login" method="post" style="display:none;">
+<form class="woocommerce-form woocommerce-form-login login sa-checkout-login" method="post" style="display:none;" aria-label="<?php esc_attr_e('Log in', 'supreme-autoparts'); ?>">
   <p class="sa-checkout-login__lead">
     <?php esc_html_e('Log in to use your saved addresses and cart across devices. You stay signed in on this browser until you tap Log out.', 'supreme-autoparts'); ?>
   </p>

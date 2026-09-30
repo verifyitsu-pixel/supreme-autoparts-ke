@@ -14,13 +14,14 @@ $needs_shipping = WC()->cart && WC()->cart->needs_shipping() && WC()->cart->show
   <?php do_action('woocommerce_before_cart_totals'); ?>
 
   <h2 class="sa-cart-summary__title"><?php esc_html_e('Order summary', 'supreme-autoparts'); ?></h2>
+  <p class="sa-cart-summary__usd"><?php esc_html_e('Charged in USD at checkout', 'supreme-autoparts'); ?></p>
 
   <?php if (wc_coupons_enabled()) : ?>
     <details class="sa-cart-coupon">
       <summary class="sa-cart-coupon__summary"><?php esc_html_e('Have a coupon?', 'supreme-autoparts'); ?></summary>
       <div class="sa-cart-coupon__body coupon">
         <label for="coupon_code" class="screen-reader-text"><?php esc_html_e('Coupon:', 'supreme-autoparts'); ?></label>
-        <input type="text" name="coupon_code" class="input-text" id="coupon_code" value="" placeholder="<?php esc_attr_e('Coupon code', 'supreme-autoparts'); ?>" form="woocommerce-cart" />
+        <input type="text" name="coupon_code" class="input-text" id="coupon_code" value="" placeholder="<?php esc_attr_e('Coupon code', 'supreme-autoparts'); ?>" form="woocommerce-cart" autocomplete="off" />
         <button type="submit" class="button sa-btn sa-btn--outline" name="apply_coupon" value="<?php esc_attr_e('Apply coupon', 'supreme-autoparts'); ?>" form="woocommerce-cart"><?php esc_html_e('Apply', 'supreme-autoparts'); ?></button>
         <?php do_action('woocommerce_cart_coupon'); ?>
       </div>
@@ -113,6 +114,11 @@ $needs_shipping = WC()->cart && WC()->cart->needs_shipping() && WC()->cart->show
     <?php do_action('woocommerce_proceed_to_checkout'); ?>
   </div>
 
+  <ul class="sa-cart-perks" aria-label="<?php esc_attr_e('Checkout benefits', 'supreme-autoparts'); ?>">
+    <li><?php esc_html_e('Secure card checkout', 'supreme-autoparts'); ?></li>
+    <li><?php esc_html_e('Order tracking by email', 'supreme-autoparts'); ?></li>
+    <li><?php esc_html_e('Kenya &amp; international shipping', 'supreme-autoparts'); ?></li>
+  </ul>
 
   <div class="sa-cart-sticky-bar" data-sa-cart-sticky>
     <div class="sa-cart-sticky-bar__total">

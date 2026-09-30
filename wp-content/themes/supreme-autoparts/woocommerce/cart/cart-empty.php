@@ -16,6 +16,14 @@ $shop_url    = function_exists('wc_get_page_permalink') ? wc_get_page_permalink(
 ?>
 <div class="sa-cart-empty">
   <div class="sa-cart-empty__card">
+    <div class="sa-cart-empty__icon" aria-hidden="true">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M7 6h14l-1.4 7H8.2L7 6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M7 6 6.2 3H3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="9.5" cy="19" r="1.4" fill="currentColor"/>
+        <circle cx="17.5" cy="19" r="1.4" fill="currentColor"/>
+      </svg>
+    </div>
     <p class="sa-cart-empty__eyebrow"><?php esc_html_e('Your cart is empty', 'supreme-autoparts'); ?></p>
     <h1 class="sa-cart-empty__title"><?php esc_html_e('Nothing to checkout yet', 'supreme-autoparts'); ?></h1>
     <p class="sa-cart-empty__lead">
