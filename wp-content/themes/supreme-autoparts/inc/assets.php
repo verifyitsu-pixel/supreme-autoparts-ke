@@ -114,11 +114,58 @@ add_action('wp_enqueue_scripts', static function (): void {
         $wa_digits = preg_replace('/\D+/', '', (string) ($wa['whatsapp'] ?? '19174375121')) ?: '19174375121';
         $on_checkout = function_exists('is_checkout') && is_checkout();
         $on_cart = function_exists('is_cart') && is_cart();
+        $on_account = function_exists('is_account_page') && is_account_page();
+        $on_product = function_exists('is_product') && is_product();
+        $on_shop = function_exists('is_shop') && is_shop();
+        $on_tax = function_exists('is_product_taxonomy') && is_product_taxonomy();
+        $on_search = is_search();
+
+        $page_type = 'store';
+        if ($on_checkout) {
+            $page_type = 'checkout';
+        } elseif ($on_cart) {
+            $page_type = 'cart';
+        } elseif ($on_account) {
+            $page_type = 'account';
+        } elseif ($on_product) {
+            $page_type = 'product';
+        } elseif ($on_shop) {
+            $page_type = 'shop';
+        } elseif ($on_tax) {
+            $page_type = 'category';
+        } elseif ($on_search) {
+            $page_type = 'search';
+        } elseif (is_front_page()) {
+            $page_type = 'home';
+        }
+
+        $product_payload = null;
+        if ($on_product && function_exists('wc_get_product')) {
+            $pid = get_queried_object_id();
+            $product = $pid ? wc_get_product($pid) : null;
+            if ($product) {
+                $img_id = (int) $product->get_image_id();
+                $img = $img_id ? wp_get_attachment_image_url($img_id, 'woocommerce_single') : '';
+                if (!$img) {
+                    $img = function_exists('wc_placeholder_img_src') ? wc_placeholder_img_src('woocommerce_single') : '';
+                }
+                $price = html_entity_decode(wp_strip_all_tags((string) $product->get_price_html()), ENT_QUOTES, 'UTF-8');
+                $product_payload = [
+                    'title' => (string) $product->get_name(),
+                    'price' => $price !== '' ? $price : '',
+                    'image' => is_string($img) ? $img : '',
+                    'sku'   => (string) $product->get_sku(),
+                ];
+            }
+        }
+
         wp_localize_script('supreme-autoparts-agents-build', 'saAgentsBuild', [
             'storageKey'  => 'sap-built',
             'waDisplay'   => (string) ($wa['phone_display'] ?? '+1 917 437 5121'),
             'waUrl'       => 'https://wa.me/' . $wa_digits,
             'criticalUi'  => ($on_checkout || $on_cart) ? 1 : 0,
+            'pageType'    => $page_type,
+            'product'     => $product_payload,
         ]);
     }
 

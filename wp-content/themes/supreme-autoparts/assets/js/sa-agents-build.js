@@ -18,6 +18,85 @@
   if (cfg.waUrl) WA_URL = String(cfg.waUrl);
   if (cfg.storageKey) STORAGE_KEY = String(cfg.storageKey);
   var CRITICAL_UI = !!(cfg.criticalUi && Number(cfg.criticalUi) === 1);
+  var PAGE_TYPE = cfg.pageType ? String(cfg.pageType) : 'store';
+  var PRODUCT = (cfg.product && typeof cfg.product === 'object') ? cfg.product : null;
+
+  function escHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function truncate(s, n) {
+    s = String(s || '');
+    if (s.length <= n) return s;
+    return s.slice(0, n - 1).replace(/\s+\S*$/, '') + '…';
+  }
+
+  function contextCopy() {
+    if (PAGE_TYPE === 'product' && PRODUCT && PRODUCT.title) {
+      return {
+        logo: 'Supreme Autoparts',
+        tagline: 'Building this listing — genuine OEM / aftermarket fitment, ships US & worldwide.',
+        featureLabel: 'This product',
+        featureTitle: truncate(PRODUCT.title, 72),
+        featurePrice: PRODUCT.price ? String(PRODUCT.price) : 'Ask on WhatsApp',
+        featureImage: PRODUCT.image ? String(PRODUCT.image) : '',
+        statusReady: 'Product ready',
+        museStatus: 'Muse is placing this product…',
+      };
+    }
+    if (PAGE_TYPE === 'shop' || PAGE_TYPE === 'category' || PAGE_TYPE === 'search') {
+      return {
+        logo: 'Supreme Autoparts',
+        tagline: 'Assembling the catalog grid — browse engines, drivetrain, lighting & more.',
+        featureLabel: 'Catalog pick',
+        featureTitle: '2JZ-GTE Complete Engine Assembly',
+        featurePrice: 'From $4,850 · used OEM',
+        featureImage: '',
+        statusReady: 'Catalog ready',
+        museStatus: 'Muse is filling a featured part…',
+      };
+    }
+    if (PAGE_TYPE === 'cart' || PAGE_TYPE === 'checkout') {
+      return {
+        logo: 'Supreme Autoparts',
+        tagline: 'Secure cart & checkout — WhatsApp support anytime. Charged in USD.',
+        featureLabel: 'Checkout trust',
+        featureTitle: 'Secure pay via Whop · guest checkout welcome',
+        featurePrice: 'WhatsApp ' + WA_DISPLAY,
+        featureImage: '',
+        statusReady: 'Checkout ready',
+        museStatus: 'Muse is wiring checkout trust…',
+      };
+    }
+    if (PAGE_TYPE === 'account') {
+      return {
+        logo: 'Supreme Autoparts',
+        tagline: 'Your account hub — orders, support, and part enquiries in one place.',
+        featureLabel: 'Support',
+        featureTitle: 'Message us on WhatsApp for fitment help',
+        featurePrice: WA_DISPLAY,
+        featureImage: '',
+        statusReady: 'Account ready',
+        museStatus: 'Muse is setting up support…',
+      };
+    }
+    return {
+      logo: 'Supreme Autoparts',
+      tagline: COPY.tagline,
+      featureLabel: 'Featured OEM',
+      featureTitle: '2JZ-GTE Complete Engine Assembly',
+      featurePrice: 'From $4,850 · used OEM',
+      featureImage: '',
+      statusReady: 'Shop ready',
+      museStatus: 'Muse is filling a featured part…',
+    };
+  }
+
+  var COPY = contextCopy();
 
   var POINTER_SVG =
     '<svg class="sa-agents-build__cursor-pointer" viewBox="0 0 18 22" width="18" height="22" aria-hidden="true" focusable="false">' +
@@ -190,6 +269,15 @@
     root.setAttribute('aria-hidden', 'false');
     root.tabIndex = -1;
 
+    var featImg = COPY.featureImage
+      ? ('<img src="' + escHtml(COPY.featureImage) + '" alt="" width="88" height="72" decoding="async"/>')
+      : ICON_PART;
+    var statusBoot = PAGE_TYPE === 'product'
+      ? 'Agents assembling this product…'
+      : (PAGE_TYPE === 'cart' || PAGE_TYPE === 'checkout')
+        ? 'Agents assembling checkout…'
+        : 'Agents assembling your shop…';
+
     root.innerHTML =
       '<div class="sa-agents-build__canvas" aria-hidden="true"></div>' +
       '<p class="sa-agents-build__skip">Click anywhere to skip</p>' +
@@ -208,11 +296,11 @@
           '<div class="sa-agents-build__cat" data-sab-cat="3">' + ICON_LIGHT + '<strong>Lights</strong></div>' +
         '</div>' +
         '<div class="sa-agents-build__feature" data-sab-feature>' +
-          '<div class="sa-agents-build__feature-img">' + ICON_PART + '</div>' +
+          '<div class="sa-agents-build__feature-img">' + featImg + '</div>' +
           '<div class="sa-agents-build__feature-meta">' +
-            '<p class="sa-agents-build__feature-label">Featured OEM</p>' +
-            '<p class="sa-agents-build__feature-title">2JZ-GTE Complete Engine Assembly</p>' +
-            '<p class="sa-agents-build__feature-price">From $4,850 · used OEM</p>' +
+            '<p class="sa-agents-build__feature-label">' + escHtml(COPY.featureLabel) + '</p>' +
+            '<p class="sa-agents-build__feature-title">' + escHtml(COPY.featureTitle) + '</p>' +
+            '<p class="sa-agents-build__feature-price">' + escHtml(COPY.featurePrice) + '</p>' +
             '<div class="sab-line sab-line--title" aria-hidden="true"></div>' +
             '<div class="sab-line sab-line--sub" aria-hidden="true"></div>' +
             '<div class="sab-line sab-line--price" aria-hidden="true"></div>' +
@@ -225,7 +313,7 @@
         '</ul>' +
       '</div>' +
       '<div class="sa-agents-build__cursors" data-sab-cursors aria-hidden="true"></div>' +
-      '<p class="sa-agents-build__status" data-sab-status>Agents assembling your shop…</p>';
+      '<p class="sa-agents-build__status" data-sab-status>' + escHtml(statusBoot) + '</p>';
 
     var cursorsWrap = root.querySelector('[data-sab-cursors]');
     AGENTS.forEach(function (a, idx) {
@@ -286,6 +374,20 @@
       state.cursors = {};
     }, removeMs);
 
+    // Soft-reveal real product chrome after overlay (does not block checkout).
+    try {
+      if (PAGE_TYPE === 'product') {
+        var reveal = document.querySelector('.product .product_title, .sa-product__title, h1.product_title, .summary .product_title');
+        var priceEl = document.querySelector('.product .price, .summary .price, .sa-product__price');
+        var imgEl = document.querySelector('.woocommerce-product-gallery__image img, .sa-product__gallery img, .product .wp-post-image');
+        [reveal, priceEl, imgEl].forEach(function (el) {
+          if (!el) return;
+          el.classList.add('sa-agents-reveal');
+          window.setTimeout(function () { el.classList.remove('sa-agents-reveal'); }, 1200);
+        });
+      }
+    } catch (e2) { /* ignore */ }
+
     // Expose for replay debugging
     try {
       window.dispatchEvent(new CustomEvent('sa-agents-build:done', { detail: { reason: reason || 'complete' } }));
@@ -318,7 +420,7 @@
         moveCursor('gemini', p1.x, p1.y, 380, function () {
           typeText(
             tagline,
-            'Genuine used OEM parts — engines, drivetrain & lighting. Ships US & worldwide.',
+            COPY.tagline,
             42,
             function () {
               hideCursor('gemini');
@@ -339,7 +441,7 @@
                     if (i >= cats.length) {
                       hideCursor('opus');
                       // Featured card
-                      setStatus('Muse is filling a featured part…');
+                      setStatus(COPY.museStatus);
                       var pf = stagePoint('[data-sab-feature]', 40, 30);
                       moveCursor('muse', pf.x, pf.y, 340, function () {
                         feature.classList.add('is-in');
@@ -355,7 +457,7 @@
                               if (state.finished) return;
                               if (ti >= trustItems.length) {
                                 hideCursor('grok');
-                                setStatus('Shop ready');
+                                setStatus(COPY.statusReady);
                                 later(function () { finish('complete'); }, 420);
                                 return;
                               }
