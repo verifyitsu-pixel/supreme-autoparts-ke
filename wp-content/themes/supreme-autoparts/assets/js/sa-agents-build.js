@@ -17,6 +17,7 @@
   if (cfg.waDisplay) WA_DISPLAY = String(cfg.waDisplay);
   if (cfg.waUrl) WA_URL = String(cfg.waUrl);
   if (cfg.storageKey) STORAGE_KEY = String(cfg.storageKey);
+  var CRITICAL_UI = !!(cfg.criticalUi && Number(cfg.criticalUi) === 1);
 
   var POINTER_SVG =
     '<svg class="sa-agents-build__cursor-pointer" viewBox="0 0 18 22" width="18" height="22" aria-hidden="true" focusable="false">' +
@@ -258,15 +259,17 @@
     markBuilt();
 
     var root = state.root;
+    // Always restore page interactivity immediately (critical on cart/checkout).
+    document.body.classList.remove('sa-agents-building');
     if (!root) {
-      document.body.classList.remove('sa-agents-building');
       return;
     }
 
+    root.style.pointerEvents = 'none';
     root.classList.add('is-done');
     root.setAttribute('aria-hidden', 'true');
     root.removeAttribute('aria-modal');
-    document.body.classList.remove('sa-agents-building');
+    root.removeAttribute('aria-label');
 
     // Return focus to body / first focusable so we don't trap
     try {
@@ -275,11 +278,13 @@
       }
     } catch (e) { /* ignore */ }
 
-    later(function () {
+    // Skip/cap/critical UI: tear down ASAP so pay buttons stay usable.
+    var removeMs = (reason === 'skip' || reason === 'cap' || reason === 'wa' || CRITICAL_UI) ? 80 : 420;
+    window.setTimeout(function () {
       if (root && root.parentNode) root.parentNode.removeChild(root);
       state.root = null;
       state.cursors = {};
-    }, 500);
+    }, removeMs);
 
     // Expose for replay debugging
     try {

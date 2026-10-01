@@ -102,19 +102,7 @@ if (!defined('ABSPATH')) {
 
     <div class="sa-footer__bottom">
       <span>&copy; <?php echo esc_html(gmdate('Y')); ?> Supreme Autoparts · supremeautoparts.co.ke</span>
-      <?php
-      $sa_show_agents_replay = !is_admin();
-      if ($sa_show_agents_replay && function_exists('is_cart') && is_cart()) {
-          $sa_show_agents_replay = false;
-      }
-      if ($sa_show_agents_replay && function_exists('is_checkout') && is_checkout()) {
-          $sa_show_agents_replay = false;
-      }
-      if ($sa_show_agents_replay && function_exists('is_account_page') && is_account_page()) {
-          $sa_show_agents_replay = false;
-      }
-      if ($sa_show_agents_replay) :
-          ?>
+      <?php if (!is_admin()) : ?>
       <div class="sa-footer__replay-wrap">
         <button type="button" class="sa-agents-replay" data-sa-agents-replay>
           <?php esc_html_e('Replay the build', 'supreme-autoparts'); ?>

@@ -77,23 +77,15 @@ add_action('wp_enqueue_scripts', static function (): void {
         );
     }
 
-    // Sai-style staged "agents assemble" intro — skip cart/checkout/account/pay/admin.
+    // Sai-style agents assemble — full customer storefront (incl. cart/checkout/account).
+    // Skip admin, AJAX, REST, and login only so ops stay clean.
     $skip_agents_build = is_admin();
-    if (!$skip_agents_build && function_exists('is_cart') && is_cart()) {
+    if (!$skip_agents_build && function_exists('wp_doing_ajax') && wp_doing_ajax()) {
         $skip_agents_build = true;
     }
-    if (!$skip_agents_build && function_exists('is_checkout') && is_checkout()) {
+    if (!$skip_agents_build && defined('REST_REQUEST') && REST_REQUEST) {
         $skip_agents_build = true;
     }
-    if (!$skip_agents_build && function_exists('is_account_page') && is_account_page()) {
-        $skip_agents_build = true;
-    }
-    if (!$skip_agents_build && function_exists('is_wc_endpoint_url')) {
-        if (is_wc_endpoint_url('order-pay') || is_wc_endpoint_url('order-received')) {
-            $skip_agents_build = true;
-        }
-    }
-    // Super Admin / wp-login style fronts
     if (!$skip_agents_build) {
         global $pagenow;
         if (is_string($pagenow) && in_array($pagenow, ['wp-login.php', 'wp-register.php'], true)) {
@@ -120,10 +112,13 @@ add_action('wp_enqueue_scripts', static function (): void {
             'phone_display' => '+1 917 437 5121',
         ];
         $wa_digits = preg_replace('/\D+/', '', (string) ($wa['whatsapp'] ?? '19174375121')) ?: '19174375121';
+        $on_checkout = function_exists('is_checkout') && is_checkout();
+        $on_cart = function_exists('is_cart') && is_cart();
         wp_localize_script('supreme-autoparts-agents-build', 'saAgentsBuild', [
-            'storageKey' => 'sap-built',
-            'waDisplay'  => (string) ($wa['phone_display'] ?? '+1 917 437 5121'),
-            'waUrl'      => 'https://wa.me/' . $wa_digits,
+            'storageKey'  => 'sap-built',
+            'waDisplay'   => (string) ($wa['phone_display'] ?? '+1 917 437 5121'),
+            'waUrl'       => 'https://wa.me/' . $wa_digits,
+            'criticalUi'  => ($on_checkout || $on_cart) ? 1 : 0,
         ]);
     }
 
