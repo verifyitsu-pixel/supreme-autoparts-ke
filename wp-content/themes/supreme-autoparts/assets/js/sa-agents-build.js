@@ -85,9 +85,10 @@
         museStatus: 'Muse is setting up support…',
       };
     }
+    // home / store / fallback — never reference COPY here (it is assigned from this return).
     return {
       logo: 'Supreme Autoparts',
-      tagline: COPY.tagline,
+      tagline: 'Genuine OEM & aftermarket parts — engines, drivetrain, lighting & more. Ships US & worldwide.',
       featureLabel: 'Featured OEM',
       featureTitle: '2JZ-GTE Complete Engine Assembly',
       featurePrice: 'From $4,850 · used OEM',
