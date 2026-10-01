@@ -161,18 +161,18 @@
     commonChrome();
 
     if (PAGE_TYPE === 'home' || PAGE_TYPE === 'store') {
-      pushUnique(list, first('.sa-hero__eyebrow'), { label: 'hero eyebrow', agent: 'grok' });
+      pushUnique(list, first('.sa-hero__eyebrow'), { label: 'hero eyebrow', agent: 'grok', type: true });
       pushUnique(list, first('#sa-hero-title, .sa-hero h1'), { label: 'hero headline', agent: 'gemini', type: true });
-      pushUnique(list, first('.sa-hero__lead'), { label: 'hero lead', agent: 'gpt' });
+      pushUnique(list, first('.sa-hero__lead'), { label: 'hero lead', agent: 'gpt', type: true });
       pushUnique(list, first('.sa-hero__search'), { label: 'hero search', agent: 'opus' });
       pushUnique(list, first('.sa-hero__actions'), { label: 'hero CTAs', agent: 'muse' });
       take('.sa-trust__item', 4).forEach(function (el, i) {
         pushUnique(list, el, { label: 'trust signal', agent: AGENTS[i % AGENTS.length].id });
       });
-      take('.sa-type-tile', 5).forEach(function (el, i) {
+      take('.sa-type-tile', 8).forEach(function (el, i) {
         pushUnique(list, el, { label: 'category tile', agent: AGENTS[i % AGENTS.length].id, mode: 'card' });
       });
-      take('.sa-latest-parts .sa-product-card, .sa-products .sa-product-card', 5).forEach(function (el, i) {
+      take('.sa-latest-parts .sa-product-card, .sa-products .sa-product-card', 8).forEach(function (el, i) {
         pushUnique(list, el, { label: 'product card', agent: AGENTS[i % AGENTS.length].id, mode: 'card' });
       });
       take('.sa-how__step', 4).forEach(function (el, i) {
@@ -181,9 +181,9 @@
       pushUnique(list, first('.sa-ship-banner'), { label: 'shipping banner', agent: 'gpt' });
       pushUnique(list, first('.sa-blurb'), { label: 'about blurb', agent: 'muse' });
     } else if (PAGE_TYPE === 'shop' || PAGE_TYPE === 'category' || PAGE_TYPE === 'search') {
-      pushUnique(list, first('.sa-archive-header'), { label: 'catalog header', agent: 'grok' });
+      pushUnique(list, first('.sa-archive-header'), { label: 'catalog header', agent: 'grok', type: true });
       pushUnique(list, first('.sa-catalog-filters, .sa-filters, .woocommerce-notices-wrapper'), { label: 'filters', agent: 'gemini' });
-      take('ul.products .sa-product-card, ul.products > li.product', 6).forEach(function (el, i) {
+      take('ul.products .sa-product-card, ul.products > li.product', 12).forEach(function (el, i) {
         pushUnique(list, el, { label: 'catalog card', agent: AGENTS[i % AGENTS.length].id, mode: 'card' });
       });
       pushUnique(list, first('.woocommerce-pagination, .sa-pagination'), { label: 'pagination', agent: 'opus' });
@@ -194,18 +194,18 @@
       pushUnique(list, first('.sa-product-card__sku, .product_meta, .sku_wrapper'), { label: 'part number', agent: 'gpt' });
       pushUnique(list, first('form.cart, .sa-product__actions, .single_add_to_cart_button'), { label: 'add to cart', agent: 'opus' });
       pushUnique(list, first('.woocommerce-tabs, .sa-product__tabs, #tab-description, .woocommerce-product-details__short-description'), { label: 'details', agent: 'muse' });
-      take('.related .sa-product-card, .related products .product, .upsells .sa-product-card', 3).forEach(function (el, i) {
+      take('.related .sa-product-card, .related products .product, .upsells .sa-product-card', 4).forEach(function (el, i) {
         pushUnique(list, el, { label: 'related part', agent: AGENTS[i % AGENTS.length].id, mode: 'card' });
       });
     } else if (PAGE_TYPE === 'cart') {
-      pushUnique(list, first('.sa-cart-hero'), { label: 'cart header', agent: 'grok' });
+      pushUnique(list, first('.sa-cart-hero'), { label: 'cart header', agent: 'grok', type: true });
       take('.woocommerce-cart-form__cart-item, .sa-cart-table tbody tr.cart_item, tr.woocommerce-cart-form__cart-item', 8).forEach(function (el, i) {
         pushUnique(list, el, { label: 'cart line', agent: AGENTS[i % AGENTS.length].id, mode: 'card' });
       });
       pushUnique(list, first('.sa-cart-summary, .cart-collaterals, .sa-cart-layout__summary'), { label: 'order summary', agent: 'opus' });
       pushUnique(list, first('.wc-proceed-to-checkout, .checkout-button, a.checkout-button'), { label: 'checkout CTA', agent: 'muse' });
     } else if (PAGE_TYPE === 'checkout') {
-      pushUnique(list, first('.sa-checkout-hero'), { label: 'checkout header', agent: 'grok' });
+      pushUnique(list, first('.sa-checkout-hero'), { label: 'checkout header', agent: 'grok', type: true });
       pushUnique(list, first('.sa-checkout-steps'), { label: 'checkout steps', agent: 'gemini' });
       pushUnique(list, first('.sa-checkout-section--contact, #sa-checkout-contact'), { label: 'contact fields', agent: 'gpt' });
       pushUnique(list, first('.sa-checkout-section--shipping, #sa-checkout-shipping'), { label: 'shipping fields', agent: 'opus' });
@@ -227,17 +227,17 @@
     pushUnique(list, first('.sa-footer__grid'), { label: 'footer', agent: 'gpt' });
     pushUnique(list, first('.sa-footer-contact'), { label: 'contact form', agent: 'opus' });
 
-    // Keep dense storefronts inside the ~8–15s window.
-    var MAX = CRITICAL_UI ? 14 : 22;
+    // Soft density cap — allow fuller Sai-style place-through (~20–40s).
+    var MAX = CRITICAL_UI ? 18 : 32;
     if (list.length > MAX) list = list.slice(0, MAX);
     return list;
   }
 
   function hardCapMs(n) {
-    // Fast real-DOM assemble: ~8–15s by density (skip anytime).
-    var ms = 4000 + n * 220;
-    if (CRITICAL_UI) ms = Math.min(ms, 11000);
-    return Math.min(14000, Math.max(8000, ms));
+    // Deliberate real-DOM assemble: ~20–40s by density (skip anytime). Max ~45–60s.
+    var ms = 10000 + n * 900;
+    if (CRITICAL_UI) ms = Math.min(ms, 45000);
+    return Math.min(60000, Math.max(20000, ms));
   }
 
   function statusBoot() {
@@ -282,7 +282,7 @@
     var start = performance.now();
     var fromX = node._x || 0;
     var fromY = node._y || 0;
-    var dur = Math.max(70, duration || 180);
+    var dur = Math.max(220, duration || 520);
 
     function frame(now) {
       if (state.finished) return;
@@ -334,7 +334,8 @@
     caret.className = 'sab-caret';
     el.textContent = '';
     el.appendChild(caret);
-    var delay = Math.max(6, Math.floor(1000 / (cps || 90)));
+    // ~40–60ms per character (cps ~17–25).
+    var delay = Math.max(40, Math.min(60, Math.floor(1000 / (cps || 20))));
 
     function tick() {
       if (state.finished) return;
@@ -356,8 +357,8 @@
       var er = el.getBoundingClientRect();
       var pad = 72;
       if (er.top < pad || er.bottom > window.innerHeight - pad) {
-        el.scrollIntoView({ behavior: 'auto', block: 'center' });
-        later(onDone, 40);
+        el.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'center' });
+        later(onDone, 480);
         return;
       }
     } catch (e) { /* ignore */ }
@@ -376,7 +377,7 @@
     el.classList.remove('sa-agents-slot');
     later(function () {
       if (onDone) onDone();
-    }, item.mode === 'card' ? 55 : 30);
+    }, item.mode === 'card' ? 280 : 200);
   }
 
   function revealAllSlots() {
@@ -500,7 +501,7 @@
       if (idx >= targets.length) {
         AGENTS.forEach(function (a) { hideCursor(a.id); });
         setStatus(PAGE_TYPE === 'checkout' ? 'Checkout ready' : (PAGE_TYPE === 'product' ? 'Product ready' : 'Shop ready'));
-        later(function () { finish('complete'); }, 120);
+        later(function () { finish('complete'); }, 600);
         return;
       }
 
@@ -520,12 +521,14 @@
       ensureVisible(item.el, function () {
         if (state.finished) return;
         var pt = pointFor(item.el);
-        moveCursor(agentId, pt.x, pt.y, 120 + Math.min(60, (idx % 3) * 15), function () {
+        // Deliberate cursor travel (~400–560ms)
+        moveCursor(agentId, pt.x, pt.y, 400 + Math.min(160, (idx % 3) * 50), function () {
           if (state.finished) return;
 
           var doPlace = function () {
             placeSlot(item, function () {
-              later(next, 12 + (item.mode === 'card' ? 18 : 0));
+              // Longer pause between placements (~400–800ms)
+              later(next, 420 + (item.mode === 'card' ? 220 : 80) + ((idx % 3) * 60));
             });
           };
 
@@ -535,11 +538,12 @@
             state.typedRestore.push({ el: item.el, html: originalHtml });
             item.el.classList.add('sa-agents-typing');
             placeSlot(item, function () {
-              typeText(item.el, text, text.length > 60 ? 110 : 95, function () {
+              // cps ~18–22 → ~45–55ms/char
+              typeText(item.el, text, text.length > 60 ? 22 : 18, function () {
                 item.el.classList.remove('sa-agents-typing');
                 // Restore exact markup (links etc.) after typewriter
                 try { item.el.innerHTML = originalHtml; } catch (e) { /* ignore */ }
-                later(next, 10);
+                later(next, 320);
               });
             });
           } else {
@@ -606,7 +610,7 @@
     }
 
     // Let layout settle so getBoundingClientRect is accurate
-    later(function () { runSequence(targets); }, 20);
+    later(function () { runSequence(targets); }, 100);
   }
 
   function attachReplayControls() {
