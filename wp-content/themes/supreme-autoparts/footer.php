@@ -102,6 +102,25 @@ if (!defined('ABSPATH')) {
 
     <div class="sa-footer__bottom">
       <span>&copy; <?php echo esc_html(gmdate('Y')); ?> Supreme Autoparts · supremeautoparts.co.ke</span>
+      <?php
+      $sa_show_agents_replay = !is_admin();
+      if ($sa_show_agents_replay && function_exists('is_cart') && is_cart()) {
+          $sa_show_agents_replay = false;
+      }
+      if ($sa_show_agents_replay && function_exists('is_checkout') && is_checkout()) {
+          $sa_show_agents_replay = false;
+      }
+      if ($sa_show_agents_replay && function_exists('is_account_page') && is_account_page()) {
+          $sa_show_agents_replay = false;
+      }
+      if ($sa_show_agents_replay) :
+          ?>
+      <div class="sa-footer__replay-wrap">
+        <button type="button" class="sa-agents-replay" data-sa-agents-replay>
+          <?php esc_html_e('Replay the build', 'supreme-autoparts'); ?>
+        </button>
+      </div>
+      <?php endif; ?>
       <div class="sa-footer__payments" role="group" aria-label="<?php echo esc_attr__('Accepted payment methods', 'supreme-autoparts'); ?>">
         <span class="sa-footer__payments-label"><?php esc_html_e('Secure checkout via Whop', 'supreme-autoparts'); ?></span>
         <ul class="sa-footer__pay-logos">

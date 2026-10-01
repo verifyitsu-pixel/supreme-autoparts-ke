@@ -76,4 +76,55 @@ add_action('wp_enqueue_scripts', static function (): void {
             SA_THEME_VERSION
         );
     }
+
+    // Sai-style staged "agents assemble" intro — skip cart/checkout/account/pay/admin.
+    $skip_agents_build = is_admin();
+    if (!$skip_agents_build && function_exists('is_cart') && is_cart()) {
+        $skip_agents_build = true;
+    }
+    if (!$skip_agents_build && function_exists('is_checkout') && is_checkout()) {
+        $skip_agents_build = true;
+    }
+    if (!$skip_agents_build && function_exists('is_account_page') && is_account_page()) {
+        $skip_agents_build = true;
+    }
+    if (!$skip_agents_build && function_exists('is_wc_endpoint_url')) {
+        if (is_wc_endpoint_url('order-pay') || is_wc_endpoint_url('order-received')) {
+            $skip_agents_build = true;
+        }
+    }
+    // Super Admin / wp-login style fronts
+    if (!$skip_agents_build) {
+        global $pagenow;
+        if (is_string($pagenow) && in_array($pagenow, ['wp-login.php', 'wp-register.php'], true)) {
+            $skip_agents_build = true;
+        }
+    }
+
+    if (!$skip_agents_build) {
+        wp_enqueue_style(
+            'supreme-autoparts-agents-build',
+            SA_THEME_URI . '/assets/css/sa-agents-build.css',
+            ['supreme-autoparts-main'],
+            SA_THEME_VERSION
+        );
+        wp_enqueue_script(
+            'supreme-autoparts-agents-build',
+            SA_THEME_URI . '/assets/js/sa-agents-build.js',
+            [],
+            SA_THEME_VERSION,
+            true
+        );
+        $wa = function_exists('sa_enquire_contact') ? sa_enquire_contact() : [
+            'whatsapp'      => '19174375121',
+            'phone_display' => '+1 917 437 5121',
+        ];
+        $wa_digits = preg_replace('/\D+/', '', (string) ($wa['whatsapp'] ?? '19174375121')) ?: '19174375121';
+        wp_localize_script('supreme-autoparts-agents-build', 'saAgentsBuild', [
+            'storageKey' => 'sap-built',
+            'waDisplay'  => (string) ($wa['phone_display'] ?? '+1 917 437 5121'),
+            'waUrl'      => 'https://wa.me/' . $wa_digits,
+        ]);
+    }
+
 });
