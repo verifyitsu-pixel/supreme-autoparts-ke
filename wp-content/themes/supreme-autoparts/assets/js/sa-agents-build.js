@@ -1,14 +1,14 @@
 /**
- * Supreme Autoparts — staged "agents assemble the page" intro overlay.
- * Fake labeled cursors (Grok, GPT, Gemini, Opus, Muse) build a mock shop UI,
- * then reveal the real site. Plays on every page load / refresh / visit
- * (prefers-reduced-motion still skips the animation).
+ * Supreme Autoparts — Sai-style agents assemble the REAL page DOM.
+ * Labeled cursors (Grok, GPT, Gemini, Opus, Muse) move to live sections
+ * (header, nav, hero, cards, PDP, cart, checkout…) and place them into
+ * position. Plays on every customer page load/refresh. Skip anytime.
+ * prefers-reduced-motion → instant show. Does not mutate Whop iframes.
  */
 (function () {
   'use strict';
 
   var STORAGE_KEY = 'sap-built';
-  var HARD_CAP_MS = 10000;
   var WA_DISPLAY = '+1 917 437 5121';
   var WA_URL = 'https://wa.me/19174375121';
 
@@ -20,112 +20,11 @@
   if (cfg.storageKey) STORAGE_KEY = String(cfg.storageKey);
   var CRITICAL_UI = !!(cfg.criticalUi && Number(cfg.criticalUi) === 1);
   var PAGE_TYPE = cfg.pageType ? String(cfg.pageType) : 'store';
-  var PRODUCT = (cfg.product && typeof cfg.product === 'object') ? cfg.product : null;
-
-  function escHtml(s) {
-    return String(s == null ? '' : s)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
-
-  function truncate(s, n) {
-    s = String(s || '');
-    if (s.length <= n) return s;
-    return s.slice(0, n - 1).replace(/\s+\S*$/, '') + '…';
-  }
-
-  function contextCopy() {
-    if (PAGE_TYPE === 'product' && PRODUCT && PRODUCT.title) {
-      return {
-        logo: 'Supreme Autoparts',
-        tagline: 'Building this listing — genuine OEM / aftermarket fitment, ships US & worldwide.',
-        featureLabel: 'This product',
-        featureTitle: truncate(PRODUCT.title, 72),
-        featurePrice: PRODUCT.price ? String(PRODUCT.price) : 'Ask on WhatsApp',
-        featureImage: PRODUCT.image ? String(PRODUCT.image) : '',
-        statusReady: 'Product ready',
-        museStatus: 'Muse is placing this product…',
-      };
-    }
-    if (PAGE_TYPE === 'shop' || PAGE_TYPE === 'category' || PAGE_TYPE === 'search') {
-      return {
-        logo: 'Supreme Autoparts',
-        tagline: 'Assembling the catalog grid — browse engines, drivetrain, lighting & more.',
-        featureLabel: 'Catalog pick',
-        featureTitle: '2JZ-GTE Complete Engine Assembly',
-        featurePrice: 'From $4,850 · used OEM',
-        featureImage: '',
-        statusReady: 'Catalog ready',
-        museStatus: 'Muse is filling a featured part…',
-      };
-    }
-    if (PAGE_TYPE === 'cart' || PAGE_TYPE === 'checkout') {
-      return {
-        logo: 'Supreme Autoparts',
-        tagline: 'Secure cart & checkout — WhatsApp support anytime. Charged in USD.',
-        featureLabel: 'Checkout trust',
-        featureTitle: 'Secure pay via Whop · guest checkout welcome',
-        featurePrice: 'WhatsApp ' + WA_DISPLAY,
-        featureImage: '',
-        statusReady: 'Checkout ready',
-        museStatus: 'Muse is wiring checkout trust…',
-      };
-    }
-    if (PAGE_TYPE === 'account') {
-      return {
-        logo: 'Supreme Autoparts',
-        tagline: 'Your account hub — orders, support, and part enquiries in one place.',
-        featureLabel: 'Support',
-        featureTitle: 'Message us on WhatsApp for fitment help',
-        featurePrice: WA_DISPLAY,
-        featureImage: '',
-        statusReady: 'Account ready',
-        museStatus: 'Muse is setting up support…',
-      };
-    }
-    // home / store / fallback — never reference COPY here (it is assigned from this return).
-    return {
-      logo: 'Supreme Autoparts',
-      tagline: 'Genuine OEM & aftermarket parts — engines, drivetrain, lighting & more. Ships US & worldwide.',
-      featureLabel: 'Featured OEM',
-      featureTitle: '2JZ-GTE Complete Engine Assembly',
-      featurePrice: 'From $4,850 · used OEM',
-      featureImage: '',
-      statusReady: 'Shop ready',
-      museStatus: 'Muse is filling a featured part…',
-    };
-  }
-
-  var COPY = contextCopy();
 
   var POINTER_SVG =
     '<svg class="sa-agents-build__cursor-pointer" viewBox="0 0 18 22" width="18" height="22" aria-hidden="true" focusable="false">' +
     '<path fill="currentColor" stroke="#0B0B0D" stroke-width="1.2" d="M1.2 1.2l15.2 8.4-6.6 1.7 3.8 7.4-2.7 1.4-3.9-7.5-5.8 4.4z"/>' +
     '</svg>';
-
-  var WA_SVG =
-    '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">' +
-    '<path fill="currentColor" d="M12.04 2C6.58 2 2.15 6.4 2.15 11.84c0 1.97.58 3.8 1.58 5.35L2 22l4.97-1.64a9.86 9.86 0 0 0 5.07 1.4h.01c5.46 0 9.89-4.4 9.89-9.84C21.94 6.4 17.5 2 12.04 2zm5.75 13.98c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.13.11-1.82-.11-.42-.14-.96-.31-1.66-.61-2.92-1.26-4.82-4.2-4.97-4.39-.14-.2-1.2-1.6-1.2-3.05s.76-2.16 1.03-2.46c.26-.3.58-.37.77-.37h.56c.18 0 .42-.07.66.5.24.58.82 2 .89 2.15.07.14.12.32.02.51-.1.2-.14.32-.28.5-.14.17-.3.38-.42.51-.14.14-.28.29-.12.56.16.28.7 1.15 1.5 1.86 1.03.92 1.9 1.2 2.17 1.34.27.14.43.12.59-.07.16-.2.68-.79.86-1.06.18-.28.36-.23.61-.14.24.1 1.56.74 1.83.87.27.14.45.2.52.31.07.12.07.68-.17 1.36z"/>' +
-    '</svg>';
-
-  var ICON_ENGINE =
-    '<svg class="sa-agents-build__cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h3l2-3h4l2 3h3v7H4v-7z"/><path d="M14 10V7h3"/><circle cx="9" cy="14" r="1.2"/><circle cx="15" cy="14" r="1.2"/></svg>';
-  var ICON_TRANS =
-    '<svg class="sa-agents-build__cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="12" r="3"/><circle cx="17" cy="8" r="2.5"/><circle cx="17" cy="16" r="2.5"/><path d="M10 12h4.5M17 10.5v3"/></svg>';
-  var ICON_AXLE =
-    '<svg class="sa-agents-build__cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="12" r="2.5"/><path d="M7.5 12h9"/><path d="M12 9v6"/></svg>';
-  var ICON_LIGHT =
-    '<svg class="sa-agents-build__cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 14c0-3.5 2.5-6 7-6s7 2.5 7 6v2H5v-2z"/><path d="M9 18h6"/><path d="M8 8l-1.5-2M16 8l1.5-2M12 6V3.5"/></svg>';
-  var ICON_PART =
-    '<svg viewBox="0 0 48 40" width="40" height="34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="10" width="32" height="20" rx="3"/><path d="M14 20h20M18 14v12M30 14v12"/></svg>';
-  var ICON_SHIP =
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h13v10H3z"/><path d="M16 10h3l2 3v4h-5V10z"/><circle cx="7.5" cy="18.5" r="1.5"/><circle cx="17.5" cy="18.5" r="1.5"/></svg>';
-  var ICON_SHIELD =
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg>';
-  var ICON_LOCK =
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h16v8H4z"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
 
   var AGENTS = [
     { id: 'grok', label: 'Grok' },
@@ -135,6 +34,15 @@
     { id: 'muse', label: 'Muse' },
   ];
 
+  var TYPEABLE_SEL = [
+    'h1', 'h2', 'h3',
+    '.sa-hero__eyebrow', '.sa-hero__lead',
+    '.sa-archive-header__eyebrow',
+    '.sa-checkout-hero__eyebrow', '.sa-checkout-hero__title', '.sa-checkout-hero__lead',
+    '.sa-cart-hero__eyebrow', '.sa-cart-hero__title',
+    '.product_title', '.sa-product__title',
+  ].join(',');
+
   var state = {
     root: null,
     cursors: {},
@@ -142,7 +50,8 @@
     rafs: [],
     finished: false,
     hardCap: null,
-    reduced: false,
+    slots: [],
+    typedRestore: [],
   };
 
   function prefersReducedMotion() {
@@ -154,9 +63,7 @@
   }
 
   function clearBuilt() {
-    try {
-      sessionStorage.removeItem(STORAGE_KEY);
-    } catch (e) { /* ignore */ }
+    try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
   }
 
   function later(fn, ms) {
@@ -176,26 +83,190 @@
     }
   }
 
-  function typeText(el, text, cps, onDone) {
-    var i = 0;
-    var caret = document.createElement('span');
-    caret.className = 'sab-caret';
-    el.textContent = '';
-    el.appendChild(caret);
-    var delay = Math.max(18, Math.floor(1000 / (cps || 28)));
-
-    function tick() {
-      if (state.finished) return;
-      if (i >= text.length) {
-        caret.classList.add('is-off');
-        if (onDone) onDone();
-        return;
-      }
-      el.insertBefore(document.createTextNode(text.charAt(i)), caret);
-      i += 1;
-      later(tick, delay);
+  function isUnsafe(el) {
+    if (!el || el.nodeType !== 1) return true;
+    var tag = (el.tagName || '').toLowerCase();
+    if (tag === 'iframe' || tag === 'script' || tag === 'style' || tag === 'noscript' || tag === 'link') {
+      return true;
     }
-    tick();
+    if (el.closest && (
+      el.closest('iframe') ||
+      el.closest('[data-whop]') ||
+      el.closest('.whop-checkout') ||
+      el.closest('.whop-embedded-checkout') ||
+      el.closest('#whop-checkout') ||
+      el.closest('.StripeElement') ||
+      el.closest('.payment_box iframe')
+    )) {
+      return true;
+    }
+    // Never hide/mutate payment field guts — only their section wrappers.
+    if (el.matches && el.matches('input, select, textarea, button') && el.closest && el.closest('#payment, .payment_box, .woocommerce-checkout-payment')) {
+      return true;
+    }
+    return false;
+  }
+
+  function qsa(sel, root) {
+    try {
+      return Array.prototype.slice.call((root || document).querySelectorAll(sel));
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function first(sel) {
+    try { return document.querySelector(sel); } catch (e) { return null; }
+  }
+
+  function pushUnique(list, el, meta) {
+    if (!el || isUnsafe(el)) return;
+    if (el.id === 'sa-agents-build' || (el.closest && el.closest('#sa-agents-build'))) return;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].el === el) return;
+    }
+    // Skip if an ancestor is already queued (place parents, not every child).
+    for (var j = 0; j < list.length; j++) {
+      if (list[j].el.contains && list[j].el.contains(el)) return;
+    }
+    // Drop previously queued descendants of this new parent.
+    for (var k = list.length - 1; k >= 0; k--) {
+      if (el.contains && el.contains(list[k].el)) list.splice(k, 1);
+    }
+    list.push({
+      el: el,
+      label: (meta && meta.label) || 'section',
+      agent: (meta && meta.agent) || null,
+      type: !!(meta && meta.type),
+      mode: (meta && meta.mode) || 'place',
+    });
+  }
+
+  function take(sel, limit) {
+    var nodes = qsa(sel);
+    if (limit && nodes.length > limit) nodes = nodes.slice(0, limit);
+    return nodes;
+  }
+
+  function collectTargets() {
+    var list = [];
+    var commonChrome = function () {
+      pushUnique(list, first('.sa-announce'), { label: 'announcement bar', agent: 'gpt' });
+      pushUnique(list, first('.sa-logo'), { label: 'logo', agent: 'grok', type: true });
+      pushUnique(list, first('.sa-search'), { label: 'search', agent: 'gemini' });
+      pushUnique(list, first('.sa-header__actions'), { label: 'account & cart', agent: 'opus' });
+      pushUnique(list, first('.sa-nav'), { label: 'navigation', agent: 'muse' });
+    };
+
+    commonChrome();
+
+    if (PAGE_TYPE === 'home' || PAGE_TYPE === 'store') {
+      pushUnique(list, first('.sa-hero__eyebrow'), { label: 'hero eyebrow', agent: 'grok', type: true });
+      pushUnique(list, first('#sa-hero-title, .sa-hero h1'), { label: 'hero headline', agent: 'gemini', type: true });
+      pushUnique(list, first('.sa-hero__lead'), { label: 'hero lead', agent: 'gpt', type: true });
+      pushUnique(list, first('.sa-hero__search'), { label: 'hero search', agent: 'opus' });
+      pushUnique(list, first('.sa-hero__actions'), { label: 'hero CTAs', agent: 'muse' });
+      take('.sa-trust__item', 4).forEach(function (el, i) {
+        pushUnique(list, el, { label: 'trust signal', agent: AGENTS[i % AGENTS.length].id });
+      });
+      take('.sa-type-tile', 8).forEach(function (el, i) {
+        pushUnique(list, el, { label: 'category tile', agent: AGENTS[i % AGENTS.length].id, mode: 'card' });
+      });
+      take('.sa-latest-parts .sa-product-card, .sa-products .sa-product-card', 8).forEach(function (el, i) {
+        pushUnique(list, el, { label: 'product card', agent: AGENTS[i % AGENTS.length].id, mode: 'card' });
+      });
+      take('.sa-how__step', 4).forEach(function (el, i) {
+        pushUnique(list, el, { label: 'how-it-works step', agent: AGENTS[i % AGENTS.length].id });
+      });
+      pushUnique(list, first('.sa-ship-banner'), { label: 'shipping banner', agent: 'gpt' });
+      pushUnique(list, first('.sa-blurb'), { label: 'about blurb', agent: 'muse' });
+    } else if (PAGE_TYPE === 'shop' || PAGE_TYPE === 'category' || PAGE_TYPE === 'search') {
+      pushUnique(list, first('.sa-archive-header'), { label: 'catalog header', agent: 'grok', type: true });
+      pushUnique(list, first('.sa-catalog-filters, .sa-filters, .woocommerce-notices-wrapper'), { label: 'filters', agent: 'gemini' });
+      take('ul.products .sa-product-card, ul.products > li.product', 12).forEach(function (el, i) {
+        pushUnique(list, el, { label: 'catalog card', agent: AGENTS[i % AGENTS.length].id, mode: 'card' });
+      });
+      pushUnique(list, first('.woocommerce-pagination, .sa-pagination'), { label: 'pagination', agent: 'opus' });
+    } else if (PAGE_TYPE === 'product') {
+      pushUnique(list, first('.woocommerce-product-gallery, .sa-product__gallery, .sa-single .images'), { label: 'product gallery', agent: 'muse', mode: 'image' });
+      pushUnique(list, first('.product_title, .sa-product__title, .summary .product_title, h1.product_title'), { label: 'product title', agent: 'grok', type: true });
+      pushUnique(list, first('.summary .price, .sa-product__price, .product .price'), { label: 'price', agent: 'gemini' });
+      pushUnique(list, first('.sa-product-card__sku, .product_meta, .sku_wrapper'), { label: 'part number', agent: 'gpt' });
+      pushUnique(list, first('form.cart, .sa-product__actions, .single_add_to_cart_button'), { label: 'add to cart', agent: 'opus' });
+      pushUnique(list, first('.woocommerce-tabs, .sa-product__tabs, #tab-description, .woocommerce-product-details__short-description'), { label: 'details', agent: 'muse' });
+      take('.related .sa-product-card, .related products .product, .upsells .sa-product-card', 4).forEach(function (el, i) {
+        pushUnique(list, el, { label: 'related part', agent: AGENTS[i % AGENTS.length].id, mode: 'card' });
+      });
+    } else if (PAGE_TYPE === 'cart') {
+      pushUnique(list, first('.sa-cart-hero'), { label: 'cart header', agent: 'grok', type: true });
+      take('.woocommerce-cart-form__cart-item, .sa-cart-table tbody tr.cart_item, tr.woocommerce-cart-form__cart-item', 8).forEach(function (el, i) {
+        pushUnique(list, el, { label: 'cart line', agent: AGENTS[i % AGENTS.length].id, mode: 'card' });
+      });
+      pushUnique(list, first('.sa-cart-summary, .cart-collaterals, .sa-cart-layout__summary'), { label: 'order summary', agent: 'opus' });
+      pushUnique(list, first('.wc-proceed-to-checkout, .checkout-button, a.checkout-button'), { label: 'checkout CTA', agent: 'muse' });
+    } else if (PAGE_TYPE === 'checkout') {
+      pushUnique(list, first('.sa-checkout-hero'), { label: 'checkout header', agent: 'grok', type: true });
+      pushUnique(list, first('.sa-checkout-steps'), { label: 'checkout steps', agent: 'gemini' });
+      pushUnique(list, first('.sa-checkout-section--contact, #sa-checkout-contact'), { label: 'contact fields', agent: 'gpt' });
+      pushUnique(list, first('.sa-checkout-section--shipping, #sa-checkout-shipping'), { label: 'shipping fields', agent: 'opus' });
+      // Place payment SECTION only — never iframes / payment inputs inside.
+      pushUnique(list, first('.sa-checkout-section--payment, #sa-checkout-payment-note, #payment'), { label: 'payment section', agent: 'muse' });
+      pushUnique(list, first('.sa-checkout-layout__summary, .sa-checkout-summary'), { label: 'order summary', agent: 'grok' });
+    } else if (PAGE_TYPE === 'account') {
+      pushUnique(list, first('.sa-account-nav, .woocommerce-MyAccount-navigation'), { label: 'account nav', agent: 'grok' });
+      pushUnique(list, first('.sa-account-panel, .woocommerce-MyAccount-content, .sa-account-auth'), { label: 'account panel', agent: 'gemini' });
+      take('.sa-account-tile', 6).forEach(function (el, i) {
+        pushUnique(list, el, { label: 'account tile', agent: AGENTS[i % AGENTS.length].id, mode: 'card' });
+      });
+    } else {
+      // Generic store page fallback
+      pushUnique(list, first('main, #main, .sa-main, .site-main'), { label: 'page content', agent: 'muse' });
+    }
+
+    // Footer last on every page (contact / trust)
+    pushUnique(list, first('.sa-footer__grid'), { label: 'footer', agent: 'gpt' });
+    pushUnique(list, first('.sa-footer-contact'), { label: 'contact form', agent: 'opus' });
+
+    return list;
+  }
+
+  function hardCapMs(n) {
+    // Customers are patient: 20–45s by density (was ~10s).
+    var ms = 9000 + n * 1200;
+    if (CRITICAL_UI) ms = Math.min(ms, 32000); // still allow a full checkout place-through
+    return Math.min(45000, Math.max(20000, ms));
+  }
+
+  function statusBoot() {
+    if (PAGE_TYPE === 'product') return 'Agents assembling this product…';
+    if (PAGE_TYPE === 'cart') return 'Agents assembling your cart…';
+    if (PAGE_TYPE === 'checkout') return 'Agents assembling checkout…';
+    if (PAGE_TYPE === 'account') return 'Agents assembling your account…';
+    if (PAGE_TYPE === 'shop' || PAGE_TYPE === 'category' || PAGE_TYPE === 'search') return 'Agents assembling the catalog…';
+    return 'Agents assembling your shop…';
+  }
+
+  function setStatus(text) {
+    if (!state.root) return;
+    var el = state.root.querySelector('[data-sab-status]');
+    if (el) el.textContent = text;
+  }
+
+  function agentLabel(id) {
+    for (var i = 0; i < AGENTS.length; i++) {
+      if (AGENTS[i].id === id) return AGENTS[i].label;
+    }
+    return 'Agent';
+  }
+
+  function pointFor(el) {
+    var er = el.getBoundingClientRect();
+    var x = er.left + Math.min(Math.max(er.width * 0.28, 12), 96);
+    var y = er.top + Math.min(Math.max(er.height * 0.35, 10), 56);
+    // Keep cursor on-screen
+    x = Math.max(8, Math.min(window.innerWidth - 48, x));
+    y = Math.max(8, Math.min(window.innerHeight - 48, y));
+    return { x: x, y: y };
   }
 
   function moveCursor(agentId, x, y, duration, onDone) {
@@ -208,7 +279,7 @@
     var start = performance.now();
     var fromX = node._x || 0;
     var fromY = node._y || 0;
-    var dur = Math.max(120, duration || 500);
+    var dur = Math.max(140, duration || 480);
 
     function frame(now) {
       if (state.finished) return;
@@ -220,14 +291,12 @@
       node._y = cy;
       node.style.transform = 'translate3d(' + cx + 'px,' + cy + 'px,0)';
       if (t < 1) {
-        var raf = window.requestAnimationFrame(frame);
-        state.rafs.push(raf);
+        state.rafs.push(window.requestAnimationFrame(frame));
       } else if (onDone) {
         onDone();
       }
     }
-    var raf0 = window.requestAnimationFrame(frame);
-    state.rafs.push(raf0);
+    state.rafs.push(window.requestAnimationFrame(frame));
   }
 
   function hideCursor(agentId) {
@@ -235,108 +304,117 @@
     if (node) node.classList.remove('is-on');
   }
 
-  function stagePoint(sel, ox, oy) {
-    var root = state.root;
-    var el = root.querySelector(sel);
-    if (!el) return { x: 80, y: 80 };
-    var rr = root.getBoundingClientRect();
-    var er = el.getBoundingClientRect();
-    return {
-      x: er.left - rr.left + (ox != null ? ox : er.width * 0.35),
-      y: er.top - rr.top + (oy != null ? oy : er.height * 0.45),
-    };
-  }
-
-  function buildDOM() {
-    var root = document.createElement('div');
-    root.id = 'sa-agents-build';
-    root.className = 'sa-agents-build';
-    root.setAttribute('role', 'dialog');
-    root.setAttribute('aria-modal', 'true');
-    root.setAttribute('aria-label', 'Building the shop experience');
-    root.setAttribute('aria-hidden', 'false');
-    root.tabIndex = -1;
-
-    var featImg = COPY.featureImage
-      ? ('<img src="' + escHtml(COPY.featureImage) + '" alt="" width="88" height="72" decoding="async"/>')
-      : ICON_PART;
-    var statusBoot = PAGE_TYPE === 'product'
-      ? 'Agents assembling this product…'
-      : (PAGE_TYPE === 'cart' || PAGE_TYPE === 'checkout')
-        ? 'Agents assembling checkout…'
-        : 'Agents assembling your shop…';
-
-    root.innerHTML =
-      '<div class="sa-agents-build__canvas" aria-hidden="true"></div>' +
-      '<p class="sa-agents-build__skip">Click anywhere to skip</p>' +
-      '<div class="sa-agents-build__stage">' +
-        '<div class="sa-agents-build__brand">' +
-          '<h1 class="sa-agents-build__logo" data-sab-logo></h1>' +
-          '<p class="sa-agents-build__tagline" data-sab-tagline></p>' +
-        '</div>' +
-        '<a class="sa-agents-build__wa" data-sab-wa href="' + WA_URL + '" target="_blank" rel="noopener noreferrer" tabindex="-1">' +
-          WA_SVG + '<span>WhatsApp ' + WA_DISPLAY + '</span>' +
-        '</a>' +
-        '<div class="sa-agents-build__cats" data-sab-cats>' +
-          '<div class="sa-agents-build__cat" data-sab-cat="0">' + ICON_ENGINE + '<strong>Engines</strong></div>' +
-          '<div class="sa-agents-build__cat" data-sab-cat="1">' + ICON_TRANS + '<strong>Transmissions</strong></div>' +
-          '<div class="sa-agents-build__cat" data-sab-cat="2">' + ICON_AXLE + '<strong>Axles</strong></div>' +
-          '<div class="sa-agents-build__cat" data-sab-cat="3">' + ICON_LIGHT + '<strong>Lights</strong></div>' +
-        '</div>' +
-        '<div class="sa-agents-build__feature" data-sab-feature>' +
-          '<div class="sa-agents-build__feature-img">' + featImg + '</div>' +
-          '<div class="sa-agents-build__feature-meta">' +
-            '<p class="sa-agents-build__feature-label">' + escHtml(COPY.featureLabel) + '</p>' +
-            '<p class="sa-agents-build__feature-title">' + escHtml(COPY.featureTitle) + '</p>' +
-            '<p class="sa-agents-build__feature-price">' + escHtml(COPY.featurePrice) + '</p>' +
-            '<div class="sab-line sab-line--title" aria-hidden="true"></div>' +
-            '<div class="sab-line sab-line--sub" aria-hidden="true"></div>' +
-            '<div class="sab-line sab-line--price" aria-hidden="true"></div>' +
-          '</div>' +
-        '</div>' +
-        '<ul class="sa-agents-build__trust" data-sab-trust>' +
-          '<li data-sab-trust-i="0">' + ICON_SHIP + '<span>Worldwide shipping</span></li>' +
-          '<li data-sab-trust-i="1">' + ICON_SHIELD + '<span>Inspected · warranty options</span></li>' +
-          '<li data-sab-trust-i="2">' + ICON_LOCK + '<span>Secure checkout</span></li>' +
-        '</ul>' +
-      '</div>' +
-      '<div class="sa-agents-build__cursors" data-sab-cursors aria-hidden="true"></div>' +
-      '<p class="sa-agents-build__status" data-sab-status>' + escHtml(statusBoot) + '</p>';
-
-    var cursorsWrap = root.querySelector('[data-sab-cursors]');
-    AGENTS.forEach(function (a, idx) {
-      var c = document.createElement('div');
-      c.className = 'sa-agents-build__cursor sa-agents-build__cursor--' + a.id;
-      c.dataset.agent = a.id;
-      c.innerHTML = POINTER_SVG + '<span class="sa-agents-build__cursor-pill">' + a.label + '</span>';
-      c._x = 40 + idx * 28;
-      c._y = 40 + idx * 18;
-      c.style.transform = 'translate3d(' + c._x + 'px,' + c._y + 'px,0)';
-      cursorsWrap.appendChild(c);
-      state.cursors[a.id] = c;
+  function hideOtherCursors(keepId) {
+    AGENTS.forEach(function (a) {
+      if (a.id !== keepId) hideCursor(a.id);
     });
-
-    document.body.appendChild(root);
-    document.body.classList.add('sa-agents-building');
-    state.root = root;
-    return root;
   }
 
-  function setStatus(text) {
-    if (!state.root) return;
-    var el = state.root.querySelector('[data-sab-status]');
-    if (el) el.textContent = text;
+  function canType(el) {
+    if (!el || !el.matches) return false;
+    try {
+      if (!el.matches(TYPEABLE_SEL)) return false;
+    } catch (e) {
+      return false;
+    }
+    if (el.querySelector && el.querySelector('img, svg, input, iframe, a .sa-logo__img')) return false;
+    // Prefer leaf-ish text nodes
+    var text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+    if (text.length < 2 || text.length > 140) return false;
+    if (el.children && el.children.length > 2) return false;
+    return true;
+  }
+
+  function typeText(el, text, cps, onDone) {
+    var i = 0;
+    var caret = document.createElement('span');
+    caret.className = 'sab-caret';
+    el.textContent = '';
+    el.appendChild(caret);
+    var delay = Math.max(14, Math.floor(1000 / (cps || 36)));
+
+    function tick() {
+      if (state.finished) return;
+      if (i >= text.length) {
+        caret.classList.add('is-off');
+        try { if (caret.parentNode) caret.parentNode.removeChild(caret); } catch (e) { /* ignore */ }
+        if (onDone) onDone();
+        return;
+      }
+      el.insertBefore(document.createTextNode(text.charAt(i)), caret);
+      i += 1;
+      later(tick, delay);
+    }
+    tick();
+  }
+
+  function ensureVisible(el, onDone) {
+    try {
+      var er = el.getBoundingClientRect();
+      var pad = 72;
+      if (er.top < pad || er.bottom > window.innerHeight - pad) {
+        el.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'center' });
+        later(onDone, 420);
+        return;
+      }
+    } catch (e) { /* ignore */ }
+    onDone();
+  }
+
+  function placeSlot(item, onDone) {
+    var el = item.el;
+    if (!el || !el.classList) {
+      if (onDone) onDone();
+      return;
+    }
+    el.classList.add('sa-agents-placed');
+    if (item.mode === 'card') el.classList.add('sa-agents-placed--card');
+    if (item.mode === 'image') el.classList.add('sa-agents-placed--image');
+    el.classList.remove('sa-agents-slot');
+    later(function () {
+      if (onDone) onDone();
+    }, item.mode === 'card' ? 220 : 160);
+  }
+
+  function revealAllSlots() {
+    state.slots.forEach(function (item) {
+      if (!item.el || !item.el.classList) return;
+      item.el.classList.add('sa-agents-placed');
+      item.el.classList.remove('sa-agents-slot');
+    });
+    state.typedRestore.forEach(function (rec) {
+      try {
+        if (rec.el && rec.html != null) rec.el.innerHTML = rec.html;
+      } catch (e) { /* ignore */ }
+    });
+    state.typedRestore = [];
+  }
+
+  function unbindSkip() {
+    if (state._onKey) {
+      document.removeEventListener('keydown', state._onKey, true);
+      state._onKey = null;
+    }
   }
 
   function finish(reason) {
     if (state.finished) return;
     state.finished = true;
     clearAllTimers();
+    unbindSkip();
+
+    revealAllSlots();
+
+    // Always restore interactivity immediately (critical on cart/checkout / Whop).
+    document.body.classList.remove('sa-agents-building');
+    document.body.classList.add('sa-agents-built');
+    document.documentElement.classList.remove('sa-agents-building');
 
     var root = state.root;
-    // Always restore page interactivity immediately (critical on cart/checkout).
-    document.body.classList.remove('sa-agents-building');
     if (!root) {
+      try {
+        window.dispatchEvent(new CustomEvent('sa-agents-build:done', { detail: { reason: reason || 'complete' } }));
+      } catch (e0) { /* ignore */ }
       return;
     }
 
@@ -346,160 +424,150 @@
     root.removeAttribute('aria-modal');
     root.removeAttribute('aria-label');
 
-    // Return focus to body / first focusable so we don't trap
     try {
       if (document.activeElement && root.contains(document.activeElement)) {
         document.activeElement.blur();
       }
     } catch (e) { /* ignore */ }
 
-    // Skip/cap/critical UI: tear down ASAP so pay buttons stay usable.
-    var removeMs = (reason === 'skip' || reason === 'cap' || reason === 'wa' || CRITICAL_UI) ? 80 : 420;
+    var removeMs = (reason === 'skip' || reason === 'cap' || reason === 'wa' || reason === 'replay-reset') ? 60 : 380;
     window.setTimeout(function () {
       if (root && root.parentNode) root.parentNode.removeChild(root);
       state.root = null;
       state.cursors = {};
+      state.slots = [];
     }, removeMs);
 
-    // Soft-reveal real product chrome after overlay (does not block checkout).
-    try {
-      if (PAGE_TYPE === 'product') {
-        var reveal = document.querySelector('.product .product_title, .sa-product__title, h1.product_title, .summary .product_title');
-        var priceEl = document.querySelector('.product .price, .summary .price, .sa-product__price');
-        var imgEl = document.querySelector('.woocommerce-product-gallery__image img, .sa-product__gallery img, .product .wp-post-image');
-        [reveal, priceEl, imgEl].forEach(function (el) {
-          if (!el) return;
-          el.classList.add('sa-agents-reveal');
-          window.setTimeout(function () { el.classList.remove('sa-agents-reveal'); }, 1200);
-        });
-      }
-    } catch (e2) { /* ignore */ }
-
-    // Expose for replay debugging
     try {
       window.dispatchEvent(new CustomEvent('sa-agents-build:done', { detail: { reason: reason || 'complete' } }));
-    } catch (e) { /* ignore */ }
+    } catch (e2) { /* ignore */ }
   }
 
-  function runSequence() {
-    var logo = state.root.querySelector('[data-sab-logo]');
-    var tagline = state.root.querySelector('[data-sab-tagline]');
-    var wa = state.root.querySelector('[data-sab-wa]');
-    var feature = state.root.querySelector('[data-sab-feature]');
-    var cats = state.root.querySelectorAll('[data-sab-cat]');
-    var trustItems = state.root.querySelectorAll('[data-sab-trust-i]');
+  function buildOverlay() {
+    var root = document.createElement('div');
+    root.id = 'sa-agents-build';
+    root.className = 'sa-agents-build sa-agents-build--live';
+    root.setAttribute('role', 'dialog');
+    root.setAttribute('aria-modal', 'true');
+    root.setAttribute('aria-label', 'Building the shop experience');
+    root.setAttribute('aria-hidden', 'false');
+    root.tabIndex = -1;
 
-    // Hard failsafe
-    state.hardCap = window.setTimeout(function () {
-      finish('cap');
-    }, HARD_CAP_MS);
+    root.innerHTML =
+      '<div class="sa-agents-build__veil" aria-hidden="true"></div>' +
+      '<p class="sa-agents-build__skip">Click / Esc / Enter / Space to skip</p>' +
+      '<div class="sa-agents-build__cursors" data-sab-cursors aria-hidden="true"></div>' +
+      '<p class="sa-agents-build__status" data-sab-status>' + statusBoot() + '</p>';
 
-    // t≈0: Grok types logo
-    setStatus('Grok is writing the brand…');
-    var p0 = stagePoint('[data-sab-logo]', 24, 20);
-    moveCursor('grok', p0.x, p0.y, 420, function () {
-      typeText(logo, 'Supreme Autoparts', 32, function () {
-        hideCursor('grok');
+    var cursorsWrap = root.querySelector('[data-sab-cursors]');
+    AGENTS.forEach(function (a, idx) {
+      var c = document.createElement('div');
+      c.className = 'sa-agents-build__cursor sa-agents-build__cursor--' + a.id;
+      c.dataset.agent = a.id;
+      c.innerHTML = POINTER_SVG + '<span class="sa-agents-build__cursor-pill">' + a.label + '</span>';
+      c._x = 36 + idx * 30;
+      c._y = 48 + idx * 20;
+      c.style.transform = 'translate3d(' + c._x + 'px,' + c._y + 'px,0)';
+      cursorsWrap.appendChild(c);
+      state.cursors[a.id] = c;
+    });
 
-        // t≈1.2: Gemini types tagline
-        setStatus('Gemini is drafting the tagline…');
-        var p1 = stagePoint('[data-sab-tagline]', 20, 12);
-        moveCursor('gemini', p1.x, p1.y, 380, function () {
-          typeText(
-            tagline,
-            COPY.tagline,
-            42,
-            function () {
-              hideCursor('gemini');
+    document.body.appendChild(root);
+    state.root = root;
+    return root;
+  }
 
-              // t≈3.2: GPT places WhatsApp pill
-              setStatus('GPT is placing WhatsApp…');
-              var p2 = stagePoint('[data-sab-wa]', 30, 18);
-              moveCursor('gpt', p2.x, p2.y, 360, function () {
-                wa.classList.add('is-in');
-                later(function () {
-                  hideCursor('gpt');
+  function prepareSlots(targets) {
+    targets.forEach(function (item) {
+      if (!item.el || !item.el.classList) return;
+      item.el.classList.add('sa-agents-slot');
+      item.el.classList.remove('sa-agents-placed', 'sa-agents-placed--card', 'sa-agents-placed--image');
+    });
+    state.slots = targets;
+  }
 
-                  // t≈4.0: Opus draws category cards
-                  setStatus('Opus is laying out categories…');
-                  var i = 0;
-                  function nextCat() {
-                    if (state.finished) return;
-                    if (i >= cats.length) {
-                      hideCursor('opus');
-                      // Featured card
-                      setStatus(COPY.museStatus);
-                      var pf = stagePoint('[data-sab-feature]', 40, 30);
-                      moveCursor('muse', pf.x, pf.y, 340, function () {
-                        feature.classList.add('is-in');
-                        later(function () {
-                          feature.classList.add('is-filled');
-                          // hide placeholder lines once text is visible
-                          later(function () {
-                            hideCursor('muse');
-                            // Trust row
-                            setStatus('Grok is adding trust signals…');
-                            var ti = 0;
-                            function nextTrust() {
-                              if (state.finished) return;
-                              if (ti >= trustItems.length) {
-                                hideCursor('grok');
-                                setStatus(COPY.statusReady);
-                                later(function () { finish('complete'); }, 420);
-                                return;
-                              }
-                              var item = trustItems[ti];
-                              var pt = stagePoint('[data-sab-trust-i="' + ti + '"]', 18, 10);
-                              moveCursor('grok', pt.x, pt.y, 220, function () {
-                                item.classList.add('is-in');
-                                ti += 1;
-                                later(nextTrust, 160);
-                              });
-                            }
-                            nextTrust();
-                          }, 380);
-                        }, 180);
-                      });
-                      return;
-                    }
-                    var cat = cats[i];
-                    var pc = stagePoint('[data-sab-cat="' + i + '"]', 28, 24);
-                    moveCursor('opus', pc.x, pc.y, 260, function () {
-                      cat.classList.add('is-in');
-                      later(function () { cat.classList.add('is-drawn'); }, 80);
-                      i += 1;
-                      later(nextCat, 200);
-                    });
-                  }
-                  nextCat();
-                }, 220);
+  function runSequence(targets) {
+    var cap = hardCapMs(targets.length);
+    state.hardCap = window.setTimeout(function () { finish('cap'); }, cap);
+
+    var idx = 0;
+
+    function next() {
+      if (state.finished) return;
+      if (idx >= targets.length) {
+        AGENTS.forEach(function (a) { hideCursor(a.id); });
+        setStatus(PAGE_TYPE === 'checkout' ? 'Checkout ready' : (PAGE_TYPE === 'product' ? 'Product ready' : 'Shop ready'));
+        later(function () { finish('complete'); }, 520);
+        return;
+      }
+
+      var item = targets[idx];
+      idx += 1;
+      var agentId = item.agent || AGENTS[(idx - 1) % AGENTS.length].id;
+      var label = agentLabel(agentId);
+
+      if (!item.el || !document.contains(item.el)) {
+        later(next, 40);
+        return;
+      }
+
+      setStatus(label + ' is placing ' + item.label + '…');
+      hideOtherCursors(agentId);
+
+      ensureVisible(item.el, function () {
+        if (state.finished) return;
+        var pt = pointFor(item.el);
+        moveCursor(agentId, pt.x, pt.y, 360 + Math.min(180, (idx % 3) * 40), function () {
+          if (state.finished) return;
+
+          var doPlace = function () {
+            placeSlot(item, function () {
+              later(next, 90 + (item.mode === 'card' ? 70 : 0));
+            });
+          };
+
+          if (item.type && canType(item.el)) {
+            var originalHtml = item.el.innerHTML;
+            var text = (item.el.textContent || '').replace(/\s+/g, ' ').trim();
+            state.typedRestore.push({ el: item.el, html: originalHtml });
+            item.el.classList.add('sa-agents-typing');
+            placeSlot(item, function () {
+              typeText(item.el, text, text.length > 60 ? 48 : 34, function () {
+                item.el.classList.remove('sa-agents-typing');
+                // Restore exact markup (links etc.) after typewriter
+                try { item.el.innerHTML = originalHtml; } catch (e) { /* ignore */ }
+                later(next, 80);
               });
-            }
-          );
+            });
+          } else {
+            doPlace();
+          }
         });
       });
-    });
+    }
+
+    next();
   }
 
   function bindSkip(root) {
     function onSkip(e) {
       if (state.finished) return;
-      // Allow WhatsApp link click to also skip (and navigate)
-      if (e && e.target && e.target.closest && e.target.closest('[data-sab-wa]')) {
-        finish('wa');
-        return;
-      }
       if (e) {
-        e.preventDefault();
+        // Don't block default for links outside overlay — overlay catches clicks.
+        if (e.type === 'keydown') e.preventDefault();
+        if (e.type === 'click') e.preventDefault();
       }
       finish('skip');
     }
     root.addEventListener('click', onSkip);
-    root.addEventListener('keydown', function (e) {
+    function onKey(e) {
+      if (state.finished) return;
       if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
         onSkip(e);
       }
-    });
+    }
+    document.addEventListener('keydown', onKey, true);
+    state._onKey = onKey;
   }
 
   function start(force) {
@@ -508,21 +576,34 @@
     state.cursors = {};
     state.timers = [];
     state.rafs = [];
+    state.slots = [];
+    state.typedRestore = [];
 
-    // Always play on load/refresh; reduced-motion users skip the animation.
-    // sessionStorage is no longer a skip gate (cleared on boot for old tabs).
     if (!force && prefersReducedMotion()) {
+      document.body.classList.add('sa-agents-built');
       return;
     }
 
-    buildDOM();
+    var targets = collectTargets();
+    if (!targets.length) {
+      document.body.classList.add('sa-agents-built');
+      return;
+    }
+
+    document.documentElement.classList.add('sa-agents-building');
+    document.body.classList.add('sa-agents-building');
+    document.body.classList.remove('sa-agents-built');
+
+    prepareSlots(targets);
+    buildOverlay();
     bindSkip(state.root);
-    // Focus overlay for a11y without trapping forever (finish removes it)
+
     try { state.root.focus({ preventScroll: true }); } catch (e) {
       try { state.root.focus(); } catch (e2) { /* ignore */ }
     }
-    // Small delay so layout measures correctly
-    later(runSequence, 60);
+
+    // Let layout settle so getBoundingClientRect is accurate
+    later(function () { runSequence(targets); }, 80);
   }
 
   function attachReplayControls() {
@@ -531,10 +612,9 @@
       if (!btn) return;
       e.preventDefault();
       clearBuilt();
-      // If one is mid-flight, finish first
       if (state.root && !state.finished) {
         finish('replay-reset');
-        later(function () { start(true); }, 520);
+        later(function () { start(true); }, 400);
       } else {
         start(true);
       }
@@ -542,7 +622,6 @@
   }
 
   function boot() {
-    // Drop legacy per-session skip flag so older tabs don't retain it.
     clearBuilt();
     attachReplayControls();
     start(false);
@@ -554,9 +633,9 @@
     boot();
   }
 
-  // Public hook for console / future
   window.saAgentsBuildReplay = function () {
     clearBuilt();
-    start(true);
+    if (state.root && !state.finished) finish('replay-reset');
+    later(function () { start(true); }, 120);
   };
 })();
