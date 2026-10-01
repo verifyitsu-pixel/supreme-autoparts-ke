@@ -1,7 +1,8 @@
 /**
  * Supreme Autoparts — staged "agents assemble the page" intro overlay.
  * Fake labeled cursors (Grok, GPT, Gemini, Opus, Muse) build a mock shop UI,
- * then reveal the real site. sessionStorage flag skips same-tab revisits.
+ * then reveal the real site. Plays on every page load / refresh / visit
+ * (prefers-reduced-motion still skips the animation).
  */
 (function () {
   'use strict';
@@ -149,20 +150,6 @@
     } catch (e) {
       return false;
     }
-  }
-
-  function alreadyBuilt() {
-    try {
-      return sessionStorage.getItem(STORAGE_KEY) === '1';
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function markBuilt() {
-    try {
-      sessionStorage.setItem(STORAGE_KEY, '1');
-    } catch (e) { /* ignore */ }
   }
 
   function clearBuilt() {
@@ -344,7 +331,6 @@
     if (state.finished) return;
     state.finished = true;
     clearAllTimers();
-    markBuilt();
 
     var root = state.root;
     // Always restore page interactivity immediately (critical on cart/checkout).
@@ -522,11 +508,11 @@
     state.timers = [];
     state.rafs = [];
 
+    // Always play on load/refresh; reduced-motion users skip the animation.
+    // sessionStorage is no longer a skip gate (cleared on boot for old tabs).
     if (!force && prefersReducedMotion()) {
-      markBuilt();
       return;
     }
-    if (!force && alreadyBuilt()) return;
 
     buildDOM();
     bindSkip(state.root);
@@ -555,6 +541,8 @@
   }
 
   function boot() {
+    // Drop legacy per-session skip flag so older tabs don't retain it.
+    clearBuilt();
     attachReplayControls();
     start(false);
   }
