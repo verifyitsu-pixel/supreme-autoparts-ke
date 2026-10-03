@@ -66,21 +66,8 @@ function sa_core_shopify_cdn_width(string $url, int $width): string
         return $rebuild;
     }
 
-    // Classic filename suffix _400x before extension.
-    if (preg_match('#\.(jpe?g|png|gif|webp|avif)$#i', $path)) {
-        $new_path = preg_replace(
-            '#_(?:pico|icon|thumb|small|compact|medium|large|grande|original|master|\d+x\d+|\d+x|x\d+)(?=\.(?:jpe?g|png|gif|webp|avif)$)#i',
-            '',
-            $path
-        );
-        $new_path = preg_replace('#(\.(?:jpe?g|png|gif|webp|avif))$#i', '_' . $width . 'x$1', (string) $new_path);
-        $rebuild = 'https://' . $parts['host'] . $new_path;
-        if (!empty($parts['query'])) {
-            $rebuild .= '?' . $parts['query'];
-        }
-        return is_string($new_path) ? $rebuild : $url;
-    }
-
+    // Non-Shopify manufacturer/retailer photos must be used unchanged.
+    // Adding a _600x filename suffix 404s those URLs.
     return $url;
 }
 

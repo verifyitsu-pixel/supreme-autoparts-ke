@@ -507,9 +507,9 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
             }
             sa_core_claim_image_urls_for_product((int) $id, $image_urls);
         } else {
-            delete_post_meta($id, '_sa_shopify_image_urls');
-            delete_post_meta($id, '_sa_shopify_image_src');
-            if ($require_images) {
+            // Do not wipe a photo already stored when this payload has no images.
+            $existing_src = trim((string) get_post_meta($id, '_sa_shopify_image_src', true));
+            if ($require_images && $existing_src === '') {
                 $reject_no_image = true;
                 wp_update_post(['ID' => $id, 'post_status' => 'draft']);
                 if (count($result['messages']) < 50) {
