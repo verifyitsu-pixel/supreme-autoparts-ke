@@ -57,8 +57,25 @@ if (function_exists('sa_product_image_attrs')) {
     <div class="sa-product-card__price price" aria-label="<?php esc_attr_e('Product price', 'supreme-autoparts'); ?>">
       <?php echo $product->get_price_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
     </div>
+    <p class="sa-product-card__meta"><?php echo esc_html(sa_theme_product_card_meta($product)); ?></p>
     <div class="sa-product-card__actions">
-      <?php woocommerce_template_loop_add_to_cart(); ?>
+      <?php
+      if ($product->is_type('simple') && $product->is_purchasable() && $product->is_in_stock()) {
+          $sa_buy = add_query_arg(
+              [
+                  'add-to-cart' => $product->get_id(),
+                  'sa_buy_now'  => '1',
+              ],
+              $product->get_permalink()
+          );
+          printf(
+              '<a class="button sa-btn sa-btn--block sa-product-card__buy" href="%s">%s</a>',
+              esc_url($sa_buy),
+              esc_html__('Buy now', 'supreme-autoparts')
+          );
+      }
+      woocommerce_template_loop_add_to_cart();
+      ?>
     </div>
   </div>
 </li>

@@ -41,7 +41,9 @@ $q = get_search_query();
       <?php endif; ?>
     </header>
 
+    <div class="sa-market">
     <?php get_template_part('template-parts/catalog', 'filters'); ?>
+    <div class="sa-market__results">
 
     <?php if (have_posts()) : ?>
       <?php if (function_exists('woocommerce_product_loop_start')) : ?>
@@ -69,6 +71,8 @@ $q = get_search_query();
     <?php else : ?>
       <?php get_template_part('template-parts/catalog', 'empty'); ?>
     <?php endif; ?>
+    </div>
+    </div>
   </div>
 </main>
 <?php

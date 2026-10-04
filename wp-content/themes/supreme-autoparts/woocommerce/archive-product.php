@@ -69,7 +69,9 @@ if ($sa_total <= 0 && isset($GLOBALS['wp_query']) && $GLOBALS['wp_query'] instan
   </div>
 </header>
 <?php
+echo '<div class="sa-market">';
 get_template_part('template-parts/catalog', 'filters');
+echo '<div class="sa-market__results">';
 
 if (woocommerce_product_loop()) {
     do_action('woocommerce_before_shop_loop');
@@ -87,5 +89,6 @@ if (woocommerce_product_loop()) {
     do_action('woocommerce_no_products_found');
 }
 
+echo '</div></div>';
 do_action('woocommerce_after_main_content');
 get_footer('shop');

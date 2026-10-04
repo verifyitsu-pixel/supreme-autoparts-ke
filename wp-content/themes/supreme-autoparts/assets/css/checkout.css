@@ -7,9 +7,7 @@
 .sa-checkout-hero {
   margin: 0 0 1.5rem;
   padding: 1.35rem 1.4rem 1.25rem;
-  background:
-    linear-gradient(135deg, rgba(245, 166, 35, 0.1), transparent 55%),
-    var(--sa-bg-card);
+  background: #fff;
   border: 1px solid var(--sa-border);
   border-radius: var(--sa-radius-lg);
 }
@@ -106,7 +104,7 @@
   align-items: flex-start;
   padding: 1.1rem 1.25rem .85rem;
   border-bottom: 1px solid var(--sa-border);
-  background: rgba(0, 0, 0, 0.18);
+  background: #fafafa;
 }
 
 .sa-checkout-section__num {
@@ -702,9 +700,7 @@
 .sa-checkout-hero {
   margin: 0 0 1.15rem;
   padding: 1.1rem 1.25rem 1.05rem;
-  background:
-    linear-gradient(135deg, rgba(245, 166, 35, 0.12), transparent 52%),
-    var(--sa-bg-card);
+  background: #fff;
   border: 1px solid var(--sa-border);
   border-radius: var(--sa-radius-lg);
 }
@@ -1044,7 +1040,7 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   border-radius: 12px !important;
-  box-shadow: 0 8px 24px rgba(245, 166, 35, 0.28);
+  box-shadow: none;
 }
 .sa-checkout-place__btn:focus-visible {
   outline: 2px solid var(--sa-accent-hover);
@@ -1077,7 +1073,7 @@
   }
   .sa-checkout-layout__summary {
     position: static;
-    order: -1;
+    order: 2;
     margin-bottom: 0.25rem;
   }
   .sa-checkout-layout__main { order: 1; }
@@ -1115,7 +1111,7 @@
     min-height: 2.85rem;
     padding: 0.65rem 1.15rem !important;
     border-radius: 12px !important;
-    box-shadow: 0 8px 22px rgba(245, 166, 35, 0.28);
+    box-shadow: none;
   }
   .sa-checkout-sticky-pay__btn:disabled,
   .sa-checkout-sticky-pay__btn[aria-disabled="true"] {
@@ -1165,4 +1161,39 @@ html.sa-checkout-qty-busy .sa-checkout-review-table {
 }
 .sa-checkout-line__meta .sa-qty--checkout {
   max-width: 100%;
+}
+
+
+/* v1.4.61 — agreements after details; no sticky bar over the fields */
+.sa-checkout-section__head { background: #fafafa; }
+.sa-checkout-layout__summary { box-shadow: none; }
+.sa-checkout-sticky-pay,
+.sa-checkout-sticky-pay[data-sa-checkout-sticky],
+.sa-checkout-sticky-pay[data-sa-checkout-sticky]:not([hidden]) {
+  display: none !important;
+}
+body.woocommerce-checkout { padding-bottom: 1.5rem; }
+.woocommerce-checkout .form-row input,
+.woocommerce-checkout .form-row select,
+.woocommerce-checkout .form-row textarea {
+  scroll-margin-bottom: 1.5rem;
+}
+.sa-checkout-place__btn,
+.woocommerce-checkout #place_order {
+  background: var(--sa-action, #3665f3) !important;
+  color: #fff !important;
+  border-radius: 24px !important;
+  box-shadow: none !important;
+}
+.sa-checkout-place__btn:hover,
+.woocommerce-checkout #place_order:hover {
+  background: var(--sa-action-hover, #2a54d6) !important;
+}
+.sa-checkout-terms,
+.woocommerce-terms-and-conditions-wrapper {
+  margin-top: 0.5rem;
+}
+@media (max-width: 960px) {
+  .sa-checkout-layout__summary { order: 2; }
+  .sa-checkout-layout__main { order: 1; }
 }

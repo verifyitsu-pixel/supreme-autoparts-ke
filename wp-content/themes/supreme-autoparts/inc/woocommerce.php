@@ -273,3 +273,249 @@ function sa_theme_checkout_update_qty(): void
 }
 add_action('wp_ajax_sa_checkout_update_qty', 'sa_theme_checkout_update_qty');
 add_action('wp_ajax_nopriv_sa_checkout_update_qty', 'sa_theme_checkout_update_qty');
+
+/**
+ * USD amount that qualifies the cart for free US shipping. Store option, default 99.
+ */
+function sa_theme_free_ship_amount(): float
+{
+    $raw = getenv('SUPREME_FREE_SHIPPING_THRESHOLD');
+    if ($raw === false || $raw === '') {
+        $raw = (string) get_option('sa_free_shipping_threshold', '99');
+    }
+    $usd = (float) $raw;
+    if ($usd <= 0 || $usd > 1000) {
+        $usd = 99.0;
+    }
+    return $usd;
+}
+
+/**
+ * True only when the cart merchandise total (after discounts, store currency) meets the threshold.
+ */
+function sa_theme_cart_has_free_shipping(): bool
+{
+    if (!function_exists('WC') || !WC()->cart) {
+        return false;
+    }
+    $subtotal = (float) WC()->cart->get_subtotal();
+    $discount = (float) WC()->cart->get_discount_total();
+    if ($discount > 0) {
+        $subtotal -= $discount;
+    }
+    if ($subtotal < 0) {
+        $subtotal = 0.0;
+    }
+    return $subtotal + 0.001 >= sa_theme_free_ship_amount();
+}
+
+/**
+ * Stock line, plus free-shipping only when this item's price itself meets the threshold.
+ */
+function sa_theme_product_card_meta(WC_Product $product): string
+{
+    if (!$product->is_in_stock()) {
+        return __('Out of stock', 'supreme-autoparts');
+    }
+    $stock = $product->is_on_backorder(1)
+        ? __('Available on backorder', 'supreme-autoparts')
+        : __('In stock', 'supreme-autoparts');
+    $price = (float) $product->get_price();
+    if ($price > 0 && $price + 0.001 >= sa_theme_free_ship_amount()) {
+        return $stock . ' · ' . __('Free US shipping', 'supreme-autoparts');
+    }
+    return $stock;
+}
+
+/**
+ * Buy now: add the simple product and continue to checkout. Pay still leaves the site for Whop.
+ */
+add_filter('woocommerce_add_to_cart_redirect', static function ($url) {
+    if (isset($_REQUEST['sa_buy_now']) && (string) wp_unslash($_REQUEST['sa_buy_now']) === '1') { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        return function_exists('wc_get_checkout_url') ? wc_get_checkout_url() : $url;
+    }
+    return $url;
+});
+
+add_action('woocommerce_after_add_to_cart_button', static function (): void {
+    global $product;
+    if (!$product instanceof WC_Product) {
+        return;
+    }
+    if (!$product->is_type('simple') || !$product->is_purchasable() || !$product->is_in_stock()) {
+        return;
+    }
+    $url = add_query_arg(
+        [
+            'add-to-cart' => $product->get_id(),
+            'sa_buy_now'  => '1',
+        ],
+        $product->get_permalink()
+    );
+    printf(
+        '<a class="button sa-btn sa-btn--buy" href="%s">%s</a>',
+        esc_url($url),
+        esc_html__('Buy now', 'supreme-autoparts')
+    );
+});
+
+/**
+ * Real min/max price on shop and search. Empty fields are ignored.
+ */
+add_action('pre_get_posts', static function ($query): void {
+    if (is_admin() || !($query instanceof WP_Query) || !$query->is_main_query()) {
+        return;
+    }
+    if (!function_exists('sa_core_is_catalog_product_query') || !sa_core_is_catalog_product_query($query)) {
+        return;
+    }
+    $read = static function (string $key): ?float {
+        if (!isset($_GET[$key])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            return null;
+        }
+        $raw = trim((string) wp_unslash($_GET[$key])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if ($raw === '' || !is_numeric($raw)) {
+            return null;
+        }
+        return (float) $raw;
+    };
+    $min = $read('min_price');
+    $max = $read('max_price');
+    if ($min === null && $max === null) {
+        return;
+    }
+    if ($min !== null && $min < 0) {
+        $min = 0.0;
+    }
+    if ($max !== null && $min !== null && $max < $min) {
+        return;
+    }
+    $meta = $query->get('meta_query');
+    if (!is_array($meta)) {
+        $meta = [];
+    }
+    $clause = [
+        'key'     => '_price',
+        'type'    => 'DECIMAL(10,2)',
+        'compare' => 'BETWEEN',
+        'value'   => [$min ?? 0, $max ?? 99999999],
+    ];
+    $meta[] = $clause;
+    $query->set('meta_query', $meta);
+}, 30);
+
+/**
+ * Same-category products for the add-to-cart sheet. Brand-only terms are skipped when a real category exists.
+ *
+ * @return list<int>
+ */
+function sa_theme_related_product_ids(WC_Product $product, int $limit = 8): array
+{
+    $cat_ids = array_map('intval', $product->get_category_ids());
+    $brand_ids = [];
+    $brands = get_term_by('slug', 'brands', 'product_cat');
+    if ($brands instanceof WP_Term) {
+        $children = get_term_children((int) $brands->term_id, 'product_cat');
+        if (is_array($children)) {
+            $brand_ids = array_map('intval', $children);
+        }
+        $brand_ids[] = (int) $brands->term_id;
+    }
+    $use = array_values(array_diff($cat_ids, $brand_ids));
+    if ($use === []) {
+        $use = $cat_ids;
+    }
+    if ($use === []) {
+        return [];
+    }
+    $q = new WP_Query([
+        'post_type'           => 'product',
+        'post_status'         => 'publish',
+        'posts_per_page'      => $limit,
+        'post__not_in'        => [$product->get_id()],
+        'fields'              => 'ids',
+        'no_found_rows'       => true,
+        'ignore_sticky_posts' => true,
+        'tax_query'           => [[
+            'taxonomy' => 'product_cat',
+            'field'    => 'term_id',
+            'terms'    => $use,
+        ]],
+        'orderby'             => 'date',
+        'order'               => 'DESC',
+    ]);
+    $ids = [];
+    foreach ($q->posts as $id) {
+        $ids[] = (int) $id;
+    }
+    return $ids;
+}
+
+function sa_theme_added_sheet(): void
+{
+    $id = isset($_REQUEST['product_id']) ? absint(wp_unslash($_REQUEST['product_id'])) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+    $product = $id > 0 ? wc_get_product($id) : false;
+    if (!$product instanceof WC_Product || $product->get_status() !== 'publish') {
+        wp_send_json_error(['message' => 'missing'], 404);
+    }
+
+    $cart_url = function_exists('wc_get_cart_url') ? wc_get_cart_url() : home_url('/cart/');
+    $image = $product->get_image('woocommerce_thumbnail', [
+        'class'    => 'sa-added__img',
+        'loading'  => 'lazy',
+        'decoding' => 'async',
+        'alt'      => $product->get_name(),
+    ]);
+
+    ob_start();
+    ?>
+    <div class="sa-added__sheet" role="dialog" aria-modal="true" aria-labelledby="sa-added-title">
+      <button type="button" class="sa-added__close" data-sa-added-close aria-label="<?php esc_attr_e('Close', 'supreme-autoparts'); ?>">&times;</button>
+      <p class="sa-added__status" id="sa-added-title">
+        <span class="sa-added__check" aria-hidden="true">&#10003;</span>
+        <?php esc_html_e('Added to cart', 'supreme-autoparts'); ?>
+      </p>
+      <div class="sa-added__item">
+        <div class="sa-added__thumb"><?php echo $image; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+        <div>
+          <p class="sa-added__name"><?php echo esc_html($product->get_name()); ?></p>
+          <p class="sa-added__price"><?php echo wp_kses_post($product->get_price_html()); ?></p>
+        </div>
+      </div>
+      <a class="sa-btn sa-btn--block sa-added__go" href="<?php echo esc_url($cart_url); ?>"><?php esc_html_e('Go to cart', 'supreme-autoparts'); ?></a>
+      <?php
+      $related = sa_theme_related_product_ids($product, 8);
+      if ($related !== []) :
+          ?>
+        <h3 class="sa-added__more-title"><?php esc_html_e('More like this', 'supreme-autoparts'); ?></h3>
+        <ul class="sa-added__row">
+          <?php foreach ($related as $rel_id) :
+              $rel = wc_get_product($rel_id);
+              if (!$rel instanceof WC_Product || !$rel->is_visible()) {
+                  continue;
+              }
+              $rel_img = $rel->get_image('woocommerce_thumbnail', [
+                  'class'    => 'sa-added__card-img',
+                  'loading'  => 'lazy',
+                  'decoding' => 'async',
+                  'alt'      => '',
+              ]);
+              ?>
+            <li class="sa-added__card">
+              <a href="<?php echo esc_url($rel->get_permalink()); ?>">
+                <span class="sa-added__card-photo"><?php echo $rel_img; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+                <span class="sa-added__card-name"><?php echo esc_html($rel->get_name()); ?></span>
+                <span class="sa-added__card-price"><?php echo wp_kses_post($rel->get_price_html()); ?></span>
+                <span class="sa-added__card-meta"><?php echo esc_html(sa_theme_product_card_meta($rel)); ?></span>
+              </a>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+      <?php endif; ?>
+    </div>
+    <?php
+    $html = (string) ob_get_clean();
+    wp_send_json_success(['html' => $html]);
+}
+add_action('wp_ajax_sa_added_sheet', 'sa_theme_added_sheet');
+add_action('wp_ajax_nopriv_sa_added_sheet', 'sa_theme_added_sheet');

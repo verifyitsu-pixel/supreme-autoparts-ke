@@ -40,6 +40,9 @@ $needs_shipping = WC()->cart && WC()->cart->needs_shipping() && WC()->cart->show
       </tr>
     <?php endforeach; ?>
 
+    <?php
+    $sa_free = function_exists('sa_theme_cart_has_free_shipping') && sa_theme_cart_has_free_shipping();
+    ?>
     <?php if ($needs_shipping) : ?>
       <?php do_action('woocommerce_cart_totals_before_shipping'); ?>
       <?php wc_cart_totals_shipping_html(); ?>
@@ -48,19 +51,12 @@ $needs_shipping = WC()->cart && WC()->cart->needs_shipping() && WC()->cart->show
       <tr class="sa-cart-shipping-hint">
         <th><?php esc_html_e('Shipping', 'supreme-autoparts'); ?></th>
         <td data-title="<?php esc_attr_e('Shipping', 'supreme-autoparts'); ?>">
-          <?php
-          if ($shipping_total <= 0) {
-              echo '<span class="sa-cart-free-ship">' . esc_html__('FREE', 'supreme-autoparts') . '</span>';
-          } else {
-              esc_html_e('Calculated at checkout', 'supreme-autoparts');
-          }
-          ?>
+          <?php if ($sa_free) : ?>
+            <span class="sa-cart-free-ship"><?php esc_html_e('Free shipping', 'supreme-autoparts'); ?></span>
+          <?php else : ?>
+            <?php esc_html_e('Calculated at checkout', 'supreme-autoparts'); ?>
+          <?php endif; ?>
         </td>
-      </tr>
-    <?php else : ?>
-      <tr class="sa-cart-shipping-hint">
-        <th><?php esc_html_e('Shipping', 'supreme-autoparts'); ?></th>
-        <td><span class="sa-cart-free-ship"><?php esc_html_e('FREE', 'supreme-autoparts'); ?></span></td>
       </tr>
     <?php endif; ?>
 
@@ -116,7 +112,7 @@ $needs_shipping = WC()->cart && WC()->cart->needs_shipping() && WC()->cart->show
   <ul class="sa-cart-perks" aria-label="<?php esc_attr_e('Checkout benefits', 'supreme-autoparts'); ?>">
     <li><?php esc_html_e('Secure card checkout', 'supreme-autoparts'); ?></li>
     <li><?php esc_html_e('Order tracking by email', 'supreme-autoparts'); ?></li>
-    <li><?php esc_html_e('Free shipping $99+ · Ships continental US · International available', 'supreme-autoparts'); ?></li>
+    <li><?php printf(esc_html__('Free US shipping on orders %s and up', 'supreme-autoparts'), esc_html(function_exists('sa_free_shipping_threshold') ? sa_free_shipping_threshold() : '$99')); ?></li>
   </ul>
 
   <div class="sa-cart-sticky-bar" data-sa-cart-sticky>

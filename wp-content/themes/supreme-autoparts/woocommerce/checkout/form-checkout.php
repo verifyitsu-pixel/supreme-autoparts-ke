@@ -8,6 +8,9 @@
 
 defined('ABSPATH') || exit;
 
+// Terms, marketing opt-in, and Pay sit after billing and shipping, not in the summary.
+remove_action('woocommerce_checkout_order_review', 'woocommerce_checkout_payment', 20);
+
 $checkout = WC()->checkout();
 
 do_action('woocommerce_before_checkout_form', $checkout);
@@ -69,18 +72,21 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
           <?php do_action('woocommerce_checkout_after_customer_details'); ?>
         <?php endif; ?>
 
-        <section class="sa-checkout-section sa-checkout-section--payment sa-checkout-section--payment-mobile" id="sa-checkout-payment-note" data-sa-checkout-panel="payment" aria-labelledby="sa-checkout-payment-title">
+        <section class="sa-checkout-section sa-checkout-section--agreements" id="sa-checkout-payment" data-sa-checkout-panel="payment" aria-labelledby="sa-checkout-payment-title">
           <header class="sa-checkout-section__head">
             <span class="sa-checkout-section__num" aria-hidden="true">3</span>
             <div>
-              <h2 id="sa-checkout-payment-title" class="sa-checkout-section__title"><?php esc_html_e('Payment', 'supreme-autoparts'); ?></h2>
-              <p class="sa-checkout-section__sub"><?php esc_html_e('Review your order, accept policies, then pay by card.', 'supreme-autoparts'); ?></p>
+              <h2 id="sa-checkout-payment-title" class="sa-checkout-section__title"><?php esc_html_e('Review and pay', 'supreme-autoparts'); ?></h2>
+              <p class="sa-checkout-section__sub"><?php esc_html_e('Accept the policies, then continue to payment.', 'supreme-autoparts'); ?></p>
             </div>
           </header>
+          <div class="sa-checkout-section__body">
+            <?php woocommerce_checkout_payment(); ?>
+          </div>
         </section>
       </div>
 
-      <aside class="sa-checkout-layout__summary" aria-label="<?php esc_attr_e('Order summary', 'supreme-autoparts'); ?>" data-sa-checkout-panel="payment">
+      <aside class="sa-checkout-layout__summary" aria-label="<?php esc_attr_e('Order summary', 'supreme-autoparts'); ?>">
         <?php do_action('woocommerce_checkout_before_order_review_heading'); ?>
         <div class="sa-checkout-summary__head">
           <h3 id="order_review_heading"><?php esc_html_e('Your order', 'supreme-autoparts'); ?></h3>
@@ -94,21 +100,6 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
       </aside>
     </div>
 
-    <div class="sa-checkout-sticky-pay" data-sa-checkout-sticky hidden>
-      <div class="sa-checkout-sticky-pay__total">
-        <small><?php
-          printf(
-              /* translators: %s: currency code */
-              esc_html__('Total (%s)', 'supreme-autoparts'),
-              esc_html(function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : 'USD')
-          );
-        ?></small>
-        <strong data-sa-checkout-sticky-total><?php echo wp_kses_post(WC()->cart ? WC()->cart->get_total() : ''); ?></strong>
-      </div>
-      <button type="button" class="button alt sa-btn sa-checkout-sticky-pay__btn" data-sa-checkout-sticky-pay>
-        <?php esc_html_e('Place order', 'supreme-autoparts'); ?>
-      </button>
-    </div>
   </form>
 </div>
 <?php
