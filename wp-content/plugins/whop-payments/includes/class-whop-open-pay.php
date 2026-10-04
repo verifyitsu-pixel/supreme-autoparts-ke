@@ -136,20 +136,9 @@ final class Whop_Open_Pay {
             }
         }
 
-        $paid_notice = '';
-        if ($paid && $order_q > 0) {
-            $ord = wc_get_order($order_q);
-            if ($ord) {
-                $paid_notice = sprintf(
-                    /* translators: 1: order number 2: formatted total */
-                    __('Payment received for order #%1$s — %2$s. A confirmation email is on the way.', 'whop-payments'),
-                    $ord->get_order_number(),
-                    wp_strip_all_tags($ord->get_formatted_order_total())
-                );
-            }
-        }
-        if ($paid && $paid_notice === '') {
-            $paid_notice = __('Thank you. If payment completed successfully, your order will appear in the store shortly.', 'whop-payments');
+        // Success return from Whop: full confirmation page (hide the pay form).
+        if ($paid) {
+            return self::render_success_page($order_q, $logo);
         }
 
         ob_start();
@@ -161,12 +150,6 @@ final class Whop_Open_Pay {
                     <h1 class="sa-open-pay__title"><?php echo esc_html__('Make a payment', 'whop-payments'); ?></h1>
                     <p class="sa-open-pay__sub"><?php echo esc_html__('Enter the amount in US dollars (USD). You will be redirected to Whop to pay securely. Paid amounts create an order in our store.', 'whop-payments'); ?></p>
                 </div>
-
-                <?php if ($paid_notice !== '') : ?>
-                    <div class="sa-open-pay__notice sa-open-pay__notice--ok" role="status">
-                        <?php echo esc_html($paid_notice); ?>
-                    </div>
-                <?php endif; ?>
 
                 <?php if ($error !== '') : ?>
                     <div class="sa-open-pay__notice sa-open-pay__notice--err" role="alert">
@@ -232,6 +215,238 @@ final class Whop_Open_Pay {
                         <?php echo esc_html__('Pay', 'whop-payments'); ?>
                     </button>
                 </form>
+            </div>
+        </div>
+        <?php
+        return (string) ob_get_clean();
+    }
+
+    /**
+     * Full-page confirmation after Whop return (?paid=1&order=&key=).
+     * Requires a matching order key before showing order details.
+     */
+    private static function render_success_page(int $order_id, string $logo): string {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $key = isset($_GET['key']) ? sanitize_text_field(wp_unslash((string) $_GET['key'])) : '';
+
+        $order = $order_id > 0 ? wc_get_order($order_id) : false;
+        $can_view = $order instanceof WC_Order
+            && $key !== ''
+            && hash_equals($order->get_order_key(), $key);
+
+        if (!$can_view) {
+            ob_start();
+            ?>
+            <div class="sa-open-pay sa-open-pay--success" id="sa-open-pay">
+                <div class="sa-open-pay__card sa-open-pay__card--success">
+                    <div class="sa-open-pay__brand sa-open-pay__brand--success">
+                        <img class="sa-open-pay__logo" src="<?php echo esc_url($logo); ?>" alt="Supreme Autoparts" width="180" height="48" loading="eager" />
+                    </div>
+                    <div class="sa-open-pay__success-hero" role="status">
+                        <div class="sa-open-pay__success-check" aria-hidden="true">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="11" stroke="currentColor" stroke-width="1.75"/>
+                                <path d="M7 12.5l3.2 3.2L17 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <h1 class="sa-open-pay__success-title"><?php echo esc_html__('Payment received', 'whop-payments'); ?></h1>
+                        <p class="sa-open-pay__success-lead"><?php echo esc_html__('Thank you. If payment completed successfully, your order will appear in the store shortly. Check your email for a confirmation.', 'whop-payments'); ?></p>
+                    </div>
+                    <a class="sa-open-pay__btn sa-open-pay__btn--secondary" href="<?php echo esc_url(home_url('/pay/')); ?>">
+                        <?php echo esc_html__('Make another payment', 'whop-payments'); ?>
+                    </a>
+                </div>
+            </div>
+            <?php
+            return (string) ob_get_clean();
+        }
+
+        /** @var WC_Order $order */
+        $email      = (string) $order->get_billing_email();
+        $total_html = wp_strip_all_tags($order->get_formatted_order_total());
+        $method     = (string) $order->get_payment_method_title();
+        if ($method === '') {
+            $method = __('Whop', 'whop-payments');
+        }
+        $status_label = wc_get_order_status_name($order->get_status());
+        $is_open_pay  = (string) $order->get_meta('_sa_open_pay') === '1';
+        $open_note    = (string) $order->get_meta('_sa_open_pay_note');
+        $received_url = $order->get_checkout_order_received_url();
+        $view_url     = '';
+        if (is_user_logged_in() && (int) $order->get_user_id() === get_current_user_id() && $order->get_user_id() > 0) {
+            $view_url = $order->get_view_order_url();
+        }
+
+        $line_rows = [];
+        foreach ($order->get_items() as $item) {
+            if (!$item instanceof WC_Order_Item_Product) {
+                continue;
+            }
+            $qty = (int) $item->get_quantity();
+            $name = $item->get_name();
+            if ($qty > 1) {
+                $name = sprintf('%s × %d', $name, $qty);
+            }
+            $line_rows[] = [
+                'label' => $name,
+                'value' => wp_strip_all_tags($order->get_formatted_line_subtotal($item)),
+            ];
+        }
+        foreach ($order->get_fees() as $fee) {
+            if (!$fee instanceof WC_Order_Item_Fee) {
+                continue;
+            }
+            $line_rows[] = [
+                'label' => $fee->get_name(),
+                'value' => wp_strip_all_tags(wc_price((float) $fee->get_total(), ['currency' => $order->get_currency()])),
+            ];
+        }
+        foreach ($order->get_shipping_methods() as $ship) {
+            if (!$ship instanceof WC_Order_Item_Shipping) {
+                continue;
+            }
+            $ship_total = (float) $ship->get_total();
+            $line_rows[] = [
+                'label' => sprintf(
+                    /* translators: %s: shipping method name */
+                    __('Shipping — %s', 'whop-payments'),
+                    $ship->get_name()
+                ),
+                'value' => $ship_total > 0
+                    ? wp_strip_all_tags(wc_price($ship_total, ['currency' => $order->get_currency()]))
+                    : __('Free', 'whop-payments'),
+            ];
+        }
+        if ($line_rows === [] && $is_open_pay) {
+            $line_rows[] = [
+                'label' => __('Custom payment', 'whop-payments'),
+                'value' => $total_html,
+            ];
+        }
+
+        ob_start();
+        ?>
+        <div class="sa-open-pay sa-open-pay--success" id="sa-open-pay">
+            <div class="sa-open-pay__card sa-open-pay__card--success">
+                <div class="sa-open-pay__brand sa-open-pay__brand--success">
+                    <img class="sa-open-pay__logo" src="<?php echo esc_url($logo); ?>" alt="Supreme Autoparts" width="180" height="48" loading="eager" />
+                </div>
+
+                <div class="sa-open-pay__success-hero" role="status">
+                    <div class="sa-open-pay__success-check" aria-hidden="true">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="11" stroke="currentColor" stroke-width="1.75"/>
+                            <path d="M7 12.5l3.2 3.2L17 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h1 class="sa-open-pay__success-title"><?php echo esc_html__('Payment received', 'whop-payments'); ?></h1>
+                    <p class="sa-open-pay__success-order">
+                        <?php
+                        echo esc_html(
+                            sprintf(
+                                /* translators: %s: order number */
+                                __('Order #%s', 'whop-payments'),
+                                $order->get_order_number()
+                            )
+                        );
+                        ?>
+                    </p>
+                    <?php if ($email !== '') : ?>
+                        <p class="sa-open-pay__success-lead">
+                            <?php
+                            echo esc_html(
+                                sprintf(
+                                    /* translators: %s: customer email */
+                                    __('A confirmation email is on the way to %s.', 'whop-payments'),
+                                    $email
+                                )
+                            );
+                            ?>
+                        </p>
+                    <?php else : ?>
+                        <p class="sa-open-pay__success-lead"><?php echo esc_html__('A confirmation email is on the way.', 'whop-payments'); ?></p>
+                    <?php endif; ?>
+                </div>
+
+                <div class="sa-open-pay__success-total">
+                    <span class="sa-open-pay__success-total-label"><?php echo esc_html__('Amount paid', 'whop-payments'); ?></span>
+                    <span class="sa-open-pay__success-total-value"><?php echo esc_html($total_html); ?></span>
+                </div>
+
+                <section class="sa-open-pay__summary" aria-labelledby="sa-pay-summary-heading">
+                    <h2 id="sa-pay-summary-heading" class="sa-open-pay__summary-heading"><?php echo esc_html__('Payment summary', 'whop-payments'); ?></h2>
+                    <dl class="sa-open-pay__summary-list">
+                        <div class="sa-open-pay__summary-row">
+                            <dt><?php echo esc_html__('Status', 'whop-payments'); ?></dt>
+                            <dd><span class="sa-open-pay__status-pill"><?php echo esc_html($status_label); ?></span></dd>
+                        </div>
+                        <div class="sa-open-pay__summary-row">
+                            <dt><?php echo esc_html__('Order', 'whop-payments'); ?></dt>
+                            <dd>#<?php echo esc_html($order->get_order_number()); ?></dd>
+                        </div>
+                        <div class="sa-open-pay__summary-row">
+                            <dt><?php echo esc_html__('Amount', 'whop-payments'); ?></dt>
+                            <dd><?php echo esc_html($total_html); ?></dd>
+                        </div>
+                        <div class="sa-open-pay__summary-row">
+                            <dt><?php echo esc_html__('Method', 'whop-payments'); ?></dt>
+                            <dd><?php echo esc_html($method); ?></dd>
+                        </div>
+                        <?php if ($email !== '') : ?>
+                            <div class="sa-open-pay__summary-row">
+                                <dt><?php echo esc_html__('Receipt email', 'whop-payments'); ?></dt>
+                                <dd><?php echo esc_html($email); ?></dd>
+                            </div>
+                        <?php endif; ?>
+                    </dl>
+                </section>
+
+                <details class="sa-open-pay__order-details" open>
+                    <summary class="sa-open-pay__order-details-summary"><?php echo esc_html__('See order info', 'whop-payments'); ?></summary>
+                    <div class="sa-open-pay__order-details-body">
+                        <h2 class="sa-open-pay__summary-heading"><?php echo esc_html__('Order summary', 'whop-payments'); ?></h2>
+                        <?php if ($is_open_pay && $open_note !== '') : ?>
+                            <p class="sa-open-pay__order-note">
+                                <span class="sa-open-pay__order-note-label"><?php echo esc_html__('Note', 'whop-payments'); ?></span>
+                                <?php echo esc_html($open_note); ?>
+                            </p>
+                        <?php elseif ($is_open_pay) : ?>
+                            <p class="sa-open-pay__order-note sa-open-pay__order-note--muted">
+                                <?php echo esc_html__('Custom amount payment (no note provided).', 'whop-payments'); ?>
+                            </p>
+                        <?php endif; ?>
+
+                        <?php if ($line_rows !== []) : ?>
+                            <ul class="sa-open-pay__line-items">
+                                <?php foreach ($line_rows as $row) : ?>
+                                    <li class="sa-open-pay__line-item">
+                                        <span class="sa-open-pay__line-item-label"><?php echo esc_html($row['label']); ?></span>
+                                        <span class="sa-open-pay__line-item-value"><?php echo esc_html($row['value']); ?></span>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
+
+                        <div class="sa-open-pay__line-total">
+                            <span><?php echo esc_html__('Order total', 'whop-payments'); ?></span>
+                            <strong><?php echo esc_html($total_html); ?></strong>
+                        </div>
+                    </div>
+                </details>
+
+                <div class="sa-open-pay__success-actions">
+                    <a class="sa-open-pay__btn" href="<?php echo esc_url($received_url); ?>">
+                        <?php echo esc_html__('View order details', 'whop-payments'); ?>
+                    </a>
+                    <?php if ($view_url !== '') : ?>
+                        <a class="sa-open-pay__link" href="<?php echo esc_url($view_url); ?>">
+                            <?php echo esc_html__('Open in my account', 'whop-payments'); ?>
+                        </a>
+                    <?php endif; ?>
+                    <a class="sa-open-pay__link" href="<?php echo esc_url(home_url('/pay/')); ?>">
+                        <?php echo esc_html__('Make another payment', 'whop-payments'); ?>
+                    </a>
+                </div>
             </div>
         </div>
         <?php
