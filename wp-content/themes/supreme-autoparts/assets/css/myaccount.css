@@ -1,4 +1,4 @@
-/* My Account — Supreme Autoparts (charcoal / amber). Loaded on account pages only. */
+/* My Account — Supreme Autoparts (light). Loaded on account pages only. */
 
 .sa-my-account {
   display: grid;
@@ -409,7 +409,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 4px;
-  background: #0B0B0D;
+  background: #f7f7f7;
   border: 1px solid var(--sa-border-strong);
   color: var(--sa-accent);
   font-size: .62rem;
@@ -480,10 +480,10 @@
 .sa-pm__fee-notice {
   margin: 0 0 1rem;
   padding: .65rem .85rem;
-  border: 1px solid var(--sa-border-strong, #3A3A40);
+  border: 1px solid var(--sa-border-strong, #cccccc);
   border-left: 3px solid var(--sa-accent, #F5A623);
-  background: var(--sa-bg-elevated, #1C1C1F);
-  color: var(--sa-text, #C8C8CC);
+  background: var(--sa-bg-elevated, #f7f7f7);
+  color: var(--sa-text, #333333);
   font-size: .82rem;
   line-height: 1.45;
   border-radius: var(--sa-radius, 6px);
@@ -502,8 +502,8 @@
 .sa-pm-embed {
   margin: 0 0 1.25rem;
   padding: 1.1rem 1.15rem 1.25rem;
-  background: var(--sa-bg-card, #161618);
-  border: 1px solid var(--sa-border, #2A2A2E);
+  background: var(--sa-bg-card, #ffffff);
+  border: 1px solid var(--sa-border, #e4e4e4);
   border-radius: var(--sa-radius-lg, 10px);
   box-shadow: inset 0 0 0 1px rgba(245, 166, 35, 0.08);
 }
@@ -524,7 +524,7 @@
 .sa-pm-embed__title {
   margin: 0;
   font-size: 1.05rem;
-  color: var(--sa-heading, #F4F4F5);
+  color: var(--sa-heading, #191919);
   font-family: var(--sa-font-display);
   font-weight: 700;
   letter-spacing: .02em;
@@ -534,10 +534,10 @@
   margin: 0 0 .75rem;
   font-size: .82rem;
   line-height: 1.45;
-  color: var(--sa-text-muted, #8A8A90);
+  color: var(--sa-text-muted, #6b6b6b);
   padding: .55rem .75rem;
   border-left: 3px solid var(--sa-accent, #F5A623);
-  background: var(--sa-bg-elevated, #1C1C1F);
+  background: var(--sa-bg-elevated, #f7f7f7);
   border-radius: 0 var(--sa-radius, 6px) var(--sa-radius, 6px) 0;
 }
 
@@ -559,7 +559,7 @@
 }
 
 .sa-pm-embed__email-value {
-  color: var(--sa-heading, #F4F4F5);
+  color: var(--sa-heading, #191919);
   font-variant-numeric: tabular-nums;
 }
 
@@ -567,7 +567,7 @@
   min-height: 1.25rem;
   margin: 0 0 .5rem;
   font-size: .82rem;
-  color: var(--sa-text-muted, #8A8A90);
+  color: var(--sa-text-muted, #6b6b6b);
 }
 
 .sa-pm-embed__status--loading {
@@ -588,8 +588,8 @@
   width: 100%;
   overflow: visible;
   border-radius: var(--sa-radius, 6px);
-  background: #0B0B0D;
-  border: 1px solid var(--sa-border-strong, #3A3A40);
+  background: #f7f7f7;
+  border: 1px solid var(--sa-border-strong, #cccccc);
   /* Avoid empty black void looking "broken" while Whop loads */
   position: relative;
 }
@@ -608,7 +608,7 @@
   max-width: 100%;
   min-height: 420px;
   border: 0;
-  background: #0B0B0D;
+  background: #f7f7f7;
   display: block;
 }
 
@@ -1583,18 +1583,18 @@ body.woocommerce-account .sa-my-account {
 .sa-otp-block {
   margin-bottom: 1.25rem;
   padding: 1rem 1.1rem;
-  border: 1px solid var(--sa-border, #2A2A2E);
+  border: 1px solid var(--sa-border, #e4e4e4);
   border-radius: var(--sa-radius-lg, 10px);
-  background: var(--sa-bg-card, #161618);
+  background: var(--sa-bg-card, #ffffff);
 }
 .sa-otp-block__title {
   margin: 0 0 0.35rem;
   font-size: 1.05rem;
-  color: var(--sa-heading, #F4F4F5);
+  color: var(--sa-heading, #191919);
 }
 .sa-otp-block__hint {
   margin: 0 0 0.9rem;
-  color: var(--sa-text-muted, #8A8A90);
+  color: var(--sa-text-muted, #6b6b6b);
   font-size: 0.9rem;
 }
 .sa-otp-code {
@@ -1612,7 +1612,7 @@ body.woocommerce-account .sa-my-account {
 .sa-otp-back { margin-top: 0.5rem; font-size: 0.9rem; }
 .sa-password-login {
   margin-top: 0.5rem;
-  border-top: 1px solid var(--sa-border, #2A2A2E);
+  border-top: 1px solid var(--sa-border, #e4e4e4);
   padding-top: 0.85rem;
 }
 .sa-password-login > summary {
@@ -1623,3 +1623,21 @@ body.woocommerce-account .sa-my-account {
 }
 .sa-password-login > summary::-webkit-details-marker { display: none; }
 .sa-password-login[open] > summary { margin-bottom: 0.85rem; }
+
+
+/* light account chrome */
+.sa-account-nav { background: #fff; }
+.sa-account-nav a {
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: .9rem;
+  font-weight: 500;
+  color: #191919;
+}
+.sa-account-nav a:hover,
+.sa-account-nav .is-active a,
+.woocommerce-MyAccount-navigation-link.is-active a {
+  background: #f4f4f4;
+  color: #191919;
+}
+.sa-dash__hero, .sa-my-account { color: #333; }

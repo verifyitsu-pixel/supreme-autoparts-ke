@@ -78,3 +78,10 @@ add_action('wp_enqueue_scripts', static function (): void {
     }
 
 });
+
+add_filter('style_loader_src', static function ($src, $handle) {
+    if ($handle !== 'sa-whop-open-pay' || !is_string($src) || $src === '') {
+        return $src;
+    }
+    return add_query_arg('ver', SA_THEME_VERSION, remove_query_arg('ver', $src));
+}, 20, 2);

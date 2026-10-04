@@ -13,10 +13,9 @@ $sa_count = function_exists('sa_published_product_count') ? sa_published_product
 <section class="sa-hero" aria-labelledby="sa-hero-title">
   <div class="sa-container sa-hero__inner">
     <div class="sa-hero__copy">
-      <p class="sa-hero__eyebrow"><?php esc_html_e('Supreme Autoparts · Ships across the US', 'supreme-autoparts'); ?></p>
-      <h1 id="sa-hero-title"><?php esc_html_e('Performance & aftermarket parts — trucks, cars, SUVs', 'supreme-autoparts'); ?></h1>
+      <h1 id="sa-hero-title"><?php esc_html_e('Shop', 'supreme-autoparts'); ?></h1>
       <p class="sa-hero__lead">
-        <?php esc_html_e('Got the part number? Search OE/OEM fit for Japan, US & UK cars, EVs, and bikes. Free shipping on qualifying US orders. Charged in USD.', 'supreme-autoparts'); ?>
+        <?php esc_html_e('Search by part number, brand, or keyword.', 'supreme-autoparts'); ?>
       </p>
 
       <form class="sa-hero__search" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>">
@@ -36,25 +35,9 @@ $sa_count = function_exists('sa_published_product_count') ? sa_published_product
         </button>
       </form>
 
-      <div class="sa-hero__actions">
-        <a class="sa-btn" href="<?php echo esc_url($sa_shop_url); ?>"><?php esc_html_e('Shop all parts', 'supreme-autoparts'); ?></a>
-        <a class="sa-btn sa-btn--outline" href="<?php echo esc_url(sa_term_link('product_cat', 'brakes')); ?>"><?php esc_html_e('Shop brakes', 'supreme-autoparts'); ?></a>
-        <a class="sa-btn sa-btn--ghost" href="<?php echo esc_url(sa_term_link('product_cat', 'suspension')); ?>"><?php esc_html_e('Suspension', 'supreme-autoparts'); ?></a>
-      </div>
-
-      <?php if ($sa_count >= 50) : ?>
-        <p class="sa-hero__meta">
-          <?php
-          printf(
-              /* translators: %s: formatted product count */
-              esc_html__('%s parts in the catalog · guest checkout available', 'supreme-autoparts'),
-              esc_html(number_format_i18n($sa_count))
-          );
-          ?>
-        </p>
-      <?php else : ?>
-        <p class="sa-hero__meta"><?php esc_html_e('Guest checkout available · charged in USD', 'supreme-autoparts'); ?></p>
-      <?php endif; ?>
+      <p class="sa-hero__meta">
+        <a href="<?php echo esc_url($sa_shop_url); ?>"><?php esc_html_e('Shop', 'supreme-autoparts'); ?></a>
+      </p>
     </div>
   </div>
 </section>
@@ -241,7 +224,7 @@ endif;
 
 <section class="sa-section sa-blurb" aria-labelledby="sa-about-title">
   <div class="sa-container sa-blurb__inner">
-    <h2 id="sa-about-title"><?php esc_html_e('Built for US drivers & builders', 'supreme-autoparts'); ?></h2>
+    <h2 id="sa-about-title"><?php esc_html_e('About', 'supreme-autoparts'); ?></h2>
     <p>
       <?php esc_html_e('Search the part number you already have. OE/OEM-matched and aftermarket fitments for Japan, US & UK cars and trucks — plus EVs and bikes. Brakes, suspension, intake, exhaust, lighting, wheels, and more. Checkout in USD; free shipping on qualifying US orders.', 'supreme-autoparts'); ?>
     </p>

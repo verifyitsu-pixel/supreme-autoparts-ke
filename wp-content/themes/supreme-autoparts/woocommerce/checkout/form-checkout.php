@@ -21,10 +21,9 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
 ?>
 <div class="sa-checkout-page">
   <header class="sa-checkout-hero">
-    <p class="sa-checkout-hero__eyebrow"><?php esc_html_e('Secure checkout', 'supreme-autoparts'); ?></p>
     <h1 class="sa-checkout-hero__title"><?php esc_html_e('Checkout', 'supreme-autoparts'); ?></h1>
     <p class="sa-checkout-hero__lead">
-      <?php esc_html_e('Enter your details, then pay by card. Charged in USD. Parts for Japan, US & UK cars, EVs, and motorcycles.', 'supreme-autoparts'); ?>
+      <?php esc_html_e('Enter your details, then continue to payment.', 'supreme-autoparts'); ?>
     </p>
     <ol class="sa-checkout-steps" aria-label="<?php esc_attr_e('Checkout steps', 'supreme-autoparts'); ?>" data-sa-checkout-steps>
       <li class="sa-checkout-steps__item is-active" data-sa-step="contact"><span>1</span> <?php esc_html_e('Contact', 'supreme-autoparts'); ?></li>

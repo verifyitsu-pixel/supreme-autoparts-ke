@@ -15,7 +15,6 @@ $shop_url   = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('
 <div class="sa-cart-page">
   <header class="sa-cart-hero">
     <div class="sa-cart-hero__text">
-      <p class="sa-cart-hero__eyebrow"><?php esc_html_e('Your bag', 'supreme-autoparts'); ?></p>
       <h1 class="sa-cart-hero__title">
         <?php esc_html_e('Cart', 'supreme-autoparts'); ?>
         <?php if ($cart_count > 0) : ?>

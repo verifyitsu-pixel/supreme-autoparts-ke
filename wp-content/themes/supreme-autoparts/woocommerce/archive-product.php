@@ -39,17 +39,15 @@ if ($sa_total <= 0 && isset($GLOBALS['wp_query']) && $GLOBALS['wp_query'] instan
     </div>
   <?php endif; ?>
   <div class="sa-archive-header__body">
+    <?php if (!$sa_is_shop) : ?>
     <p class="sa-archive-header__eyebrow">
-      <?php if ($sa_is_shop) : ?>
-        <?php esc_html_e('Catalog', 'supreme-autoparts'); ?>
-      <?php else : ?>
         <a href="<?php echo esc_url(function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/')); ?>"><?php esc_html_e('Shop', 'supreme-autoparts'); ?></a>
         <?php if ($sa_term && !empty($sa_term->name)) : ?>
           <span aria-hidden="true"> / </span>
           <span><?php echo esc_html($sa_term->name); ?></span>
         <?php endif; ?>
-      <?php endif; ?>
     </p>
+    <?php endif; ?>
     <?php if (apply_filters('woocommerce_show_page_title', true)) : ?>
       <h1 class="woocommerce-products-header__title page-title"><?php woocommerce_page_title(); ?></h1>
     <?php endif; ?>
@@ -67,9 +65,7 @@ if ($sa_total <= 0 && isset($GLOBALS['wp_query']) && $GLOBALS['wp_query'] instan
     <div class="sa-archive-header__desc">
       <?php do_action('woocommerce_archive_description'); ?>
     </div>
-    <?php if ($sa_is_shop) : ?>
-      <p class="sa-archive-header__hint"><?php esc_html_e('Search by part number first · brand · make / model · USD checkout', 'supreme-autoparts'); ?></p>
-    <?php endif; ?>
+
   </div>
 </header>
 <?php

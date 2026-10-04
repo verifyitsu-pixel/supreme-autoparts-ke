@@ -24,10 +24,9 @@ $shop_url    = function_exists('wc_get_page_permalink') ? wc_get_page_permalink(
         <circle cx="17.5" cy="19" r="1.4" fill="currentColor"/>
       </svg>
     </div>
-    <p class="sa-cart-empty__eyebrow"><?php esc_html_e('Your cart is empty', 'supreme-autoparts'); ?></p>
-    <h1 class="sa-cart-empty__title"><?php esc_html_e('Nothing to checkout yet', 'supreme-autoparts'); ?></h1>
+    <h1 class="sa-cart-empty__title"><?php esc_html_e('Cart', 'supreme-autoparts'); ?></h1>
     <p class="sa-cart-empty__lead">
-      <?php esc_html_e('Browse the catalogue for parts in stock, or enquire if you need something we have not listed yet.', 'supreme-autoparts'); ?>
+      <?php esc_html_e('Your cart is empty.', 'supreme-autoparts'); ?>
     </p>
     <div class="sa-cart-empty__actions">
       <?php if ($shop_url) : ?>

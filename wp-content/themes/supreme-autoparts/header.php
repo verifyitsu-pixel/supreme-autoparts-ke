@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 <head>
   <meta charset="<?php bloginfo('charset'); ?>">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0B0B0D">
+  <meta name="theme-color" content="#ffffff">
   <link rel="icon" href="<?php echo esc_url(SA_THEME_URI . '/assets/favicon.png'); ?>" type="image/png" sizes="any">
   <link rel="apple-touch-icon" href="<?php echo esc_url(SA_THEME_URI . '/assets/icon.png'); ?>">
   <?php wp_head(); ?>
@@ -44,65 +44,13 @@ if (!defined('ABSPATH')) {
 
     <a class="sa-logo" href="<?php echo esc_url(home_url('/')); ?>">
       <?php
-      if (function_exists('has_custom_logo') && has_custom_logo()) {
-          $custom_logo_id = (int) get_theme_mod('custom_logo');
-          $logo_file      = (string) get_post_meta($custom_logo_id, '_wp_attached_file', true);
-          $uploads        = wp_get_upload_dir();
-          $basedir        = (string) ($uploads['basedir'] ?? '');
-          $logo_on_disk   = $logo_file !== '' && $basedir !== '' && is_readable($basedir . '/' . ltrim($logo_file, '/'));
-          $logo_html      = '';
-          if ($logo_on_disk) {
-              $logo_html = wp_get_attachment_image($custom_logo_id, 'sa-logo', false, [
-                  'class'         => 'sa-logo__img',
-                  'alt'           => get_bloginfo('name'),
-                  'loading'       => 'eager',
-                  'fetchpriority' => 'high',
-                  'decoding'      => 'async',
-                  'sizes'         => '(max-width: 767px) 140px, 200px',
-              ]);
-              if ($logo_html === '') {
-                  $logo_html = wp_get_attachment_image($custom_logo_id, 'medium', false, [
-                      'class'         => 'sa-logo__img',
-                      'alt'           => get_bloginfo('name'),
-                      'loading'       => 'eager',
-                      'fetchpriority' => 'high',
-                      'decoding'      => 'async',
-                      'sizes'         => '(max-width: 767px) 140px, 200px',
-                  ]);
-              }
-          }
-          if ($logo_html !== '') {
-              echo $logo_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-          } else {
-              // Fall through to theme-baked asset when uploads missing after redeploy.
-              $fallback_uri = function_exists('sa_theme_logo_url') ? sa_theme_logo_url(false) : (SA_THEME_URI . '/assets/logo.jpg');
-              printf(
-                  '<img class="sa-logo__img" src="%s" alt="%s" width="200" height="112" loading="eager" fetchpriority="high" decoding="async" sizes="(max-width: 767px) 140px, 200px" />',
-                  esc_url($fallback_uri),
-                  esc_attr(get_bloginfo('name'))
-              );
-          }
-      } else {
-          $fallback_uri = function_exists('sa_theme_logo_url') ? sa_theme_logo_url(false) : (SA_THEME_URI . '/assets/logo.png');
-          $fallback_path = str_replace(SA_THEME_URI, SA_THEME_DIR, $fallback_uri);
-          if (is_readable($fallback_path) || is_readable(SA_THEME_DIR . '/assets/logo.jpg') || is_readable(SA_THEME_DIR . '/assets/logo.png')) {
-              printf(
-                  '<img class="sa-logo__img" src="%s" alt="%s" width="200" height="112" loading="eager" fetchpriority="high" decoding="async" sizes="(max-width: 767px) 140px, 200px" />',
-                  esc_url($fallback_uri),
-                  esc_attr(get_bloginfo('name'))
-              );
-          } else {
-              $icon = SA_THEME_URI . '/assets/icon.png';
-              printf(
-                  '<img class="sa-logo__img" src="%s" alt="%s" width="48" height="48" loading="eager" fetchpriority="high" decoding="async" />',
-                  esc_url($icon),
-                  esc_attr(get_bloginfo('name'))
-              );
-              echo '<span>' . esc_html(get_bloginfo('name')) . '</span>';
-          }
-      }
+      $sa_logo = function_exists('sa_theme_logo_url') ? sa_theme_logo_url(true) : (SA_THEME_URI . '/assets/logo-light.png');
+      printf(
+          '<img class="sa-logo__img" src="%s" alt="%s" width="220" height="96" loading="eager" fetchpriority="high" decoding="async" />',
+          esc_url($sa_logo),
+          esc_attr(get_bloginfo('name'))
+      );
       ?>
-      <span class="screen-reader-text"><?php bloginfo('name'); ?></span>
     </a>
 
     <form class="sa-search" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>">
@@ -111,6 +59,7 @@ if (!defined('ABSPATH')) {
       <input type="hidden" name="post_type" value="product">
       <button type="submit" aria-label="<?php esc_attr_e('Search', 'supreme-autoparts'); ?>">
         <?php echo sa_category_icon_svg('search'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+        <span class="sa-search__label"><?php esc_html_e('Search', 'supreme-autoparts'); ?></span>
       </button>
     </form>
 
@@ -137,6 +86,7 @@ if (!defined('ABSPATH')) {
       <input type="hidden" name="post_type" value="product">
       <button type="submit" aria-label="<?php esc_attr_e('Search', 'supreme-autoparts'); ?>">
         <?php echo sa_category_icon_svg('search'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+        <span class="sa-search__label"><?php esc_html_e('Search', 'supreme-autoparts'); ?></span>
       </button>
     </form>
   </div>
@@ -174,7 +124,7 @@ if (!defined('ABSPATH')) {
         </li>
         <?php if (function_exists('wc_get_page_permalink')) : ?>
           <li class="sa-nav__item">
-            <a class="sa-nav__link" href="<?php echo esc_url(wc_get_page_permalink('shop')); ?>"><?php esc_html_e('Shop All', 'supreme-autoparts'); ?></a>
+            <a class="sa-nav__link" href="<?php echo esc_url(wc_get_page_permalink('shop')); ?>"><?php esc_html_e('Shop', 'supreme-autoparts'); ?></a>
           </li>
         <?php endif; ?>
       </ul>

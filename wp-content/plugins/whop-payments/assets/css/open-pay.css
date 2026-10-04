@@ -1,10 +1,10 @@
-/* Supreme Autoparts — open amount pay form (charcoal + amber). No Whop badges. */
+/* Supreme Autoparts — open amount pay form (light). No Whop badges. */
 .sa-open-pay {
-  --op-bg: #0B0B0D;
-  --op-card: #141418;
-  --op-border: #2a2a30;
-  --op-text: #f2f2f4;
-  --op-muted: #a0a0a8;
+  --op-bg: #ffffff;
+  --op-card: #ffffff;
+  --op-border: #e4e4e4;
+  --op-text: #191919;
+  --op-muted: #5c5c5c;
   --op-amber: #F5A623;
   --op-amber-ink: #0B0B0D;
   --op-err: #ff6b6b;
@@ -29,7 +29,7 @@
   border: 1px solid var(--op-border);
   border-radius: 16px;
   padding: 1.75rem 1.5rem 1.5rem;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
 }
 
 .sa-open-pay__brand {
@@ -70,13 +70,13 @@
 .sa-open-pay__notice--err {
   background: rgba(255, 107, 107, 0.12);
   border: 1px solid rgba(255, 107, 107, 0.35);
-  color: #ffb4b4;
+  color: #9b1c1c;
 }
 
 .sa-open-pay__notice--ok {
   background: rgba(61, 214, 140, 0.12);
   border: 1px solid rgba(61, 214, 140, 0.35);
-  color: #9aefc4;
+  color: #0f6b3a;
 }
 
 .sa-open-pay__form {
@@ -236,7 +236,7 @@
   margin: 0.75rem 1rem 0;
   padding: 1.5rem 1.25rem 1.35rem;
   border-radius: 14px;
-  background: linear-gradient(160deg, rgba(245, 166, 35, 0.18) 0%, rgba(61, 214, 140, 0.12) 55%, rgba(20, 20, 24, 0.4) 100%);
+  background: linear-gradient(160deg, rgba(245, 166, 35, 0.18) 0%, rgba(61, 214, 140, 0.12) 55%, rgba(255, 255, 255, 0.4) 100%);
   border: 1px solid rgba(245, 166, 35, 0.35);
   text-align: center;
 }
@@ -327,7 +327,7 @@
   align-items: baseline;
   gap: 1rem;
   padding: 0.55rem 0;
-  border-bottom: 1px solid rgba(42, 42, 48, 0.85);
+  border-bottom: 1px solid #e4e4e4;
 }
 
 .sa-open-pay__summary-row:last-child {
@@ -356,7 +356,7 @@
   border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #9aefc4;
+  color: #0f6b3a;
   background: rgba(61, 214, 140, 0.14);
   border: 1px solid rgba(61, 214, 140, 0.35);
 }
@@ -365,7 +365,7 @@
   margin: 0.85rem 1rem 0;
   border: 1px solid var(--op-border);
   border-radius: 12px;
-  background: rgba(11, 11, 13, 0.55);
+  background: #fafafa;
   overflow: hidden;
 }
 
@@ -452,7 +452,7 @@
   align-items: flex-start;
   gap: 1rem;
   padding: 0.65rem 0;
-  border-bottom: 1px solid rgba(42, 42, 48, 0.85);
+  border-bottom: 1px solid #e4e4e4;
   font-size: 0.95rem;
 }
 
@@ -572,7 +572,7 @@
   min-height: 420px;
   border-radius: 12px;
   overflow: hidden;
-  background: #0B0B0D;
+  background: #fff;
 }
 .sa-whop-pay-embed__checkout {
   width: 100%;
@@ -588,5 +588,5 @@
 .sa-open-pay .sa-pm-embed__status--loading {
   background: rgba(245, 166, 35, 0.08);
   border: 1px solid rgba(245, 166, 35, 0.25);
-  color: #f2f2f4;
+  color: #191919;
 }

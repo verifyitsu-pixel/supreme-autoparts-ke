@@ -17,20 +17,18 @@ $q = get_search_query();
 <main id="primary" class="sa-main sa-page sa-search-results">
   <div class="sa-container">
     <header class="sa-archive-header sa-archive-header--shop">
-      <p class="sa-archive-header__eyebrow"><?php esc_html_e('Search', 'supreme-autoparts'); ?></p>
-      <h1>
-        <?php
-        if ($q !== '') {
-            printf(
-                /* translators: %s: search query */
-                esc_html__('Results for “%s”', 'supreme-autoparts'),
-                esc_html($q)
-            );
-        } else {
-            esc_html_e('Search parts', 'supreme-autoparts');
-        }
-        ?>
-      </h1>
+      <h1><?php esc_html_e('Search', 'supreme-autoparts'); ?></h1>
+      <?php if ($q !== '') : ?>
+        <p class="sa-archive-header__count">
+          <?php
+          printf(
+              /* translators: %s: search query */
+              esc_html__('Results for “%s”', 'supreme-autoparts'),
+              esc_html($q)
+          );
+          ?>
+        </p>
+      <?php endif; ?>
       <?php if ($sa_total > 0) : ?>
         <p class="sa-archive-header__count">
           <?php
@@ -41,7 +39,6 @@ $q = get_search_query();
           ?>
         </p>
       <?php endif; ?>
-      <p class="sa-archive-header__hint"><?php esc_html_e('Part numbers match first, then brand and title.', 'supreme-autoparts'); ?></p>
     </header>
 
     <?php get_template_part('template-parts/catalog', 'filters'); ?>

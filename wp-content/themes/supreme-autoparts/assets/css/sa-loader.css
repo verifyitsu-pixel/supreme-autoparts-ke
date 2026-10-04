@@ -1,6 +1,6 @@
 /**
  * Supreme Autoparts — branded tyre loading overlay.
- * Charcoal backdrop + amber accents. Original 5-spoke wheel SVG (not a stock asset).
+ * Light backdrop + amber wheel. Original 5-spoke wheel SVG (not a stock asset).
  */
 
 .sa-loader {
@@ -11,7 +11,7 @@
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  background: rgba(11, 11, 13, 0.82);
+  background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   opacity: 0;
@@ -33,12 +33,9 @@
   gap: 1rem;
   padding: 1.5rem 1.75rem;
   border-radius: 12px;
-  background: rgba(22, 22, 24, 0.92);
+  background: #fff;
   border: 1px solid rgba(245, 166, 35, 0.28);
-  box-shadow:
-    0 0 0 1px rgba(11, 11, 13, 0.6),
-    0 18px 48px rgba(0, 0, 0, 0.55),
-    0 0 32px rgba(245, 166, 35, 0.08);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
   max-width: min(90vw, 280px);
   text-align: center;
 }
@@ -60,7 +57,7 @@
   font-size: 0.92rem;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: #F4F4F5;
+  color: #191919;
   min-height: 1.35em;
 }
 

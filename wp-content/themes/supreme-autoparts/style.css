@@ -2,34 +2,35 @@
 Theme Name: Supreme Autoparts
 Theme URI: https://supremeautoparts.co.ke
 Author: Supreme Autoparts
-Description: Dark charcoal + amber automotive WooCommerce storefront for Supreme Autoparts (KES).
-Version: 1.4.59
+Description: Light marketplace storefront for Supreme Autoparts. White and light gray pages, amber only as a small accent.
+Version: 1.4.60
 Requires at least: 6.4
 Tested up to: 6.7
 Requires PHP: 8.1
 Text Domain: supreme-autoparts
-Tags: e-commerce, woocommerce, dark, custom-menu, responsive
+Tags: e-commerce, woocommerce, custom-menu, responsive
 */
 
-/* Design tokens — charcoal #0B0B0D + amber #F5A623, Inter typography */
+/* Design tokens — light marketplace. Amber is a small accent, not a page wash. */
 :root {
-  --sa-bg: #0B0B0D;
-  --sa-bg-alt: #121214;
-  --sa-bg-card: #161618;
-  --sa-bg-header: #0B0B0D;
-  --sa-bg-elevated: #1C1C1F;
-  --sa-text: #C8C8CC;
-  --sa-text-muted: #8A8A90;
-  --sa-heading: #F4F4F5;
-  --sa-link: #C8C8CC;
+  --sa-bg: #f4f4f4;
+  --sa-bg-alt: #ffffff;
+  --sa-bg-card: #ffffff;
+  --sa-bg-header: #ffffff;
+  --sa-bg-elevated: #f7f7f7;
+  --sa-text: #333333;
+  --sa-text-muted: #6b6b6b;
+  --sa-heading: #191919;
+  --sa-link: #1863dc;
+  --sa-link-hover: #0d4eaf;
   --sa-accent: #F5A623;
-  --sa-accent-hover: #FFB83D;
-  --sa-accent-ink: #0B0B0D;
-  --sa-danger: #E5484D;
-  --sa-border: #2A2A2E;
-  --sa-border-strong: #3A3A40;
-  --sa-radius: 6px;
-  --sa-radius-lg: 10px;
+  --sa-accent-hover: #e09512;
+  --sa-accent-ink: #1a1a1a;
+  --sa-danger: #c13515;
+  --sa-border: #e4e4e4;
+  --sa-border-strong: #cccccc;
+  --sa-radius: 4px;
+  --sa-radius-lg: 6px;
   --sa-font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --sa-font-display: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --sa-max: 1280px;
@@ -57,7 +58,7 @@ Tags: e-commerce, woocommerce, dark, custom-menu, responsive
 }
 
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; overflow-x: clip; }
+html { scroll-behavior: smooth; overflow-x: clip; color-scheme: light; }
 body {
   margin: 0;
   overflow-x: clip;
@@ -71,7 +72,7 @@ body {
 }
 img { max-width: 100%; height: auto; display: block; }
 a { color: var(--sa-link); text-decoration: none; transition: color .15s, background .15s, border-color .15s; }
-a:hover { color: var(--sa-accent); }
+a:hover { color: var(--sa-link-hover); }
 h1,h2,h3,h4,h5,h6 {
   font-family: var(--sa-font-display);
   color: var(--sa-heading);

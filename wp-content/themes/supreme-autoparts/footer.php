@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     <div class="sa-footer__grid">
       <div>
         <a class="sa-footer__brand" href="<?php echo esc_url(home_url('/')); ?>">
-          <img class="sa-footer__logo" src="<?php echo esc_url(function_exists('sa_theme_logo_url') ? sa_theme_logo_url(false) : (SA_THEME_URI . '/assets/logo.png')); ?>" alt="<?php echo esc_attr(get_bloginfo('name')); ?>" width="160" height="48" loading="lazy" />
+          <img class="sa-footer__logo" src="<?php echo esc_url(function_exists('sa_theme_logo_url') ? sa_theme_logo_url(true) : (SA_THEME_URI . '/assets/logo.png')); ?>" alt="<?php echo esc_attr(get_bloginfo('name')); ?>" width="160" height="48" loading="lazy" />
         </a>
         <h3 class="screen-reader-text"><?php esc_html_e('Supreme Autoparts', 'supreme-autoparts'); ?></h3>
         <p class="sa-footer__blurb">
@@ -140,7 +140,7 @@ if (!defined('ABSPATH')) {
   <button type="button" class="sa-cart-drawer__backdrop" data-sa-cart-close aria-label="<?php esc_attr_e('Close cart', 'supreme-autoparts'); ?>"></button>
   <div class="sa-cart-drawer__panel" role="dialog" aria-modal="true" aria-labelledby="sa-cart-drawer-title">
     <header class="sa-cart-drawer__head">
-      <h2 id="sa-cart-drawer-title"><?php esc_html_e('Your cart', 'supreme-autoparts'); ?></h2>
+      <h2 id="sa-cart-drawer-title"><?php esc_html_e('Cart', 'supreme-autoparts'); ?></h2>
       <button type="button" class="sa-cart-drawer__close" data-sa-cart-close aria-label="<?php esc_attr_e('Close', 'supreme-autoparts'); ?>">
         <?php echo sa_category_icon_svg('close'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
       </button>

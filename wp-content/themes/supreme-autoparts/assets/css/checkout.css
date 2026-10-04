@@ -1,4 +1,4 @@
-/* Supreme Autoparts — checkout + order-received (charcoal / amber) */
+/* Supreme Autoparts — checkout + order-received (light marketplace) */
 
 .sa-checkout-page {
   padding: 0 0 2.5rem;
@@ -973,7 +973,7 @@
   height: 52px !important;
   object-fit: contain;
   border-radius: 9px;
-  background: #101012;
+  background: #f7f7f7;
   border: 1px solid var(--sa-border);
   flex-shrink: 0;
 }
@@ -1093,9 +1093,9 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.8rem 1rem calc(0.8rem + env(safe-area-inset-bottom, 0px));
-    background: rgba(11, 11, 13, 0.95);
-    border-top: 1px solid var(--sa-border);
-    backdrop-filter: blur(12px);
+    background: #fff;
+    border-top: 1px solid #ddd;
+    box-shadow: 0 -1px 0 rgba(0,0,0,.06);
   }
   .sa-checkout-sticky-pay__total {
     color: var(--sa-heading);
@@ -1152,9 +1152,9 @@
 .sa-qty--checkout .qty {
   width: 2.75rem;
   text-align: center;
-  background: var(--sa-bg-elevated, #1C1C1F);
-  border: 1px solid var(--sa-border, #2A2A2E);
-  color: var(--sa-heading, #F4F4F5);
+  background: var(--sa-bg-elevated, #f7f7f7);
+  border: 1px solid var(--sa-border, #e4e4e4);
+  color: var(--sa-heading, #191919);
   border-radius: 4px;
   padding: 0.25rem 0.15rem;
   font-size: 0.9rem;
