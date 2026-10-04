@@ -93,11 +93,11 @@ final class Whop_Open_Pay {
      * @param array<string,string>|string $atts
      */
     public static function render_shortcode($atts = []): string {
-        // Paying an existing order via on-site embed — defer to Whop_Checkout_Embed markup.
+        // Existing unpaid order: send them to Whop (HTTP redirect already ran; this is the fallback).
         if (class_exists('Whop_Checkout_Embed')) {
             $pay_order = Whop_Checkout_Embed::order_from_request();
-            if ($pay_order instanceof WC_Order && Whop_Checkout_Embed::order_has_embed($pay_order) && !$pay_order->is_paid()) {
-                return Whop_Checkout_Embed::render_embed_markup($pay_order);
+            if ($pay_order instanceof WC_Order && $pay_order->get_payment_method() === 'whop' && !$pay_order->is_paid()) {
+                return Whop_Checkout_Embed::render_redirect_fallback($pay_order);
             }
         }
 
@@ -159,7 +159,7 @@ final class Whop_Open_Pay {
                 <div class="sa-open-pay__brand">
                     <img class="sa-open-pay__logo" src="<?php echo esc_url($logo); ?>" alt="Supreme Autoparts" width="180" height="48" loading="eager" />
                     <h1 class="sa-open-pay__title"><?php echo esc_html__('Make a payment', 'whop-payments'); ?></h1>
-                    <p class="sa-open-pay__sub"><?php echo esc_html__('Enter the amount in US dollars (USD). Pay securely on this page — you stay on supremeautoparts.co.ke. Paid amounts create an order in our store.', 'whop-payments'); ?></p>
+                    <p class="sa-open-pay__sub"><?php echo esc_html__('Enter the amount in US dollars (USD). You will be redirected to Whop to pay securely. Paid amounts create an order in our store.', 'whop-payments'); ?></p>
                 </div>
 
                 <?php if ($paid_notice !== '') : ?>
@@ -340,26 +340,17 @@ final class Whop_Open_Pay {
             $order->update_meta_data('_whop_checkout_id', $checkout_id);
         }
         $order->update_meta_data('_whop_plan_id', $plan_id);
-        if (!empty($result['purchase_url'])) {
-            // Stored for support/debug only — customers never redirect here.
-            $order->update_meta_data('_whop_purchase_url', (string) $result['purchase_url']);
+        $purchase_url = (string) ($result['purchase_url'] ?? '');
+        if ($purchase_url !== '') {
+            $order->update_meta_data('_whop_purchase_url', $purchase_url);
         }
-        $order->add_order_note(__('Open-pay: on-site Whop embed checkout created (no whop.com redirect).', 'whop-payments'));
+        $order->add_order_note(__('Open-pay: customer redirected to Whop checkout.', 'whop-payments'));
         $order->save();
 
-        // Stay on supremeautoparts.co.ke /pay with embedded Whop element.
-        $embed_url = class_exists('Whop_Checkout_Embed')
-            ? Whop_Checkout_Embed::pay_url($order)
-            : add_query_arg(
-                [
-                    'sa_whop_pay' => '1',
-                    'order'       => $order->get_id(),
-                    'key'         => $order->get_order_key(),
-                ],
-                $pay_url
-            );
-        wp_safe_redirect($embed_url, 302);
-        exit;
+        if (class_exists('Whop_Checkout_Embed') && Whop_Checkout_Embed::is_allowed_whop_url($purchase_url)) {
+            Whop_Checkout_Embed::redirect_customer_to_whop($purchase_url);
+        }
+        self::redirect_error($pay_url, __('Could not start checkout. Please try again.', 'whop-payments'));
     }
 
     /**

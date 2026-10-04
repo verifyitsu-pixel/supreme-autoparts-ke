@@ -626,12 +626,12 @@ final class Whop_Api_Client {
         if ($plan_id === '') {
             return [
                 'success' => false,
-                'message' => __('Whop response missing plan_id (required for embedded checkout).', 'whop-payments'),
+                'message' => __('Whop response missing plan_id.', 'whop-payments'),
                 'raw'     => $raw,
             ];
         }
 
-        // purchase_url kept for debug/meta only — customers use on-site embed (plan_id).
+        // purchase_url is where the customer is sent to pay (whop.com checkout).
 
         return [
             'success'      => true,

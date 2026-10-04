@@ -132,7 +132,7 @@ Appears in **WooCommerce → Settings → Payments** as **Whop**.
 ### Flow
 
 1. At checkout, the gateway creates a Whop **Checkout Configuration** with an inline **one-time** plan priced to the WooCommerce order total (`POST /checkout_configurations`).
-2. Customer pays in an **on-site Whop embed** on `/pay/` (or order-pay) — top frame never goes to whop.com; `data-whop-checkout-skip-redirect` + return URL stay on supremeautoparts.co.ke.
+2. Customer is **redirected to the Whop checkout URL** (`purchase_url` on whop.com) to pay. After payment, Whop sends them back to the store return URL. `/pay/?sa_whop_pay=1` for an unpaid order also redirects to that Whop link (no on-site card form).
 3. Whop sends a signed **`payment.succeeded`** webhook to `/?wc-api=whop_webhook`; the plugin verifies the signature and marks the order paid.
 
 Docs: [Accept payments](https://docs.whop.com/developer/guides/accept-payments) · [Create checkout configuration](https://docs.whop.com/api-reference/checkout-configurations/create-checkout-configuration) · [Webhooks](https://docs.whop.com/developer/guides/webhooks)

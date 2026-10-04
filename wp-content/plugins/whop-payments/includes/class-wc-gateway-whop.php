@@ -67,7 +67,7 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
     }
 
     /**
-     * Minimal payment box — card entry happens in on-site Whop embed after Pay.
+     * Minimal payment box — card entry happens on Whop after Pay.
      */
     public function payment_fields(): void {
         // Intentionally empty: no processor badges or redirect marketing copy.
@@ -307,19 +307,24 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
             );
         }
 
-        WC()->cart->empty_cart();
+        $purchase_url = (string) ($result['purchase_url'] ?? '');
+        if (!class_exists('Whop_Checkout_Embed') || !Whop_Checkout_Embed::is_allowed_whop_url($purchase_url)) {
+            wc_add_notice(__('Could not start Whop Checkout.', 'whop-payments'), 'error');
+            $order->add_order_note(__('Whop checkout created but purchase URL was missing or not on whop.com.', 'whop-payments'));
+            $order->save();
+            return ['result' => 'failure'];
+        }
 
-        // Stay on supremeautoparts.co.ke — embedded Whop checkout (never whop.com).
-        $embed_url = class_exists('Whop_Checkout_Embed')
-            ? Whop_Checkout_Embed::pay_url($order)
-            : $order->get_checkout_payment_url(false);
+        if (WC()->cart) {
+            WC()->cart->empty_cart();
+        }
 
-        $order->add_order_note(__('Customer sent to on-site Whop embed payment page.', 'whop-payments'));
+        $order->add_order_note(__('Customer redirected to Whop checkout.', 'whop-payments'));
         $order->save();
 
         return [
             'result'   => 'success',
-            'redirect' => $embed_url,
+            'redirect' => $purchase_url,
         ];
     }
 

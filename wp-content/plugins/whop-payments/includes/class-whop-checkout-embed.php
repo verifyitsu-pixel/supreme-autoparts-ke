@@ -1,9 +1,9 @@
 <?php
 /**
- * On-site Whop Checkout embed for Woo order-pay and /pay.
+ * Send Woo order-pay and /pay customers to the Whop checkout URL.
  *
- * Never redirects the top frame to whop.com — mounts js.whop.com checkout
- * element with plan_id + session, skip-redirect, guest-friendly.
+ * Payment is not collected in an on-site card embed. Unpaid orders redirect
+ * to the stored Whop purchase URL (whop.com / sandbox.whop.com).
  */
 
 declare(strict_types=1);
@@ -15,12 +15,10 @@ if (!defined('ABSPATH')) {
 final class Whop_Checkout_Embed {
 
     public static function init(): void {
-        add_action('wp_enqueue_scripts', [self::class, 'maybe_enqueue'], 30);
         add_action('template_redirect', [self::class, 'maybe_redirect_paid'], 5);
+        add_action('template_redirect', [self::class, 'maybe_redirect_to_whop'], 6);
         add_filter('the_content', [self::class, 'filter_pay_page_content'], 20);
         add_action('before_woocommerce_pay', [self::class, 'hijack_order_pay'], 5);
-        add_action('wp_head', [self::class, 'maybe_print_preloads'], 2);
-        add_filter('wp_headers', [self::class, 'filter_csp_headers'], 20);
     }
 
     /**
@@ -54,6 +52,99 @@ final class Whop_Checkout_Embed {
         }
         $order = wc_get_order($order_id);
         if (!$order || !hash_equals($order->get_order_key(), $key)) {
+            return null;
+        }
+        return $order;
+    }
+
+
+    /**
+     * True when $url is an https Whop checkout host (not an open redirect).
+     */
+    public static function is_allowed_whop_url(string $url): bool {
+        $parts = wp_parse_url($url);
+        if (!is_array($parts)) {
+            return false;
+        }
+        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+        $host = strtolower((string) ($parts['host'] ?? ''));
+        if ($scheme !== 'https' || $host === '') {
+            return false;
+        }
+        return $host === 'whop.com' || str_ends_with($host, '.whop.com');
+    }
+
+    /**
+     * Whop checkout link for this order (stored purchase URL, else checkout id).
+     */
+    public static function whop_checkout_url(WC_Order $order): string {
+        $stored = trim((string) $order->get_meta('_whop_purchase_url'));
+        if (self::is_allowed_whop_url($stored)) {
+            return $stored;
+        }
+        $checkout_id = trim((string) $order->get_meta('_whop_checkout_id'));
+        if ($checkout_id === '' || !preg_match('/^[A-Za-z0-9_\-]+$/', $checkout_id)) {
+            return '';
+        }
+        $host = 'https://whop.com';
+        if (function_exists('WC') && WC()->payment_gateways()) {
+            $gateways = WC()->payment_gateways()->payment_gateways();
+            $gateway = $gateways['whop'] ?? null;
+            if ($gateway instanceof WC_Gateway_Whop && $gateway->is_sandbox_mode()) {
+                $host = 'https://sandbox.whop.com';
+            }
+        }
+        return $host . '/checkout/' . rawurlencode($checkout_id) . '/';
+    }
+
+    /**
+     * 302 to Whop. Caller must pass a URL that is_allowed_whop_url().
+     */
+    public static function redirect_customer_to_whop(string $url): void {
+        if (!self::is_allowed_whop_url($url)) {
+            return;
+        }
+        nocache_headers();
+        wp_redirect($url, 302);
+        exit;
+    }
+
+    /**
+     * Unpaid Whop orders on /pay or order-pay go to Whop, not the card embed.
+     */
+    public static function maybe_redirect_to_whop(): void {
+        $order = self::unpaid_whop_order_from_request();
+        if (!$order instanceof WC_Order) {
+            return;
+        }
+        $url = self::whop_checkout_url($order);
+        if ($url === '') {
+            return;
+        }
+        self::redirect_customer_to_whop($url);
+    }
+
+    private static function unpaid_whop_order_from_request(): ?WC_Order {
+        $order = self::order_from_request();
+        if (!$order && function_exists('is_checkout_pay_page') && is_checkout_pay_page()) {
+            global $wp;
+            $oid = absint($wp->query_vars['order-pay'] ?? 0);
+            $candidate = $oid ? wc_get_order($oid) : null;
+            if ($candidate instanceof WC_Order) {
+                // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                $key = sanitize_text_field(wp_unslash((string) ($_GET['key'] ?? '')));
+                if ($key !== '' && hash_equals($candidate->get_order_key(), $key)) {
+                    $order = $candidate;
+                }
+            }
+        }
+        if (!$order instanceof WC_Order) {
+            return null;
+        }
+        if ($order->get_payment_method() !== 'whop') {
+            return null;
+        }
+        if ($order->is_paid() || $order->has_status(['processing', 'completed', 'cancelled', 'refunded', 'failed'])) {
             return null;
         }
         return $order;
@@ -229,50 +320,50 @@ final class Whop_Checkout_Embed {
             return $content;
         }
 
-        return self::render_embed_markup($order);
+        return self::render_redirect_fallback($order);
     }
 
     /**
-     * On Woo order-pay, swap gateway list for Whop embed when session exists.
+     * Woo order-pay with a valid key goes to Whop (not the on-site card form).
      */
     public static function hijack_order_pay(): void {
         global $wp;
         $order_id = absint($wp->query_vars['order-pay'] ?? 0);
         $order = $order_id ? wc_get_order($order_id) : false;
-        if (!$order instanceof WC_Order || !self::order_has_embed($order)) {
+        if (!$order instanceof WC_Order || $order->get_payment_method() !== 'whop') {
             return;
         }
-        if ($order->is_paid()) {
+        if ($order->is_paid() || $order->has_status(['processing', 'completed', 'cancelled', 'refunded', 'failed'])) {
             return;
         }
-
-        // Prefer dedicated /pay/ embed page (cleaner guest UX).
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         $key = sanitize_text_field(wp_unslash((string) ($_GET['key'] ?? '')));
-        if ($key !== '' && hash_equals($order->get_order_key(), $key)) {
-            wp_safe_redirect(self::pay_url($order), 302);
-            exit;
+        if ($key === '' || !hash_equals($order->get_order_key(), $key)) {
+            return;
         }
+        $url = self::whop_checkout_url($order);
+        if ($url === '') {
+            return;
+        }
+        self::redirect_customer_to_whop($url);
+    }
 
-        self::enqueue_for_order($order);
-        add_action('woocommerce_pay_order_before_payment', static function () use ($order): void {
-            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-            echo self::render_embed_markup($order);
-        }, 1);
-        add_filter('woocommerce_available_payment_gateways', static function (): array {
-            return [];
-        }, 100);
+    /**
+     * Fallback if headers were already sent. No card iframe — link/JS to Whop only.
+     */
+    public static function render_redirect_fallback(WC_Order $order): string {
+        return self::render_embed_markup($order);
     }
 
     public static function render_embed_markup(WC_Order $order): string {
+        $url = self::whop_checkout_url($order);
         $logo = WHOP_PAYMENTS_URL . 'assets/img/logo-light.png';
         $total = wp_strip_all_tags($order->get_formatted_order_total());
         $num = $order->get_order_number();
-        $email = $order->get_billing_email();
 
         ob_start();
         ?>
-        <div class="sa-open-pay sa-whop-pay-embed" id="sa-whop-pay-embed">
+        <div class="sa-open-pay" id="sa-whop-pay-redirect">
             <div class="sa-open-pay__card">
                 <div class="sa-open-pay__brand">
                     <img class="sa-open-pay__logo" src="<?php echo esc_url($logo); ?>" alt="Supreme Autoparts" width="180" height="48" loading="eager" />
@@ -282,34 +373,31 @@ final class Whop_Checkout_Embed {
                         echo esc_html(
                             sprintf(
                                 /* translators: 1: order number 2: formatted total */
-                                __('Order #%1$s — %2$s. Pay securely on this page (you stay on supremeautoparts.co.ke).', 'whop-payments'),
+                                __('Order #%1$s — %2$s. Continue to Whop to pay securely.', 'whop-payments'),
                                 $num,
                                 $total
                             )
                         );
                         ?>
                     </p>
-                    <?php if ($email !== '') : ?>
-                        <p class="sa-open-pay__hint" style="margin-top:0.5rem;">
-                            <?php
-                            echo esc_html(
-                                sprintf(
-                                    /* translators: %s: email */
-                                    __('Receipt: %s', 'whop-payments'),
-                                    $email
-                                )
-                            );
-                            ?>
-                        </p>
-                    <?php endif; ?>
                 </div>
-                <p id="sa-whop-pay-status" class="sa-open-pay__notice sa-pm-embed__status" role="status" aria-live="polite"></p>
-                <div id="sa-whop-pay-mount" class="sa-whop-pay-embed__mount" style="min-height:420px;width:100%;"></div>
-                <noscript>
-                    <p class="sa-open-pay__notice sa-open-pay__notice--err">
-                        <?php echo esc_html__('JavaScript is required to pay on this page.', 'whop-payments'); ?>
+                <?php if ($url !== '') : ?>
+                    <p class="sa-open-pay__notice" role="status">
+                        <?php echo esc_html__('Redirecting to Whop…', 'whop-payments'); ?>
                     </p>
-                </noscript>
+                    <p>
+                        <a class="button" href="<?php echo esc_url($url); ?>">
+                            <?php echo esc_html__('Pay on Whop', 'whop-payments'); ?>
+                        </a>
+                    </p>
+                    <script>
+                        window.location.replace(<?php echo wp_json_encode($url); ?>);
+                    </script>
+                <?php else : ?>
+                    <p class="sa-open-pay__notice sa-open-pay__notice--err" role="alert">
+                        <?php echo esc_html__('Payment link is unavailable. Return to checkout and try again.', 'whop-payments'); ?>
+                    </p>
+                <?php endif; ?>
             </div>
         </div>
         <?php

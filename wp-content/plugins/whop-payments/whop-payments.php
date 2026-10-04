@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Whop Payments for WooCommerce
- * Description: WooCommerce payment gateway for Whop — on-site embedded checkout (/checkout, /pay, Add card/bank), webhooks, saved payment methods.
- * Version: 1.2.19
+ * Description: WooCommerce payment gateway for Whop — redirect to Whop checkout, webhooks, saved payment methods.
+ * Version: 1.2.20
  * Author: Supreme Autoparts
  * Text Domain: whop-payments
  * Requires at least: 6.4
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('WHOP_PAYMENTS_VERSION', '1.2.19');
+define('WHOP_PAYMENTS_VERSION', '1.2.20');
 define('WHOP_PAYMENTS_FILE', __FILE__);
 define('WHOP_PAYMENTS_DIR', plugin_dir_path(__FILE__));
 define('WHOP_PAYMENTS_URL', plugin_dir_url(__FILE__));
