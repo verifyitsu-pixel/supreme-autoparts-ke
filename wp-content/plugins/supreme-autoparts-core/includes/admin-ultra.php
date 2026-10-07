@@ -371,7 +371,7 @@ function sa_core_ultra_render_dashboard(): void
                 $pay_id = 'sa-pay-' . $oid;
                 ?>
                 <tr>
-                  <td><a href="<?php echo esc_url($order->get_edit_order_url()); ?>">#<?php echo esc_html($order->get_order_number()); ?></a></td>
+                  <td><a href="<?php echo esc_url($order->get_edit_order_url()); ?>">#<?php echo esc_html($order->get_order_number()); ?></a><?php if (function_exists('sa_cod_order_items_inline_html')) { echo sa_cod_order_items_inline_html($order, 40); } // phpcs:ignore ?></td>
                   <td><?php echo esc_html($order->get_date_created() ? $order->get_date_created()->date_i18n('Y-m-d H:i') : ''); ?></td>
                   <td><?php echo esc_html(wc_get_order_status_name($order->get_status())); ?></td>
                   <td><?php echo wp_kses_post($order->get_formatted_order_total()); ?></td>

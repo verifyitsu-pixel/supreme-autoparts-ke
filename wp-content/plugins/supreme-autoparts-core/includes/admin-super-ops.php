@@ -479,7 +479,7 @@ function sa_core_super_render_orders(): void
             $st = $order->get_status();
             $needs_pay = in_array($st, ['pending', 'on-hold', 'failed'], true) || (!$order->is_paid() && !in_array($st, ['completed', 'cancelled', 'refunded'], true));
             echo '<tr>';
-            echo '<td><a href="' . esc_url($order->get_edit_order_url()) . '">#' . esc_html($order->get_order_number()) . '</a></td>';
+            echo '<td><a href="' . esc_url($order->get_edit_order_url()) . '">#' . esc_html($order->get_order_number()) . '</a>' . (function_exists('sa_cod_order_items_inline_html') ? sa_cod_order_items_inline_html($order, 40) : '') . '</td>';
             echo '<td>' . esc_html($order->get_date_created() ? $order->get_date_created()->date_i18n('Y-m-d H:i') : '') . '</td>';
             echo '<td>' . esc_html($name);
             if ($cid > 0) {
@@ -706,7 +706,7 @@ function sa_core_super_render_customer_detail(int $uid): void
                 continue;
             }
             echo '<tr>';
-            echo '<td><a href="' . esc_url($o->get_edit_order_url()) . '">#' . esc_html($o->get_order_number()) . '</a></td>';
+            echo '<td><a href="' . esc_url($o->get_edit_order_url()) . '">#' . esc_html($o->get_order_number()) . '</a>' . (function_exists('sa_cod_order_items_inline_html') ? sa_cod_order_items_inline_html($o, 40) : '') . '</td>';
             echo '<td>' . esc_html($o->get_date_created() ? $o->get_date_created()->date_i18n('Y-m-d H:i') : '') . '</td>';
             echo '<td>' . esc_html(wc_get_order_status_name($o->get_status())) . '</td>';
             echo '<td>' . wp_kses_post($o->get_formatted_order_total()) . '</td>';
@@ -967,7 +967,7 @@ function sa_core_super_render_payments(): void
             $needs_pay = in_array($st, ['pending', 'on-hold', 'failed'], true) || !$order->is_paid();
             $email = (string) $order->get_billing_email();
             echo '<tr>';
-            echo '<td><a href="' . esc_url($order->get_edit_order_url()) . '">#' . esc_html($order->get_order_number()) . '</a></td>';
+            echo '<td><a href="' . esc_url($order->get_edit_order_url()) . '">#' . esc_html($order->get_order_number()) . '</a>' . (function_exists('sa_cod_order_items_inline_html') ? sa_cod_order_items_inline_html($order, 40) : '') . '</td>';
             echo '<td>' . esc_html($email ?: '—') . '</td>';
             echo '<td>' . esc_html($order->get_payment_method_title() ?: $order->get_payment_method() ?: '—') . '</td>';
             echo '<td>' . wp_kses_post($order->get_formatted_order_total()) . '</td>';

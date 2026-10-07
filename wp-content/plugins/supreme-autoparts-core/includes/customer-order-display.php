@@ -61,6 +61,36 @@ function sa_cod_item_thumb_html($item, int $size = 64): string
 }
 
 /**
+ * Compact photo + title + SKU block for an order (dashboards, order lists).
+ */
+function sa_cod_order_items_inline_html($order, int $size = 40, int $max = 2): string
+{
+    if (!$order instanceof WC_Order) {
+        return '';
+    }
+    $items = $order->get_items();
+    $out = '<div class="sa-order-items-inline" style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">';
+    $shown = 0;
+    foreach ($items as $item) {
+        if ($shown >= $max) {
+            break;
+        }
+        $product = is_object($item) && method_exists($item, 'get_product') ? $item->get_product() : null;
+        $sku = $product instanceof WC_Product ? $product->get_sku() : '';
+        $out .= '<div style="display:flex;align-items:center;gap:8px;">' . sa_cod_item_thumb_html($item, $size)
+            . '<span style="line-height:1.3;"><span>' . esc_html($item->get_name()) . '</span>'
+            . ($sku !== '' ? '<br><small style="opacity:.75;">SKU: ' . esc_html($sku) . ' &times; ' . (int) $item->get_quantity() . '</small>' : '')
+            . '</span></div>';
+        $shown++;
+    }
+    $more = count($items) - $shown;
+    if ($more > 0) {
+        $out .= '<small>+' . (int) $more . ' more</small>';
+    }
+    return $out . '</div>';
+}
+
+/**
  * View order / Order received: photo beside the product name.
  */
 add_filter('woocommerce_order_item_name', static function ($name, $item, $is_visible = false) {
@@ -295,3 +325,29 @@ add_action('woocommerce_admin_order_data_after_order_details', static function (
     echo '<a href="' . esc_url($l['order_received']) . '" target="_blank" rel="noopener">' . esc_html__('Thank-you page', 'supreme-autoparts-core') . '</a> · ';
     echo '<a href="' . esc_url($l['email']) . '" target="_blank" rel="noopener">' . esc_html__('Email (preview, not sent)', 'supreme-autoparts-core') . '</a></p>';
 });
+
+/**
+ * WP admin orders list (HPOS + legacy): "Items" column with photo, title, SKU.
+ */
+$sa_cod_admin_cols = static function (array $columns): array {
+    $out = [];
+    foreach ($columns as $k => $v) {
+        $out[$k] = $v;
+        if ($k === 'order_number') {
+            $out['sa_items'] = __('Items', 'supreme-autoparts-core');
+        }
+    }
+    return $out;
+};
+add_filter('manage_woocommerce_page_wc-orders_columns', $sa_cod_admin_cols, 20);
+add_filter('manage_edit-shop_order_columns', $sa_cod_admin_cols, 20);
+add_action('manage_woocommerce_page_wc-orders_custom_column', static function ($column, $order): void {
+    if ($column === 'sa_items') {
+        echo sa_cod_order_items_inline_html($order instanceof WC_Order ? $order : wc_get_order($order), 40); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    }
+}, 10, 2);
+add_action('manage_shop_order_posts_custom_column', static function ($column, $post_id): void {
+    if ($column === 'sa_items') {
+        echo sa_cod_order_items_inline_html(wc_get_order($post_id), 40); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    }
+}, 10, 2);

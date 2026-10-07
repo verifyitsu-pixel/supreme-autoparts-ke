@@ -94,7 +94,7 @@ function sa_core_render_orders_tools_page(): void
                 }
                 ?>
                 <tr>
-                  <td><a href="<?php echo esc_url($order->get_edit_order_url()); ?>">#<?php echo esc_html($order->get_order_number()); ?></a></td>
+                  <td><a href="<?php echo esc_url($order->get_edit_order_url()); ?>">#<?php echo esc_html($order->get_order_number()); ?></a><?php if (function_exists('sa_cod_order_items_inline_html')) { echo sa_cod_order_items_inline_html($order, 40); } // phpcs:ignore ?></td>
                   <td><?php echo esc_html($name); ?></td>
                   <td><?php echo esc_html(wc_get_order_status_name($order->get_status())); ?></td>
                   <td>

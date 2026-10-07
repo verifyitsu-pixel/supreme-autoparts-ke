@@ -64,6 +64,17 @@ final class SA_Geo_Display
             return false;
         }
 
+        // Customer order screens / receipts: show the amount actually charged (order currency).
+        if (function_exists('is_account_page') && is_account_page()) {
+            return false;
+        }
+        if (function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('order-received')) {
+            return false;
+        }
+        if (!empty($_GET['sa_invoice'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            return false;
+        }
+
         // Emails: keep USD (matches charged amount).
         if (doing_action('woocommerce_email_before_order_table') || doing_action('woocommerce_email_after_order_table')) {
             return false;

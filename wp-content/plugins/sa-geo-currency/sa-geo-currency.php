@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Supreme Geo Currency Display
  * Description: Display prices in visitor local currency (CF-IPCountry / geo fallback) while WooCommerce + Whop checkout remain USD.
- * Version: 1.1.1
+ * Version: 1.1.2
  * Author: Supreme Autoparts
  * Text Domain: sa-geo-currency
  * Requires at least: 6.4
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_GEO_CURRENCY_VERSION', '1.1.1');
+define('SA_GEO_CURRENCY_VERSION', '1.1.2');
 define('SA_GEO_CURRENCY_FILE', __FILE__);
 define('SA_GEO_CURRENCY_DIR', plugin_dir_path(__FILE__));
 define('SA_GEO_CURRENCY_URL', plugin_dir_url(__FILE__));

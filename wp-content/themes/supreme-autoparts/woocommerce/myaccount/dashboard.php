@@ -107,6 +107,7 @@ $links = [
           <thead>
             <tr>
               <th><?php esc_html_e('Order', 'supreme-autoparts'); ?></th>
+              <th><?php esc_html_e('Items', 'supreme-autoparts'); ?></th>
               <th><?php esc_html_e('Date', 'supreme-autoparts'); ?></th>
               <th><?php esc_html_e('Status', 'supreme-autoparts'); ?></th>
               <th><?php esc_html_e('Total', 'supreme-autoparts'); ?></th>
@@ -121,6 +122,13 @@ $links = [
                   <a href="<?php echo esc_url($order->get_view_order_url()); ?>">
                     #<?php echo esc_html($order->get_order_number()); ?>
                   </a>
+                </td>
+                <td data-title="<?php esc_attr_e('Items', 'supreme-autoparts'); ?>">
+                  <?php
+                  if (function_exists('sa_cod_order_items_inline_html')) {
+                      echo sa_cod_order_items_inline_html($order, 48); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                  }
+                  ?>
                 </td>
                 <td data-title="<?php esc_attr_e('Date', 'supreme-autoparts'); ?>">
                   <time datetime="<?php echo esc_attr($order->get_date_created() ? $order->get_date_created()->date('c') : ''); ?>">
