@@ -167,6 +167,45 @@ ensure_woocommerce() {
   echo "[supreme] WooCommerce on disk + active check done."
 }
 
+# ---------------------------------------------------------------------------
+# Admin account: NEVER reset the password on boot/deploy.
+# Previously every boot ran `wp user update --user_pass=...`, which re-hashed the
+# password and made WordPress email "[Supreme Autoparts] Password Changed" on
+# EVERY deploy (and reverted any password the owner set in wp-admin).
+#   - Admin user missing  -> create it with WORDPRESS_ADMIN_PASSWORD (no email).
+#   - Admin user present  -> leave the password alone. Only if
+#     SUPREME_ADMIN_PASSWORD_SYNC=1 AND the stored hash does not already match
+#     WORDPRESS_ADMIN_PASSWORD is it re-set — silently (no email, sessions kept).
+# ---------------------------------------------------------------------------
+ensure_admin_account() {
+  local pw="${WORDPRESS_ADMIN_PASSWORD:-}"
+  if ! wp_as user get "$WORDPRESS_ADMIN_USER" --field=ID >/dev/null 2>&1; then
+    if [[ -n "$pw" && "$pw" != "adminpass" && "$pw" != "change-me-strong" ]]; then
+      echo "[supreme] Admin user $WORDPRESS_ADMIN_USER missing — creating it (no email)."
+      wp_as user create "$WORDPRESS_ADMIN_USER" "$WORDPRESS_ADMIN_EMAIL" --role=administrator \
+        --user_pass="$pw" 2>/dev/null || echo "[supreme] WARN: could not create admin $WORDPRESS_ADMIN_USER" >&2
+    fi
+    return 0
+  fi
+  if [[ "${SUPREME_ADMIN_PASSWORD_SYNC:-0}" != "1" ]]; then
+    echo "[supreme] Admin password left unchanged (set SUPREME_ADMIN_PASSWORD_SYNC=1 to force a one-off silent sync)."
+    return 0
+  fi
+  if [[ -z "$pw" || "$pw" == "adminpass" || "$pw" == "change-me-strong" ]]; then
+    return 0
+  fi
+  SA_SYNC_USER="$WORDPRESS_ADMIN_USER" SA_SYNC_PW="$pw" wp_as eval '
+$u = get_user_by("login", getenv("SA_SYNC_USER"));
+$pw = (string) getenv("SA_SYNC_PW");
+if (!$u || $pw === "") { echo "admin_sync_skipped\n"; return; }
+if (wp_check_password($pw, $u->user_pass, $u->ID)) { echo "admin_password_already_matches\n"; return; }
+global $wpdb;
+$wpdb->update($wpdb->users, ["user_pass" => wp_hash_password($pw), "user_activation_key" => ""], ["ID" => $u->ID]);
+clean_user_cache($u);
+echo "admin_password_synced_silently\n";
+' 2>/dev/null || echo "[supreme] WARN: admin password sync check failed" >&2
+}
+
 bootstrap_wordpress() {
   # Wait until core files + wp-config exist (official entrypoint creates them)
   for _ in $(seq 1 60); do
@@ -186,17 +225,12 @@ bootstrap_wordpress() {
       --admin_email="$WORDPRESS_ADMIN_EMAIL" \
       --skip-email || true
   else
-    echo "[supreme] WordPress already installed — syncing URLs, admin email, and admin password from env."
+    echo "[supreme] WordPress already installed — syncing URLs and admin email from env (admin password is NOT touched on boot)."
     wp_as option update home "$WP_HOME" || true
     wp_as option update siteurl "$WP_SITEURL" || true
     wp_as option update admin_email "$WORDPRESS_ADMIN_EMAIL" || true
-    wp_as user update "$WORDPRESS_ADMIN_USER" --user_email="$WORDPRESS_ADMIN_EMAIL" 2>/dev/null || true
-    # Keep WP admin password aligned with Railway WORDPRESS_ADMIN_PASSWORD (rotation-friendly).
-    if [[ -n "${WORDPRESS_ADMIN_PASSWORD:-}" && "${WORDPRESS_ADMIN_PASSWORD}" != "adminpass" && "${WORDPRESS_ADMIN_PASSWORD}" != "change-me-strong" ]]; then
-      wp_as user update "$WORDPRESS_ADMIN_USER" --user_pass="$WORDPRESS_ADMIN_PASSWORD" 2>/dev/null \
-        && echo "[supreme] Admin password synced from WORDPRESS_ADMIN_PASSWORD." \
-        || echo "[supreme] WARN: could not sync admin password for $WORDPRESS_ADMIN_USER" >&2
-    fi
+    wp_as user update "$WORDPRESS_ADMIN_USER" --user_email="$WORDPRESS_ADMIN_EMAIL" --skip-email 2>/dev/null || true
+    ensure_admin_account
   fi
 
   wp_as option update timezone_string "Africa/Nairobi" || true
@@ -424,6 +458,17 @@ echo "whop_enabled\n";
 mkdir -p /usr/src/wordpress/wp-content/mu-plugins
 if [[ -f /var/www/html/../.. ]]; then :; fi
 # healthz already copied into image at /usr/src/wordpress/healthz.php via Dockerfile
+
+# WordPress auth keys/salts must be STABLE across deploys. /var/www/html is not on the
+# Railway volume, so the official image regenerates wp-config.php on every deploy and,
+# without WORDPRESS_AUTH_KEY & friends in env, fills them with fresh random salts —
+# logging every admin/customer out and breaking emailed links after each redeploy.
+for _salt in AUTH_KEY SECURE_AUTH_KEY LOGGED_IN_KEY NONCE_KEY AUTH_SALT SECURE_AUTH_SALT LOGGED_IN_SALT NONCE_SALT; do
+  _v="WORDPRESS_${_salt}"
+  if [[ -z "${!_v:-}" ]]; then
+    echo "[supreme] WARNING: ${_v} not set in env — WordPress salts will be random this boot (all logins reset)." >&2
+  fi
+done
 
 # Background bootstrap after Apache/official entrypoint brings files online
 (

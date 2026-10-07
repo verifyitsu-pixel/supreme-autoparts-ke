@@ -54,7 +54,8 @@ Catalog prices are stored in **USD**. Front-end geo display converts for visitor
 | `WP_HOME` | `https://supremeautoparts.co.ke` (or Railway URL first) |
 | `WP_SITEURL` | Same as `WP_HOME` |
 | `WORDPRESS_ADMIN_USER` | Admin username |
-| `WORDPRESS_ADMIN_PASSWORD` | Strong secret |
+| `WORDPRESS_ADMIN_PASSWORD` | Strong secret — used only to create the admin; boot never resets an existing password (`SUPREME_ADMIN_PASSWORD_SYNC=1` = one-off silent sync) |
+| `WORDPRESS_AUTH_KEY` … `WORDPRESS_NONCE_SALT` | 8 stable salts (64 random chars) so logins/links survive redeploys |
 | `WORDPRESS_ADMIN_EMAIL` | Your email |
 | `WOO_CURRENCY` / `SA_CHECKOUT_CURRENCY` | `USD` (required for Whop) |
 | `SA_GEO_CURRENCY` | `1` to enable IP→local display |
