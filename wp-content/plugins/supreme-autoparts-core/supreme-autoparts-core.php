@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Supreme Autoparts Core
  * Description: Branding defaults, category seed, static pages, invoices, admin dashboard, and Shopify JSON import helpers for Supreme Autoparts.
- * Version: 1.3.45
+ * Version: 1.3.46
  * Author: Supreme Autoparts
  * Text Domain: supreme-autoparts-core
  * Requires at least: 6.4
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_CORE_VERSION', '1.3.45');
+define('SA_CORE_VERSION', '1.3.46');
 define('SA_CORE_FILE', __FILE__);
 define('SA_CORE_DIR', plugin_dir_path(__FILE__));
 define('SA_CORE_URL', plugin_dir_url(__FILE__));
@@ -42,6 +42,7 @@ require_once SA_CORE_DIR . 'includes/customer-accounts.php';
 require_once SA_CORE_DIR . 'includes/guest-account-otp.php';
 require_once SA_CORE_DIR . 'includes/order-emails.php';
 require_once SA_CORE_DIR . 'includes/invoices.php';
+require_once SA_CORE_DIR . 'includes/customer-order-display.php';
 require_once SA_CORE_DIR . 'includes/admin-ultra.php';
 require_once SA_CORE_DIR . 'includes/admin-dashboard.php';
 require_once SA_CORE_DIR . 'includes/admin-orders.php';

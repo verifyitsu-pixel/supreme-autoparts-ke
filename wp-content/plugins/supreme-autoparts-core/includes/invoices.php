@@ -328,11 +328,25 @@ function sa_core_build_invoice_html($order, bool $for_email = false): string
             <?php if ($order->get_billing_phone()) : ?> · <?php echo esc_html($order->get_billing_phone()); ?><?php endif; ?>
           </p>
         </div>
+        <?php $ship_addr = $order->get_formatted_shipping_address(); ?>
+        <div class="card">
+          <h3><?php echo esc_html__('Ship to', 'supreme-autoparts-core'); ?></h3>
+          <p><?php echo wp_kses_post($ship_addr ?: ($order->get_formatted_billing_address() ?: '—')); ?></p>
+          <?php if ($order->get_shipping_method()) : ?>
+            <p class="muted"><?php echo esc_html__('Shipping method', 'supreme-autoparts-core'); ?>: <?php echo esc_html($order->get_shipping_method()); ?></p>
+          <?php endif; ?>
+        </div>
         <div class="card">
           <h3><?php echo esc_html__('Order details', 'supreme-autoparts-core'); ?></h3>
           <p><strong><?php echo esc_html__('Date', 'supreme-autoparts-core'); ?>:</strong> <?php echo esc_html(wc_format_datetime($order->get_date_created())); ?></p>
           <p><strong><?php echo esc_html__('Status', 'supreme-autoparts-core'); ?>:</strong> <span class="badge"><?php echo esc_html(wc_get_order_status_name($status)); ?></span></p>
           <p><strong><?php echo esc_html__('Payment', 'supreme-autoparts-core'); ?>:</strong> <?php echo esc_html($order->get_payment_method_title() ?: '—'); ?></p>
+          <?php if ($order->get_date_paid()) : ?>
+            <p><strong><?php echo esc_html__('Paid', 'supreme-autoparts-core'); ?>:</strong> <?php echo esc_html(wc_format_datetime($order->get_date_paid(), get_option('date_format') . ' ' . get_option('time_format'))); ?></p>
+          <?php endif; ?>
+          <?php if ($order->get_transaction_id()) : ?>
+            <p class="muted"><?php echo esc_html__('Transaction', 'supreme-autoparts-core'); ?>: <?php echo esc_html($order->get_transaction_id()); ?></p>
+          <?php endif; ?>
         </div>
       </div>
 
@@ -346,8 +360,29 @@ function sa_core_build_invoice_html($order, bool $for_email = false): string
         </thead>
         <tbody>
         <?php foreach ($order->get_items() as $item) : ?>
+          <?php
+          $inv_product = is_callable([$item, 'get_product']) ? $item->get_product() : null;
+          $inv_thumb = '';
+          if ($inv_product instanceof WC_Product && function_exists('sa_core_get_product_email_image_url')) {
+              $inv_thumb = sa_core_get_product_email_image_url($inv_product, 160);
+          }
+          $inv_qty = max(1, (int) $item->get_quantity());
+          ?>
           <tr>
-            <td><?php echo esc_html($item->get_name()); ?></td>
+            <td>
+              <div style="display:flex;gap:.75rem;align-items:flex-start">
+                <?php if ($inv_thumb !== '') : ?>
+                  <img src="<?php echo esc_url($inv_thumb); ?>" alt="<?php echo esc_attr($item->get_name()); ?>" width="72" height="72" style="width:72px;height:72px;object-fit:contain;background:#fff;border:1px solid #e8e8ea;border-radius:8px;flex:0 0 auto" />
+                <?php endif; ?>
+                <div>
+                  <div><?php echo esc_html($item->get_name()); ?></div>
+                  <?php if ($inv_product instanceof WC_Product && $inv_product->get_sku() !== '') : ?>
+                    <div class="muted" style="font-size:.82rem"><?php echo esc_html__('SKU', 'supreme-autoparts-core'); ?>: <?php echo esc_html($inv_product->get_sku()); ?></div>
+                  <?php endif; ?>
+                  <div class="muted" style="font-size:.82rem"><?php echo esc_html__('Unit price', 'supreme-autoparts-core'); ?>: <?php echo wp_kses_post(wc_price((float) $item->get_subtotal() / $inv_qty, ['currency' => $currency])); ?></div>
+                </div>
+              </div>
+            </td>
             <td><?php echo esc_html((string) $item->get_quantity()); ?></td>
             <td class="right"><?php echo wp_kses_post($order->get_formatted_line_subtotal($item)); ?></td>
           </tr>
@@ -358,7 +393,7 @@ function sa_core_build_invoice_html($order, bool $for_email = false): string
       <table class="totals">
         <tr><td><?php echo esc_html__('Subtotal', 'supreme-autoparts-core'); ?></td><td><?php echo wp_kses_post($order->get_subtotal_to_display()); ?></td></tr>
         <?php if ((float) $order->get_shipping_total() > 0) : ?>
-          <tr><td><?php echo esc_html__('Shipping', 'supreme-autoparts-core'); ?></td><td><?php echo wp_kses_post(wc_price((float) $order->get_shipping_total(), ['currency' => $currency])); ?></td></tr>
+          <tr><td><?php echo esc_html__('Shipping', 'supreme-autoparts-core'); ?><?php if ($order->get_shipping_method()) : ?> (<?php echo esc_html($order->get_shipping_method()); ?>)<?php endif; ?></td><td><?php echo wp_kses_post(wc_price((float) $order->get_shipping_total(), ['currency' => $currency])); ?></td></tr>
         <?php endif; ?>
         <?php foreach ($order->get_tax_totals() as $tax) : ?>
           <tr><td><?php echo esc_html($tax->label); ?></td><td><?php echo wp_kses_post($tax->formatted_amount); ?></td></tr>
