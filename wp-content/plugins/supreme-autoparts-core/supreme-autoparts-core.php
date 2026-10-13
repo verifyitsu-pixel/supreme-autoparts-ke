@@ -43,6 +43,7 @@ require_once SA_CORE_DIR . 'includes/weight-sync.php';
 require_once SA_CORE_DIR . 'includes/seo.php';
 require_once SA_CORE_DIR . 'includes/google-product-feed.php';
 require_once SA_CORE_DIR . 'includes/product-fallbacks.php';
+require_once SA_CORE_DIR . 'includes/catalog-gaps.php';
 require_once SA_CORE_DIR . 'includes/customer-accounts.php';
 require_once SA_CORE_DIR . 'includes/guest-account-otp.php';
 require_once SA_CORE_DIR . 'includes/order-emails.php';
