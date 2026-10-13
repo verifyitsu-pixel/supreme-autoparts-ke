@@ -36,7 +36,7 @@
 /* ---------- Cart page & checkout: same cards, type, colours ---------- */
 .sa-cart-page,.sa-checkout-page{color:var(--sa-text)}
 .sa-cart-hero__title,.sa-checkout-hero__title{font-size:clamp(1.5rem,4vw,2rem)!important;font-weight:700!important;letter-spacing:-.01em;color:var(--sa-ui-ink)!important;text-transform:none!important}
-.sa-cart-line,.sa-cart-summary,.sa-checkout-section,.sa-checkout-layout__aside>*,#order_review{background:var(--sa-ui-card)!important;border:1px solid var(--sa-ui-line)!important;border-radius:var(--sa-ui-radius)!important;box-shadow:var(--sa-ui-shadow)!important}
+.sa-cart-line,.sa-cart-summary,.sa-checkout-section{background:var(--sa-ui-card)!important;border:1px solid var(--sa-ui-line)!important;border-radius:var(--sa-ui-radius)!important;box-shadow:var(--sa-ui-shadow)!important}
 .sa-cart-lines{display:flex;flex-direction:column;gap:.75rem;list-style:none;padding:0}
 .sa-cart-line{padding:1rem!important}
 .sa-cart-line__title{font-size:1rem!important;font-weight:600!important;line-height:1.35;overflow-wrap:anywhere}
