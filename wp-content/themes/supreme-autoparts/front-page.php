@@ -10,35 +10,46 @@ $sa_threshold = sa_free_shipping_threshold();
 $sa_count = function_exists('sa_published_product_count') ? sa_published_product_count() : 0;
 ?>
 
-<section class="sa-hero" aria-labelledby="sa-hero-title">
-  <div class="sa-container sa-hero__inner">
-    <div class="sa-hero__copy">
-      <h1 id="sa-hero-title"><?php esc_html_e('The right part. Fitted right.', 'supreme-autoparts'); ?></h1>
-      <p class="sa-hero__lead">
-        <?php esc_html_e('Search by part number and order online, or book our Njiru, Nairobi garage to fit it for you. One account keeps every order and booking in one place.', 'supreme-autoparts'); ?>
-      </p>
+<section class="sa-hero sa-hero--premium" aria-labelledby="sa-hero-title">
+  <div class="sa-hero__band">
+    <div class="sa-container sa-hero__inner">
+      <div class="sa-hero__copy">
+        <p class="sa-hero__eyebrow"><?php esc_html_e('Parts · Garage · Roadside — Njiru, Nairobi', 'supreme-autoparts'); ?></p>
+        <h1 id="sa-hero-title"><?php esc_html_e('The right part.', 'supreme-autoparts'); ?> <span><?php esc_html_e('Fitted right.', 'supreme-autoparts'); ?></span></h1>
+        <p class="sa-hero__lead">
+          <?php esc_html_e('Search by part number and order online, book our Njiru garage to fit it, or call for roadside help. One account keeps every order, booking and rescue in one place.', 'supreme-autoparts'); ?>
+        </p>
+        <form class="sa-hero__search" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>">
+          <label class="screen-reader-text" for="sa-hero-search"><?php esc_html_e('Search products', 'supreme-autoparts'); ?></label>
+          <input
+            type="search"
+            id="sa-hero-search"
+            name="s"
+            placeholder="<?php esc_attr_e('Part number, brand, make, or keyword…', 'supreme-autoparts'); ?>"
+            value="<?php echo esc_attr(get_search_query()); ?>"
+            autocomplete="off"
+          />
+          <input type="hidden" name="post_type" value="product" />
+          <button type="submit" class="sa-btn sa-hero__search-btn">
+            <?php echo sa_category_icon_svg('search'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+            <span><?php esc_html_e('Search', 'supreme-autoparts'); ?></span>
+          </button>
+        </form>
 
-      <form class="sa-hero__search" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>">
-        <label class="screen-reader-text" for="sa-hero-search"><?php esc_html_e('Search products', 'supreme-autoparts'); ?></label>
-        <input
-          type="search"
-          id="sa-hero-search"
-          name="s"
-          placeholder="<?php esc_attr_e('Part number, brand, make, or keyword…', 'supreme-autoparts'); ?>"
-          value="<?php echo esc_attr(get_search_query()); ?>"
-          autocomplete="off"
-        />
-        <input type="hidden" name="post_type" value="product" />
-        <button type="submit" class="sa-btn sa-hero__search-btn">
-          <?php echo sa_category_icon_svg('search'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-          <span><?php esc_html_e('Search', 'supreme-autoparts'); ?></span>
-        </button>
-      </form>
-
-      <p class="sa-hero__meta">
-        <a href="<?php echo esc_url($sa_shop_url); ?>"><?php esc_html_e('Shop all parts', 'supreme-autoparts'); ?></a> · <a href="<?php echo esc_url(home_url('/services/')); ?>"><?php esc_html_e('All car services', 'supreme-autoparts'); ?></a>
-      </p>
+        <nav class="sa-hero__ctas" aria-label="<?php esc_attr_e('Our services', 'supreme-autoparts'); ?>">
+          <a class="sa-hero__cta sa-hero__cta--primary" href="<?php echo esc_url($sa_shop_url); ?>"><?php esc_html_e('Shop parts', 'supreme-autoparts'); ?></a>
+          <a class="sa-hero__cta" href="<?php echo esc_url(home_url('/book-service/')); ?>"><?php esc_html_e('Book a service', 'supreme-autoparts'); ?></a>
+          <a class="sa-hero__cta" href="<?php echo esc_url(home_url('/roadside/')); ?>"><?php esc_html_e('Roadside rescue', 'supreme-autoparts'); ?></a>
+        </nav>
+        <ul class="sa-hero__points">
+          <li><?php esc_html_e('Guest checkout, no account needed', 'supreme-autoparts'); ?></li>
+          <?php if ((!function_exists('sa_ship_is_us') || !sa_ship_is_us())) : ?><li><?php esc_html_e('Store pickup in Njiru or Fargo Courier to your town', 'supreme-autoparts'); ?></li><?php endif; ?>
+          <li><a href="<?php echo esc_url(home_url('/fitment-check/')); ?>"><?php esc_html_e('Not sure it fits? Ask us to check', 'supreme-autoparts'); ?></a></li>
+        </ul>
+      </div>
     </div>
+  </div>
+  <div class="sa-container sa-hero__cards">
     <div class="sa-paths sa-paths--photo">
       <?php
       $sa_img = get_template_directory_uri() . '/assets/images/home/';
