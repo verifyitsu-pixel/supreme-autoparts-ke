@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 add_action('wp_enqueue_scripts', static function (): void {
     wp_enqueue_style(
         'sa-google-fonts',
-        'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
+        'https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,600..900&family=Inter:wght@400;500;600;700&display=swap',
         [],
         null
     );
@@ -112,3 +112,15 @@ add_action('wp_enqueue_scripts', static function (): void {
         'shop'    => function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/'),
     ]);
 }, 1001);
+
+/* Homepage cinematic hero: live suggestions, vehicle quick-select, scroll reveal. */
+add_action('wp_enqueue_scripts', static function (): void {
+    if (!is_front_page()) {
+        return;
+    }
+    wp_enqueue_script('supreme-autoparts-hero', SA_THEME_URI . '/assets/js/hero.js', [], SA_THEME_VERSION, true);
+    wp_localize_script('supreme-autoparts-hero', 'saHero', [
+        'ajaxUrl' => admin_url('admin-ajax.php'),
+        'store'   => rest_url('wc/store/v1/products'),
+    ]);
+}, 1002);

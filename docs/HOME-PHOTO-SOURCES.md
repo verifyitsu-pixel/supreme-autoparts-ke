@@ -13,3 +13,8 @@ CC BY-SA 4.0 requires attribution: a small "Photo: author / CC BY-SA 4.0" credit
 Gaps: no free-licence, location-verified Kenyan photo was found of (a) an auto-parts shop/shelf or (b) a tow truck/flatbed or jump-start on a Kenyan road (searched Unsplash, Pexels, Wikimedia Commons). The parts card uses Nairobi mechanics fitting brake parts; the roadside card shows a Kenyan car stranded in mud. Swap in better verified-Kenya photos if any become available.
 
 Previous (non-Kenya) picks, removed in v1.4.73: Unsplash vS2shmNei2E (Erik Mclean), Pexels 8986101 (Artem Podrez), Pexels 17429097 (Jonathan Reynaga).
+
+## Homepage hero (v1.4.75)
+`hero-1920.webp`, `hero-1280.webp` (mirrored, cropped 16:9) and `hero-m-800.webp` (4:5 crop) are derived from
+https://commons.wikimedia.org/wiki/File:Mechanic_working_in_Nairobi.jpg by Eugene Odanga Masinde, CC BY-SA 4.0 (Kenya-verified as above).
+Shown greyscale with a dark/amber overlay; credit is displayed on the hero.
