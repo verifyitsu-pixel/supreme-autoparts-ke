@@ -48,9 +48,9 @@ Applied by `includes/catalog-gaps.php` from `data/catalog-fixes.json` (meta `_sa
 | 6609 | price_usd | https://supreme-mods.com/products/wilwood-bracket-spacer-tubular-750-length |
 | 5908 | weight_lbs | https://supreme-mods.com/products/ridetech-16-24-chevrolet-camaro-hq-coil-over-system |
 
-## Batch 2026-10-14-bulk1
+## Manufacturer catalog batches (cumulative)
 
-| Product ID | Field(s) | Source |
+| Product ID | Field | Source |
 |---|---|---|
 | 3237 | photo | https://www.alconkits.com/products/ford-raptor-f-150-5mm-wheel-spacer |
 | 3238 | photo | https://www.alconkits.com/products/f450-f550-48mm-piston |
@@ -78,6 +78,10 @@ Applied by `includes/catalog-gaps.php` from `data/catalog-fixes.json` (meta `_sa
 | 3720 | photo | https://www.konigwheels.com/products/konig-forged-f3s |
 | 3721 | photo | https://www.konigwheels.com/products/konig-forged-f3s |
 | 3722 | photo | https://www.konigwheels.com/products/konig-forged-f1m |
+| 3743 | photo | https://bankspower.com/products/sensor-accessory-61301-31-idash-datamonster-super-gauge-pedalmonster |
+| 3798 | photo | https://pedders.com/products/extreme-xa-suspension-kit-corvette-c5-c6 |
+| 3798 | weight 66.14 lb | https://pedders.com/products/extreme-xa-suspension-kit-corvette-c5-c6 |
+| 4010 | photo | https://bankspower.com/products/engine-cover-2007-2024-dodge-ram-2500-3500-6-7l-cummins |
 | 4044 | photo | https://www.timbren.com/products/front-bes-brake-kit-toyota-tundra-2022-present |
 | 4044 | weight 56.84 lb | https://www.timbren.com/products/front-bes-brake-kit-toyota-tundra-2022-present |
 | 5052 | photo | https://www.zoneoffroad.com/products/6-5-inch-lift-kit-w-radius-arm-ram-3500-13-18-4wd-diesel |
@@ -89,6 +93,7 @@ Applied by `includes/catalog-gaps.php` from `data/catalog-fixes.json` (meta `_sa
 | 5110 | photo | https://turbosmartusa.com/products/turbine-housing-b-frame-t4-divided-118ar-suit-66mm-turbine |
 | 5187 | photo | https://www.timbren.com/products/front-bes-brake-kit-chevy-gmc-1500-2019-2024-6-piston-caliper |
 | 5187 | weight 89.1 lb | https://www.timbren.com/products/front-bes-brake-kit-chevy-gmc-1500-2019-2024-6-piston-caliper |
+| 5434 | photo | https://addictivedesertdesigns.com/products/super-duty-console-molle-panels |
 | 5503 | photo | https://turbosmartusa.com/products/ts-1-turbocharger-8280-pro-t4-divided-115ar-externally-wastegated |
 | 5504 | photo | https://turbosmartusa.com/products/ts-1-turbocharger-7880-pro-t4-divided-115ar-externally-wastegated |
 | 5505 | photo | https://turbosmartusa.com/products/ts-1-turbocharger-7675-pro-t4-divided-115ar-externally-wastegated |
@@ -132,9 +137,12 @@ Applied by `includes/catalog-gaps.php` from `data/catalog-fixes.json` (meta `_sa
 | 5848 | weight 67.56 lb | https://www.timbren.com/products/front-bes-brake-kit-chevy-gmc-1500-2014-2019-6-piston-caliper |
 | 5849 | photo | https://www.timbren.com/products/rear-bes-brake-kit-toyota-tacoma-tundra-2024-present-335mm-rotor |
 | 5849 | weight 35.87 lb | https://www.timbren.com/products/rear-bes-brake-kit-toyota-tacoma-tundra-2024-present-335mm-rotor |
+| 6328 | photo | https://bankspower.com/products/wideband-o2-afr-module-66564 |
 | 8935 | photo | https://turbosmartusa.com/products/locksleeve-3-00-compressor-oulet-collar-tool |
 | 8936 | photo | https://turbosmartusa.com/products/locksleeve-2-50-compressor-oulet-collar-tool |
+| 8963 | photo | https://pedders.com/products/909990r-sports-ryder-ezifit-front-right-strut-subaru-wrx-2002-2007 |
 | 8986 | photo | https://www.konigwheels.com/products/konig-aeris |
+| 9101 | photo | https://bankspower.com/products/63386-63387-idash-stealth-pods-19-ram-1500 |
 | 9113 | photo | https://www.alconkits.com/products/ford-raptor-f-150-7mm-wheel-spacer |
 | 9115 | photo | https://www.alconkits.com/products/alcon-lc200-braided-brake-hose-kit-front |
 | 9116 | photo | https://www.alconkits.com/products/alcon-lc200-braided-brake-hose-kit-rear |
@@ -162,10 +170,19 @@ Applied by `includes/catalog-gaps.php` from `data/catalog-fixes.json` (meta `_sa
 | 9172 | photo | https://www.alconkits.com/products/toyota-lc300-tundra-2022-front-big-brake-kit |
 | 9173 | photo | https://www.alconkits.com/products/clearance-toyota-hilux-military-grade-front-brake-kit |
 | 9174 | photo | https://www.alconkits.com/products/toyota-lc76-79-2016-six-piston-front-brake-kit |
+| 9276 | photo | https://bankspower.com/products/boost-tube-26012-toyota-tacoma-2-4l |
+| 9296 | photo | https://ticonindustries.com/products/x-lok-clamps |
 | 9359 | photo | https://www.alconkits.com/products/ram-trx-brake-pads-front-for-alcon-bbk |
 | 9361 | photo | https://www.alconkits.com/products/ford-raptor-f-150-tacoma-hi-performance-front-brade-pads-for-alcon-bbk |
+| 9510 | photo | https://ticonindustries.com/products/x-lok-clamps |
+| 9511 | photo | https://ticonindustries.com/products/x-lok-clamps |
+| 9514 | photo | https://ticonindustries.com/products/copy-of-aluminum-6061-90-mandrel-bend |
+| 9594 | photo | https://pedders.com/products/pte3049a-front-tie-rod-pontiac-gto-2004-2006 |
+| 9773 | photo | https://bankspower.com/products/idash-pro-mounting-sleeve-kit-66716 |
+| 9774 | photo | https://bankspower.com/products/transmission-pan-system-allison-10l1000-gm-2020-2023-black |
 | 10208 | photo | https://turbosmartusa.com/products/turbine-housing-b-frame-v-band-reverse-rotation-082ar-suit-66mm-turbine |
 | 10209 | photo | https://turbosmartusa.com/products/turbine-housing-b-frame-t4-062ar-suit-62mm-turbine |
+| 11004 | photo | https://aeromotiveinc.com/products/replacement-fuel-level-sending-bracket-for-gen-ii-stealth-tanks |
 | 5539 | weight 124.59 lb | https://www.timbren.com/products/front-bes-brake-kit-ford-f-250-f-350-2wd-2013-2022 |
 | 5540 | weight 125.13 lb | https://www.timbren.com/products/front-bes-brake-kit-ford-f-250-f-350-2wd-2023-present |
 | 5541 | weight 35.78 lb | https://www.timbren.com/products/rear-bes-brake-kit-ford-f-150-2021-present-336mm-rotor |
