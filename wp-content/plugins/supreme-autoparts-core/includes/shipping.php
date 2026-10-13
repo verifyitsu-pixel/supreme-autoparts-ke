@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
  * - International ....................... $25.00 (Rest of World flat_rate)
  */
 const SA_SHIPPING_ZONES_VER = '6';
-const SA_STORE_PICKUP_TITLE = 'Store pickup (free) — Ground Floor, Midax Plaza, Kandundo Rd, Njiru';
+const SA_STORE_PICKUP_TITLE = 'Store pickup (free) — Ground Floor, Midax Plaza, Kangundo Rd, Njiru';
 
 /**
  * Is this visitor a US customer? Uses the address they entered (shipping, else billing country)

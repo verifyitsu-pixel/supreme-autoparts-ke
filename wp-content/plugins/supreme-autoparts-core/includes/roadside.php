@@ -511,7 +511,7 @@ function sa_rs_faq_default(): array
 {
     return [
         ['Do I need an account or to pay before asking for help?', 'No. Anyone can request help without logging in, and no payment is taken to request help. You get a request number and a live status link by SMS-friendly email and on screen.'],
-        ['How much will it cost?', 'Towing shows a published Nairobi rate card as a guide. Everything else is quoted on the phone after we know your location and car. You always agree the price before a responder is sent.'],
+        ['How much will it cost?', 'Towing shows guide prices. Everything else is quoted on the phone after we know your location and car. You always agree the price before a responder is sent.'],
         ['Which areas do you cover?', 'Nairobi and its environs, from our base at Midax Plaza, Njiru. Further out we will tell you on the call if we can reach you, and how long it will take.'],
         ['How long until someone arrives?', 'It depends on traffic and distance. Your responder sets an ETA when they head out, and you can watch their position live on your status page.'],
         ['How do I pay?', 'Pay the responder on site, or ask us for a secure Pesapal link (M-Pesa or card). Paying online is optional.'],
@@ -584,13 +584,13 @@ function sa_rs_render_index(): void
       <?php $t = $cat['towing']['rates']; ?>
       <section class="sa-rs-rates">
         <h2>Towing guide prices</h2>
-        <p class="sa-svc-muted">Published Nairobi towing rates, shown as a guide. Your exact price is confirmed on the call before we send anyone.</p>
+        <p class="sa-svc-muted">Guide towing prices. Your exact price is confirmed on the call before we send anyone.</p>
         <div class="sa-rs-rates__grid">
         <?php foreach ($t['tables'] as $label => $rows) : ?>
           <table class="sa-rs-table"><caption><?php echo esc_html($label); ?></caption><?php foreach ($rows as $d => $kes) echo '<tr><td>' . esc_html($d) . '</td><td>KES ' . esc_html(number_format($kes)) . '</td></tr>'; ?></table>
         <?php endforeach; ?>
         </div>
-        <p class="sa-svc-fine">Source: <a href="<?php echo esc_url($t['url']); ?>" target="_blank" rel="noopener nofollow"><?php echo esc_html($t['source']); ?></a>. Beyond 50 km and all other services: quote on request, confirmed on call.</p>
+        <p class="sa-svc-fine">Beyond 50 km and all other services: quote on request, confirmed on call.</p>
       </section>
       <div class="sa-rs-safety"><?php echo sa_rs_icon('shield'); ?><div><strong>Safety first</strong><p>Hazard lights on, warning triangle out if safe, and wait away from traffic. If anyone is hurt, call 999 or 112 before anything else.</p></div></div>
       <?php echo sa_rs_faq_html(); ?>
@@ -781,7 +781,7 @@ function sa_rs_render_terms(): void
     $t = [
         'What this service is' => 'Supreme Autoparts (Standard Driveworks) arranges roadside help in Nairobi and its environs: towing, jump-starts, flat tyres, fuel delivery, lockouts, winching and minor on-site repairs. Help is provided by our own team or by vetted responders we work with.',
         'Requesting help' => 'You can request help without an account and without paying anything. A request is not a booking until we call you and you agree the price. Please give an accurate location and a phone number we can reach.',
-        'Prices' => 'We agree the price with you on the phone before anyone is sent. Towing guide prices on our site come from a published Nairobi rate card and are a guide only. Fuel, parts and batteries are charged on top at the price we tell you. Extra work found on site is only done if you agree.',
+        'Prices' => 'We agree the price with you on the phone before anyone is sent. Towing prices on our site are a guide only. Fuel, parts and batteries are charged on top at the price we tell you. Extra work found on site is only done if you agree.',
         'Paying' => 'You pay when the job is done: to the responder, or through a secure Pesapal link (M-Pesa or card) that we send you. We never ask for payment before agreeing the price with you.',
         'Arrival times' => 'ETAs are our best estimate and can change with traffic, weather and road conditions. We keep your status page updated.',
         'Cancelling' => 'You can cancel free of charge from your status page before the responder is on the way. If you cancel after they have set off, we may charge a call-out amount, which we will tell you before you cancel.',

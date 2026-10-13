@@ -13,12 +13,12 @@ if (!defined('ABSPATH')) {
 const SA_SVC_VER = '3';
 const SA_SVC_SLOT_CAPACITY = 2;
 // Registered business address (Business Registration Certificate BN-93S9AZEJ, Standard Driveworks).
-const SA_SVC_GARAGE_ADDRESS = 'Ground Floor, Midax Plaza, Kandundo Rd, Njiru, Nairobi, Kenya';
+const SA_SVC_GARAGE_ADDRESS = 'Ground Floor, Midax Plaza, Kangundo Rd, Njiru, Nairobi, Kenya';
 const SA_SVC_GARAGE_POSTAL = 'P.O. Box 00516-00100 G.P.O Nairobi';
 
 function sa_svc_map_url(): string
 {
-    return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode('Midax Plaza, Kandundo Rd, Njiru, Nairobi');
+    return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode('Midax Plaza, Kangundo Rd, Njiru, Nairobi');
 }
 
 function sa_svc_address_html(bool $compact = false): string
@@ -53,7 +53,7 @@ function sa_svc_statuses(): array
 function sa_svc_locations(): array
 {
     return [
-        'nairobi' => ['label' => 'Nairobi garage — Midax Plaza, Kandundo Rd, Njiru', 'region' => 'KE', 'note' => SA_SVC_GARAGE_ADDRESS],
+        'nairobi' => ['label' => 'Nairobi garage — Midax Plaza, Kangundo Rd, Njiru', 'region' => 'KE', 'note' => SA_SVC_GARAGE_ADDRESS],
         'usa' => ['label' => 'United States', 'region' => 'US', 'note' => ''],
     ];
 }
@@ -89,10 +89,10 @@ function sa_svc_price_label(array $svc, string $region): string
 function sa_svc_source_note(array $svc, string $region): string
 {
     if ($region === 'KE' && !empty($svc['kes'])) {
-        return 'Reference price published by AutoXpress Kenya (Oct 2026). Final price confirmed before work starts.';
+        return 'Guide price. The final price for your vehicle is confirmed before work starts.';
     }
     if ($region === 'US' && !empty($svc['usd'])) {
-        return 'US national average range (RepairPal, Sept 2026). The exact price is confirmed before work starts.';
+        return 'Typical price range. The exact price is confirmed before work starts.';
     }
     return 'We confirm a written quote for your vehicle before any work starts.';
 }
@@ -613,9 +613,9 @@ function sa_svc_render_index(): void
             </article>
           <?php endforeach; ?>
         </div>
-      <div class="sa-svc-locbar"><?php echo sa_svc_address_html(); ?><iframe title="Garage map" loading="lazy" src="https://www.google.com/maps?q=<?php echo rawurlencode('Midax Plaza, Kandundo Rd, Njiru, Nairobi'); ?>&output=embed"></iframe></div>
+      <div class="sa-svc-locbar"><?php echo sa_svc_address_html(); ?><iframe title="Garage map" loading="lazy" src="https://www.google.com/maps?q=<?php echo rawurlencode('Midax Plaza, Kangundo Rd, Njiru, Nairobi'); ?>&output=embed"></iframe></div>
       <?php echo sa_svc_faq_html(sa_svc_faq_general(), 'Car service FAQ'); ?>
-      <p class="sa-svc-fine">Job durations are typical estimates; your technician confirms timing. Kenya prices are reference prices published by AutoXpress Kenya; US prices are national average ranges from RepairPal. Services without a published price are quoted for your vehicle. You always approve the final price before work starts.</p>
+      <p class="sa-svc-fine">Job durations are typical estimates; your technician confirms timing. Prices shown are guide prices. Services without a listed price are quoted for your vehicle. You always approve the final price before work starts.</p>
     </section>
     <?php
 }
@@ -841,7 +841,7 @@ function sa_svc_render_book(): void
       </form>
       <aside class="sa-svc-side">
         <div class="sa-svc-sum"><h3>Your estimate</h3><div data-sa-summary></div>
-          <p class="sa-svc-fine">This is an estimate from published prices. You approve the final quote before any work starts. The KES 1,000 booking fee is deducted from your bill.</p></div>
+          <p class="sa-svc-fine">This is an estimate. You approve the final quote before any work starts. The KES 1,000 booking fee is deducted from your bill.</p></div>
         <?php echo sa_svc_address_html(true); ?>
       </aside>
       </div>
@@ -1256,9 +1256,9 @@ function sa_svc_faq_general(): array
         ['How long will my service take?', 'Each service shows an approximate job time (marked as an estimate). Longer jobs reserve consecutive hours in our calendar. Your technician confirms the timing when your booking is confirmed, and tells you if extra work is found.'],
         ['Can I wait at the garage, or should I drop the car off?', 'Short jobs such as wheel balancing or a battery test are often done while you wait. For longer jobs we recommend dropping the car off. Choose “Drop-off at our garage” when you book, and our team will tell you if waiting on site is practical.'],
         ['Do you collect the car from my home or office?', 'Yes, in the Nairobi area. Choose “Vehicle pickup from my address” and enter the address. Any pickup fee depends on distance and is confirmed with you before the booking is confirmed. Nothing is charged automatically.'],
-        ['Where is your garage?', 'Ground Floor, Midax Plaza, Kandundo Rd, Njiru, Nairobi. The services page and the side menu have a Google Maps link.'],
+        ['Where is your garage?', 'Ground Floor, Midax Plaza, Kangundo Rd, Njiru, Nairobi. The services page and the side menu have a Google Maps link.'],
         ['Do I need an appointment, or can I walk in?', 'Booking online holds a time slot for you and is the fastest way to be seen. Walk-ins depend on how busy we are that day, so we recommend booking, even if it is for later the same day.'],
-        ['Is the price shown the final price?', 'No. The price shown is a reference estimate: published AutoXpress Kenya prices for Kenya, and RepairPal national average ranges for the US. Services marked “Quote on request” are priced for your vehicle. We give you the final price before any work starts, and nothing extra is done without your approval.'],
+        ['Is the price shown the final price?', 'No. The price shown is a guide estimate. Services marked “Quote on request” are priced for your vehicle. We give you the final price before any work starts, and nothing extra is done without your approval.'],
         ['Is there a booking fee?', 'Yes. You pay a KES ' . number_format((float) sa_svc_setting('fee_kes')) . ' booking fee online to confirm your slot. It is deducted from your final service bill, so it is not an extra cost.'],
         ['Will I get the booking fee back if I cancel?', 'Yes, if you cancel at least ' . (int) sa_svc_setting('cancel_hours') . ' hours before your appointment, or if we cancel. For later cancellations and no-shows the fee may be kept. See the Booking Terms.'],
         ['How do I find my booking?', 'Every booking has a booking number (for example SA-BK-261016-AB12). Enter it with your email under Manage booking, or open My Account → Service bookings.'],
@@ -1655,11 +1655,11 @@ function sa_svc_terms(): array
     $fee = number_format((float) sa_svc_setting('fee_kes'));
     $h = (int) sa_svc_setting('cancel_hours');
     return [
-        ['Who we are', 'Car services are provided by Supreme Autoparts (Standard Driveworks, BN-93S9AZEJ), at Ground Floor, Midax Plaza, Kandundo Rd, Njiru, Nairobi. These terms apply together with our store Terms of Service.'],
+        ['Who we are', 'Car services are provided by Supreme Autoparts (Standard Driveworks, BN-93S9AZEJ), at Ground Floor, Midax Plaza, Kangundo Rd, Njiru, Nairobi. These terms apply together with our store Terms of Service.'],
         ['Booking fee', "A booking fee of KES {$fee} is paid online through our secure checkout to confirm your appointment. The fee is not an extra charge: it is deducted from your final service bill. Your booking is only confirmed once the fee is paid, and unpaid bookings are released after 2 hours."],
         ['Cancelling and rescheduling', "You can cancel or reschedule online with your booking number and email. If you cancel at least {$h} hours before your appointment, or if we cancel for any reason, the booking fee is refunded to your original payment method. If you cancel later than that, or you don't attend, the fee may be kept. You can reschedule once without charge within the same window. The {$h}-hour window is the current setting and may be updated; the window shown when you book applies."],
         ['Late arrival and no-shows', 'Please arrive at your slot time. If you are more than 30 minutes late, we may need to move you to the next free slot. If you neither arrive nor contact us, the booking counts as a no-show and the booking fee may be kept.'],
-        ['Estimates, final price and extra work', 'Prices shown online are reference estimates (published AutoXpress Kenya prices and RepairPal US averages) or “quote on request”. Before starting, we give you the final price for your vehicle. We will not do any extra work, or go above the agreed price, without your approval by phone, WhatsApp or in person.'],
+        ['Estimates, final price and extra work', 'Prices shown online are guide estimates or “quote on request”. Before starting, we give you the final price for your vehicle. We will not do any extra work, or go above the agreed price, without your approval by phone, WhatsApp or in person.'],
         ['Customer-supplied parts', 'You may bring your own parts if you say so in the booking notes. We check that they are suitable before fitting them. We can refuse parts that look unsafe, used or wrong for the vehicle. Parts you supply are not covered by any parts warranty from us, and any workmanship cover for that job is confirmed on your job card.'],
         ['Drop-off, pickup and liability', 'For pickup bookings, any pickup fee is confirmed with you before the booking is confirmed. Our driver checks the vehicle’s condition with you at handover. Please tell us about existing damage or warning lights. Our responsibility for the vehicle while it is in our care is set out on your job card.'],
         ['Keys and personal belongings', 'Please hand over all keys needed for the work, including any wheel-lock key. Remove valuables, cash and documents before drop-off or pickup. We cannot accept responsibility for personal items left in the vehicle.'],
