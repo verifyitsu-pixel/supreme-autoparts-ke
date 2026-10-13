@@ -540,6 +540,7 @@ function sa_svc_render_index(): void
           <?php endforeach; ?>
         </div>
       <div class="sa-svc-locbar"><?php echo sa_svc_address_html(); ?><iframe title="Garage map" loading="lazy" src="https://www.google.com/maps?q=<?php echo rawurlencode('Midax Plaza, Kandundo Rd, Njiru, Nairobi'); ?>&output=embed"></iframe></div>
+      <?php echo sa_svc_faq_html(sa_svc_faq_general(), 'Car service FAQ'); ?>
       <p class="sa-svc-fine">Job durations are typical estimates; your technician confirms timing. Kenya prices are reference prices published by AutoXpress Kenya; US prices are national average ranges from RepairPal. Services without a published price are quoted for your vehicle. You always approve the final price before work starts.</p>
     </section>
     <?php
@@ -590,6 +591,7 @@ function sa_svc_render_detail(string $slug): void
           <?php echo sa_svc_address_html(true); ?>
         </aside>
       </div>
+      <?php echo sa_svc_faq_html(array_merge(sa_svc_faq_for($slug), array_slice(sa_svc_faq_general(), 1, 6)), $s['name'] . ' — FAQ'); ?>
       <?php if ($parts) : ?>
         <section class="sa-svc-parts">
           <div class="sa-svc-head"><h2>Parts for this service</h2><a href="<?php echo esc_url(add_query_arg(['s' => $s['parts'], 'post_type' => 'product'], home_url('/'))); ?>">See all</a></div>
@@ -682,6 +684,7 @@ function sa_svc_render_book(): void
         <button class="sa-svc-btn sa-svc-btn--primary sa-svc-btn--lg" type="submit"><?php echo sa_svc_icon('calendar'); ?> Confirm booking</button>
         <p class="sa-svc-fine">By booking you agree we may contact you by email, phone or WhatsApp about this appointment. Free cancellation online while the booking is pending or confirmed.</p>
       </form>
+      <?php echo sa_svc_faq_html(sa_svc_faq_general(), 'Booking FAQ'); ?>
     </div>
     <?php
 }
@@ -1026,4 +1029,56 @@ function sa_svc_gcal_sync(int $id, bool $deleting = false): void
     } catch (Throwable $e) {
         update_option('sa_svc_gcal_last', ['ok' => false, 'msg' => $e->getMessage(), 't' => time()], false);
     }
+}
+
+/* ---------- FAQ (accordion + FAQPage schema) ---------- */
+
+function sa_svc_faq_general(): array
+{
+    return [
+        ['How long will my service take?', 'Each service shows an approximate job time (marked as an estimate). Longer jobs reserve consecutive hours in our calendar. Your technician confirms the timing when your booking is confirmed, and tells you if extra work is found.'],
+        ['Can I wait at the garage, or should I drop the car off?', 'Short jobs such as wheel balancing or a battery test are often done while you wait. For longer jobs we recommend dropping the car off. Choose “Drop-off at our garage” when you book, and our team will tell you if waiting on site is practical.'],
+        ['Do you collect the car from my home or office?', 'Yes, in the Nairobi area. Choose “Vehicle pickup from my address” and enter the address. Any pickup fee depends on distance and is confirmed with you before the booking is confirmed. Nothing is charged automatically.'],
+        ['Where is your garage?', 'Ground Floor, Midax Plaza, Kandundo Rd, Njiru, Nairobi. The services page and the side menu have a Google Maps link. US bookings are matched with a partner garage near you and confirmed by email.'],
+        ['Do I need an appointment, or can I walk in?', 'Booking online holds a time slot for you and is the fastest way to be seen. Walk-ins depend on how busy we are that day, so we recommend booking, even if it is for later the same day.'],
+        ['Is the price shown the final price?', 'No. The price shown is a reference estimate: published AutoXpress Kenya prices for Kenya, and RepairPal national average ranges for the US. Services marked “Quote on request” are priced for your vehicle. We give you the final price before any work starts, and nothing extra is done without your approval.'],
+        ['When and how do I pay?', 'You don’t pay anything online to book. You pay at the service, after you have approved the final quote. Our team confirms the accepted payment methods with your booking.'],
+        ['What parts do you use? Can I bring my own?', 'We fit parts that match your vehicle’s specification, and you can buy them from our shop. Each service page suggests matching parts. If you want to bring your own parts, mention it in the booking notes so the technician can check them first.'],
+        ['Is there a warranty on the work?', 'Any parts warranty is the manufacturer’s, and the terms vary by part. A workmanship warranty, where it applies, is confirmed in writing with your booking. We don’t promise any cover that isn’t on your confirmation.'],
+        ['How do I cancel or reschedule?', 'You can cancel online for free from your confirmation page or My Account → Service bookings while the booking is pending or confirmed. To reschedule, cancel and book a new slot, or contact us on WhatsApp (+1 917 437 5121) and we’ll move it for you.'],
+        ['How often should my car be serviced?', 'Follow the service intervals in your owner’s manual. They depend on your engine, oil type and driving conditions. Heavy traffic, dusty roads and towing usually mean shorter intervals. If you’re not sure, book a Full Service or Diagnostics and we’ll advise you.'],
+        ['Will I be told if more work is needed?', 'Yes. If the technician finds something else, we contact you with the details and a price, and only go ahead if you approve it.'],
+        ['What do I need to bring?', 'Bring the vehicle, its keys (including the wheel-lock key if you have one), and your service book if you have it. Remove valuables before drop-off or pickup.'],
+    ];
+}
+
+function sa_svc_faq_for(string $slug): array
+{
+    $s = sa_svc_catalog()[$slug] ?? null;
+    if (!$s) {
+        return [];
+    }
+    $n = $s['name'];
+    $ke = sa_svc_price_label($s, 'KE');
+    $us = sa_svc_price_label($s, 'US');
+    return [
+        ['How much does ' . strtolower($n) . ' cost?', 'Kenya: ' . $ke . '. US: ' . $us . '. ' . sa_svc_source_note($s, 'KE') . ' The final price for your vehicle is confirmed before work starts.'],
+        ['How long does ' . strtolower($n) . ' take?', 'About ' . trim(str_replace(['≈', '(estimate)'], '', sa_svc_duration_label($slug))) . ' for a typical car. This is an estimate: the technician confirms the time for your vehicle when your booking is confirmed.'],
+        ['What is included?', implode('; ', $s['includes']) . '.'],
+        ['Can I buy the parts from you?', 'Yes. The parts suggested on this page come from our shop catalog. Tell us your vehicle when you book and we’ll check that they fit before fitting them.'],
+    ];
+}
+
+function sa_svc_faq_html(array $faqs, string $title): string
+{
+    if (!$faqs) {
+        return '';
+    }
+    $o = '<section class="sa-svc-faq"><h2>' . esc_html($title) . '</h2>';
+    $schema = ['@context' => 'https://schema.org', '@type' => 'FAQPage', 'mainEntity' => []];
+    foreach ($faqs as $i => [$q, $a]) {
+        $o .= '<details class="sa-svc-faq__item"' . ($i === 0 ? ' open' : '') . '><summary>' . esc_html($q) . '</summary><div>' . esc_html($a) . '</div></details>';
+        $schema['mainEntity'][] = ['@type' => 'Question', 'name' => $q, 'acceptedAnswer' => ['@type' => 'Answer', 'text' => $a]];
+    }
+    return $o . '</section><script type="application/ld+json">' . wp_json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</script>';
 }

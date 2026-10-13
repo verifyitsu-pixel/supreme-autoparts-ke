@@ -137,3 +137,11 @@ body.sa-side-open{overflow:hidden}
 .sa-header__menu{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid #e6e8ee;border-radius:10px;padding:7px 10px;cursor:pointer;font-weight:600;color:inherit}
 .sa-header__menu .sa-svc-ico{width:20px;height:20px}
 @media (max-width:900px){.sa-header__menu{display:none}.sa-svc-locbar,.sa-svc-modes{grid-template-columns:1fr}}
+
+.sa-svc-faq{margin:40px 0 10px}.sa-svc-faq h2{color:#0b1f3a;margin-bottom:12px}
+.sa-svc-faq__item{background:#fff;border:1px solid #e6e8ee;border-radius:12px;margin-bottom:8px;overflow:hidden}
+.sa-svc-faq__item summary{cursor:pointer;padding:15px 44px 15px 18px;font-weight:700;color:#0b1f3a;list-style:none;position:relative}
+.sa-svc-faq__item summary::-webkit-details-marker{display:none}
+.sa-svc-faq__item summary::after{content:'+';position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:22px;color:#c47d07;transition:transform .2s}
+.sa-svc-faq__item[open] summary::after{content:'–'}
+.sa-svc-faq__item div{padding:0 18px 16px;line-height:1.6;color:#444}
