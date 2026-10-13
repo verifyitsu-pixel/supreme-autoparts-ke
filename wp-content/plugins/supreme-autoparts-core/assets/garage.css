@@ -1,0 +1,90 @@
+/* Supreme Workshop — mechanic app, inspection card, estimate & report pages, My Vehicles. Mobile-first. */
+.sa-g-app,.sa-g-public{max-width:860px;margin:0 auto;padding:20px 16px 110px;color:var(--sa-text,#333);font-family:var(--sa-font,Inter,system-ui,sans-serif)}
+.sa-g-app h1,.sa-g-public h1{font-size:1.6rem;line-height:1.2;margin:0 0 6px;color:var(--sa-heading,#191919)}
+.sa-g-eyebrow{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--sa-text-muted,#6b6b6b);margin:0 0 4px;font-weight:600}
+.sa-g-muted{color:var(--sa-text-muted,#6b6b6b);font-size:.9rem}
+.sa-g-h2{font-size:1.05rem;margin:22px 0 10px}
+.sa-g-app__head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.sa-g-card,.sa-g-sec{background:#fff;border:1px solid var(--sa-border,#e4e4e4);border-radius:10px;padding:16px;margin:0 0 12px}
+.sa-g-sec h2{font-size:1rem;margin:0 0 10px;color:var(--sa-heading,#191919)}
+.sa-g-grid{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:620px){.sa-g-grid{grid-template-columns:1fr 1fr}}
+.sa-g-field{display:grid;gap:5px;font-size:.85rem;font-weight:600;color:#444;margin:6px 0}
+.sa-g-field input,.sa-g-field select,.sa-g-field textarea,.sa-g-textarea,.sa-g-note,.sa-g-mm,.sa-g-dmglist input{width:100%;min-height:44px;padding:10px 12px;border:1px solid var(--sa-border-strong,#ccc);border-radius:6px;font:inherit;font-size:16px;font-weight:400;background:#fff;box-sizing:border-box}
+.sa-g-seg{display:flex;flex-wrap:wrap;gap:6px}
+.sa-g-seg label,.sa-g-chips label{position:relative;cursor:pointer}
+.sa-g-seg input,.sa-g-chips input,.sa-g-rag input{position:absolute;opacity:0;pointer-events:none}
+.sa-g-seg span,.sa-g-chips span{display:inline-flex;align-items:center;gap:4px;min-height:40px;padding:8px 12px;border:1px solid var(--sa-border-strong,#ccc);border-radius:999px;font-size:.85rem;background:#fff}
+.sa-g-seg input:checked+span,.sa-g-chips input:checked+span{background:#eef2fe;border-color:var(--sa-action,#3665f3);color:#1f3fb0;font-weight:600}
+.sa-g-seg input:focus-visible+span,.sa-g-chips input:focus-visible+span,.sa-g-rag input:focus-visible+span{outline:2px solid var(--sa-action,#3665f3);outline-offset:2px}
+.sa-g-chips{display:flex;flex-wrap:wrap;gap:6px}
+.sa-g-carwrap{max-width:260px;margin:10px auto;touch-action:manipulation}
+.sa-g-car{width:100%;height:auto;display:block;cursor:crosshair}
+.sa-g-carwrap--ro .sa-g-car{cursor:default}
+.sa-g-dmglist{padding-left:0;list-style:none;margin:8px 0 0;display:grid;gap:6px}
+.sa-g-dmglist li{display:flex;gap:8px;align-items:center;font-size:.85rem}
+.sa-g-dmglist b{background:#c13515;color:#fff;border-radius:999px;padding:2px 8px;font-size:.75rem}
+.sa-g-checks{display:grid;gap:8px}
+.sa-g-check{display:grid;grid-template-columns:1fr;gap:6px;padding:8px 0;border-bottom:1px solid #f0f0f0}
+@media(min-width:620px){.sa-g-check{grid-template-columns:170px auto 1fr;align-items:center}}
+.sa-g-check>span{font-weight:600;font-size:.9rem}
+.sa-g-rag{display:inline-flex;gap:4px}
+.sa-g-rag label{position:relative;cursor:pointer}
+.sa-g-rag span{display:inline-block;min-width:52px;min-height:40px;line-height:40px;text-align:center;border:1px solid #ccc;border-radius:6px;font-size:.8rem;font-weight:600;background:#fff}
+.sa-g-rag__g input:checked+span{background:#16a34a;border-color:#16a34a;color:#fff}
+.sa-g-rag__y input:checked+span{background:#F5A623;border-color:#F5A623;color:#1a1a1a}
+.sa-g-rag__r input:checked+span{background:#c13515;border-color:#c13515;color:#fff}
+.sa-g-rag__na input:checked+span{background:#6b6b6b;border-color:#6b6b6b;color:#fff}
+.sa-g-photo-btn{cursor:pointer}
+.sa-g-thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:10px}
+.sa-g-thumbs--lg{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+.sa-g-thumb{position:relative}
+.sa-g-thumb img,.sa-g-thumbs--lg img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;display:block;border:1px solid #e4e4e4}
+.sa-g-thumb button{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:18px;line-height:1;cursor:pointer}
+.sa-g-sigs{display:grid;gap:12px}
+@media(min-width:620px){.sa-g-sigs{grid-template-columns:1fr 1fr}}
+.sa-g-sigs span{display:block;font-weight:600;font-size:.85rem;margin-bottom:4px}
+.sa-g-sig{width:100%;height:auto;aspect-ratio:3/1;border:1px dashed #999;border-radius:6px;background:#fff;touch-action:none}
+.sa-g-link{background:none;border:0;color:var(--sa-link,#1863dc);padding:6px 0;cursor:pointer;font:inherit;font-size:.85rem}
+.sa-g-check--email{display:flex;gap:8px;align-items:center;border:0;margin-top:10px}
+.sa-g-submitbar{position:sticky;bottom:0;background:linear-gradient(transparent,#f4f4f4 30%);padding:16px 0 12px;z-index:5}
+.sa-g-submitbar .sa-btn{width:100%;min-height:52px;font-size:1rem}
+.sa-g-gps{font-size:.8rem;color:#6b6b6b;background:#fff;border:1px solid #e4e4e4;border-radius:999px;padding:6px 10px}
+.sa-g-gps.is-ok{color:#16794a;border-color:#a7e3c0}
+.sa-g-cards{display:grid;gap:8px}
+@media(min-width:700px){.sa-g-cards{grid-template-columns:1fr 1fr}}
+.sa-g-jobcard{display:grid;gap:4px;background:#fff;border:1px solid #e4e4e4;border-radius:10px;padding:14px;text-decoration:none;color:inherit}
+.sa-g-jobcard:hover{border-color:var(--sa-action,#3665f3)}
+.sa-g-jobcard small{color:#6b6b6b}
+.sa-g-pill{justify-self:start;display:inline-block;font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:999px;background:#f0f0f0;color:#333}
+.sa-g-pill--in_progress{background:#eef2fe;color:#1f3fb0}.sa-g-pill--approved{background:#e7f6ec;color:#16794a}.sa-g-pill--waiting_parts{background:#fff4df;color:#8a5a00}
+.sa-g-pill--qc{background:#f3e8ff;color:#6b21a8}.sa-g-pill--ready{background:#16a34a;color:#fff}.sa-g-pill--sent{background:#fff4df;color:#8a5a00}.sa-g-pill--declined,.sa-g-pill--cancelled{background:#fde8e4;color:#c13515}
+.sa-g-clockbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:#eef2fe;border:1px solid #c9d6fd;border-radius:10px;padding:10px 14px;margin:0 0 12px}
+.sa-g-actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.sa-g-actions form{margin:0}
+.sa-g-list{list-style:none;padding:0;margin:8px 0}
+.sa-g-list li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:.9rem}
+.sa-g-list em{font-style:normal;color:#6b6b6b;white-space:nowrap}
+.sa-g-appr--approved{color:#16794a!important}.sa-g-appr--declined{color:#c13515!important}
+.sa-g-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:middle}
+.sa-g-dot--g{background:#16a34a}.sa-g-dot--y{background:#F5A623}.sa-g-dot--r{background:#c13515}.sa-g-dot--na{background:#aaa}
+.sa-g-report{display:grid;gap:12px}
+@media(min-width:760px){.sa-g-report{grid-template-columns:300px 1fr}}
+.sa-g-est{display:grid;gap:8px;margin:14px 0}
+.sa-g-est__row{display:grid;grid-template-columns:1fr auto;gap:6px 12px;background:#fff;border:1px solid #e4e4e4;border-radius:10px;padding:12px 14px}
+.sa-g-est__row--declined{opacity:.6}
+.sa-g-est__price{font-weight:700;white-space:nowrap}
+.sa-g-est__choice{grid-column:1/-1;display:flex;gap:16px}
+.sa-g-est__choice label{display:flex;gap:6px;align-items:center;min-height:36px}
+.sa-g-est__total{display:flex;justify-content:space-between;padding:12px 14px;font-size:1.05rem;border-top:2px solid #191919}
+.sa-g-tag{display:inline-block;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:#6b6b6b;margin-right:6px}
+/* My Account → My Vehicles */
+.sa-g-veh{display:grid;gap:12px}
+.sa-g-veh__card{background:#fff;border:1px solid #e4e4e4;border-radius:10px;padding:16px}
+.sa-g-veh__top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.sa-g-plate{display:inline-block;font-weight:800;letter-spacing:.06em;background:#F5A623;color:#111;border:2px solid #111;border-radius:4px;padding:2px 8px;font-size:.9rem}
+.sa-g-veh__stats{display:flex;gap:16px;flex-wrap:wrap;font-size:.85rem;color:#6b6b6b;margin:8px 0}
+.sa-g-hist{list-style:none;padding:0;margin:10px 0 0;border-left:2px solid #e4e4e4}
+.sa-g-hist li{position:relative;padding:0 0 10px 14px;font-size:.9rem}
+.sa-g-hist li:before{content:"";position:absolute;left:-6px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--sa-action,#3665f3)}
+.sa-g-hist small{color:#6b6b6b}

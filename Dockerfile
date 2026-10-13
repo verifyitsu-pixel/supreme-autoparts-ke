@@ -48,6 +48,7 @@ COPY data /usr/src/supreme-data
 COPY scripts /usr/src/supreme-scripts
 COPY healthz.php /usr/src/wordpress/healthz.php
 COPY wordpress-entrypoint.sh /usr/local/bin/wordpress-entrypoint.sh
+RUN printf "upload_max_filesize=32M\npost_max_size=48M\nmax_input_vars=5000\n" > /usr/local/etc/php/conf.d/zz-sa-uploads.ini
 
 RUN chmod +x /usr/local/bin/wordpress-entrypoint.sh \
     && chown -R www-data:www-data \

@@ -1,0 +1,49 @@
+.sa-ga{max-width:1500px;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.sa-ga-title{font-size:1.5rem;font-weight:700;margin:6px 0 12px}
+.sa-ga-tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid #e4e4e4;margin-bottom:12px}
+.sa-ga-tabs a{padding:9px 14px;text-decoration:none;color:#333;border-radius:6px 6px 0 0;font-weight:500}
+.sa-ga-tabs a.is-on{background:#fff;border:1px solid #e4e4e4;border-bottom-color:#fff;margin-bottom:-1px;color:#1f3fb0;font-weight:700}
+.sa-ga-tabs__app{margin-left:auto}
+.sa-ga-search{display:flex;gap:6px;margin:0 0 14px}
+.sa-ga-search input{flex:1;max-width:520px;min-height:36px}
+.sa-ga-card{background:#fff;border:1px solid #e4e4e4;border-radius:10px;padding:16px;margin:0 0 14px}
+.sa-ga-card h2,.sa-ga-card h3{margin-top:0}
+.sa-ga-head{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start;margin-bottom:12px}
+.sa-ga-head h2{font-size:1.35rem;margin:2px 0 6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sa-ga-eyebrow{margin:0;text-transform:uppercase;font-size:11px;letter-spacing:.06em;color:#6b6b6b;font-weight:600}
+.sa-ga-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.sa-ga-actions form{margin:0}
+.sa-ga-grid2{display:grid;gap:14px;grid-template-columns:1fr}
+@media(min-width:1100px){.sa-ga-grid2{grid-template-columns:minmax(0,2fr) minmax(300px,1fr)}}
+.sa-ga-cols3{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.sa-ga-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:0 0 14px}
+.sa-ga-kpis div{background:#fff;border:1px solid #e4e4e4;border-radius:10px;padding:12px 14px}
+.sa-ga-kpis span{display:block;color:#6b6b6b;font-size:12px}
+.sa-ga-kpis strong{font-size:1.2rem}
+.sa-ga-table td,.sa-ga-table th{vertical-align:middle}
+.sa-ga-table form{margin:0}
+.sa-ga-inline{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.sa-ga-inline input,.sa-ga-inline select{min-height:32px}
+.sa-ga-inline input[name=description],.sa-ga-inline input[name=part_q]{flex:1;min-width:200px}
+.sa-ga-stack{display:grid;gap:8px}
+.sa-ga-stack label,.sa-ga-form label{display:grid;gap:3px;font-weight:600;font-size:12px;color:#444}
+.sa-ga-stack input,.sa-ga-stack select,.sa-ga-stack textarea,.sa-ga-form input,.sa-ga-form textarea{width:100%;font-weight:400}
+.sa-ga-stack button{justify-self:start}
+.sa-ga-form{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.sa-ga-wide{grid-column:1/-1}
+.sa-ga-board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,1fr);gap:10px;overflow-x:auto;padding-bottom:10px}
+.sa-ga-col{background:#f6f7f7;border:1px solid #e4e4e4;border-radius:10px;padding:10px;min-height:300px}
+.sa-ga-col h3{margin:0 0 8px;font-size:13px;display:flex;justify-content:space-between}
+.sa-ga-col h3 span{background:#fff;border-radius:999px;padding:0 8px;font-weight:600}
+.sa-ga-ticket{background:#fff;border:1px solid #e4e4e4;border-radius:8px;padding:10px;margin:0 0 8px;display:grid;gap:3px}
+.sa-ga-ticket a{text-decoration:none}
+.sa-ga-ticket small{color:#6b6b6b}
+.sa-ga-ticket form{margin:4px 0 0}
+.sa-ga-cal{display:grid;grid-template-columns:110px repeat(7,minmax(120px,1fr));border:1px solid #e4e4e4;border-radius:10px;overflow:auto;background:#fff}
+.sa-ga-cal__hd{background:#f6f7f7;font-weight:700;padding:8px;border-bottom:1px solid #e4e4e4;font-size:12px}
+.sa-ga-cal__bay{padding:8px;font-weight:600;border-top:1px solid #f0f0f0;background:#fafafa;font-size:12px}
+.sa-ga-cal__cell{border-top:1px solid #f0f0f0;border-left:1px solid #f0f0f0;padding:4px;min-height:70px;display:grid;gap:4px;align-content:start}
+.sa-ga-ev{display:block;font-size:11px;padding:5px 6px;border-radius:6px;background:#eef2fe;color:#1f3fb0;text-decoration:none;border-left:3px solid #3665f3}
+.sa-ga-ev--booking{background:#fff4df;color:#6b4500;border-left-color:#F5A623}
+.sa-ga-ev--ready,.sa-ga-ev--delivered{background:#e7f6ec;color:#16794a;border-left-color:#16a34a}
+.sa-ga-ev form{margin:2px 0 0}
