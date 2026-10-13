@@ -101,3 +101,14 @@ add_action('wp_enqueue_scripts', static function (): void {
 add_action('wp_enqueue_scripts', static function (): void {
     wp_enqueue_style('supreme-autoparts-cart-ui', SA_THEME_URI . '/assets/css/cart-ui.css', ['supreme-autoparts-polish'], SA_THEME_VERSION . '.cu8');
 }, 1001);
+
+/* Header search panel (optional filters) on every page. */
+add_action('wp_enqueue_scripts', static function (): void {
+    wp_enqueue_style('supreme-autoparts-search-panel', SA_THEME_URI . '/assets/css/search-panel.css', [], SA_THEME_VERSION . '.sp1');
+    wp_enqueue_script('supreme-autoparts-search-panel', SA_THEME_URI . '/assets/js/search-panel.js', [], SA_THEME_VERSION . '.sp1', true);
+    wp_localize_script('supreme-autoparts-search-panel', 'saSearchPanel', [
+        'ajaxUrl' => admin_url('admin-ajax.php'),
+        'home'    => home_url('/'),
+        'shop'    => function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/'),
+    ]);
+}, 1001);

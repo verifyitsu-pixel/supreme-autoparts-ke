@@ -844,3 +844,71 @@ function sa_fx_chips(): array
     }
     return $chips;
 }
+
+/* ------------------------------------------------------------------ */
+/* Header search panel: facet data (lazy-loaded on first focus)        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * admin-ajax: sa_search_facets. Reads sa_make / sa_model from the query
+ * string (same params as the shop filters) and returns option lists built
+ * with sa_fx_counts() / sa_fx_stats(), so counts match the shop sidebar.
+ */
+function sa_fx_search_facets_ajax(): void
+{
+    nocache_headers();
+    $st = sa_fx_state();
+    $sort_label = static function (array $rows, bool $desc_num = false): array {
+        usort($rows, $desc_num
+            ? static fn ($a, $b) => (int) $b['label'] <=> (int) $a['label']
+            : static fn ($a, $b) => strnatcasecmp($a['label'], $b['label']));
+        return array_map(static fn ($r) => ['v' => $r['value'], 'l' => $r['label'], 'n' => $r['count']], $rows);
+    };
+    $out = ['makes' => [], 'models' => [], 'years' => []];
+    if (sa_fx_ready()) {
+        $out['makes'] = $sort_label(sa_fx_counts('make', 'vehicle', 120));
+        if ($st['make'] !== '') {
+            $out['models'] = array_map(static function ($r) {
+                $r['v'] = (string) substr($r['v'], strpos($r['v'], '/') + 1);
+                return $r;
+            }, $sort_label(sa_fx_counts('model', 'model', 300, $st['make'] . '/')));
+        }
+        if ($st['model'] !== '') {
+            $out['years'] = array_map(static function ($r) {
+                $r['v'] = (string) $r['l'];
+                return $r;
+            }, $sort_label(sa_fx_counts('ymm', 'year', 120, $st['make'] . '/' . $st['model'] . '/'), true));
+        }
+    }
+    // Only make-dependent lists requested.
+    if (!empty($_GET['vehicle_only'])) { // phpcs:ignore
+        wp_send_json_success($out);
+    }
+    $brands_root = get_term_by('slug', 'brands', 'product_cat');
+    $brands_root_id = $brands_root instanceof WP_Term ? (int) $brands_root->term_id : -1;
+    $cat_counts = [];
+    foreach (sa_fx_ready() ? sa_fx_counts('cat', 'cat', 2000) : [] as $c) {
+        $cat_counts[(int) $c['value']] = $c['count'];
+    }
+    $cats = [];
+    $terms = get_terms(['taxonomy' => 'product_cat', 'parent' => 0, 'hide_empty' => true, 'exclude' => [$brands_root_id], 'number' => 0]);
+    foreach (is_array($terms) ? $terms : [] as $t) {
+        $n = $cat_counts[(int) $t->term_id] ?? 0;
+        if ($n <= 0 || $t->slug === 'uncategorized') { continue; }
+        $link = get_term_link($t);
+        if (is_wp_error($link)) { continue; }
+        $cats[] = ['v' => $t->slug, 'l' => html_entity_decode($t->name, ENT_QUOTES, 'UTF-8'), 'n' => $n, 'u' => (string) $link];
+    }
+    usort($cats, static fn ($a, $b) => strnatcasecmp($a['l'], $b['l']));
+    $out['cats'] = $cats;
+    $out['brands'] = sa_fx_ready() ? $sort_label(sa_fx_counts('brand', 'brand', 400)) : [];
+    $stats = sa_fx_stats();
+    $out['price'] = ['min' => floor((float) $stats['min']), 'max' => ceil((float) $stats['max'])];
+    $out['cur'] = function_exists('get_woocommerce_currency_symbol') ? html_entity_decode(get_woocommerce_currency_symbol(), ENT_QUOTES, 'UTF-8') : '$';
+    $out['freeship'] = (!function_exists('sa_ship_is_us') || sa_ship_is_us()) && $stats['freeship'] > 0;
+    $out['freeMin'] = sa_fx_free_ship_min();
+    $out['shop'] = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
+    wp_send_json_success($out);
+}
+add_action('wp_ajax_sa_search_facets', 'sa_fx_search_facets_ajax');
+add_action('wp_ajax_nopriv_sa_search_facets', 'sa_fx_search_facets_ajax');
