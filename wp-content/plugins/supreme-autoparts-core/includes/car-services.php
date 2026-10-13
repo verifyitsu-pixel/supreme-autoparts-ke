@@ -1530,3 +1530,8 @@ function sa_svc_render_terms(): void
     }
     echo '</ol><p><a class="sa-svc-btn sa-svc-btn--primary" href="' . esc_url(sa_svc_book_url()) . '">Book a service</a></p></div>';
 }
+
+/* Booking fee is a fixed deposit: never discounted by coupons. */
+add_filter('woocommerce_coupon_is_valid_for_product', static function ($valid, $product) {
+    return $product && (int) $product->get_id() === (int) get_option('sa_svc_fee_product', 0) ? false : $valid;
+}, 20, 2);
