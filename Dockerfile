@@ -27,12 +27,22 @@ RUN mkdir -p /usr/src/wordpress/wp-content/plugins \
     && test -f /usr/src/wordpress/wp-content/plugins/woocommerce/woocommerce.php \
     && chown -R www-data:www-data /usr/src/wordpress/wp-content/plugins/woocommerce
 
+# Official WooCommerce PayPal Payments (WordPress.org), baked like WooCommerce
+ARG PAYPAL_PAYMENTS_VERSION=4.1.3
+RUN curl -fsSL -o /tmp/ppcp.zip \
+        "https://downloads.wordpress.org/plugin/woocommerce-paypal-payments.${PAYPAL_PAYMENTS_VERSION}.zip" \
+    && unzip -q /tmp/ppcp.zip -d /usr/src/wordpress/wp-content/plugins \
+    && rm -f /tmp/ppcp.zip \
+    && test -f /usr/src/wordpress/wp-content/plugins/woocommerce-paypal-payments/woocommerce-paypal-payments.php
+
 # Custom theme + plugins (baked into image for Git auto-deploy)
 COPY wp-content/themes/supreme-autoparts /usr/src/wordpress/wp-content/themes/supreme-autoparts
 COPY wp-content/plugins/supreme-autoparts-core /usr/src/wordpress/wp-content/plugins/supreme-autoparts-core
 COPY wp-content/plugins/whop-payments /usr/src/wordpress/wp-content/plugins/whop-payments
 COPY wp-content/plugins/sa-brevo-mail /usr/src/wordpress/wp-content/plugins/sa-brevo-mail
 COPY wp-content/plugins/sa-geo-currency /usr/src/wordpress/wp-content/plugins/sa-geo-currency
+COPY wp-content/plugins/pesapal-woocommerce /usr/src/wordpress/wp-content/plugins/pesapal-woocommerce
+COPY wp-content/plugins/transactworld-payment-integration /usr/src/wordpress/wp-content/plugins/transactworld-payment-integration
 COPY wp-content/mu-plugins /usr/src/wordpress/wp-content/mu-plugins
 COPY data /usr/src/supreme-data
 COPY scripts /usr/src/supreme-scripts

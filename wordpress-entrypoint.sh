@@ -67,6 +67,14 @@ sync_custom_content() {
     rm -rf /var/www/html/wp-content/plugins/sa-geo-currency
     cp -a /usr/src/wordpress/wp-content/plugins/sa-geo-currency /var/www/html/wp-content/plugins/
   fi
+  for gw in pesapal-woocommerce transactworld-payment-integration woocommerce-paypal-payments; do
+    if [[ -d /usr/src/wordpress/wp-content/plugins/$gw ]]; then
+      rm -rf "/var/www/html/wp-content/plugins/$gw"
+      cp -a "/usr/src/wordpress/wp-content/plugins/$gw" /var/www/html/wp-content/plugins/
+      chown -R www-data:www-data "/var/www/html/wp-content/plugins/$gw" 2>/dev/null || true
+    fi
+  done
+  [[ -f /usr/src/wordpress/wp-content/mu-plugins/supreme-gateways-env.php ]] && cp -f /usr/src/wordpress/wp-content/mu-plugins/supreme-gateways-env.php /var/www/html/wp-content/mu-plugins/ || true
   if [[ -f /usr/src/wordpress/wp-content/mu-plugins/supreme-loader.php ]]; then
     cp -f /usr/src/wordpress/wp-content/mu-plugins/supreme-loader.php /var/www/html/wp-content/mu-plugins/ || true
   fi
@@ -243,6 +251,9 @@ bootstrap_wordpress() {
   wp_as plugin activate whop-payments || true
   wp_as plugin activate sa-brevo-mail || true
   wp_as plugin activate sa-geo-currency || true
+  wp_as plugin activate pesapal-woocommerce || true
+  wp_as plugin activate transactworld-payment-integration || true
+  wp_as plugin activate woocommerce-paypal-payments || true
   wp_as theme activate supreme-autoparts || true
 
   # Enable Whop gateway when Railway/env credentials are present.
