@@ -72,6 +72,7 @@ if ($sa_total <= 0 && isset($GLOBALS['wp_query']) && $GLOBALS['wp_query'] instan
 echo '<div class="sa-market">';
 get_template_part('template-parts/catalog', 'filters');
 echo '<div class="sa-market__results">';
+get_template_part('template-parts/catalog', 'chips');
 
 if (woocommerce_product_loop()) {
     do_action('woocommerce_before_shop_loop');

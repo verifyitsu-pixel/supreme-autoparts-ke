@@ -377,23 +377,7 @@ add_action('pre_get_posts', static function ($query): void {
         return;
     }
 
-    if ($f['filter_brand'] !== '') {
-        $tax_query = $query->get('tax_query');
-        if (!is_array($tax_query)) {
-            $tax_query = [];
-        }
-        $tax_query[] = [
-            'taxonomy'         => 'product_cat',
-            'field'            => 'slug',
-            'terms'            => [$f['filter_brand']],
-            'operator'         => 'IN',
-            'include_children' => true,
-        ];
-        if (!isset($tax_query['relation'])) {
-            $tax_query['relation'] = 'AND';
-        }
-        $query->set('tax_query', $tax_query);
-    }
+    // Brand / vehicle filters: catalog-facets.php (precomputed index).
 
     $query->set('sa_core_catalog_search', 1);
     $query->set('sa_core_catalog_filters', $f);
@@ -451,89 +435,7 @@ add_filter('posts_clauses', static function (array $clauses, $query): array {
         );
     }
 
-    if (($f['sa_make'] ?? '') !== '') {
-        $make = (string) $f['sa_make'];
-        $like = '%' . $wpdb->esc_like($make) . '%';
-        $clauses['where'] .= $wpdb->prepare(
-            " AND (
-                EXISTS (
-                  SELECT 1 FROM {$wpdb->postmeta} sam
-                  WHERE sam.post_id = {$wpdb->posts}.ID AND sam.meta_key = '_sa_make' AND sam.meta_value = %s
-                ) OR {$wpdb->posts}.post_title LIKE %s
-              ) ",
-            $make,
-            $like
-        );
-    }
-
-    if (($f['sa_model'] ?? '') !== '') {
-        $model = (string) $f['sa_model'];
-        $like = '%' . $wpdb->esc_like($model) . '%';
-        $compact = str_replace(['-', ' ', '/'], '', $model);
-        if ($compact !== '' && strcasecmp($compact, $model) !== 0) {
-            $like2 = '%' . $wpdb->esc_like($compact) . '%';
-            $clauses['where'] .= $wpdb->prepare(
-                " AND (
-                    EXISTS (
-                      SELECT 1 FROM {$wpdb->postmeta} samo
-                      WHERE samo.post_id = {$wpdb->posts}.ID AND samo.meta_key = '_sa_model'
-                        AND (samo.meta_value LIKE %s OR samo.meta_value LIKE %s)
-                    )
-                    OR {$wpdb->posts}.post_title LIKE %s
-                    OR REPLACE(REPLACE({$wpdb->posts}.post_title,'-',''),' ','') LIKE %s
-                  ) ",
-                $like,
-                $like2,
-                $like,
-                $like2
-            );
-        } else {
-            $clauses['where'] .= $wpdb->prepare(
-                " AND (
-                    EXISTS (
-                      SELECT 1 FROM {$wpdb->postmeta} samo
-                      WHERE samo.post_id = {$wpdb->posts}.ID AND samo.meta_key = '_sa_model' AND samo.meta_value LIKE %s
-                    ) OR {$wpdb->posts}.post_title LIKE %s
-                  ) ",
-                $like,
-                $like
-            );
-        }
-    }
-
-    if (($f['sa_year'] ?? '') !== '') {
-        $year = (string) $f['sa_year'];
-        $like = '%' . $wpdb->esc_like($year) . '%';
-        $yy = (preg_match('/^(?:19|20)(\d{2})$/', $year, $ym)) ? $ym[1] : '';
-        if ($yy !== '') {
-            $clauses['where'] .= $wpdb->prepare(
-                " AND (
-                    EXISTS (
-                      SELECT 1 FROM {$wpdb->postmeta} say
-                      WHERE say.post_id = {$wpdb->posts}.ID AND say.meta_key = '_sa_year' AND say.meta_value LIKE %s
-                    )
-                    OR {$wpdb->posts}.post_title LIKE %s
-                    OR {$wpdb->posts}.post_title LIKE %s
-                    OR {$wpdb->posts}.post_title LIKE %s
-                  ) ",
-                $like,
-                $like,
-                '%' . $wpdb->esc_like($yy) . '-%',
-                '%-' . $wpdb->esc_like($yy) . '%'
-            );
-        } else {
-            $clauses['where'] .= $wpdb->prepare(
-                " AND (
-                    EXISTS (
-                      SELECT 1 FROM {$wpdb->postmeta} say
-                      WHERE say.post_id = {$wpdb->posts}.ID AND say.meta_key = '_sa_year' AND say.meta_value LIKE %s
-                    ) OR {$wpdb->posts}.post_title LIKE %s
-                  ) ",
-                $like,
-                $like
-            );
-        }
-    }
+    // Make / model / year: catalog-facets.php (fitment index).
 
     // Ranking: exact SKU → prefix → title prefix → contains.
     $needle = trim((string) (($f['sa_pn'] ?? '') !== '' ? $f['sa_pn'] : ($f['s'] ?? '')));

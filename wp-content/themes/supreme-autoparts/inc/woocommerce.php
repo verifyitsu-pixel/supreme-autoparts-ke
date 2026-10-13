@@ -322,9 +322,9 @@ function sa_theme_product_card_meta(WC_Product $product): string
         : __('In stock', 'supreme-autoparts');
     $price = (float) $product->get_price();
     if ($price > 0 && $price + 0.001 >= sa_theme_free_ship_amount()) {
-        return $stock . ' · ' . __('Free US shipping', 'supreme-autoparts');
+        return $stock . ' · ' . __('Free US shipping · Free Kenya delivery', 'supreme-autoparts');
     }
-    return $stock;
+    return $stock . ' · ' . __('Ships to US & Kenya', 'supreme-autoparts');
 }
 
 /**

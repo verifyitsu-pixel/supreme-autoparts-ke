@@ -89,3 +89,11 @@ add_filter('style_loader_src', static function ($src, $handle) {
 add_action('wp_enqueue_scripts', static function (): void {
     wp_enqueue_style('supreme-autoparts-polish', SA_THEME_URI . '/assets/css/polish.css', [], SA_THEME_VERSION . '.p1');
 }, 999);
+
+add_action('wp_enqueue_scripts', static function (): void {
+    if (!function_exists('is_shop') || !(is_shop() || is_product_taxonomy() || is_search())) {
+        return;
+    }
+    wp_enqueue_style('supreme-autoparts-filters', SA_THEME_URI . '/assets/css/filters.css', ['supreme-autoparts-polish'], SA_THEME_VERSION);
+    wp_enqueue_script('supreme-autoparts-filters', SA_THEME_URI . '/assets/js/filters.js', [], SA_THEME_VERSION, true);
+}, 1000);

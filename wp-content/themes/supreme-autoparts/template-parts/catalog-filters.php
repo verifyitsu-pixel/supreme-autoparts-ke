@@ -1,9 +1,9 @@
 <?php
 /**
- * Shop / search filters grouped like a parts catalog.
- *
- * Groups use real Woo categories, brand terms, and the existing
- * part-number / make / model / year search. Price uses Woo min_price / max_price.
+ * Parts-store filters: vehicle (Make → Model → Year), part number, category,
+ * brand, context specs, price slider, stock, free shipping.
+ * Desktop: left sidebar. Mobile: full-screen sheet with Apply / Clear.
+ * Data + counts: supreme-autoparts-core/includes/catalog-facets.php.
  *
  * @package Supreme_Autoparts
  */
@@ -12,284 +12,264 @@ declare(strict_types=1);
 
 defined('ABSPATH') || exit;
 
-$filters = function_exists('sa_core_catalog_filters_from_request')
-    ? sa_core_catalog_filters_from_request()
-    : [
-        's' => get_search_query(),
-        'sa_pn' => '',
-        'filter_brand' => '',
-        'sa_make' => '',
-        'sa_model' => '',
-        'sa_year' => '',
-    ];
-
-$brands = function_exists('sa_core_brand_filter_options') ? sa_core_brand_filter_options() : [];
-$makes  = function_exists('sa_core_make_filter_options') ? sa_core_make_filter_options() : [];
-$action = function_exists('sa_core_catalog_filter_form_action') ? sa_core_catalog_filter_form_action() : home_url('/shop/');
-$clear  = function_exists('sa_core_catalog_clear_filters_url') ? sa_core_catalog_clear_filters_url() : home_url('/shop/');
-
-$sa_price_bound = static function (string $key): string {
-    if (!isset($_GET[$key])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        return '';
-    }
-    $raw = trim((string) wp_unslash($_GET[$key])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-    if ($raw === '' || !is_numeric($raw)) {
-        return '';
-    }
-    return function_exists('wc_format_decimal') ? (string) wc_format_decimal($raw) : $raw;
-};
-$min_price = $sa_price_bound('min_price');
-$max_price = $sa_price_bound('max_price');
-
-$orderby = isset($_GET['orderby']) ? sanitize_text_field(wp_unslash((string) $_GET['orderby'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-
-$active = ($filters['s'] ?? '') !== ''
-    || ($filters['sa_pn'] ?? '') !== ''
-    || ($filters['filter_brand'] ?? '') !== ''
-    || ($filters['sa_make'] ?? '') !== ''
-    || ($filters['sa_model'] ?? '') !== ''
-    || ($filters['sa_year'] ?? '') !== ''
-    || $min_price !== ''
-    || $max_price !== '';
-
-$total = 0;
-if (isset($GLOBALS['wp_query']) && $GLOBALS['wp_query'] instanceof WP_Query) {
-    $total = (int) $GLOBALS['wp_query']->found_posts;
+if (!function_exists('sa_fx_state')) {
+    return;
 }
 
-$shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
+$st      = sa_fx_state();
+$action  = sa_fx_base_url();
+$shop    = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
+$clear   = function_exists('sa_core_catalog_clear_filters_url') ? sa_core_catalog_clear_filters_url() : $shop;
+$stats   = sa_fx_stats();
+$chips   = sa_fx_chips();
+$cur     = function_exists('get_woocommerce_currency_symbol') ? html_entity_decode(get_woocommerce_currency_symbol(), ENT_QUOTES, 'UTF-8') : '$';
+$free_min = sa_fx_free_ship_min();
+$orderby = isset($_GET['orderby']) ? sanitize_key(wp_unslash((string) $_GET['orderby'])) : ''; // phpcs:ignore
 
-$keep = [];
-foreach (['s', 'sa_pn', 'filter_brand', 'sa_make', 'sa_model', 'sa_year', 'orderby'] as $key) {
-    $val = $key === 'orderby' ? $orderby : (string) ($filters[$key] ?? '');
-    if ($val !== '') {
-        $keep[$key] = $val;
-    }
+// Vehicle lists.
+$makes  = sa_fx_counts('make', 'vehicle', 120);
+usort($makes, static fn ($a, $b) => strcasecmp($a['label'], $b['label']));
+$models = $st['make'] !== '' ? sa_fx_counts('model', 'model', 300, $st['make'] . '/') : [];
+usort($models, static fn ($a, $b) => strnatcasecmp($a['label'], $b['label']));
+$years  = $st['model'] !== '' ? sa_fx_counts('ymm', 'year', 120, $st['make'] . '/' . $st['model'] . '/') : [];
+usort($years, static fn ($a, $b) => (int) $b['label'] <=> (int) $a['label']);
+
+// Categories: children of the current category (or top level on shop).
+$current = (function_exists('is_product_category') && is_product_category()) ? get_queried_object() : null;
+$brands_root = get_term_by('slug', 'brands', 'product_cat');
+$brands_root_id = $brands_root instanceof WP_Term ? (int) $brands_root->term_id : -1;
+$parent_id = $current instanceof WP_Term ? (int) $current->term_id : 0;
+$child_terms = get_terms(['taxonomy' => 'product_cat', 'parent' => $parent_id, 'hide_empty' => true, 'exclude' => [$brands_root_id], 'number' => 80]);
+$cat_counts = [];
+foreach (sa_fx_counts('cat', 'cat', 2000) as $c) {
+    $cat_counts[(int) $c['value']] = $c['count'];
 }
-if ($min_price !== '') {
-    $keep['min_price'] = $min_price;
-}
-if ($max_price !== '') {
-    $keep['max_price'] = $max_price;
-}
-
-$with_filters = static function (string $url) use ($keep): string {
-    return $keep === [] ? $url : add_query_arg($keep, $url);
-};
-
-$current_term = (function_exists('is_product_category') && is_product_category()) ? get_queried_object() : null;
-$current_id = ($current_term instanceof WP_Term) ? (int) $current_term->term_id : 0;
-
-$exclude_ids = [];
-$brands_parent = get_term_by('slug', 'brands', 'product_cat');
-if ($brands_parent instanceof WP_Term) {
-    $exclude_ids[] = (int) $brands_parent->term_id;
-}
-
-$cat_parent = 0;
-if ($current_term instanceof WP_Term && (int) $current_term->parent > 0 && !in_array((int) $current_term->parent, $exclude_ids, true)) {
-    $cat_parent = (int) $current_term->parent;
-}
-
-$categories = [];
-if (taxonomy_exists('product_cat')) {
-    $terms = get_terms([
-        'taxonomy'   => 'product_cat',
-        'parent'     => $cat_parent,
-        'hide_empty' => true,
-        'exclude'    => $exclude_ids,
-        'orderby'    => 'name',
-        'order'      => 'ASC',
-        'number'     => 40,
-    ]);
-    if (!is_wp_error($terms) && is_array($terms)) {
-        foreach ($terms as $term) {
-            if (!$term instanceof WP_Term) {
-                continue;
-            }
-            if (in_array((int) $term->term_id, $exclude_ids, true)) {
-                continue;
-            }
-            $link = get_term_link($term);
-            if (is_wp_error($link)) {
-                continue;
-            }
-            $categories[] = [
-                'name'    => $term->name,
-                'count'   => (int) $term->count,
-                'url'     => $with_filters((string) $link),
-                'current' => (int) $term->term_id === $current_id,
-            ];
+$cats = [];
+if (is_array($child_terms)) {
+    foreach ($child_terms as $t) {
+        $n = $cat_counts[(int) $t->term_id] ?? 0;
+        if ($n <= 0 || (int) $t->term_id === $brands_root_id) {
+            continue;
         }
+        $link = get_term_link($t);
+        if (is_wp_error($link)) { continue; }
+        $cats[] = ['name' => html_entity_decode($t->name, ENT_QUOTES, 'UTF-8'), 'count' => $n, 'url' => sa_fx_url([], (string) $link)];
+    }
+    usort($cats, static fn ($a, $b) => $b['count'] <=> $a['count']);
+}
+$up_url = '';
+$up_name = '';
+if ($current instanceof WP_Term) {
+    if ((int) $current->parent > 0 && (int) $current->parent !== $brands_root_id) {
+        $p = get_term((int) $current->parent, 'product_cat');
+        if ($p instanceof WP_Term) {
+            $l = get_term_link($p);
+            $up_url = is_wp_error($l) ? '' : sa_fx_url([], (string) $l);
+            $up_name = html_entity_decode($p->name, ENT_QUOTES, 'UTF-8');
+        }
+    } else {
+        $up_url = sa_fx_url([], $shop);
+        $up_name = __('All parts', 'supreme-autoparts');
     }
 }
 
-$currency = function_exists('get_woocommerce_currency_symbol') ? get_woocommerce_currency_symbol() : '$';
+$brands = sa_fx_counts('brand', 'brand', 400);
+$spec_groups = [];
+if ($current instanceof WP_Term || $st['s'] !== '' || $st['make'] !== '') {
+    foreach (sa_fx_spec_facets() as $f => $label) {
+        $opts = sa_fx_counts($f, $f, 40);
+        $selected = $st['specs'][$f] ?? [];
+        // Context-aware: show only when it actually splits these results (or is in use).
+        if ($selected === [] && (count($opts) < 2 || array_sum(array_column($opts, 'count')) < 3)) {
+            continue;
+        }
+        if ($f === 'wheel_dia' || $f === 'wheel_w' || $f === 'diameter' || $f === 'lift') {
+            usort($opts, static fn ($a, $b) => (float) $a['label'] <=> (float) $b['label']);
+        }
+        $spec_groups[$f] = ['label' => $label, 'opts' => $opts, 'sel' => $selected];
+    }
+}
+
+$pmin = (int) floor($stats['min']);
+$pmax = (int) ceil($stats['max']);
+$vmin = $st['min'] !== '' ? (int) $st['min'] : $pmin;
+$vmax = $st['max'] !== '' ? (int) $st['max'] : $pmax;
+$n_active = count($chips);
 ?>
-<aside class="sa-filters<?php echo $active ? ' is-open' : ''; ?>" aria-label="<?php esc_attr_e('Filter parts', 'supreme-autoparts'); ?>">
-  <button type="button" class="sa-filters__toggle" data-sa-filters-toggle aria-expanded="<?php echo $active ? 'true' : 'false'; ?>">
-    <?php esc_html_e('Filters', 'supreme-autoparts'); ?>
-    <?php if ($active) : ?>
-      <span class="sa-filters__toggle-dot" aria-hidden="true"></span>
-    <?php endif; ?>
+<div class="sa-pf-bar" data-sa-pf-bar>
+  <button type="button" class="sa-pf-bar__btn" data-sa-pf-open aria-controls="sa-pf" aria-expanded="false">
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 5h18v2H3zm4 6h10v2H7zm3 6h4v2h-4z"/></svg>
+    <?php esc_html_e('Filter', 'supreme-autoparts'); ?>
+    <?php if ($n_active > 0) : ?><span class="sa-pf-bar__n"><?php echo (int) $n_active; ?></span><?php endif; ?>
   </button>
+</div>
 
-  <form class="sa-filters__form" method="get" action="<?php echo esc_url($action); ?>" data-sa-filters>
-    <?php if ($orderby !== '') : ?>
-      <input type="hidden" name="orderby" value="<?php echo esc_attr($orderby); ?>" />
-    <?php endif; ?>
+<aside id="sa-pf" class="sa-pf" aria-label="<?php esc_attr_e('Filter parts', 'supreme-autoparts'); ?>" data-sa-pf>
+  <form class="sa-pf__form" method="get" action="<?php echo esc_url($action); ?>" data-sa-pf-form>
+    <div class="sa-pf__head">
+      <strong><?php esc_html_e('Filter parts', 'supreme-autoparts'); ?></strong>
+      <button type="button" class="sa-pf__close" data-sa-pf-close aria-label="<?php esc_attr_e('Close filters', 'supreme-autoparts'); ?>">&times;</button>
+    </div>
 
-    <?php if ($categories !== []) : ?>
-      <details class="sa-filter-group" open>
-        <summary><?php esc_html_e('Category', 'supreme-autoparts'); ?></summary>
-        <ul class="sa-filter-group__list">
-          <li>
-            <a class="<?php echo $current_id === 0 ? 'is-current' : ''; ?>" href="<?php echo esc_url($with_filters($shop_url)); ?>">
-              <?php esc_html_e('All categories', 'supreme-autoparts'); ?>
-            </a>
-          </li>
-          <?php foreach ($categories as $cat) : ?>
-            <li>
-              <a class="<?php echo $cat['current'] ? 'is-current' : ''; ?>" href="<?php echo esc_url($cat['url']); ?>">
-                <?php echo esc_html($cat['name']); ?>
-                <span class="sa-filter-group__count"><?php echo esc_html(number_format_i18n($cat['count'])); ?></span>
-              </a>
-            </li>
+    <div class="sa-pf__body">
+      <?php if ($orderby !== '') : ?><input type="hidden" name="orderby" value="<?php echo esc_attr($orderby); ?>" /><?php endif; ?>
+      <?php if ($st['s'] !== '') : ?>
+        <input type="hidden" name="s" value="<?php echo esc_attr($st['s']); ?>" />
+        <input type="hidden" name="post_type" value="product" />
+      <?php endif; ?>
+
+      <?php if ($chips !== []) : ?>
+        <div class="sa-pf__chips sa-pf__chips--sheet">
+          <?php foreach ($chips as $chip) : ?>
+            <a class="sa-chip" href="<?php echo esc_url($chip['url']); ?>"><?php echo esc_html($chip['label']); ?> <span aria-hidden="true">&times;</span></a>
           <?php endforeach; ?>
-        </ul>
-      </details>
-    <?php endif; ?>
+        </div>
+      <?php endif; ?>
 
-    <?php if ($brands !== []) : ?>
-      <details class="sa-filter-group" open>
-        <summary><?php esc_html_e('Brand', 'supreme-autoparts'); ?></summary>
-        <label class="sa-filters__field">
-          <span class="screen-reader-text"><?php esc_html_e('Brand', 'supreme-autoparts'); ?></span>
-          <select name="filter_brand">
-            <option value=""><?php esc_html_e('All brands', 'supreme-autoparts'); ?></option>
-            <?php foreach ($brands as $b) : ?>
-              <option value="<?php echo esc_attr($b['slug']); ?>" <?php selected($filters['filter_brand'] ?? '', $b['slug']); ?>>
-                <?php echo esc_html($b['name'] . ' (' . number_format_i18n((int) $b['count']) . ')'); ?>
-              </option>
+      <section class="sa-pf__group sa-pf__group--vehicle">
+        <h3 class="sa-pf__title"><?php esc_html_e('Shop by vehicle', 'supreme-autoparts'); ?></h3>
+        <?php if ($makes === [] && $st['make'] === '') : ?>
+          <p class="sa-pf__hint"><?php esc_html_e('No vehicle fitment listed for these parts.', 'supreme-autoparts'); ?></p>
+        <?php else : ?>
+        <label class="sa-pf__field">
+          <span><?php esc_html_e('Make', 'supreme-autoparts'); ?></span>
+          <select name="sa_make" data-sa-pf-vehicle="make">
+            <option value=""><?php esc_html_e('Select make', 'supreme-autoparts'); ?></option>
+            <?php foreach ($makes as $m) : ?>
+              <option value="<?php echo esc_attr($m['value']); ?>" <?php selected($st['make'], $m['value']); ?>><?php echo esc_html($m['label'] . ' (' . number_format_i18n($m['count']) . ')'); ?></option>
             <?php endforeach; ?>
           </select>
         </label>
-      </details>
-    <?php endif; ?>
-
-    <details class="sa-filter-group" open>
-      <summary><?php esc_html_e('Price', 'supreme-autoparts'); ?></summary>
-      <div class="sa-filters__price">
-        <label class="sa-filters__field">
-          <span class="sa-filters__label"><?php echo esc_html(sprintf(/* translators: %s currency symbol */ __('Min (%s)', 'supreme-autoparts'), wp_strip_all_tags($currency))); ?></span>
-          <input type="text" inputmode="decimal" name="min_price" value="<?php echo esc_attr($min_price); ?>" placeholder="0" autocomplete="off" />
+        <label class="sa-pf__field">
+          <span><?php esc_html_e('Model', 'supreme-autoparts'); ?></span>
+          <select name="sa_model" data-sa-pf-vehicle="model" <?php disabled($st['make'] === '' || $models === []); ?>>
+            <option value=""><?php echo esc_html($st['make'] === '' ? __('Select make first', 'supreme-autoparts') : __('All models', 'supreme-autoparts')); ?></option>
+            <?php foreach ($models as $m) : $slug = substr($m['value'], strlen($st['make']) + 1); ?>
+              <option value="<?php echo esc_attr($slug); ?>" <?php selected($st['model'], $slug); ?>><?php echo esc_html($m['label'] . ' (' . number_format_i18n($m['count']) . ')'); ?></option>
+            <?php endforeach; ?>
+          </select>
         </label>
-        <label class="sa-filters__field">
-          <span class="sa-filters__label"><?php echo esc_html(sprintf(/* translators: %s currency symbol */ __('Max (%s)', 'supreme-autoparts'), wp_strip_all_tags($currency))); ?></span>
-          <input type="text" inputmode="decimal" name="max_price" value="<?php echo esc_attr($max_price); ?>" placeholder="<?php esc_attr_e('Any', 'supreme-autoparts'); ?>" autocomplete="off" />
+        <?php if ($st['model'] !== '' && $years !== []) : ?>
+        <label class="sa-pf__field">
+          <span><?php esc_html_e('Year', 'supreme-autoparts'); ?></span>
+          <select name="sa_year" data-sa-pf-vehicle="year">
+            <option value=""><?php esc_html_e('All years', 'supreme-autoparts'); ?></option>
+            <?php foreach ($years as $y) : ?>
+              <option value="<?php echo esc_attr($y['label']); ?>" <?php selected($st['year'], $y['label']); ?>><?php echo esc_html($y['label'] . ' (' . number_format_i18n($y['count']) . ')'); ?></option>
+            <?php endforeach; ?>
+          </select>
         </label>
-      </div>
-    </details>
+        <?php endif; ?>
+        <?php endif; ?>
+      </section>
 
-    <details class="sa-filter-group" open>
-      <summary><?php esc_html_e('Vehicle', 'supreme-autoparts'); ?></summary>
-      <div class="sa-filters__stack">
-        <label class="sa-filters__field">
-          <span class="sa-filters__label"><?php esc_html_e('Make', 'supreme-autoparts'); ?></span>
-          <?php if ($makes !== []) : ?>
-            <select name="sa_make">
-              <option value=""><?php esc_html_e('All makes', 'supreme-autoparts'); ?></option>
-              <?php foreach ($makes as $make) : ?>
-                <option value="<?php echo esc_attr($make); ?>" <?php selected($filters['sa_make'] ?? '', $make); ?>>
-                  <?php echo esc_html($make); ?>
-                </option>
-              <?php endforeach; ?>
-            </select>
-          <?php else : ?>
-            <input type="text" name="sa_make" value="<?php echo esc_attr($filters['sa_make'] ?? ''); ?>" placeholder="<?php esc_attr_e('Toyota, Ford…', 'supreme-autoparts'); ?>" autocomplete="off" />
+      <section class="sa-pf__group">
+        <h3 class="sa-pf__title"><?php esc_html_e('Part number', 'supreme-autoparts'); ?></h3>
+        <label class="sa-pf__field sa-pf__field--search">
+          <span class="screen-reader-text"><?php esc_html_e('Part number', 'supreme-autoparts'); ?></span>
+          <input type="search" name="sa_pn" value="<?php echo esc_attr($st['pn']); ?>" placeholder="<?php esc_attr_e('e.g. 51313-B or OE number', 'supreme-autoparts'); ?>" autocomplete="off" inputmode="text" />
+        </label>
+      </section>
+
+      <?php if ($cats !== [] || $up_url !== '') : ?>
+      <section class="sa-pf__group">
+        <h3 class="sa-pf__title"><?php echo esc_html($current instanceof WP_Term ? __('Subcategory', 'supreme-autoparts') : __('Category', 'supreme-autoparts')); ?></h3>
+        <ul class="sa-pf__cats">
+          <?php if ($up_url !== '') : ?>
+            <li><a class="sa-pf__up" href="<?php echo esc_url($up_url); ?>">&larr; <?php echo esc_html($up_name); ?></a></li>
           <?php endif; ?>
-        </label>
-        <label class="sa-filters__field">
-          <span class="sa-filters__label"><?php esc_html_e('Model', 'supreme-autoparts'); ?></span>
-          <input type="text" name="sa_model" value="<?php echo esc_attr($filters['sa_model'] ?? ''); ?>" placeholder="<?php esc_attr_e('F-150, Civic…', 'supreme-autoparts'); ?>" autocomplete="off" />
-        </label>
-        <label class="sa-filters__field">
-          <span class="sa-filters__label"><?php esc_html_e('Year', 'supreme-autoparts'); ?></span>
-          <input type="text" name="sa_year" value="<?php echo esc_attr($filters['sa_year'] ?? ''); ?>" placeholder="<?php esc_attr_e('2021', 'supreme-autoparts'); ?>" inputmode="numeric" autocomplete="off" />
-        </label>
-      </div>
-    </details>
+          <?php if ($current instanceof WP_Term) : ?>
+            <li><span class="is-current"><?php echo esc_html(html_entity_decode($current->name, ENT_QUOTES, 'UTF-8')); ?></span></li>
+          <?php endif; ?>
+          <?php foreach ($cats as $i => $c) : ?>
+            <li class="<?php echo $i >= 12 ? 'sa-pf__more' : ''; ?>"><a href="<?php echo esc_url($c['url']); ?>"><?php echo esc_html($c['name']); ?> <span class="sa-pf__n"><?php echo esc_html(number_format_i18n($c['count'])); ?></span></a></li>
+          <?php endforeach; ?>
+        </ul>
+        <?php if (count($cats) > 12) : ?><button type="button" class="sa-pf__showmore" data-sa-pf-more><?php esc_html_e('Show all', 'supreme-autoparts'); ?></button><?php endif; ?>
+      </section>
+      <?php endif; ?>
 
-    <details class="sa-filter-group" open>
-      <summary><?php esc_html_e('Part', 'supreme-autoparts'); ?></summary>
-      <div class="sa-filters__stack">
-        <label class="sa-filters__field">
-          <span class="sa-filters__label"><?php esc_html_e('Part number', 'supreme-autoparts'); ?></span>
-          <input type="search" name="sa_pn" value="<?php echo esc_attr($filters['sa_pn'] ?? ''); ?>" placeholder="<?php esc_attr_e('SKU / OE / part #', 'supreme-autoparts'); ?>" autocomplete="off" enterkeyhint="search" />
+      <section class="sa-pf__group">
+        <h3 class="sa-pf__title"><?php esc_html_e('Availability & delivery', 'supreme-autoparts'); ?></h3>
+        <label class="sa-pf__check">
+          <input type="checkbox" name="instock" value="1" <?php checked($st['instock']); ?> />
+          <span><?php esc_html_e('In stock', 'supreme-autoparts'); ?></span>
+          <span class="sa-pf__n"><?php echo esc_html(number_format_i18n($stats['instock'])); ?></span>
         </label>
-        <label class="sa-filters__field">
-          <span class="sa-filters__label"><?php esc_html_e('Keyword', 'supreme-autoparts'); ?></span>
-          <input type="search" name="s" value="<?php echo esc_attr($filters['s'] ?? ''); ?>" placeholder="<?php esc_attr_e('Name or keyword…', 'supreme-autoparts'); ?>" autocomplete="off" />
+        <?php if ($stats['freeship'] > 0 || $st['freeship']) : ?>
+        <label class="sa-pf__check">
+          <input type="checkbox" name="freeship" value="1" <?php checked($st['freeship']); ?> />
+          <span><?php echo esc_html(sprintf(__('Free shipping (%s+ · US & Kenya)', 'supreme-autoparts'), $cur . number_format_i18n($free_min))); ?></span>
+          <span class="sa-pf__n"><?php echo esc_html(number_format_i18n($stats['freeship'])); ?></span>
         </label>
-      </div>
-    </details>
+        <?php endif; ?>
+      </section>
 
-    <div class="sa-filters__actions">
-      <button type="submit" class="sa-btn sa-filters__submit">
-        <?php esc_html_e('Apply filters', 'supreme-autoparts'); ?>
-      </button>
-      <?php if ($active || $current_id > 0) : ?>
-        <a class="sa-filters__clear" href="<?php echo esc_url($clear); ?>">
-          <?php esc_html_e('Clear all', 'supreme-autoparts'); ?>
-        </a>
+      <?php if ($pmax > $pmin) : ?>
+      <section class="sa-pf__group">
+        <h3 class="sa-pf__title"><?php esc_html_e('Price', 'supreme-autoparts'); ?></h3>
+        <div class="sa-pf__range" data-sa-pf-range data-min="<?php echo (int) $pmin; ?>" data-max="<?php echo (int) $pmax; ?>">
+          <div class="sa-pf__range-track"><div class="sa-pf__range-fill" data-fill></div>
+            <input type="range" min="<?php echo (int) $pmin; ?>" max="<?php echo (int) $pmax; ?>" value="<?php echo (int) $vmin; ?>" data-lo aria-label="<?php esc_attr_e('Minimum price', 'supreme-autoparts'); ?>" />
+            <input type="range" min="<?php echo (int) $pmin; ?>" max="<?php echo (int) $pmax; ?>" value="<?php echo (int) $vmax; ?>" data-hi aria-label="<?php esc_attr_e('Maximum price', 'supreme-autoparts'); ?>" />
+          </div>
+          <div class="sa-pf__range-inputs">
+            <label><span><?php echo esc_html($cur); ?></span><input type="number" name="min_price" min="0" value="<?php echo esc_attr($st['min']); ?>" placeholder="<?php echo (int) $pmin; ?>" data-lo-num inputmode="numeric" /></label>
+            <span aria-hidden="true">–</span>
+            <label><span><?php echo esc_html($cur); ?></span><input type="number" name="max_price" min="0" value="<?php echo esc_attr($st['max']); ?>" placeholder="<?php echo (int) $pmax; ?>" data-hi-num inputmode="numeric" /></label>
+          </div>
+        </div>
+      </section>
+      <?php endif; ?>
+
+      <?php foreach ($spec_groups as $f => $g) : ?>
+      <section class="sa-pf__group">
+        <h3 class="sa-pf__title"><?php echo esc_html($g['label']); ?></h3>
+        <input type="hidden" name="f_<?php echo esc_attr($f); ?>" value="<?php echo esc_attr(implode(',', $g['sel'])); ?>" data-sa-pf-multi />
+        <div class="sa-pf__opts">
+          <?php foreach ($g['opts'] as $o) : ?>
+            <label class="sa-pf__check">
+              <input type="checkbox" value="<?php echo esc_attr($o['value']); ?>" <?php checked(in_array($o['value'], $g['sel'], true)); ?> data-sa-pf-multi-opt="f_<?php echo esc_attr($f); ?>" />
+              <span><?php echo esc_html($o['label']); ?></span>
+              <span class="sa-pf__n"><?php echo esc_html(number_format_i18n($o['count'])); ?></span>
+            </label>
+          <?php endforeach; ?>
+        </div>
+      </section>
+      <?php endforeach; ?>
+
+      <?php if ($brands !== []) : ?>
+      <section class="sa-pf__group">
+        <h3 class="sa-pf__title"><?php esc_html_e('Brand', 'supreme-autoparts'); ?></h3>
+        <input type="hidden" name="filter_brand" value="<?php echo esc_attr(implode(',', $st['brand'])); ?>" data-sa-pf-multi />
+        <?php if (count($brands) > 8) : ?>
+          <input type="search" class="sa-pf__find" placeholder="<?php esc_attr_e('Find a brand', 'supreme-autoparts'); ?>" data-sa-pf-find aria-label="<?php esc_attr_e('Find a brand', 'supreme-autoparts'); ?>" />
+        <?php endif; ?>
+        <div class="sa-pf__opts sa-pf__opts--scroll">
+          <?php
+          usort($brands, static function ($a, $b) use ($st) {
+              $sa = in_array($a['value'], $st['brand'], true) ? 0 : 1;
+              $sb = in_array($b['value'], $st['brand'], true) ? 0 : 1;
+              return $sa <=> $sb ?: $b['count'] <=> $a['count'];
+          });
+          foreach ($brands as $o) :
+              ?>
+            <label class="sa-pf__check" data-name="<?php echo esc_attr(strtolower($o['label'])); ?>">
+              <input type="checkbox" value="<?php echo esc_attr($o['value']); ?>" <?php checked(in_array($o['value'], $st['brand'], true)); ?> data-sa-pf-multi-opt="filter_brand" />
+              <span><?php echo esc_html(html_entity_decode($o['label'], ENT_QUOTES, 'UTF-8')); ?></span>
+              <span class="sa-pf__n"><?php echo esc_html(number_format_i18n($o['count'])); ?></span>
+            </label>
+          <?php endforeach; ?>
+        </div>
+      </section>
       <?php endif; ?>
     </div>
 
-    <?php if ($active) : ?>
-      <div class="sa-filters__chips" aria-live="polite">
-        <?php
-        $chips = [];
-        if (($filters['sa_pn'] ?? '') !== '') {
-            $chips[] = sprintf(__('Part # %s', 'supreme-autoparts'), $filters['sa_pn']);
-        }
-        if (($filters['s'] ?? '') !== '') {
-            $chips[] = sprintf(__('“%s”', 'supreme-autoparts'), $filters['s']);
-        }
-        if (($filters['filter_brand'] ?? '') !== '') {
-            $label = $filters['filter_brand'];
-            foreach ($brands as $b) {
-                if ($b['slug'] === $filters['filter_brand']) {
-                    $label = $b['name'];
-                    break;
-                }
-            }
-            $chips[] = sprintf(__('Brand: %s', 'supreme-autoparts'), $label);
-        }
-        if (($filters['sa_make'] ?? '') !== '') {
-            $chips[] = sprintf(__('Make: %s', 'supreme-autoparts'), $filters['sa_make']);
-        }
-        if (($filters['sa_model'] ?? '') !== '') {
-            $chips[] = sprintf(__('Model: %s', 'supreme-autoparts'), $filters['sa_model']);
-        }
-        if (($filters['sa_year'] ?? '') !== '') {
-            $chips[] = sprintf(__('Year: %s', 'supreme-autoparts'), $filters['sa_year']);
-        }
-        if ($min_price !== '' || $max_price !== '') {
-            $chips[] = sprintf(__('Price: %1$s–%2$s', 'supreme-autoparts'), $min_price !== '' ? $min_price : '0', $max_price !== '' ? $max_price : '…');
-        }
-        foreach ($chips as $chip) :
-            ?>
-          <span class="sa-filters__chip"><?php echo esc_html($chip); ?></span>
-        <?php endforeach; ?>
-        <span class="sa-filters__count">
-          <?php
-          printf(
-              esc_html(_n('%s result', '%s results', $total, 'supreme-autoparts')),
-              esc_html(number_format_i18n($total))
-          );
-          ?>
-        </span>
-      </div>
-    <?php endif; ?>
+    <div class="sa-pf__foot">
+      <a class="sa-pf__clear" href="<?php echo esc_url($st['s'] !== '' ? add_query_arg(['s' => $st['s'], 'post_type' => 'product'], $clear) : $clear); ?>"><?php esc_html_e('Clear all', 'supreme-autoparts'); ?></a>
+      <button type="submit" class="sa-pf__apply"><?php esc_html_e('Apply', 'supreme-autoparts'); ?>
+        <?php if ($stats['total'] > 0) : ?><span>· <?php echo esc_html(sprintf(_n('%s part', '%s parts', (int) $GLOBALS['wp_query']->found_posts, 'supreme-autoparts'), number_format_i18n((int) $GLOBALS['wp_query']->found_posts))); ?></span><?php endif; ?>
+      </button>
+    </div>
   </form>
 </aside>
