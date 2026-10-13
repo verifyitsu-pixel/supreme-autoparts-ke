@@ -193,7 +193,7 @@ final class Whop_Open_Pay {
                             value="<?php echo esc_attr($prefill_amount); ?>"
                         />
                     </div>
-                    <p class="sa-open-pay__hint"><?php echo esc_html__('Enter any amount, e.g. 0.50, 25 or 1,234.50', 'whop-payments'); ?></p>
+                    <p class="sa-open-pay__hint"><?php echo esc_html__('Enter any amount, e.g. 25 or 1,234.50', 'whop-payments'); ?></p>
 
                     <label class="sa-open-pay__label" for="sa_open_pay_note">
                         <?php echo esc_html__('Note (optional)', 'whop-payments'); ?>
