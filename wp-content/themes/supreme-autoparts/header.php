@@ -16,25 +16,6 @@ if (!defined('ABSPATH')) {
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
 
-<div class="sa-announce">
-  <?php
-  $sa_welcome_code = function_exists('sa_core_welcome_coupon_code') ? sa_core_welcome_coupon_code() : 'WELCOME30';
-  echo esc_html__('New customers: 30% off with', 'supreme-autoparts');
-  echo ' <strong class="sa-announce__code">' . esc_html($sa_welcome_code) . '</strong> — ';
-  echo esc_html__('worldwide', 'supreme-autoparts');
-  ?>
-  <span class="sa-announce__sep" aria-hidden="true"> · </span>
-  <a href="<?php echo esc_url(home_url('/shop/?coupon=' . rawurlencode($sa_welcome_code))); ?>"><?php esc_html_e('Shop now', 'supreme-autoparts'); ?></a>
-  <span class="sa-announce__sep" aria-hidden="true"> · </span>
-  <?php
-  printf(
-      /* translators: %s: formatted free-shipping threshold */
-      esc_html__('Free US ship over %s*', 'supreme-autoparts'),
-      esc_html(sa_free_shipping_threshold())
-  );
-  ?>
-</div>
-
 <header class="sa-header" role="banner">
   <div class="sa-container sa-header__bar">
     <button type="button" class="sa-nav-toggle" data-sa-nav-toggle aria-expanded="false" aria-controls="sa-primary-nav">

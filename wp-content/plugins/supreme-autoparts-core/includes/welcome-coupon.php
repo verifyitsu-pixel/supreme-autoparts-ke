@@ -237,6 +237,49 @@ add_action('template_redirect', static function (): void {
     sa_core_try_apply_welcome_coupon($code);
 }, 20);
 
+
+/**
+ * True when the cart holds at least one item WELCOME30 can discount
+ * (i.e. anything other than the car-service booking-fee deposit).
+ */
+function sa_core_welcome_cart_has_eligible(): bool
+{
+    if (!function_exists('WC') || !WC()->cart) {
+        return false;
+    }
+    $fee = (int) get_option('sa_svc_fee_product', 0);
+    foreach (WC()->cart->get_cart() as $item) {
+        $pid = (int) ($item['product_id'] ?? 0);
+        $vid = (int) ($item['variation_id'] ?? 0);
+        if ($fee <= 0 || ($pid !== $fee && $vid !== $fee)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Drop WELCOME30 silently when no eligible items remain (e.g. booking-fee-only cart),
+ * so checkout never fails with "not applicable to selected products".
+ */
+function sa_core_welcome_prune_ineligible(): void
+{
+    if (!function_exists('WC') || !WC()->cart) {
+        return;
+    }
+    $code = strtolower(sa_core_welcome_coupon_code());
+    if (!in_array($code, array_map('strtolower', WC()->cart->get_applied_coupons()), true)) {
+        return;
+    }
+    if (!sa_core_welcome_cart_has_eligible()) {
+        WC()->cart->remove_coupon($code);
+    }
+}
+add_action('woocommerce_cart_loaded_from_session', 'sa_core_welcome_prune_ineligible', 25);
+add_action('woocommerce_cart_item_removed', 'sa_core_welcome_prune_ineligible', 20);
+add_action('woocommerce_checkout_process', 'sa_core_welcome_prune_ineligible', 1);
+add_action('woocommerce_before_checkout_form', 'sa_core_welcome_prune_ineligible', 1);
+
 /**
  * Attempt to apply welcome (or pending) coupon when cart has items and customer is new.
  */
@@ -258,6 +301,9 @@ function sa_core_try_apply_welcome_coupon(?string $prefer = null): void
     }
 
     $code = wc_format_coupon_code($code);
+    if (strtoupper($code) === sa_core_welcome_coupon_code() && !sa_core_welcome_cart_has_eligible()) {
+        return;
+    }
     $applied = array_map('strtolower', WC()->cart->get_applied_coupons());
     if (in_array(strtolower($code), $applied, true)) {
         return;
@@ -310,6 +356,9 @@ function sa_core_welcome_offer_notice(): void
 
     $applied = array_map('strtolower', WC()->cart->get_applied_coupons());
     $is_on   = in_array(strtolower($code), $applied, true);
+    if (!$is_on) {
+        return; // promo banner removed sitewide; only confirm when applied
+    }
 
     if ($is_on) {
         echo '<div class="sa-welcome-offer sa-welcome-offer--on" role="status">';
