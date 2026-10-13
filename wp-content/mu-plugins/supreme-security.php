@@ -34,7 +34,7 @@ add_action('send_headers', static function (): void {
     header('X-Content-Type-Options: nosniff', false);
     header('X-Frame-Options: SAMEORIGIN', false);
     header('Referrer-Policy: strict-origin-when-cross-origin', false);
-    header('Permissions-Policy: camera=(), microphone=(), geolocation=()', false);
+    header('Permissions-Policy: camera=(), microphone=(), geolocation=(self)', false);
     header('Cross-Origin-Opener-Policy: same-origin-allow-popups', false);
 
     // HSTS only when the request is HTTPS (Cloudflare / Railway TLS).

@@ -27,7 +27,7 @@
 .sa-rs-form input:focus,.sa-rs-form textarea:focus{outline:2px solid var(--rs-blue);outline-offset:1px;border-color:var(--rs-blue)}
 .sa-rs-inline{display:flex!important;align-items:center;gap:8px;font-weight:500!important}
 .sa-rs-inline input[type=datetime-local]{display:inline-block!important;width:auto!important;margin:0!important}
-.sa-rs-types{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.sa-rs-types{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px}
 .sa-rs-type{margin:0!important;cursor:pointer}.sa-rs-type input{position:absolute;opacity:0}
 .sa-rs-type span{display:flex;flex-direction:column;gap:4px;height:100%;padding:12px;border:1.5px solid var(--sa-border,#e4e4e4);border-radius:var(--rs-r);background:#fff;transition:.15s}
 .sa-rs-type small{color:var(--sa-text-muted,#6b6b6b);font-weight:500}
