@@ -132,6 +132,8 @@ final class SA_Geo_Display
             return (string) $html;
         }
 
+        $converted = self::snap($converted, $usd, $display);
+
         // Prevent recursive wc_price filter (calling wc_price inside this filter).
         self::$busy = true;
         $out = (string) $html;
@@ -139,6 +141,10 @@ final class SA_Geo_Display
             remove_filter('wc_price', [self::class, 'filter_wc_price'], 20);
             $new_args = is_array($args) ? $args : [];
             $new_args['currency'] = $display;
+            if (strtoupper($display) === 'KES') {
+                $new_args['decimals'] = 0;
+                $new_args['price_format'] = '%1$s&nbsp;%2$s';
+            }
             $out = (string) wc_price($converted, $new_args);
         } finally {
             add_filter('wc_price', [self::class, 'filter_wc_price'], 20, 4);
@@ -146,6 +152,26 @@ final class SA_Geo_Display
         }
 
         return $out;
+    }
+
+    /**
+     * Store prices are USD with 2 decimals, so a local-currency amount (e.g. the KES 1,000
+     * booking fee stored as USD 7.74) comes back a few cents off (KES 999.91). Undo that
+     * cent-rounding noise: show KES as whole shillings, and snap to a round hundred when the
+     * gap is within the USD cent-rounding error (2 cents' worth of the rate).
+     */
+    public static function snap(float $converted, float $usd, string $display): float
+    {
+        if (strtoupper($display) !== 'KES' || $usd <= 0) {
+            return $converted;
+        }
+        $rate = SA_FX_Rates::rate_for($display);
+        $tol  = ($rate !== null && $rate > 0) ? $rate * 0.02 : 1.0;
+        $hundred = round($converted / 100) * 100;
+        if ($hundred > 0 && abs($converted - $hundred) <= $tol) {
+            return (float) $hundred;
+        }
+        return (float) round($converted);
     }
 
     public static function render_charge_note(): void
