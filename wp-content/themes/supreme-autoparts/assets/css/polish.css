@@ -157,3 +157,4 @@ img{max-width:100%;height:auto}
 .sa-hero.sa-hed h1.sa-hed__title{margin:0 0 22px;font-family:Archivo,Inter,system-ui,sans-serif;font-stretch:72%;font-variation-settings:"wdth" 72;font-weight:900;text-transform:uppercase;font-size:clamp(3rem,8.4vw,7.4rem);line-height:.86;letter-spacing:-.01em;color:#fff;max-width:11ch}
 .sa-hero.sa-hed h1.sa-hed__title em{color:#f2a31b}
 @media (max-width:700px){.sa-hero.sa-hed h1.sa-hed__title{font-size:clamp(2.9rem,15vw,4.4rem)}.sa-hed__kicker{letter-spacing:.14em;font-size:11px}.sa-hed__kicker::before{width:24px}.sa-hed__indexrow span{font-size:1rem}}
+.sa-hed__search{z-index:5}.sa-hed__veh{position:relative;z-index:1}
