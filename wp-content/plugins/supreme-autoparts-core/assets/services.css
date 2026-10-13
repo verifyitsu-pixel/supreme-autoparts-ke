@@ -1,4 +1,4 @@
-.sa-svc{--svc-ink:#0b1f3a;--svc-acc:var(--sa-accent,#F5A623);--svc-act:var(--sa-action,#3665f3);--svc-line:#e6e8ee;color:var(--sa-text,#333)}
+.sa-svc{--svc-ink:#0b1f3a;--svc-acc:var(--sa-accent,#F5A623);--svc-act:var(--sa-action,#0a0a0a);--svc-line:#e6e8ee;color:var(--sa-text,#333)}
 .sa-svc .sa-container{max-width:1200px;margin:0 auto;padding:0 20px}
 .sa-svc-ico{width:24px;height:24px;flex:0 0 auto;vertical-align:middle}
 .sa-svc-hero{background:linear-gradient(135deg,#0b1f3a 0%,#13335f 60%,#1b4a8a 100%);color:#fff;padding:56px 0 48px}
@@ -92,7 +92,7 @@
 .sa-svc-bk h3{font-size:17px;margin:10px 0;color:var(--svc-ink);display:flex;gap:8px;align-items:center}
 .sa-svc-bk dl{display:grid;grid-template-columns:80px 1fr;gap:6px 10px;font-size:14px;margin:0 0 12px}.sa-svc-bk dt{color:#6b7280}.sa-svc-bk dd{margin:0;font-weight:600}
 .sa-svc-status{font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em;background:#eef1f6;color:#374151}
-.sa-svc-status--pending{background:#fff7e6;color:#b45309}.sa-svc-status--confirmed{background:#e0ecff;color:#1d4ed8}.sa-svc-status--in_progress{background:#ede9fe;color:#6d28d9}.sa-svc-status--done{background:#dcfce7;color:#15803d}.sa-svc-status--cancelled{background:#fee2e2;color:#b91c1c}
+.sa-svc-status--pending{background:#fff7e6;color:#b45309}.sa-svc-status--confirmed{background:#e0ecff;color:#2b2b2b}.sa-svc-status--in_progress{background:#ede9fe;color:#6d28d9}.sa-svc-status--done{background:#dcfce7;color:#15803d}.sa-svc-status--cancelled{background:#fee2e2;color:#b91c1c}
 .sa-svc-vehs{display:grid;gap:8px;margin:10px 0}.sa-svc-veh{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--svc-line);border-radius:12px;padding:10px 14px;background:#fff}
 .sa-svc-vehadd{grid-template-columns:repeat(auto-fit,minmax(120px,1fr));align-items:center}
 .sa-home-services{padding:44px 0;background:linear-gradient(135deg,#0b1f3a,#13335f);color:#fff}
@@ -172,8 +172,8 @@ body.sa-side-open{overflow:hidden}
 .sa-acct-tiles small{color:#6b7280}.sa-acct-list{padding-left:18px}
 .sa-paths{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
 .sa-path{display:flex;gap:12px;align-items:flex-start;background:#fff;border:2px solid #e6e8ee;border-radius:16px;padding:16px;text-decoration:none!important;color:#0b1f3a;transition:border-color .15s,transform .15s}
-.sa-path:hover{border-color:#3665f3;transform:translateY(-1px)}.sa-path--svc:hover{border-color:#F5A623}
-.sa-path .sa-svc-ico{width:30px;height:30px;color:#3665f3}.sa-path--svc .sa-svc-ico{color:#c47d07}
+.sa-path:hover{border-color:#0a0a0a;transform:translateY(-1px)}.sa-path--svc:hover{border-color:#F5A623}
+.sa-path .sa-svc-ico{width:30px;height:30px;color:#0a0a0a}.sa-path--svc .sa-svc-ico{color:#c47d07}
 .sa-path span{display:flex;flex-direction:column;gap:3px}.sa-path strong{font-size:17px}.sa-path small{color:#555;font-size:13px}
 @media (max-width:900px){.sa-svc-wiz__grid{grid-template-columns:1fr}.sa-svc-side{position:static;order:-1}.sa-svc-progress li{font-size:0}.sa-svc-progress li::before{font-size:12px}}
 @media (max-width:560px){.sa-paths{grid-template-columns:1fr}}
@@ -196,4 +196,4 @@ body.sa-side-open{overflow:hidden}
 
 /* Homepage: three service paths (Shop Parts, Book a Service, Roadside Rescue). */
 .sa-paths{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
-.sa-path--rs .sa-svc-ico{color:var(--sa-action,#3665f3)}
+.sa-path--rs .sa-svc-ico{color:var(--sa-action,#0a0a0a)}

@@ -43,7 +43,7 @@
 .sa-ga-cal__hd{background:#f6f7f7;font-weight:700;padding:8px;border-bottom:1px solid #e4e4e4;font-size:12px}
 .sa-ga-cal__bay{padding:8px;font-weight:600;border-top:1px solid #f0f0f0;background:#fafafa;font-size:12px}
 .sa-ga-cal__cell{border-top:1px solid #f0f0f0;border-left:1px solid #f0f0f0;padding:4px;min-height:70px;display:grid;gap:4px;align-content:start}
-.sa-ga-ev{display:block;font-size:11px;padding:5px 6px;border-radius:6px;background:#eef2fe;color:#1f3fb0;text-decoration:none;border-left:3px solid #3665f3}
+.sa-ga-ev{display:block;font-size:11px;padding:5px 6px;border-radius:6px;background:#eef2fe;color:#1f3fb0;text-decoration:none;border-left:3px solid #0a0a0a}
 .sa-ga-ev--booking{background:#fff4df;color:#6b4500;border-left-color:#F5A623}
 .sa-ga-ev--ready,.sa-ga-ev--delivered{background:#e7f6ec;color:#16794a;border-left-color:#16a34a}
 .sa-ga-ev form{margin:2px 0 0}

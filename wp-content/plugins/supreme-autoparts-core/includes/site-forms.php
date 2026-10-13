@@ -301,5 +301,32 @@ add_filter('do_shortcode_tag', static function ($out, $tag) {
 }, 10, 2);
 
 add_action('wp_head', static function (): void {
-    echo '<style id="sa-sf-css">.sa-sf-narrow{max-width:760px;padding-top:24px;padding-bottom:40px}.sa-sf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}.sa-sf-hp{position:absolute!important;left:-9999px;width:1px;height:1px;overflow:hidden}.sa-sf-ok{background:#ecfdf3;border:1px solid #a7f3c4;color:#065f46;border-radius:12px;padding:14px 16px;margin:12px 0}.sa-sf-note{font-size:13px;color:#6b7280;margin:0}.sa-sf-embed{margin-top:28px;max-width:760px}.sa-sf-embed .sa-svc-form label,.sa-sf .sa-svc-form label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:#374151}.sa-xlinks{display:flex;flex-direction:column;gap:6px;margin:12px 0 4px}.sa-xlink{font-size:14px;font-weight:600;color:#1863dc;text-decoration:none}.sa-xlink:hover{text-decoration:underline}.sa-xlink--strong{display:inline-block;background:#F5A623;color:#0b1f3a;border-radius:10px;padding:10px 14px;align-self:flex-start}.sa-next{margin:28px auto}.sa-next h2{font-size:20px;margin:0 0 12px}.sa-next__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}.sa-next__card{display:flex;flex-direction:column;gap:4px;padding:16px;border:1px solid #e6e8ee;border-radius:14px;background:#fff;color:#0b1f3a;text-decoration:none!important;transition:border-color .15s,transform .15s}.sa-next__card:hover{border-color:#3665f3;transform:translateY(-2px)}.sa-next__card span{color:#555;font-size:14px}</style>';
+    echo '<style id="sa-sf-css">.sa-sf-narrow{max-width:760px;padding-top:24px;padding-bottom:40px}.sa-sf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}.sa-sf-hp{position:absolute!important;left:-9999px;width:1px;height:1px;overflow:hidden}.sa-sf-ok{background:#ecfdf3;border:1px solid #a7f3c4;color:#065f46;border-radius:12px;padding:14px 16px;margin:12px 0}.sa-sf-note{font-size:13px;color:#6b7280;margin:0}.sa-sf-embed{margin-top:28px;max-width:760px}.sa-sf-embed .sa-svc-form label,.sa-sf .sa-svc-form label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:#374151}.sa-xlinks{display:flex;flex-direction:column;gap:6px;margin:12px 0 4px}.sa-xlink{font-size:14px;font-weight:600;color:#0a0a0a;text-decoration:none}.sa-xlink:hover{text-decoration:underline}.sa-xlink--strong{display:inline-block;background:#F5A623;color:#0b1f3a;border-radius:10px;padding:10px 14px;align-self:flex-start}.sa-next{margin:28px auto}.sa-next h2{font-size:20px;margin:0 0 12px}.sa-next__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}.sa-next__card{display:flex;flex-direction:column;gap:4px;padding:16px;border:1px solid #e6e8ee;border-radius:14px;background:#fff;color:#0b1f3a;text-decoration:none!important;transition:border-color .15s,transform .15s}.sa-next__card:hover{border-color:#0a0a0a;transform:translateY(-2px)}.sa-next__card span{color:#555;font-size:14px}</style>';
 });
+
+/* Hero search suggestions with real (CDN) product images. */
+function sa_sf_suggest(): void
+{
+    $q = trim(sanitize_text_field(wp_unslash((string) ($_GET['q'] ?? ''))));
+    if (mb_strlen($q) < 2) {
+        wp_send_json_success([]);
+    }
+    $ck = 'sa_sugg_' . md5(strtolower($q));
+    $out = get_transient($ck);
+    if (!is_array($out)) {
+        $ids = (new WP_Query(['post_type' => 'product', 'post_status' => 'publish', 's' => $q, 'posts_per_page' => 6, 'fields' => 'ids', 'no_found_rows' => true]))->posts;
+        $out = [];
+        foreach ($ids as $id) {
+            $p = wc_get_product($id);
+            if (!$p || !$p->is_visible()) {
+                continue;
+            }
+            $img = function_exists('sa_core_get_product_email_image_url') ? sa_core_get_product_email_image_url($p, 96) : '';
+            $out[] = ['name' => html_entity_decode($p->get_name(), ENT_QUOTES, 'UTF-8'), 'permalink' => get_permalink($id), 'images' => $img !== '' ? [['thumbnail' => $img]] : []];
+        }
+        set_transient($ck, $out, 10 * MINUTE_IN_SECONDS);
+    }
+    wp_send_json_success($out);
+}
+add_action('wp_ajax_sa_suggest', 'sa_sf_suggest');
+add_action('wp_ajax_nopriv_sa_suggest', 'sa_sf_suggest');

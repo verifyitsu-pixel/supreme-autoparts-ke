@@ -1,7 +1,7 @@
-/* Roadside Rescue — matches design system: action blue #3665f3, 10px radius, theme fonts. */
-.sa-rs{--rs-blue:var(--sa-action,#3665f3);--rs-r:10px;padding-bottom:84px}
-.sa-rs .sa-svc-btn--primary{background:var(--rs-blue);color:#fff!important;box-shadow:0 6px 16px rgba(54,101,243,.22)}
-.sa-rs .sa-svc-btn--primary:hover{background:var(--sa-action-hover,#2a54d6)}
+/* Roadside Rescue — matches design system: action blue #0a0a0a, 10px radius, theme fonts. */
+.sa-rs{--rs-blue:var(--sa-action,#0a0a0a);--rs-r:10px;padding-bottom:84px}
+.sa-rs .sa-svc-btn--primary{background:var(--rs-blue);color:#fff!important;box-shadow:0 6px 16px rgba(242,163,27,.22)}
+.sa-rs .sa-svc-btn--primary:hover{background:var(--sa-action-hover,#2b2b2b)}
 .sa-rs .sa-svc-btn{border-radius:var(--rs-r)}
 .sa-rs-btn--big{padding:15px 24px;font-size:1.05rem}
 .sa-rs-btn--wa{background:#fff;border:1px solid var(--sa-border-strong,#ccc);color:#128c3e!important}
@@ -31,7 +31,7 @@
 .sa-rs-type{margin:0!important;cursor:pointer}.sa-rs-type input{position:absolute;opacity:0}
 .sa-rs-type span{display:flex;flex-direction:column;gap:4px;height:100%;padding:12px;border:1.5px solid var(--sa-border,#e4e4e4);border-radius:var(--rs-r);background:#fff;transition:.15s}
 .sa-rs-type small{color:var(--sa-text-muted,#6b6b6b);font-weight:500}
-.sa-rs-type input:checked+span{border-color:var(--rs-blue);box-shadow:0 0 0 3px rgba(54,101,243,.15);background:#f5f8ff}
+.sa-rs-type input:checked+span{border-color:var(--rs-blue);box-shadow:0 0 0 3px rgba(242,163,27,.15);background:#fff8eb}
 .sa-rs-type input:focus-visible+span{outline:2px solid var(--rs-blue)}
 .sa-rs-type .sa-svc-ico{width:26px;height:26px;color:var(--rs-blue)}
 .sa-rs-locate{width:100%;justify-content:center;margin-bottom:8px}
@@ -44,15 +44,15 @@
 .sa-hp{position:absolute!important;left:-9999px!important}
 /* status */
 .sa-rs-stat{display:flex;align-items:center;gap:10px}
-.sa-rs-eta{display:flex;align-items:center;gap:6px;font-size:1.1rem;background:#f5f8ff;border-radius:var(--rs-r);padding:10px 14px;color:#1e3a8a}
+.sa-rs-eta{display:flex;align-items:center;gap:6px;font-size:1.1rem;background:#fff8eb;border-radius:var(--rs-r);padding:10px 14px;color:#1e3a8a}
 .sa-rs-steps{list-style:none;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:0;margin:18px 0;counter-reset:s}
 .sa-rs-steps li{position:relative;text-align:center;font-size:.8rem;color:var(--sa-text-muted,#6b6b6b)}
 .sa-rs-steps li span{display:block;width:16px;height:16px;margin:0 auto 6px;border-radius:50%;background:#dfe3ea;position:relative;z-index:1}
 .sa-rs-steps li:not(:first-child)::before{content:"";position:absolute;top:7px;right:50%;width:100%;height:3px;background:#dfe3ea}
 .sa-rs-steps li.is-done span,.sa-rs-steps li.is-now span,.sa-rs-steps li.is-done::before,.sa-rs-steps li.is-now::before{background:var(--rs-blue)}
-.sa-rs-steps li.is-now span{box-shadow:0 0 0 5px rgba(54,101,243,.2);animation:rsP 1.6s infinite}
+.sa-rs-steps li.is-now span{box-shadow:0 0 0 5px rgba(242,163,27,.2);animation:rsP 1.6s infinite}
 .sa-rs-steps li strong{display:block;color:var(--sa-heading,#191919)}.sa-rs-steps em{font-style:normal}
-@keyframes rsP{50%{box-shadow:0 0 0 9px rgba(54,101,243,.06)}}
+@keyframes rsP{50%{box-shadow:0 0 0 9px rgba(242,163,27,.06)}}
 .sa-rs-card{background:#fff;border:1px solid var(--sa-border,#e4e4e4);border-radius:var(--rs-r);padding:16px;margin:14px 0}.sa-rs-card h2{font-size:1.1rem;margin:0 0 10px}
 .sa-rs-prov,.sa-rs-pay,.sa-rs-offer{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:1px solid var(--sa-border,#e4e4e4);border-radius:var(--rs-r);padding:14px;margin:12px 0}
 .sa-rs-prov small,.sa-rs-pay small{display:block;color:var(--sa-text-muted,#6b6b6b)}.sa-rs-prov span,.sa-rs-offer span{display:block;font-size:.85rem;color:var(--sa-text-muted,#6b6b6b)}
@@ -71,7 +71,7 @@
 .sa-rs-badge{display:inline-block;font-size:.75rem;font-weight:700;padding:3px 9px;border-radius:999px;background:#eef2f6;color:#344054;white-space:nowrap}
 .sa-rs-badge--received{background:#fff4e5;color:#9a5b00}.sa-rs-badge--dispatched,.sa-rs-badge--en_route{background:#eaf0ff;color:#1e40af}
 .sa-rs-badge--arrived{background:#e8f7ff;color:#075985}.sa-rs-badge--completed{background:#e7f8ee;color:#166534}.sa-rs-badge--cancelled{background:#f2f4f7;color:#667085}
-.sa-rs-pin span{display:block;width:22px;height:22px;border-radius:50%;background:var(--sa-action,#3665f3);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.sa-rs-pin span{display:block;width:22px;height:22px;border-radius:50%;background:var(--sa-action,#0a0a0a);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35)}
 .sa-rs-pin--prov span{background:#f5a623}
 /* account */
 .sa-rs-acct{display:flex;flex-direction:column;gap:8px}
@@ -89,12 +89,12 @@
 .sa-rs-job__act,.sa-rs-job__contact{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px;margin-top:10px}
 .sa-rs-job__act label{font-size:.8rem;font-weight:600}.sa-rs-job__act input{display:block;width:110px;padding:8px;border:1px solid var(--sa-border-strong,#ccc);border-radius:8px;font-size:16px}
 .sa-rs-job__act input[data-text]{width:180px}
-.sa-rs-acct-tip{background:#f5f8ff;border-radius:var(--rs-r);padding:10px 14px}
+.sa-rs-acct-tip{background:#fff8eb;border-radius:var(--rs-r);padding:10px 14px}
 /* admin */
 .sa-rs-admin .sa-rs-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0}
 .sa-rs-kpis div{background:#fff;border:1px solid #e4e4e4;border-radius:10px;padding:14px}.sa-rs-kpis strong{display:block;font-size:1.6rem}.sa-rs-kpis span{color:#6b6b6b}
 .sa-rs-filter{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0}
 .sa-rs-adetail{display:grid;grid-template-columns:1.2fr 1fr;gap:24px}@media(max-width:1100px){.sa-rs-adetail{grid-template-columns:1fr}}
 .sa-rs-aform{margin:6px 0 12px}.sa-rs-ahist{font-size:13px}.sa-rs-ahist em{color:#6b6b6b}
-.sa-rs-bars div{display:grid;grid-template-columns:160px 1fr 40px;align-items:center;gap:8px;margin:4px 0}.sa-rs-bars i{display:block;height:12px;background:#3665f3;border-radius:6px}
+.sa-rs-bars div{display:grid;grid-template-columns:160px 1fr 40px;align-items:center;gap:8px;margin:4px 0}.sa-rs-bars i{display:block;height:12px;background:#0a0a0a;border-radius:6px}
 @media(max-width:600px){.sa-rs-steps li{font-size:.68rem}.sa-rs-prov,.sa-rs-pay{flex-wrap:wrap}}

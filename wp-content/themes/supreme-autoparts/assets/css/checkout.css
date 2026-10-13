@@ -1180,14 +1180,14 @@ body.woocommerce-checkout { padding-bottom: 1.5rem; }
 }
 .sa-checkout-place__btn,
 .woocommerce-checkout #place_order {
-  background: var(--sa-action, #3665f3) !important;
+  background: var(--sa-action, #0a0a0a) !important;
   color: #fff !important;
   border-radius: 24px !important;
   box-shadow: none !important;
 }
 .sa-checkout-place__btn:hover,
 .woocommerce-checkout #place_order:hover {
-  background: var(--sa-action-hover, #2a54d6) !important;
+  background: var(--sa-action-hover, #2b2b2b) !important;
 }
 .sa-checkout-terms,
 .woocommerce-terms-and-conditions-wrapper {

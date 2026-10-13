@@ -6,7 +6,7 @@
 
   /* ---- live suggestions ---- */
   var form = document.querySelector('[data-sa-hx-search]');
-  if (form && cfg.store) {
+  if (form && cfg.ajaxUrl) {
     var input = form.querySelector('input[name=s]'), list = form.querySelector('.sa-hx__sugg'), t = 0, ctl = null, active = -1;
     var esc = function (s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
     var close = function () { list.hidden = true; input.setAttribute('aria-expanded', 'false'); active = -1; };
@@ -24,8 +24,8 @@
       if (q.length < 2) { close(); return; }
       t = setTimeout(function () {
         if (ctl) ctl.abort(); ctl = 'AbortController' in window ? new AbortController() : null;
-        fetch(cfg.store + '?per_page=6&search=' + encodeURIComponent(q), { signal: ctl ? ctl.signal : undefined, credentials: 'same-origin' })
-          .then(function (r) { return r.ok ? r.json() : []; }).then(function (rows) { if (input.value.trim() === q) paint(rows || [], q); }).catch(function () {});
+        fetch(cfg.ajaxUrl + '?action=sa_suggest&q=' + encodeURIComponent(q), { signal: ctl ? ctl.signal : undefined, credentials: 'same-origin' })
+          .then(function (r) { return r.ok ? r.json() : {}; }).then(function (j) { return j && j.success ? j.data : []; }).then(function (rows) { if (input.value.trim() === q) paint(rows || [], q); }).catch(function () {});
       }, 220);
     });
     input.addEventListener('keydown', function (e) {

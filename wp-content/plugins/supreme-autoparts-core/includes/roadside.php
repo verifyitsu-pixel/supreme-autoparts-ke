@@ -382,7 +382,7 @@ function sa_rs_email(int $id, string $event, string $note = ''): void
     $label = sa_rs_statuses()[$r['status']] ?? $r['status'];
     $headers = ['Content-Type: text/html; charset=UTF-8'];
     $admin = (string) get_option('woocommerce_email_from_address', get_option('admin_email'));
-    $btn = static fn(string $url, string $t) => '<p style="margin:18px 0"><a href="' . esc_url($url) . '" style="display:inline-block;background:#3665f3;color:#fff;text-decoration:none;font-weight:700;padding:13px 24px;border-radius:10px">' . esc_html($t) . '</a></p>';
+    $btn = static fn(string $url, string $t) => '<p style="margin:18px 0"><a href="' . esc_url($url) . '" style="display:inline-block;background:#0a0a0a;color:#fff;text-decoration:none;font-weight:700;padding:13px 24px;border-radius:10px">' . esc_html($t) . '</a></p>';
     $rows = ['Request number' => $r['ref'], 'Help needed' => $svc, 'Status' => $label,
         'Location' => trim($r['address'] . ($r['landmark'] ? ' (near ' . $r['landmark'] . ')' : '')) ?: ($r['lat'] ? $r['lat'] . ', ' . $r['lng'] : ''),
         'Vehicle' => trim($r['year'] . ' ' . $r['make'] . ' ' . $r['model'] . ' ' . $r['reg']), 'Phone' => $r['phone']];

@@ -44,7 +44,7 @@ img{max-width:100%;height:auto}
 /* Home hero photo cards (v1.4.72): real photos, 3-up grid, no layout shift */
 .sa-hero .sa-paths.sa-paths--photo{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:22px 0 4px}
 .sa-hero .sa-pcard{display:flex;flex-direction:column;gap:0;padding:0;overflow:hidden;background:#fff;border:1px solid #e6e8ee;border-radius:var(--sa-r-card,16px);box-shadow:0 1px 2px rgba(11,31,58,.06);color:#0b1f3a;text-decoration:none!important;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
-.sa-hero .sa-pcard:hover,.sa-hero .sa-pcard:focus-visible{transform:translateY(-3px);box-shadow:0 12px 28px rgba(11,31,58,.14);border-color:#3665f3}
+.sa-hero .sa-pcard:hover,.sa-hero .sa-pcard:focus-visible{transform:translateY(-3px);box-shadow:0 12px 28px rgba(11,31,58,.14);border-color:#0a0a0a}
 .sa-hero .sa-pcard.sa-path--svc:hover{border-color:#F5A623}
 .sa-pcard__media{display:block;aspect-ratio:4/3;overflow:hidden;background:#eef1f6}
 .sa-pcard__media img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .35s ease}
@@ -52,7 +52,7 @@ img{max-width:100%;height:auto}
 .sa-hero .sa-pcard .sa-pcard__body{position:relative;display:flex;flex-direction:column;gap:5px;padding:14px 44px 16px 16px}
 .sa-hero .sa-pcard strong{font-size:18px;line-height:1.25}
 .sa-hero .sa-pcard small{color:#555;font-size:13.5px;line-height:1.45}
-.sa-pcard__go{position:absolute;right:16px;top:14px;font-style:normal;font-weight:700;color:#3665f3;transition:transform .18s}
+.sa-pcard__go{position:absolute;right:16px;top:14px;font-style:normal;font-weight:700;color:#0a0a0a;transition:transform .18s}
 .sa-path--svc .sa-pcard__go{color:#c47d07}
 .sa-pcard:hover .sa-pcard__go{transform:translateX(3px)}
 @media (max-width:860px){.sa-hero .sa-paths.sa-paths--photo{grid-template-columns:1fr 1fr}.sa-hero .sa-pcard.sa-path--rs{grid-column:1/-1}.sa-hero .sa-pcard.sa-path--rs .sa-pcard__media{aspect-ratio:16/7}}
@@ -63,7 +63,7 @@ img{max-width:100%;height:auto}
 
 /* Premium hero (v1.4.74): photo-free, type + colour led */
 .sa-hero.sa-hero--premium{padding:0 0 8px;background:#f5f7fb;border-bottom:0}
-.sa-hero--premium .sa-hero__band{position:relative;overflow:hidden;color:#fff;background:radial-gradient(1200px 500px at 85% -10%,rgba(54,101,243,.55),transparent 60%),radial-gradient(700px 400px at 0% 120%,rgba(245,166,35,.28),transparent 60%),linear-gradient(135deg,#071427 0%,#0b1f3a 55%,#0f2c57 100%);padding:44px 0 92px}
+.sa-hero--premium .sa-hero__band{position:relative;overflow:hidden;color:#fff;background:radial-gradient(1200px 500px at 85% -10%,rgba(242,163,27,.55),transparent 60%),radial-gradient(700px 400px at 0% 120%,rgba(245,166,35,.28),transparent 60%),linear-gradient(135deg,#071427 0%,#0b1f3a 55%,#0f2c57 100%);padding:44px 0 92px}
 .sa-hero--premium .sa-hero__band::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(180deg,#000,transparent 85%);pointer-events:none}
 .sa-hero--premium .sa-hero__copy{position:relative;z-index:1;max-width:46rem}
 .sa-hero--premium .sa-hero__eyebrow{display:inline-block;margin:0 0 14px;padding:6px 12px;border:1px solid rgba(255,255,255,.2);border-radius:999px;background:rgba(255,255,255,.06);color:#cfe0ff;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
@@ -158,3 +158,10 @@ img{max-width:100%;height:auto}
 .sa-hero.sa-hed h1.sa-hed__title em{color:#f2a31b}
 @media (max-width:700px){.sa-hero.sa-hed h1.sa-hed__title{font-size:clamp(2.9rem,15vw,4.4rem)}.sa-hed__kicker{letter-spacing:.14em;font-size:11px}.sa-hed__kicker::before{width:24px}.sa-hed__indexrow span{font-size:1rem}}
 .sa-hed__search{z-index:5}.sa-hed__veh{position:relative;z-index:1}
+
+/* Brand system (v1.4.78): black / white / amber everywhere. Header search matches the hero search. */
+:root{--sa-amber:#f2a31b;--sa-amber-hover:#ffb62e}
+.sa-search button,.sa-search button[type=submit]{background:var(--sa-amber)!important;border-color:var(--sa-amber)!important;color:#0a0a0a!important}
+.sa-search button:hover{background:var(--sa-amber-hover)!important;color:#0a0a0a!important}
+.sa-search button svg{stroke:currentColor;color:#0a0a0a}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline-color:var(--sa-amber)}

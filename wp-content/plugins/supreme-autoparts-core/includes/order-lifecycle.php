@@ -122,13 +122,13 @@ function sa_ol_timeline_html(WC_Order $o): string
         $reached = true;
         foreach ($flow as $i => $s) {
             $done = in_array($s, $seen, true) || ($s === 'placed') || ($s === $cur);
-            $html .= '<li style="flex:1 1 90px;min-width:90px;padding:8px 10px;border-radius:8px;font-size:.8rem;font-weight:600;border:1px solid ' . ($done ? '#3665f3;background:#eef2fe;color:#1f3fb0' : '#e4e4e4;background:#fff;color:#888') . '">' . ($done ? '✓ ' : ($i + 1) . '. ') . esc_html($lab[$s] ?? $s) . '</li>';
+            $html .= '<li style="flex:1 1 90px;min-width:90px;padding:8px 10px;border-radius:8px;font-size:.8rem;font-weight:600;border:1px solid ' . ($done ? '#0a0a0a;background:#eef2fe;color:#1f3fb0' : '#e4e4e4;background:#fff;color:#888') . '">' . ($done ? '✓ ' : ($i + 1) . '. ') . esc_html($lab[$s] ?? $s) . '</li>';
         }
         $html .= '</ol>';
     }
     $html .= '<ul style="list-style:none;padding:0;margin:0;border-left:2px solid #e4e4e4">';
     foreach (array_reverse($h) as $e) {
-        $html .= '<li style="padding:0 0 12px 14px;position:relative"><span style="position:absolute;left:-6px;top:4px;width:10px;height:10px;border-radius:50%;background:#3665f3"></span><strong>' . esc_html($lab[$e['s']] ?? ucfirst((string) $e['s'])) . '</strong> <small style="color:#6b6b6b">' . esc_html(wp_date('j M Y, g:i A', (int) $e['t'])) . ' EAT</small>'
+        $html .= '<li style="padding:0 0 12px 14px;position:relative"><span style="position:absolute;left:-6px;top:4px;width:10px;height:10px;border-radius:50%;background:#0a0a0a"></span><strong>' . esc_html($lab[$e['s']] ?? ucfirst((string) $e['s'])) . '</strong> <small style="color:#6b6b6b">' . esc_html(wp_date('j M Y, g:i A', (int) $e['t'])) . ' EAT</small>'
             . ($e['n'] !== '' ? '<div style="color:#444;font-size:.9rem">' . esc_html((string) $e['n']) . '</div>' : '') . '</li>';
     }
     $html .= '</ul>';
@@ -165,7 +165,7 @@ add_action('woocommerce_thankyou', static function ($order_id): void {
 function sa_mail_layout(string $heading, string $inner, string $cta_label = '', string $cta_url = '', string $preheader = ''): string
 {
     $logo = function_exists('sa_theme_logo_url') ? sa_theme_logo_url(true) : home_url('/wp-content/themes/supreme-autoparts/assets/logo-light.jpg');
-    $btn = ($cta_label !== '' && $cta_url !== '') ? '<tr><td style="padding:8px 28px 24px"><a href="' . esc_url($cta_url) . '" style="display:inline-block;background:#3665f3;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 26px;border-radius:6px">' . esc_html($cta_label) . '</a></td></tr>' : '';
+    $btn = ($cta_label !== '' && $cta_url !== '') ? '<tr><td style="padding:8px 28px 24px"><a href="' . esc_url($cta_url) . '" style="display:inline-block;background:#0a0a0a;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 26px;border-radius:6px">' . esc_html($cta_label) . '</a></td></tr>' : '';
     return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>' . esc_html($heading) . '</title></head>'
         . '<body style="margin:0;background:#f4f4f4;font-family:Inter,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#333">'
         . '<span style="display:none;max-height:0;overflow:hidden">' . esc_html($preheader) . '</span>'
@@ -206,7 +206,7 @@ function sa_ol_email_content(WC_Order $o, string $stage, string $note = ''): arr
     $c = (string) $o->get_meta('_sa_courier');
     $trk_no = (string) $o->get_meta('_sa_tracking_no');
     $trk = sa_ol_tracking_url($o);
-    $trkh = $trk_no !== '' ? '<p><strong>Courier:</strong> ' . esc_html(sa_ol_couriers()[$c]['label'] ?? 'Courier') . '<br><strong>Tracking number:</strong> ' . esc_html($trk_no) . ($trk ? '<br><a href="' . esc_url($trk) . '" style="color:#1863dc">Track your parcel on the courier site</a>' : '') . '</p>' : '';
+    $trkh = $trk_no !== '' ? '<p><strong>Courier:</strong> ' . esc_html(sa_ol_couriers()[$c]['label'] ?? 'Courier') . '<br><strong>Tracking number:</strong> ' . esc_html($trk_no) . ($trk ? '<br><a href="' . esc_url($trk) . '" style="color:#0a0a0a">Track your parcel on the courier site</a>' : '') . '</p>' : '';
     $view = sa_ol_view_url($o);
     $m = [
         'processing' => ['We are preparing order #' . $n, 'Your order is being processed', '<p>We have your order and are getting it ready. We will email you again when it ships or is ready for pickup.</p>' . sa_ol_items_html($o), 'View your order', $view],
