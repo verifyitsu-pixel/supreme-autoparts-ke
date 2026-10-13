@@ -127,3 +127,4 @@
 .woocommerce-checkout-review-order-table .product-total,.woocommerce-checkout-review-order-table tfoot td{width:38%;text-align:right;white-space:nowrap}
 #order_review table.woocommerce-checkout-review-order-table{width:100%!important;max-width:100%!important;margin:0!important}
 body.woocommerce-checkout .sa-page__content,body.woocommerce-cart .sa-page__content{max-width:1180px!important;width:100%}
+.woocommerce #order_review table.shop_table.woocommerce-checkout-review-order-table{table-layout:fixed!important}
