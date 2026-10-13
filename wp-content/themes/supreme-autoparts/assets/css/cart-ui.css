@@ -175,3 +175,12 @@
 #order_review table.woocommerce-checkout-review-order-table{width:100%!important;max-width:100%!important;margin:0!important}
 body.woocommerce-checkout .sa-page__content,body.woocommerce-cart .sa-page__content{max-width:1180px!important;width:100%}
 .woocommerce #order_review table.shop_table.woocommerce-checkout-review-order-table{table-layout:fixed!important}
+/* Shipping choices: full-width stacked row so long labels never squeeze */
+.woocommerce-checkout-review-order-table tr.woocommerce-shipping-totals,.cart_totals tr.woocommerce-shipping-totals{display:block}
+.woocommerce-checkout-review-order-table tr.woocommerce-shipping-totals>th,.woocommerce-checkout-review-order-table tr.woocommerce-shipping-totals>td,
+.cart_totals tr.woocommerce-shipping-totals>th,.cart_totals tr.woocommerce-shipping-totals>td{display:block;width:100%!important;text-align:left!important;white-space:normal!important;padding-left:0;padding-right:0}
+#shipping_method{list-style:none;margin:.35rem 0 0;padding:0;display:flex;flex-direction:column;gap:.45rem}
+#shipping_method li{display:flex;align-items:flex-start;gap:.5rem;padding:.6rem .7rem;border:1px solid #e7e9ee;border-radius:10px;line-height:1.35;white-space:normal;overflow-wrap:normal;word-break:normal}
+#shipping_method li input{margin-top:.2rem;flex:0 0 auto}
+#shipping_method li label{flex:1;font-weight:500}
+tr.sa-fargo-nobranch{display:block}tr.sa-fargo-nobranch td{display:block;width:100%!important;white-space:normal!important}
