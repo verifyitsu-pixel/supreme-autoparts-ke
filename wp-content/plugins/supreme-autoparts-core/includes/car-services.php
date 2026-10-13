@@ -436,10 +436,6 @@ function sa_svc_region_switch(string $region, string $base): string
 function sa_svc_render_index(): void
 {
     $region = sa_svc_region();
-    $groups = [];
-    foreach (sa_svc_catalog() as $slug => $s) {
-        $groups[$s['group']][$slug] = $s;
-    }
     ?>
     <section class="sa-svc-hero">
       <div class="sa-container sa-svc-hero__in">
@@ -463,12 +459,10 @@ function sa_svc_render_index(): void
     </section>
     <section class="sa-container sa-svc-catalog">
       <div class="sa-svc-head"><h2>All services</h2><?php echo sa_svc_region_switch($region, sa_svc_url()); ?></div>
-      <?php foreach ($groups as $g => $items) : ?>
-        <h3 class="sa-svc-group"><?php echo esc_html($g); ?></h3>
         <div class="sa-svc-grid">
-          <?php foreach ($items as $slug => $s) : ?>
+          <?php foreach (sa_svc_catalog() as $slug => $s) : ?>
             <article class="sa-svc-card">
-              <div class="sa-svc-card__ico"><?php echo sa_svc_icon($s['icon']); ?></div>
+              <div class="sa-svc-card__top"><div class="sa-svc-card__ico"><?php echo sa_svc_icon($s['icon']); ?></div><span class="sa-svc-tag"><?php echo esc_html($s['group']); ?></span></div>
               <h4><a href="<?php echo esc_url(sa_svc_url($slug)); ?>"><?php echo esc_html($s['name']); ?></a></h4>
               <p><?php echo esc_html($s['summary']); ?></p>
               <div class="sa-svc-card__foot">
@@ -482,7 +476,6 @@ function sa_svc_render_index(): void
             </article>
           <?php endforeach; ?>
         </div>
-      <?php endforeach; ?>
       <p class="sa-svc-fine">Kenya prices are reference prices published by AutoXpress Kenya; US prices are national average ranges from RepairPal. Services without a published price are quoted for your vehicle. You always approve the final price before work starts.</p>
     </section>
     <?php

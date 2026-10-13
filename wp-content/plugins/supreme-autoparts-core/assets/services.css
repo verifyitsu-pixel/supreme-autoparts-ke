@@ -105,3 +105,5 @@
 .sa-nav__link--service{color:#c47d07!important;font-weight:800!important}
 @media (max-width:860px){.sa-svc-hero__in,.sa-svc-detail__grid,.sa-home-services__in{grid-template-columns:1fr}.sa-svc-pricebox{position:static}.sa-home-services__grid{grid-template-columns:repeat(2,1fr)}.sa-svc-hero{padding:36px 0}}
 @media (max-width:480px){.sa-svc-choices{grid-template-columns:1fr 1fr}.sa-svc-btn--lg{width:100%}.sa-svc-step{padding:16px}}
+.sa-svc-card__top{display:flex;justify-content:space-between;align-items:flex-start}.sa-svc-tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;background:#f3f4f6;padding:4px 8px;border-radius:999px}
+.sa-svc-catalog .sa-svc-grid{margin-top:18px}
