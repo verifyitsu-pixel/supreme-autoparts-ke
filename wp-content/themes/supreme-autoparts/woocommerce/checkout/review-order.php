@@ -9,11 +9,7 @@
 defined('ABSPATH') || exit;
 
 $sa_currency = function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : 'USD';
-$sa_total_label = sprintf(
-    /* translators: %s: currency code e.g. USD */
-    __('Total (%s)', 'supreme-autoparts'),
-    $sa_currency
-);
+$sa_total_label = __('Total', 'supreme-autoparts');
 ?>
 <table class="shop_table woocommerce-checkout-review-order-table sa-checkout-review-table">
   <thead>

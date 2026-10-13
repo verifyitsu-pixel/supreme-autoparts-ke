@@ -157,6 +157,7 @@ $free_ship = function_exists('sa_theme_cart_has_free_shipping') && sa_theme_cart
     <aside class="sa-cart-layout__summary">
       <div class="sa-cart-summary cart-collaterals">
         <?php do_action('woocommerce_cart_collaterals'); ?>
+<?php if (!function_exists('sa_ship_is_us') || sa_ship_is_us()) : ?>
         <p class="sa-cart-ship-note">
           <?php
           printf(
@@ -166,6 +167,9 @@ $free_ship = function_exists('sa_theme_cart_has_free_shipping') && sa_theme_cart
           );
           ?>
         </p>
+        <?php else : ?>
+        <p class="sa-cart-ship-note"><?php esc_html_e('Kenya: free Store pickup in Njiru, Nairobi, or Fargo Courier to your town (priced by weight at checkout).', 'supreme-autoparts'); ?></p>
+        <?php endif; ?>
         <div class="sa-cart-trust">
           <a href="<?php echo esc_url(sa_page_url('shipping-policy')); ?>"><?php esc_html_e('Shipping', 'supreme-autoparts'); ?></a>
           <a href="<?php echo esc_url(sa_page_url('returns')); ?>"><?php esc_html_e('Returns', 'supreme-autoparts'); ?></a>

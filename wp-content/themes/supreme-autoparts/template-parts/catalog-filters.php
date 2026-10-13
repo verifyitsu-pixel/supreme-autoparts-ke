@@ -196,10 +196,10 @@ $n_active = count($chips);
           <span><?php esc_html_e('In stock', 'supreme-autoparts'); ?></span>
           <span class="sa-pf__n"><?php echo esc_html(number_format_i18n($stats['instock'])); ?></span>
         </label>
-        <?php if ($stats['freeship'] > 0 || $st['freeship']) : ?>
+        <?php if ((!function_exists('sa_ship_is_us') || sa_ship_is_us()) && ($stats['freeship'] > 0 || $st['freeship'])) : ?>
         <label class="sa-pf__check">
           <input type="checkbox" name="freeship" value="1" <?php checked($st['freeship']); ?> />
-          <span><?php echo esc_html(sprintf(__('Free shipping (%s+ · US & Kenya)', 'supreme-autoparts'), $cur . number_format_i18n($free_min))); ?></span>
+          <span><?php echo esc_html(sprintf(__('Free US shipping (%s+)', 'supreme-autoparts'), $cur . number_format_i18n($free_min))); ?></span>
           <span class="sa-pf__n"><?php echo esc_html(number_format_i18n($stats['freeship'])); ?></span>
         </label>
         <?php endif; ?>

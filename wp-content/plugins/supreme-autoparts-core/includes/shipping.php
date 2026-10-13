@@ -23,7 +23,58 @@ if (!defined('ABSPATH')) {
  * - Local pickup (Nairobi) .............. $0.00  (local_pickup, KE)
  * - International ....................... $25.00 (Rest of World flat_rate)
  */
-const SA_SHIPPING_ZONES_VER = '5';
+const SA_SHIPPING_ZONES_VER = '6';
+const SA_STORE_PICKUP_TITLE = 'Store pickup (free) — Ground Floor, Midax Plaza, Kandundo Rd, Njiru, Nairobi';
+
+/**
+ * Is this visitor a US customer? Uses the address they entered (shipping, else billing country)
+ * once they have typed any address detail; before that, the geolocated country.
+ */
+function sa_ship_is_us(): bool
+{
+    static $memo = null;
+    if ($memo !== null && !wp_doing_ajax()) {
+        return $memo;
+    }
+    $cc = '';
+    if (function_exists('WC') && WC()->customer) {
+        $cu = WC()->customer;
+        $typed = trim((string) $cu->get_shipping_state() . $cu->get_shipping_city() . $cu->get_shipping_postcode() . $cu->get_shipping_address_1()
+            . $cu->get_billing_state() . $cu->get_billing_city() . $cu->get_billing_postcode() . $cu->get_billing_address_1()) !== '';
+        if ($typed) {
+            $cc = (string) ($cu->get_shipping_country() ?: $cu->get_billing_country());
+        }
+    }
+    if ($cc === '' && class_exists('SA_Geo_Detector')) {
+        $cc = (string) SA_Geo_Detector::country_code();
+    }
+    $memo = strtoupper($cc) === 'US';
+    return $memo;
+}
+
+/*
+ * Rate gate (belt and braces over the zones):
+ * - Free shipping only ever for US destinations.
+ * - Kenya: exactly Store pickup + Fargo Courier.
+ */
+add_filter('woocommerce_package_rates', static function ($rates, $package) {
+    $cc = strtoupper((string) ($package['destination']['country'] ?? ''));
+    foreach ($rates as $id => $rate) {
+        $mid = is_object($rate) && method_exists($rate, 'get_method_id') ? $rate->get_method_id() : '';
+        if ($cc !== 'US' && $mid === 'free_shipping') {
+            unset($rates[$id]);
+            continue;
+        }
+        if ($cc === 'KE' && !in_array($mid, ['local_pickup', 'sa_fargo'], true)) {
+            unset($rates[$id]);
+            continue;
+        }
+        if ($cc === 'KE' && $mid === 'local_pickup' && method_exists($rate, 'set_label')) {
+            $rate->set_label(SA_STORE_PICKUP_TITLE);
+        }
+    }
+    return $rates;
+}, 50, 2);
 
 /**
  * Free-shipping minimum in store currency (USD).
@@ -110,15 +161,6 @@ function sa_core_ensure_shipping_zones(): void
     if ($ke_zone) {
         sa_core_sync_zone_methods($ke_zone, [
             [
-                'id'         => 'free_shipping',
-                'title'      => $free_title,
-                'requires'   => 'min_amount',
-                'min_amount' => (string) $free_min,
-                'order'      => 0,
-                'meta_key'   => '_sa_ship_code',
-                'meta_val'   => 'free',
-            ],
-            [
                 'id'       => 'sa_fargo',
                 'title'    => 'Fargo Courier',
                 'tax'      => 'none',
@@ -128,7 +170,7 @@ function sa_core_ensure_shipping_zones(): void
             ],
             [
                 'id'       => 'local_pickup',
-                'title'    => 'Local pickup (Nairobi)',
+                'title'    => SA_STORE_PICKUP_TITLE,
                 'cost'     => '0',
                 'tax'      => 'no',
                 'order'    => 3,
@@ -139,7 +181,8 @@ function sa_core_ensure_shipping_zones(): void
         // v5: Fargo Courier (weight + county) replaces the flat Nairobi / Upcountry rates.
         foreach ($ke_zone->get_shipping_methods(false) as $iid => $m) {
             $t = strtolower((string) ($m->title ?? ''));
-            if (($m->id ?? '') === 'flat_rate' && (str_contains($t, 'nairobi deliver') || str_contains($t, 'upcountry'))) {
+            // v6: Kenya = Store pickup + Fargo only (no free-shipping or flat methods).
+            if (in_array(($m->id ?? ''), ['flat_rate', 'free_shipping'], true)) {
                 $ke_zone->delete_shipping_method((int) $iid);
             }
         }
@@ -150,15 +193,6 @@ function sa_core_ensure_shipping_zones(): void
     if ($row) {
         sa_core_sync_zone_methods($row, [
             [
-                'id'         => 'free_shipping',
-                'title'      => $free_title,
-                'requires'   => 'min_amount',
-                'min_amount' => (string) $free_min,
-                'order'      => 0,
-                'meta_key'   => '_sa_ship_code',
-                'meta_val'   => 'free_intl',
-            ],
-            [
                 'id'       => 'flat_rate',
                 'title'    => 'International shipping',
                 'cost'     => '25',
@@ -168,6 +202,12 @@ function sa_core_ensure_shipping_zones(): void
                 'meta_val' => 'intl',
             ],
         ]);
+        // v6: free shipping is US-only.
+        foreach ($row->get_shipping_methods(false) as $iid => $m) {
+            if (($m->id ?? '') === 'free_shipping') {
+                $row->delete_shipping_method((int) $iid);
+            }
+        }
     }
 
     update_option('sa_shipping_zones_ver', SA_SHIPPING_ZONES_VER);

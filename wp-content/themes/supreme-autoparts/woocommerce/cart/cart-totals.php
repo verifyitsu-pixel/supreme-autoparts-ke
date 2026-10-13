@@ -112,7 +112,7 @@ $needs_shipping = WC()->cart && WC()->cart->needs_shipping() && WC()->cart->show
   <ul class="sa-cart-perks" aria-label="<?php esc_attr_e('Checkout benefits', 'supreme-autoparts'); ?>">
     <li><?php esc_html_e('Secure card checkout', 'supreme-autoparts'); ?></li>
     <li><?php esc_html_e('Order tracking by email', 'supreme-autoparts'); ?></li>
-    <li><?php printf(esc_html__('Free US shipping on orders %s and up', 'supreme-autoparts'), esc_html(function_exists('sa_free_shipping_threshold') ? sa_free_shipping_threshold() : '$99')); ?></li>
+    <?php if (!function_exists('sa_ship_is_us') || sa_ship_is_us()) : ?><li><?php printf(esc_html__('Free US shipping on orders %s and up', 'supreme-autoparts'), esc_html(function_exists('sa_free_shipping_threshold') ? sa_free_shipping_threshold() : '$99')); ?></li><?php else : ?><li><?php esc_html_e('Store pickup or Fargo delivery in Kenya', 'supreme-autoparts'); ?></li><?php endif; ?>
   </ul>
 
   <div class="sa-cart-sticky-bar" data-sa-cart-sticky>

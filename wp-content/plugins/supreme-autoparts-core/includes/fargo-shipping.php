@@ -65,7 +65,7 @@ function sa_fargo_destination(string $state, string $city): ?array
     $pick = '';
     if ($cityn !== '') {
         foreach ($towns as $t => $row) {
-            if (sa_fargo_norm($t) === $cityn && ($county === '' || $row['county'] === $county)) {
+            if (sa_fargo_norm($t) === $cityn && ($county === '' || $row['county'] === $county || in_array($county, $card['counties_without_branch'] ?? [], true))) {
                 $pick = $t;
                 break;
             }
@@ -122,7 +122,7 @@ function sa_fargo_kes_to_store(float $kes): ?float
         }
         if ($rate > 0) {
             $usd_per = SA_FX_Rates::rate_for($cur) ?: 1.0; // store currency per USD
-            return round($kes / $rate * $usd_per, 2);
+            return $kes / $rate * $usd_per; // unrounded so the KES display converts back exactly
         }
     }
     return null;
@@ -214,6 +214,28 @@ if(window.jQuery){jQuery(document.body).on('updated_checkout country_to_state_ch
 </script>
     <?php
 }, 50);
+
+/** Kenya counties with no Fargo branch (Wajir, Mandera): explain instead of a silent gap. */
+function sa_fargo_no_branch_notice(): void
+{
+    if (!function_exists('WC') || !WC()->customer) {
+        return;
+    }
+    $cu = WC()->customer;
+    if (strtoupper((string) $cu->get_shipping_country()) !== 'KE') {
+        return;
+    }
+    $state = (string) $cu->get_shipping_state();
+    if ($state === '' || sa_fargo_destination($state, (string) $cu->get_shipping_city())) {
+        return;
+    }
+    $county = sa_fargo_county_name($state) ?: $state;
+    echo '<tr class="sa-fargo-nobranch"><td colspan="2" style="font-size:.85rem;color:#6b6b6b;line-height:1.4">'
+        . esc_html(sprintf('Fargo Courier has no branch in %s. Choose Store pickup, or enter the nearest town with a Fargo branch (e.g. Garissa or Isiolo) in Town / City. Need help? WhatsApp +1 917 437 5121.', $county))
+        . '</td></tr>';
+}
+add_action('woocommerce_review_order_after_shipping', 'sa_fargo_no_branch_notice');
+add_action('woocommerce_cart_totals_after_shipping', 'sa_fargo_no_branch_notice');
 
 /** Public quote + weight stats (read-only), used for QA. */
 add_action('rest_api_init', static function (): void {

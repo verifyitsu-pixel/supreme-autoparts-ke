@@ -54,6 +54,7 @@ $sa_count = function_exists('sa_published_product_count') ? sa_published_product
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h13v10H3z"/><path d="M16 10h3l2 3v4h-5V10z"/><circle cx="7.5" cy="18.5" r="1.5"/><circle cx="17.5" cy="18.5" r="1.5"/></svg>
         </span>
         <div>
+          <?php if (!function_exists('sa_ship_is_us') || sa_ship_is_us()) : ?>
           <strong><?php esc_html_e('Free US shipping', 'supreme-autoparts'); ?></strong>
           <span>
             <?php
@@ -64,6 +65,10 @@ $sa_count = function_exists('sa_published_product_count') ? sa_published_product
             );
             ?>
           </span>
+          <?php else : ?>
+          <strong><?php esc_html_e('Kenya delivery', 'supreme-autoparts'); ?></strong>
+          <span><?php esc_html_e('Free store pickup in Njiru, Nairobi, or Fargo Courier to your town', 'supreme-autoparts'); ?></span>
+          <?php endif; ?>
         </div>
       </li>
       <li class="sa-trust__item">
@@ -198,7 +203,7 @@ endif;
       <li class="sa-how__step">
         <span class="sa-how__num" aria-hidden="true">4</span>
         <strong><?php esc_html_e('We ship', 'supreme-autoparts'); ?></strong>
-        <span><?php esc_html_e('Ships across the continental US — international available. Track by email.', 'supreme-autoparts'); ?></span>
+        <span><?php esc_html_e('Store pickup or courier delivery to your door. Track by email.', 'supreme-autoparts'); ?></span>
       </li>
     </ol>
   </div>
@@ -266,7 +271,7 @@ endif;
       </a>
       <a class="sa-guides-strip__card" href="<?php echo esc_url(sa_page_url('shipping-policy')); ?>">
         <strong><?php esc_html_e('Shipping & delivery', 'supreme-autoparts'); ?></strong>
-        <span><?php esc_html_e('Continental US rates, free-shipping threshold, and international options.', 'supreme-autoparts'); ?></span>
+        <span><?php esc_html_e('Delivery options, rates and pickup details.', 'supreme-autoparts'); ?></span>
       </a>
       <a class="sa-guides-strip__card" href="<?php echo esc_url(sa_page_url('performance-truck-parts')); ?>">
         <strong><?php esc_html_e('Truck & off-road', 'supreme-autoparts'); ?></strong>
