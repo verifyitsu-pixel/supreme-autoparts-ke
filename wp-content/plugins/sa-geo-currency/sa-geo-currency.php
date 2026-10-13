@@ -110,6 +110,10 @@ function sa_geo_stamp_order_currency_meta($order): void
     if (!is_object($order) || !method_exists($order, 'set_currency')) {
         return;
     }
+    // Open-pay orders are charged in the exact currency/amount the customer entered.
+    if (method_exists($order, 'get_meta') && $order->get_meta('_sa_native_currency')) {
+        return;
+    }
     $checkout = sa_geo_checkout_currency();
     $order->set_currency($checkout);
 
