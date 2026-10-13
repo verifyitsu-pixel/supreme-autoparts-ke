@@ -256,7 +256,6 @@ add_action('woocommerce_single_product_summary', static function (): void {
         echo '<a class="sa-xlink sa-xlink--strong" href="' . esc_url(add_query_arg('product', $id, home_url('/request-a-part/'))) . '">Request a price for this part</a>';
     }
     echo '<a class="sa-xlink" href="' . esc_url(add_query_arg('product', $id, home_url('/fitment-check/'))) . '">Not sure it fits? Check fitment</a>';
-    echo '<a class="sa-xlink" href="' . esc_url(add_query_arg('part', $id, home_url('/book-service/'))) . '">Need it fitted? Book installation at our Njiru garage</a>';
     echo '</div>';
 }, 38);
 
