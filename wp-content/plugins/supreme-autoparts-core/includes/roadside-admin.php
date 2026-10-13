@@ -52,7 +52,7 @@ add_action('admin_post_sa_rs_admin', static function (): void {
         }
         sa_rs_set_status($id, $st, $txt, $me);
     } elseif ($isreq && $do === 'note' && $txt !== '') {
-        $n = (array) get_post_meta($id, '_rs_notes', true);
+        $n = sa_rs_meta_list($id, '_rs_notes');
         $n[] = ['t' => time(), 'w' => $me, 'x' => $txt];
         update_post_meta($id, '_rs_notes', $n);
     } elseif ($isreq && $do === 'msg' && $txt !== '') {
@@ -256,7 +256,7 @@ function sa_rs_admin_list(): void
     if (!$ids) echo '<tr><td colspan="7">No requests.</td></tr>';
     foreach ($ids as $i) {
         $r = sa_rs_data((int) $i);
-        echo '<tr><td><a href="' . esc_url(sa_rs_admin_url(['r' => $i])) . '"><strong>' . esc_html($r['ref']) . '</strong></a></td><td>' . esc_html(sa_rs_catalog()[$r['type']]['name'] ?? $r['type']) . '</td><td>' . esc_html($r['name']) . '<br><a href="tel:' . esc_attr($r['phone']) . '">' . esc_html($r['phone']) . '</a></td><td>' . esc_html(mb_strimwidth(trim($r['address'] . ' ' . $r['landmark']), 0, 60, '…') ?: ($r['lat'] ? 'Pin' : '—')) . '</td><td><span class="sa-rs-badge sa-rs-badge--' . esc_attr($r['status']) . '">' . esc_html(sa_rs_statuses()[$r['status']]) . '</span></td><td>' . esc_html($r['provider'] ? get_the_title($r['provider']) : '—') . '</td><td>' . esc_html(wp_date('j M, g:i A', $r['created'])) . '</td></tr>';
+        echo '<tr><td><a href="' . esc_url(sa_rs_admin_url(['r' => $i])) . '"><strong>' . esc_html($r['ref']) . '</strong></a></td><td>' . esc_html(sa_rs_catalog()[$r['type']]['name'] ?? $r['type']) . '</td><td>' . esc_html($r['name']) . '<br><a href="tel:' . esc_attr($r['phone']) . '">' . esc_html($r['phone']) . '</a></td><td>' . esc_html(wp_html_excerpt(trim($r['address'] . ' ' . $r['landmark']), 60, '…') ?: ($r['lat'] ? 'Pin' : '—')) . '</td><td><span class="sa-rs-badge sa-rs-badge--' . esc_attr($r['status']) . '">' . esc_html(sa_rs_statuses()[$r['status']]) . '</span></td><td>' . esc_html($r['provider'] ? get_the_title($r['provider']) : '—') . '</td><td>' . esc_html(wp_date('j M, g:i A', $r['created'])) . '</td></tr>';
     }
     echo '</tbody></table>';
 }

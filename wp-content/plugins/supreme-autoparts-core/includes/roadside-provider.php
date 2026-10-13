@@ -132,7 +132,7 @@ function sa_rs_provider_jobs(int $pid): array
                 $mine[] = $r;
             }
         } elseif ($r['status'] === 'received' && in_array($r['type'], $p['services'], true)
-            && !in_array($pid, (array) get_post_meta($id, '_rs_declined', true), true)
+            && !in_array($pid, sa_rs_meta_list($id, '_rs_declined'), true)
             && ($r['km'] === null || $r['km'] <= $p['radius'])) {
             $open[] = $r;
         }
@@ -239,7 +239,7 @@ function sa_rs_provider_ajax(): void
         wp_send_json_success(['reload' => 1]);
     }
     if ($do === 'decline') {
-        $d = (array) get_post_meta($id, '_rs_declined', true);
+        $d = sa_rs_meta_list($id, '_rs_declined');
         $d[] = $pid;
         update_post_meta($id, '_rs_declined', array_values(array_unique($d)));
         if ($r['provider'] === $pid && $r['status'] === 'dispatched') {

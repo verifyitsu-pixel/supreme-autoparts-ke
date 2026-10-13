@@ -121,14 +121,20 @@ function sa_rs_data(int $id): array
         $d[$k] = $m($k);
     }
     foreach (['history', 'messages', 'notes', 'offers'] as $k) {
-        $v = $m($k);
-        $d[$k] = is_array($v) ? $v : [];
+        $d[$k] = array_values(array_filter(sa_rs_meta_list($id, '_rs_' . $k), 'is_array'));
     }
     $d['status'] = $d['status'] ?: 'received';
     $d['user'] = (int) $d['user'];
     $d['provider'] = (int) $d['provider'];
     $d['created'] = (int) ($d['created'] ?: get_post_time('U', true, $id));
     return $d;
+}
+
+/** Array meta that is always a clean list of arrays/scalars (never [''] from an empty meta). */
+function sa_rs_meta_list(int $id, string $key): array
+{
+    $v = get_post_meta($id, $key, true);
+    return is_array($v) ? array_values(array_filter($v, static fn($x) => $x !== '' && $x !== null)) : [];
 }
 
 function sa_rs_set(int $id, string $k, $v): void
@@ -138,7 +144,7 @@ function sa_rs_set(int $id, string $k, $v): void
 
 function sa_rs_log(int $id, string $status, string $note = '', string $by = ''): void
 {
-    $h = (array) get_post_meta($id, '_rs_history', true);
+    $h = sa_rs_meta_list($id, '_rs_history');
     $h[] = ['t' => time(), 's' => $status, 'n' => $note, 'by' => $by];
     update_post_meta($id, '_rs_history', $h);
 }
@@ -323,7 +329,7 @@ function sa_rs_customer_action(): void
 
 function sa_rs_add_message(int $id, string $from, string $who, string $text): void
 {
-    $m = (array) get_post_meta($id, '_rs_messages', true);
+    $m = sa_rs_meta_list($id, '_rs_messages');
     $m[] = ['t' => time(), 'f' => $from, 'w' => $who, 'x' => mb_substr($text, 0, 1000)];
     update_post_meta($id, '_rs_messages', array_slice($m, -100));
 }
