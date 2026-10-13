@@ -39,7 +39,7 @@ $current = (function_exists('is_product_category') && is_product_category()) ? g
 $brands_root = get_term_by('slug', 'brands', 'product_cat');
 $brands_root_id = $brands_root instanceof WP_Term ? (int) $brands_root->term_id : -1;
 $parent_id = $current instanceof WP_Term ? (int) $current->term_id : 0;
-$child_terms = get_terms(['taxonomy' => 'product_cat', 'parent' => $parent_id, 'hide_empty' => true, 'exclude' => [$brands_root_id], 'number' => 80]);
+$child_terms = get_terms(['taxonomy' => 'product_cat', 'parent' => $parent_id, 'hide_empty' => true, 'exclude' => [$brands_root_id], 'number' => 0]);
 $cat_counts = [];
 foreach (sa_fx_counts('cat', 'cat', 2000) as $c) {
     $cat_counts[(int) $c['value']] = $c['count'];

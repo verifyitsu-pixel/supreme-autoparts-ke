@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-const SA_FX_VER = '3';
+const SA_FX_VER = '4';
 const SA_FX_BATCH = 600;
 
 function sa_fx_table(bool $build = false): string
@@ -116,7 +116,7 @@ function sa_fx_parse_fits_tag(string $tag): array
 /** Years from a title: 2021-2024, 21-24, 2019+, 2020. */
 function sa_fx_title_years(string $title): array
 {
-    $now = (int) gmdate('Y') + 1;
+    $now = (int) gmdate('Y');
     if (preg_match('/\b((?:19|20)\d{2})\s*[-–]\s*((?:19|20)\d{2})\b/', $title, $m)) {
         $a = (int) $m[1]; $b = (int) $m[2];
     } elseif (preg_match('/\b(\d{2})\s*[-–]\s*(\d{2})\b/', $title, $m)) {
