@@ -580,7 +580,7 @@ function sa_svc_render_index(): void
           <p class="sa-svc-eyebrow">Supreme Autoparts garage · Njiru, Nairobi</p>
           <h1>Car service, booked in two minutes</h1>
           <p class="sa-svc-lead">From oil changes and brake pads to alignment, AC and full servicing. Pick a time online, drop the car off or have us collect it, and we fit real parts from our own shop. Your KES 1,000 booking fee is deducted from the final bill.</p>
-          <p class="sa-svc-usnote" style="margin:12px 0;padding:10px 14px;border-left:3px solid #c8102e;background:#f6f7f9;font-size:14px;line-height:1.5"><strong>Outside Kenya?</strong> Customers in the US: we forward your request to our support team, who route you to a suitable service centre near you. Services, pricing and booking work differently for customers outside Kenya.</p>
+          <p class="sa-svc-usnote" style="margin:12px 0;padding:10px 14px;border-left:3px solid #c8102e;background:#f6f7f9;color:#1a1f2b;font-size:14px;line-height:1.5"><strong style="color:#1a1f2b">Outside Kenya?</strong> Customers in the US: we forward your request to our support team, who route you to a suitable service centre near you. Services, pricing and booking work differently for customers outside Kenya.</p>
           <div class="sa-svc-cta">
             <a class="sa-svc-btn sa-svc-btn--primary" href="<?php echo esc_url(sa_svc_book_url()); ?>"><?php echo sa_svc_icon('calendar'); ?> Book a service</a>
             <a class="sa-svc-btn sa-svc-btn--ghost" href="<?php echo esc_url(function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/')); ?>">Shop parts</a>
@@ -739,7 +739,7 @@ function sa_svc_render_book(): void
     <div class="sa-container sa-svc-wiz">
       <nav class="sa-svc-crumbs"><a href="<?php echo esc_url(home_url('/')); ?>">Home</a> / <a href="<?php echo esc_url(sa_svc_url()); ?>">Services</a> / <span>Book</span></nav>
       <h1><?php echo $old ? 'Reschedule ' . esc_html($old['ref']) : 'Book a service'; ?></h1>
-      <p class="sa-svc-usnote" style="margin:12px 0;padding:10px 14px;border-left:3px solid #c8102e;background:#f6f7f9;font-size:14px;line-height:1.5"><strong>Outside Kenya?</strong> Customers in the US: we forward your request to our support team, who route you to a suitable service centre near you. Services, pricing and booking work differently for customers outside Kenya.</p>
+      <p class="sa-svc-usnote" style="margin:12px 0;padding:10px 14px;border-left:3px solid #c8102e;background:#f6f7f9;color:#1a1f2b;font-size:14px;line-height:1.5"><strong style="color:#1a1f2b">Outside Kenya?</strong> Customers in the US: we forward your request to our support team, who route you to a suitable service centre near you. Services, pricing and booking work differently for customers outside Kenya.</p>
       <p class="sa-svc-lead">Five quick steps. Pay a KES <?php echo esc_html(number_format((float) sa_svc_setting('fee_kes'))); ?> booking fee to confirm, which is credited to your bill. You pay the rest at the service, after approving the final quote.</p>
       <ul class="sa-svc-trust"><li><?php echo sa_svc_icon('check'); ?>Written quote before work</li><li><?php echo sa_svc_icon('check'); ?>Free online cancellation</li><li><?php echo sa_svc_icon('check'); ?>Parts from our own shop</li><li><?php echo sa_svc_icon('pin'); ?>Njiru, Nairobi garage</li></ul>
       <?php if ($err) : ?><div class="sa-svc-alert"><?php echo esc_html($err); ?></div><?php endif; ?>
@@ -1660,7 +1660,7 @@ function sa_svc_terms(): array
 
 function sa_svc_render_terms(): void
 {
-    echo '<div class="sa-container sa-svc-book sa-svc-terms"><h1>Booking Terms &amp; Policies</h1><p class="sa-svc-lead">Plain-language terms for car service bookings. Last updated ' . esc_html(wp_date('j F Y', (int) get_option('sa_svc_terms_date', strtotime('2026-10-13')))) . '.</p>' . '<p class="sa-svc-usnote" style="margin:12px 0;padding:10px 14px;border-left:3px solid #c8102e;background:#f6f7f9;font-size:14px;line-height:1.5"><strong>Outside Kenya?</strong> Customers in the US: we forward your request to our support team, who route you to a suitable service centre near you. Services, pricing and booking work differently for customers outside Kenya.</p>' . '<ol>';
+    echo '<div class="sa-container sa-svc-book sa-svc-terms"><h1>Booking Terms &amp; Policies</h1><p class="sa-svc-lead">Plain-language terms for car service bookings. Last updated ' . esc_html(wp_date('j F Y', (int) get_option('sa_svc_terms_date', strtotime('2026-10-13')))) . '.</p>' . '<p class="sa-svc-usnote" style="margin:12px 0;padding:10px 14px;border-left:3px solid #c8102e;background:#f6f7f9;color:#1a1f2b;font-size:14px;line-height:1.5"><strong style="color:#1a1f2b">Outside Kenya?</strong> Customers in the US: we forward your request to our support team, who route you to a suitable service centre near you. Services, pricing and booking work differently for customers outside Kenya.</p>' . '<ol>';
     foreach (sa_svc_terms() as [$t, $b]) {
         echo '<li><h2>' . esc_html($t) . '</h2><p>' . esc_html($b) . '</p></li>';
     }
