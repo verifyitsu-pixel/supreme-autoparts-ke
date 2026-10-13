@@ -99,6 +99,20 @@ function sa_fix_run_batch(): array
                 $product->set_sale_price('');
             }
             $product->save();
+            // A stale "0" sale price would otherwise keep _price at 0.
+            if ($cmp <= $reg) {
+                delete_post_meta($id, '_sale_price');
+                update_post_meta($id, '_price', (string) $reg);
+            }
+            clean_post_cache($id);
+            if (function_exists('wc_get_container')) {
+                try {
+                    wc_get_container()->get(\Automattic\WooCommerce\Internal\ProductAttributesLookup\DataRegenerator::class);
+                } catch (Throwable $e) {
+                }
+            }
+            $wpdb_ = $GLOBALS['wpdb'];
+            $wpdb_->update($wpdb_->prefix . 'wc_product_meta_lookup', ['min_price' => $reg, 'max_price' => $reg, 'onsale' => $cmp > $reg ? 1 : 0], ['product_id' => $id]);
             update_post_meta($id, '_sa_price_source', (string) ($it['price_source'] ?? ''));
             $st['price']++;
         }
