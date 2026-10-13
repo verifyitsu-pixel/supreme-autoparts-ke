@@ -7,7 +7,8 @@ final class Pesapal_Gateway_Blocks extends AbstractPaymentMethodType {
 
     public function initialize() {
         $this->settings = get_option('woocommerce_pesapal_settings', []);
-        $this->methods = new WC_TheBunchKE_PesaPal_Pay_Gateway();
+        $gws = function_exists('WC') && WC()->payment_gateways() ? WC()->payment_gateways()->payment_gateways() : [];
+        $this->methods = $gws['pesapal'] ?? new WC_TheBunchKE_PesaPal_Pay_Gateway();
         add_action('wp_enqueue_scripts', [$this, 'register_payment_scripts']);
     }
 

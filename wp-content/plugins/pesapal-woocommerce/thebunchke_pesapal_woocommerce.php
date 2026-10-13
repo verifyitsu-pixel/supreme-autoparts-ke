@@ -147,8 +147,6 @@ use Google\Service\ShoppingContent\Account;
 						public function __construct(){
 							global $woocommerce; 
 
-							add_action('woocommerce_receipt_'.$this->id, array(&$this, 'payment_page'));
-		
 							//Settings
 							$this->id = 'pesapal';
 							$this->method_title = 'Pesapal';
@@ -732,6 +730,11 @@ use Google\Service\ShoppingContent\Account;
 						
 						//Create Payment Page
 						public function payment_page($order_id){
+							// SA: render once per request. The Blocks integration builds a 2nd gateway
+							// instance whose constructor re-adds this hook, so it fired twice (two widgets, two Pesapal orders).
+							static $sa_rendered = false;
+							if ($sa_rendered) { return; }
+							$sa_rendered = true;
 							$order = wc_get_order( $order_id );
 								$url = $this->create_url($order_id); 
 								echo '<br>';
@@ -802,7 +805,9 @@ use Google\Service\ShoppingContent\Account;
 									
 									<?php if($this->loadjquery || $this->apiVersion==25 || $this->apiVersion==26){ ?>
 										<style type="text/css">
-											#pesapal-iframe{ opacity: 0; }
+											#pesapal-iframe{ opacity: 0; display:block; width:100%!important; max-width:100%; min-height:640px; border:0; }
+											#pesapal-iframe-holder{width:100%;max-width:100%;overflow:hidden;}
+											@media (max-width:600px){#pesapal-iframe{height:900px;}}
 											#pesapal-iframe-container{position:relative;}
 											#pesapal-iframe-loader-msg{position:absolute;width:100%;top: 10%; text-align: center}
 											#pesapal-iframe-container h5, #pesapal-iframe-container .btn-link{ width: 100%; text-align: left; border: none!important; color: #333!important; text-decoration: none!important; background: none; font-size: 22px; line-height: 22px; outline: none; }
