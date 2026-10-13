@@ -1516,7 +1516,9 @@ function sa_svc_order_paid(int $order_id): void
             if (get_post_meta($bid, '_sa_bk_status', true) === 'pending') {
                 update_post_meta($bid, '_sa_bk_status', 'confirmed');
             }
-            sa_svc_send_emails($bid, 'status');
+            if (!function_exists('sa_bk_invoice_email')) {
+                sa_svc_send_emails($bid, 'status'); // otherwise the PAID invoice is the confirmation
+            }
             sa_svc_gcal_sync($bid);
         }
     }
