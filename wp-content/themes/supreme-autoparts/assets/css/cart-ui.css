@@ -119,3 +119,9 @@
 .sa-cart-drawer .sa-mc__buttons .sa-mc__btn--ghost{background:#fff!important;color:#191919!important;border:1px solid #cccccc!important}
 .sa-cart-line .sa-mc__meta{margin:.35rem 0 .5rem}
 .sa-checkout-line dl.variation{display:block}.sa-checkout-line dl.variation dt{display:inline;margin-right:.25rem}.sa-checkout-line dl.variation dd{display:inline;margin:0 .6rem 0 0}
+/* Checkout order summary: never clip prices */
+.sa-checkout-layout>*,.sa-checkout-layout__main,.sa-checkout-layout__aside{min-width:0}
+#order_review,.woocommerce-checkout-review-order{max-width:100%;overflow:hidden}
+.woocommerce-checkout-review-order-table{width:100%!important;max-width:100%;table-layout:fixed}
+.woocommerce-checkout-review-order-table td,.woocommerce-checkout-review-order-table th{overflow-wrap:anywhere}
+.woocommerce-checkout-review-order-table .product-total,.woocommerce-checkout-review-order-table tfoot td{width:38%;text-align:right;white-space:nowrap}
