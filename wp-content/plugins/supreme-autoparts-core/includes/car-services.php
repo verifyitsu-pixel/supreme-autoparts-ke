@@ -1094,7 +1094,7 @@ add_action('wp_footer', static function (): void {
     echo '<div class="sa-side" data-sa-side aria-hidden="true"><div class="sa-side__backdrop" data-sa-side-close></div>'
         . '<aside class="sa-side__panel" role="dialog" aria-modal="true" aria-label="Menu">'
         . '<div class="sa-side__head"><div><strong>' . ($user->ID ? 'Hi, ' . esc_html($user->first_name ?: $user->display_name) : 'Welcome') . '</strong>'
-        . ($user->ID ? '' : '<a href="' . esc_url($acct) . '">Sign in or create account</a>') . '</div>'
+        . ($user->ID ? (function_exists('sa_core_logout_link_url') ? '<a href="' . esc_url(sa_core_logout_link_url()) . '">Log out</a>' : '') : '<a href="' . esc_url($acct) . '">Sign in or create account</a>') . '</div>'
         . '<button type="button" class="sa-side__x" data-sa-side-close aria-label="Close menu">' . sa_svc_icon('close') . '</button></div>'
         . '<div class="sa-side__quick">'
         . '<a href="' . esc_url($shop) . '">' . sa_svc_icon('grid') . 'Shop Parts</a>'
@@ -1119,6 +1119,7 @@ add_action('wp_footer', static function (): void {
     echo '</div></nav><nav class="sa-side__sec"><h4>Account</h4>'
         . $link($ep('orders'), 'box', 'Orders')
         . $link($acct, 'user', 'Account')
+        . ($user->ID && function_exists('sa_core_logout_link_url') ? str_replace('class="sa-side__link"', 'class="sa-side__link sa-side__link--logout"', $link(sa_core_logout_link_url(), 'close', 'Log out')) : '')
         . '</nav><nav class="sa-side__sec"><h4>Help</h4>'
         . $link($wa, 'chat', 'WhatsApp us', '+1 917 437 5121', ' target="_blank" rel="noopener"')
         . $link(function_exists('sa_page_url') ? sa_page_url('contact') : home_url('/contact/'), 'chat', 'Contact')
