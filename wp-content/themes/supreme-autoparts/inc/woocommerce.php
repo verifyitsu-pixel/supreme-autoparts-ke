@@ -144,7 +144,7 @@ add_filter('gettext', static function ($translated, $text, $domain) {
  */
 add_filter('woocommerce_email_header_image', static function ($url) {
     // Always prefer a stable theme-hosted logo so every transactional email shows brand.
-    foreach (['logo-light.png', 'logo-light.jpg', 'logo.png', 'icon.png'] as $f) {
+    foreach (['logo-light.jpg', 'logo-light.png', 'logo.png', 'icon.png'] as $f) {
         if (is_readable(SA_THEME_DIR . '/assets/' . $f)) {
             return set_url_scheme(SA_THEME_URI . '/assets/' . $f, 'https');
         }
