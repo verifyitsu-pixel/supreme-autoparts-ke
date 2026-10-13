@@ -793,7 +793,7 @@ use Google\Service\ShoppingContent\Account;
 												</div>
 											<?php } ?>
 
-											<iframe id="pesapal-iframe" class="pesapal_loading_frame" src="<?php echo $url; ?>" width="100%" height="1200px" scrolling="yes" frameBorder="0">
+											<iframe id="pesapal-iframe" class="pesapal_loading_frame" src="<?php echo $url; ?>" width="100%" height="720" scrolling="auto" frameBorder="0">
 												<p><?php _e('Browser unable to load iFrame', 'woothemes'); ?></p>
 											</iframe>
 											
@@ -805,9 +805,9 @@ use Google\Service\ShoppingContent\Account;
 									
 									<?php if($this->loadjquery || $this->apiVersion==25 || $this->apiVersion==26){ ?>
 										<style type="text/css">
-											#pesapal-iframe{ opacity: 0; display:block; width:100%!important; max-width:100%; min-height:640px; border:0; }
+											#pesapal-iframe{ opacity: 0; display:block; width:100%!important; max-width:100%; border:0; }
 											#pesapal-iframe-holder{width:100%;max-width:100%;overflow:hidden;}
-											@media (max-width:600px){#pesapal-iframe{height:900px;}}
+											@media (max-width:600px){#pesapal-iframe{height:680px!important;}}
 											#pesapal-iframe-container{position:relative;}
 											#pesapal-iframe-loader-msg{position:absolute;width:100%;top: 10%; text-align: center}
 											#pesapal-iframe-container h5, #pesapal-iframe-container .btn-link{ width: 100%; text-align: left; border: none!important; color: #333!important; text-decoration: none!important; background: none; font-size: 22px; line-height: 22px; outline: none; }
