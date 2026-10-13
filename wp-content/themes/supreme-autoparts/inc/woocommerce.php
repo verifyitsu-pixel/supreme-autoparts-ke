@@ -115,7 +115,7 @@ add_filter('body_class', static function (array $classes): array {
  * Empty checkout cart → redirect to cart (which shows enquire CTA).
  */
 add_action('template_redirect', static function (): void {
-    if (!function_exists('is_checkout') || !is_checkout() || is_order_received_page()) {
+    if (!function_exists('is_checkout') || !is_checkout() || is_order_received_page() || (function_exists('is_checkout_pay_page') && is_checkout_pay_page())) {
         return;
     }
     if (!function_exists('WC') || !WC()->cart) {
