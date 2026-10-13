@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-const SA_SVC_VER = '2';
+const SA_SVC_VER = '3';
 const SA_SVC_SLOT_CAPACITY = 2;
 // Registered business address (Business Registration Certificate BN-93S9AZEJ, Standard Driveworks).
 const SA_SVC_GARAGE_ADDRESS = 'Ground Floor, Midax Plaza, Kandundo Rd, Njiru, Nairobi, Kenya';
@@ -122,6 +122,9 @@ add_action('init', static function (): void {
     add_rewrite_rule('^book-service/?$', 'index.php?sa_svc_view=book', 'top');
     add_rewrite_rule('^book-service/confirmed/?$', 'index.php?sa_svc_view=confirmed', 'top');
     add_rewrite_rule('^track-order/?$', 'index.php?sa_svc_view=track', 'top');
+    add_rewrite_rule('^book-service/pay/?$', 'index.php?sa_svc_view=pay', 'top');
+    add_rewrite_rule('^manage-booking/?$', 'index.php?sa_svc_view=manage', 'top');
+    add_rewrite_rule('^booking-terms/?$', 'index.php?sa_svc_view=terms', 'top');
 
     if (get_option('sa_svc_rewrite_ver') !== SA_SVC_VER) {
         flush_rewrite_rules(false);
@@ -143,7 +146,7 @@ function sa_svc_booking_data(int $id): array
         'date' => $m('date'), 'time' => $m('time'), 'location' => $m('location'), 'region' => $m('region'),
         'status' => $m('status') ?: 'pending', 'name' => $m('name'), 'email' => $m('email'), 'phone' => $m('phone'),
         'make' => $m('make'), 'model' => $m('model'), 'year' => $m('year'), 'reg' => $m('reg'),
-        'notes' => $m('notes'), 'estimate' => $m('estimate'), 'mode' => $m('mode') ?: 'dropoff', 'pickup' => $m('pickup'), 'gcal' => $m('gcal'), 'user' => (int) $m('user'), 'key' => $m('key'),
+        'notes' => $m('notes'), 'estimate' => $m('estimate'), 'fee' => $m('fee') ?: 'unpaid', 'fee_kes' => $m('fee_kes'), 'fee_order' => $m('fee_order'), 'mode' => $m('mode') ?: 'dropoff', 'pickup' => $m('pickup'), 'gcal' => $m('gcal'), 'user' => (int) $m('user'), 'key' => $m('key'),
         'created' => get_post_time('U', true, $id),
     ];
 }
@@ -277,6 +280,8 @@ function sa_svc_handle_booking(): void
     foreach ((array) ($_POST['addons'] ?? []) as $ad) { $ad = sanitize_key((string) $ad); if (isset($catalog[$ad]) && $ad !== $service) $addmin += (int) $catalog[$ad]['duration']; }
     if (!in_array($time, sa_svc_available_slots($date, $loc, $service, $addmin), true)) $fail('That time slot is no longer available. Please pick another.');
     if (!is_email($email)) $fail('Please enter a valid email address.');
+    if (empty($_POST['agree_terms'])) $fail('Please accept the Booking Terms to continue.');
+    if (sa_svc_fee_usd() === null) $fail('Online booking is temporarily unavailable (currency rate missing). Please contact us on WhatsApp.');
     if ($p('name') === '' || $p('phone') === '') $fail('Please enter your name and phone number.');
     if ($p('make') === '' || $p('model') === '') $fail('Please enter your vehicle make and model.');
     $mode = $p('mode') === 'pickup' ? 'pickup' : 'dropoff';
@@ -299,7 +304,7 @@ function sa_svc_handle_booking(): void
     $addons = array_values(array_filter(array_map('sanitize_key', (array) ($_POST['addons'] ?? [])), static fn($x) => isset($catalog[$x]) && $x !== $service));
     $part = (int) ($_POST['part'] ?? 0);
     $partname = $part && get_post_type($part) === 'product' ? get_the_title($part) : '';
-    $ref = 'SVC-' . strtoupper(wp_generate_password(6, false, false));
+    $ref = sa_svc_new_ref();
     $id = wp_insert_post([
         'post_type' => 'sa_booking', 'post_status' => 'publish',
         'post_title' => $ref . ' ' . $svc['name'] . ' — ' . $p('name'),
@@ -314,7 +319,7 @@ function sa_svc_handle_booking(): void
         'phone' => $p('phone'), 'make' => $p('make'), 'model' => $p('model'), 'year' => $year === '0' ? '' : $year,
         'reg' => strtoupper($p('reg')), 'notes' => sanitize_textarea_field(wp_unslash((string) ($_POST['notes'] ?? ''))),
         'estimate' => $estimate . ($addons ? ' + add-ons: ' . implode(', ', array_map(static fn($x) => $catalog[$x]['name'] . ' (' . sa_svc_price_label($catalog[$x], $region) . ')', $addons)) : ''),
-        'addons' => implode(',', $addons), 'part' => $partname, 'mode' => $mode, 'pickup' => $mode === 'pickup' ? $pickup : '', 'user' => (string) $user, 'key' => wp_generate_password(20, false, false),
+        'addons' => implode(',', $addons), 'part' => $partname, 'mode' => $mode, 'pickup' => $mode === 'pickup' ? $pickup : '', 'fee' => 'unpaid', 'fee_kes' => (string) sa_svc_setting('fee_kes'), 'user' => (string) $user, 'key' => wp_generate_password(20, false, false),
     ];
     foreach ($meta as $k => $v) {
         update_post_meta((int) $id, '_sa_bk_' . $k, $v);
@@ -336,7 +341,7 @@ function sa_svc_handle_booking(): void
     }
     sa_svc_send_emails((int) $id, 'created');
     sa_svc_gcal_sync((int) $id);
-    wp_safe_redirect(add_query_arg(['b' => (int) $id, 'k' => $meta['key']], home_url('/book-service/confirmed/')));
+    wp_safe_redirect(add_query_arg(['b' => (int) $id, 'k' => $meta['key']], home_url('/book-service/pay/')));
     exit;
 }
 
@@ -394,6 +399,9 @@ function sa_svc_customer_cancel(): void
         wp_die('This booking cannot be cancelled online. Please contact us.', 403);
     }
     update_post_meta($id, '_sa_bk_status', 'cancelled');
+    if ($b['fee'] === 'paid') {
+        update_post_meta($id, '_sa_bk_fee', sa_svc_within_window($b) ? 'refund_due' : 'forfeited');
+    }
     sa_svc_send_emails($id, 'cancelled');
     sa_svc_gcal_sync($id);
     $to = wp_get_referer() ?: home_url('/');
@@ -417,10 +425,10 @@ function sa_svc_send_emails(int $id, string $event): void
         'reminder' => 'Reminder: your ' . $svc['name'] . ' is tomorrow at ' . $b['time'] . ' (' . $b['ref'] . ')',
     ];
     $rows = [
-        'Reference' => $b['ref'], 'Service' => $svc['name'] . ($b['option'] ? ' — ' . $b['option'] : ''),
+        'Booking number' => $b['ref'], 'Service' => $svc['name'] . ($b['option'] ? ' — ' . $b['option'] : ''),
         'When' => $when, 'Duration' => sa_svc_duration_label($b['service']), 'Where' => $loc,
         'Handover' => $b['mode'] === 'pickup' ? 'Vehicle pickup from: ' . $b['pickup'] . ' (pickup fee confirmed on booking)' : 'Drop-off at the garage', 'Vehicle' => trim($b['year'] . ' ' . $b['make'] . ' ' . $b['model'] . ' ' . $b['reg']),
-        'Estimate' => $b['estimate'] . ' (pay at service)', 'Status' => $status,
+        'Estimate' => $b['estimate'] . ' (balance paid at service)', 'Booking fee' => sa_svc_fee_label($b), 'Status' => $status,
     ];
     $html = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#222">'
         . '<h2 style="color:#0b1f3a">Supreme Autoparts — Car Service</h2><p>Hi ' . esc_html($b['name']) . ',</p><p>'
@@ -429,7 +437,7 @@ function sa_svc_send_emails(int $id, string $event): void
     foreach ($rows as $k => $v) {
         $html .= '<tr><td style="padding:6px 8px;border-bottom:1px solid #eee;color:#666">' . esc_html($k) . '</td><td style="padding:6px 8px;border-bottom:1px solid #eee"><strong>' . esc_html($v) . '</strong></td></tr>';
     }
-    $html .= '</table><p><a href="' . esc_url(add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/confirmed/'))) . '">View, cancel or reschedule your booking</a> · <a href="' . esc_url(add_query_arg(['service' => $b['service'], 'reschedule' => $id, 'rk' => $b['key']], home_url('/book-service/'))) . '">Reschedule</a></p></div>';
+    $html .= '</table><p><a href="' . esc_url(add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/confirmed/'))) . '">View, cancel or reschedule your booking</a> · <a href="' . esc_url(home_url('/booking-terms/')) . '">Booking Terms</a> · <a href="' . esc_url(add_query_arg(['service' => $b['service'], 'reschedule' => $id, 'rk' => $b['key']], home_url('/book-service/'))) . '">Reschedule</a></p></div>';
     $headers = ['Content-Type: text/html; charset=UTF-8'];
     wp_mail($b['email'], $subjects[$event] ?? $subjects['status'], $html, $headers);
     if (!in_array($event, ['status', 'reminder'], true)) {
@@ -451,14 +459,20 @@ add_action('template_redirect', static function (): void {
         status_header(404);
         return;
     }
+    if ($view === 'pay') {
+        sa_svc_route_pay();
+    }
+    if ($view === 'manage' && isset($_POST['ref'])) {
+        sa_svc_route_manage_lookup();
+    }
     global $wp_query;
     $wp_query->is_404 = false;
     $wp_query->is_page = true;
     status_header(200);
-    $titles = ['track' => 'Track your order', 'index' => 'Car Services & Repairs', 'book' => 'Book a Service', 'confirmed' => 'Booking confirmed'];
+    $titles = ['manage' => 'Manage booking', 'terms' => 'Booking Terms & Policies', 'track' => 'Track your order', 'index' => 'Car Services & Repairs', 'book' => 'Book a Service', 'confirmed' => 'Booking confirmed'];
     $title = $view === 'detail' ? sa_svc_catalog()[(string) get_query_var('sa_svc')]['name'] : $titles[$view] ?? 'Services';
     add_filter('pre_get_document_title', static fn() => $title . ' | ' . get_bloginfo('name'), 99);
-    if (in_array($view, ['confirmed', 'book', 'track'], true)) {
+    if (in_array($view, ['confirmed', 'book', 'track', 'manage'], true)) {
         add_filter('wp_robots', static fn(array $r) => array_merge($r, ['noindex' => true]));
     }
     get_header();
@@ -467,6 +481,8 @@ add_action('template_redirect', static function (): void {
         case 'detail': sa_svc_render_detail((string) get_query_var('sa_svc')); break;
         case 'book': sa_svc_render_book(); break;
         case 'confirmed': sa_svc_render_confirmed(); break;
+        case 'manage': sa_svc_render_manage(); break;
+        case 'terms': sa_svc_render_terms(); break;
         case 'track': echo '<div class="sa-container sa-svc-book"><h1>Track your order</h1><p class="sa-svc-lead">Enter your order number and billing email.</p>' . do_shortcode('[woocommerce_order_tracking]') . '</div>'; break;
         default: sa_svc_render_index();
     }
@@ -688,7 +704,7 @@ function sa_svc_render_book(): void
     <div class="sa-container sa-svc-wiz">
       <nav class="sa-svc-crumbs"><a href="<?php echo esc_url(home_url('/')); ?>">Home</a> / <a href="<?php echo esc_url(sa_svc_url()); ?>">Services</a> / <span>Book</span></nav>
       <h1><?php echo $old ? 'Reschedule ' . esc_html($old['ref']) : 'Book a service'; ?></h1>
-      <p class="sa-svc-lead">Five quick steps. No payment now: you pay at the service after approving the final quote.</p>
+      <p class="sa-svc-lead">Five quick steps. Pay a KES <?php echo esc_html(number_format((float) sa_svc_setting('fee_kes'))); ?> booking fee to confirm, which is credited to your bill. You pay the rest at the service, after approving the final quote.</p>
       <ul class="sa-svc-trust"><li><?php echo sa_svc_icon('check'); ?>Written quote before work</li><li><?php echo sa_svc_icon('check'); ?>Free online cancellation</li><li><?php echo sa_svc_icon('check'); ?>Parts from our own shop</li><li><?php echo sa_svc_icon('pin'); ?>Njiru, Nairobi garage</li></ul>
       <?php if ($err) : ?><div class="sa-svc-alert"><?php echo esc_html($err); ?></div><?php endif; ?>
       <ol class="sa-svc-progress" data-sa-progress><li class="is-on">Vehicle</li><li>Services</li><li>Location</li><li>Date &amp; time</li><li>Review</li></ol>
@@ -762,13 +778,16 @@ function sa_svc_render_book(): void
             <label>Phone / WhatsApp* <input name="phone" required value="<?php echo esc_attr($old ? $old['phone'] : ($user->ID ? (string) get_user_meta($user->ID, 'billing_phone', true) : '')); ?>"></label>
           </div>
           <label class="sa-svc-full">Notes for the technician <textarea name="notes" rows="3" placeholder="Noises, warning lights, mileage…"><?php echo esc_textarea($v('notes')); ?></textarea></label>
+          <div class="sa-svc-feebox"><strong>Booking fee: KES <?php echo esc_html(number_format((float) sa_svc_setting('fee_kes'))); ?><?php $usd = sa_svc_fee_usd(); echo $usd !== null ? ' (≈ US$' . esc_html(number_format($usd, 2)) . ' charged at checkout)' : ''; ?></strong>
+            <span>Paid now through our secure checkout. It is deducted from your final service bill. It is refunded if we cancel, or if you cancel at least <?php echo (int) sa_svc_setting('cancel_hours'); ?> hours before your appointment. Your booking is confirmed once the fee is paid.</span></div>
+          <label class="sa-svc-check"><input type="checkbox" name="agree_terms" value="1" required> I agree to the <a href="<?php echo esc_url(home_url('/booking-terms/')); ?>" target="_blank">Booking Terms &amp; Policies</a></label>
           <p class="sa-svc-fine">By booking you agree that we may contact you by email, phone or WhatsApp about this appointment. You can cancel for free online while the booking is pending or confirmed. You'll get a reminder the day before.</p>
         </fieldset>
 
         <div class="sa-svc-nav">
           <button type="button" class="sa-svc-btn sa-svc-btn--ghost" data-sa-back hidden>Back</button>
           <button type="button" class="sa-svc-btn sa-svc-btn--primary" data-sa-next>Continue</button>
-          <button class="sa-svc-btn sa-svc-btn--primary sa-svc-btn--lg" type="submit" data-sa-submit hidden><?php echo sa_svc_icon('calendar'); ?> <?php echo $old ? 'Confirm new time' : 'Confirm booking'; ?></button>
+          <button class="sa-svc-btn sa-svc-btn--primary sa-svc-btn--lg" type="submit" data-sa-submit hidden><?php echo sa_svc_icon('calendar'); ?> <?php echo $old ? 'Confirm new time & pay fee' : 'Continue to pay booking fee'; ?></button>
         </div>
       </form>
       <aside class="sa-svc-side">
@@ -788,7 +807,7 @@ function sa_svc_render_booking_card(array $b, bool $cancel = true): void
     $loc = sa_svc_locations()[$b['location']]['label'] ?? $b['location'];
     ?>
     <div class="sa-svc-bk">
-      <div class="sa-svc-bk__top"><span class="sa-svc-bk__ref"><?php echo esc_html($b['ref']); ?></span><span class="sa-svc-status sa-svc-status--<?php echo esc_attr($b['status']); ?>"><?php echo esc_html(sa_svc_statuses()[$b['status']] ?? $b['status']); ?></span></div>
+      <div class="sa-svc-bk__top"><span class="sa-svc-bk__ref">Booking no. <?php echo esc_html($b['ref']); ?></span><span class="sa-svc-status sa-svc-status--<?php echo esc_attr($b['status']); ?>"><?php echo esc_html(sa_svc_statuses()[$b['status']] ?? $b['status']); ?></span></div>
       <h3><?php echo sa_svc_icon($svc['icon'] ?? 'service'); ?> <?php echo esc_html($svc['name'] . ($b['option'] ? ' — ' . $b['option'] : '')); ?></h3>
       <dl>
         <dt>When</dt><dd><?php echo esc_html(date_i18n('D j M Y', strtotime($b['date'])) . ', ' . $b['time']); ?></dd>
@@ -796,7 +815,8 @@ function sa_svc_render_booking_card(array $b, bool $cancel = true): void
         <dt>Where</dt><dd><?php echo esc_html($loc); ?><?php if ($b['location'] === 'nairobi') : ?> · <a href="<?php echo esc_url(sa_svc_map_url()); ?>" target="_blank" rel="noopener">Map</a><?php endif; ?></dd>
         <dt>Handover</dt><dd><?php echo $b['mode'] === 'pickup' ? esc_html('Pickup from ' . $b['pickup']) . ' <small>(fee confirmed on booking)</small>' : 'Drop-off at garage'; ?></dd>
         <dt>Vehicle</dt><dd><?php echo esc_html(trim($b['year'] . ' ' . $b['make'] . ' ' . $b['model'] . ' ' . $b['reg'])); ?></dd>
-        <dt>Estimate</dt><dd><?php echo esc_html($b['estimate']); ?> · pay at service</dd>
+        <dt>Estimate</dt><dd><?php echo esc_html($b['estimate']); ?> · balance paid at service</dd>
+        <dt>Booking fee</dt><dd><?php echo esc_html(sa_svc_fee_label($b)); ?><?php if ($b['fee'] === 'unpaid' && $b['status'] === 'pending') : ?> · <a href="<?php echo esc_url(add_query_arg(['b' => $b['id'], 'k' => $b['key']], home_url('/book-service/pay/'))); ?>">Pay now</a><?php endif; ?></dd>
       </dl>
       <?php if ($cancel && in_array($b['status'], ['pending', 'confirmed'], true)) : ?>
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" onsubmit="return confirm('Cancel this booking?');">
@@ -823,8 +843,9 @@ function sa_svc_render_confirmed(): void
     ?>
     <div class="sa-container sa-svc-book sa-svc-done">
       <div class="sa-svc-done__badge"><?php echo sa_svc_icon('check'); ?></div>
-      <h1><?php echo $b['status'] === 'cancelled' ? 'Booking cancelled' : 'Booking received'; ?></h1>
-      <p class="sa-svc-lead">We've emailed <?php echo esc_html($b['email']); ?>. Our team will confirm your slot shortly.</p>
+      <h1><?php echo $b['status'] === 'cancelled' ? 'Booking cancelled' : ($b['fee'] === 'unpaid' ? 'Booking held — pay the fee to confirm' : 'Booking confirmed'); ?></h1>
+      <p class="sa-svc-refbig">Booking number <strong><?php echo esc_html($b['ref']); ?></strong></p>
+      <p class="sa-svc-lead">We've emailed the details to <?php echo esc_html($b['email']); ?>. Use your booking number and email under <a href="<?php echo esc_url(home_url('/manage-booking/')); ?>">Manage booking</a>.</p>
       <?php sa_svc_render_booking_card($b); ?>
       <div class="sa-svc-cta"><a class="sa-svc-btn sa-svc-btn--primary" href="<?php echo esc_url(is_user_logged_in() ? wc_get_account_endpoint_url('bookings') : sa_svc_url()); ?>"><?php echo is_user_logged_in() ? 'My bookings' : 'Back to services'; ?></a></div>
       <?php if ($parts) : ?>
@@ -893,6 +914,13 @@ add_action('admin_post_sa_svc_admin', static function (): void {
                 sa_svc_send_emails($id, $st === 'cancelled' ? 'cancelled' : 'status');
             }
         }
+        $fee = sanitize_key((string) ($_POST['fee'] ?? ''));
+        if (isset(sa_svc_fee_statuses()[$fee])) {
+            update_post_meta($id, '_sa_bk_fee', $fee);
+        }
+        if ($st === 'cancelled' && get_post_meta($id, '_sa_bk_fee', true) === 'paid') {
+            update_post_meta($id, '_sa_bk_fee', 'refund_due'); // We cancelled → refund.
+        }
         if (isset($_POST['estimate'])) {
             update_post_meta($id, '_sa_bk_estimate', sanitize_text_field(wp_unslash((string) $_POST['estimate'])));
         }
@@ -924,7 +952,7 @@ function sa_svc_admin_render(): void
         $counts[$s] = ($counts[$s] ?? 0) + 1;
     }
     $base = admin_url('admin.php?page=sa-super-bookings');
-    echo '<div class="wrap sa-ultra sa-svc-admin"><h1>Service bookings</h1><p class="sa-ultra__sub">Appointments from <a href="' . esc_url(sa_svc_url()) . '" target="_blank">/services/</a>. Changing status can email the customer.</p>' . sa_svc_gcal_status_html();
+    echo '<div class="wrap sa-ultra sa-svc-admin"><h1>Service bookings</h1><p class="sa-ultra__sub">Appointments from <a href="' . esc_url(sa_svc_url()) . '" target="_blank">/services/</a>. Changing status can email the customer.</p>' . sa_svc_gcal_status_html() . sa_svc_settings_form();
     echo '<ul class="subsubsub"><li><a href="' . esc_url($base) . '"' . ($filter === '' ? ' class="current"' : '') . '>All (' . count($all) . ')</a></li>';
     foreach (sa_svc_statuses() as $k => $l) {
         echo '<li> | <a href="' . esc_url(add_query_arg('st', $k, $base)) . '"' . ($filter === $k ? ' class="current"' : '') . '>' . esc_html($l) . ' (' . (int) $counts[$k] . ')</a></li>';
@@ -944,7 +972,11 @@ function sa_svc_admin_render(): void
             . '<td>' . esc_html(sa_svc_locations()[$b['location']]['label'] ?? $b['location']) . '<br><small>' . ($b['mode'] === 'pickup' ? 'PICKUP: ' . esc_html($b['pickup']) : 'Drop-off') . ' · ' . esc_html(sa_svc_duration_label($b['service'])) . ($b['gcal'] ? ' · 📅 synced' : '') . '</small></td>'
             . '<td colspan="2"><form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'
             . '<input type="hidden" name="action" value="sa_svc_admin"><input type="hidden" name="b" value="' . (int) $id . '">' . wp_nonce_field('sa_svc_admin', '_wpnonce', true, false)
-            . '<input name="estimate" value="' . esc_attr($b['estimate']) . '" style="width:150px"><select name="status">';
+            . '<input name="estimate" value="' . esc_attr($b['estimate']) . '" style="width:150px"><select name="fee" title="Booking fee">';
+        foreach (sa_svc_fee_statuses() as $k => $l) {
+            echo '<option value="' . esc_attr($k) . '"' . selected($b['fee'], $k, false) . '>Fee: ' . esc_html($l) . '</option>';
+        }
+        echo '</select>' . ($b['fee_order'] ? '<a href="' . esc_url(admin_url('post.php?post=' . (int) $b['fee_order'] . '&action=edit')) . '">order #' . (int) $b['fee_order'] . '</a>' : '') . '<select name="status">';
         foreach (sa_svc_statuses() as $k => $l) {
             echo '<option value="' . esc_attr($k) . '"' . selected($b['status'], $k, false) . '>' . esc_html($l) . '</option>';
         }
@@ -993,6 +1025,8 @@ add_action('wp_footer', static function (): void {
         . $link(sa_svc_url(), 'service', 'All services', 'Oil, brakes, alignment, AC…')
         . $link($ep('bookings'), 'calendar', 'My Bookings')
         . $link($ep('bookings') . '#vehicles', 'car', 'My Garage / Vehicles')
+        . $link(home_url('/manage-booking/'), 'box', 'Manage booking', 'Booking number + email')
+        . $link(home_url('/booking-terms/'), 'check', 'Booking Terms & Policies')
         . '</nav><nav class="sa-side__sec"><h4>Shop by category</h4><div class="sa-side__cats">';
     foreach ($cats as $m) {
         $u = get_term_link($m['slug'], 'product_cat');
@@ -1136,10 +1170,13 @@ function sa_svc_faq_general(): array
         ['Where is your garage?', 'Ground Floor, Midax Plaza, Kandundo Rd, Njiru, Nairobi. The services page and the side menu have a Google Maps link. US bookings are matched with a partner garage near you and confirmed by email.'],
         ['Do I need an appointment, or can I walk in?', 'Booking online holds a time slot for you and is the fastest way to be seen. Walk-ins depend on how busy we are that day, so we recommend booking, even if it is for later the same day.'],
         ['Is the price shown the final price?', 'No. The price shown is a reference estimate: published AutoXpress Kenya prices for Kenya, and RepairPal national average ranges for the US. Services marked “Quote on request” are priced for your vehicle. We give you the final price before any work starts, and nothing extra is done without your approval.'],
-        ['When and how do I pay?', 'You don’t pay anything online to book. You pay at the service, after you have approved the final quote. Our team confirms the accepted payment methods with your booking.'],
+        ['Is there a booking fee?', 'Yes. You pay a KES ' . number_format((float) sa_svc_setting('fee_kes')) . ' booking fee online to confirm your slot (the USD equivalent is charged where checkout settles in USD). It is deducted from your final service bill, so it is not an extra cost.'],
+        ['Will I get the booking fee back if I cancel?', 'Yes, if you cancel at least ' . (int) sa_svc_setting('cancel_hours') . ' hours before your appointment, or if we cancel. For later cancellations and no-shows the fee may be kept. See the Booking Terms.'],
+        ['How do I find my booking?', 'Every booking has a booking number (for example SA-BK-261016-AB12). Enter it with your email under Manage booking, or open My Account → Service bookings.'],
+        ['When and how do I pay?', 'You pay the booking fee online at checkout when you book. You pay the rest at the service, after approving the final quote. Accepted payment methods for the balance are confirmed with your booking.'],
         ['What parts do you use? Can I bring my own?', 'We fit parts that match your vehicle’s specification, and you can buy them from our shop. Each service page suggests matching parts. If you want to bring your own parts, mention it in the booking notes so the technician can check them first.'],
         ['Is there a warranty on the work?', 'Any parts warranty is the manufacturer’s, and the terms vary by part. A workmanship warranty, where it applies, is confirmed in writing with your booking. We don’t promise any cover that isn’t on your confirmation.'],
-        ['How do I cancel or reschedule?', 'You can cancel online for free from your confirmation page or My Account → Service bookings while the booking is pending or confirmed. To reschedule, cancel and book a new slot, or contact us on WhatsApp (+1 917 437 5121) and we’ll move it for you.'],
+        ['How do I cancel or reschedule?', 'Use Manage booking (booking number + email), the links in your emails, or My Account → Service bookings. Reschedule picks a new slot and moves your booking. Fee refunds follow the cancellation window in the Booking Terms.'],
         ['How often should my car be serviced?', 'Follow the service intervals in your owner’s manual. They depend on your engine, oil type and driving conditions. Heavy traffic, dusty roads and towing usually mean shorter intervals. If you’re not sure, book a Full Service or Diagnostics and we’ll advise you.'],
         ['Will I be told if more work is needed?', 'Yes. If the technician finds something else, we contact you with the details and a price, and only go ahead if you approve it.'],
         ['What do I need to bring?', 'Bring the vehicle, its keys (including the wheel-lock key if you have one), and your service book if you have it. Remove valuables before drop-off or pickup.'],
@@ -1252,3 +1289,244 @@ add_action('sa_svc_reminders', static function (): void {
         sa_svc_send_emails((int) $id, 'reminder');
     }
 });
+
+
+/* ---------- Booking number, fee, settings ---------- */
+
+function sa_svc_setting(string $k)
+{
+    $d = ['fee_kes' => 1000, 'cancel_hours' => 24];
+    $o = get_option('sa_svc_settings', []);
+    return is_array($o) && isset($o[$k]) ? $o[$k] : $d[$k];
+}
+
+function sa_svc_settings_form(): string
+{
+    return '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="notice" style="padding:10px 12px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">'
+        . '<input type="hidden" name="action" value="sa_svc_settings">' . wp_nonce_field('sa_svc_settings', '_wpnonce', true, false)
+        . '<strong>Booking settings</strong><label>Booking fee (KES) <input type="number" min="0" name="fee_kes" value="' . (int) sa_svc_setting('fee_kes') . '" style="width:90px"></label>'
+        . '<label>Free-cancellation window (hours before appointment) <input type="number" min="0" max="336" name="cancel_hours" value="' . (int) sa_svc_setting('cancel_hours') . '" style="width:70px"></label>'
+        . '<button class="button">Save settings</button><small>Defaults: KES 1,000 and 24 h (owner can change).</small></form>';
+}
+
+add_action('admin_post_sa_svc_settings', static function (): void {
+    if (!current_user_can('manage_woocommerce') || !wp_verify_nonce((string) ($_POST['_wpnonce'] ?? ''), 'sa_svc_settings')) {
+        wp_die('Not allowed', 403);
+    }
+    update_option('sa_svc_settings', ['fee_kes' => max(0, (int) ($_POST['fee_kes'] ?? 1000)), 'cancel_hours' => max(0, min(336, (int) ($_POST['cancel_hours'] ?? 24)))]);
+    wp_safe_redirect(admin_url('admin.php?page=sa-super-bookings'));
+    exit;
+});
+
+function sa_svc_new_ref(): string
+{
+    $day = wp_date('ymd');
+    do {
+        $ref = 'SA-BK-' . $day . '-' . strtoupper(wp_generate_password(4, false, false));
+        $dupe = get_posts(['post_type' => 'sa_booking', 'numberposts' => 1, 'fields' => 'ids', 'post_status' => 'any', 'meta_key' => '_sa_bk_ref', 'meta_value' => $ref]);
+    } while ($dupe);
+    return $ref;
+}
+
+function sa_svc_fee_usd(): ?float
+{
+    $kes = (float) sa_svc_setting('fee_kes');
+    if (!class_exists('SA_FX_Rates')) {
+        return null;
+    }
+    $u = SA_FX_Rates::convert_local_to_usd($kes, 'KES');
+    return $u === null ? null : round($u, 2);
+}
+
+function sa_svc_fee_statuses(): array
+{
+    return ['unpaid' => 'Unpaid', 'paid' => 'Paid', 'applied' => 'Applied to bill', 'refund_due' => 'Refund due', 'refunded' => 'Refunded', 'forfeited' => 'Forfeited (late cancel / no-show)'];
+}
+
+function sa_svc_fee_label(array $b): string
+{
+    $kes = (int) ($b['fee_kes'] ?: sa_svc_setting('fee_kes'));
+    return 'KES ' . number_format($kes) . ' — ' . (sa_svc_fee_statuses()[$b['fee']] ?? $b['fee']);
+}
+
+function sa_svc_within_window(array $b): bool
+{
+    $tz = wp_timezone();
+    $at = DateTimeImmutable::createFromFormat('Y-m-d H:i', $b['date'] . ' ' . $b['time'], $tz);
+    return $at && ($at->getTimestamp() - time()) >= (int) sa_svc_setting('cancel_hours') * HOUR_IN_SECONDS;
+}
+
+function sa_svc_fee_product_id(): int
+{
+    $id = (int) get_option('sa_svc_fee_product', 0);
+    if ($id && get_post_status($id) === 'publish') {
+        return $id;
+    }
+    if (!class_exists('WC_Product_Simple')) {
+        return 0;
+    }
+    $p = new WC_Product_Simple();
+    $p->set_name('Car service booking fee');
+    $p->set_slug('car-service-booking-fee');
+    $p->set_status('publish');
+    $p->set_catalog_visibility('hidden');
+    $p->set_virtual(true);
+    $p->set_sold_individually(true);
+    $p->set_regular_price((string) (sa_svc_fee_usd() ?? 0));
+    $p->set_description('Booking fee for a Supreme Autoparts car service appointment. Credited against the final service bill.');
+    $id = (int) $p->save();
+    update_option('sa_svc_fee_product', $id);
+    return $id;
+}
+
+/** Front-end route: put the fee in the cart (linked to the booking) and go to checkout. */
+function sa_svc_route_pay(): void
+{
+    $id = (int) ($_GET['b'] ?? 0);
+    $b = $id && get_post_type($id) === 'sa_booking' ? sa_svc_booking_data($id) : null;
+    if (!$b || !hash_equals($b['key'], (string) ($_GET['k'] ?? '')) || $b['fee'] !== 'unpaid' || $b['status'] !== 'pending' || !function_exists('WC') || !WC()->cart) {
+        wp_safe_redirect(home_url('/manage-booking/'));
+        exit;
+    }
+    $pid = sa_svc_fee_product_id();
+    foreach (WC()->cart->get_cart() as $k => $item) {
+        if ((int) $item['product_id'] === $pid) {
+            WC()->cart->remove_cart_item($k);
+        }
+    }
+    WC()->cart->add_to_cart($pid, 1, 0, [], ['sa_booking' => $id, 'sa_booking_ref' => $b['ref']]);
+    wp_safe_redirect(wc_get_checkout_url());
+    exit;
+}
+
+add_action('woocommerce_before_calculate_totals', static function ($cart): void {
+    $usd = sa_svc_fee_usd();
+    foreach ($cart->get_cart() as $item) {
+        if (!empty($item['sa_booking']) && $usd !== null) {
+            $item['data']->set_price($usd);
+        }
+    }
+}, 20);
+
+add_filter('woocommerce_get_item_data', static function (array $data, array $item): array {
+    if (!empty($item['sa_booking_ref'])) {
+        $data[] = ['name' => 'Booking number', 'value' => $item['sa_booking_ref']];
+        $data[] = ['name' => 'Fee', 'value' => 'KES ' . number_format((float) sa_svc_setting('fee_kes')) . ' (credited to your service bill)'];
+    }
+    return $data;
+}, 10, 2);
+
+add_action('woocommerce_checkout_create_order_line_item', static function ($line, $key, $values): void {
+    if (!empty($values['sa_booking'])) {
+        $line->add_meta_data('_sa_booking', (int) $values['sa_booking'], true);
+        $line->add_meta_data('Booking number', (string) $values['sa_booking_ref'], true);
+    }
+}, 10, 3);
+
+function sa_svc_order_paid(int $order_id): void
+{
+    $o = wc_get_order($order_id);
+    if (!$o) {
+        return;
+    }
+    foreach ($o->get_items() as $it) {
+        $bid = (int) $it->get_meta('_sa_booking');
+        if ($bid && get_post_type($bid) === 'sa_booking' && get_post_meta($bid, '_sa_bk_fee', true) === 'unpaid') {
+            update_post_meta($bid, '_sa_bk_fee', 'paid');
+            update_post_meta($bid, '_sa_bk_fee_order', $order_id);
+            if (get_post_meta($bid, '_sa_bk_status', true) === 'pending') {
+                update_post_meta($bid, '_sa_bk_status', 'confirmed');
+            }
+            sa_svc_send_emails($bid, 'status');
+            sa_svc_gcal_sync($bid);
+        }
+    }
+}
+add_action('woocommerce_payment_complete', 'sa_svc_order_paid');
+add_action('woocommerce_order_status_processing', 'sa_svc_order_paid');
+add_action('woocommerce_order_status_completed', 'sa_svc_order_paid');
+
+/* Thank-you page: link back to the booking. */
+add_action('woocommerce_thankyou', static function ($order_id): void {
+    $o = wc_get_order($order_id);
+    if (!$o) return;
+    foreach ($o->get_items() as $it) {
+        $bid = (int) $it->get_meta('_sa_booking');
+        if ($bid) {
+            $b = sa_svc_booking_data($bid);
+            echo '<div class="sa-svc-alert sa-svc-alert--ok">Booking fee received for <strong>' . esc_html($b['ref']) . '</strong>. <a href="' . esc_url(add_query_arg(['b' => $bid, 'k' => $b['key']], home_url('/book-service/confirmed/'))) . '">View your booking</a></div>';
+        }
+    }
+}, 5);
+
+/* Release unpaid holds after 2 hours. */
+add_action('sa_svc_reminders', static function (): void {
+    $ids = get_posts(['post_type' => 'sa_booking', 'numberposts' => 100, 'fields' => 'ids', 'date_query' => [['before' => '2 hours ago']], 'meta_query' => [['key' => '_sa_bk_fee', 'value' => 'unpaid'], ['key' => '_sa_bk_status', 'value' => 'pending']]]);
+    foreach ($ids as $id) {
+        update_post_meta((int) $id, '_sa_bk_status', 'cancelled');
+        update_post_meta((int) $id, '_sa_bk_notes', 'Auto-released: booking fee not paid within 2 hours. ' . get_post_meta((int) $id, '_sa_bk_notes', true));
+        sa_svc_gcal_sync((int) $id);
+    }
+}, 20);
+
+/* ---------- Manage booking lookup ---------- */
+
+function sa_svc_route_manage_lookup(): void
+{
+    if (!wp_verify_nonce((string) ($_POST['_wpnonce'] ?? ''), 'sa_svc_manage')) {
+        return;
+    }
+    $ref = strtoupper(sanitize_text_field(wp_unslash((string) $_POST['ref'])));
+    $email = sanitize_email(wp_unslash((string) ($_POST['email'] ?? '')));
+    $ids = get_posts(['post_type' => 'sa_booking', 'numberposts' => 1, 'fields' => 'ids', 'meta_query' => [['key' => '_sa_bk_ref', 'value' => $ref], ['key' => '_sa_bk_email', 'value' => $email]]]);
+    if ($ids) {
+        $b = sa_svc_booking_data((int) $ids[0]);
+        wp_safe_redirect(add_query_arg(['b' => $b['id'], 'k' => $b['key']], home_url('/book-service/confirmed/')));
+        exit;
+    }
+    wp_safe_redirect(add_query_arg('nf', '1', home_url('/manage-booking/')));
+    exit;
+}
+
+function sa_svc_render_manage(): void
+{
+    echo '<div class="sa-container sa-svc-book"><h1>Manage booking</h1><p class="sa-svc-lead">Enter your booking number (e.g. SA-BK-261016-AB12) and the email address you booked with to view, pay, reschedule or cancel your booking.</p>';
+    if (isset($_GET['nf'])) {
+        echo '<div class="sa-svc-alert">We couldn’t find a booking with that number and email.</div>';
+    }
+    echo '<form method="post" class="sa-svc-form sa-svc-step" style="display:grid;gap:12px;max-width:520px">' . wp_nonce_field('sa_svc_manage', '_wpnonce', true, false)
+        . '<label>Booking number <input name="ref" required placeholder="SA-BK-YYMMDD-XXXX"></label><label>Email <input type="email" name="email" required></label>'
+        . '<button class="sa-svc-btn sa-svc-btn--primary">Find my booking</button></form></div>';
+}
+
+/* ---------- Booking Terms & Policies ---------- */
+
+function sa_svc_terms(): array
+{
+    $fee = number_format((float) sa_svc_setting('fee_kes'));
+    $h = (int) sa_svc_setting('cancel_hours');
+    return [
+        ['Who we are', 'Car services are provided by Supreme Autoparts (Standard Driveworks, BN-93S9AZEJ), at Ground Floor, Midax Plaza, Kandundo Rd, Njiru, Nairobi. US bookings are carried out by a partner garage that we confirm with you by email. These terms apply together with our store Terms of Service.'],
+        ['Booking fee', "A booking fee of KES {$fee} is paid online through our secure checkout to confirm your appointment. If checkout settles in US dollars, the USD equivalent at our current exchange rate is shown and charged. The fee is not an extra charge: it is deducted from your final service bill. Your booking is only confirmed once the fee is paid, and unpaid bookings are released after 2 hours."],
+        ['Cancelling and rescheduling', "You can cancel or reschedule online with your booking number and email. If you cancel at least {$h} hours before your appointment, or if we cancel for any reason, the booking fee is refunded to your original payment method. If you cancel later than that, or you don't attend, the fee may be kept. You can reschedule once without charge within the same window. The {$h}-hour window is the current setting and may be updated; the window shown when you book applies."],
+        ['Late arrival and no-shows', 'Please arrive at your slot time. If you are more than 30 minutes late, we may need to move you to the next free slot. If you neither arrive nor contact us, the booking counts as a no-show and the booking fee may be kept.'],
+        ['Estimates, final price and extra work', 'Prices shown online are reference estimates (published AutoXpress Kenya prices and RepairPal US averages) or “quote on request”. Before starting, we give you the final price for your vehicle. We will not do any extra work, or go above the agreed price, without your approval by phone, WhatsApp or in person.'],
+        ['Customer-supplied parts', 'You may bring your own parts if you say so in the booking notes. We check that they are suitable before fitting them. We can refuse parts that look unsafe, used or wrong for the vehicle. Parts you supply are not covered by any parts warranty from us, and any workmanship cover for that job is confirmed on your job card.'],
+        ['Drop-off, pickup and liability', 'For pickup bookings, any pickup fee is confirmed with you before the booking is confirmed. Our driver checks the vehicle’s condition with you at handover. Please tell us about existing damage or warning lights. Our responsibility for the vehicle while it is in our care is set out on your job card.'],
+        ['Keys and personal belongings', 'Please hand over all keys needed for the work, including any wheel-lock key. Remove valuables, cash and documents before drop-off or pickup. We cannot accept responsibility for personal items left in the vehicle.'],
+        ['Payment', 'The booking fee is paid online at checkout. The balance is paid when the work is finished, before the vehicle is released. Accepted payment methods for the balance are confirmed with your booking.'],
+        ['Uncollected vehicles', 'Please collect your vehicle on the day we tell you it is ready. If a vehicle is not collected, storage arrangements and any charges are confirmed with you on your job card.'],
+        ['Warranties', 'Parts are covered by their manufacturer’s warranty, where one applies. Any workmanship warranty, including its length and what it covers, is confirmed on your job card. No other warranty or guarantee is implied by these terms.'],
+        ['Your data and privacy', 'We use your name, contact details, vehicle details and booking history to manage your appointment, send confirmations and reminders, and keep service records. Booking events may be added to our internal calendar. We do not sell your data. See our Privacy Policy for your rights.'],
+        ['Changes and contact', 'We may update these terms; the version shown when you book applies to that booking. Questions: WhatsApp +1 917 437 5121, +254 714 498 451, or calvin@supremeautoparts.co.ke.'],
+    ];
+}
+
+function sa_svc_render_terms(): void
+{
+    echo '<div class="sa-container sa-svc-book sa-svc-terms"><h1>Booking Terms &amp; Policies</h1><p class="sa-svc-lead">Plain-language terms for car service bookings. Last updated ' . esc_html(wp_date('j F Y', (int) get_option('sa_svc_terms_date', strtotime('2026-10-13')))) . '.</p><ol>';
+    foreach (sa_svc_terms() as [$t, $b]) {
+        echo '<li><h2>' . esc_html($t) . '</h2><p>' . esc_html($b) . '</p></li>';
+    }
+    echo '</ol><p><a class="sa-svc-btn sa-svc-btn--primary" href="' . esc_url(sa_svc_book_url()) . '">Book a service</a></p></div>';
+}

@@ -177,3 +177,6 @@ body.sa-side-open{overflow:hidden}
 .sa-path span{display:flex;flex-direction:column;gap:3px}.sa-path strong{font-size:17px}.sa-path small{color:#555;font-size:13px}
 @media (max-width:900px){.sa-svc-wiz__grid{grid-template-columns:1fr}.sa-svc-side{position:static;order:-1}.sa-svc-progress li{font-size:0}.sa-svc-progress li::before{font-size:12px}}
 @media (max-width:560px){.sa-paths{grid-template-columns:1fr}}
+.sa-svc-feebox{display:flex;flex-direction:column;gap:4px;background:#fffaf0;border:1px solid #F5A623;border-radius:12px;padding:12px 14px;margin:12px 0;font-size:14px}
+.sa-svc-refbig{font-size:18px}.sa-svc-refbig strong{font-family:monospace;background:#0b1f3a;color:#fff;padding:4px 10px;border-radius:8px}
+.sa-svc-terms ol{padding-left:20px}.sa-svc-terms h2{font-size:18px;color:#0b1f3a;margin:18px 0 4px}.sa-svc-terms p{line-height:1.65}

@@ -46,6 +46,8 @@ if (!defined('ABSPATH')) {
           <li><a href="<?php echo esc_url(sa_page_url('refund-policy')); ?>"><?php esc_html_e('Refund Policy', 'supreme-autoparts'); ?></a></li>
           <li><a href="<?php echo esc_url(sa_page_url('chargeback-policy')); ?>"><?php esc_html_e('Chargeback & Disputes', 'supreme-autoparts'); ?></a></li>
           <li><a href="<?php echo esc_url(sa_page_url('cookie-policy')); ?>"><?php esc_html_e('Cookie Policy', 'supreme-autoparts'); ?></a></li>
+          <li><a href="<?php echo esc_url(home_url('/booking-terms/')); ?>"><?php esc_html_e('Booking Terms', 'supreme-autoparts'); ?></a></li>
+          <li><a href="<?php echo esc_url(home_url('/manage-booking/')); ?>"><?php esc_html_e('Manage booking', 'supreme-autoparts'); ?></a></li>
         </ul>
       </div>
       <div>
