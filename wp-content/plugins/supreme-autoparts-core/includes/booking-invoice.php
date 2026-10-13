@@ -25,7 +25,7 @@ function sa_bk_invoice_url(int $id, bool $download = false): string
     return add_query_arg($args, home_url('/'));
 }
 
-function sa_bk_invoice_html(int $id): string
+function sa_bk_invoice_html(int $id, bool $embed_logo = false): string
 {
     $b = sa_svc_booking_data($id);
     $svc = sa_svc_catalog()[$b['service']] ?? ['name' => $b['service']];
@@ -34,7 +34,7 @@ function sa_bk_invoice_html(int $id): string
     $usd = sa_svc_fee_usd();
     $loc = sa_svc_locations()[$b['location']]['label'] ?? $b['location'];
     $pay = add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/pay/'));
-    $logo = function_exists('sa_core_invoice_logo_url') ? sa_core_invoice_logo_url() : '';
+    $logo = $embed_logo && function_exists('sa_core_logo_data_uri') ? sa_core_logo_data_uri() : (function_exists('sa_core_invoice_logo_url') ? sa_core_invoice_logo_url() : '');
     $e = static fn($s) => esc_html((string) $s);
     $badge = $paid
         ? '<span style="display:inline-block;padding:6px 14px;border-radius:999px;background:#e7f7ee;color:#137a3f;font-weight:700;letter-spacing:.08em">PAID</span>'
@@ -50,7 +50,7 @@ function sa_bk_invoice_html(int $id): string
     ];
     $h = '<div style="font-family:Inter,Arial,sans-serif;max-width:720px;margin:24px auto;background:#fff;color:#1f2430;border:1px solid #e6e8ee;border-radius:14px;padding:28px">';
     $h .= '<table style="width:100%;border-collapse:collapse"><tr><td style="vertical-align:top">'
-        . ($logo ? '<img src="' . esc_url($logo) . '" alt="Supreme Autoparts" style="max-height:48px;margin-bottom:8px"><br>' : '')
+        . ($logo ? '<img src="' . ($embed_logo ? esc_attr($logo) : esc_url($logo)) . '" width="160" alt="Supreme Autoparts" style="max-height:48px;margin-bottom:8px"><br>' : '')
         . '<strong>Standard Driveworks / Supreme Autoparts</strong><br><span style="color:#5b6475;font-size:13px">Ground Floor, Midax Plaza, Kandundo Rd, Njiru, Nairobi<br>P.O. Box 00516-00100 G.P.O Nairobi<br>calvin@supremeautoparts.co.ke · +254 714 498 451</span></td>'
         . '<td style="vertical-align:top;text-align:right"><div style="font-size:22px;font-weight:800;color:#0b1f3a">' . ($paid ? 'INVOICE / BOOKING CONFIRMATION' : 'INVOICE') . '</div>'
         . '<div style="margin:6px 0;color:#5b6475;font-size:13px">No. ' . $e(sa_bk_invoice_no($b)) . '<br>Issued ' . $e(wp_date('j M Y', (int) $b['created'])) . '</div>' . $badge . '</td></tr></table>';
@@ -103,7 +103,7 @@ function sa_bk_invoice_email(int $id, string $kind = ''): void
     $att = [];
     $dir = function_exists('get_temp_dir') ? get_temp_dir() : sys_get_temp_dir() . '/';
     $tmp = $dir . sanitize_file_name(sa_bk_invoice_no($b) . ($paid ? '-PAID' : '') . '.html');
-    if (@file_put_contents($tmp, '<!doctype html><meta charset="utf-8"><title>' . esc_html(sa_bk_invoice_no($b)) . '</title><body style="background:#f4f5f8">' . sa_bk_invoice_html($id) . '</body>') !== false) {
+    if (@file_put_contents($tmp, '<!doctype html><meta charset="utf-8"><title>' . esc_html(sa_bk_invoice_no($b)) . '</title><body style="background:#f4f5f8">' . sa_bk_invoice_html($id, true) . '</body>') !== false) {
         $att[] = $tmp;
     }
     wp_mail($b['email'], $subject, $body, ['Content-Type: text/html; charset=UTF-8'], $att);
@@ -138,7 +138,7 @@ add_action('template_redirect', static function (): void {
         . '<style>@media print{.noprint{display:none}body{background:#fff!important}}</style></head><body style="background:#f4f5f8;margin:0;padding:12px">'
         . '<p class="noprint" style="font-family:Arial,sans-serif;text-align:center"><button onclick="window.print()" style="padding:10px 18px;border-radius:10px;border:0;background:#0b1f3a;color:#fff;font-weight:600;cursor:pointer">Print / Save as PDF</button> '
         . '<a href="' . esc_url(sa_bk_invoice_url($id, true)) . '" style="margin-left:10px">Download</a></p>'
-        . sa_bk_invoice_html($id) . '</body></html>';
+        . sa_bk_invoice_html($id, !empty($_GET['dl'])) . '</body></html>';
     exit;
 });
 

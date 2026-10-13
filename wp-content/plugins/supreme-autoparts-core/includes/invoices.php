@@ -20,28 +20,20 @@ if (!defined('ABSPATH')) {
  */
 function sa_core_invoice_logo_url(): string
 {
-    $custom = (int) get_theme_mod('custom_logo');
-    if ($custom > 0) {
-        $src = wp_get_attachment_image_url($custom, 'full');
-        if (is_string($src) && $src !== '') {
-            return set_url_scheme($src, 'https');
-        }
-    }
+    // Official logo bundled with the theme (same file as the site header). Media-library
+    // uploads are not used: they can disappear on redeploy and show as broken images.
+    return 'https://www.supremeautoparts.co.ke/wp-content/themes/supreme-autoparts/assets/logo-light.jpg';
+}
 
-    $theme_uri = get_template_directory_uri();
-    $candidates = [
-        get_template_directory() . '/assets/logo-light.jpg' => $theme_uri . '/assets/logo-light.jpg',
-        get_template_directory() . '/assets/logo-light.png' => $theme_uri . '/assets/logo-light.png',
-        get_template_directory() . '/assets/logo.png'       => $theme_uri . '/assets/logo.png',
-        get_template_directory() . '/assets/logo.jpg'       => $theme_uri . '/assets/logo.jpg',
-    ];
-    foreach ($candidates as $path => $url) {
-        if (is_readable($path)) {
-            return set_url_scheme($url, 'https');
-        }
+/** Same logo as a data: URI, for files opened offline (downloaded invoices, attachments, PDFs). */
+function sa_core_logo_data_uri(): string
+{
+    static $u = null;
+    if ($u === null) {
+        $f = get_template_directory() . '/assets/logo-light.jpg';
+        $u = is_readable($f) ? 'data:image/jpeg;base64,' . base64_encode((string) file_get_contents($f)) : sa_core_invoice_logo_url();
     }
-
-    return set_url_scheme(home_url('/wp-content/themes/supreme-autoparts/assets/logo-light.jpg'), 'https');
+    return $u;
 }
 
 /**
