@@ -1221,3 +1221,5 @@ body.woocommerce-order-pay #payment #place_order{width:100%;min-height:52px;bord
   body.woocommerce-order-pay .sa-page__content{padding:16px 14px;border-radius:14px;}
   body.woocommerce-order-pay #pesapal-iframe{height:680px;}
 }
+body.woocommerce-order-pay ul.order_details::before,body.woocommerce-order-pay ul.order_details::after{content:none!important;display:none!important;}
+@media (max-width:600px){body.woocommerce-order-pay .sa-page__content{padding:14px 12px;}}
