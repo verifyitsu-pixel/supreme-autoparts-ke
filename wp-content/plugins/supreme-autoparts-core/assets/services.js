@@ -65,9 +65,10 @@
       }).catch(function () { slotsBox.innerHTML = '<p class="sa-svc-muted">Could not load times. Please retry.</p>'; });
   }
   function togglePickup() {
-    var us = region() === 'US', po = q('[data-sa-pickup-opt]'), pk = q('[data-sa-pickup]'), ta = pk.querySelector('textarea');
+    var us = region() === 'US', po = q('[data-sa-pickup-opt]'), pk = q('[data-sa-pickup]');
     po.hidden = us; if (us) q('[name=mode][value=dropoff]').checked = true;
-    var on = !us && val('mode') === 'pickup'; pk.hidden = !on; ta.required = on; renderSummary();
+    var on = !us && val('mode') === 'pickup'; pk.hidden = !on;
+    pk.querySelectorAll('[data-pk-req]').forEach(function (el) { el.required = on; }); renderSummary();
   }
   var vdbEl = document.querySelector('[data-sa-vdb]'), vdb = vdbEl ? JSON.parse(vdbEl.textContent) : {};
   function models() { var mk = q('[name=make]').value.trim().toLowerCase(), dl = document.getElementById('sa-models'), list = [];
@@ -88,5 +89,15 @@
     ['make', 'model', 'year', 'reg'].forEach(function (k) { q('[name=' + k + ']').value = v[k] || ''; }); models(); renderSummary();
   });
   f.addEventListener('submit', function (e) { if (!q('[name=time]:checked')) { e.preventDefault(); show(3); slotsBox.classList.add('is-error'); } });
+  var loc = q('[data-pk-locate]');
+  if (loc) loc.addEventListener('click', function () {
+    var lab = q('[data-pk-pinlabel]');
+    if (!navigator.geolocation) { lab.textContent = 'Location not available on this device.'; return; }
+    lab.textContent = 'Getting your location…';
+    navigator.geolocation.getCurrentPosition(function (p) {
+      var v = p.coords.latitude.toFixed(6) + ',' + p.coords.longitude.toFixed(6); q('[data-pk-pin]').value = v;
+      lab.innerHTML = 'Pin saved: <a target="_blank" rel="noopener" href="https://www.google.com/maps?q=' + v + '">' + v + '</a>';
+    }, function () { lab.textContent = 'Could not get location. You can skip this step.'; }, { enableHighAccuracy: true, timeout: 10000 });
+  });
   models(); togglePickup(); refreshPrices(); show(0);
 })();

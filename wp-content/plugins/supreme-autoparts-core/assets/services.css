@@ -180,3 +180,16 @@ body.sa-side-open{overflow:hidden}
 .sa-svc-feebox{display:flex;flex-direction:column;gap:4px;background:#fffaf0;border:1px solid #F5A623;border-radius:12px;padding:12px 14px;margin:12px 0;font-size:14px}
 .sa-svc-refbig{font-size:18px}.sa-svc-refbig strong{font-family:monospace;background:#0b1f3a;color:#fff;padding:4px 10px;border-radius:8px}
 .sa-svc-terms ol{padding-left:20px}.sa-svc-terms h2{font-size:18px;color:#0b1f3a;margin:18px 0 4px}.sa-svc-terms p{line-height:1.65}
+
+.sa-svc [hidden],.sa-svc-wiz [hidden]{display:none!important}
+.sa-svc-pickup{margin-top:10px;border-top:1px solid #eef0f3;padding-top:6px}
+.sa-svc-pin{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.sa-svc-cr{margin-top:8px}.sa-svc-cr summary{list-style:none;display:inline-flex}.sa-svc-cr summary::-webkit-details-marker{display:none}
+.sa-svc-cr form{margin-top:10px;gap:10px}
+.sa-svc-status--cancel_requested{background:#fff7e6;color:#b45309}
+@media (max-width:640px){
+ .sa-svc-nav{position:sticky;bottom:0;z-index:5;background:#fff;padding:10px 0 calc(10px + env(safe-area-inset-bottom));margin:0 -4px;flex-direction:column-reverse;box-shadow:0 -6px 16px rgba(0,0,0,.06)}
+ .sa-svc-nav .sa-svc-btn{width:100%;padding:14px}
+ .sa-svc-row{grid-template-columns:1fr}
+ .sa-svc-bk .sa-svc-btn{width:100%;margin-top:6px}
+}

@@ -45,6 +45,7 @@ function sa_svc_statuses(): array
         'confirmed'   => 'Confirmed',
         'in_progress' => 'In progress',
         'done'        => 'Done',
+        'cancel_requested' => 'Cancellation requested',
         'cancelled'   => 'Cancelled',
     ];
 }
@@ -146,7 +147,7 @@ function sa_svc_booking_data(int $id): array
         'date' => $m('date'), 'time' => $m('time'), 'location' => $m('location'), 'region' => $m('region'),
         'status' => $m('status') ?: 'pending', 'name' => $m('name'), 'email' => $m('email'), 'phone' => $m('phone'),
         'make' => $m('make'), 'model' => $m('model'), 'year' => $m('year'), 'reg' => $m('reg'),
-        'notes' => $m('notes'), 'estimate' => $m('estimate'), 'fee' => $m('fee') ?: 'unpaid', 'fee_kes' => $m('fee_kes'), 'fee_order' => $m('fee_order'), 'mode' => $m('mode') ?: 'dropoff', 'pickup' => $m('pickup'), 'gcal' => $m('gcal'), 'user' => (int) $m('user'), 'key' => $m('key'),
+        'notes' => $m('notes'), 'estimate' => $m('estimate'), 'cancel_note' => $m('cancel_note'), 'fee' => $m('fee') ?: 'unpaid', 'fee_kes' => $m('fee_kes'), 'fee_order' => $m('fee_order'), 'mode' => $m('mode') ?: 'dropoff', 'pickup' => $m('pickup'), 'gcal' => $m('gcal'), 'user' => (int) $m('user'), 'key' => $m('key'),
         'created' => get_post_time('U', true, $id),
     ];
 }
@@ -285,9 +286,19 @@ function sa_svc_handle_booking(): void
     if ($p('name') === '' || $p('phone') === '') $fail('Please enter your name and phone number.');
     if ($p('make') === '' || $p('model') === '') $fail('Please enter your vehicle make and model.');
     $mode = $p('mode') === 'pickup' ? 'pickup' : 'dropoff';
-    $pickup = sanitize_textarea_field(wp_unslash((string) ($_POST['pickup_address'] ?? '')));
     if ($mode === 'pickup' && $loc === 'usa') $mode = 'dropoff';
-    if ($mode === 'pickup' && strlen(trim($pickup)) < 8) $fail('Please enter your full pickup address.');
+    $pickup = '';
+    if ($mode === 'pickup') {
+        foreach (['pk_street' => 'street / road', 'pk_building' => 'building / estate', 'pk_area' => 'area', 'pk_city' => 'city / town', 'pk_phone' => 'pickup contact phone', 'pk_time' => 'preferred pickup time'] as $k => $lab) {
+            if (trim($p($k)) === '') $fail('Please enter the pickup ' . $lab . '.');
+        }
+        if (!preg_match('/^[+0-9 ]{9,16}$/', $p('pk_phone'))) $fail('Please enter a valid pickup contact phone.');
+        $pin = preg_match('/^-?\d{1,3}\.\d+,-?\d{1,3}\.\d+$/', $p('pk_pin')) ? $p('pk_pin') : '';
+        $pickup = implode(', ', array_filter([$p('pk_house'), $p('pk_building'), $p('pk_street'), $p('pk_area'), $p('pk_city')]))
+            . ($p('pk_landmark') !== '' ? ' | Landmark: ' . sanitize_text_field(wp_unslash((string) $_POST['pk_landmark'])) : '')
+            . ' | Pickup phone: ' . $p('pk_phone') . ' | Pickup time: ' . $p('pk_time')
+            . ($pin !== '' ? ' | Pin: https://www.google.com/maps?q=' . $pin : '');
+    }
 
     $svc = $catalog[$service];
     $region = sa_svc_locations()[$loc]['region'];
@@ -398,10 +409,24 @@ function sa_svc_customer_cancel(): void
     if (!$owner || !in_array($b['status'], ['pending', 'confirmed'], true)) {
         wp_die('This booking cannot be cancelled online. Please contact us.', 403);
     }
-    update_post_meta($id, '_sa_bk_status', 'cancelled');
     if ($b['fee'] === 'paid') {
-        update_post_meta($id, '_sa_bk_fee', sa_svc_within_window($b) ? 'refund_due' : 'forfeited');
+        // Paid bookings: cancellation REQUEST, reviewed by admin.
+        $g = static fn(string $k): string => sanitize_text_field(wp_unslash((string) ($_POST[$k] ?? '')));
+        $reasons = sa_svc_cancel_reasons();
+        $method = $g('refund_method');
+        if (!isset($reasons[$g('reason')]) || !in_array($method, ['mpesa', 'card', 'bank'], true) || $g('refund_details') === '' || $g('contact') === '') {
+            wp_safe_redirect(add_query_arg(['b' => $id, 'k' => $b['key'], 'cr_err' => 1], home_url('/book-service/confirmed/')) . '#cancel');
+            exit;
+        }
+        $req = ['reason' => $reasons[$g('reason')], 'details' => sanitize_textarea_field(wp_unslash((string) ($_POST['details'] ?? ''))), 'method' => $method,
+            'refund_details' => $g('refund_details'), 'contact' => $g('contact'), 'prev' => $b['status'], 'within' => sa_svc_within_window($b) ? 'yes' : 'no', 't' => time()];
+        update_post_meta($id, '_sa_bk_cancel_req', $req);
+        update_post_meta($id, '_sa_bk_status', 'cancel_requested');
+        sa_svc_send_emails($id, 'cancel_request');
+        wp_safe_redirect(add_query_arg(['b' => $id, 'k' => $b['key'], 'cr' => 1], home_url('/book-service/confirmed/')));
+        exit;
     }
+    update_post_meta($id, '_sa_bk_status', 'cancelled');
     sa_svc_send_emails($id, 'cancelled');
     sa_svc_gcal_sync($id);
     $to = wp_get_referer() ?: home_url('/');
@@ -422,6 +447,9 @@ function sa_svc_send_emails(int $id, string $event): void
         'created' => 'Booking received: ' . $svc['name'] . ' (' . $b['ref'] . ')',
         'cancelled' => 'Booking cancelled: ' . $b['ref'],
         'status' => 'Booking update: ' . $b['ref'] . ' is ' . $status,
+        'cancel_request' => 'Cancellation request received: ' . $b['ref'],
+        'cancel_approved' => 'Cancellation approved — booking fee refund: ' . $b['ref'],
+        'cancel_declined' => 'Cancellation request declined: ' . $b['ref'],
         'reminder' => 'Reminder: your ' . $svc['name'] . ' is tomorrow at ' . $b['time'] . ' (' . $b['ref'] . ')',
     ];
     $rows = [
@@ -432,7 +460,7 @@ function sa_svc_send_emails(int $id, string $event): void
     ];
     $html = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#222">'
         . '<h2 style="color:#0b1f3a">Supreme Autoparts — Car Service</h2><p>Hi ' . esc_html($b['name']) . ',</p><p>'
-        . ($event === 'reminder' ? 'This is a reminder of your appointment tomorrow.' : ($event === 'created' ? 'Thanks for booking. Our team will confirm your appointment shortly.' : ($event === 'cancelled' ? 'Your booking has been cancelled.' : 'Your booking status has changed.')))
+        . ($event === 'cancel_request' ? 'We have received your cancellation request. Our team will review it and email you the decision. Your booking stays on hold until then.' : ($event === 'cancel_approved' ? 'Your cancellation has been approved and your booking is cancelled. Your KES ' . number_format((int) ($b['fee_kes'] ?: 1000)) . ' booking fee is being refunded to the method you chose.' : ($event === 'cancel_declined' ? 'Your cancellation request was declined, so your booking remains active. Please contact us if you have questions.' . ($b['cancel_note'] ? ' Note from our team: ' . $b['cancel_note'] : '') : ''))) . ($event === 'reminder' ? 'This is a reminder of your appointment tomorrow.' : (in_array($event, ['cancel_request', 'cancel_approved', 'cancel_declined'], true) ? '' : ($event === 'created' ? 'Thanks for booking. Our team will confirm your appointment shortly.' : ($event === 'cancelled' ? 'Your booking has been cancelled.' : 'Your booking status has changed.'))))
         . '</p><table style="border-collapse:collapse;width:100%">';
     foreach ($rows as $k => $v) {
         $html .= '<tr><td style="padding:6px 8px;border-bottom:1px solid #eee;color:#666">' . esc_html($k) . '</td><td style="padding:6px 8px;border-bottom:1px solid #eee"><strong>' . esc_html($v) . '</strong></td></tr>';
@@ -440,7 +468,7 @@ function sa_svc_send_emails(int $id, string $event): void
     $html .= '</table><p><a href="' . esc_url(add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/confirmed/'))) . '">View, cancel or reschedule your booking</a> · <a href="' . esc_url(home_url('/booking-terms/')) . '">Booking Terms</a> · <a href="' . esc_url(add_query_arg(['service' => $b['service'], 'reschedule' => $id, 'rk' => $b['key']], home_url('/book-service/'))) . '">Reschedule</a></p></div>';
     $headers = ['Content-Type: text/html; charset=UTF-8'];
     wp_mail($b['email'], $subjects[$event] ?? $subjects['status'], $html, $headers);
-    if (!in_array($event, ['status', 'reminder'], true)) {
+    if (!in_array($event, ['status', 'reminder', 'cancel_approved', 'cancel_declined'], true)) {
         $admin = (string) get_option('woocommerce_email_from_address', get_option('admin_email'));
         wp_mail($admin, '[Bookings] ' . ($subjects[$event] ?? '') . ' — ' . $b['name'], $html, $headers);
     }
@@ -763,7 +791,20 @@ function sa_svc_render_book(): void
             <label class="sa-svc-choice sa-svc-choice--row"><input type="radio" name="mode" value="dropoff" checked><span><strong>Drop-off at the garage</strong><em>Bring the car in at your slot time. <a href="<?php echo esc_url(sa_svc_map_url()); ?>" target="_blank" rel="noopener">Map</a></em></span></label>
             <label class="sa-svc-choice sa-svc-choice--row" data-sa-pickup-opt><input type="radio" name="mode" value="pickup"><span><strong>Vehicle pickup from my address</strong><em>Nairobi area. Pickup fee confirmed on booking.</em></span></label>
           </div>
-          <label class="sa-svc-full" data-sa-pickup hidden>Pickup address* <textarea name="pickup_address" rows="2" placeholder="Estate, street, building, landmark"></textarea></label>
+          <div class="sa-svc-pickup" data-sa-pickup hidden>
+            <h4 class="sa-svc-sub">Pickup address</h4>
+            <div class="sa-svc-row">
+              <label>Street / road* <input name="pk_street" data-pk-req placeholder="Kangundo Rd"></label>
+              <label>Building / estate* <input name="pk_building" data-pk-req placeholder="Building or estate name"></label>
+              <label>House / apartment no. <input name="pk_house" placeholder="e.g. B12"></label>
+              <label>Area / neighbourhood* <input name="pk_area" data-pk-req placeholder="e.g. Njiru"></label>
+              <label>City / town* <input name="pk_city" data-pk-req value="Nairobi"></label>
+              <label>Contact phone at pickup* <input name="pk_phone" type="tel" data-pk-req pattern="[+0-9 ]{9,16}" placeholder="+254 7xx xxx xxx"></label>
+              <label>Preferred pickup time* <select name="pk_time" data-pk-req><option value="">Choose</option><option>1 hour before my slot</option><option>2 hours before my slot</option><option>Early morning (7:00–8:00)</option><option>Day before (evening)</option></select></label>
+            </div>
+            <label class="sa-svc-full">Landmark / directions <textarea name="pk_landmark" rows="2" placeholder="Near…, gate colour, which entrance"></textarea></label>
+            <div class="sa-svc-pin"><input type="hidden" name="pk_pin" data-pk-pin><button type="button" class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--ghost" data-pk-locate>📍 Use my location</button><span class="sa-svc-muted" data-pk-pinlabel>Optional: share a map pin so the driver finds you faster.</span></div>
+          </div>
         </fieldset>
 
         <fieldset class="sa-svc-step" data-step="4"><legend><span>4</span> Date &amp; time</legend>
@@ -818,7 +859,23 @@ function sa_svc_render_booking_card(array $b, bool $cancel = true): void
         <dt>Estimate</dt><dd><?php echo esc_html($b['estimate']); ?> · balance paid at service</dd>
         <dt>Booking fee</dt><dd><?php echo esc_html(sa_svc_fee_label($b)); ?><?php if ($b['fee'] === 'unpaid' && $b['status'] === 'pending') : ?> · <a href="<?php echo esc_url(add_query_arg(['b' => $b['id'], 'k' => $b['key']], home_url('/book-service/pay/'))); ?>">Pay now</a><?php endif; ?></dd>
       </dl>
-      <?php if ($cancel && in_array($b['status'], ['pending', 'confirmed'], true)) : ?>
+      <?php if ($b['status'] === 'cancel_requested') : ?><p class="sa-svc-alert">Cancellation requested. We'll email you our decision.</p><?php endif; ?>
+      <?php if ($cancel && in_array($b['status'], ['pending', 'confirmed'], true) && $b['fee'] === 'paid') : ?>
+        <a class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--primary" href="<?php echo esc_url(add_query_arg(['service' => $b['service'], 'reschedule' => $b['id'], 'rk' => $b['key']], home_url('/book-service/'))); ?>">Reschedule</a>
+        <details class="sa-svc-cr" id="cancel"<?php echo isset($_GET['cr_err']) ? ' open' : ''; ?>><summary class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--ghost">Request cancellation</summary>
+          <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="sa-svc-form">
+            <?php if (isset($_GET['cr_err'])) : ?><p class="sa-svc-alert">Please complete all required fields.</p><?php endif; ?>
+            <input type="hidden" name="action" value="sa_svc_cancel"><input type="hidden" name="b" value="<?php echo (int) $b['id']; ?>"><input type="hidden" name="k" value="<?php echo esc_attr($b['key']); ?>">
+            <?php wp_nonce_field('sa_svc_cancel_' . $b['id']); ?>
+            <p class="sa-svc-muted">Booking <?php echo esc_html($b['ref']); ?>. <?php echo sa_svc_within_window($b) ? 'You are within the free-cancellation window, so the fee is refundable.' : 'This is less than ' . (int) sa_svc_setting('cancel_hours') . ' hours before your appointment, so the fee may not be refundable (see Booking Terms).'; ?></p>
+            <label>Reason* <select name="reason" required><option value="">Choose</option><?php foreach (sa_svc_cancel_reasons() as $rk2 => $rl) : ?><option value="<?php echo esc_attr($rk2); ?>"><?php echo esc_html($rl); ?></option><?php endforeach; ?></select></label>
+            <label>Details <textarea name="details" rows="2"></textarea></label>
+            <label>Preferred refund method* <select name="refund_method" required><option value="">Choose</option><option value="mpesa">M-Pesa</option><option value="card">Original card</option><option value="bank">Bank transfer</option></select></label>
+            <label>Refund details* <input name="refund_details" required placeholder="M-Pesa number / last 4 card digits / bank, account name & number"></label>
+            <label>Contact (phone or email)* <input name="contact" required value="<?php echo esc_attr($b['phone']); ?>"></label>
+            <button class="sa-svc-btn sa-svc-btn--primary" type="submit">Submit cancellation request</button>
+          </form></details>
+      <?php elseif ($cancel && in_array($b['status'], ['pending', 'confirmed'], true)) : ?>
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" onsubmit="return confirm('Cancel this booking?');">
           <input type="hidden" name="action" value="sa_svc_cancel"><input type="hidden" name="b" value="<?php echo (int) $b['id']; ?>"><input type="hidden" name="k" value="<?php echo esc_attr($b['key']); ?>">
           <?php wp_nonce_field('sa_svc_cancel_' . $b['id']); ?>
@@ -903,6 +960,21 @@ add_action('admin_post_sa_svc_admin', static function (): void {
     if (get_post_type($id) !== 'sa_booking') {
         wp_die('Unknown booking', 404);
     }
+    if (!empty($_POST['cr_decision'])) {
+        $req = (array) get_post_meta($id, '_sa_bk_cancel_req', true);
+        update_post_meta($id, '_sa_bk_cancel_note', sanitize_text_field(wp_unslash((string) ($_POST['cr_note'] ?? ''))));
+        if ($_POST['cr_decision'] === 'approve') {
+            update_post_meta($id, '_sa_bk_status', 'cancelled');
+            update_post_meta($id, '_sa_bk_fee', 'refunded');
+            sa_svc_send_emails($id, 'cancel_approved');
+        } else {
+            update_post_meta($id, '_sa_bk_status', in_array($req['prev'] ?? '', ['pending', 'confirmed'], true) ? $req['prev'] : 'confirmed');
+            sa_svc_send_emails($id, 'cancel_declined');
+        }
+        sa_svc_gcal_sync($id);
+        wp_safe_redirect(wp_get_referer() ?: admin_url('admin.php?page=sa-super-bookings'));
+        exit;
+    }
     if (!empty($_POST['delete'])) {
         sa_svc_gcal_sync($id, true);
         wp_delete_post($id, true);
@@ -970,7 +1042,7 @@ function sa_svc_admin_render(): void
             . '<td>' . esc_html($b['name']) . '<br><a href="mailto:' . esc_attr($b['email']) . '">' . esc_html($b['email']) . '</a><br>' . esc_html($b['phone']) . '</td>'
             . '<td>' . esc_html(trim($b['year'] . ' ' . $b['make'] . ' ' . $b['model'] . ' ' . $b['reg'])) . '</td>'
             . '<td>' . esc_html(sa_svc_locations()[$b['location']]['label'] ?? $b['location']) . '<br><small>' . ($b['mode'] === 'pickup' ? 'PICKUP: ' . esc_html($b['pickup']) : 'Drop-off') . ' · ' . esc_html(sa_svc_duration_label($b['service'])) . ($b['gcal'] ? ' · 📅 synced' : '') . '</small></td>'
-            . '<td colspan="2"><form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'
+            . '<td colspan="2">' . sa_svc_admin_cr_box((int) $id, $b) . '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'
             . '<input type="hidden" name="action" value="sa_svc_admin"><input type="hidden" name="b" value="' . (int) $id . '">' . wp_nonce_field('sa_svc_admin', '_wpnonce', true, false)
             . '<input name="estimate" value="' . esc_attr($b['estimate']) . '" style="width:150px"><select name="fee" title="Booking fee">';
         foreach (sa_svc_fee_statuses() as $k => $l) {
@@ -1535,3 +1607,23 @@ function sa_svc_render_terms(): void
 add_filter('woocommerce_coupon_is_valid_for_product', static function ($valid, $product) {
     return $product && (int) $product->get_id() === (int) get_option('sa_svc_fee_product', 0) ? false : $valid;
 }, 20, 2);
+
+
+function sa_svc_cancel_reasons(): array
+{
+    return ['schedule' => 'Schedule changed', 'fixed' => 'Problem fixed / no longer needed', 'elsewhere' => 'Booked elsewhere', 'price' => 'Price or estimate', 'vehicle' => 'Vehicle sold or unavailable', 'other' => 'Other'];
+}
+
+function sa_svc_admin_cr_box(int $id, array $b): string
+{
+    if ($b['status'] !== 'cancel_requested') {
+        return '';
+    }
+    $r = (array) get_post_meta($id, '_sa_bk_cancel_req', true);
+    $m = ['mpesa' => 'M-Pesa', 'card' => 'Card', 'bank' => 'Bank'][$r['method'] ?? ''] ?? '';
+    return '<div style="background:#fff7e6;border:1px solid #f5a623;border-radius:8px;padding:8px;margin-bottom:6px"><strong>Cancellation request</strong> (' . esc_html(wp_date('j M H:i', (int) ($r['t'] ?? 0))) . ', ' . (($r['within'] ?? '') === 'yes' ? 'within window' : 'LATE: outside window') . ')<br>'
+        . 'Reason: ' . esc_html((string) ($r['reason'] ?? '')) . ($r['details'] ?? '' ? ' — ' . esc_html((string) $r['details']) : '') . '<br>Refund: ' . esc_html($m . ' ' . ($r['refund_details'] ?? '')) . '<br>Contact: ' . esc_html((string) ($r['contact'] ?? ''))
+        . '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap"><input type="hidden" name="action" value="sa_svc_admin"><input type="hidden" name="b" value="' . $id . '">' . wp_nonce_field('sa_svc_admin', '_wpnonce', true, false)
+        . '<input name="cr_note" placeholder="Note to customer (optional)" style="width:200px"><button class="button button-primary" name="cr_decision" value="approve">Approve & mark refunded</button><button class="button" name="cr_decision" value="decline">Decline</button></form>'
+        . '<small>Approving marks the fee refunded. Send the actual refund via M-Pesa, bank, or the Woo order refund.</small></div>';
+}
