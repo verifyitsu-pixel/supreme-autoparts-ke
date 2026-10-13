@@ -418,6 +418,10 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
                 $product->set_regular_price((string) $store_compare);
             }
             $product->set_manage_stock(false);
+            $sa_grams = (float) ($variant['grams'] ?? 0);
+            if ($sa_grams > 0 && (string) $product->get_weight() === '') {
+                $product->set_weight((string) round($sa_grams / 453.59237, 2));
+            }
             $product->set_stock_status(!empty($variant['available']) ? 'instock' : 'outofstock');
         }
 
