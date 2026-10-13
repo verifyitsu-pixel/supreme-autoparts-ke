@@ -48,7 +48,7 @@ Applied by `includes/catalog-gaps.php` from `data/catalog-fixes.json` (meta `_sa
 | 6609 | price_usd | https://supreme-mods.com/products/wilwood-bracket-spacer-tubular-750-length |
 | 5908 | weight_lbs | https://supreme-mods.com/products/ridetech-16-24-chevrolet-camaro-hq-coil-over-system |
 
-## Manufacturer catalog batches (cumulative)
+## Manufacturer / retailer batches (cumulative)
 
 | Product ID | Field | Source |
 |---|---|---|
@@ -170,7 +170,6 @@ Applied by `includes/catalog-gaps.php` from `data/catalog-fixes.json` (meta `_sa
 | 9172 | photo | https://www.alconkits.com/products/toyota-lc300-tundra-2022-front-big-brake-kit |
 | 9173 | photo | https://www.alconkits.com/products/clearance-toyota-hilux-military-grade-front-brake-kit |
 | 9174 | photo | https://www.alconkits.com/products/toyota-lc76-79-2016-six-piston-front-brake-kit |
-| 9276 | photo | https://bankspower.com/products/boost-tube-26012-toyota-tacoma-2-4l |
 | 9296 | photo | https://ticonindustries.com/products/x-lok-clamps |
 | 9359 | photo | https://www.alconkits.com/products/ram-trx-brake-pads-front-for-alcon-bbk |
 | 9361 | photo | https://www.alconkits.com/products/ford-raptor-f-150-tacoma-hi-performance-front-brade-pads-for-alcon-bbk |
@@ -187,3 +186,7 @@ Applied by `includes/catalog-gaps.php` from `data/catalog-fixes.json` (meta `_sa
 | 5540 | weight 125.13 lb | https://www.timbren.com/products/front-bes-brake-kit-ford-f-250-f-350-2wd-2023-present |
 | 5541 | weight 35.78 lb | https://www.timbren.com/products/rear-bes-brake-kit-ford-f-150-2021-present-336mm-rotor |
 | 5828 | weight 65.53 lb | https://www.timbren.com/products/front-bes-brake-kit-ford-f-150-2015-2017 |
+| 10192 | weight 20.4 lb | https://milkymotorsports.com/products/wea471436-1-2im |
+| 10200 | weight 13.43 lb | https://milkymotorsports.com/products/wea441080-1-2im |
+| 9276 | photo | https://bankspower.com/products/boost-tube-26012-toyota-tacoma-2-4l |
+| 5908 | weight 41.0 lb | https://idspeedshop.com/ridetech-16-24-chevrolet-camaro-v6-v8-hq-series-coilover-kit-front-rear-11630201/ |
