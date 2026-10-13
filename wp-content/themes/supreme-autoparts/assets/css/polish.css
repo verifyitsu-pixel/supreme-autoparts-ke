@@ -32,3 +32,11 @@ img{max-width:100%;height:auto}
 /* Section rhythm */
 .sa-section{padding-block:clamp(1.75rem,4vw,3rem)}
 .sa-section__title{font-size:clamp(1.25rem,2.2vw,1.6rem);letter-spacing:-.01em}
+/* Shipping options in the order summary wrapped off-screen on phones */
+.woocommerce-shipping-methods,#shipping_method{margin:0;padding:0;list-style:none;max-width:100%}
+.woocommerce-shipping-methods li,#shipping_method li{white-space:normal;display:flex;gap:.45rem;align-items:flex-start;text-align:left}
+.woocommerce-shipping-methods li label{white-space:normal;overflow-wrap:anywhere}
+@media (max-width:640px){tr.woocommerce-shipping-totals th,tr.woocommerce-shipping-totals td{display:block;width:100%;text-align:left}}
+/* Welcome coupon confirmation: readable on light checkout */
+.sa-welcome-offer{color:#3d2a00!important;background:#fff6e5!important;border-color:#f5c56b!important}
+.sa-welcome-offer strong{color:#3d2a00}
