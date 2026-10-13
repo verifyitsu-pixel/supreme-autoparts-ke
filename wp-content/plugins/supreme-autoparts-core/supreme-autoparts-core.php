@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_CORE_VERSION', '1.3.61');
+define('SA_CORE_VERSION', '1.3.62');
 define('SA_CORE_FILE', __FILE__);
 define('SA_CORE_DIR', plugin_dir_path(__FILE__));
 define('SA_CORE_URL', plugin_dir_url(__FILE__));
@@ -70,6 +70,7 @@ require_once SA_CORE_DIR . 'includes/email-footer.php';
 require_once SA_CORE_DIR . 'includes/order-lifecycle.php';
 require_once SA_CORE_DIR . 'includes/garage/garage.php';
 require_once SA_CORE_DIR . 'includes/site-forms.php';
+require_once SA_CORE_DIR . 'includes/guest-pay.php';
 // import-shopify.php is loaded by CLI/admin/boot import and by product-images helpers when needed.
 
 register_activation_hook(__FILE__, static function (): void {
