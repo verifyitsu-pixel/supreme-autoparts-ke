@@ -259,7 +259,7 @@ function sa_gpf_description(WC_Product $product, string $title): string
         $tiny = strlen($text) < 30;
     }
     if ($tiny) {
-        $text = $title . '. Auto part sold by Supreme Autoparts. USD checkout.';
+        $text = $title . '. Auto part sold by Supreme Autoparts.';
     }
     if (function_exists('mb_substr')) {
         return mb_substr($text, 0, 5000);

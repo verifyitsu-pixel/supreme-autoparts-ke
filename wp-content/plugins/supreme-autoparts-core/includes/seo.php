@@ -208,14 +208,14 @@ function sa_seo_context(): array
     $img   = $brand['og_image'];
     $type  = 'website';
 
-    $default_desc = 'OE/OEM and aftermarket auto parts for US drivers — Japan, US & UK cars, EVs, and bikes. Search by part #. USD checkout. Ships continental US. Free shipping on qualifying orders.';
+    $default_desc = 'OE/OEM and aftermarket auto parts for US drivers — Japan, US & UK cars, EVs, and bikes. Search by part #. Ships continental US. Free shipping on qualifying orders.';
 
     $title = $site;
     $desc  = $default_desc;
 
     if (is_front_page() || is_home()) {
         $title = 'Auto Parts & Accessories | Find Your Part # · Ships US | ' . $site;
-        $desc  = 'Find your part #. OE/OEM fit for US drivers. USD checkout · ships continental US · free shipping on qualifying orders. Support +1 917 437 5121.';
+        $desc  = 'Find your part #. OE/OEM fit for US drivers. Ships continental US · free shipping on qualifying orders. Support +1 917 437 5121.';
     } elseif (function_exists('is_product') && is_product()) {
         $product = function_exists('wc_get_product') ? wc_get_product(get_the_ID()) : null;
         $name    = get_the_title();
@@ -226,7 +226,7 @@ function sa_seo_context(): array
             if (is_string($raw) && $raw !== '') {
                 $desc = sa_seo_clip($raw, 158);
             } else {
-                $desc = sa_seo_clip($name . ' — genuine aftermarket part. USD pricing, ships continental US and internationally. Order at Supreme Autoparts.', 158);
+                $desc = sa_seo_clip($name . ' — genuine aftermarket part. Ships continental US and internationally. Order at Supreme Autoparts.', 158);
             }
             $thumb = (int) $product->get_image_id();
             if ($thumb > 0) {
@@ -262,7 +262,7 @@ function sa_seo_context(): array
                 $desc = sa_seo_clip($tdesc, 158);
             } else {
                 $desc = sa_seo_clip(
-                    'Shop ' . $term->name . ' for cars, trucks, and SUVs. US-spec fitments, USD checkout, free shipping on qualifying continental US orders. Browse ' . $term->name . ' at Supreme Autoparts.',
+                    'Shop ' . $term->name . ' for cars, trucks, and SUVs. US-spec fitments, free shipping on qualifying continental US orders. Browse ' . $term->name . ' at Supreme Autoparts.',
                     158
                 );
             }
@@ -275,7 +275,7 @@ function sa_seo_context(): array
         }
     } elseif (function_exists('is_shop') && is_shop()) {
         $title = 'Shop Auto Parts Online | Performance & Aftermarket | ' . $site;
-        $desc  = 'Browse brakes, suspension, wheels, lighting, and more. Search by part number. USD checkout · ships continental US. Find your part at Supreme Autoparts.';
+        $desc  = 'Browse brakes, suspension, wheels, lighting, and more. Search by part number. Ships continental US. Find your part at Supreme Autoparts.';
     } elseif (is_singular(['page', 'post'])) {
         $id    = get_the_ID();
         $name  = get_the_title();
@@ -471,7 +471,7 @@ function sa_seo_print_json_ld(array $ctx, array $brand, string $url): void
             'url'   => $brand['logo'],
         ],
         'areaServed'  => $brand['area_served'],
-        'description' => 'Kenya auto parts store for Japanese, American, and British vehicles — plus EVs and motorcycles. USD checkout; shipping and WhatsApp support.',
+        'description' => 'Kenya auto parts store for Japanese, American, and British vehicles — plus EVs and motorcycles. Shipping and WhatsApp support.',
     ];
     if (!empty($brand['same_as'])) {
         $org['sameAs'] = $brand['same_as'];
@@ -624,11 +624,11 @@ function sa_seo_builtin_faqs(): array
         'how-to-order' => [
             [
                 'q' => 'How do I order from Supreme Autoparts?',
-                'a' => 'Browse the shop or search by part name, add items to your cart, and check out in USD. Create an account or checkout as a guest. You will receive order confirmation by email.',
+                'a' => 'Browse the shop or search by part name, add items to your cart, and check out. Create an account or checkout as a guest. You will receive order confirmation by email.',
             ],
             [
                 'q' => 'What currency am I charged in?',
-                'a' => 'Checkout is in USD. Depending on your location, the site may display an approximate local amount for convenience — the charge at payment is USD.',
+                'a' => 'Prices and totals are shown before you pay. The amount at checkout is the amount you pay.',
             ],
             [
                 'q' => 'Do you ship within the United States?',
@@ -646,7 +646,7 @@ function sa_seo_builtin_faqs(): array
             ],
             [
                 'q' => 'Is there free shipping?',
-                'a' => 'Qualifying orders over the threshold shown in the site banner (USD equivalent, often around $99) may include complimentary shipping. Oversized or direct-ship items can be excluded — always confirm on the product page and at checkout.',
+                'a' => 'Qualifying orders over the threshold shown in the site banner may include complimentary shipping. Oversized or direct-ship items can be excluded — always confirm on the product page and at checkout.',
             ],
             [
                 'q' => 'Who do I contact about a Kenya delivery?',
@@ -670,7 +670,7 @@ function sa_seo_builtin_faqs(): array
         'auto-parts-kenya' => [
             [
                 'q' => 'Can I buy US-spec auto parts and have them shipped to Kenya?',
-                'a' => 'Yes. Shop online in USD, complete checkout, and we arrange shipping per the live Shipping Policy. Local support is available on WhatsApp ' . $wa . '.',
+                'a' => 'Yes. Shop online, complete checkout, and we arrange shipping per the live Shipping Policy. Local support is available on WhatsApp ' . $wa . '.',
             ],
             [
                 'q' => 'Do you have a physical walk-in store in Nairobi?',
@@ -684,7 +684,7 @@ function sa_seo_builtin_faqs(): array
             ],
             [
                 'q' => 'Do you ship performance parts within the United States?',
-                'a' => 'Checkout supports USD payments for customers we ship to, including US destinations where enabled at checkout. Confirm shipping options and rates on the cart/checkout pages for your address.',
+                'a' => 'Checkout supports online payment for customers we ship to. Confirm shipping options and rates on the cart/checkout pages for your address.',
             ],
         ],
         'guides' => [
@@ -898,7 +898,7 @@ function sa_seo_seed_page_meta(): void
     $map = [
         'how-to-order' => [
             'title' => 'How to Order Auto Parts Online | Free US Shipping | Supreme Autoparts',
-            'desc'  => 'Step-by-step ordering: find fitment, checkout in USD, free shipping $99+ continental US, international options, and WhatsApp support at +1 917 437 5121.',
+            'desc'  => 'Step-by-step ordering: find fitment, checkout, free shipping $99+ continental US, international options, and WhatsApp support at +1 917 437 5121.',
         ],
         'shipping-to-kenya' => [
             'title' => 'Shipping Auto Parts to Kenya | Import & Delivery | Supreme Autoparts',
@@ -910,11 +910,11 @@ function sa_seo_seed_page_meta(): void
         ],
         'auto-parts-kenya' => [
             'title' => 'Buy Auto Parts in Kenya | Import US Spec Parts | Supreme Autoparts',
-            'desc'  => 'Order US-spec performance and aftermarket parts online with USD checkout. Primary delivery: continental US. Support: calvin@supremeautoparts.co.ke · +1 917 437 5121.',
+            'desc'  => 'Order US-spec performance and aftermarket parts online. Primary delivery: continental US. Support: calvin@supremeautoparts.co.ke · +1 917 437 5121.',
         ],
         'performance-truck-parts' => [
             'title' => 'Performance Truck & Off-Road Parts | US Spec | Supreme Autoparts',
-            'desc'  => 'Suspension, brakes, wheels, lighting, and drivetrain for trucks and SUVs. USD checkout — shop popular US-spec performance brands.',
+            'desc'  => 'Suspension, brakes, wheels, lighting, and drivetrain for trucks and SUVs. Shop popular US-spec performance brands.',
         ],
         'guides' => [
             'title' => 'Guides: Ordering, Fitment & Shipping | Supreme Autoparts',

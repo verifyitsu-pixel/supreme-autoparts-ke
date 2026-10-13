@@ -211,7 +211,7 @@ final class SA_Geo_Display
         }
 
         return '<p class="sa-geo-currency-note" data-sa-geo-cc="' . esc_attr($country) . '" data-sa-geo-display="' . esc_attr($display) . '">'
-            . esc_html__('Charged in USD at checkout', 'sa-geo-currency')
+            . esc_html__('Final amount shown at checkout', 'sa-geo-currency')
             . $extra
             . '</p>';
     }

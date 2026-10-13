@@ -19,7 +19,7 @@ function sa_core_page_definitions(): array
         'about-us' => [
             'title'   => 'About Us',
             'content' => <<<HTML
-<p>Welcome to <strong>Supreme Autoparts</strong> — aftermarket and performance parts built for US drivers and builders. We cover <strong>Japanese, American, and British</strong> cars and trucks, plus <strong>electric vehicles</strong> and <strong>motorcycles</strong>. Checkout is in USD; we ship across the continental United States, with international delivery available.</p>
+<p>Welcome to <strong>Supreme Autoparts</strong> — aftermarket and performance parts built for US drivers and builders. We cover <strong>Japanese, American, and British</strong> cars and trucks, plus <strong>electric vehicles</strong> and <strong>motorcycles</strong>. We ship across the continental United States, with international delivery available.</p>
 <p>Whether you drive a JDM daily, a US truck, a UK import, an EV, or a bike, we aim to help you find the right part. If something is not listed online, contact us — odds are we can source it.</p>
 <p>Thanks for reading. We look forward to getting quality parts to you soon.</p>
 <p><em>{$site}</em> · <a href="mailto:{$email}">{$email}</a></p>
@@ -162,7 +162,7 @@ HTML,
 </ul>
 <p>Delivery times depend on your location and part availability; we confirm timing with you after your order. See also <a href="/shipping-to-kenya/">Shipping to Kenya</a>.</p>
 <h2>United States &amp; international</h2>
-<p>Supreme Autoparts ships using the methods shown at checkout. Rates are in <strong>USD</strong> (same as checkout). Totals update when you change address or method.</p>
+<p>Supreme Autoparts ships using the methods shown at checkout. Totals update when you change address or method.</p>
 <ul>
 <li><strong>Standard Shipping (Continental US):</strong> $8 flat.</li>
 <li><strong>Priority Shipping (US):</strong> $15 flat.</li>
@@ -242,7 +242,7 @@ HTML,
             'content' => <<<HTML
 <p>Practical guides for shopping Supreme Autoparts — fitment, ordering, and <strong>US delivery</strong> without the fluff.</p>
 <ul>
-<li><a href="/how-to-order/"><strong>How to order</strong></a> — cart, USD checkout, accounts</li>
+<li><a href="/how-to-order/"><strong>How to order</strong></a> — cart, checkout, accounts</li>
 <li><a href="/fitment-guide/"><strong>Fitment guide</strong></a> — year / make / model checks for US-spec trucks &amp; SUVs</li>
 <li><a href="/shipping-policy/"><strong>Shipping &amp; delivery</strong></a> — continental US rates, free shipping $99+, international</li>
 <li><a href="/free-shipping/"><strong>Free shipping details</strong></a> — threshold, exclusions, Alaska/Hawaii &amp; intl notes</li>
@@ -254,7 +254,7 @@ HTML,
         'how-to-order' => [
             'title'   => 'How to Order',
             'content' => <<<HTML
-<p>Supreme Autoparts is built for buyers in the <strong>United States</strong> (and other destinations we ship to). Catalog fitments skew US-spec — popular trucks, SUVs, and performance platforms — with <strong>USD checkout</strong> and free shipping on qualifying continental US orders.</p>
+<p>Supreme Autoparts is built for buyers in the <strong>United States</strong> (and other destinations we ship to). Catalog fitments skew US-spec — popular trucks, SUVs, and performance platforms — with free shipping on qualifying continental US orders.</p>
 <h2>1. Find the right part</h2>
 <ol>
 <li>Use <a href="/shop/">Shop</a> or search by brand / part name.</li>
@@ -263,7 +263,6 @@ HTML,
 </ol>
 <h2>2. Add to cart &amp; check out</h2>
 <ul>
-<li>Prices are charged in <strong>USD</strong> at payment. Geo display may show a local estimate for convenience.</li>
 <li>Checkout as a guest (no login required to pay) or create a <a href="/my-account/">My Account</a>. After a guest order we link an account to your email — next visit, use <strong>Email me a login code</strong> on My Account.</li>
 <li>Review shipping lines before paying — free shipping may apply above the banner threshold (see <a href="/free-shipping/">Free Shipping Details</a>).</li>
 </ul>
@@ -278,7 +277,7 @@ HTML,
 <ul>
 <li><strong>US buyers:</strong> Free shipping on orders $99+ in the continental US (eligible items). Standard from $8 · Priority $15 below threshold.</li>
 <li><strong>International:</strong> Select your country at checkout — international flat rate applies when free shipping does not.</li>
-<li><strong>Kenya buyers:</strong> Same catalog and USD payment — Kenya methods appear when your address is in Kenya. See <a href="/shipping-to-kenya/">Shipping to Kenya</a> if needed.</li>
+<li><strong>Kenya buyers:</strong> Same catalog — Kenya methods appear when your address is in Kenya. See <a href="/shipping-to-kenya/">Shipping to Kenya</a> if needed.</li>
 </ul>
 HTML,
         ],
@@ -296,7 +295,7 @@ HTML,
 <h2>Duties &amp; import notes</h2>
 <p>Customs duties, VAT, or brokerage for Kenya imports are the buyer&rsquo;s responsibility unless we explicitly state otherwise on an order. Keep your invoice handy for clearance. Questions before you buy: WhatsApp <a href="https://wa.me/19174375121">+1 917 437 5121</a>.</p>
 <h2>US &amp; international buyers</h2>
-<p>For continental US free shipping ($99+), Standard $8, Priority $15, and international $25, use the main <a href="/shipping-policy/">Shipping Policy</a>. Currency at payment remains <strong>USD</strong>.</p>
+<p>For continental US free shipping ($99+), Standard $8, Priority $15, and international $25, use the main <a href="/shipping-policy/">Shipping Policy</a>.</p>
 <h2>Support</h2>
 <p>Email <a href="mailto:{$email}">{$email}</a> with your order number. Related: <a href="/how-to-order/">How to order</a> · <a href="/fitment-guide/">Fitment</a>.</p>
 HTML,
@@ -322,11 +321,11 @@ HTML,
         'auto-parts-kenya' => [
             'title'   => 'Auto Parts Kenya',
             'content' => <<<HTML
-<p>Looking for <strong>auto parts in Kenya</strong> without settling for random marketplace quality? Supreme Autoparts lets you order <strong>US-spec and popular aftermarket parts</strong> online — brakes, suspension, wheels, lighting, and more — with <strong>USD checkout</strong> and support that picks up WhatsApp.</p>
+<p>Looking for <strong>auto parts in Kenya</strong> without settling for random marketplace quality? Supreme Autoparts lets you order <strong>US-spec and popular aftermarket parts</strong> online — brakes, suspension, wheels, lighting, and more — with support that picks up WhatsApp.</p>
 <h2>Why shop with us</h2>
 <ul>
 <li>Catalog built around real performance brands and fitments common on trucks and SUVs.</li>
-<li>Secure USD payment; optional local currency display for readability.</li>
+<li>Secure online payment.</li>
 <li>Human support on WhatsApp/email: <a href="https://wa.me/19174375121">+1 917 437 5121</a> · <a href="mailto:{$email}">{$email}</a>. Primary delivery is continental US; Kenya methods appear for KE addresses.</li>
 </ul>
 <h2>Popular starting points</h2>
@@ -355,7 +354,7 @@ HTML,
 <li><a href="/product-category/drivetrain/"><strong>Drivetrain</strong></a> · <a href="/product-category/exhaust/">Exhaust</a> · <a href="/product-category/exterior/">Exterior</a></li>
 </ul>
 <h2>Shipping</h2>
-<p>Checkout is <strong>USD</strong>. Free shipping on qualifying continental US orders ($99+). International available at checkout. Support: WhatsApp <a href="https://wa.me/19174375121">+1 917 437 5121</a> · <a href="mailto:{$email}">{$email}</a>.</p>
+<p>Free shipping on qualifying continental US orders ($99+). International available at checkout. Support: WhatsApp <a href="https://wa.me/19174375121">+1 917 437 5121</a> · <a href="mailto:{$email}">{$email}</a>.</p>
 <p>New here? Start with <a href="/how-to-order/">How to order</a> and the <a href="/fitment-guide/">Fitment guide</a>.</p>
 HTML,
         ],

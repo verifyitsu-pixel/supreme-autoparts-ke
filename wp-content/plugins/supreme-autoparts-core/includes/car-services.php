@@ -54,7 +54,7 @@ function sa_svc_locations(): array
 {
     return [
         'nairobi' => ['label' => 'Nairobi garage — Midax Plaza, Kandundo Rd, Njiru', 'region' => 'KE', 'note' => SA_SVC_GARAGE_ADDRESS],
-        'usa' => ['label' => 'United States — partner garage near you', 'region' => 'US', 'note' => 'We match you with a partner garage near your ZIP code and confirm by email.'],
+        'usa' => ['label' => 'United States — partner garage near you', 'region' => 'US', 'note' => 'Customers in the US: we forward your request to our support team, who route you to a suitable service centre near you. Services, pricing and booking work differently for customers outside Kenya.'],
     ];
 }
 
@@ -580,6 +580,7 @@ function sa_svc_render_index(): void
           <p class="sa-svc-eyebrow">Supreme Autoparts garage · Njiru, Nairobi</p>
           <h1>Car service, booked in two minutes</h1>
           <p class="sa-svc-lead">From oil changes and brake pads to alignment, AC and full servicing. Pick a time online, drop the car off or have us collect it, and we fit real parts from our own shop. Your KES 1,000 booking fee is deducted from the final bill.</p>
+          <p class="sa-svc-usnote" style="margin:12px 0;padding:10px 14px;border-left:3px solid #c8102e;background:#f6f7f9;font-size:14px;line-height:1.5"><strong>Outside Kenya?</strong> Customers in the US: we forward your request to our support team, who route you to a suitable service centre near you. Services, pricing and booking work differently for customers outside Kenya.</p>
           <div class="sa-svc-cta">
             <a class="sa-svc-btn sa-svc-btn--primary" href="<?php echo esc_url(sa_svc_book_url()); ?>"><?php echo sa_svc_icon('calendar'); ?> Book a service</a>
             <a class="sa-svc-btn sa-svc-btn--ghost" href="<?php echo esc_url(function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/')); ?>">Shop parts</a>
@@ -738,6 +739,7 @@ function sa_svc_render_book(): void
     <div class="sa-container sa-svc-wiz">
       <nav class="sa-svc-crumbs"><a href="<?php echo esc_url(home_url('/')); ?>">Home</a> / <a href="<?php echo esc_url(sa_svc_url()); ?>">Services</a> / <span>Book</span></nav>
       <h1><?php echo $old ? 'Reschedule ' . esc_html($old['ref']) : 'Book a service'; ?></h1>
+      <p class="sa-svc-usnote" style="margin:12px 0;padding:10px 14px;border-left:3px solid #c8102e;background:#f6f7f9;font-size:14px;line-height:1.5"><strong>Outside Kenya?</strong> Customers in the US: we forward your request to our support team, who route you to a suitable service centre near you. Services, pricing and booking work differently for customers outside Kenya.</p>
       <p class="sa-svc-lead">Five quick steps. Pay a KES <?php echo esc_html(number_format((float) sa_svc_setting('fee_kes'))); ?> booking fee to confirm, which is credited to your bill. You pay the rest at the service, after approving the final quote.</p>
       <ul class="sa-svc-trust"><li><?php echo sa_svc_icon('check'); ?>Written quote before work</li><li><?php echo sa_svc_icon('check'); ?>Free online cancellation</li><li><?php echo sa_svc_icon('check'); ?>Parts from our own shop</li><li><?php echo sa_svc_icon('pin'); ?>Njiru, Nairobi garage</li></ul>
       <?php if ($err) : ?><div class="sa-svc-alert"><?php echo esc_html($err); ?></div><?php endif; ?>
@@ -825,7 +827,7 @@ function sa_svc_render_book(): void
             <label>Phone / WhatsApp* <input name="phone" required value="<?php echo esc_attr($old ? $old['phone'] : ($user->ID ? (string) get_user_meta($user->ID, 'billing_phone', true) : '')); ?>"></label>
           </div>
           <label class="sa-svc-full">Notes for the technician <textarea name="notes" rows="3" placeholder="Noises, warning lights, mileage…"><?php echo esc_textarea($v('notes')); ?></textarea></label>
-          <div class="sa-svc-feebox"><strong>Booking fee: KES <?php echo esc_html(number_format((float) sa_svc_setting('fee_kes'))); ?><?php $usd = sa_svc_fee_usd(); echo $usd !== null ? ' (≈ US$' . esc_html(number_format($usd, 2)) . ' charged at checkout)' : ''; ?></strong>
+          <div class="sa-svc-feebox"><strong>Booking fee: KES <?php echo esc_html(number_format((float) sa_svc_setting('fee_kes'))); ?><?php $usd = sa_svc_fee_usd(); unset($usd); ?></strong>
             <span>Paid now through our secure checkout. It is deducted from your final service bill. It is refunded if we cancel, or if you cancel at least <?php echo (int) sa_svc_setting('cancel_hours'); ?> hours before your appointment. Your booking is confirmed once the fee is paid.</span></div>
           <label class="sa-svc-check"><input type="checkbox" name="agree_terms" value="1" required> I agree to the <a href="<?php echo esc_url(home_url('/booking-terms/')); ?>" target="_blank">Booking Terms &amp; Policies</a></label>
           <p class="sa-svc-fine">By booking you agree that we may contact you by email, phone or WhatsApp about this appointment. You can cancel for free online while the booking is pending or confirmed. You'll get a reminder the day before.</p>
@@ -1248,10 +1250,11 @@ function sa_svc_faq_general(): array
         ['How long will my service take?', 'Each service shows an approximate job time (marked as an estimate). Longer jobs reserve consecutive hours in our calendar. Your technician confirms the timing when your booking is confirmed, and tells you if extra work is found.'],
         ['Can I wait at the garage, or should I drop the car off?', 'Short jobs such as wheel balancing or a battery test are often done while you wait. For longer jobs we recommend dropping the car off. Choose “Drop-off at our garage” when you book, and our team will tell you if waiting on site is practical.'],
         ['Do you collect the car from my home or office?', 'Yes, in the Nairobi area. Choose “Vehicle pickup from my address” and enter the address. Any pickup fee depends on distance and is confirmed with you before the booking is confirmed. Nothing is charged automatically.'],
-        ['Where is your garage?', 'Ground Floor, Midax Plaza, Kandundo Rd, Njiru, Nairobi. The services page and the side menu have a Google Maps link. US bookings are matched with a partner garage near you and confirmed by email.'],
+        ['I am in the US. Can I book a service?', 'Customers in the US are forwarded to our support team, who route you to a suitable service centre near you. Services, pricing and booking work differently for customers outside Kenya. The online KES booking is for our Nairobi garage.'],
+        ['Where is your garage?', 'Ground Floor, Midax Plaza, Kandundo Rd, Njiru, Nairobi. The services page and the side menu have a Google Maps link. Customers in the US: we forward your request to our support team, who route you to a suitable service centre near you. Services, pricing and booking work differently for customers outside Kenya.'],
         ['Do I need an appointment, or can I walk in?', 'Booking online holds a time slot for you and is the fastest way to be seen. Walk-ins depend on how busy we are that day, so we recommend booking, even if it is for later the same day.'],
         ['Is the price shown the final price?', 'No. The price shown is a reference estimate: published AutoXpress Kenya prices for Kenya, and RepairPal national average ranges for the US. Services marked “Quote on request” are priced for your vehicle. We give you the final price before any work starts, and nothing extra is done without your approval.'],
-        ['Is there a booking fee?', 'Yes. You pay a KES ' . number_format((float) sa_svc_setting('fee_kes')) . ' booking fee online to confirm your slot (the USD equivalent is charged where checkout settles in USD). It is deducted from your final service bill, so it is not an extra cost.'],
+        ['Is there a booking fee?', 'Yes. You pay a KES ' . number_format((float) sa_svc_setting('fee_kes')) . ' booking fee online to confirm your slot. It is deducted from your final service bill, so it is not an extra cost.'],
         ['Will I get the booking fee back if I cancel?', 'Yes, if you cancel at least ' . (int) sa_svc_setting('cancel_hours') . ' hours before your appointment, or if we cancel. For later cancellations and no-shows the fee may be kept. See the Booking Terms.'],
         ['How do I find my booking?', 'Every booking has a booking number (for example SA-BK-261016-AB12). Enter it with your email under Manage booking, or open My Account → Service bookings.'],
         ['When and how do I pay?', 'You pay the booking fee online at checkout when you book. You pay the rest at the service, after approving the final quote. Accepted payment methods for the balance are confirmed with your booking.'],
@@ -1639,8 +1642,8 @@ function sa_svc_terms(): array
     $fee = number_format((float) sa_svc_setting('fee_kes'));
     $h = (int) sa_svc_setting('cancel_hours');
     return [
-        ['Who we are', 'Car services are provided by Supreme Autoparts (Standard Driveworks, BN-93S9AZEJ), at Ground Floor, Midax Plaza, Kandundo Rd, Njiru, Nairobi. US bookings are carried out by a partner garage that we confirm with you by email. These terms apply together with our store Terms of Service.'],
-        ['Booking fee', "A booking fee of KES {$fee} is paid online through our secure checkout to confirm your appointment. If checkout settles in US dollars, the USD equivalent at our current exchange rate is shown and charged. The fee is not an extra charge: it is deducted from your final service bill. Your booking is only confirmed once the fee is paid, and unpaid bookings are released after 2 hours."],
+        ['Who we are', 'Car services are provided by Supreme Autoparts (Standard Driveworks, BN-93S9AZEJ), at Ground Floor, Midax Plaza, Kandundo Rd, Njiru, Nairobi. Customers in the US: we forward your request to our support team, who route you to a suitable service centre near you. Services, pricing and booking work differently for customers outside Kenya. These terms apply together with our store Terms of Service.'],
+        ['Booking fee', "A booking fee of KES {$fee} is paid online through our secure checkout to confirm your appointment. The fee is not an extra charge: it is deducted from your final service bill. Your booking is only confirmed once the fee is paid, and unpaid bookings are released after 2 hours."],
         ['Cancelling and rescheduling', "You can cancel or reschedule online with your booking number and email. If you cancel at least {$h} hours before your appointment, or if we cancel for any reason, the booking fee is refunded to your original payment method. If you cancel later than that, or you don't attend, the fee may be kept. You can reschedule once without charge within the same window. The {$h}-hour window is the current setting and may be updated; the window shown when you book applies."],
         ['Late arrival and no-shows', 'Please arrive at your slot time. If you are more than 30 minutes late, we may need to move you to the next free slot. If you neither arrive nor contact us, the booking counts as a no-show and the booking fee may be kept.'],
         ['Estimates, final price and extra work', 'Prices shown online are reference estimates (published AutoXpress Kenya prices and RepairPal US averages) or “quote on request”. Before starting, we give you the final price for your vehicle. We will not do any extra work, or go above the agreed price, without your approval by phone, WhatsApp or in person.'],
@@ -1657,7 +1660,7 @@ function sa_svc_terms(): array
 
 function sa_svc_render_terms(): void
 {
-    echo '<div class="sa-container sa-svc-book sa-svc-terms"><h1>Booking Terms &amp; Policies</h1><p class="sa-svc-lead">Plain-language terms for car service bookings. Last updated ' . esc_html(wp_date('j F Y', (int) get_option('sa_svc_terms_date', strtotime('2026-10-13')))) . '.</p><ol>';
+    echo '<div class="sa-container sa-svc-book sa-svc-terms"><h1>Booking Terms &amp; Policies</h1><p class="sa-svc-lead">Plain-language terms for car service bookings. Last updated ' . esc_html(wp_date('j F Y', (int) get_option('sa_svc_terms_date', strtotime('2026-10-13')))) . '.</p>' . '<p class="sa-svc-usnote" style="margin:12px 0;padding:10px 14px;border-left:3px solid #c8102e;background:#f6f7f9;font-size:14px;line-height:1.5"><strong>Outside Kenya?</strong> Customers in the US: we forward your request to our support team, who route you to a suitable service centre near you. Services, pricing and booking work differently for customers outside Kenya.</p>' . '<ol>';
     foreach (sa_svc_terms() as [$t, $b]) {
         echo '<li><h2>' . esc_html($t) . '</h2><p>' . esc_html($b) . '</p></li>';
     }

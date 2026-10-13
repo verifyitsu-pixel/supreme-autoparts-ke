@@ -71,7 +71,7 @@ $sa_count = function_exists('sa_published_product_count') ? sa_published_product
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h16v8H4z"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v2"/></svg>
         </span>
         <div>
-          <strong><?php esc_html_e('USD checkout', 'supreme-autoparts'); ?></strong>
+          <strong><?php esc_html_e('Secure checkout', 'supreme-autoparts'); ?></strong>
           <span><?php esc_html_e('Secure checkout · guest checkout welcome', 'supreme-autoparts'); ?></span>
         </div>
       </li>
@@ -192,7 +192,7 @@ endif;
       </li>
       <li class="sa-how__step">
         <span class="sa-how__num" aria-hidden="true">3</span>
-        <strong><?php esc_html_e('Pay in USD', 'supreme-autoparts'); ?></strong>
+        <strong><?php esc_html_e('Pay securely', 'supreme-autoparts'); ?></strong>
         <span><?php esc_html_e('Secure online checkout. Local display currency where available.', 'supreme-autoparts'); ?></span>
       </li>
       <li class="sa-how__step">
@@ -235,21 +235,12 @@ endif;
   </div>
 </section>
 
-<div class="sa-ship-banner">
-  <?php
-  printf(
-      esc_html__('Free shipping on orders over %s* in the continental US — see policy for details.', 'supreme-autoparts'),
-      esc_html($sa_threshold)
-  );
-  ?>
-  <a class="sa-ship-banner__link" href="<?php echo esc_url(sa_page_url('free-shipping')); ?>"><?php esc_html_e('Details', 'supreme-autoparts'); ?></a>
-</div>
 
 <section class="sa-section sa-blurb" aria-labelledby="sa-about-title">
   <div class="sa-container sa-blurb__inner">
     <h2 id="sa-about-title"><?php esc_html_e('About', 'supreme-autoparts'); ?></h2>
     <p>
-      <?php esc_html_e('Search the part number you already have. OE/OEM-matched and aftermarket fitments for Japan, US & UK cars and trucks — plus EVs and bikes. Brakes, suspension, intake, exhaust, lighting, wheels, and more. Checkout in USD; free shipping on qualifying US orders.', 'supreme-autoparts'); ?>
+      <?php esc_html_e('Search the part number you already have. OE/OEM-matched and aftermarket fitments for Japan, US & UK cars and trucks — plus EVs and bikes. Brakes, suspension, intake, exhaust, lighting, wheels, and more. ', 'supreme-autoparts'); ?>
     </p>
     <p class="sa-blurb__actions">
       <a class="sa-btn sa-btn--outline" href="<?php echo esc_url(sa_page_url('shipping-policy')); ?>"><?php esc_html_e('Shipping & delivery', 'supreme-autoparts'); ?></a>
@@ -267,7 +258,7 @@ endif;
     <div class="sa-guides-strip__grid">
       <a class="sa-guides-strip__card" href="<?php echo esc_url(sa_page_url('how-to-order')); ?>">
         <strong><?php esc_html_e('How to order', 'supreme-autoparts'); ?></strong>
-        <span><?php esc_html_e('USD checkout, accounts, and what happens after you pay.', 'supreme-autoparts'); ?></span>
+        <span><?php esc_html_e('Cart, checkout, accounts, and what happens after you pay.', 'supreme-autoparts'); ?></span>
       </a>
       <a class="sa-guides-strip__card" href="<?php echo esc_url(sa_page_url('fitment-guide')); ?>">
         <strong><?php esc_html_e('Fitment guide', 'supreme-autoparts'); ?></strong>

@@ -111,6 +111,20 @@ add_action('plugins_loaded', static function (): void {
 
 
 /**
+ * Re-seed static page content only (USD-copy removal, 2026-10-13). No store settings touched.
+ */
+add_action('init', static function (): void {
+    if (get_option('sa_pages_copy_ver') === 'nousd-1' || !function_exists('sa_core_seed_pages')) {
+        return;
+    }
+    update_option('sa_pages_copy_ver', 'nousd-1', false);
+    sa_core_seed_pages();
+    if (function_exists('sa_seo_seed_page_meta')) {
+        sa_seo_seed_page_meta();
+    }
+}, 30);
+
+/**
  * Force page seed when sa_pages_seed_ver bumps (creates missing policy pages on deploy).
  */
 add_action('init', static function (): void {
