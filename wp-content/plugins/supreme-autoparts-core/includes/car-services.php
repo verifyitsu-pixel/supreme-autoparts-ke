@@ -184,7 +184,11 @@ function sa_svc_slots_taken(string $date, string $location): array
     $count = [];
     foreach ($q as $id) {
         $t = (int) substr((string) get_post_meta($id, '_sa_bk_time', true), 0, 2);
-        $n = sa_svc_blocks((string) get_post_meta($id, '_sa_bk_service', true));
+        $mins = (int) (sa_svc_catalog()[(string) get_post_meta($id, '_sa_bk_service', true)]['duration'] ?? 60);
+        foreach (array_filter(explode(',', (string) get_post_meta($id, '_sa_bk_addons', true))) as $ad) {
+            $mins += (int) (sa_svc_catalog()[$ad]['duration'] ?? 0);
+        }
+        $n = max(1, (int) ceil($mins / 60));
         for ($h = $t; $h < $t + $n; $h++) {
             $k = sprintf('%02d:00', $h);
             $count[$k] = ($count[$k] ?? 0) + 1;
@@ -194,7 +198,7 @@ function sa_svc_slots_taken(string $date, string $location): array
 }
 
 /** Available slots: Mon–Sat, future only (store timezone), capacity per slot/location. */
-function sa_svc_available_slots(string $date, string $location, string $service = ''): array
+function sa_svc_available_slots(string $date, string $location, string $service = '', int $extra = 0): array
 {
     $tz = wp_timezone();
     $d = DateTimeImmutable::createFromFormat('!Y-m-d', $date, $tz);
@@ -208,7 +212,7 @@ function sa_svc_available_slots(string $date, string $location, string $service 
     $taken = sa_svc_slots_taken($date, $location);
     $out = [];
     $close = (int) $d->format('w') === 6 ? 13 : 17; // Sat half-day.
-    $blocks = $service !== '' ? sa_svc_blocks($service) : 1;
+    $blocks = $service !== '' ? max(1, (int) ceil(((int) (sa_svc_catalog()[$service]['duration'] ?? 60) + $extra) / 60)) : 1;
     foreach (sa_svc_slot_times() as $t) {
         $h = (int) substr($t, 0, 2);
         if ($h + $blocks > $close) {
@@ -239,7 +243,8 @@ function sa_svc_ajax_slots(): void
     }
     $svc = sanitize_key((string) ($_GET['service'] ?? ''));
     $svc = isset(sa_svc_catalog()[$svc]) ? $svc : '';
-    wp_send_json_success(['slots' => sa_svc_available_slots($date, $loc, $svc), 'duration' => $svc ? sa_svc_duration_label($svc) : '']);
+    $extra = max(0, min(600, (int) ($_GET['extra'] ?? 0)));
+    wp_send_json_success(['slots' => sa_svc_available_slots($date, $loc, $svc, $extra), 'duration' => $svc ? sa_svc_duration_label($svc) : '']);
 }
 
 /* ---------- Booking submit ---------- */
@@ -268,7 +273,9 @@ function sa_svc_handle_booking(): void
     $email = sanitize_email($p('email'));
     if (!isset($catalog[$service])) $fail('Please choose a service.');
     if (!isset(sa_svc_locations()[$loc])) $fail('Please choose a location.');
-    if (!in_array($time, sa_svc_available_slots($date, $loc, $service), true)) $fail('That time slot is no longer available. Please pick another.');
+    $addmin = 0;
+    foreach ((array) ($_POST['addons'] ?? []) as $ad) { $ad = sanitize_key((string) $ad); if (isset($catalog[$ad]) && $ad !== $service) $addmin += (int) $catalog[$ad]['duration']; }
+    if (!in_array($time, sa_svc_available_slots($date, $loc, $service, $addmin), true)) $fail('That time slot is no longer available. Please pick another.');
     if (!is_email($email)) $fail('Please enter a valid email address.');
     if ($p('name') === '' || $p('phone') === '') $fail('Please enter your name and phone number.');
     if ($p('make') === '' || $p('model') === '') $fail('Please enter your vehicle make and model.');
@@ -289,6 +296,9 @@ function sa_svc_handle_booking(): void
         }
     }
 
+    $addons = array_values(array_filter(array_map('sanitize_key', (array) ($_POST['addons'] ?? [])), static fn($x) => isset($catalog[$x]) && $x !== $service));
+    $part = (int) ($_POST['part'] ?? 0);
+    $partname = $part && get_post_type($part) === 'product' ? get_the_title($part) : '';
     $ref = 'SVC-' . strtoupper(wp_generate_password(6, false, false));
     $id = wp_insert_post([
         'post_type' => 'sa_booking', 'post_status' => 'publish',
@@ -303,13 +313,26 @@ function sa_svc_handle_booking(): void
         'location' => $loc, 'region' => $region, 'status' => 'pending', 'name' => $p('name'), 'email' => $email,
         'phone' => $p('phone'), 'make' => $p('make'), 'model' => $p('model'), 'year' => $year === '0' ? '' : $year,
         'reg' => strtoupper($p('reg')), 'notes' => sanitize_textarea_field(wp_unslash((string) ($_POST['notes'] ?? ''))),
-        'estimate' => $estimate, 'mode' => $mode, 'pickup' => $mode === 'pickup' ? $pickup : '', 'user' => (string) $user, 'key' => wp_generate_password(20, false, false),
+        'estimate' => $estimate . ($addons ? ' + add-ons: ' . implode(', ', array_map(static fn($x) => $catalog[$x]['name'] . ' (' . sa_svc_price_label($catalog[$x], $region) . ')', $addons)) : ''),
+        'addons' => implode(',', $addons), 'part' => $partname, 'mode' => $mode, 'pickup' => $mode === 'pickup' ? $pickup : '', 'user' => (string) $user, 'key' => wp_generate_password(20, false, false),
     ];
     foreach ($meta as $k => $v) {
         update_post_meta((int) $id, '_sa_bk_' . $k, $v);
     }
     if ($user && !empty($_POST['save_vehicle'])) {
         sa_svc_save_vehicle($user, ['make' => $meta['make'], 'model' => $meta['model'], 'year' => $meta['year'], 'reg' => $meta['reg']]);
+    }
+    $rs = (int) ($_POST['reschedule'] ?? 0);
+    if ($rs && get_post_type($rs) === 'sa_booking') {
+        $ob = sa_svc_booking_data($rs);
+        if (hash_equals($ob['key'], (string) ($_POST['rk'] ?? '')) && in_array($ob['status'], ['pending', 'confirmed'], true)) {
+            update_post_meta($rs, '_sa_bk_status', 'cancelled');
+            update_post_meta((int) $id, '_sa_bk_notes', trim('Rescheduled from ' . $ob['ref'] . '. ' . $meta['notes']));
+            sa_svc_gcal_sync($rs);
+        }
+    }
+    if ($partname !== '') {
+        update_post_meta((int) $id, '_sa_bk_notes', trim('Install part: ' . $partname . '. ' . (string) get_post_meta((int) $id, '_sa_bk_notes', true)));
     }
     sa_svc_send_emails((int) $id, 'created');
     sa_svc_gcal_sync((int) $id);
@@ -391,6 +414,7 @@ function sa_svc_send_emails(int $id, string $event): void
         'created' => 'Booking received: ' . $svc['name'] . ' (' . $b['ref'] . ')',
         'cancelled' => 'Booking cancelled: ' . $b['ref'],
         'status' => 'Booking update: ' . $b['ref'] . ' is ' . $status,
+        'reminder' => 'Reminder: your ' . $svc['name'] . ' is tomorrow at ' . $b['time'] . ' (' . $b['ref'] . ')',
     ];
     $rows = [
         'Reference' => $b['ref'], 'Service' => $svc['name'] . ($b['option'] ? ' — ' . $b['option'] : ''),
@@ -400,15 +424,15 @@ function sa_svc_send_emails(int $id, string $event): void
     ];
     $html = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#222">'
         . '<h2 style="color:#0b1f3a">Supreme Autoparts — Car Service</h2><p>Hi ' . esc_html($b['name']) . ',</p><p>'
-        . ($event === 'created' ? 'Thanks for booking. Our team will confirm your appointment shortly.' : ($event === 'cancelled' ? 'Your booking has been cancelled.' : 'Your booking status has changed.'))
+        . ($event === 'reminder' ? 'This is a reminder of your appointment tomorrow.' : ($event === 'created' ? 'Thanks for booking. Our team will confirm your appointment shortly.' : ($event === 'cancelled' ? 'Your booking has been cancelled.' : 'Your booking status has changed.')))
         . '</p><table style="border-collapse:collapse;width:100%">';
     foreach ($rows as $k => $v) {
         $html .= '<tr><td style="padding:6px 8px;border-bottom:1px solid #eee;color:#666">' . esc_html($k) . '</td><td style="padding:6px 8px;border-bottom:1px solid #eee"><strong>' . esc_html($v) . '</strong></td></tr>';
     }
-    $html .= '</table><p><a href="' . esc_url(add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/confirmed/'))) . '">View or manage your booking</a></p></div>';
+    $html .= '</table><p><a href="' . esc_url(add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/confirmed/'))) . '">View, cancel or reschedule your booking</a> · <a href="' . esc_url(add_query_arg(['service' => $b['service'], 'reschedule' => $id, 'rk' => $b['key']], home_url('/book-service/'))) . '">Reschedule</a></p></div>';
     $headers = ['Content-Type: text/html; charset=UTF-8'];
     wp_mail($b['email'], $subjects[$event] ?? $subjects['status'], $html, $headers);
-    if ($event !== 'status') {
+    if (!in_array($event, ['status', 'reminder'], true)) {
         $admin = (string) get_option('woocommerce_email_from_address', get_option('admin_email'));
         wp_mail($admin, '[Bookings] ' . ($subjects[$event] ?? '') . ' — ' . $b['name'], $html, $headers);
     }
@@ -610,80 +634,149 @@ function sa_svc_render_detail(string $slug): void
     <?php
 }
 
+function sa_svc_vehicle_db(): array
+{
+    // Common makes/models in Kenya and the US (for type-ahead only; any value is accepted).
+    return [
+        'Toyota' => ['Corolla', 'Fielder', 'Axio', 'Premio', 'Allion', 'Vitz', 'Probox', 'Succeed', 'Harrier', 'RAV4', 'Prado', 'Land Cruiser', 'Hilux', 'Camry', 'Tacoma', 'Tundra', 'Highlander', 'Wish', 'Noah', 'Voxy', 'Mark X', 'Crown'],
+        'Nissan' => ['Note', 'March', 'Tiida', 'Sylphy', 'X-Trail', 'Navara', 'Juke', 'Dualis', 'Wingroad', 'AD Van', 'Altima', 'Rogue', 'Frontier', 'Sentra'],
+        'Mazda' => ['Demio', 'Axela', 'Atenza', 'CX-5', 'CX-3', 'Mazda3', 'Mazda6', 'BT-50'],
+        'Subaru' => ['Impreza', 'Forester', 'Outback', 'Legacy', 'XV', 'WRX'],
+        'Honda' => ['Fit', 'Civic', 'Accord', 'CR-V', 'HR-V', 'Vezel', 'Pilot'],
+        'Mitsubishi' => ['Pajero', 'Outlander', 'L200', 'Lancer', 'RVR', 'Colt'],
+        'Volkswagen' => ['Golf', 'Polo', 'Passat', 'Tiguan', 'Touareg', 'Jetta', 'Amarok'],
+        'Mercedes-Benz' => ['C-Class', 'E-Class', 'S-Class', 'GLE', 'GLC', 'ML', 'Sprinter'],
+        'BMW' => ['3 Series', '5 Series', 'X1', 'X3', 'X5'],
+        'Audi' => ['A3', 'A4', 'A6', 'Q5', 'Q7'],
+        'Isuzu' => ['D-Max', 'MU-X', 'NQR', 'NPR'],
+        'Suzuki' => ['Swift', 'Alto', 'Vitara', 'Jimny', 'Every'],
+        'Ford' => ['F-150', 'Ranger', 'Everest', 'Escape', 'Explorer', 'Mustang', 'Focus'],
+        'Chevrolet' => ['Silverado', 'Equinox', 'Malibu', 'Tahoe'],
+        'Hyundai' => ['Tucson', 'Santa Fe', 'Elantra', 'Sonata'],
+        'Kia' => ['Sportage', 'Sorento', 'Rio', 'Optima'],
+        'Land Rover' => ['Range Rover', 'Range Rover Sport', 'Discovery', 'Defender', 'Evoque'],
+        'Jeep' => ['Wrangler', 'Grand Cherokee', 'Cherokee'],
+        'Ram' => ['1500', '2500'],
+        'Tesla' => ['Model 3', 'Model Y', 'Model S', 'Model X'],
+    ];
+}
+
 function sa_svc_render_book(): void
 {
     $catalog = sa_svc_catalog();
     $region = sa_svc_region();
     $sel = sanitize_key((string) ($_GET['service'] ?? ''));
+    if (!isset($catalog[$sel])) {
+        $sel = 'oil-change';
+    }
     $user = wp_get_current_user();
     $vehicles = $user->ID ? sa_svc_vehicles($user->ID) : [];
     $err = isset($_GET['sa_err']) ? sanitize_text_field(wp_unslash((string) $_GET['sa_err'])) : '';
+    $resch = (int) ($_GET['reschedule'] ?? 0);
+    $rk = sanitize_text_field((string) ($_GET['rk'] ?? ''));
+    $old = $resch && get_post_type($resch) === 'sa_booking' ? sa_svc_booking_data($resch) : null;
+    if ($old && !hash_equals($old['key'], $rk)) {
+        $old = null;
+    }
+    $part = (int) ($_GET['part'] ?? 0);
+    $partname = $part && get_post_type($part) === 'product' ? get_the_title($part) : '';
     $tz = wp_timezone();
     $min = (new DateTimeImmutable('now', $tz))->format('Y-m-d');
     $max = (new DateTimeImmutable('now', $tz))->modify('+60 days')->format('Y-m-d');
+    $v = static fn(string $k): string => $old ? (string) $old[$k] : '';
     ?>
-    <div class="sa-container sa-svc-book">
-      <nav class="sa-svc-crumbs"><a href="<?php echo esc_url(sa_svc_url()); ?>">Services</a> / <span>Book</span></nav>
-      <h1>Book a service</h1>
-      <p class="sa-svc-lead">Four quick steps. No payment now — you pay at the service after approving the final quote.</p>
+    <div class="sa-container sa-svc-wiz">
+      <nav class="sa-svc-crumbs"><a href="<?php echo esc_url(home_url('/')); ?>">Home</a> / <a href="<?php echo esc_url(sa_svc_url()); ?>">Services</a> / <span>Book</span></nav>
+      <h1><?php echo $old ? 'Reschedule ' . esc_html($old['ref']) : 'Book a service'; ?></h1>
+      <p class="sa-svc-lead">Five quick steps. No payment now: you pay at the service after approving the final quote.</p>
+      <ul class="sa-svc-trust"><li><?php echo sa_svc_icon('check'); ?>Written quote before work</li><li><?php echo sa_svc_icon('check'); ?>Free online cancellation</li><li><?php echo sa_svc_icon('check'); ?>Parts from our own shop</li><li><?php echo sa_svc_icon('pin'); ?>Njiru, Nairobi garage</li></ul>
       <?php if ($err) : ?><div class="sa-svc-alert"><?php echo esc_html($err); ?></div><?php endif; ?>
+      <ol class="sa-svc-progress" data-sa-progress><li class="is-on">Vehicle</li><li>Services</li><li>Location</li><li>Date &amp; time</li><li>Review</li></ol>
+      <div class="sa-svc-wiz__grid">
       <form class="sa-svc-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" data-sa-svc-form>
         <input type="hidden" name="action" value="sa_book_service">
         <?php wp_nonce_field('sa_book_service', 'sa_svc_nonce'); ?>
+        <?php if ($old) : ?><input type="hidden" name="reschedule" value="<?php echo (int) $resch; ?>"><input type="hidden" name="rk" value="<?php echo esc_attr($rk); ?>"><?php endif; ?>
+        <?php if ($partname) : ?><input type="hidden" name="part" value="<?php echo (int) $part; ?>"><?php endif; ?>
         <input type="text" name="sa_hp" value="" tabindex="-1" autocomplete="off" class="sa-svc-hp" aria-hidden="true">
-        <fieldset class="sa-svc-step"><legend><span>1</span> Service</legend>
+
+        <fieldset class="sa-svc-step is-active" data-step="1"><legend><span>1</span> Your vehicle</legend>
+          <?php if ($vehicles) : ?>
+            <label class="sa-svc-full">My Garage <select data-sa-vehicle><option value="">Choose a saved vehicle</option>
+              <?php foreach ($vehicles as $vv) : ?><option data-v='<?php echo esc_attr(wp_json_encode($vv)); ?>'><?php echo esc_html(trim($vv['year'] . ' ' . $vv['make'] . ' ' . $vv['model'] . ' ' . $vv['reg'])); ?></option><?php endforeach; ?>
+            </select></label>
+          <?php endif; ?>
+          <div class="sa-svc-row">
+            <label>Year <select name="year"><option value="">Year</option><?php for ($y = (int) gmdate('Y') + 1; $y >= 1985; $y--) : ?><option <?php selected($v('year'), (string) $y); ?>><?php echo (int) $y; ?></option><?php endfor; ?></select></label>
+            <label>Make* <input name="make" required list="sa-makes" placeholder="Start typing, e.g. Toyota" value="<?php echo esc_attr($v('make')); ?>" data-sa-make autocomplete="off"></label>
+            <label>Model* <input name="model" required list="sa-models" placeholder="e.g. Fielder" value="<?php echo esc_attr($v('model')); ?>" autocomplete="off"></label>
+            <label>Plate / reg. <input name="reg" placeholder="KDA 123A" value="<?php echo esc_attr($v('reg')); ?>"></label>
+          </div>
+          <datalist id="sa-makes"><?php foreach (array_keys(sa_svc_vehicle_db()) as $mk) : ?><option value="<?php echo esc_attr($mk); ?>"><?php endforeach; ?></datalist>
+          <datalist id="sa-models"></datalist>
+          <script type="application/json" data-sa-vdb><?php echo wp_json_encode(sa_svc_vehicle_db()); ?></script>
+          <?php if ($user->ID) : ?><label class="sa-svc-check"><input type="checkbox" name="save_vehicle" value="1" checked> Save to My Garage</label><?php endif; ?>
+        </fieldset>
+
+        <fieldset class="sa-svc-step" data-step="2"><legend><span>2</span> Main service</legend>
+          <?php if ($partname) : ?><p class="sa-svc-alert sa-svc-alert--ok">Installation for: <strong><?php echo esc_html($partname); ?></strong></p><?php endif; ?>
           <div class="sa-svc-choices">
           <?php foreach ($catalog as $slug => $s) : ?>
-            <label class="sa-svc-choice"><input type="radio" name="service" value="<?php echo esc_attr($slug); ?>" <?php checked($sel === $slug || ($sel === '' && $slug === 'oil-change')); ?> required
+            <label class="sa-svc-choice"><input type="radio" name="service" value="<?php echo esc_attr($slug); ?>" <?php checked($sel === $slug); ?> required data-dur="<?php echo (int) $s['duration']; ?>"
               data-kes='<?php echo esc_attr(wp_json_encode($s['kes']['options'] ?? [])); ?>'>
               <span><?php echo sa_svc_icon($s['icon']); ?><strong><?php echo esc_html($s['name']); ?></strong><small class="sa-svc-durtag"><?php echo esc_html(sa_svc_duration_label($slug)); ?></small><em data-price-ke="<?php echo esc_attr(sa_svc_price_label($s, 'KE')); ?>" data-price-us="<?php echo esc_attr(sa_svc_price_label($s, 'US')); ?>"><?php echo esc_html(sa_svc_price_label($s, $region)); ?></em></span></label>
           <?php endforeach; ?>
           </div>
           <div class="sa-svc-option" data-sa-option hidden><label>Option <select name="option"></select></label></div>
-        </fieldset>
-        <fieldset class="sa-svc-step"><legend><span>2</span> Vehicle</legend>
-          <?php if ($vehicles) : ?>
-            <label class="sa-svc-full">Saved vehicles <select data-sa-vehicle><option value="">— Choose saved vehicle —</option>
-              <?php foreach ($vehicles as $v) : ?><option data-v='<?php echo esc_attr(wp_json_encode($v)); ?>'><?php echo esc_html(trim($v['year'] . ' ' . $v['make'] . ' ' . $v['model'] . ' ' . $v['reg'])); ?></option><?php endforeach; ?>
-            </select></label>
-          <?php endif; ?>
-          <div class="sa-svc-row">
-            <label>Make* <input name="make" required placeholder="Toyota" autocomplete="off"></label>
-            <label>Model* <input name="model" required placeholder="Corolla"></label>
-            <label>Year <input name="year" type="number" min="1960" max="<?php echo (int) gmdate('Y') + 1; ?>" placeholder="2015"></label>
-            <label>Plate / reg. <input name="reg" placeholder="KDA 123A"></label>
+          <h4 class="sa-svc-sub">Add-ons <small>(optional, done in the same visit)</small></h4>
+          <div class="sa-svc-addons">
+          <?php foreach ($catalog as $slug => $s) : ?>
+            <label class="sa-svc-addon" data-addon="<?php echo esc_attr($slug); ?>"><input type="checkbox" name="addons[]" value="<?php echo esc_attr($slug); ?>" data-dur="<?php echo (int) $s['duration']; ?>"><span><?php echo esc_html($s['name']); ?> <em data-price-ke="<?php echo esc_attr(sa_svc_price_label($s, 'KE')); ?>" data-price-us="<?php echo esc_attr(sa_svc_price_label($s, 'US')); ?>"><?php echo esc_html(sa_svc_price_label($s, $region)); ?></em></span></label>
+          <?php endforeach; ?>
           </div>
-          <?php if ($user->ID) : ?><label class="sa-svc-check"><input type="checkbox" name="save_vehicle" value="1" checked> Save to My vehicles</label><?php endif; ?>
         </fieldset>
-        <fieldset class="sa-svc-step"><legend><span>3</span> Location, date &amp; time</legend>
+
+        <fieldset class="sa-svc-step" data-step="3"><legend><span>3</span> Location &amp; handover</legend>
           <div class="sa-svc-locs">
           <?php foreach (sa_svc_locations() as $k => $l) : ?>
-            <label class="sa-svc-choice sa-svc-choice--row"><input type="radio" name="location" value="<?php echo esc_attr($k); ?>" data-region="<?php echo esc_attr($l['region']); ?>" <?php checked(($region === 'KE' && $k === 'nairobi') || ($region === 'US' && $k === 'usa')); ?> required>
+            <label class="sa-svc-choice sa-svc-choice--row"><input type="radio" name="location" value="<?php echo esc_attr($k); ?>" data-region="<?php echo esc_attr($l['region']); ?>" <?php checked($old ? $old['location'] === $k : (($region === 'KE' && $k === 'nairobi') || ($region === 'US' && $k === 'usa'))); ?> required>
               <span><strong><?php echo esc_html($l['label']); ?></strong><em><?php echo esc_html($l['note']); ?></em></span></label>
           <?php endforeach; ?>
           </div>
           <div class="sa-svc-modes" data-sa-modes>
-            <label class="sa-svc-choice sa-svc-choice--row"><input type="radio" name="mode" value="dropoff" checked><span><strong>Drop-off at our garage</strong><em><?php echo esc_html(SA_SVC_GARAGE_ADDRESS); ?> · <a href="<?php echo esc_url(sa_svc_map_url()); ?>" target="_blank" rel="noopener">Map</a></em></span></label>
+            <label class="sa-svc-choice sa-svc-choice--row"><input type="radio" name="mode" value="dropoff" checked><span><strong>Drop-off at the garage</strong><em>Bring the car in at your slot time. <a href="<?php echo esc_url(sa_svc_map_url()); ?>" target="_blank" rel="noopener">Map</a></em></span></label>
             <label class="sa-svc-choice sa-svc-choice--row" data-sa-pickup-opt><input type="radio" name="mode" value="pickup"><span><strong>Vehicle pickup from my address</strong><em>Nairobi area. Pickup fee confirmed on booking.</em></span></label>
           </div>
           <label class="sa-svc-full" data-sa-pickup hidden>Pickup address* <textarea name="pickup_address" rows="2" placeholder="Estate, street, building, landmark"></textarea></label>
-          <div class="sa-svc-row">
-            <label>Date* <input type="date" name="date" required min="<?php echo esc_attr($min); ?>" max="<?php echo esc_attr($max); ?>" data-sa-date></label>
-          </div>
-          <div class="sa-svc-slots" data-sa-slots><p class="sa-svc-muted">Choose a date to see available times (Mon–Fri 8:00–17:00, Sat 8:00–13:00). Longer jobs reserve consecutive hours.</p></div>
         </fieldset>
-        <fieldset class="sa-svc-step"><legend><span>4</span> Your details</legend>
-          <div class="sa-svc-row">
-            <label>Full name* <input name="name" required value="<?php echo esc_attr($user->ID ? trim($user->first_name . ' ' . $user->last_name) ?: $user->display_name : ''); ?>"></label>
-            <label>Email* <input type="email" name="email" required value="<?php echo esc_attr($user->ID ? $user->user_email : ''); ?>"></label>
-            <label>Phone / WhatsApp* <input name="phone" required value="<?php echo esc_attr($user->ID ? (string) get_user_meta($user->ID, 'billing_phone', true) : ''); ?>"></label>
-          </div>
-          <label class="sa-svc-full">Notes for the technician <textarea name="notes" rows="3" placeholder="Noises, warning lights, mileage…"></textarea></label>
+
+        <fieldset class="sa-svc-step" data-step="4"><legend><span>4</span> Date &amp; time</legend>
+          <div class="sa-svc-row"><label>Date* <input type="date" name="date" required min="<?php echo esc_attr($min); ?>" max="<?php echo esc_attr($max); ?>" data-sa-date></label></div>
+          <div class="sa-svc-slots" data-sa-slots><p class="sa-svc-muted">Choose a date to see free times (Mon–Fri 8:00–17:00, Sat 8:00–13:00). Longer jobs reserve consecutive hours.</p></div>
         </fieldset>
-        <div class="sa-svc-summary" data-sa-summary></div>
-        <button class="sa-svc-btn sa-svc-btn--primary sa-svc-btn--lg" type="submit"><?php echo sa_svc_icon('calendar'); ?> Confirm booking</button>
-        <p class="sa-svc-fine">By booking you agree we may contact you by email, phone or WhatsApp about this appointment. Free cancellation online while the booking is pending or confirmed.</p>
+
+        <fieldset class="sa-svc-step" data-step="5"><legend><span>5</span> Your details &amp; review</legend>
+          <div class="sa-svc-row">
+            <label>Full name* <input name="name" required value="<?php echo esc_attr($old ? $old['name'] : ($user->ID ? (trim($user->first_name . ' ' . $user->last_name) ?: $user->display_name) : '')); ?>"></label>
+            <label>Email* <input type="email" name="email" required value="<?php echo esc_attr($old ? $old['email'] : ($user->ID ? $user->user_email : '')); ?>"></label>
+            <label>Phone / WhatsApp* <input name="phone" required value="<?php echo esc_attr($old ? $old['phone'] : ($user->ID ? (string) get_user_meta($user->ID, 'billing_phone', true) : '')); ?>"></label>
+          </div>
+          <label class="sa-svc-full">Notes for the technician <textarea name="notes" rows="3" placeholder="Noises, warning lights, mileage…"><?php echo esc_textarea($v('notes')); ?></textarea></label>
+          <p class="sa-svc-fine">By booking you agree that we may contact you by email, phone or WhatsApp about this appointment. You can cancel for free online while the booking is pending or confirmed. You'll get a reminder the day before.</p>
+        </fieldset>
+
+        <div class="sa-svc-nav">
+          <button type="button" class="sa-svc-btn sa-svc-btn--ghost" data-sa-back hidden>Back</button>
+          <button type="button" class="sa-svc-btn sa-svc-btn--primary" data-sa-next>Continue</button>
+          <button class="sa-svc-btn sa-svc-btn--primary sa-svc-btn--lg" type="submit" data-sa-submit hidden><?php echo sa_svc_icon('calendar'); ?> <?php echo $old ? 'Confirm new time' : 'Confirm booking'; ?></button>
+        </div>
       </form>
+      <aside class="sa-svc-side">
+        <div class="sa-svc-sum"><h3>Your estimate</h3><div data-sa-summary></div>
+          <p class="sa-svc-fine">This is an estimate from published prices. You approve the final quote before any work starts, and pay at service.</p></div>
+        <?php echo sa_svc_address_html(true); ?>
+      </aside>
+      </div>
       <?php echo sa_svc_faq_html(sa_svc_faq_general(), 'Booking FAQ'); ?>
     </div>
     <?php
@@ -709,6 +802,7 @@ function sa_svc_render_booking_card(array $b, bool $cancel = true): void
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" onsubmit="return confirm('Cancel this booking?');">
           <input type="hidden" name="action" value="sa_svc_cancel"><input type="hidden" name="b" value="<?php echo (int) $b['id']; ?>"><input type="hidden" name="k" value="<?php echo esc_attr($b['key']); ?>">
           <?php wp_nonce_field('sa_svc_cancel_' . $b['id']); ?>
+          <a class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--primary" href="<?php echo esc_url(add_query_arg(['service' => $b['service'], 'reschedule' => $b['id'], 'rk' => $b['key']], home_url('/book-service/'))); ?>">Reschedule</a>
           <button class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--ghost" type="submit">Cancel booking</button>
         </form>
       <?php endif; ?>
@@ -1082,3 +1176,79 @@ function sa_svc_faq_html(array $faqs, string $title): string
     }
     return $o . '</section><script type="application/ld+json">' . wp_json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</script>';
 }
+
+
+/* ---------- Cross-link: product page → book installation ---------- */
+
+function sa_svc_for_product(int $pid): string
+{
+    $t = strtolower(get_the_title($pid) . ' ' . implode(' ', wp_get_post_terms($pid, 'product_cat', ['fields' => 'slugs']) ?: []));
+    $map = ['pad' => 'brake-pads', 'rotor' => 'brake-pads', 'brake' => 'brake-pads', 'battery' => 'battery', 'shock' => 'suspension', 'strut' => 'suspension', 'coilover' => 'suspension', 'spring' => 'suspension', 'suspension' => 'suspension', 'tire' => 'tyre-rotation', 'wheel' => 'wheel-balancing', 'compressor' => 'ac-service', 'a/c' => 'ac-service', 'oil filter' => 'oil-change', 'filter' => 'full-service', 'spark plug' => 'full-service', 'sensor' => 'diagnostics', 'tie rod' => 'wheel-alignment', 'control arm' => 'wheel-alignment'];
+    foreach ($map as $k => $svc) {
+        if (str_contains($t, $k)) {
+            return $svc;
+        }
+    }
+    return 'diagnostics';
+}
+
+add_action('woocommerce_single_product_summary', static function (): void {
+    global $product;
+    if (!$product) {
+        return;
+    }
+    $svc = sa_svc_for_product((int) $product->get_id());
+    $name = sa_svc_catalog()[$svc]['name'] ?? 'installation';
+    echo '<div class="sa-svc-fit">' . sa_svc_icon('service') . '<div><strong>Need it fitted?</strong><span>Book installation (' . esc_html($name) . ') at our Njiru, Nairobi garage, or with a US partner garage. Pay at service.</span></div>'
+        . '<a class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--primary" href="' . esc_url(add_query_arg(['service' => $svc, 'part' => (int) $product->get_id()], home_url('/book-service/'))) . '">Book installation</a></div>';
+}, 36);
+
+/* ---------- Unified My Account: orders + bookings on dashboard ---------- */
+
+add_action('woocommerce_account_dashboard', static function (): void {
+    $uid = get_current_user_id();
+    $email = wp_get_current_user()->user_email;
+    $ids = get_posts(['post_type' => 'sa_booking', 'numberposts' => 3, 'fields' => 'ids', 'meta_query' => ['relation' => 'OR', ['key' => '_sa_bk_user', 'value' => (string) $uid], ['key' => '_sa_bk_email', 'value' => $email]]]);
+    $orders = function_exists('wc_get_orders') ? wc_get_orders(['customer_id' => $uid, 'limit' => 3]) : [];
+    echo '<div class="sa-svc sa-acct-unified"><div class="sa-acct-tiles">'
+        . '<a href="' . esc_url(wc_get_account_endpoint_url('orders')) . '">' . sa_svc_icon('box') . '<strong>Orders</strong><small>' . count($orders) . ' recent</small></a>'
+        . '<a href="' . esc_url(wc_get_account_endpoint_url('bookings')) . '">' . sa_svc_icon('calendar') . '<strong>Service bookings</strong><small>' . count($ids) . ' recent</small></a>'
+        . '<a href="' . esc_url(wc_get_account_endpoint_url('bookings') . '#vehicles') . '">' . sa_svc_icon('car') . '<strong>My Garage</strong><small>' . count(sa_svc_vehicles($uid)) . ' vehicles</small></a>'
+        . '<a href="' . esc_url(sa_svc_book_url()) . '" class="is-hl">' . sa_svc_icon('service') . '<strong>Book a service</strong><small>Pick a slot</small></a></div>';
+    if ($orders) {
+        echo '<h3>Recent orders</h3><ul class="sa-acct-list">';
+        foreach ($orders as $o) {
+            echo '<li><a href="' . esc_url($o->get_view_order_url()) . '">#' . esc_html($o->get_order_number()) . '</a> · ' . esc_html(wc_get_order_status_name($o->get_status())) . ' · ' . wp_kses_post($o->get_formatted_order_total()) . '</li>';
+        }
+        echo '</ul>';
+    }
+    if ($ids) {
+        echo '<h3>Upcoming & recent bookings</h3><div class="sa-svc-bks">';
+        foreach ($ids as $id) {
+            sa_svc_render_booking_card(sa_svc_booking_data((int) $id));
+        }
+        echo '</div>';
+    }
+    echo '</div>';
+}, 5);
+
+/* ---------- Reminders (WP-Cron, ~24h before) ---------- */
+
+add_action('init', static function (): void {
+    if (!wp_next_scheduled('sa_svc_reminders')) {
+        wp_schedule_event(time() + 600, 'hourly', 'sa_svc_reminders');
+    }
+});
+add_action('sa_svc_reminders', static function (): void {
+    $tz = wp_timezone();
+    $tomorrow = (new DateTimeImmutable('now', $tz))->modify('+1 day')->format('Y-m-d');
+    $ids = get_posts(['post_type' => 'sa_booking', 'numberposts' => 100, 'fields' => 'ids', 'meta_query' => [
+        ['key' => '_sa_bk_date', 'value' => $tomorrow],
+        ['key' => '_sa_bk_status', 'value' => ['pending', 'confirmed'], 'compare' => 'IN'],
+        ['key' => '_sa_bk_reminded', 'compare' => 'NOT EXISTS'],
+    ]]);
+    foreach ($ids as $id) {
+        update_post_meta((int) $id, '_sa_bk_reminded', time());
+        sa_svc_send_emails((int) $id, 'reminder');
+    }
+});

@@ -13,10 +13,14 @@ $sa_count = function_exists('sa_published_product_count') ? sa_published_product
 <section class="sa-hero" aria-labelledby="sa-hero-title">
   <div class="sa-container sa-hero__inner">
     <div class="sa-hero__copy">
-      <h1 id="sa-hero-title"><?php esc_html_e('Shop', 'supreme-autoparts'); ?></h1>
+      <h1 id="sa-hero-title"><?php esc_html_e('Parts and car service in one place', 'supreme-autoparts'); ?></h1>
       <p class="sa-hero__lead">
-        <?php esc_html_e('Search by part number, brand, or keyword.', 'supreme-autoparts'); ?>
+        <?php esc_html_e('Buy the right part online, or book our technicians to fit it. One account, one cart, all your orders and bookings together.', 'supreme-autoparts'); ?>
       </p>
+      <div class="sa-paths">
+        <a class="sa-path" href="<?php echo esc_url($sa_shop_url); ?>"><?php echo function_exists('sa_svc_icon') ? sa_svc_icon('grid') : ''; // phpcs:ignore ?><span><strong><?php esc_html_e('Shop Parts', 'supreme-autoparts'); ?></strong><small><?php esc_html_e('Search by part number, brand or vehicle. Shipped to you.', 'supreme-autoparts'); ?></small></span></a>
+        <a class="sa-path sa-path--svc" href="<?php echo esc_url(home_url('/book-service/')); ?>"><?php echo function_exists('sa_svc_icon') ? sa_svc_icon('calendar') : ''; // phpcs:ignore ?><span><strong><?php esc_html_e('Book a Service', 'supreme-autoparts'); ?></strong><small><?php esc_html_e('Oil, brakes, alignment, AC and more. Pick a time slot and pay at service.', 'supreme-autoparts'); ?></small></span></a>
+      </div>
 
       <form class="sa-hero__search" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>">
         <label class="screen-reader-text" for="sa-hero-search"><?php esc_html_e('Search products', 'supreme-autoparts'); ?></label>
@@ -36,7 +40,7 @@ $sa_count = function_exists('sa_published_product_count') ? sa_published_product
       </form>
 
       <p class="sa-hero__meta">
-        <a href="<?php echo esc_url($sa_shop_url); ?>"><?php esc_html_e('Shop', 'supreme-autoparts'); ?></a>
+        <a href="<?php echo esc_url($sa_shop_url); ?>"><?php esc_html_e('Shop all parts', 'supreme-autoparts'); ?></a> · <a href="<?php echo esc_url(home_url('/services/')); ?>"><?php esc_html_e('All car services', 'supreme-autoparts'); ?></a>
       </p>
     </div>
   </div>
