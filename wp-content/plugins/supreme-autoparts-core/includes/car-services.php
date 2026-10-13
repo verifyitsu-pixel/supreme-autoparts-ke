@@ -486,16 +486,11 @@ function sa_svc_related_parts(string $term, int $n = 4): array
     if (!function_exists('wc_get_products') || $term === '') {
         return [];
     }
-    $key = 'sa_svc_parts_' . md5($term);
+    $key = 'sa_svc_parts2_' . md5($term);
     $ids = get_transient($key);
     if (!is_array($ids)) {
-        $q = new WP_Query(['post_type' => 'product', 'post_status' => 'publish', 's' => $term, 'posts_per_page' => 12, 'fields' => 'ids', 'no_found_rows' => true]);
-        $ids = [];
-        foreach ($q->posts as $pid) {
-            if (has_post_thumbnail($pid)) {
-                $ids[] = (int) $pid;
-            }
-        }
+        $q = new WP_Query(['post_type' => 'product', 'post_status' => 'publish', 's' => $term, 'posts_per_page' => 8, 'fields' => 'ids', 'no_found_rows' => true]);
+        $ids = array_map('intval', $q->posts);
         set_transient($key, $ids, 6 * HOUR_IN_SECONDS);
     }
     return array_slice(array_filter(array_map('wc_get_product', $ids)), 0, $n);

@@ -21,7 +21,7 @@ return [
         'includes' => ['Pads fitted in pairs (per axle)', 'Disc and caliper inspection', 'Brake fluid check', 'Road test'],
         'kes' => null,
         'usd' => ['min' => 335, 'max' => 394, 'note' => 'Average US cost per axle, parts + labour', 'src' => 'repairpal-brakes'],
-        'parts' => 'brake pad',
+        'parts' => 'pad',
     ],
     'wheel-alignment' => [
         'name' => '3D Wheel Alignment', 'icon' => 'align', 'group' => 'Tyres & Wheels', 'duration' => 60,
@@ -53,7 +53,7 @@ return [
         'includes' => ['Refrigerant recovery', 'Vacuum + leak test', 'Recharge with gas and oil', 'Vent temperature check'],
         'kes' => ['options' => [['label' => 'Passenger car', 'price' => 5500], ['label' => 'SUV', 'price' => 7500], ['label' => 'SUV (dual vents)', 'price' => 10000]], 'src' => 'autoxpress-services'],
         'usd' => ['min' => 285, 'max' => 369, 'note' => 'Average US cost', 'src' => 'repairpal-ac'],
-        'parts' => 'ac compressor',
+        'parts' => 'compressor',
     ],
     'battery' => [
         'name' => 'Battery Test & Replacement', 'icon' => 'battery', 'group' => 'Electrical', 'duration' => 30,
