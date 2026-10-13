@@ -20,6 +20,7 @@ $sa_count = function_exists('sa_published_product_count') ? sa_published_product
       <div class="sa-paths">
         <a class="sa-path" href="<?php echo esc_url($sa_shop_url); ?>"><?php echo function_exists('sa_svc_icon') ? sa_svc_icon('grid') : ''; // phpcs:ignore ?><span><strong><?php esc_html_e('Shop Parts', 'supreme-autoparts'); ?></strong><small><?php esc_html_e('Find it by part number, brand or vehicle, then check out in minutes.', 'supreme-autoparts'); ?></small></span></a>
         <a class="sa-path sa-path--svc" href="<?php echo esc_url(home_url('/book-service/')); ?>"><?php echo function_exists('sa_svc_icon') ? sa_svc_icon('calendar') : ''; // phpcs:ignore ?><span><strong><?php esc_html_e('Book a Service', 'supreme-autoparts'); ?></strong><small><?php esc_html_e('Oil, brakes, alignment, AC and more. Pick a slot online; the KES 1,000 booking fee comes off your bill.', 'supreme-autoparts'); ?></small></span></a>
+        <a class="sa-path sa-path--rs" href="<?php echo esc_url(home_url('/roadside/')); ?>"><?php echo function_exists('sa_rs_icon') ? sa_rs_icon('truck') : ''; // phpcs:ignore ?><span><strong><?php esc_html_e('Roadside Rescue', 'supreme-autoparts'); ?></strong><small><?php esc_html_e('Towing, jump-starts, flat tyres, fuel and lockouts in Nairobi. Share your location, no login needed.', 'supreme-autoparts'); ?></small></span></a>
       </div>
 
       <form class="sa-hero__search" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>">

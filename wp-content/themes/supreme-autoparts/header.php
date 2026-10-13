@@ -46,6 +46,7 @@ if (!defined('ABSPATH')) {
 
     <div class="sa-header__actions">
       <a class="sa-hide-sm sa-header__link" href="<?php echo esc_url(home_url('/services/')); ?>"><?php esc_html_e('Car Service', 'supreme-autoparts'); ?></a>
+      <a class="sa-hide-sm sa-header__link" href="<?php echo esc_url(home_url('/roadside/')); ?>"><?php esc_html_e('Roadside Help', 'supreme-autoparts'); ?></a>
       <a class="sa-hide-sm sa-header__link" href="<?php echo esc_url(sa_page_url('contact')); ?>"><?php esc_html_e('Contact', 'supreme-autoparts'); ?></a>
       <?php if (function_exists('wc_get_page_permalink')) : ?>
         <a class="sa-header__icon-link" href="<?php echo esc_url(wc_get_page_permalink('myaccount')); ?>" aria-label="<?php esc_attr_e('Account', 'supreme-autoparts'); ?>">
@@ -110,6 +111,9 @@ if (!defined('ABSPATH')) {
         </li>
         <li class="sa-nav__item">
           <a class="sa-nav__link sa-nav__link--service" href="<?php echo esc_url(home_url('/services/')); ?>"><?php esc_html_e('Book a Service', 'supreme-autoparts'); ?></a>
+        </li>
+        <li class="sa-nav__item">
+          <a class="sa-nav__link sa-nav__link--service" href="<?php echo esc_url(home_url('/roadside/')); ?>"><?php esc_html_e('Roadside Rescue', 'supreme-autoparts'); ?></a>
         </li>
         <?php if (function_exists('wc_get_page_permalink')) : ?>
           <li class="sa-nav__item">

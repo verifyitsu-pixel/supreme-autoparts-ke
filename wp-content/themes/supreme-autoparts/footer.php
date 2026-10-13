@@ -64,6 +64,8 @@ $sa_chev       = '<svg class="sa-foot__chev" viewBox="0 0 24 24" width="18" heig
           <li><a href="<?php echo esc_url(sa_page_url('fitment-guide')); ?>"><?php esc_html_e('Fitment guide', 'supreme-autoparts'); ?></a></li>
           <li><a href="<?php echo esc_url($sa_account); ?>"><?php esc_html_e('My Account', 'supreme-autoparts'); ?></a></li>
           <li><a href="<?php echo esc_url(home_url('/services/')); ?>"><?php esc_html_e('Car Services', 'supreme-autoparts'); ?></a></li>
+          <li><a href="<?php echo esc_url(home_url('/roadside/')); ?>"><?php esc_html_e('Roadside Rescue', 'supreme-autoparts'); ?></a></li>
+          <li><a href="<?php echo esc_url(home_url('/roadside-terms/')); ?>"><?php esc_html_e('Roadside Terms', 'supreme-autoparts'); ?></a></li>
           <li><a href="<?php echo esc_url(home_url('/track-order/')); ?>"><?php esc_html_e('Track order', 'supreme-autoparts'); ?></a></li>
         </ul>
       </details>

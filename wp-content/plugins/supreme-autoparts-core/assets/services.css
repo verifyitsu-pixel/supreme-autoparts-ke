@@ -193,3 +193,7 @@ body.sa-side-open{overflow:hidden}
  .sa-svc-row{grid-template-columns:1fr}
  .sa-svc-bk .sa-svc-btn{width:100%;margin-top:6px}
 }
+
+/* Homepage: three service paths (Shop Parts, Book a Service, Roadside Rescue). */
+.sa-paths{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.sa-path--rs .sa-svc-ico{color:var(--sa-action,#3665f3)}
