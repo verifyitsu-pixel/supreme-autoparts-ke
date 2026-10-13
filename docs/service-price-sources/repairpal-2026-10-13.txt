@@ -1,0 +1,7 @@
+Fetched 2026-10-13 via web fetch. Each page header: "Estimates last updated September 3, 2026".
+oil-change-cost: "The average cost for an Oil Change is between $160 and $188." Labor $58-$86, parts $101-$103.
+brake-pad-replacement-cost: "The average cost for a Brake Pad Replacement is between $335 and $394." Labor $122-$179, parts $213-$215.
+wheel-alignment-cost: "The average cost for a Wheel Alignment is between $186 and $273."
+tire-rotation-cost: "The average cost for a Tire Rotation is between $49 and $72."
+ac-recharge-cost: "The average cost for an AC Recharge is between $285 and $369." Labor $179-$262, parts ~$106.
+battery-replacement-cost: "The average cost for a Battery Replacement is between $456 and $493." Labor $61-$90, parts $394-$403.

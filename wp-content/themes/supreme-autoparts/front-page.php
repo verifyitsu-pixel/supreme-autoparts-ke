@@ -119,6 +119,24 @@ $sa_count = function_exists('sa_published_product_count') ? sa_published_product
   </div>
 </section>
 
+<?php if (function_exists('sa_svc_catalog')) : $sa_svc_region = sa_svc_region(); ?>
+<section class="sa-home-services" aria-labelledby="sa-home-services-title">
+  <div class="sa-container sa-home-services__in">
+    <div>
+      <p class="sa-svc-eyebrow"><?php esc_html_e('New · Car service', 'supreme-autoparts'); ?></p>
+      <h2 id="sa-home-services-title"><?php esc_html_e('Shop parts. Book the fitting.', 'supreme-autoparts'); ?></h2>
+      <p><?php esc_html_e('Book oil changes, brakes, alignment, AC and diagnostics online with live time slots — pay at service.', 'supreme-autoparts'); ?></p>
+      <div class="sa-svc-cta"><a class="sa-svc-btn sa-svc-btn--primary" href="<?php echo esc_url(home_url('/book-service/')); ?>"><?php esc_html_e('Book a service', 'supreme-autoparts'); ?></a><a class="sa-svc-btn sa-svc-btn--ghost" style="color:#fff" href="<?php echo esc_url(home_url('/services/')); ?>"><?php esc_html_e('All services', 'supreme-autoparts'); ?></a></div>
+    </div>
+    <div class="sa-home-services__grid">
+      <?php foreach (array_slice(sa_svc_catalog(), 0, 6, true) as $sa_slug => $sa_s) : ?>
+        <a href="<?php echo esc_url(home_url('/services/' . $sa_slug . '/')); ?>"><?php echo sa_svc_icon($sa_s['icon']); // phpcs:ignore ?><?php echo esc_html($sa_s['name']); ?><small><?php echo esc_html(sa_svc_price_label($sa_s, $sa_svc_region)); ?></small></a>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
+
 <?php
 /* Featured Parts — mega-store round-robin across departments (real photos). */
 $sa_latest = function_exists('sa_get_homepage_latest_products')

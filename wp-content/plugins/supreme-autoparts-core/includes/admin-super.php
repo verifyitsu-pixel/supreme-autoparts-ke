@@ -24,6 +24,7 @@ function sa_core_super_nav(): array {
     return [
         ['slug' => 'supreme-autoparts', 'label' => 'Dashboard', 'phase' => 1, 'built' => true, 'cb' => 'sa_core_render_ultra_dashboard'],
         ['slug' => 'sa-super-orders', 'label' => 'Orders', 'phase' => 2, 'built' => true, 'cb' => 'sa_core_super_render_orders', 'woo' => $orders_url],
+        ['slug' => 'sa-super-bookings', 'label' => 'Service Bookings', 'phase' => 2, 'built' => true, 'cb' => 'sa_svc_admin_render'],
         ['slug' => 'sa-super-products', 'label' => 'Products', 'phase' => 2, 'built' => true, 'cb' => 'sa_core_super_render_products', 'woo' => admin_url('edit.php?post_type=product')],
         ['slug' => 'sa-super-inventory', 'label' => 'Inventory', 'phase' => 3, 'built' => true, 'cb' => 'sa_core_super_render_inventory', 'woo' => admin_url('edit.php?post_type=product&orderby=stock&order=asc')],
         ['slug' => 'sa-super-customers', 'label' => 'Customers', 'phase' => 2, 'built' => true, 'cb' => 'sa_core_super_render_customers'],

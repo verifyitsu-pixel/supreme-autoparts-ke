@@ -83,6 +83,7 @@ function sa_core_my_account_endpoints(): array
 {
     return [
         'orders'          => __('Orders', 'supreme-autoparts-core'),
+        'bookings'        => __('Service bookings', 'supreme-autoparts-core'),
         'invoices'        => __('Invoices', 'supreme-autoparts-core'),
         'edit-address'    => __('Addresses', 'supreme-autoparts-core'),
         'payment-methods' => __('Payment methods', 'supreme-autoparts-core'),

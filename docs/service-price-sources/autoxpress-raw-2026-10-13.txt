@@ -1,0 +1,389 @@
+===== https://auto-xpress.co.ke/estore/services
+Services
+
+Home / Services
+
+Sort by
+Featured
+Price: Low to High
+Price: High to Low
+Sort by
+Featured
+
+Tyres
+
+Oil
+
+Brakes
+
+Batteries
+
+Suspension
+
+Wipers
+
+Accessories
+
+Services
+
+Filters
+
+Reset Filters
+
+Service Category
+
+Service Type
+Air Conditioning
+Diagnostics
+Free 30 Point Inspection
+Suspension Services
+Tyre Services
+Wheel Alignment
+Service Type
+
+Price
+
+0.1
+
+10000
+
+Ksh
+0.1
+Ksh
+10000
+
+AC Gas Refilling
+
+Passenger
+
+Get 25% off
+
+Ksh5,500
+
+View Detail
+
+AC Gas Refilling
+
+SUV
+
+Get 25% off
+
+Ksh7,500
+
+View Detail
+
+AC Gas Refilling
+
+SUV(Dual Vents)
+
+Get 25% off
+
+Ksh10,000
+
+View Detail
+
+3D Wheel Alignment
+
+Toe
+
+Ksh2,500
+
+View Detail
+
+3D Wheel Alignment
+
+Caster Camber
+
+Ksh4,000
+
+View Detail
+
+3D Wheel Alignment
+
+Caster Camber - Shims
+
+Ksh6,000
+
+View Detail
+
+Wheel Balancing
+
+Passenger - 12"
+
+Ksh450
+
+View Detail
+
+Wheel Balancing
+
+Passenger - 13"
+
+Ksh450
+
+View Detail
+
+Wheel Balancing
+
+Passenger - 14"
+
+Ksh450
+
+View Detail
+
+Wheel Balancing
+
+Passenger - 15"
+
+Ksh550
+
+View Detail
+
+Wheel Balancing
+
+Passenger - 16"
+
+Ksh600
+
+View Detail
+
+Wheel Balancing
+
+Passenger - 17"
+
+Ksh800
+
+View Detail
+
+1
+1
+2
+3
+4
+===== https://auto-xpress.co.ke/estore/oil
+Oil Service
+
+Home / Oil Service
+
+Sort by
+Featured
+Price: Low to High
+Price: High to Low
+Sort by
+Featured
+
+Tyres
+
+Oil
+
+Brakes
+
+Batteries
+
+Suspension
+
+Wipers
+
+Accessories
+
+Services
+
+Filters
+
+Reset Filters
+
+Make & Model
+
+Make
+AUDI
+BMW
+DAIHATSU
+FORD
+HONDA
+ISUZU
+LEXUS
+MAZDA
+MERCEDES BENZ
+MITSUBISHI
+NISSAN
+RANGE ROVER
+SUBARU
+SUZUKI
+TOYOTA
+VOLKSWAGEN
+VOLVO
+Make
+Model
+Model
+Engine CC
+Engine CC
+Year
+Year
+Model Trim
+Model Trim
+
+Oil Specification
+
+Service Parts
+Filters
+Lubricants
+Oil Service Package
+Spark Plugs
+Service Parts
+Part Type
+AdBlue
+Air Filter
+Brake Fluid
+Cabin Filter
+Coolant
+Double Iridium
+Double Platinum
+Engine Oil
+Fuel Filter
+G-power Platinum
+Iridium
+Iridium DF
+Iridium HP
+Iridium IX
+Laser Iridium
+Laser Platinum
+Oil Filter
+Platinum
+Platinum Iridium
+Single Iridium
+Standard
+Super
+Part Type
+
+Brand
+
+AutoXpress
+BOSCH
+CASTROL
+NGK
+OLA
+PETRONAS
+TEXEN
+TOTAL
+WIX
+
+Price
+
+0
+
+25000
+
+Ksh
+0
+Ksh
+25000
+
+Bosch Air Filter
+
+F026400780
+
+Ksh3,400
+
+View Detail
+
+Synthetic Oil Service
+
+Oil, Filter & Labour
+
+N/A
+
+View Detail
+
+Mineral Oil Service
+
+Oil, Filter & Labour
+
+N/A
+
+View Detail
+
+Bosch Air Filter
+
+1457429988
+
+Ksh2,500
+
+View Detail
+
+Bosch Air Filter
+
+1457433071
+
+Ksh4,750
+
+View Detail
+
+Bosch Air Filter
+
+1457433273
+
+Ksh2,600
+
+View Detail
+
+Bosch Air Filter
+
+1457433274
+
+Ksh2,600
+
+View Detail
+
+Bosch Air Filter
+
+1457433281
+
+Ksh2,500
+
+View Detail
+
+Bosch Air Filter
+
+1457433323
+
+Ksh4,200
+
+View Detail
+
+Bosch Air Filter
+
+1457433339
+
+Ksh4,200
+
+View Detail
+
+Bosch Air Filter
+
+1457433575
+
+Ksh3,500
+
+View Detail
+
+Bosch Air Filter
+
+1457433585
+
+Ksh3,650
+
+View Detail
+
+1
+1
+2
+3
+4
+JSON https://sr-client-cfg.eu.amplitude.com/config/82e119e4c01aa1d1814f40cc8951b205?config_group=browser {"configs":{"diagnostics":{"browserSDK":{"sampleRate":0.02}},"sessionReplay":{"sr_sampling_config":{"capture_enabled":false,"disabled_reason":"OUT_OF_QUOTA"}},"analyticsSDK":{}}}
+JSON https://sr-client-cfg.eu.amplitude.com/config/82e119e4c01aa1d1814f40cc8951b205?config_group=browser {"configs":{"diagnostics":{"browserSDK":{"sampleRate":0.02}},"sessionReplay":{"sr_sampling_config":{"capture_enabled":false,"disabled_reason":"OUT_OF_QUOTA"}},"analyticsSDK":{}}}
+JSON https://gs.eu.amplitude.com/sdk/v1/config {"nudges":[],"organization":{"branding":"","guideThrottle":{"conditions":[[]],"enabled":false,"limits":[{"max":10,"period":"day"}]},"localization":{"addedLocales":["en"],"defaultLocale":"en","enabled":false,"translationOutdated":"showDefault","translationUnavailable":"showDefault"},"nudgesMutualExcl
+JSON https://gs.eu.amplitude.com/sdk/v1/resource_center {"resourceCenters":[{"appId":100035769,"chatEnabled":false,"defaultTab":"resource_center","imageUploadEnabled":true,"isAutopilotEnabled":true,"key":"nudge-resource-center","resourceCenterEnabled":true,"showBranding":true,"showNegativeFeedbackDropdown":true,"showQuickLinks":false,"showRecsetHeroCards
+JSON https://gs.eu.amplitude.com/sdk/v1/decide {}
+JSON https://gs.eu.amplitude.com/sdk/v1/state {"ampIdToken":"Wj733t-p8uFaPvfB0X_e2b0mbTih6tlH","nudgeInteractions":{}}
+JSON https://auto-xpress.co.ke/api/auth/session null
+JSON https://auto-xpress.co.ke/api/auth/session null
+JSON https://api.eu.amplitude.com/2/httpapi {"code":200,"server_upload_time":1791881731965,"payload_size_bytes":2493,"events_ingested":2}
