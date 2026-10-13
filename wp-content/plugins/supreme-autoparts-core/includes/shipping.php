@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
  * - Local pickup (Nairobi) .............. $0.00  (local_pickup, KE)
  * - International ....................... $25.00 (Rest of World flat_rate)
  */
-const SA_SHIPPING_ZONES_VER = '4';
+const SA_SHIPPING_ZONES_VER = '5';
 
 /**
  * Free-shipping minimum in store currency (USD).
@@ -119,22 +119,12 @@ function sa_core_ensure_shipping_zones(): void
                 'meta_val'   => 'free',
             ],
             [
-                'id'       => 'flat_rate',
-                'title'    => 'Nairobi Delivery',
-                'cost'     => '8',
-                'tax'      => 'no',
+                'id'       => 'sa_fargo',
+                'title'    => 'Fargo Courier',
+                'tax'      => 'none',
                 'order'    => 1,
                 'meta_key' => '_sa_ship_code',
-                'meta_val' => 'nairobi',
-            ],
-            [
-                'id'       => 'flat_rate',
-                'title'    => 'Upcountry Kenya',
-                'cost'     => '15',
-                'tax'      => 'no',
-                'order'    => 2,
-                'meta_key' => '_sa_ship_code',
-                'meta_val' => 'upcountry',
+                'meta_val' => 'fargo',
             ],
             [
                 'id'       => 'local_pickup',
@@ -146,6 +136,13 @@ function sa_core_ensure_shipping_zones(): void
                 'meta_val' => 'pickup',
             ],
         ]);
+        // v5: Fargo Courier (weight + county) replaces the flat Nairobi / Upcountry rates.
+        foreach ($ke_zone->get_shipping_methods(false) as $iid => $m) {
+            $t = strtolower((string) ($m->title ?? ''));
+            if (($m->id ?? '') === 'flat_rate' && (str_contains($t, 'nairobi deliver') || str_contains($t, 'upcountry'))) {
+                $ke_zone->delete_shipping_method((int) $iid);
+            }
+        }
     }
 
     // --- Rest of world ---
@@ -183,8 +180,7 @@ function sa_core_ensure_shipping_zones(): void
             'free_min'             => $free_min,
         ],
         'kenya' => [
-            'nairobi_delivery' => 8.0,
-            'upcountry'        => 15.0,
+            'fargo_courier'    => 'KES rate card by town/county + weight (data/fargo-rates.json)',
             'free_min'         => $free_min,
             'local_pickup'     => 0.0,
         ],
@@ -313,6 +309,8 @@ function sa_core_sync_zone_methods(WC_Shipping_Zone $zone, array $desired): void
                 $code = 'nairobi';
             } elseif (str_contains($title, 'upcountry')) {
                 $code = 'upcountry';
+            } elseif (str_contains($title, 'fargo')) {
+                $code = 'fargo';
             } elseif (str_contains($title, 'local pickup') || str_contains($title, 'pickup')) {
                 $code = 'pickup';
             } elseif (str_contains($title, 'international')) {

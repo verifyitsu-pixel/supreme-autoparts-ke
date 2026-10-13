@@ -1,0 +1,2253 @@
+{
+ "source": {
+  "requested": "https://www.scribd.com/document/748087601/Fargo-Courier-Rates",
+  "requested_status": "Scribd page and /embeds/ content returned only a JavaScript-required stub (3 KB, no table) to WebFetch and curl on 2026-10-13; could not be read.",
+  "used": "https://thekenyatimes.com/featured/wells-fargo-courier-parcel-delivery-rates-in-kenya/",
+  "used_published": "2025-04-27",
+  "used_note": "Same Fargo Courier branch rate card (Nairobi origin, rates for first 5 kg incl. 16% VAT). Not verified byte-for-byte against the Scribd PDF."
+ },
+ "currency": "KES",
+ "origin": "Nairobi",
+ "vat_inclusive": true,
+ "base_covers_kg": 5,
+ "base_covers": "first 5 kg per item, delivery up to 5 km from destination town",
+ "excess_per_kg_kes": {
+  "default": 65,
+  "starred_towns": 100,
+  "remote_150": 150
+ },
+ "starred_towns": [
+  "Lodwar",
+  "Lokichogio",
+  "Taveta"
+ ],
+ "remote_150_towns": [
+  "Lodwar",
+  "Lamu",
+  "Lokichogio",
+  "Lokichar",
+  "Turkwel",
+  "Ortum",
+  "Kakuma"
+ ],
+ "delivery_days": null,
+ "delivery_days_note": "Card gives no transit times.",
+ "exclusions": "Rates exclude Sundays and public holidays; items above Fargo standard liability must be insured.",
+ "notes": [
+  "Nairobi also appears in the Rift Valley table at KES 690 with an inconsistent VAT split (517.24+131.03); the dedicated 'Nairobi Routes' entry (KES 300) is used.",
+  "Watamu charge printed as '73276' (typo for 732.76); total KES 850 used."
+ ],
+ "county_default_town": {
+  "Nairobi": "Nairobi",
+  "Kiambu": "Kiambu",
+  "Machakos": "Machakos",
+  "Kajiado": "Kajiado",
+  "Murang'a": "Murang'a",
+  "Nyeri": "Nyeri",
+  "Kirinyaga": "Kerugoya",
+  "Embu": "Embu",
+  "Tharaka-Nithi": "Chuka",
+  "Meru": "Meru",
+  "Laikipia": "Nanyuki",
+  "Nyandarua": "Olkalau",
+  "Nakuru": "Nakuru",
+  "Narok": "Narok",
+  "Kericho": "Kericho",
+  "Bomet": "Bomet",
+  "Uasin Gishu": "Eldoret",
+  "Nandi": "Kapsabet",
+  "Elgeyo-Marakwet": "Iten",
+  "Trans Nzoia": "Kitale",
+  "West Pokot": "Kapenguria",
+  "Baringo": "Kabarnet",
+  "Samburu": "Maralal",
+  "Turkana": "Lodwar",
+  "Kakamega": "Kakamega",
+  "Vihiga": "Mbale",
+  "Bungoma": "Bungoma",
+  "Busia": "Busia",
+  "Kisumu": "Kisumu",
+  "Siaya": "Siaya",
+  "Homa Bay": "HomaBay",
+  "Migori": "Migori",
+  "Kisii": "Kisii",
+  "Nyamira": "Keroka",
+  "Mombasa": "Mombasa",
+  "Kilifi": "Kilifi",
+  "Kwale": "Diani",
+  "Taita-Taveta": "Wundanyi",
+  "Lamu": "Lamu",
+  "Tana River": "Garsen",
+  "Kitui": "Kitui",
+  "Makueni": "Wote",
+  "Isiolo": "Isiolo",
+  "Marsabit": "Marsabit",
+  "Garissa": "Garissa",
+  "Wajir": null,
+  "Mandera": null
+ },
+ "counties_without_branch": [
+  "Wajir",
+  "Mandera"
+ ],
+ "towns": {
+  "Ahero": {
+   "county": "Kisumu",
+   "kes": 640.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Athi River": {
+   "county": "Machakos",
+   "kes": 360.0,
+   "route": "Outer Nairobi Routes"
+  },
+  "Awendo": {
+   "county": "Migori",
+   "kes": 600.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Baraton": {
+   "county": "Nandi",
+   "kes": 700.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Bomet": {
+   "county": "Bomet",
+   "kes": 500.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Bondo": {
+   "county": "Siaya",
+   "kes": 640.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Bungoma": {
+   "county": "Bungoma",
+   "kes": 600.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Burnt forest": {
+   "county": "Uasin Gishu",
+   "kes": 520.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Busia": {
+   "county": "Busia",
+   "kes": 590.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Chewele": {
+   "county": "Bungoma",
+   "kes": 600.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Chogoria": {
+   "county": "Tharaka-Nithi",
+   "kes": 480.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Chuka": {
+   "county": "Tharaka-Nithi",
+   "kes": 420.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Diani": {
+   "county": "Kwale",
+   "kes": 770.0,
+   "route": "Nairobi to Coastal Routes"
+  },
+  "Eldama Ravine": {
+   "county": "Baringo",
+   "kes": 470.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Eldoret": {
+   "county": "Uasin Gishu",
+   "kes": 450.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Emali": {
+   "county": "Makueni",
+   "kes": 580.0,
+   "route": "Outer Nairobi Routes"
+  },
+  "Embu": {
+   "county": "Embu",
+   "kes": 420.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Engineer": {
+   "county": "Nyandarua",
+   "kes": 400.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Garissa": {
+   "county": "Garissa",
+   "kes": 750.0,
+   "route": "Outer Nairobi Routes"
+  },
+  "Garsen": {
+   "county": "Tana River",
+   "kes": 1400.0,
+   "route": "Nairobi to Coastal Routes"
+  },
+  "Gatundu": {
+   "county": "Kiambu",
+   "kes": 350.0,
+   "route": "Nairobi Routes"
+  },
+  "Gilgil": {
+   "county": "Nakuru",
+   "kes": 350.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Githunguri": {
+   "county": "Kiambu",
+   "kes": 350.0,
+   "route": "Nairobi Routes"
+  },
+  "HomaBay": {
+   "county": "Homa Bay",
+   "kes": 700.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Isebania": {
+   "county": "Migori",
+   "kes": 740.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Isinya": {
+   "county": "Kajiado",
+   "kes": 420.0,
+   "route": "Outer Nairobi Routes"
+  },
+  "Isiolo": {
+   "county": "Isiolo",
+   "kes": 650.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Iten": {
+   "county": "Elgeyo-Marakwet",
+   "kes": 450.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Juja": {
+   "county": "Kiambu",
+   "kes": 380.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Kabarnet": {
+   "county": "Baringo",
+   "kes": 580.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Kagio": {
+   "county": "Kirinyaga",
+   "kes": 400.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Kajiado": {
+   "county": "Kajiado",
+   "kes": 420.0,
+   "route": "Outer Nairobi Routes"
+  },
+  "Kakamega": {
+   "county": "Kakamega",
+   "kes": 480.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Kangari": {
+   "county": "Murang'a",
+   "kes": 350.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Kangema": {
+   "county": "Murang'a",
+   "kes": 420.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Kangundo": {
+   "county": "Machakos",
+   "kes": 400.0,
+   "route": "Outer Nairobi Routes"
+  },
+  "Kapenguria": {
+   "county": "West Pokot",
+   "kes": 780.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Kapsabet": {
+   "county": "Nandi",
+   "kes": 620.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Karatina": {
+   "county": "Nyeri",
+   "kes": 400.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Katenchaha": {
+   "county": "Kakamega",
+   "kes": 740.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Kendubay": {
+   "county": "Homa Bay",
+   "kes": 750.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Kericho": {
+   "county": "Kericho",
+   "kes": 480.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Keroka": {
+   "county": "Nyamira",
+   "kes": 600.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Kerugoya": {
+   "county": "Kirinyaga",
+   "kes": 400.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Kiambu": {
+   "county": "Kiambu",
+   "kes": 350.0,
+   "route": "Nairobi Routes"
+  },
+  "Kibwezi": {
+   "county": "Makueni",
+   "kes": 580.0,
+   "route": "Outer Nairobi Routes"
+  },
+  "Kiganjo": {
+   "county": "Nyeri",
+   "kes": 410.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Kijabe": {
+   "county": "Kiambu",
+   "kes": 350.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Kikuyu": {
+   "county": "Kiambu",
+   "kes": 350.0,
+   "route": "Nairobi Routes"
+  },
+  "Kilifi": {
+   "county": "Kilifi",
+   "kes": 800.0,
+   "route": "Nairobi to Coastal Routes"
+  },
+  "Kimilili": {
+   "county": "Bungoma",
+   "kes": 600.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Kisii": {
+   "county": "Kisii",
+   "kes": 500.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Kisumu": {
+   "county": "Kisumu",
+   "kes": 500.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Kitale": {
+   "county": "Trans Nzoia",
+   "kes": 520.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Kitengela": {
+   "county": "Kajiado",
+   "kes": 360.0,
+   "route": "Outer Nairobi Routes"
+  },
+  "Kitui": {
+   "county": "Kitui",
+   "kes": 450.0,
+   "route": "Outer Nairobi Routes"
+  },
+  "Kligoris": {
+   "county": "Narok",
+   "kes": 600.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Kutus": {
+   "county": "Kirinyaga",
+   "kes": 410.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Lamu": {
+   "county": "Lamu",
+   "kes": 2050.0,
+   "route": "Nairobi to Coastal Routes"
+  },
+  "Limuru": {
+   "county": "Kiambu",
+   "kes": 350.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Litein": {
+   "county": "Kericho",
+   "kes": 500.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Lodwar": {
+   "county": "Turkana",
+   "kes": 2050.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Lokichogio": {
+   "county": "Turkana",
+   "kes": 2850.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Londiani": {
+   "county": "Kericho",
+   "kes": 500.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Luanda": {
+   "county": "Vihiga",
+   "kes": 660.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Lugari": {
+   "county": "Kakamega",
+   "kes": 600.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Machakos": {
+   "county": "Machakos",
+   "kes": 420.0,
+   "route": "Outer Nairobi Routes"
+  },
+  "Makindu": {
+   "county": "Makueni",
+   "kes": 580.0,
+   "route": "Outer Nairobi Routes"
+  },
+  "Makutano": {
+   "county": "Machakos",
+   "kes": 460.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Makuyu": {
+   "county": "Murang'a",
+   "kes": 360.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Malaba": {
+   "county": "Busia",
+   "kes": 600.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Malindi": {
+   "county": "Kilifi",
+   "kes": 840.0,
+   "route": "Nairobi to Coastal Routes"
+  },
+  "Maralal": {
+   "county": "Samburu",
+   "kes": 1100.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Mariakani": {
+   "county": "Kilifi",
+   "kes": 640.0,
+   "route": "Nairobi to Coastal Routes"
+  },
+  "Marsabit": {
+   "county": "Marsabit",
+   "kes": 950.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Maseno": {
+   "county": "Kisumu",
+   "kes": 500.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Masii": {
+   "county": "Machakos",
+   "kes": 500.0,
+   "route": "Outer Nairobi Routes"
+  },
+  "Maua": {
+   "county": "Meru",
+   "kes": 650.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Mbale": {
+   "county": "Vihiga",
+   "kes": 480.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Mbita": {
+   "county": "Homa Bay",
+   "kes": 720.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Meru": {
+   "county": "Meru",
+   "kes": 480.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Migori": {
+   "county": "Migori",
+   "kes": 600.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Moi's Bridge": {
+   "county": "Uasin Gishu",
+   "kes": 530.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Molo": {
+   "county": "Nakuru",
+   "kes": 480.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Mombasa": {
+   "county": "Mombasa",
+   "kes": 640.0,
+   "route": "Nairobi to Coastal Routes"
+  },
+  "Moyale": {
+   "county": "Marsabit",
+   "kes": 3050.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Mpeketoni": {
+   "county": "Lamu",
+   "kes": 2050.0,
+   "route": "Nairobi to Coastal Routes"
+  },
+  "Mtito Andei": {
+   "county": "Makueni",
+   "kes": 600.0,
+   "route": "Outer Nairobi Routes"
+  },
+  "Mtwapa": {
+   "county": "Kilifi",
+   "kes": 640.0,
+   "route": "Nairobi to Coastal Routes"
+  },
+  "Muhoroni": {
+   "county": "Kisumu",
+   "kes": 660.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Mukuweini": {
+   "county": "Nyeri",
+   "kes": 410.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Mumias": {
+   "county": "Kakamega",
+   "kes": 600.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Murang'a": {
+   "county": "Murang'a",
+   "kes": 420.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Mutomo": {
+   "county": "Kitui",
+   "kes": 600.0,
+   "route": "Outer Nairobi Routes"
+  },
+  "Mwala": {
+   "county": "Machakos",
+   "kes": 600.0,
+   "route": "Outer Nairobi Routes"
+  },
+  "Mwatate": {
+   "county": "Taita-Taveta",
+   "kes": 840.0,
+   "route": "Nairobi to Coastal Routes"
+  },
+  "Mwea": {
+   "county": "Kirinyaga",
+   "kes": 410.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Mwingi": {
+   "county": "Kitui",
+   "kes": 550.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Nairobi": {
+   "county": "Nairobi",
+   "kes": 300.0,
+   "route": "Nairobi Routes"
+  },
+  "Naivasha": {
+   "county": "Nakuru",
+   "kes": 350.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Nakuru": {
+   "county": "Nakuru",
+   "kes": 360.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Namanga": {
+   "county": "Kajiado",
+   "kes": 670.0,
+   "route": "Outer Nairobi Routes"
+  },
+  "Nambale": {
+   "county": "Busia",
+   "kes": 670.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Nandi Hills": {
+   "county": "Nandi",
+   "kes": 400.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Nanyuki": {
+   "county": "Laikipia",
+   "kes": 520.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Narok": {
+   "county": "Narok",
+   "kes": 420.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Naromoru": {
+   "county": "Laikipia",
+   "kes": 520.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Ngong": {
+   "county": "Kajiado",
+   "kes": 350.0,
+   "route": "Nairobi Routes"
+  },
+  "Njro": {
+   "county": "Nakuru",
+   "kes": 480.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Nkubu": {
+   "county": "Meru",
+   "kes": 460.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Nyabondo": {
+   "county": "Kisumu",
+   "kes": 500.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Nyahururu": {
+   "county": "Laikipia",
+   "kes": 480.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Nyeri": {
+   "county": "Nyeri",
+   "kes": 420.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Nzoia": {
+   "county": "Kakamega",
+   "kes": 710.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Obarogo": {
+   "county": "Kisii",
+   "kes": 600.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Ogendo": {
+   "county": "Migori",
+   "kes": 600.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Olkalau": {
+   "county": "Nyandarua",
+   "kes": 480.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Oloitoktok": {
+   "county": "Kajiado",
+   "kes": 670.0,
+   "route": "Outer Nairobi Routes"
+  },
+  "Ongata rongai": {
+   "county": "Kajiado",
+   "kes": 350.0,
+   "route": "Nairobi Routes"
+  },
+  "Othaya": {
+   "county": "Nyeri",
+   "kes": 420.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Oyugis": {
+   "county": "Homa Bay",
+   "kes": 600.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Rongo": {
+   "county": "Migori",
+   "kes": 600.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Ruiru": {
+   "county": "Kiambu",
+   "kes": 360.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Rumuruti": {
+   "county": "Laikipia",
+   "kes": 500.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Runyenjes": {
+   "county": "Embu",
+   "kes": 420.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Sabasaba": {
+   "county": "Murang'a",
+   "kes": 360.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Sabatia": {
+   "county": "Vihiga",
+   "kes": 480.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Sagana": {
+   "county": "Kirinyaga",
+   "kes": 480.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Salgaa": {
+   "county": "Nakuru",
+   "kes": 680.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Siaya": {
+   "county": "Siaya",
+   "kes": 650.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Sotik": {
+   "county": "Bomet",
+   "kes": 500.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Sultan Hamud": {
+   "county": "Makueni",
+   "kes": 580.0,
+   "route": "Nairobi to Coastal Routes"
+  },
+  "Tala": {
+   "county": "Machakos",
+   "kes": 420.0,
+   "route": "Outer Nairobi Routes"
+  },
+  "Taveta": {
+   "county": "Taita-Taveta",
+   "kes": 850.0,
+   "route": "Nairobi to Coastal Routes"
+  },
+  "Thika": {
+   "county": "Kiambu",
+   "kes": 360.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Timau": {
+   "county": "Meru",
+   "kes": 520.0,
+   "route": "Nairobi to Mt Kenya Routes"
+  },
+  "Turbo": {
+   "county": "Uasin Gishu",
+   "kes": 450.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Ugunga": {
+   "county": "Siaya",
+   "kes": 650.0,
+   "route": "Nairobi to Lake Routes"
+  },
+  "Voi": {
+   "county": "Taita-Taveta",
+   "kes": 600.0,
+   "route": "Nairobi to Coastal Routes"
+  },
+  "Watamu": {
+   "county": "Kilifi",
+   "kes": 850.0,
+   "route": "Nairobi to Coastal Routes"
+  },
+  "Webuye": {
+   "county": "Bungoma",
+   "kes": 600.0,
+   "route": "Nairobi to Rift Valley Routes"
+  },
+  "Wote": {
+   "county": "Makueni",
+   "kes": 600.0,
+   "route": "Outer Nairobi Routes"
+  },
+  "Wundanyi": {
+   "county": "Taita-Taveta",
+   "kes": 800.0,
+   "route": "Nairobi to Coastal Routes"
+  }
+ },
+ "raw_rows": [
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Baraton",
+   "town": "Baraton",
+   "starred": false,
+   "charge_ex_vat": "603.45",
+   "vat": "96.55",
+   "total_kes": 700.0,
+   "county": "Nandi"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Bungoma",
+   "town": "Bungoma",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "82.76",
+   "total_kes": 600.0,
+   "county": "Bungoma"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Burnt forest",
+   "town": "Burnt forest",
+   "starred": false,
+   "charge_ex_vat": "448.28",
+   "vat": "71.72",
+   "total_kes": 520.0,
+   "county": "Uasin Gishu"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Chewele",
+   "town": "Chewele",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "82.76",
+   "total_kes": 600.0,
+   "county": "Bungoma"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Eldama Ravine",
+   "town": "Eldama Ravine",
+   "starred": false,
+   "charge_ex_vat": "405.17",
+   "vat": "64.83",
+   "total_kes": 470.0,
+   "county": "Baringo"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Eldoret",
+   "town": "Eldoret",
+   "starred": false,
+   "charge_ex_vat": "387.93",
+   "vat": "62.07",
+   "total_kes": 450.0,
+   "county": "Uasin Gishu"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Engineer",
+   "town": "Engineer",
+   "starred": false,
+   "charge_ex_vat": "344.83",
+   "vat": "55.17",
+   "total_kes": 400.0,
+   "county": "Nyandarua"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Gilgil",
+   "town": "Gilgil",
+   "starred": false,
+   "charge_ex_vat": "301.72",
+   "vat": "48.28",
+   "total_kes": 350.0,
+   "county": "Nakuru"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Iten",
+   "town": "Iten",
+   "starred": false,
+   "charge_ex_vat": "387.93",
+   "vat": "62.07",
+   "total_kes": 450.0,
+   "county": "Elgeyo-Marakwet"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Kabarnet",
+   "town": "Kabarnet",
+   "starred": false,
+   "charge_ex_vat": "500.00",
+   "vat": "80.00",
+   "total_kes": 580.0,
+   "county": "Baringo"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Kapenguria",
+   "town": "Kapenguria",
+   "starred": false,
+   "charge_ex_vat": "672.41",
+   "vat": "107.59",
+   "total_kes": 780.0,
+   "county": "West Pokot"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Kapsabet",
+   "town": "Kapsabet",
+   "starred": false,
+   "charge_ex_vat": "534.48",
+   "vat": "85.52",
+   "total_kes": 620.0,
+   "county": "Nandi"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Kijabe",
+   "town": "Kijabe",
+   "starred": false,
+   "charge_ex_vat": "301.72",
+   "vat": "48.28",
+   "total_kes": 350.0,
+   "county": "Kiambu"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Kimilili",
+   "town": "Kimilili",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "82.76",
+   "total_kes": 600.0,
+   "county": "Bungoma"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Kitale",
+   "town": "Kitale",
+   "starred": false,
+   "charge_ex_vat": "448.28",
+   "vat": "71.72",
+   "total_kes": 520.0,
+   "county": "Trans Nzoia"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Limuru",
+   "town": "Limuru",
+   "starred": false,
+   "charge_ex_vat": "301.72",
+   "vat": "48.28",
+   "total_kes": 350.0,
+   "county": "Kiambu"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Lodwar*",
+   "town": "Lodwar",
+   "starred": true,
+   "charge_ex_vat": "1,767.24",
+   "vat": "282.76",
+   "total_kes": 2050.0,
+   "county": "Turkana"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Lokichogio*",
+   "town": "Lokichogio",
+   "starred": true,
+   "charge_ex_vat": "2,456.90",
+   "vat": "393.10",
+   "total_kes": 2850.0,
+   "county": "Turkana"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Lugari",
+   "town": "Lugari",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "82.76",
+   "total_kes": 600.0,
+   "county": "Kakamega"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Malaba",
+   "town": "Malaba",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "82.76",
+   "total_kes": 600.0,
+   "county": "Busia"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Maralal",
+   "town": "Maralal",
+   "starred": false,
+   "charge_ex_vat": "948.28",
+   "vat": "151.72",
+   "total_kes": 1100.0,
+   "county": "Samburu"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Moi’s Bridge",
+   "town": "Moi's Bridge",
+   "starred": false,
+   "charge_ex_vat": "456.90",
+   "vat": "73.10",
+   "total_kes": 530.0,
+   "county": "Uasin Gishu"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Molo",
+   "town": "Molo",
+   "starred": false,
+   "charge_ex_vat": "413.79",
+   "vat": "66.21",
+   "total_kes": 480.0,
+   "county": "Nakuru"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Mumias",
+   "town": "Mumias",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "82.76",
+   "total_kes": 600.0,
+   "county": "Kakamega"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Nairobi",
+   "town": "Nairobi",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "131.03",
+   "total_kes": 690.0,
+   "county": "Nairobi",
+   "ignored": true
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Naivasha",
+   "town": "Naivasha",
+   "starred": false,
+   "charge_ex_vat": "301.72",
+   "vat": "48.28",
+   "total_kes": 350.0,
+   "county": "Nakuru"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Nakuru",
+   "town": "Nakuru",
+   "starred": false,
+   "charge_ex_vat": "310.34",
+   "vat": "49.66",
+   "total_kes": 360.0,
+   "county": "Nakuru"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Nandi Hills",
+   "town": "Nandi Hills",
+   "starred": false,
+   "charge_ex_vat": "344.83",
+   "vat": "55.17",
+   "total_kes": 400.0,
+   "county": "Nandi"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Narok",
+   "town": "Narok",
+   "starred": false,
+   "charge_ex_vat": "362.07",
+   "vat": "57.93",
+   "total_kes": 420.0,
+   "county": "Narok"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Njro",
+   "town": "Njro",
+   "starred": false,
+   "charge_ex_vat": "413.79",
+   "vat": "66.21",
+   "total_kes": 480.0,
+   "county": "Nakuru"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Nyahururu",
+   "town": "Nyahururu",
+   "starred": false,
+   "charge_ex_vat": "413.79",
+   "vat": "66.21",
+   "total_kes": 480.0,
+   "county": "Laikipia"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Nzoia",
+   "town": "Nzoia",
+   "starred": false,
+   "charge_ex_vat": "612.07",
+   "vat": "97.93",
+   "total_kes": 710.0,
+   "county": "Kakamega"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Olkalau",
+   "town": "Olkalau",
+   "starred": false,
+   "charge_ex_vat": "413.79",
+   "vat": "66.21",
+   "total_kes": 480.0,
+   "county": "Nyandarua"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Rumuruti",
+   "town": "Rumuruti",
+   "starred": false,
+   "charge_ex_vat": "431.03",
+   "vat": "68.97",
+   "total_kes": 500.0,
+   "county": "Laikipia"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Salgaa",
+   "town": "Salgaa",
+   "starred": false,
+   "charge_ex_vat": "586.21",
+   "vat": "93.79",
+   "total_kes": 680.0,
+   "county": "Nakuru"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Turbo",
+   "town": "Turbo",
+   "starred": false,
+   "charge_ex_vat": "387.93",
+   "vat": "62.07",
+   "total_kes": 450.0,
+   "county": "Uasin Gishu"
+  },
+  {
+   "route": "Nairobi to Rift Valley Routes",
+   "branch_as_printed": "Webuye",
+   "town": "Webuye",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "82.76",
+   "total_kes": 600.0,
+   "county": "Bungoma"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Ahero",
+   "town": "Ahero",
+   "starred": false,
+   "charge_ex_vat": "551.72",
+   "vat": "88.28",
+   "total_kes": 640.0,
+   "county": "Kisumu"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Awendo",
+   "town": "Awendo",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "82.76",
+   "total_kes": 600.0,
+   "county": "Migori"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Bomet",
+   "town": "Bomet",
+   "starred": false,
+   "charge_ex_vat": "431.03",
+   "vat": "68.97",
+   "total_kes": 500.0,
+   "county": "Bomet"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Bondo",
+   "town": "Bondo",
+   "starred": false,
+   "charge_ex_vat": "551.72",
+   "vat": "88.28",
+   "total_kes": 640.0,
+   "county": "Siaya"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Busia",
+   "town": "Busia",
+   "starred": false,
+   "charge_ex_vat": "508.62",
+   "vat": "81.38",
+   "total_kes": 590.0,
+   "county": "Busia"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "HomaBay",
+   "town": "HomaBay",
+   "starred": false,
+   "charge_ex_vat": "603.45",
+   "vat": "96.55",
+   "total_kes": 700.0,
+   "county": "Homa Bay"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Isebania",
+   "town": "Isebania",
+   "starred": false,
+   "charge_ex_vat": "637.93",
+   "vat": "102.07",
+   "total_kes": 740.0,
+   "county": "Migori"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Kakamega",
+   "town": "Kakamega",
+   "starred": false,
+   "charge_ex_vat": "413.79",
+   "vat": "66.21",
+   "total_kes": 480.0,
+   "county": "Kakamega"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Katenchaha",
+   "town": "Katenchaha",
+   "starred": false,
+   "charge_ex_vat": "637.93",
+   "vat": "102.07",
+   "total_kes": 740.0,
+   "county": "Kakamega"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Kendubay",
+   "town": "Kendubay",
+   "starred": false,
+   "charge_ex_vat": "646.55",
+   "vat": "103.45",
+   "total_kes": 750.0,
+   "county": "Homa Bay"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Kericho",
+   "town": "Kericho",
+   "starred": false,
+   "charge_ex_vat": "413.79",
+   "vat": "66.21",
+   "total_kes": 480.0,
+   "county": "Kericho"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Keroka",
+   "town": "Keroka",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "82.76",
+   "total_kes": 600.0,
+   "county": "Nyamira"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Kligoris",
+   "town": "Kligoris",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "82.76",
+   "total_kes": 600.0,
+   "county": "Narok"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Kisii",
+   "town": "Kisii",
+   "starred": false,
+   "charge_ex_vat": "431.03",
+   "vat": "68.97",
+   "total_kes": 500.0,
+   "county": "Kisii"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Kisumu",
+   "town": "Kisumu",
+   "starred": false,
+   "charge_ex_vat": "431.03",
+   "vat": "68.97",
+   "total_kes": 500.0,
+   "county": "Kisumu"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Litein",
+   "town": "Litein",
+   "starred": false,
+   "charge_ex_vat": "431.03",
+   "vat": "68.97",
+   "total_kes": 500.0,
+   "county": "Kericho"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Londiani",
+   "town": "Londiani",
+   "starred": false,
+   "charge_ex_vat": "431.03",
+   "vat": "68.97",
+   "total_kes": 500.0,
+   "county": "Kericho"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Luanda",
+   "town": "Luanda",
+   "starred": false,
+   "charge_ex_vat": "568.97",
+   "vat": "91.03",
+   "total_kes": 660.0,
+   "county": "Vihiga"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Maseno",
+   "town": "Maseno",
+   "starred": false,
+   "charge_ex_vat": "431.03",
+   "vat": "68.97",
+   "total_kes": 500.0,
+   "county": "Kisumu"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Mbale",
+   "town": "Mbale",
+   "starred": false,
+   "charge_ex_vat": "413.79",
+   "vat": "66.21",
+   "total_kes": 480.0,
+   "county": "Vihiga"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Mbita",
+   "town": "Mbita",
+   "starred": false,
+   "charge_ex_vat": "620.69",
+   "vat": "99.31",
+   "total_kes": 720.0,
+   "county": "Homa Bay"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Migori",
+   "town": "Migori",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "82.76",
+   "total_kes": 600.0,
+   "county": "Migori"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Muhoroni",
+   "town": "Muhoroni",
+   "starred": false,
+   "charge_ex_vat": "558.62",
+   "vat": "91.03",
+   "total_kes": 660.0,
+   "county": "Kisumu"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Nambale",
+   "town": "Nambale",
+   "starred": false,
+   "charge_ex_vat": "577.59",
+   "vat": "92.41",
+   "total_kes": 670.0,
+   "county": "Busia"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Nyabondo",
+   "town": "Nyabondo",
+   "starred": false,
+   "charge_ex_vat": "431.03",
+   "vat": "68.97",
+   "total_kes": 500.0,
+   "county": "Kisumu"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Ogendo",
+   "town": "Ogendo",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "82.76",
+   "total_kes": 600.0,
+   "county": "Migori"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Oyugis",
+   "town": "Oyugis",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "82.76",
+   "total_kes": 600.0,
+   "county": "Homa Bay"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Obarogo",
+   "town": "Obarogo",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "82.76",
+   "total_kes": 600.0,
+   "county": "Kisii"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Rongo",
+   "town": "Rongo",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "82.76",
+   "total_kes": 600.0,
+   "county": "Migori"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Sabatia",
+   "town": "Sabatia",
+   "starred": false,
+   "charge_ex_vat": "413.79",
+   "vat": "66.21",
+   "total_kes": 480.0,
+   "county": "Vihiga"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Siaya",
+   "town": "Siaya",
+   "starred": false,
+   "charge_ex_vat": "560.34",
+   "vat": "89.66",
+   "total_kes": 650.0,
+   "county": "Siaya"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Sotik",
+   "town": "Sotik",
+   "starred": false,
+   "charge_ex_vat": "431.03",
+   "vat": "68.97",
+   "total_kes": 500.0,
+   "county": "Bomet"
+  },
+  {
+   "route": "Nairobi to Lake Routes",
+   "branch_as_printed": "Ugunga",
+   "town": "Ugunga",
+   "starred": false,
+   "charge_ex_vat": "560.34",
+   "vat": "89.66",
+   "total_kes": 650.0,
+   "county": "Siaya"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Chogoria",
+   "town": "Chogoria",
+   "starred": false,
+   "charge_ex_vat": "413.79",
+   "vat": "66.21",
+   "total_kes": 480.0,
+   "county": "Tharaka-Nithi"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Chuka",
+   "town": "Chuka",
+   "starred": false,
+   "charge_ex_vat": "362.07",
+   "vat": "57.93",
+   "total_kes": 420.0,
+   "county": "Tharaka-Nithi"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Embu",
+   "town": "Embu",
+   "starred": false,
+   "charge_ex_vat": "362.07",
+   "vat": "57.93",
+   "total_kes": 420.0,
+   "county": "Embu"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Isiolo",
+   "town": "Isiolo",
+   "starred": false,
+   "charge_ex_vat": "560.34",
+   "vat": "89.66",
+   "total_kes": 650.0,
+   "county": "Isiolo"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Juja",
+   "town": "Juja",
+   "starred": false,
+   "charge_ex_vat": "327.59",
+   "vat": "52.41",
+   "total_kes": 380.0,
+   "county": "Kiambu"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Kagio",
+   "town": "Kagio",
+   "starred": false,
+   "charge_ex_vat": "344.83",
+   "vat": "55.17",
+   "total_kes": 400.0,
+   "county": "Kirinyaga"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Kangari",
+   "town": "Kangari",
+   "starred": false,
+   "charge_ex_vat": "301.72",
+   "vat": "48.28",
+   "total_kes": 350.0,
+   "county": "Murang'a"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Kangema",
+   "town": "Kangema",
+   "starred": false,
+   "charge_ex_vat": "362.07",
+   "vat": "57.93",
+   "total_kes": 420.0,
+   "county": "Murang'a"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Karatina",
+   "town": "Karatina",
+   "starred": false,
+   "charge_ex_vat": "344.83",
+   "vat": "55.17",
+   "total_kes": 400.0,
+   "county": "Nyeri"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Kerugoya",
+   "town": "Kerugoya",
+   "starred": false,
+   "charge_ex_vat": "344.83",
+   "vat": "55.17",
+   "total_kes": 400.0,
+   "county": "Kirinyaga"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Kiganjo",
+   "town": "Kiganjo",
+   "starred": false,
+   "charge_ex_vat": "353.45",
+   "vat": "56.55",
+   "total_kes": 410.0,
+   "county": "Nyeri"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Kutus",
+   "town": "Kutus",
+   "starred": false,
+   "charge_ex_vat": "353.45",
+   "vat": "56.55",
+   "total_kes": 410.0,
+   "county": "Kirinyaga"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Makutano",
+   "town": "Makutano",
+   "starred": false,
+   "charge_ex_vat": "396.55",
+   "vat": "63.45",
+   "total_kes": 460.0,
+   "county": "Machakos"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Makuyu",
+   "town": "Makuyu",
+   "starred": false,
+   "charge_ex_vat": "310.34",
+   "vat": "49.66",
+   "total_kes": 360.0,
+   "county": "Murang'a"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Marsabit",
+   "town": "Marsabit",
+   "starred": false,
+   "charge_ex_vat": "818.97",
+   "vat": "131.03",
+   "total_kes": 950.0,
+   "county": "Marsabit"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Maua",
+   "town": "Maua",
+   "starred": false,
+   "charge_ex_vat": "560.34",
+   "vat": "89.66",
+   "total_kes": 650.0,
+   "county": "Meru"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Meru",
+   "town": "Meru",
+   "starred": false,
+   "charge_ex_vat": "413.79",
+   "vat": "66.21",
+   "total_kes": 480.0,
+   "county": "Meru"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Moyale",
+   "town": "Moyale",
+   "starred": false,
+   "charge_ex_vat": "2,629.31",
+   "vat": "420.69",
+   "total_kes": 3050.0,
+   "county": "Marsabit"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Mukuweini",
+   "town": "Mukuweini",
+   "starred": false,
+   "charge_ex_vat": "353.45",
+   "vat": "56.55",
+   "total_kes": 410.0,
+   "county": "Nyeri"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Murang’a",
+   "town": "Murang'a",
+   "starred": false,
+   "charge_ex_vat": "362.07",
+   "vat": "57.93",
+   "total_kes": 420.0,
+   "county": "Murang'a"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Mwea",
+   "town": "Mwea",
+   "starred": false,
+   "charge_ex_vat": "353.45",
+   "vat": "56.55",
+   "total_kes": 410.0,
+   "county": "Kirinyaga"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Mwingi",
+   "town": "Mwingi",
+   "starred": false,
+   "charge_ex_vat": "474.14",
+   "vat": "75.86",
+   "total_kes": 550.0,
+   "county": "Kitui"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Nanyuki",
+   "town": "Nanyuki",
+   "starred": false,
+   "charge_ex_vat": "448.28",
+   "vat": "71.72",
+   "total_kes": 520.0,
+   "county": "Laikipia"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Naromoru",
+   "town": "Naromoru",
+   "starred": false,
+   "charge_ex_vat": "448.28",
+   "vat": "71.72",
+   "total_kes": 520.0,
+   "county": "Laikipia"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Nkubu",
+   "town": "Nkubu",
+   "starred": false,
+   "charge_ex_vat": "396.55",
+   "vat": "63.45",
+   "total_kes": 460.0,
+   "county": "Meru"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Nyeri",
+   "town": "Nyeri",
+   "starred": false,
+   "charge_ex_vat": "362.07",
+   "vat": "57.93",
+   "total_kes": 420.0,
+   "county": "Nyeri"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Othaya",
+   "town": "Othaya",
+   "starred": false,
+   "charge_ex_vat": "362.07",
+   "vat": "57.93",
+   "total_kes": 420.0,
+   "county": "Nyeri"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Ruiru",
+   "town": "Ruiru",
+   "starred": false,
+   "charge_ex_vat": "310.34",
+   "vat": "49.66",
+   "total_kes": 360.0,
+   "county": "Kiambu"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Runyenjes",
+   "town": "Runyenjes",
+   "starred": false,
+   "charge_ex_vat": "362.07",
+   "vat": "57.93",
+   "total_kes": 420.0,
+   "county": "Embu"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Sabasaba",
+   "town": "Sabasaba",
+   "starred": false,
+   "charge_ex_vat": "310.34",
+   "vat": "49.66",
+   "total_kes": 360.0,
+   "county": "Murang'a"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Sagana",
+   "town": "Sagana",
+   "starred": false,
+   "charge_ex_vat": "413.79",
+   "vat": "66.21",
+   "total_kes": 480.0,
+   "county": "Kirinyaga"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Thika",
+   "town": "Thika",
+   "starred": false,
+   "charge_ex_vat": "310.34",
+   "vat": "49.66",
+   "total_kes": 360.0,
+   "county": "Kiambu"
+  },
+  {
+   "route": "Nairobi to Mt Kenya Routes",
+   "branch_as_printed": "Timau",
+   "town": "Timau",
+   "starred": false,
+   "charge_ex_vat": "448.28",
+   "vat": "71.72",
+   "total_kes": 520.0,
+   "county": "Meru"
+  },
+  {
+   "route": "Nairobi to Coastal Routes",
+   "branch_as_printed": "Diani",
+   "town": "Diani",
+   "starred": false,
+   "charge_ex_vat": "663.79",
+   "vat": "106.21",
+   "total_kes": 770.0,
+   "county": "Kwale"
+  },
+  {
+   "route": "Nairobi to Coastal Routes",
+   "branch_as_printed": "Garsen",
+   "town": "Garsen",
+   "starred": false,
+   "charge_ex_vat": "1,206.90",
+   "vat": "193.10",
+   "total_kes": 1400.0,
+   "county": "Tana River"
+  },
+  {
+   "route": "Nairobi to Coastal Routes",
+   "branch_as_printed": "Kilifi",
+   "town": "Kilifi",
+   "starred": false,
+   "charge_ex_vat": "689.66",
+   "vat": "110.34",
+   "total_kes": 800.0,
+   "county": "Kilifi"
+  },
+  {
+   "route": "Nairobi to Coastal Routes",
+   "branch_as_printed": "Lamu",
+   "town": "Lamu",
+   "starred": false,
+   "charge_ex_vat": "1,767.24",
+   "vat": "282.76",
+   "total_kes": 2050.0,
+   "county": "Lamu"
+  },
+  {
+   "route": "Nairobi to Coastal Routes",
+   "branch_as_printed": "Malindi",
+   "town": "Malindi",
+   "starred": false,
+   "charge_ex_vat": "724.14",
+   "vat": "115.86",
+   "total_kes": 840.0,
+   "county": "Kilifi"
+  },
+  {
+   "route": "Nairobi to Coastal Routes",
+   "branch_as_printed": "Mariakani",
+   "town": "Mariakani",
+   "starred": false,
+   "charge_ex_vat": "551.72",
+   "vat": "88.28",
+   "total_kes": 640.0,
+   "county": "Kilifi"
+  },
+  {
+   "route": "Nairobi to Coastal Routes",
+   "branch_as_printed": "Mombasa",
+   "town": "Mombasa",
+   "starred": false,
+   "charge_ex_vat": "551.72",
+   "vat": "88.28",
+   "total_kes": 640.0,
+   "county": "Mombasa"
+  },
+  {
+   "route": "Nairobi to Coastal Routes",
+   "branch_as_printed": "Mpeketoni",
+   "town": "Mpeketoni",
+   "starred": false,
+   "charge_ex_vat": "1,767.24",
+   "vat": "282.76",
+   "total_kes": 2050.0,
+   "county": "Lamu"
+  },
+  {
+   "route": "Nairobi to Coastal Routes",
+   "branch_as_printed": "Mtwapa",
+   "town": "Mtwapa",
+   "starred": false,
+   "charge_ex_vat": "551.72",
+   "vat": "88.28",
+   "total_kes": 640.0,
+   "county": "Kilifi"
+  },
+  {
+   "route": "Nairobi to Coastal Routes",
+   "branch_as_printed": "Mwatate",
+   "town": "Mwatate",
+   "starred": false,
+   "charge_ex_vat": "724.14",
+   "vat": "115.86",
+   "total_kes": 840.0,
+   "county": "Taita-Taveta"
+  },
+  {
+   "route": "Nairobi to Coastal Routes",
+   "branch_as_printed": "Sultan Hamud",
+   "town": "Sultan Hamud",
+   "starred": false,
+   "charge_ex_vat": "500.00",
+   "vat": "80.00",
+   "total_kes": 580.0,
+   "county": "Makueni"
+  },
+  {
+   "route": "Nairobi to Coastal Routes",
+   "branch_as_printed": "Taveta*",
+   "town": "Taveta",
+   "starred": true,
+   "charge_ex_vat": "732.76",
+   "vat": "117.24",
+   "total_kes": 850.0,
+   "county": "Taita-Taveta"
+  },
+  {
+   "route": "Nairobi to Coastal Routes",
+   "branch_as_printed": "Voi",
+   "town": "Voi",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "82.76",
+   "total_kes": 600.0,
+   "county": "Taita-Taveta"
+  },
+  {
+   "route": "Nairobi to Coastal Routes",
+   "branch_as_printed": "Watamu",
+   "town": "Watamu",
+   "starred": false,
+   "charge_ex_vat": "73276",
+   "vat": "117.24",
+   "total_kes": 850.0,
+   "county": "Kilifi"
+  },
+  {
+   "route": "Nairobi to Coastal Routes",
+   "branch_as_printed": "Wundanyi",
+   "town": "Wundanyi",
+   "starred": false,
+   "charge_ex_vat": "689.66",
+   "vat": "110.34",
+   "total_kes": 800.0,
+   "county": "Taita-Taveta"
+  },
+  {
+   "route": "Outer Nairobi Routes",
+   "branch_as_printed": "Athi River",
+   "town": "Athi River",
+   "starred": false,
+   "charge_ex_vat": "310.34",
+   "vat": "49.66",
+   "total_kes": 360.0,
+   "county": "Machakos"
+  },
+  {
+   "route": "Outer Nairobi Routes",
+   "branch_as_printed": "Emali",
+   "town": "Emali",
+   "starred": false,
+   "charge_ex_vat": "500.00",
+   "vat": "80.00",
+   "total_kes": 580.0,
+   "county": "Makueni"
+  },
+  {
+   "route": "Outer Nairobi Routes",
+   "branch_as_printed": "Garissa",
+   "town": "Garissa",
+   "starred": false,
+   "charge_ex_vat": "646.55",
+   "vat": "103.45",
+   "total_kes": 750.0,
+   "county": "Garissa"
+  },
+  {
+   "route": "Outer Nairobi Routes",
+   "branch_as_printed": "Isinya",
+   "town": "Isinya",
+   "starred": false,
+   "charge_ex_vat": "362.07",
+   "vat": "57.93",
+   "total_kes": 420.0,
+   "county": "Kajiado"
+  },
+  {
+   "route": "Outer Nairobi Routes",
+   "branch_as_printed": "Kajiado",
+   "town": "Kajiado",
+   "starred": false,
+   "charge_ex_vat": "362.07",
+   "vat": "57.93",
+   "total_kes": 420.0,
+   "county": "Kajiado"
+  },
+  {
+   "route": "Outer Nairobi Routes",
+   "branch_as_printed": "Kangundo",
+   "town": "Kangundo",
+   "starred": false,
+   "charge_ex_vat": "344.83",
+   "vat": "55.17",
+   "total_kes": 400.0,
+   "county": "Machakos"
+  },
+  {
+   "route": "Outer Nairobi Routes",
+   "branch_as_printed": "Kibwezi",
+   "town": "Kibwezi",
+   "starred": false,
+   "charge_ex_vat": "500.00",
+   "vat": "80.00",
+   "total_kes": 580.0,
+   "county": "Makueni"
+  },
+  {
+   "route": "Outer Nairobi Routes",
+   "branch_as_printed": "Kitengela",
+   "town": "Kitengela",
+   "starred": false,
+   "charge_ex_vat": "310.34",
+   "vat": "49.66",
+   "total_kes": 360.0,
+   "county": "Kajiado"
+  },
+  {
+   "route": "Outer Nairobi Routes",
+   "branch_as_printed": "Kitui",
+   "town": "Kitui",
+   "starred": false,
+   "charge_ex_vat": "387.93",
+   "vat": "62.07",
+   "total_kes": 450.0,
+   "county": "Kitui"
+  },
+  {
+   "route": "Outer Nairobi Routes",
+   "branch_as_printed": "Machakos",
+   "town": "Machakos",
+   "starred": false,
+   "charge_ex_vat": "362.07",
+   "vat": "57.93",
+   "total_kes": 420.0,
+   "county": "Machakos"
+  },
+  {
+   "route": "Outer Nairobi Routes",
+   "branch_as_printed": "Makindu",
+   "town": "Makindu",
+   "starred": false,
+   "charge_ex_vat": "500.00",
+   "vat": "80.00",
+   "total_kes": 580.0,
+   "county": "Makueni"
+  },
+  {
+   "route": "Outer Nairobi Routes",
+   "branch_as_printed": "Masii",
+   "town": "Masii",
+   "starred": false,
+   "charge_ex_vat": "431.03",
+   "vat": "68.97",
+   "total_kes": 500.0,
+   "county": "Machakos"
+  },
+  {
+   "route": "Outer Nairobi Routes",
+   "branch_as_printed": "Mtito Andei",
+   "town": "Mtito Andei",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "82.76",
+   "total_kes": 600.0,
+   "county": "Makueni"
+  },
+  {
+   "route": "Outer Nairobi Routes",
+   "branch_as_printed": "Mutomo",
+   "town": "Mutomo",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "82.76",
+   "total_kes": 600.0,
+   "county": "Kitui"
+  },
+  {
+   "route": "Outer Nairobi Routes",
+   "branch_as_printed": "Mwala",
+   "town": "Mwala",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "82.76",
+   "total_kes": 600.0,
+   "county": "Machakos"
+  },
+  {
+   "route": "Outer Nairobi Routes",
+   "branch_as_printed": "Namanga",
+   "town": "Namanga",
+   "starred": false,
+   "charge_ex_vat": "577.59",
+   "vat": "92.41",
+   "total_kes": 670.0,
+   "county": "Kajiado"
+  },
+  {
+   "route": "Outer Nairobi Routes",
+   "branch_as_printed": "Oloitoktok",
+   "town": "Oloitoktok",
+   "starred": false,
+   "charge_ex_vat": "577.59",
+   "vat": "92.41",
+   "total_kes": 670.0,
+   "county": "Kajiado"
+  },
+  {
+   "route": "Outer Nairobi Routes",
+   "branch_as_printed": "Tala",
+   "town": "Tala",
+   "starred": false,
+   "charge_ex_vat": "362.07",
+   "vat": "57.93",
+   "total_kes": 420.0,
+   "county": "Machakos"
+  },
+  {
+   "route": "Outer Nairobi Routes",
+   "branch_as_printed": "Wote",
+   "town": "Wote",
+   "starred": false,
+   "charge_ex_vat": "517.24",
+   "vat": "82.76",
+   "total_kes": 600.0,
+   "county": "Makueni"
+  },
+  {
+   "route": "Nairobi Routes",
+   "branch_as_printed": "Gatundu",
+   "town": "Gatundu",
+   "starred": false,
+   "charge_ex_vat": "301.72",
+   "vat": "48.28",
+   "total_kes": 350.0,
+   "county": "Kiambu"
+  },
+  {
+   "route": "Nairobi Routes",
+   "branch_as_printed": "Githunguri",
+   "town": "Githunguri",
+   "starred": false,
+   "charge_ex_vat": "301.72",
+   "vat": "48.28",
+   "total_kes": 350.0,
+   "county": "Kiambu"
+  },
+  {
+   "route": "Nairobi Routes",
+   "branch_as_printed": "Kiambu",
+   "town": "Kiambu",
+   "starred": false,
+   "charge_ex_vat": "301.72",
+   "vat": "48.28",
+   "total_kes": 350.0,
+   "county": "Kiambu"
+  },
+  {
+   "route": "Nairobi Routes",
+   "branch_as_printed": "Kikuyu",
+   "town": "Kikuyu",
+   "starred": false,
+   "charge_ex_vat": "301.72",
+   "vat": "48.28",
+   "total_kes": 350.0,
+   "county": "Kiambu"
+  },
+  {
+   "route": "Nairobi Routes",
+   "branch_as_printed": "Nairobi",
+   "town": "Nairobi",
+   "starred": false,
+   "charge_ex_vat": "258.62",
+   "vat": "41.38",
+   "total_kes": 300.0,
+   "county": "Nairobi"
+  },
+  {
+   "route": "Nairobi Routes",
+   "branch_as_printed": "Ngong",
+   "town": "Ngong",
+   "starred": false,
+   "charge_ex_vat": "301.72",
+   "vat": "48.28",
+   "total_kes": 350.0,
+   "county": "Kajiado"
+  },
+  {
+   "route": "Nairobi Routes",
+   "branch_as_printed": "Ongata rongai",
+   "town": "Ongata rongai",
+   "starred": false,
+   "charge_ex_vat": "301.72",
+   "vat": "48.28",
+   "total_kes": 350.0,
+   "county": "Kajiado"
+  }
+ ]
+}

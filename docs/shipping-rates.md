@@ -1,7 +1,7 @@
 # Supreme Autoparts — shipping rates (USD)
 
 Configured by `sa_core_ensure_shipping_zones()` in `wp-content/plugins/supreme-autoparts-core/includes/shipping.php`  
-(version option: `sa_shipping_zones_ver`, current **4**).
+(version option: `sa_shipping_zones_ver`, current **5**).
 
 Checkout currency is **USD**. Totals recalculate when the customer changes address or shipping method.
 
@@ -20,8 +20,7 @@ Storefront copy is **US-primary** (continental US free shipping threshold, Stand
 | Method | Type | Rate |
 |--------|------|------|
 | Free shipping (orders $99+) | `free_shipping` / min_amount | $0 when cart subtotal ≥ **$99** |
-| Nairobi Delivery | `flat_rate` | **$8.00** |
-| Upcountry Kenya | `flat_rate` | **$15.00** |
+| Fargo Courier | `sa_fargo` | Fargo branch rate (KES, first 5 kg) + KES 65/kg above 5 kg (100 or 150/kg for remote towns), converted to USD. Town from City field, else county default branch. Card: `docs/fargo-rates.json`. Products without weight count as 1 kg. Wajir & Mandera: no branch on card, method hidden. |
 | Local pickup (Nairobi) | `local_pickup` | **$0.00** |
 
 ## Rest of world

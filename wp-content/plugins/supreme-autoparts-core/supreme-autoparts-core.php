@@ -37,6 +37,7 @@ require_once SA_CORE_DIR . 'includes/checkout-terms.php';
 require_once SA_CORE_DIR . 'includes/cart-persistence.php';
 require_once SA_CORE_DIR . 'includes/store-settings.php';
 require_once SA_CORE_DIR . 'includes/shipping.php';
+require_once SA_CORE_DIR . 'includes/fargo-shipping.php';
 require_once SA_CORE_DIR . 'includes/seo.php';
 require_once SA_CORE_DIR . 'includes/google-product-feed.php';
 require_once SA_CORE_DIR . 'includes/customer-accounts.php';
