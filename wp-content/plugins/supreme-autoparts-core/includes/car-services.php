@@ -1554,7 +1554,7 @@ add_filter('woocommerce_cart_item_thumbnail', static function ($thumb, $item) {
     if (empty($item['sa_booking']) || !function_exists('sa_theme_logo_url')) {
         return $thumb;
     }
-    return '<img class="sa-fee-thumb sa-checkout-line__thumb" src="' . esc_url(sa_theme_logo_url()) . '" alt="Car service booking" width="80" height="80" loading="lazy" />';
+    return '<img class="sa-fee-thumb sa-checkout-line__thumb" src="' . esc_url(sa_theme_logo_url()) . '" alt="Car service booking" width="80" height="80" />';
 }, 20, 2);
 
 add_action('woocommerce_checkout_create_order_line_item', static function ($line, $key, $values): void {

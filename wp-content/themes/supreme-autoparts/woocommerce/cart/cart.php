@@ -44,6 +44,7 @@ $free_ship = function_exists('sa_theme_cart_has_free_shipping') && sa_theme_cart
               if (!is_string($thumbnail) || strpos($thumbnail, '<img') === false) {
                   $thumbnail = '<span class="sa-cart-line__img sa-cart-line__img--empty" aria-hidden="true"></span>';
               }
+              $is_fee = !empty($cart_item['sa_booking']);
               $on_sale = $_product->is_on_sale();
               $regular = (float) $_product->get_regular_price();
               $current = (float) $_product->get_price();
@@ -71,8 +72,13 @@ $free_ship = function_exists('sa_theme_cart_has_free_shipping') && sa_theme_cart
                 </h2>
                 <?php
                 do_action('woocommerce_after_cart_item_name', $cart_item, $cart_item_key);
-                echo wc_get_formatted_cart_item_data($cart_item); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                if ($is_fee) {
+                    echo '<p class="sa-mc__meta"><span class="sa-mc__chip">' . esc_html('Booking ' . ($cart_item['sa_booking_ref'] ?? '')) . '</span><span class="sa-mc__note">' . esc_html__('Credited to your service bill', 'supreme-autoparts') . '</span></p>';
+                } else {
+                    echo wc_get_formatted_cart_item_data($cart_item); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                }
                 ?>
+                <?php if (!$is_fee) : ?>
                 <div class="sa-cart-line__qty">
                   <span class="sa-cart-line__qty-label"><?php esc_html_e('Qty', 'supreme-autoparts'); ?></span>
                   <div class="sa-qty" data-sa-qty>
@@ -101,17 +107,18 @@ $free_ship = function_exists('sa_theme_cart_has_free_shipping') && sa_theme_cart
                     <button type="button" class="sa-qty__btn" data-sa-qty-plus aria-label="<?php esc_attr_e('Increase quantity', 'supreme-autoparts'); ?>">+</button>
                   </div>
                 </div>
+                <?php endif; ?>
                 <p class="sa-cart-line__price">
                   <span class="sa-cart-line__now"><?php echo apply_filters('woocommerce_cart_item_price', WC()->cart->get_product_price($_product), $cart_item, $cart_item_key); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
                   <?php if ($show_was) : ?>
                     <del class="sa-cart-line__was"><?php echo wp_kses_post(wc_price($regular)); ?></del>
                   <?php endif; ?>
                 </p>
-                <?php if ($free_ship) : ?>
+                <?php if ($free_ship && !$is_fee) : ?>
                   <p class="sa-cart-line__ship"><?php esc_html_e('Free shipping', 'supreme-autoparts'); ?></p>
                 <?php endif; ?>
                 <p class="sa-cart-line__links">
-                  <?php if ($_product->is_purchasable() && $_product->is_in_stock()) : ?>
+                  <?php if (!$is_fee && $_product->is_purchasable() && $_product->is_in_stock()) : ?>
                     <a class="sa-cart-line__buy" href="<?php echo esc_url($checkout_url); ?>"><?php esc_html_e('Buy it now', 'supreme-autoparts'); ?></a>
                   <?php endif; ?>
                   <?php
