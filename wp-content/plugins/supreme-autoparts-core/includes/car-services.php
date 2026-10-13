@@ -1320,7 +1320,7 @@ add_action('woocommerce_single_product_summary', static function (): void {
     }
     $svc = sa_svc_for_product((int) $product->get_id());
     $name = sa_svc_catalog()[$svc]['name'] ?? 'installation';
-    echo '<div class="sa-svc-fit">' . sa_svc_icon('service') . '<div><strong>Need it fitted?</strong><span>Book installation (' . esc_html($name) . ') at our Njiru, Nairobi garage, or with a US partner garage. The KES 1,000 booking fee comes off your bill.</span></div>'
+    echo '<div class="sa-svc-fit">' . sa_svc_icon('service') . '<div><strong>Need it fitted?</strong><span>Book installation (' . esc_html($name) . ') at our Njiru, Nairobi garage (US customers: our support team routes you to a service centre near you). The KES 1,000 booking fee comes off your bill.</span></div>'
         . '<a class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--primary" href="' . esc_url(add_query_arg(['service' => $svc, 'part' => (int) $product->get_id()], home_url('/book-service/'))) . '">Book installation</a></div>';
 }, 36);
 
