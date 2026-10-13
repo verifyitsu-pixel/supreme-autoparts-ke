@@ -201,6 +201,8 @@ function sa_core_apply_store_settings(): void
     // WooCommerce email sender
     update_option('woocommerce_email_from_name', 'Supreme Autoparts');
     update_option('woocommerce_email_from_address', $email);
+    // No WooCommerce email footer copy — logo header only.
+    update_option('woocommerce_email_footer_text', '');
     update_option('sa_brevo_sender_name', 'Supreme Autoparts');
     // Prefer optimized light JPEG for email header when theme asset exists.
     $email_logo = '';
