@@ -69,14 +69,17 @@ function sa_gpf_render(bool $for_comments = false): void
         ob_end_clean();
     }
 
-    $built = sa_gpf_file_path(false);
-    if (empty($_GET['live']) && is_readable($built)) { // phpcs:ignore
+    $n = (int) get_option('sa_gpf_chunks_ready', 0);
+    if (empty($_GET['live']) && $n > 0) { // phpcs:ignore
         status_header(200);
         header('Content-Type: application/rss+xml; charset=UTF-8');
         header('X-Robots-Tag: noindex, follow');
         header('Cache-Control: public, max-age=1800');
-        header('Content-Length: ' . (string) filesize($built));
-        readfile($built);
+        echo sa_gpf_head();
+        for ($i = 0; $i < $n; $i++) {
+            echo (string) get_option('sa_gpf_chunk_r_' . $i, '');
+        }
+        echo "</channel>\n</rss>\n";
         exit;
     }
     @set_time_limit(300);
@@ -421,29 +424,23 @@ function sa_gpf_xml(string $value): string
 /* ------------------------------------------------------------------ */
 
 const SA_GPF_BUILD_BATCH = 800;
-const SA_GPF_BUILD_VERSION = '2026-10-14a';
+const SA_GPF_BUILD_VERSION = '2026-10-14b';
 
-function sa_gpf_file_path(bool $building): string
+function sa_gpf_head(): string
 {
-    $up = wp_get_upload_dir();
-    $dir = trailingslashit((string) $up['basedir']) . 'sa-feed';
-    if (!is_dir($dir)) {
-        wp_mkdir_p($dir);
-    }
-    return $dir . ($building ? '/google-building.xml' : '/google.xml');
+    return '<?xml version="1.0" encoding="UTF-8"?>' . "\n"
+        . '<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">' . "\n<channel>\n"
+        . "<title>Supreme Autoparts</title>\n<link>https://www.supremeautoparts.co.ke/</link>\n"
+        . "<description>Supreme Autoparts product catalog for Google Merchant Center. Prices in USD.</description>\n";
 }
 
+/* Chunks live in the DB (container disk is not shared/persistent across Railway instances). */
 function sa_gpf_build_batch(): array
 {
     global $wpdb;
     $st = get_option('sa_gpf_build_state', []);
     if (!is_array($st) || ($st['version'] ?? '') !== SA_GPF_BUILD_VERSION || !empty($st['restart'])) {
-        $st = ['version' => SA_GPF_BUILD_VERSION, 'last_id' => 0, 'scanned' => 0, 'items' => 0, 'done' => false, 'started' => time()];
-        $head = '<?xml version="1.0" encoding="UTF-8"?>' . "\n"
-            . '<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">' . "\n<channel>\n"
-            . "<title>Supreme Autoparts</title>\n<link>https://www.supremeautoparts.co.ke/</link>\n"
-            . "<description>Supreme Autoparts product catalog for Google Merchant Center. Prices in USD.</description>\n";
-        file_put_contents(sa_gpf_file_path(true), $head);
+        $st = ['version' => SA_GPF_BUILD_VERSION, 'last_id' => 0, 'scanned' => 0, 'items' => 0, 'chunk' => 0, 'done' => false, 'started' => time()];
     }
     if (!empty($st['done'])) {
         return $st;
@@ -453,8 +450,16 @@ function sa_gpf_build_batch(): array
         (int) $st['last_id'], SA_GPF_BUILD_BATCH
     ));
     if (!$ids) {
-        file_put_contents(sa_gpf_file_path(true), "</channel>\n</rss>\n", FILE_APPEND);
-        @rename(sa_gpf_file_path(true), sa_gpf_file_path(false));
+        // Promote the building set to the ready set atomically-ish.
+        $old = (int) get_option('sa_gpf_chunks_ready', 0);
+        for ($i = 0; $i < (int) $st['chunk']; $i++) {
+            update_option('sa_gpf_chunk_r_' . $i, (string) get_option('sa_gpf_chunk_b_' . $i, ''), false);
+            delete_option('sa_gpf_chunk_b_' . $i);
+        }
+        for ($i = (int) $st['chunk']; $i < $old; $i++) {
+            delete_option('sa_gpf_chunk_r_' . $i);
+        }
+        update_option('sa_gpf_chunks_ready', (int) $st['chunk'], false);
         $st['done'] = true;
         $st['finished'] = time();
         update_option('sa_gpf_build_state', $st, false);
@@ -469,7 +474,8 @@ function sa_gpf_build_batch(): array
     }
     $chunk = (string) ob_get_clean();
     $st['items'] += substr_count($chunk, "<item>\n");
-    file_put_contents(sa_gpf_file_path(true), $chunk, FILE_APPEND);
+    update_option('sa_gpf_chunk_b_' . (int) $st['chunk'], $chunk, false);
+    $st['chunk']++;
     $st['updated'] = time();
     update_option('sa_gpf_build_state', $st, false);
     return $st;
@@ -492,7 +498,7 @@ add_action('sa_gpf_build_tick', static function (): void {
 add_action('init', static function (): void {
     $st = get_option('sa_gpf_build_state', []);
     $done = is_array($st) && ($st['version'] ?? '') === SA_GPF_BUILD_VERSION && !empty($st['done']);
-    if ($done && (time() - (int) ($st['finished'] ?? 0) > DAY_IN_SECONDS || !is_readable(sa_gpf_file_path(false)))) {
+    if ($done && (time() - (int) ($st['finished'] ?? 0) > DAY_IN_SECONDS || (int) get_option('sa_gpf_chunks_ready', 0) === 0)) {
         $st['restart'] = 1;
         update_option('sa_gpf_build_state', $st, false);
         $done = false;
@@ -507,8 +513,7 @@ add_action('rest_api_init', static function (): void {
         'methods'             => 'GET',
         'permission_callback' => '__return_true',
         'callback'            => static function () {
-            $f = sa_gpf_file_path(false);
-            return ['state' => get_option('sa_gpf_build_state', []), 'file_bytes' => is_readable($f) ? filesize($f) : 0];
+            return ['state' => get_option('sa_gpf_build_state', []), 'ready_chunks' => (int) get_option('sa_gpf_chunks_ready', 0)];
         },
     ]);
     // Read-only catalog visibility audit (counts only).

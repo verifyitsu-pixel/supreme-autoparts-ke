@@ -87,8 +87,17 @@ function sa_fix_run_batch(): array
             $st['photo']++;
         }
         if (isset($it['price_usd']) && is_numeric($it['price_usd']) && (float) $it['price_usd'] > 0) {
-            $product->set_regular_price(wc_format_decimal((string) $it['price_usd'], 2));
-            $product->set_sale_price('');
+            // Same conversion the importer uses for supreme-mods USD amounts.
+            $conv = static fn (float $v): float => function_exists('sa_core_shopify_usd_to_store_amount') ? (float) sa_core_shopify_usd_to_store_amount($v) : $v;
+            $reg = $conv((float) $it['price_usd']);
+            $cmp = isset($it['compare_usd']) && is_numeric($it['compare_usd']) ? $conv((float) $it['compare_usd']) : 0.0;
+            if ($cmp > $reg) {
+                $product->set_regular_price((string) $cmp);
+                $product->set_sale_price((string) $reg);
+            } else {
+                $product->set_regular_price((string) $reg);
+                $product->set_sale_price('');
+            }
             $product->save();
             update_post_meta($id, '_sa_price_source', (string) ($it['price_source'] ?? ''));
             $st['price']++;
