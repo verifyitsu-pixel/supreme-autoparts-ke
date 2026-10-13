@@ -2997,7 +2997,7 @@ a.remove.sa-cart-line__remove {
 .woocommerce div.product > span.onsale { position: absolute; top: .6rem; left: .6rem; z-index: 3; margin: 0; }
 @media (max-width: 900px) {
   .woocommerce div.product { grid-template-columns: minmax(0, 1fr); }
-  .woocommerce div.product .woocommerce-product-gallery { opacity: 1 !important; }
+  .woocommerce div.product .woocommerce-product-gallery { opacity: 1 !important; top: auto !important; position: relative !important; }
   .sa-single, .sa-single--pdp { padding-top: 1rem; }
 }
 @media (max-width: 480px) {
