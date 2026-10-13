@@ -69,6 +69,18 @@ function sa_gpf_render(bool $for_comments = false): void
         ob_end_clean();
     }
 
+    $built = sa_gpf_file_path(false);
+    if (empty($_GET['live']) && is_readable($built)) { // phpcs:ignore
+        status_header(200);
+        header('Content-Type: application/rss+xml; charset=UTF-8');
+        header('X-Robots-Tag: noindex, follow');
+        header('Cache-Control: public, max-age=1800');
+        header('Content-Length: ' . (string) filesize($built));
+        readfile($built);
+        exit;
+    }
+    @set_time_limit(300);
+
     status_header(200);
     header('Content-Type: application/rss+xml; charset=UTF-8');
     header('X-Robots-Tag: noindex, follow');
@@ -170,6 +182,9 @@ function sa_gpf_render_item(int $product_id): void
 
     $description = sa_gpf_description($product, $title);
     $image = sa_gpf_image_url($product);
+    if ($image === '') {
+        return; // Merchant Center requires image_link; never substitute a placeholder.
+    }
     $availability = $product->is_in_stock() ? 'in_stock' : 'out_of_stock';
     $brand = sa_gpf_brand_name($product);
     $gtin = sa_gpf_gtin($product);
@@ -277,6 +292,19 @@ function sa_gpf_image_url(WC_Product $product): string
         }
     }
     if ($image_id <= 0) {
+        // Real scraped supplier photo (Shopify/manufacturer CDN) stored at import.
+        if (function_exists('sa_core_get_stored_shopify_image_urls')) {
+            $urls = sa_core_get_stored_shopify_image_urls($product->get_id());
+            if ($urls !== []) {
+                return (string) $urls[0];
+            }
+        }
+        foreach (['_sa_primary_image_url', '_sa_image_url'] as $k) {
+            $u = trim((string) get_post_meta($product->get_id(), $k, true));
+            if ($u !== '' && preg_match('#^https?://#i', $u)) {
+                return $u;
+            }
+        }
         return '';
     }
     $url = wp_get_attachment_image_url($image_id, 'full');
@@ -386,3 +414,128 @@ function sa_gpf_xml(string $value): string
 {
     return htmlspecialchars($value, ENT_XML1 | ENT_QUOTES, 'UTF-8');
 }
+
+
+/* ------------------------------------------------------------------ */
+/* Prebuilt feed: resumable WP-Cron batches -> uploads/sa-feed/google.xml */
+/* ------------------------------------------------------------------ */
+
+const SA_GPF_BUILD_BATCH = 800;
+const SA_GPF_BUILD_VERSION = '2026-10-14a';
+
+function sa_gpf_file_path(bool $building): string
+{
+    $up = wp_get_upload_dir();
+    $dir = trailingslashit((string) $up['basedir']) . 'sa-feed';
+    if (!is_dir($dir)) {
+        wp_mkdir_p($dir);
+    }
+    return $dir . ($building ? '/google-building.xml' : '/google.xml');
+}
+
+function sa_gpf_build_batch(): array
+{
+    global $wpdb;
+    $st = get_option('sa_gpf_build_state', []);
+    if (!is_array($st) || ($st['version'] ?? '') !== SA_GPF_BUILD_VERSION || !empty($st['restart'])) {
+        $st = ['version' => SA_GPF_BUILD_VERSION, 'last_id' => 0, 'scanned' => 0, 'items' => 0, 'done' => false, 'started' => time()];
+        $head = '<?xml version="1.0" encoding="UTF-8"?>' . "\n"
+            . '<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">' . "\n<channel>\n"
+            . "<title>Supreme Autoparts</title>\n<link>https://www.supremeautoparts.co.ke/</link>\n"
+            . "<description>Supreme Autoparts product catalog for Google Merchant Center. Prices in USD.</description>\n";
+        file_put_contents(sa_gpf_file_path(true), $head);
+    }
+    if (!empty($st['done'])) {
+        return $st;
+    }
+    $ids = $wpdb->get_col($wpdb->prepare(
+        "SELECT ID FROM {$wpdb->posts} WHERE post_type='product' AND post_status='publish' AND ID>%d ORDER BY ID ASC LIMIT %d",
+        (int) $st['last_id'], SA_GPF_BUILD_BATCH
+    ));
+    if (!$ids) {
+        file_put_contents(sa_gpf_file_path(true), "</channel>\n</rss>\n", FILE_APPEND);
+        @rename(sa_gpf_file_path(true), sa_gpf_file_path(false));
+        $st['done'] = true;
+        $st['finished'] = time();
+        update_option('sa_gpf_build_state', $st, false);
+        return $st;
+    }
+    ob_start();
+    foreach ($ids as $id) {
+        sa_gpf_render_item((int) $id);
+        $st['last_id'] = (int) $id;
+        $st['scanned']++;
+        clean_post_cache((int) $id);
+    }
+    $chunk = (string) ob_get_clean();
+    $st['items'] += substr_count($chunk, "<item>\n");
+    file_put_contents(sa_gpf_file_path(true), $chunk, FILE_APPEND);
+    $st['updated'] = time();
+    update_option('sa_gpf_build_state', $st, false);
+    return $st;
+}
+
+add_action('sa_gpf_build_tick', static function (): void {
+    if (get_transient('sa_gpf_build_lock')) {
+        return;
+    }
+    set_transient('sa_gpf_build_lock', 1, 180);
+    @set_time_limit(170);
+    $st = sa_gpf_build_batch();
+    delete_transient('sa_gpf_build_lock');
+    if (empty($st['done'])) {
+        wp_schedule_single_event(time() + 5, 'sa_gpf_build_tick');
+    }
+});
+
+/* Start/resume after deploys; rebuild daily (or if the file vanished on redeploy). */
+add_action('init', static function (): void {
+    $st = get_option('sa_gpf_build_state', []);
+    $done = is_array($st) && ($st['version'] ?? '') === SA_GPF_BUILD_VERSION && !empty($st['done']);
+    if ($done && (time() - (int) ($st['finished'] ?? 0) > DAY_IN_SECONDS || !is_readable(sa_gpf_file_path(false)))) {
+        $st['restart'] = 1;
+        update_option('sa_gpf_build_state', $st, false);
+        $done = false;
+    }
+    if (!$done && !wp_next_scheduled('sa_gpf_build_tick') && !get_transient('sa_gpf_build_lock')) {
+        wp_schedule_single_event(time() + 5, 'sa_gpf_build_tick');
+    }
+}, 99);
+
+add_action('rest_api_init', static function (): void {
+    register_rest_route('sa/v1', '/feed-build', [
+        'methods'             => 'GET',
+        'permission_callback' => '__return_true',
+        'callback'            => static function () {
+            $f = sa_gpf_file_path(false);
+            return ['state' => get_option('sa_gpf_build_state', []), 'file_bytes' => is_readable($f) ? filesize($f) : 0];
+        },
+    ]);
+    // Read-only catalog visibility audit (counts only).
+    register_rest_route('sa/v1', '/catalog-visibility', [
+        'methods'             => 'GET',
+        'permission_callback' => '__return_true',
+        'callback'            => static function () {
+            $c = get_transient('sa_catalog_vis_audit');
+            if (is_array($c)) {
+                return $c;
+            }
+            global $wpdb;
+            $p = $wpdb->posts; $m = $wpdb->postmeta;
+            $c = [
+                'by_status' => $wpdb->get_results("SELECT post_status s, COUNT(*) n FROM {$p} WHERE post_type='product' GROUP BY post_status", ARRAY_A),
+                'publish_hidden_visibility' => (int) $wpdb->get_var("SELECT COUNT(DISTINCT p.ID) FROM {$p} p JOIN {$wpdb->term_relationships} tr ON tr.object_id=p.ID JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id=tr.term_taxonomy_id AND tt.taxonomy='product_visibility' JOIN {$wpdb->terms} t ON t.term_id=tt.term_id AND t.slug='exclude-from-catalog' WHERE p.post_type='product' AND p.post_status='publish'"),
+                'publish_no_price' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$p} p LEFT JOIN {$m} pr ON pr.post_id=p.ID AND pr.meta_key='_price' WHERE p.post_type='product' AND p.post_status='publish' AND (pr.meta_value IS NULL OR pr.meta_value='' OR pr.meta_value+0<=0)"),
+                'publish_outofstock' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$p} p JOIN {$m} s ON s.post_id=p.ID AND s.meta_key='_stock_status' AND s.meta_value='outofstock' WHERE p.post_type='product' AND p.post_status='publish'"),
+                'publish_with_attachment' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$p} p JOIN {$m} t ON t.post_id=p.ID AND t.meta_key='_thumbnail_id' AND t.meta_value+0>0 WHERE p.post_type='product' AND p.post_status='publish'"),
+                'publish_no_photo_at_all' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$p} p WHERE p.post_type='product' AND p.post_status='publish' AND NOT EXISTS (SELECT 1 FROM {$m} x WHERE x.post_id=p.ID AND ((x.meta_key='_thumbnail_id' AND x.meta_value+0>0) OR (x.meta_key IN ('_sa_shopify_image_urls','_sa_shopify_image_src','_sa_primary_image_url','_sa_image_url') AND x.meta_value LIKE '%http%')))"),
+                'publish_no_category' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$p} p WHERE p.post_type='product' AND p.post_status='publish' AND NOT EXISTS (SELECT 1 FROM {$wpdb->term_relationships} tr JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id=tr.term_taxonomy_id AND tt.taxonomy='product_cat' WHERE tr.object_id=p.ID)"),
+                'lookup_rows' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}wc_product_meta_lookup"),
+                'woo_hide_out_of_stock' => get_option('woocommerce_hide_out_of_stock_items'),
+                'at' => gmdate('c'),
+            ];
+            set_transient('sa_catalog_vis_audit', $c, 10 * MINUTE_IN_SECONDS);
+            return $c;
+        },
+    ]);
+});
