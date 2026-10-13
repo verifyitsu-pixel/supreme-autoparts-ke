@@ -14,11 +14,11 @@ function sa_gw_env(string $k): string {
 function sa_gw_sync(): void {
     if (!class_exists('WooCommerce')) return;
     $sig = md5(implode('|', array_map('sa_gw_env', [
-        'PESAPAL_CONSUMER_KEY','PESAPAL_CONSUMER_SECRET','PESAPAL_ENV','PESAPAL_IPN_ID',
+        'PESAPAL_CONSUMER_KEY','PESAPAL_CONSUMER_SECRET','PESAPAL_ENV','PESAPAL_IPN_ID','PESAPAL_CHECKOUT_ENABLED',
         'TRANSACTPAY_MERCHANT_ID','TRANSACTPAY_WORKING_KEY','TRANSACTPAY_PARTNER_NAME','TRANSACTPAY_PARTNER_ID',
         'TRANSACTPAY_ENV','TRANSACTPAY_LIVE_URL','TRANSACTPAY_TEST_URL','TRANSACTPAY_QUERY_URL','TRANSACTPAY_IP',
         'PAYPAL_CLIENT_ID','PAYPAL_CLIENT_SECRET',
-    ])) . '|v2');
+    ])) . '|v3');
     if (get_option('sa_gw_env_sig') === $sig) return;
 
     /* ---- Pesapal (official plugin, option woocommerce_pesapal_settings) ---- */
@@ -31,7 +31,9 @@ function sa_gw_sync(): void {
         else { $p['consumerkey'] = $pk; $p['secretkey'] = $ps; }
         $ipn = sa_gw_env('PESAPAL_IPN_ID') ?: sa_gw_pesapal_register_ipn($pk, $ps, $sandbox);
         if ($ipn) $p['testnotification_id'] = $ipn; // plugin uses this field for live + demo
-        $p['enabled'] = $ipn ? 'yes' : 'no';
+        // Gate: keys + IPN are stored, but the gateway stays hidden at checkout until
+        // PESAPAL_CHECKOUT_ENABLED=1 (account verification / transaction limit pending).
+        $p['enabled'] = ($ipn && sa_gw_env('PESAPAL_CHECKOUT_ENABLED') === '1') ? 'yes' : 'no';
         if (empty($p['title'])) $p['title'] = 'Pesapal (M-Pesa, Airtel Money, Visa, Mastercard)';
     } else {
         $p['enabled'] = 'no';
