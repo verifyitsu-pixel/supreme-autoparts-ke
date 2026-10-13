@@ -75,3 +75,44 @@
   .sa-foot__bottom{flex-direction:column}
   .sa-foot--min{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
 }
+
+/* Mini-cart: WooCommerce clearfix pseudo-elements must not become grid cells. */
+.sa-cart-drawer .sa-mc__item::before,.sa-cart-drawer .sa-mc__item::after{content:none!important;display:none!important}
+.sa-cart-drawer .sa-mc__item{padding-left:0!important}
+.sa-cart-drawer .sa-mc__info{grid-column:2}.sa-cart-drawer .sa-mc__remove{grid-column:3;grid-row:1}
+
+/* ================= Shared design tokens (homepage = source of truth) ================= */
+:root{
+  --sa-btn-radius:10px;--sa-btn-h:46px;--sa-btn-h-lg:52px;--sa-btn-px:1.25rem;--sa-btn-fs:.9375rem;--sa-btn-fw:600;
+  --sa-btn-primary-bg:#3665f3;--sa-btn-primary-bg-hover:#2a54d6;--sa-btn-primary-ink:#fff;
+  --sa-btn-secondary-bg:#fff;--sa-btn-secondary-ink:#191919;--sa-btn-secondary-border:#cccccc;--sa-btn-secondary-hover-border:#191919;
+  --sa-input-radius:10px;--sa-input-h:46px;--sa-input-border:#cccccc;--sa-focus:0 0 0 3px rgba(54,101,243,.18);
+  --sa-r-btn:var(--sa-btn-radius)
+}
+/* Primary buttons: Buy now, Add to cart (PDP), Checkout, Place order, Pay, Book */
+.sa-btn:not(.sa-btn--outline):not(.sa-btn--ghost):not(.sa-product-card__atc),
+.sa-svc-btn--primary,.sa-mc__btn--primary,
+.checkout-button,#place_order,.single_add_to_cart_button,.woocommerce button.button.alt,.woocommerce a.button.alt,
+.sa-cart-sticky-bar .button,.woocommerce-mini-cart__buttons .checkout{
+  background:var(--sa-btn-primary-bg)!important;color:var(--sa-btn-primary-ink)!important;border:1px solid transparent!important;
+  border-radius:var(--sa-btn-radius)!important;min-height:var(--sa-btn-h)!important;padding:.7rem var(--sa-btn-px)!important;
+  font-family:var(--sa-font)!important;font-size:var(--sa-btn-fs)!important;font-weight:var(--sa-btn-fw)!important;
+  box-shadow:none!important;text-transform:none!important;letter-spacing:0!important;display:inline-flex!important;align-items:center;justify-content:center;gap:.45rem;text-decoration:none!important
+}
+.sa-btn:not(.sa-btn--outline):not(.sa-btn--ghost):not(.sa-product-card__atc):hover,.sa-svc-btn--primary:hover,.sa-mc__btn--primary:hover,
+.checkout-button:hover,#place_order:hover,.single_add_to_cart_button:hover,.woocommerce button.button.alt:hover,.woocommerce a.button.alt:hover,.sa-cart-sticky-bar .button:hover{background:var(--sa-btn-primary-bg-hover)!important;color:#fff!important}
+/* Secondary buttons: Add to cart (cards), View cart, Update cart, outline links */
+.sa-btn--outline,.sa-product-card__atc,.sa-mc__btn--ghost,.sa-cart-update,.sa-svc-btn--secondary{
+  background:var(--sa-btn-secondary-bg)!important;color:var(--sa-btn-secondary-ink)!important;border:1px solid var(--sa-btn-secondary-border)!important;
+  border-radius:var(--sa-btn-radius)!important;min-height:var(--sa-btn-h)!important;padding:.7rem var(--sa-btn-px)!important;
+  font-family:var(--sa-font)!important;font-size:var(--sa-btn-fs)!important;font-weight:var(--sa-btn-fw)!important;box-shadow:none!important;text-transform:none!important;text-decoration:none!important
+}
+.sa-btn--outline:hover,.sa-product-card__atc:hover,.sa-mc__btn--ghost:hover,.sa-cart-update:hover{border-color:var(--sa-btn-secondary-hover-border)!important;color:var(--sa-btn-secondary-ink)!important;background:#fff!important}
+.sa-svc-btn--ghost{border-radius:var(--sa-btn-radius)!important;min-height:var(--sa-btn-h)!important;font-size:var(--sa-btn-fs)!important;font-weight:var(--sa-btn-fw)!important}
+.sa-product-card__buy,.sa-product-card__atc{min-height:44px!important;font-size:.875rem!important;padding:.6rem 1rem!important}
+#place_order,.checkout-button,.sa-mc__btn{min-height:var(--sa-btn-h-lg)!important;width:100%}
+.sa-hero__search-btn{width:auto}
+/* Inputs everywhere */
+.woocommerce form .input-text,.woocommerce form select,.sa-svc-book input:not([type=radio]):not([type=checkbox]),.sa-svc-book select,.sa-svc-book textarea,.select2-container .select2-selection--single{
+  border-radius:var(--sa-input-radius)!important;border:1px solid var(--sa-input-border)!important;min-height:var(--sa-input-h);font-family:var(--sa-font);font-size:16px}
+.woocommerce form .input-text:focus,.sa-svc-book input:focus,.sa-svc-book select:focus{border-color:var(--sa-btn-primary-bg)!important;box-shadow:var(--sa-focus)!important;outline:0}
