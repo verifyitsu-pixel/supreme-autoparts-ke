@@ -635,6 +635,7 @@ add_action('admin_post_sa_g_admin', static function (): void {
                 $uid = wp_insert_user(['user_login' => sanitize_user(strtok($email, '@') . '-' . wp_generate_password(4, false, false), true), 'user_email' => $email, 'display_name' => $p('name'), 'first_name' => strtok($p('name'), ' '), 'user_pass' => wp_generate_password(24), 'role' => 'sa_mechanic']);
                 if (!is_wp_error($uid)) {
                     $u = get_userdata((int) $uid);
+                    $u->add_role('sa_mechanic'); // user_register forces "customer"; add the mechanic role on top.
                     $key = get_password_reset_key($u);
                     if (!is_wp_error($key)) {
                         wp_mail($email, 'Your Supreme Autoparts workshop login', sa_mail_layout('Welcome to the workshop app', '<p>Hi ' . esc_html($p('name')) . ',</p><p>You have been added as a mechanic. Set your password, then open the workshop app on your phone to see your jobs, clock in and fill inspection cards.</p><p>Workshop app: ' . esc_html(home_url('/workshop/')) . '</p>', 'Set my password', network_site_url('wp-login.php?action=rp&key=' . $key . '&login=' . rawurlencode($u->user_login), 'login')), ['Content-Type: text/html; charset=UTF-8']);

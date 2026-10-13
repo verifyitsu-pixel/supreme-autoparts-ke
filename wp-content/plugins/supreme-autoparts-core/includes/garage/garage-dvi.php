@@ -597,6 +597,9 @@ function sa_g_dvi_pdf(int $id): string
     }
     $ph = array_values(array_filter(array_map('sa_g_pdf_img', (array) ($x['photos'] ?? []))));
     if ($ph) {
+        if ($pdf->GetY() > 215) {
+            $pdf->AddPage();
+        }
         $sec('Photos');
         $col = 0;
         $y = $pdf->GetY();

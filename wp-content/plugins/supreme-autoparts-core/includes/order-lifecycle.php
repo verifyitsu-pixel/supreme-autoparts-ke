@@ -52,7 +52,7 @@ add_filter('woocommerce_order_is_download_permitted', static fn($ok, $o) => $ok 
 
 /* Woo's own on-hold / refunded / completed customer emails are replaced by ours (no duplicates).
  * The processing receipt (with the item list) stays Woo's — see order-emails.php. */
-foreach (['customer_on_hold_order', 'customer_refunded_order', 'customer_partially_refunded_order', 'customer_completed_order'] as $sa_ol_id) {
+foreach (['customer_on_hold_order', 'customer_refunded_order', 'customer_partially_refunded_order', 'customer_completed_order', 'customer_failed_order', 'customer_cancelled_order'] as $sa_ol_id) {
     add_filter('woocommerce_email_enabled_' . $sa_ol_id, '__return_false', 50);
 }
 
