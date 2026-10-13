@@ -908,6 +908,7 @@ function sa_svc_render_confirmed(): void
     <div class="sa-container sa-svc-book sa-svc-done">
       <div class="sa-svc-done__badge"><?php echo sa_svc_icon('check'); ?></div>
       <h1><?php echo $b['status'] === 'cancelled' ? 'Booking cancelled' : ($b['fee'] === 'unpaid' ? 'Booking held — pay the fee to confirm' : 'Booking confirmed'); ?></h1>
+      <?php $sa_pay = sanitize_key((string) ($_GET['sa_pay'] ?? '')); if ($sa_pay !== '') : ?><p class="sa-svc-alert<?php echo $sa_pay === 'paid' ? ' sa-svc-alert--ok' : ''; ?>"><?php echo esc_html(['paid' => 'Your booking fee is already paid. Nothing more to pay.', 'closed' => 'This booking is no longer awaiting payment (it was cancelled or released after 2 hours unpaid). Please book a new slot.', 'unavailable' => 'Online payment is temporarily unavailable. Please contact us on WhatsApp and we will help you pay.'][$sa_pay] ?? ''); ?></p><?php endif; ?>
       <p class="sa-svc-refbig">Booking number <strong><?php echo esc_html($b['ref']); ?></strong></p>
       <p class="sa-svc-lead">We've emailed the details to <?php echo esc_html($b['email']); ?>. Use your booking number and email under <a href="<?php echo esc_url(home_url('/manage-booking/')); ?>">Manage booking</a>.</p>
       <?php sa_svc_render_booking_card($b); ?>
@@ -1458,25 +1459,75 @@ function sa_svc_fee_product_id(): int
     return $id;
 }
 
-/** Front-end route: put the fee in the cart (linked to the booking) and go to checkout. */
+/**
+ * Front-end route /book-service/pay/?b=ID&k=KEY (the key is the booking's secret token).
+ * Creates (or reuses) a guest-payable WooCommerce order for the fee and goes straight to its
+ * order-pay page (order key in URL). No login, no lookup. Valid until the booking is released.
+ */
 function sa_svc_route_pay(): void
 {
     $id = (int) ($_GET['b'] ?? 0);
+    $k = (string) ($_GET['k'] ?? '');
     $b = $id && get_post_type($id) === 'sa_booking' ? sa_svc_booking_data($id) : null;
-    if (!$b || !hash_equals($b['key'], (string) ($_GET['k'] ?? '')) || $b['fee'] !== 'unpaid' || $b['status'] !== 'pending' || !function_exists('WC') || !WC()->cart) {
+    if (!$b || $b['key'] === '' || !hash_equals($b['key'], $k)) {
         wp_safe_redirect(home_url('/manage-booking/'));
         exit;
     }
-    $pid = sa_svc_fee_product_id();
-    foreach (WC()->cart->get_cart() as $k => $item) {
-        if ((int) $item['product_id'] === $pid) {
-            WC()->cart->remove_cart_item($k);
-        }
+    $view = add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/confirmed/'));
+    if ($b['fee'] !== 'unpaid' || $b['status'] !== 'pending' || !function_exists('wc_create_order')) {
+        wp_safe_redirect(add_query_arg('sa_pay', $b['fee'] !== 'unpaid' ? 'paid' : 'closed', $view));
+        exit;
     }
-    WC()->cart->add_to_cart($pid, 1, 0, [], ['sa_booking' => $id, 'sa_booking_ref' => $b['ref']]);
-    wp_safe_redirect(wc_get_checkout_url());
+    $oid = (int) get_post_meta($id, '_sa_bk_pay_order', true);
+    $o = $oid ? wc_get_order($oid) : null;
+    if (!$o || !$o->needs_payment()) {
+        $usd = sa_svc_fee_usd();
+        $pid = sa_svc_fee_product_id();
+        $prod = wc_get_product($pid);
+        if ($usd === null || !$prod) {
+            wp_safe_redirect(add_query_arg('sa_pay', 'unavailable', $view));
+            exit;
+        }
+        $o = wc_create_order(['customer_id' => 0, 'created_via' => 'sa_booking']);
+        $item_id = $o->add_product($prod, 1, ['subtotal' => $usd, 'total' => $usd]);
+        $it = $o->get_item($item_id);
+        if ($it) {
+            $it->add_meta_data('_sa_booking', $id, true);
+            $it->add_meta_data('Booking number', $b['ref'], true);
+            $it->save();
+        }
+        $parts = preg_split('/\s+/', trim($b['name']), 2);
+        $o->set_billing_first_name($parts[0] ?? '');
+        $o->set_billing_last_name($parts[1] ?? '');
+        $o->set_billing_email($b['email']);
+        $o->set_billing_phone($b['phone']);
+        $o->set_billing_country($b['location'] === 'usa' ? 'US' : 'KE');
+        $o->set_billing_city($b['location'] === 'usa' ? '' : 'Nairobi');
+        // customer_id stays 0 so the order-pay link works logged-out (key in URL is the token).
+        $o->update_meta_data('_sa_booking_fee_for', $id);
+        $o->calculate_totals(false);
+        $o->set_status('pending');
+        $o->add_order_note('Booking fee order for ' . $b['ref'] . ' (created from the pay link).');
+        $o->save();
+        update_post_meta($id, '_sa_bk_pay_order', $o->get_id());
+    }
+    if (function_exists('WC') && WC()->session) {
+        WC()->session->set('sa_pr_last_order', $o->get_id());
+    }
+    wp_safe_redirect($o->get_checkout_payment_url());
     exit;
 }
+
+/* Fee orders stop being payable once their booking is paid, released or cancelled (link expiry). */
+add_filter('woocommerce_order_needs_payment', static function ($needs, $order) {
+    if ($needs && $order instanceof WC_Order && ($bid = (int) $order->get_meta('_sa_booking_fee_for'))) {
+        if (get_post_meta($bid, '_sa_bk_fee', true) !== 'unpaid' || get_post_meta($bid, '_sa_bk_status', true) !== 'pending') {
+            return false;
+        }
+    }
+    return $needs;
+}, 20, 2);
+
 
 add_action('woocommerce_before_calculate_totals', static function ($cart): void {
     $usd = sa_svc_fee_usd();
