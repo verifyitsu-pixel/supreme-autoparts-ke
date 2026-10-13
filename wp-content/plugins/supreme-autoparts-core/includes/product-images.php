@@ -363,7 +363,16 @@ add_filter('woocommerce_single_product_image_thumbnail_html', static function ($
     }
     $urls = sa_core_get_stored_shopify_image_urls($product->get_id());
     if ($urls === []) {
-        return '';
+        // No real photo: neutral store logo (never a stock/AI image).
+        $logo = function_exists('sa_core_invoice_logo_url') ? sa_core_invoice_logo_url() : '';
+        if ($logo === '') {
+            return '';
+        }
+        return sprintf(
+            '<div class="woocommerce-product-gallery__image sa-logo-placeholder-wrap"><img src="%s" alt="%s" class="sa-logo-placeholder" width="600" height="600" loading="eager" decoding="async" /></div>',
+            esc_url($logo),
+            esc_attr($product->get_name() . ' (photo coming soon)')
+        );
     }
     $out = '';
     foreach ($urls as $i => $url) {
