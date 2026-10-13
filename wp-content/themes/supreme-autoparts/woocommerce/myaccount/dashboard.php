@@ -46,7 +46,7 @@ $links = [
     [
         'href'  => wc_get_account_endpoint_url('payment-methods'),
         'title' => __('Payment methods', 'supreme-autoparts'),
-        'desc'  => __('Saved cards via Whop', 'supreme-autoparts'),
+        'desc'  => __('Saved payment cards', 'supreme-autoparts'),
     ],
     [
         'href'  => wc_get_account_endpoint_url('edit-account'),

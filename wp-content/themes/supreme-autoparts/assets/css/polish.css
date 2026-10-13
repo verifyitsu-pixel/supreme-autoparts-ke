@@ -1,0 +1,34 @@
+/* Sitewide polish layer (loaded last). Spacing, buttons, cards, grids, overflow. */
+:root{--sa-r-card:14px;--sa-r-btn:10px;--sa-gap:1rem;--sa-acc:#F5A623;--sa-ink:#0b1f3a}
+html,body{overflow-x:clip}
+img{max-width:100%;height:auto}
+/* Hero: .sa-hero__inner overrode the container width, pinning text to the screen edge */
+.sa-hero__inner.sa-container{width:min(100% - 2rem,var(--sa-max,1280px))}
+@media (max-width:640px){.sa-hero__search,.sa-hero__meta{display:none}.sa-hero h1{font-size:1.6rem;line-height:1.18}.sa-hero__lead{font-size:1rem}}
+/* Buttons: one shape, one height */
+.sa-btn,.sa-svc-btn,.woocommerce a.button,.woocommerce button.button,.woocommerce input.button,.wc-block-components-button{border-radius:var(--sa-r-btn)!important;min-height:44px;font-weight:600;letter-spacing:0;display:inline-flex;align-items:center;justify-content:center;gap:.45rem}
+.sa-cart-drawer__close{min-width:44px;min-height:44px}
+/* Primary service CTA: solid, high contrast everywhere (var was undefined outside .sa-svc) */
+.sa-svc-btn--primary,.sa-home-services .sa-svc-btn--primary{background:var(--sa-acc)!important;color:#111!important;border:0!important;box-shadow:0 8px 22px rgba(245,166,35,.35)}
+.sa-svc-btn--primary:hover{background:#e09512!important}
+.sa-home-services .sa-svc-btn--ghost{border:1.5px solid rgba(255,255,255,.75)!important;color:#fff!important;background:transparent}
+.sa-home-services .sa-svc-cta{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1rem}
+.sa-home-services__grid a{min-height:104px}
+.sa-home-steps{list-style:none;margin:1.1rem 0 0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
+.sa-home-steps li{display:flex;gap:.55rem;align-items:center;font-size:.9rem;color:#e7ecf5}
+.sa-home-steps b{flex:0 0 26px;height:26px;border-radius:50%;background:var(--sa-acc);color:#111;display:grid;place-items:center;font-size:.8rem}
+/* Cards */
+.sa-path,.sa-svc-card,.sa-type-tile,.sa-region-card,.sa-trust__item,ul.products li.product,.sa-product-card{border-radius:var(--sa-r-card)}
+.sa-svc-price.is-quote{display:inline-block;padding:.2rem .6rem;border-radius:999px;background:#f3f5f9;border:1px solid #e3e7ef;color:#3b4660;font-size:.8rem;font-weight:600}
+.sa-home-services__grid small{display:inline-block;align-self:flex-start;margin-top:auto;padding:.15rem .55rem;border-radius:999px;background:rgba(255,255,255,.12);opacity:1!important}
+/* Category grid: fixed columns, last tile fills the row (11 tiles -> even rows) */
+.sa-type-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.sa-type-grid>.sa-type-tile:last-child{grid-column:span 2}
+@media (min-width:640px){.sa-type-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
+@media (min-width:1100px){.sa-type-grid{grid-template-columns:repeat(6,minmax(0,1fr))!important}}
+/* Checkout: grid column blew out to min-content width on phones */
+@media (max-width:900px){.sa-checkout-layout{grid-template-columns:minmax(0,1fr)!important}.sa-checkout-layout__main,.sa-checkout-section{min-width:0;max-width:100%}}
+@media (max-width:640px){.sa-page__content{padding:1rem}.woocommerce form .form-row input.input-text,.woocommerce form .form-row select,.woocommerce form .form-row textarea{max-width:100%}}
+/* Section rhythm */
+.sa-section{padding-block:clamp(1.75rem,4vw,3rem)}
+.sa-section__title{font-size:clamp(1.25rem,2.2vw,1.6rem);letter-spacing:-.01em}

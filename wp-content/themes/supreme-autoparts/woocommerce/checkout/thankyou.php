@@ -48,7 +48,7 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
           : __('Thank you — we have your order', 'supreme-autoparts');
       $lead = $paid
           ? __('A confirmation email with your order details is on its way. Check inbox and spam. We will prepare your parts and update you on shipping.', 'supreme-autoparts')
-          : __('If you just paid on Whop, confirmation can take a few seconds. Refresh this page if the status does not update.', 'supreme-autoparts');
+          : __('If you just paid, confirmation can take a few seconds. Refresh this page if the status does not update.', 'supreme-autoparts');
       ?>
       <div class="sa-thankyou__card<?php echo $paid ? ' sa-thankyou__card--success' : ''; ?>">
         <div class="sa-thankyou__badge" aria-hidden="true">
@@ -134,7 +134,7 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
 
         <?php if ($pending && !$paid) : ?>
           <p class="sa-thankyou__pending-note">
-            <?php esc_html_e('Still seeing “pending”? Wait a moment after Whop, then refresh. If it stays pending, WhatsApp us with your order number.', 'supreme-autoparts'); ?>
+            <?php esc_html_e('Still seeing “pending”? Wait a moment after paying, then refresh. If it stays pending, WhatsApp us with your order number.', 'supreme-autoparts'); ?>
           </p>
         <?php endif; ?>
       </div>

@@ -13,13 +13,13 @@ $sa_count = function_exists('sa_published_product_count') ? sa_published_product
 <section class="sa-hero" aria-labelledby="sa-hero-title">
   <div class="sa-container sa-hero__inner">
     <div class="sa-hero__copy">
-      <h1 id="sa-hero-title"><?php esc_html_e('Parts and car service in one place', 'supreme-autoparts'); ?></h1>
+      <h1 id="sa-hero-title"><?php esc_html_e('The right part. Fitted right.', 'supreme-autoparts'); ?></h1>
       <p class="sa-hero__lead">
-        <?php esc_html_e('Buy the right part online, or book our technicians to fit it. One account, one cart, all your orders and bookings together.', 'supreme-autoparts'); ?>
+        <?php esc_html_e('Search by part number and order online, or book our Njiru, Nairobi garage to fit it for you. One account keeps every order and booking in one place.', 'supreme-autoparts'); ?>
       </p>
       <div class="sa-paths">
-        <a class="sa-path" href="<?php echo esc_url($sa_shop_url); ?>"><?php echo function_exists('sa_svc_icon') ? sa_svc_icon('grid') : ''; // phpcs:ignore ?><span><strong><?php esc_html_e('Shop Parts', 'supreme-autoparts'); ?></strong><small><?php esc_html_e('Search by part number, brand or vehicle. Shipped to you.', 'supreme-autoparts'); ?></small></span></a>
-        <a class="sa-path sa-path--svc" href="<?php echo esc_url(home_url('/book-service/')); ?>"><?php echo function_exists('sa_svc_icon') ? sa_svc_icon('calendar') : ''; // phpcs:ignore ?><span><strong><?php esc_html_e('Book a Service', 'supreme-autoparts'); ?></strong><small><?php esc_html_e('Oil, brakes, alignment, AC and more. Pick a time slot and pay at service.', 'supreme-autoparts'); ?></small></span></a>
+        <a class="sa-path" href="<?php echo esc_url($sa_shop_url); ?>"><?php echo function_exists('sa_svc_icon') ? sa_svc_icon('grid') : ''; // phpcs:ignore ?><span><strong><?php esc_html_e('Shop Parts', 'supreme-autoparts'); ?></strong><small><?php esc_html_e('Find it by part number, brand or vehicle, then check out in minutes.', 'supreme-autoparts'); ?></small></span></a>
+        <a class="sa-path sa-path--svc" href="<?php echo esc_url(home_url('/book-service/')); ?>"><?php echo function_exists('sa_svc_icon') ? sa_svc_icon('calendar') : ''; // phpcs:ignore ?><span><strong><?php esc_html_e('Book a Service', 'supreme-autoparts'); ?></strong><small><?php esc_html_e('Oil, brakes, alignment, AC and more. Pick a slot online; the KES 1,000 booking fee comes off your bill.', 'supreme-autoparts'); ?></small></span></a>
       </div>
 
       <form class="sa-hero__search" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>">
@@ -72,7 +72,7 @@ $sa_count = function_exists('sa_published_product_count') ? sa_published_product
         </span>
         <div>
           <strong><?php esc_html_e('USD checkout', 'supreme-autoparts'); ?></strong>
-          <span><?php esc_html_e('Secure pay via Whop · guest checkout welcome', 'supreme-autoparts'); ?></span>
+          <span><?php esc_html_e('Secure checkout · guest checkout welcome', 'supreme-autoparts'); ?></span>
         </div>
       </li>
       <li class="sa-trust__item">
@@ -127,10 +127,11 @@ $sa_count = function_exists('sa_published_product_count') ? sa_published_product
 <section class="sa-home-services" aria-labelledby="sa-home-services-title">
   <div class="sa-container sa-home-services__in">
     <div>
-      <p class="sa-svc-eyebrow"><?php esc_html_e('New · Car service', 'supreme-autoparts'); ?></p>
-      <h2 id="sa-home-services-title"><?php esc_html_e('Shop parts. Book the fitting.', 'supreme-autoparts'); ?></h2>
-      <p><?php esc_html_e('Book oil changes, brakes, alignment, AC and diagnostics online with live time slots — pay at service.', 'supreme-autoparts'); ?></p>
-      <div class="sa-svc-cta"><a class="sa-svc-btn sa-svc-btn--primary" href="<?php echo esc_url(home_url('/book-service/')); ?>"><?php esc_html_e('Book a service', 'supreme-autoparts'); ?></a><a class="sa-svc-btn sa-svc-btn--ghost" style="color:#fff" href="<?php echo esc_url(home_url('/services/')); ?>"><?php esc_html_e('All services', 'supreme-autoparts'); ?></a></div>
+      <p class="sa-svc-eyebrow"><?php esc_html_e('Car service · Njiru, Nairobi', 'supreme-autoparts'); ?></p>
+      <h2 id="sa-home-services-title"><?php esc_html_e('Book it online. We handle the rest.', 'supreme-autoparts'); ?></h2>
+      <p><?php esc_html_e('Choose your service and a time that suits you. Drop the car at our Midax Plaza garage or let us collect it. You get a booking number and email confirmation straight away, and the KES 1,000 booking fee is deducted from your final bill.', 'supreme-autoparts'); ?></p>
+      <ol class="sa-home-steps"><li><b>1</b><?php esc_html_e('Book online', 'supreme-autoparts'); ?></li><li><b>2</b><?php esc_html_e('Drop off or we pick up', 'supreme-autoparts'); ?></li><li><b>3</b><?php esc_html_e('We fix it', 'supreme-autoparts'); ?></li><li><b>4</b><?php esc_html_e('Drive away', 'supreme-autoparts'); ?></li></ol>
+      <div class="sa-svc-cta"><a class="sa-svc-btn sa-svc-btn--primary" href="<?php echo esc_url(home_url('/book-service/')); ?>"><?php esc_html_e('Book a service', 'supreme-autoparts'); ?></a><a class="sa-svc-btn sa-svc-btn--ghost" style="color:#fff" href="<?php echo esc_url(home_url('/services/')); ?>"><?php esc_html_e('See all services & prices', 'supreme-autoparts'); ?></a></div>
     </div>
     <div class="sa-home-services__grid">
       <?php foreach (array_slice(sa_svc_catalog(), 0, 6, true) as $sa_slug => $sa_s) : ?>
@@ -192,7 +193,7 @@ endif;
       <li class="sa-how__step">
         <span class="sa-how__num" aria-hidden="true">3</span>
         <strong><?php esc_html_e('Pay in USD', 'supreme-autoparts'); ?></strong>
-        <span><?php esc_html_e('Secure checkout through Whop. Local display currency where available.', 'supreme-autoparts'); ?></span>
+        <span><?php esc_html_e('Secure online checkout. Local display currency where available.', 'supreme-autoparts'); ?></span>
       </li>
       <li class="sa-how__step">
         <span class="sa-how__num" aria-hidden="true">4</span>

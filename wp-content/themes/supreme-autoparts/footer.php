@@ -68,7 +68,7 @@ if (!defined('ABSPATH')) {
     <div class="sa-footer__bottom">
       <span>&copy; <?php echo esc_html(gmdate('Y')); ?> Supreme Autoparts · supremeautoparts.co.ke</span>
       <div class="sa-footer__payments" role="group" aria-label="<?php echo esc_attr__('Accepted payment methods', 'supreme-autoparts'); ?>">
-        <span class="sa-footer__payments-label"><?php esc_html_e('Secure checkout via Whop', 'supreme-autoparts'); ?></span>
+        <span class="sa-footer__payments-label"><?php esc_html_e('Secure checkout', 'supreme-autoparts'); ?></span>
         <ul class="sa-footer__pay-logos">
           <?php
           $sa_pay_logos = [

@@ -85,3 +85,7 @@ add_filter('style_loader_src', static function ($src, $handle) {
     }
     return add_query_arg('ver', SA_THEME_VERSION, remove_query_arg('ver', $src));
 }, 20, 2);
+
+add_action('wp_enqueue_scripts', static function (): void {
+    wp_enqueue_style('supreme-autoparts-polish', SA_THEME_URI . '/assets/css/polish.css', [], SA_THEME_VERSION . '.p1');
+}, 999);

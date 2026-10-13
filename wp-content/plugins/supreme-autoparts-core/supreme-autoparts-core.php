@@ -57,6 +57,8 @@ require_once SA_CORE_DIR . 'includes/admin-super-ops.php';
 require_once SA_CORE_DIR . 'includes/admin-super-phase3.php';
 require_once SA_CORE_DIR . 'includes/welcome-coupon.php';
 require_once SA_CORE_DIR . 'includes/car-services.php';
+require_once SA_CORE_DIR . 'includes/booking-invoice.php';
+require_once SA_CORE_DIR . 'includes/payment-recovery.php';
 // import-shopify.php is loaded by CLI/admin/boot import and by product-images helpers when needed.
 
 register_activation_hook(__FILE__, static function (): void {

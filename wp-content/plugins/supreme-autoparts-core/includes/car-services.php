@@ -351,6 +351,9 @@ function sa_svc_handle_booking(): void
         update_post_meta((int) $id, '_sa_bk_notes', trim('Install part: ' . $partname . '. ' . (string) get_post_meta((int) $id, '_sa_bk_notes', true)));
     }
     sa_svc_send_emails((int) $id, 'created');
+    if (function_exists('sa_bk_invoice_email')) {
+        sa_bk_invoice_email((int) $id);
+    }
     sa_svc_gcal_sync((int) $id);
     wp_safe_redirect(add_query_arg(['b' => (int) $id, 'k' => $meta['key']], home_url('/book-service/pay/')));
     exit;
@@ -456,18 +459,21 @@ function sa_svc_send_emails(int $id, string $event): void
         'Booking number' => $b['ref'], 'Service' => $svc['name'] . ($b['option'] ? ' — ' . $b['option'] : ''),
         'When' => $when, 'Duration' => sa_svc_duration_label($b['service']), 'Where' => $loc,
         'Handover' => $b['mode'] === 'pickup' ? 'Vehicle pickup from: ' . $b['pickup'] . ' (pickup fee confirmed on booking)' : 'Drop-off at the garage', 'Vehicle' => trim($b['year'] . ' ' . $b['make'] . ' ' . $b['model'] . ' ' . $b['reg']),
-        'Estimate' => $b['estimate'] . ' (balance paid at service)', 'Booking fee' => sa_svc_fee_label($b), 'Status' => $status,
+        'Estimate' => $b['estimate'] . ' (booking fee deducted from the final bill)', 'Booking fee' => sa_svc_fee_label($b), 'Status' => $status,
     ];
     $html = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#222">'
         . '<h2 style="color:#0b1f3a">Supreme Autoparts — Car Service</h2><p>Hi ' . esc_html($b['name']) . ',</p><p>'
-        . ($event === 'cancel_request' ? 'We have received your cancellation request. Our team will review it and email you the decision. Your booking stays on hold until then.' : ($event === 'cancel_approved' ? 'Your cancellation has been approved and your booking is cancelled. Your KES ' . number_format((int) ($b['fee_kes'] ?: 1000)) . ' booking fee is being refunded to the method you chose.' : ($event === 'cancel_declined' ? 'Your cancellation request was declined, so your booking remains active. Please contact us if you have questions.' . ($b['cancel_note'] ? ' Note from our team: ' . $b['cancel_note'] : '') : ''))) . ($event === 'reminder' ? 'This is a reminder of your appointment tomorrow.' : (in_array($event, ['cancel_request', 'cancel_approved', 'cancel_declined'], true) ? '' : ($event === 'created' ? 'Thanks for booking. Our team will confirm your appointment shortly.' : ($event === 'cancelled' ? 'Your booking has been cancelled.' : 'Your booking status has changed.'))))
+        . ($event === 'cancel_request' ? 'We have received your cancellation request. Our team will review it and email you the decision. Your booking stays on hold until then.' : ($event === 'cancel_approved' ? 'Your cancellation has been approved and your booking is cancelled. Your KES ' . number_format((int) ($b['fee_kes'] ?: 1000)) . ' booking fee is being refunded to the method you chose.' : ($event === 'cancel_declined' ? 'Your cancellation request was declined, so your booking remains active. Please contact us if you have questions.' . ($b['cancel_note'] ? ' Note from our team: ' . $b['cancel_note'] : '') : ''))) . ($event === 'reminder' ? 'This is a reminder of your appointment tomorrow.' : (in_array($event, ['cancel_request', 'cancel_approved', 'cancel_declined'], true) ? '' : ($event === 'created' ? ($b['fee'] === 'unpaid' ? 'Thanks for booking. Pay the KES ' . number_format((int) ($b['fee_kes'] ?: sa_svc_setting('fee_kes'))) . ' booking fee to secure your slot: <a href="' . esc_url(add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/pay/'))) . '">Pay booking fee</a>. Unpaid bookings are released after 2 hours.' : 'Thanks for booking. Your slot is secured.') : ($event === 'cancelled' ? 'Your booking has been cancelled.' : 'Your booking status has changed.'))))
         . '</p><table style="border-collapse:collapse;width:100%">';
     foreach ($rows as $k => $v) {
         $html .= '<tr><td style="padding:6px 8px;border-bottom:1px solid #eee;color:#666">' . esc_html($k) . '</td><td style="padding:6px 8px;border-bottom:1px solid #eee"><strong>' . esc_html($v) . '</strong></td></tr>';
     }
     $html .= '</table><p><a href="' . esc_url(add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/confirmed/'))) . '">View, cancel or reschedule your booking</a> · <a href="' . esc_url(home_url('/booking-terms/')) . '">Booking Terms</a> · <a href="' . esc_url(add_query_arg(['service' => $b['service'], 'reschedule' => $id, 'rk' => $b['key']], home_url('/book-service/'))) . '">Reschedule</a></p></div>';
     $headers = ['Content-Type: text/html; charset=UTF-8'];
-    wp_mail($b['email'], $subjects[$event] ?? $subjects['status'], $html, $headers);
+    // Unpaid new bookings: the customer gets the combined invoice + pay email instead (no duplicate).
+    if (!($event === 'created' && $b['fee'] === 'unpaid' && function_exists('sa_bk_invoice_email'))) {
+        wp_mail($b['email'], $subjects[$event] ?? $subjects['status'], $html, $headers);
+    }
     if (!in_array($event, ['status', 'reminder', 'cancel_approved', 'cancel_declined'], true)) {
         $admin = (string) get_option('woocommerce_email_from_address', get_option('admin_email'));
         wp_mail($admin, '[Bookings] ' . ($subjects[$event] ?? '') . ' — ' . $b['name'], $html, $headers);
@@ -571,20 +577,20 @@ function sa_svc_render_index(): void
     <section class="sa-svc-hero">
       <div class="sa-container sa-svc-hero__in">
         <div>
-          <p class="sa-svc-eyebrow">Parts + service, one place</p>
-          <h1>Book trusted car service in minutes</h1>
-          <p class="sa-svc-lead">Oil changes, brakes, alignment, AC, batteries, diagnostics and full servicing. Pick a time slot online, pay at service, and get the right parts from our shop.</p>
+          <p class="sa-svc-eyebrow">Supreme Autoparts garage · Njiru, Nairobi</p>
+          <h1>Car service, booked in two minutes</h1>
+          <p class="sa-svc-lead">From oil changes and brake pads to alignment, AC and full servicing. Pick a time online, drop the car off or have us collect it, and we fit real parts from our own shop. Your KES 1,000 booking fee is deducted from the final bill.</p>
           <div class="sa-svc-cta">
             <a class="sa-svc-btn sa-svc-btn--primary" href="<?php echo esc_url(sa_svc_book_url()); ?>"><?php echo sa_svc_icon('calendar'); ?> Book a service</a>
             <a class="sa-svc-btn sa-svc-btn--ghost" href="<?php echo esc_url(function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/')); ?>">Shop parts</a>
           </div>
-          <ul class="sa-svc-points"><li><?php echo sa_svc_icon('check'); ?>Live time slots</li><li><?php echo sa_svc_icon('check'); ?>Written quote before work</li><li><?php echo sa_svc_icon('check'); ?>Pay at service</li></ul>
+          <ul class="sa-svc-points"><li><?php echo sa_svc_icon('check'); ?>Garage at Midax Plaza, Njiru</li><li><?php echo sa_svc_icon('check'); ?>Book online, any time</li><li><?php echo sa_svc_icon('check'); ?>Parts from our own shop</li><li><?php echo sa_svc_icon('check'); ?>Booking number + email confirmation</li><li><?php echo sa_svc_icon('check'); ?>Drop-off or pickup</li></ul>
         </div>
         <ol class="sa-svc-steps">
-          <li><span>1</span><strong>Choose a service</strong><em>Transparent published pricing</em></li>
-          <li><span>2</span><strong>Add your vehicle</strong><em>Make, model, year</em></li>
-          <li><span>3</span><strong>Pick a slot</strong><em>Nairobi or a US partner garage</em></li>
-          <li><span>4</span><strong>Get confirmed</strong><em>Email confirmation + tracking</em></li>
+          <li><span>1</span><strong>Book</strong><em>Pick a service and a time slot</em></li>
+          <li><span>2</span><strong>Drop off or we pick up</strong><em>Bring it to Njiru or we collect it</em></li>
+          <li><span>3</span><strong>We fix it</strong><em>You approve the quote before work starts</em></li>
+          <li><span>4</span><strong>Drive away</strong><em>Pay the balance, fee already deducted</em></li>
         </ol>
       </div>
     </section>
@@ -653,7 +659,7 @@ function sa_svc_render_detail(string $slug): void
             <div class="sa-svc-bigprice<?php echo sa_svc_price_label($s, $region) === 'Quote on request' ? ' is-quote' : ''; ?>"><?php echo esc_html(sa_svc_price_label($s, $region)); ?></div>
             <?php if ($region === 'US' && !empty($s['usd']['note'])) : ?><p class="sa-svc-muted"><?php echo esc_html($s['usd']['note']); ?></p><?php endif; ?>
           <?php endif; ?>
-          <p class="sa-svc-muted"><?php echo esc_html(sa_svc_duration_label($slug)); ?> · Pay at service · Drop-off or pickup</p>
+          <p class="sa-svc-muted"><?php echo esc_html(sa_svc_duration_label($slug)); ?> · KES 1,000 fee deducted from bill · Drop-off or pickup</p>
           <a class="sa-svc-btn sa-svc-btn--primary sa-svc-btn--block" href="<?php echo esc_url(sa_svc_book_url($slug)); ?>"><?php echo sa_svc_icon('calendar'); ?> Book this service</a>
           <p class="sa-svc-fine"><?php echo esc_html(sa_svc_source_note($s, $region)); ?></p>
           <?php echo sa_svc_address_html(true); ?>
@@ -833,7 +839,7 @@ function sa_svc_render_book(): void
       </form>
       <aside class="sa-svc-side">
         <div class="sa-svc-sum"><h3>Your estimate</h3><div data-sa-summary></div>
-          <p class="sa-svc-fine">This is an estimate from published prices. You approve the final quote before any work starts, and pay at service.</p></div>
+          <p class="sa-svc-fine">This is an estimate from published prices. You approve the final quote before any work starts. The KES 1,000 booking fee is deducted from your bill.</p></div>
         <?php echo sa_svc_address_html(true); ?>
       </aside>
       </div>
@@ -856,9 +862,10 @@ function sa_svc_render_booking_card(array $b, bool $cancel = true): void
         <dt>Where</dt><dd><?php echo esc_html($loc); ?><?php if ($b['location'] === 'nairobi') : ?> · <a href="<?php echo esc_url(sa_svc_map_url()); ?>" target="_blank" rel="noopener">Map</a><?php endif; ?></dd>
         <dt>Handover</dt><dd><?php echo $b['mode'] === 'pickup' ? esc_html('Pickup from ' . $b['pickup']) . ' <small>(fee confirmed on booking)</small>' : 'Drop-off at garage'; ?></dd>
         <dt>Vehicle</dt><dd><?php echo esc_html(trim($b['year'] . ' ' . $b['make'] . ' ' . $b['model'] . ' ' . $b['reg'])); ?></dd>
-        <dt>Estimate</dt><dd><?php echo esc_html($b['estimate']); ?> · balance paid at service</dd>
+        <dt>Estimate</dt><dd><?php echo esc_html($b['estimate']); ?> · booking fee deducted from final bill</dd>
         <dt>Booking fee</dt><dd><?php echo esc_html(sa_svc_fee_label($b)); ?><?php if ($b['fee'] === 'unpaid' && $b['status'] === 'pending') : ?> · <a href="<?php echo esc_url(add_query_arg(['b' => $b['id'], 'k' => $b['key']], home_url('/book-service/pay/'))); ?>">Pay now</a><?php endif; ?></dd>
       </dl>
+      <?php if (function_exists('sa_bk_invoice_url')) : ?><p class="sa-svc-inv"><a class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--ghost" href="<?php echo esc_url(sa_bk_invoice_url((int) $b['id'])); ?>" target="_blank" rel="noopener">View invoice<?php echo in_array($b['fee'], ['paid', 'applied'], true) ? ' (paid)' : ' (unpaid)'; ?></a> <a class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--ghost" href="<?php echo esc_url(sa_bk_invoice_url((int) $b['id'], true)); ?>">Download</a></p><?php endif; ?>
       <?php if ($b['status'] === 'cancel_requested') : ?><p class="sa-svc-alert">Cancellation requested. We'll email you our decision.</p><?php endif; ?>
       <?php if ($cancel && in_array($b['status'], ['pending', 'confirmed'], true) && $b['fee'] === 'paid') : ?>
         <a class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--primary" href="<?php echo esc_url(add_query_arg(['service' => $b['service'], 'reschedule' => $b['id'], 'rk' => $b['key']], home_url('/book-service/'))); ?>">Reschedule</a>
@@ -1037,7 +1044,7 @@ function sa_svc_admin_render(): void
     foreach ($ids as $id) {
         $b = sa_svc_booking_data((int) $id);
         $svc = sa_svc_catalog()[$b['service']]['name'] ?? $b['service'];
-        echo '<tr><td><strong>' . esc_html($b['ref']) . '</strong><br><small>' . esc_html(wp_date('j M H:i', (int) $b['created'])) . '</small></td>'
+        echo '<tr><td><strong>' . esc_html($b['ref']) . '</strong><br><small>' . esc_html(wp_date('j M H:i', (int) $b['created'])) . '</small>' . (function_exists('sa_bk_invoice_url') ? '<br><a href="' . esc_url(sa_bk_invoice_url((int) $id)) . '" target="_blank">Invoice</a> · <a href="' . esc_url(sa_bk_invoice_url((int) $id, true)) . '">Download</a>' : '') . '</td>'
             . '<td>' . esc_html($b['date'] . ' ' . $b['time']) . '</td><td>' . esc_html($svc . ($b['option'] ? ' — ' . $b['option'] : '')) . ($b['notes'] ? '<br><small>' . esc_html($b['notes']) . '</small>' : '') . '</td>'
             . '<td>' . esc_html($b['name']) . '<br><a href="mailto:' . esc_attr($b['email']) . '">' . esc_html($b['email']) . '</a><br>' . esc_html($b['phone']) . '</td>'
             . '<td>' . esc_html(trim($b['year'] . ' ' . $b['make'] . ' ' . $b['model'] . ' ' . $b['reg'])) . '</td>'
@@ -1308,7 +1315,7 @@ add_action('woocommerce_single_product_summary', static function (): void {
     }
     $svc = sa_svc_for_product((int) $product->get_id());
     $name = sa_svc_catalog()[$svc]['name'] ?? 'installation';
-    echo '<div class="sa-svc-fit">' . sa_svc_icon('service') . '<div><strong>Need it fitted?</strong><span>Book installation (' . esc_html($name) . ') at our Njiru, Nairobi garage, or with a US partner garage. Pay at service.</span></div>'
+    echo '<div class="sa-svc-fit">' . sa_svc_icon('service') . '<div><strong>Need it fitted?</strong><span>Book installation (' . esc_html($name) . ') at our Njiru, Nairobi garage, or with a US partner garage. The KES 1,000 booking fee comes off your bill.</span></div>'
         . '<a class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--primary" href="' . esc_url(add_query_arg(['service' => $svc, 'part' => (int) $product->get_id()], home_url('/book-service/'))) . '">Book installation</a></div>';
 }, 36);
 
