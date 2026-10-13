@@ -15,6 +15,7 @@ Not used for display, for reference only: Rosselot (rosselot.co.ke/prices) and E
 (elitetowing.co.ke) also publish Nairobi towing tables. Rosselot's page renders client-side and
 couldn't be verified from the HTML, so it isn't shown.
 
-The tables are labelled on /roadside/ as a published Nairobi market guide with the source linked.
-They are not Supreme Autoparts' own tariff. Dispatch confirms the actual price on the call and can
+On /roadside/ the tables are labelled "Guide towing prices". Following the store-wide change in
+7f69f16, no source name or link is shown to customers; the source lives only in this file and in
+`data/roadside-catalog.php`. They are not Supreme Autoparts' own tariff. Dispatch confirms the actual price on the call and can
 record it under "Agreed price" in Super Admin → Roadside Rescue.
