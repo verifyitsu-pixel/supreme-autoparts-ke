@@ -17,11 +17,6 @@ $sa_count = function_exists('sa_published_product_count') ? sa_published_product
       <p class="sa-hero__lead">
         <?php esc_html_e('Search by part number and order online, or book our Njiru, Nairobi garage to fit it for you. One account keeps every order and booking in one place.', 'supreme-autoparts'); ?>
       </p>
-      <div class="sa-paths">
-        <a class="sa-path" href="<?php echo esc_url($sa_shop_url); ?>"><?php echo function_exists('sa_svc_icon') ? sa_svc_icon('grid') : ''; // phpcs:ignore ?><span><strong><?php esc_html_e('Shop Parts', 'supreme-autoparts'); ?></strong><small><?php esc_html_e('Find it by part number, brand or vehicle, then check out in minutes.', 'supreme-autoparts'); ?></small></span></a>
-        <a class="sa-path sa-path--svc" href="<?php echo esc_url(home_url('/book-service/')); ?>"><?php echo function_exists('sa_svc_icon') ? sa_svc_icon('calendar') : ''; // phpcs:ignore ?><span><strong><?php esc_html_e('Book a Service', 'supreme-autoparts'); ?></strong><small><?php esc_html_e('Oil, brakes, alignment, AC and more. Pick a slot online; the KES 1,000 booking fee comes off your bill.', 'supreme-autoparts'); ?></small></span></a>
-        <a class="sa-path sa-path--rs" href="<?php echo esc_url(home_url('/roadside/')); ?>"><?php echo function_exists('sa_rs_icon') ? sa_rs_icon('truck') : ''; // phpcs:ignore ?><span><strong><?php esc_html_e('Roadside Rescue', 'supreme-autoparts'); ?></strong><small><?php esc_html_e('Towing, jump-starts, flat tyres, fuel and lockouts in Nairobi. Share your location, no login needed.', 'supreme-autoparts'); ?></small></span></a>
-      </div>
 
       <form class="sa-hero__search" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>">
         <label class="screen-reader-text" for="sa-hero-search"><?php esc_html_e('Search products', 'supreme-autoparts'); ?></label>
@@ -43,6 +38,21 @@ $sa_count = function_exists('sa_published_product_count') ? sa_published_product
       <p class="sa-hero__meta">
         <a href="<?php echo esc_url($sa_shop_url); ?>"><?php esc_html_e('Shop all parts', 'supreme-autoparts'); ?></a> · <a href="<?php echo esc_url(home_url('/services/')); ?>"><?php esc_html_e('All car services', 'supreme-autoparts'); ?></a>
       </p>
+    </div>
+    <div class="sa-paths sa-paths--photo">
+      <?php
+      $sa_img = get_template_directory_uri() . '/assets/images/home/';
+      $sa_cards = [
+          ['url' => $sa_shop_url, 'img' => 'parts', 'mod' => '', 'alt' => __('Brake disc and caliper on a car', 'supreme-autoparts'), 'title' => __('Shop Parts', 'supreme-autoparts'), 'text' => __('Find it by part number, brand or vehicle, then check out in minutes.', 'supreme-autoparts')],
+          ['url' => home_url('/book-service/'), 'img' => 'service', 'mod' => ' sa-path--svc', 'alt' => __('Mechanic working under a car in a garage', 'supreme-autoparts'), 'title' => __('Book a Service', 'supreme-autoparts'), 'text' => __('Oil, brakes, alignment, AC and more. Pick a slot online; the KES 1,000 booking fee comes off your bill.', 'supreme-autoparts')],
+          ['url' => home_url('/roadside/'), 'img' => 'roadside', 'mod' => ' sa-path--rs', 'alt' => __('Tow truck loading a vehicle onto a flatbed', 'supreme-autoparts'), 'title' => __('Roadside Rescue', 'supreme-autoparts'), 'text' => __('Towing, jump-starts, flat tyres, fuel and lockouts in Nairobi. Share your location, no login needed.', 'supreme-autoparts')],
+      ];
+      foreach ($sa_cards as $i => $c) : ?>
+        <a class="sa-path sa-pcard<?php echo esc_attr($c['mod']); ?>" href="<?php echo esc_url($c['url']); ?>">
+          <span class="sa-pcard__media"><img src="<?php echo esc_url($sa_img . $c['img'] . '-640.webp'); ?>" srcset="<?php echo esc_url($sa_img . $c['img'] . '-640.webp'); ?> 640w, <?php echo esc_url($sa_img . $c['img'] . '-1200.webp'); ?> 1200w" sizes="(max-width: 700px) 92vw, 410px" width="1200" height="900" alt="<?php echo esc_attr($c['alt']); ?>" decoding="async"<?php echo 0 === $i ? ' fetchpriority="high"' : ' loading="lazy"'; ?>></span>
+          <span class="sa-pcard__body"><strong><?php echo esc_html($c['title']); ?></strong><small><?php echo esc_html($c['text']); ?></small><em class="sa-pcard__go" aria-hidden="true">&rarr;</em></span>
+        </a>
+      <?php endforeach; ?>
     </div>
   </div>
 </section>
