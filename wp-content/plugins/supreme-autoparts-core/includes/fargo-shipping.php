@@ -91,7 +91,7 @@ function sa_fargo_destination(string $state, string $city): ?array
 function sa_fargo_fee_kes(array $dest, float $kg): float
 {
     $base_kg = (float) (sa_fargo_card()['base_covers_kg'] ?? 5);
-    $over = max(0.0, ceil($kg - $base_kg));
+    $over = max(0.0, ceil(round($kg - $base_kg, 3))); // round first: 10.0000001 kg must not bill an extra kg
     return $dest['kes'] + $over * $dest['excess'];
 }
 
