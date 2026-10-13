@@ -14,8 +14,8 @@ if (!defined('ABSPATH')) {
 
 final class Whop_Open_Pay {
 
-    private const MIN_AMOUNT = 1.00;
-    private const MAX_AMOUNT = 100000.00;
+    private const MIN_AMOUNT = 0.01;
+    private const MAX_AMOUNT = 999999.99;
     private const NOTE_MAX   = 200;
     private const ACTION     = 'sa_open_pay';
 
@@ -182,20 +182,18 @@ final class Whop_Open_Pay {
                         <span class="sa-open-pay__currency" aria-hidden="true">USD</span>
                         <input
                             class="sa-open-pay__input"
-                            type="number"
+                            type="text"
                             name="amount"
                             id="sa_open_pay_amount"
                             inputmode="decimal"
-                            min="1"
-                            max="100000"
-                            step="0.01"
+                            pattern="[0-9][0-9,]*(\.[0-9]{1,2})?|\.[0-9]{1,2}"
                             required
                             placeholder="0.00"
                             autocomplete="off"
                             value="<?php echo esc_attr($prefill_amount); ?>"
                         />
                     </div>
-                    <p class="sa-open-pay__hint"><?php echo esc_html__('Minimum $1.00 · Maximum $100,000.00', 'whop-payments'); ?></p>
+                    <p class="sa-open-pay__hint"><?php echo esc_html__('Enter any amount, e.g. 0.50, 25 or 1,234.50', 'whop-payments'); ?></p>
 
                     <label class="sa-open-pay__label" for="sa_open_pay_note">
                         <?php echo esc_html__('Note (optional)', 'whop-payments'); ?>
@@ -215,6 +213,11 @@ final class Whop_Open_Pay {
                         <?php echo esc_html__('Pay', 'whop-payments'); ?>
                     </button>
                 </form>
+                <script>
+                (function(){try{var u=new URL(window.location.href);if(u.searchParams.has('sa_pay_err')){u.searchParams.delete('sa_pay_err');history.replaceState(null,'',u.toString());}
+                var i=document.getElementById('sa_open_pay_amount'),n=document.querySelector('.sa-open-pay__notice--err');
+                if(i&&n){i.addEventListener('input',function(){n.style.display='none';});}}catch(e){}})();
+                </script>
             </div>
         </div>
         <?php
@@ -480,7 +483,7 @@ final class Whop_Open_Pay {
         if (!is_numeric($amount_raw) || $amount < self::MIN_AMOUNT || $amount > self::MAX_AMOUNT) {
             self::redirect_error(
                 $pay_url,
-                __('Enter a valid USD amount between $1.00 and $100,000.00.', 'whop-payments')
+                __('Please enter an amount greater than 0 (e.g. 25 or 1,234.50).', 'whop-payments')
             );
         }
 
