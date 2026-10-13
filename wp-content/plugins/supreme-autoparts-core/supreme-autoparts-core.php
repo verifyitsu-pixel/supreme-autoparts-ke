@@ -106,7 +106,7 @@ add_action('plugins_loaded', static function (): void {
  * Force page seed when sa_pages_seed_ver bumps (creates missing policy pages on deploy).
  */
 add_action('init', static function (): void {
-    if (get_option('sa_pages_seed_ver') === '13') {
+    if (get_option('sa_pages_seed_ver') === '14') {
         return;
     }
     if (!function_exists('sa_core_seed_pages')) {

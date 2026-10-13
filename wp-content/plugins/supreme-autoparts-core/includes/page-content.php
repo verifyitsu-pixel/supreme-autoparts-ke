@@ -153,6 +153,15 @@ HTML,
         'shipping-policy' => [
             'title'   => 'Shipping Policy',
             'content' => <<<HTML
+<p><strong>Where we deliver:</strong> Supreme Autoparts delivers within <strong>Kenya</strong> — Nairobi plus countrywide by courier — and to the <strong>United States</strong>. Other international destinations are available at checkout.</p>
+<h2>Kenya delivery</h2>
+<ul>
+<li><strong>Nairobi Delivery:</strong> $8 flat.</li>
+<li><strong>Upcountry Kenya (countrywide by courier):</strong> $15 flat.</li>
+<li><strong>Local pickup (Nairobi):</strong> free — arrange with support.</li>
+</ul>
+<p>Delivery times depend on your location and part availability; we confirm timing with you after your order. See also <a href="/shipping-to-kenya/">Shipping to Kenya</a>.</p>
+<h2>United States &amp; international</h2>
 <p>Supreme Autoparts ships using the methods shown at checkout. Rates are in <strong>USD</strong> (same as checkout). Totals update when you change address or method.</p>
 <ul>
 <li><strong>Standard Shipping (Continental US):</strong> $8 flat.</li>
