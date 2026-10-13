@@ -24,7 +24,15 @@ function sa_core_logout_done_url(): string
 
 function sa_core_logout_link_url(): string
 {
-    return function_exists('wc_logout_url') ? wc_logout_url() : wp_logout_url(home_url('/'));
+    // Always the My Account endpoint (handled below even with a stale nonce),
+    // never wp-login.php?action=logout which shows a 403 "Are you sure?" page.
+    if (function_exists('wc_get_account_endpoint_url')) {
+        $base = wc_get_page_permalink('myaccount');
+        $ep   = (string) get_option('woocommerce_logout_endpoint', 'customer-logout');
+        $url  = function_exists('wc_get_endpoint_url') ? wc_get_endpoint_url($ep ?: 'customer-logout', '', $base) : $base;
+        return wp_nonce_url($url, 'customer-logout');
+    }
+    return wp_logout_url(home_url('/'));
 }
 
 /** Full logout: session, cookies, Woo session, no-cache. */
@@ -109,3 +117,15 @@ add_action('wp_head', static function (): void {
         . '.sa-side__link--logout{color:#b91c1c}'
         . '</style>';
 }, 50);
+
+/** Customers hitting wp-login.php?action=logout (old links) log out without the confirm page. */
+add_action('login_init', static function (): void {
+    if (($_REQUEST['action'] ?? '') !== 'logout' || !is_user_logged_in()) { // phpcs:ignore
+        return;
+    }
+    $u = wp_get_current_user();
+    if (user_can($u, 'manage_woocommerce') || user_can($u, 'manage_options')) {
+        return;
+    }
+    sa_core_do_customer_logout();
+}, 1);

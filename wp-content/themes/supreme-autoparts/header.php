@@ -53,7 +53,7 @@ if (!defined('ABSPATH')) {
           <span class="sa-hide-sm"><?php esc_html_e('Account', 'supreme-autoparts'); ?></span>
         </a>
         <?php if (is_user_logged_in()) : ?>
-          <a class="sa-hide-sm sa-header__logout" href="<?php echo esc_url(wc_logout_url()); ?>"><?php esc_html_e('Log out', 'supreme-autoparts'); ?></a>
+          <a class="sa-hide-sm sa-header__logout" href="<?php echo esc_url(function_exists('sa_core_logout_link_url') ? sa_core_logout_link_url() : wc_logout_url()); ?>"><?php esc_html_e('Log out', 'supreme-autoparts'); ?></a>
         <?php endif; ?>
         <button type="button" class="sa-header__cart" data-sa-cart-open aria-controls="sa-cart-drawer" aria-expanded="false">
           <?php echo sa_category_icon_svg('cart'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
