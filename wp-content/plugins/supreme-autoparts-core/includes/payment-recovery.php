@@ -101,6 +101,13 @@ add_action('woocommerce_cart_loaded_from_session', static function (): void {
     sa_pr_restore_order_to_cart($o);
 }, 40);
 
+/* A customer removing an item is intentional: never refill after that. */
+add_action('woocommerce_cart_item_removed', static function (): void {
+    if (function_exists('WC') && WC()->session) {
+        WC()->session->set('sa_pr_last_order', null);
+    }
+});
+
 /* Failure / cancel messaging. */
 function sa_pr_saved_notice_html(?WC_Order $o = null): string
 {
