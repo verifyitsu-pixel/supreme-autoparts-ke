@@ -116,3 +116,6 @@
 .woocommerce form .input-text,.woocommerce form select,.sa-svc-book input:not([type=radio]):not([type=checkbox]),.sa-svc-book select,.sa-svc-book textarea,.select2-container .select2-selection--single{
   border-radius:var(--sa-input-radius)!important;border:1px solid var(--sa-input-border)!important;min-height:var(--sa-input-h);font-family:var(--sa-font);font-size:16px}
 .woocommerce form .input-text:focus,.sa-svc-book input:focus,.sa-svc-book select:focus{border-color:var(--sa-btn-primary-bg)!important;box-shadow:var(--sa-focus)!important;outline:0}
+.sa-cart-drawer .sa-mc__buttons .sa-mc__btn--ghost{background:#fff!important;color:#191919!important;border:1px solid #cccccc!important}
+.sa-cart-line .sa-mc__meta{margin:.35rem 0 .5rem}
+.sa-checkout-line dl.variation{display:block}.sa-checkout-line dl.variation dt{display:inline;margin-right:.25rem}.sa-checkout-line dl.variation dd{display:inline;margin:0 .6rem 0 0}

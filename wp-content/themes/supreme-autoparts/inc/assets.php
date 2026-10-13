@@ -99,5 +99,5 @@ add_action('wp_enqueue_scripts', static function (): void {
 }, 1000);
 
 add_action('wp_enqueue_scripts', static function (): void {
-    wp_enqueue_style('supreme-autoparts-cart-ui', SA_THEME_URI . '/assets/css/cart-ui.css', ['supreme-autoparts-polish'], SA_THEME_VERSION . '.cu3');
+    wp_enqueue_style('supreme-autoparts-cart-ui', SA_THEME_URI . '/assets/css/cart-ui.css', ['supreme-autoparts-polish'], SA_THEME_VERSION . '.cu4');
 }, 1001);
