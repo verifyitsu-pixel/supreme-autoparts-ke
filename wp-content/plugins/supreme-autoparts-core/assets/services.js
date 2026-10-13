@@ -20,14 +20,14 @@
   function renderSummary() {
     var s = f.querySelector('[name=service]:checked'), l = f.querySelector('[name=location]:checked'), t = f.querySelector('[name=time]:checked');
     if (!s) { summary.innerHTML = ''; return; }
-    var name = s.parentNode.querySelector('strong').textContent, price = s.parentNode.querySelector('em').textContent;
+    var dur = s.parentNode.querySelector('.sa-svc-durtag'), md = f.querySelector('[name=mode]:checked'), name = s.parentNode.querySelector('strong').textContent + (dur ? ' (' + dur.textContent + ')' : ''), price = s.parentNode.querySelector('em').textContent;
     if (!optBox.hidden && optSel.value) price = optSel.options[optSel.selectedIndex].textContent.split(' — ')[1];
-    summary.innerHTML = '<strong>' + name + '</strong> · ' + price + (dateIn.value ? ' · ' + dateIn.value : '') + (t ? ' ' + t.value : '') + (l ? '<br><small>' + l.parentNode.querySelector('strong').textContent + '</small>' : '');
+    summary.innerHTML = '<strong>' + name + '</strong> · ' + price + (dateIn.value ? ' · ' + dateIn.value : '') + (t ? ' ' + t.value : '') + (l ? '<br><small>' + l.parentNode.querySelector('strong').textContent + (md ? ' · ' + (md.value === 'pickup' ? 'Vehicle pickup (fee confirmed on booking)' : 'Drop-off') : '') + '</small>' : '');
   }
   function loadSlots() {
     if (!dateIn.value) return;
     slotsBox.innerHTML = '<p class="sa-svc-muted">Checking availability…</p>';
-    fetch(saSvc.ajax + '?action=sa_svc_slots&date=' + encodeURIComponent(dateIn.value) + '&location=' + encodeURIComponent(val('location')), { credentials: 'same-origin' })
+    fetch(saSvc.ajax + '?action=sa_svc_slots&date=' + encodeURIComponent(dateIn.value) + '&location=' + encodeURIComponent(val('location')) + '&service=' + encodeURIComponent(val('service')), { credentials: 'same-origin' })
       .then(function (r) { return r.json(); }).then(function (j) {
         var s = (j && j.data && j.data.slots) || [];
         if (!s.length) { slotsBox.innerHTML = '<p class="sa-svc-muted">No free slots that day (we are closed Sundays). Try another date.</p>'; renderSummary(); return; }
@@ -38,7 +38,8 @@
   f.addEventListener('change', function (e) {
     var n = e.target.name;
     if (n === 'service' || n === 'location') refreshPrices();
-    if (n === 'location' || e.target === dateIn) loadSlots();
+    if (n === 'location' || n === 'service' || e.target === dateIn) loadSlots();
+    if (n === 'mode' || n === 'location') togglePickup();
     if (n === 'time' || n === 'option') renderSummary();
   });
   var veh = f.querySelector('[data-sa-vehicle]');
@@ -48,5 +49,11 @@
     ['make', 'model', 'year', 'reg'].forEach(function (k) { f.querySelector('[name=' + k + ']').value = v[k] || ''; });
   });
   f.addEventListener('submit', function (e) { if (!f.querySelector('[name=time]:checked')) { e.preventDefault(); slotsBox.scrollIntoView({ behavior: 'smooth', block: 'center' }); slotsBox.classList.add('is-error'); } });
+  function togglePickup() {
+    var us = region() === 'US', po = f.querySelector('[data-sa-pickup-opt]'), pk = f.querySelector('[data-sa-pickup]'), ta = pk.querySelector('textarea');
+    po.hidden = us; if (us) { f.querySelector('[name=mode][value=dropoff]').checked = true; }
+    var on = !us && val('mode') === 'pickup'; pk.hidden = !on; ta.required = on; renderSummary();
+  }
+  togglePickup();
   refreshPrices();
 })();

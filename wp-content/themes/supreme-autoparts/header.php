@@ -77,6 +77,7 @@ if (!defined('ABSPATH')) {
           <span class="sa-cart-count" data-sa-cart-count><?php echo esc_html((string) (function_exists('WC') && WC()->cart ? WC()->cart->get_cart_contents_count() : 0)); ?></span>
         </button>
       <?php endif; ?>
+      <button type="button" class="sa-header__menu" data-sa-side-open aria-label="<?php esc_attr_e('Open menu', 'supreme-autoparts'); ?>"><?php echo function_exists('sa_svc_icon') ? sa_svc_icon('menu') : ''; // phpcs:ignore ?><span><?php esc_html_e('Menu', 'supreme-autoparts'); ?></span></button>
     </div>
   </div>
 

@@ -10,8 +10,24 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-const SA_SVC_VER = '1';
+const SA_SVC_VER = '2';
 const SA_SVC_SLOT_CAPACITY = 2;
+// Registered business address (Business Registration Certificate BN-93S9AZEJ, Standard Driveworks).
+const SA_SVC_GARAGE_ADDRESS = 'Ground Floor, Midax Plaza, Kandundo Rd, Njiru, Nairobi, Kenya';
+const SA_SVC_GARAGE_POSTAL = 'P.O. Box 00516-00100 G.P.O Nairobi';
+
+function sa_svc_map_url(): string
+{
+    return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode('Midax Plaza, Kandundo Rd, Njiru, Nairobi');
+}
+
+function sa_svc_address_html(bool $compact = false): string
+{
+    return '<div class="sa-svc-addr' . ($compact ? ' sa-svc-addr--compact' : '') . '">' . sa_svc_icon('pin')
+        . '<div><strong>Supreme Autoparts garage</strong><span>' . esc_html(SA_SVC_GARAGE_ADDRESS) . '</span>'
+        . ($compact ? '' : '<span class="sa-svc-muted">' . esc_html(SA_SVC_GARAGE_POSTAL) . '</span>')
+        . '<a href="' . esc_url(sa_svc_map_url()) . '" target="_blank" rel="noopener">Open in Google Maps →</a></div></div>';
+}
 
 function sa_svc_catalog(): array
 {
@@ -36,8 +52,7 @@ function sa_svc_statuses(): array
 function sa_svc_locations(): array
 {
     return [
-        'nairobi' => ['label' => 'Nairobi, Kenya — Supreme Autoparts service partner', 'region' => 'KE', 'note' => 'Exact workshop address is confirmed by our team with your booking.'],
-        'kenya-mobile' => ['label' => 'Nairobi — mobile service at your location', 'region' => 'KE', 'note' => 'Selected services only; our team confirms availability.'],
+        'nairobi' => ['label' => 'Nairobi garage — Midax Plaza, Kandundo Rd, Njiru', 'region' => 'KE', 'note' => SA_SVC_GARAGE_ADDRESS],
         'usa' => ['label' => 'United States — partner garage near you', 'region' => 'US', 'note' => 'We match you with a partner garage near your ZIP code and confirm by email.'],
     ];
 }
@@ -106,6 +121,7 @@ add_action('init', static function (): void {
     add_rewrite_rule('^services/([a-z0-9-]+)/?$', 'index.php?sa_svc_view=detail&sa_svc=$matches[1]', 'top');
     add_rewrite_rule('^book-service/?$', 'index.php?sa_svc_view=book', 'top');
     add_rewrite_rule('^book-service/confirmed/?$', 'index.php?sa_svc_view=confirmed', 'top');
+    add_rewrite_rule('^track-order/?$', 'index.php?sa_svc_view=track', 'top');
 
     if (get_option('sa_svc_rewrite_ver') !== SA_SVC_VER) {
         flush_rewrite_rules(false);
@@ -127,14 +143,32 @@ function sa_svc_booking_data(int $id): array
         'date' => $m('date'), 'time' => $m('time'), 'location' => $m('location'), 'region' => $m('region'),
         'status' => $m('status') ?: 'pending', 'name' => $m('name'), 'email' => $m('email'), 'phone' => $m('phone'),
         'make' => $m('make'), 'model' => $m('model'), 'year' => $m('year'), 'reg' => $m('reg'),
-        'notes' => $m('notes'), 'estimate' => $m('estimate'), 'user' => (int) $m('user'), 'key' => $m('key'),
+        'notes' => $m('notes'), 'estimate' => $m('estimate'), 'mode' => $m('mode') ?: 'dropoff', 'pickup' => $m('pickup'), 'gcal' => $m('gcal'), 'user' => (int) $m('user'), 'key' => $m('key'),
         'created' => get_post_time('U', true, $id),
     ];
 }
 
 function sa_svc_slot_times(): array
 {
-    return ['08:00', '09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00'];
+    return ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'];
+}
+
+/** Number of 1-hour slots a service occupies (sized from its estimated duration). */
+function sa_svc_blocks(string $service): int
+{
+    $d = (int) (sa_svc_catalog()[$service]['duration'] ?? 60);
+    return max(1, (int) ceil($d / 60));
+}
+
+function sa_svc_duration_label(string $service): string
+{
+    $s = sa_svc_catalog()[$service] ?? null;
+    if (!$s) {
+        return '';
+    }
+    $m = (int) $s['duration'];
+    $txt = $m >= 60 ? (floor($m / 60) . ' h' . ($m % 60 ? ' ' . ($m % 60) . ' min' : '')) : $m . ' min';
+    return '≈ ' . $txt . (empty($s['duration_src']) ? ' (estimate)' : '');
 }
 
 function sa_svc_slots_taken(string $date, string $location): array
@@ -149,14 +183,18 @@ function sa_svc_slots_taken(string $date, string $location): array
     ]);
     $count = [];
     foreach ($q as $id) {
-        $t = (string) get_post_meta($id, '_sa_bk_time', true);
-        $count[$t] = ($count[$t] ?? 0) + 1;
+        $t = (int) substr((string) get_post_meta($id, '_sa_bk_time', true), 0, 2);
+        $n = sa_svc_blocks((string) get_post_meta($id, '_sa_bk_service', true));
+        for ($h = $t; $h < $t + $n; $h++) {
+            $k = sprintf('%02d:00', $h);
+            $count[$k] = ($count[$k] ?? 0) + 1;
+        }
     }
     return $count;
 }
 
 /** Available slots: Mon–Sat, future only (store timezone), capacity per slot/location. */
-function sa_svc_available_slots(string $date, string $location): array
+function sa_svc_available_slots(string $date, string $location, string $service = ''): array
 {
     $tz = wp_timezone();
     $d = DateTimeImmutable::createFromFormat('!Y-m-d', $date, $tz);
@@ -169,15 +207,20 @@ function sa_svc_available_slots(string $date, string $location): array
     }
     $taken = sa_svc_slots_taken($date, $location);
     $out = [];
+    $close = (int) $d->format('w') === 6 ? 13 : 17; // Sat half-day.
+    $blocks = $service !== '' ? sa_svc_blocks($service) : 1;
     foreach (sa_svc_slot_times() as $t) {
-        if ((int) $d->format('w') === 6 && $t >= '14:00') {
-            continue; // Saturday half-day.
+        $h = (int) substr($t, 0, 2);
+        if ($h + $blocks > $close) {
+            continue; // Job must finish before closing.
+        }
+        for ($x = $h; $x < $h + $blocks; $x++) {
+            if (($taken[sprintf('%02d:00', $x)] ?? 0) >= SA_SVC_SLOT_CAPACITY) {
+                continue 2;
+            }
         }
         $slot = DateTimeImmutable::createFromFormat('Y-m-d H:i', $date . ' ' . $t, $tz);
         if ($slot <= $now->modify('+2 hours')) {
-            continue;
-        }
-        if (($taken[$t] ?? 0) >= SA_SVC_SLOT_CAPACITY) {
             continue;
         }
         $out[] = $t;
@@ -194,7 +237,9 @@ function sa_svc_ajax_slots(): void
     if (!isset(sa_svc_locations()[$loc])) {
         wp_send_json_error(['message' => 'Unknown location'], 400);
     }
-    wp_send_json_success(['slots' => sa_svc_available_slots($date, $loc)]);
+    $svc = sanitize_key((string) ($_GET['service'] ?? ''));
+    $svc = isset(sa_svc_catalog()[$svc]) ? $svc : '';
+    wp_send_json_success(['slots' => sa_svc_available_slots($date, $loc, $svc), 'duration' => $svc ? sa_svc_duration_label($svc) : '']);
 }
 
 /* ---------- Booking submit ---------- */
@@ -223,10 +268,14 @@ function sa_svc_handle_booking(): void
     $email = sanitize_email($p('email'));
     if (!isset($catalog[$service])) $fail('Please choose a service.');
     if (!isset(sa_svc_locations()[$loc])) $fail('Please choose a location.');
-    if (!in_array($time, sa_svc_available_slots($date, $loc), true)) $fail('That time slot is no longer available. Please pick another.');
+    if (!in_array($time, sa_svc_available_slots($date, $loc, $service), true)) $fail('That time slot is no longer available. Please pick another.');
     if (!is_email($email)) $fail('Please enter a valid email address.');
     if ($p('name') === '' || $p('phone') === '') $fail('Please enter your name and phone number.');
     if ($p('make') === '' || $p('model') === '') $fail('Please enter your vehicle make and model.');
+    $mode = $p('mode') === 'pickup' ? 'pickup' : 'dropoff';
+    $pickup = sanitize_textarea_field(wp_unslash((string) ($_POST['pickup_address'] ?? '')));
+    if ($mode === 'pickup' && $loc === 'usa') $mode = 'dropoff';
+    if ($mode === 'pickup' && strlen(trim($pickup)) < 8) $fail('Please enter your full pickup address.');
 
     $svc = $catalog[$service];
     $region = sa_svc_locations()[$loc]['region'];
@@ -254,7 +303,7 @@ function sa_svc_handle_booking(): void
         'location' => $loc, 'region' => $region, 'status' => 'pending', 'name' => $p('name'), 'email' => $email,
         'phone' => $p('phone'), 'make' => $p('make'), 'model' => $p('model'), 'year' => $year === '0' ? '' : $year,
         'reg' => strtoupper($p('reg')), 'notes' => sanitize_textarea_field(wp_unslash((string) ($_POST['notes'] ?? ''))),
-        'estimate' => $estimate, 'user' => (string) $user, 'key' => wp_generate_password(20, false, false),
+        'estimate' => $estimate, 'mode' => $mode, 'pickup' => $mode === 'pickup' ? $pickup : '', 'user' => (string) $user, 'key' => wp_generate_password(20, false, false),
     ];
     foreach ($meta as $k => $v) {
         update_post_meta((int) $id, '_sa_bk_' . $k, $v);
@@ -263,6 +312,7 @@ function sa_svc_handle_booking(): void
         sa_svc_save_vehicle($user, ['make' => $meta['make'], 'model' => $meta['model'], 'year' => $meta['year'], 'reg' => $meta['reg']]);
     }
     sa_svc_send_emails((int) $id, 'created');
+    sa_svc_gcal_sync((int) $id);
     wp_safe_redirect(add_query_arg(['b' => (int) $id, 'k' => $meta['key']], home_url('/book-service/confirmed/')));
     exit;
 }
@@ -322,6 +372,7 @@ function sa_svc_customer_cancel(): void
     }
     update_post_meta($id, '_sa_bk_status', 'cancelled');
     sa_svc_send_emails($id, 'cancelled');
+    sa_svc_gcal_sync($id);
     $to = wp_get_referer() ?: home_url('/');
     wp_safe_redirect(add_query_arg('sa_cancelled', '1', $to));
     exit;
@@ -343,7 +394,8 @@ function sa_svc_send_emails(int $id, string $event): void
     ];
     $rows = [
         'Reference' => $b['ref'], 'Service' => $svc['name'] . ($b['option'] ? ' — ' . $b['option'] : ''),
-        'When' => $when, 'Where' => $loc, 'Vehicle' => trim($b['year'] . ' ' . $b['make'] . ' ' . $b['model'] . ' ' . $b['reg']),
+        'When' => $when, 'Duration' => sa_svc_duration_label($b['service']), 'Where' => $loc,
+        'Handover' => $b['mode'] === 'pickup' ? 'Vehicle pickup from: ' . $b['pickup'] . ' (pickup fee confirmed on booking)' : 'Drop-off at the garage', 'Vehicle' => trim($b['year'] . ' ' . $b['make'] . ' ' . $b['model'] . ' ' . $b['reg']),
         'Estimate' => $b['estimate'] . ' (pay at service)', 'Status' => $status,
     ];
     $html = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#222">'
@@ -379,10 +431,10 @@ add_action('template_redirect', static function (): void {
     $wp_query->is_404 = false;
     $wp_query->is_page = true;
     status_header(200);
-    $titles = ['index' => 'Car Services & Repairs', 'book' => 'Book a Service', 'confirmed' => 'Booking confirmed'];
+    $titles = ['track' => 'Track your order', 'index' => 'Car Services & Repairs', 'book' => 'Book a Service', 'confirmed' => 'Booking confirmed'];
     $title = $view === 'detail' ? sa_svc_catalog()[(string) get_query_var('sa_svc')]['name'] : $titles[$view] ?? 'Services';
     add_filter('pre_get_document_title', static fn() => $title . ' | ' . get_bloginfo('name'), 99);
-    if ($view === 'confirmed' || $view === 'book') {
+    if (in_array($view, ['confirmed', 'book', 'track'], true)) {
         add_filter('wp_robots', static fn(array $r) => array_merge($r, ['noindex' => true]));
     }
     get_header();
@@ -391,6 +443,7 @@ add_action('template_redirect', static function (): void {
         case 'detail': sa_svc_render_detail((string) get_query_var('sa_svc')); break;
         case 'book': sa_svc_render_book(); break;
         case 'confirmed': sa_svc_render_confirmed(); break;
+        case 'track': echo '<div class="sa-container sa-svc-book"><h1>Track your order</h1><p class="sa-svc-lead">Enter your order number and billing email.</p>' . do_shortcode('[woocommerce_order_tracking]') . '</div>'; break;
         default: sa_svc_render_index();
     }
     echo '</main>';
@@ -420,6 +473,16 @@ function sa_svc_icon(string $name): string
         'service' => '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>',
         'calendar' => '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
         'check' => '<path d="M5 12l5 5 9-10"/>',
+        'pin' => '<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+        'cart' => '<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.5 12h11L21 7H6.5"/>',
+        'user' => '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
+        'box' => '<path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/>',
+        'truck' => '<path d="M1 6h13v10H1zM14 10h4l3 3v3h-7"/><circle cx="5" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',
+        'car' => '<path d="M3 13l2-5a2 2 0 0 1 2-1h10a2 2 0 0 1 2 1l2 5v5H3z"/><circle cx="7" cy="16" r="1.4"/><circle cx="17" cy="16" r="1.4"/>',
+        'chat' => '<path d="M21 12a8 8 0 0 1-11.8 7L3 21l2-6A8 8 0 1 1 21 12z"/>',
+        'grid' => '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+        'close' => '<path d="M6 6l12 12M18 6L6 18"/>',
+        'menu' => '<path d="M4 7h16M4 12h16M4 17h16"/>',
     ][$name] ?? '<circle cx="12" cy="12" r="9"/>';
     return '<svg class="sa-svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $p . '</svg>';
 }
@@ -467,7 +530,7 @@ function sa_svc_render_index(): void
               <p><?php echo esc_html($s['summary']); ?></p>
               <div class="sa-svc-card__foot">
                 <span class="sa-svc-price<?php echo sa_svc_price_label($s, $region) === 'Quote on request' ? ' is-quote' : ''; ?>"><?php echo esc_html(sa_svc_price_label($s, $region)); ?></span>
-                <span class="sa-svc-dur">~<?php echo (int) $s['duration']; ?> min</span>
+                <span class="sa-svc-dur"><?php echo esc_html(sa_svc_duration_label($slug)); ?></span>
               </div>
               <div class="sa-svc-card__act">
                 <a class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--primary" href="<?php echo esc_url(sa_svc_book_url($slug)); ?>">Book</a>
@@ -476,7 +539,8 @@ function sa_svc_render_index(): void
             </article>
           <?php endforeach; ?>
         </div>
-      <p class="sa-svc-fine">Kenya prices are reference prices published by AutoXpress Kenya; US prices are national average ranges from RepairPal. Services without a published price are quoted for your vehicle. You always approve the final price before work starts.</p>
+      <div class="sa-svc-locbar"><?php echo sa_svc_address_html(); ?><iframe title="Garage map" loading="lazy" src="https://www.google.com/maps?q=<?php echo rawurlencode('Midax Plaza, Kandundo Rd, Njiru, Nairobi'); ?>&output=embed"></iframe></div>
+      <p class="sa-svc-fine">Job durations are typical estimates; your technician confirms timing. Kenya prices are reference prices published by AutoXpress Kenya; US prices are national average ranges from RepairPal. Services without a published price are quoted for your vehicle. You always approve the final price before work starts.</p>
     </section>
     <?php
 }
@@ -520,9 +584,10 @@ function sa_svc_render_detail(string $slug): void
             <div class="sa-svc-bigprice<?php echo sa_svc_price_label($s, $region) === 'Quote on request' ? ' is-quote' : ''; ?>"><?php echo esc_html(sa_svc_price_label($s, $region)); ?></div>
             <?php if ($region === 'US' && !empty($s['usd']['note'])) : ?><p class="sa-svc-muted"><?php echo esc_html($s['usd']['note']); ?></p><?php endif; ?>
           <?php endif; ?>
-          <p class="sa-svc-muted">Approx. <?php echo (int) $s['duration']; ?> minutes · Pay at service</p>
+          <p class="sa-svc-muted"><?php echo esc_html(sa_svc_duration_label($slug)); ?> · Pay at service · Drop-off or pickup</p>
           <a class="sa-svc-btn sa-svc-btn--primary sa-svc-btn--block" href="<?php echo esc_url(sa_svc_book_url($slug)); ?>"><?php echo sa_svc_icon('calendar'); ?> Book this service</a>
           <p class="sa-svc-fine"><?php echo esc_html(sa_svc_source_note($s, $region)); ?></p>
+          <?php echo sa_svc_address_html(true); ?>
         </aside>
       </div>
       <?php if ($parts) : ?>
@@ -569,7 +634,7 @@ function sa_svc_render_book(): void
           <?php foreach ($catalog as $slug => $s) : ?>
             <label class="sa-svc-choice"><input type="radio" name="service" value="<?php echo esc_attr($slug); ?>" <?php checked($sel === $slug || ($sel === '' && $slug === 'oil-change')); ?> required
               data-kes='<?php echo esc_attr(wp_json_encode($s['kes']['options'] ?? [])); ?>'>
-              <span><?php echo sa_svc_icon($s['icon']); ?><strong><?php echo esc_html($s['name']); ?></strong><em data-price-ke="<?php echo esc_attr(sa_svc_price_label($s, 'KE')); ?>" data-price-us="<?php echo esc_attr(sa_svc_price_label($s, 'US')); ?>"><?php echo esc_html(sa_svc_price_label($s, $region)); ?></em></span></label>
+              <span><?php echo sa_svc_icon($s['icon']); ?><strong><?php echo esc_html($s['name']); ?></strong><small class="sa-svc-durtag"><?php echo esc_html(sa_svc_duration_label($slug)); ?></small><em data-price-ke="<?php echo esc_attr(sa_svc_price_label($s, 'KE')); ?>" data-price-us="<?php echo esc_attr(sa_svc_price_label($s, 'US')); ?>"><?php echo esc_html(sa_svc_price_label($s, $region)); ?></em></span></label>
           <?php endforeach; ?>
           </div>
           <div class="sa-svc-option" data-sa-option hidden><label>Option <select name="option"></select></label></div>
@@ -595,10 +660,15 @@ function sa_svc_render_book(): void
               <span><strong><?php echo esc_html($l['label']); ?></strong><em><?php echo esc_html($l['note']); ?></em></span></label>
           <?php endforeach; ?>
           </div>
+          <div class="sa-svc-modes" data-sa-modes>
+            <label class="sa-svc-choice sa-svc-choice--row"><input type="radio" name="mode" value="dropoff" checked><span><strong>Drop-off at our garage</strong><em><?php echo esc_html(SA_SVC_GARAGE_ADDRESS); ?> · <a href="<?php echo esc_url(sa_svc_map_url()); ?>" target="_blank" rel="noopener">Map</a></em></span></label>
+            <label class="sa-svc-choice sa-svc-choice--row" data-sa-pickup-opt><input type="radio" name="mode" value="pickup"><span><strong>Vehicle pickup from my address</strong><em>Nairobi area. Pickup fee confirmed on booking.</em></span></label>
+          </div>
+          <label class="sa-svc-full" data-sa-pickup hidden>Pickup address* <textarea name="pickup_address" rows="2" placeholder="Estate, street, building, landmark"></textarea></label>
           <div class="sa-svc-row">
             <label>Date* <input type="date" name="date" required min="<?php echo esc_attr($min); ?>" max="<?php echo esc_attr($max); ?>" data-sa-date></label>
           </div>
-          <div class="sa-svc-slots" data-sa-slots><p class="sa-svc-muted">Choose a date to see available times (Mon–Fri 8:00–16:00, Sat 8:00–12:00).</p></div>
+          <div class="sa-svc-slots" data-sa-slots><p class="sa-svc-muted">Choose a date to see available times (Mon–Fri 8:00–17:00, Sat 8:00–13:00). Longer jobs reserve consecutive hours.</p></div>
         </fieldset>
         <fieldset class="sa-svc-step"><legend><span>4</span> Your details</legend>
           <div class="sa-svc-row">
@@ -626,7 +696,9 @@ function sa_svc_render_booking_card(array $b, bool $cancel = true): void
       <h3><?php echo sa_svc_icon($svc['icon'] ?? 'service'); ?> <?php echo esc_html($svc['name'] . ($b['option'] ? ' — ' . $b['option'] : '')); ?></h3>
       <dl>
         <dt>When</dt><dd><?php echo esc_html(date_i18n('D j M Y', strtotime($b['date'])) . ', ' . $b['time']); ?></dd>
-        <dt>Where</dt><dd><?php echo esc_html($loc); ?></dd>
+        <dt>Duration</dt><dd><?php echo esc_html(sa_svc_duration_label($b['service'])); ?></dd>
+        <dt>Where</dt><dd><?php echo esc_html($loc); ?><?php if ($b['location'] === 'nairobi') : ?> · <a href="<?php echo esc_url(sa_svc_map_url()); ?>" target="_blank" rel="noopener">Map</a><?php endif; ?></dd>
+        <dt>Handover</dt><dd><?php echo $b['mode'] === 'pickup' ? esc_html('Pickup from ' . $b['pickup']) . ' <small>(fee confirmed on booking)</small>' : 'Drop-off at garage'; ?></dd>
         <dt>Vehicle</dt><dd><?php echo esc_html(trim($b['year'] . ' ' . $b['make'] . ' ' . $b['model'] . ' ' . $b['reg'])); ?></dd>
         <dt>Estimate</dt><dd><?php echo esc_html($b['estimate']); ?> · pay at service</dd>
       </dl>
@@ -692,7 +764,7 @@ add_action('woocommerce_account_bookings_endpoint', static function (): void {
         }
         echo '</div>';
     }
-    echo '<h2 style="margin-top:28px">My vehicles</h2><div class="sa-svc-vehs">';
+    echo '<h2 id="vehicles" style="margin-top:28px">My Garage / Vehicles</h2><div class="sa-svc-vehs">';
     foreach (sa_svc_vehicles($uid) as $i => $v) {
         echo '<form class="sa-svc-veh" method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><span>' . esc_html(trim($v['year'] . ' ' . $v['make'] . ' ' . $v['model'] . ' ' . $v['reg'])) . '</span>'
             . '<input type="hidden" name="action" value="sa_svc_vehicle"><input type="hidden" name="remove" value="' . (int) $i . '">' . wp_nonce_field('sa_svc_vehicle', '_wpnonce', true, false)
@@ -714,6 +786,7 @@ add_action('admin_post_sa_svc_admin', static function (): void {
         wp_die('Unknown booking', 404);
     }
     if (!empty($_POST['delete'])) {
+        sa_svc_gcal_sync($id, true);
         wp_delete_post($id, true);
     } else {
         $st = sanitize_key((string) ($_POST['status'] ?? ''));
@@ -726,6 +799,7 @@ add_action('admin_post_sa_svc_admin', static function (): void {
         if (isset($_POST['estimate'])) {
             update_post_meta($id, '_sa_bk_estimate', sanitize_text_field(wp_unslash((string) $_POST['estimate'])));
         }
+        sa_svc_gcal_sync($id);
     }
     if (function_exists('sa_core_audit_log')) {
         sa_core_audit_log('booking_update', ['booking' => $id]);
@@ -753,7 +827,7 @@ function sa_svc_admin_render(): void
         $counts[$s] = ($counts[$s] ?? 0) + 1;
     }
     $base = admin_url('admin.php?page=sa-super-bookings');
-    echo '<div class="wrap sa-ultra sa-svc-admin"><h1>Service bookings</h1><p class="sa-ultra__sub">Appointments from <a href="' . esc_url(sa_svc_url()) . '" target="_blank">/services/</a>. Changing status can email the customer.</p>';
+    echo '<div class="wrap sa-ultra sa-svc-admin"><h1>Service bookings</h1><p class="sa-ultra__sub">Appointments from <a href="' . esc_url(sa_svc_url()) . '" target="_blank">/services/</a>. Changing status can email the customer.</p>' . sa_svc_gcal_status_html();
     echo '<ul class="subsubsub"><li><a href="' . esc_url($base) . '"' . ($filter === '' ? ' class="current"' : '') . '>All (' . count($all) . ')</a></li>';
     foreach (sa_svc_statuses() as $k => $l) {
         echo '<li> | <a href="' . esc_url(add_query_arg('st', $k, $base)) . '"' . ($filter === $k ? ' class="current"' : '') . '>' . esc_html($l) . ' (' . (int) $counts[$k] . ')</a></li>';
@@ -770,7 +844,7 @@ function sa_svc_admin_render(): void
             . '<td>' . esc_html($b['date'] . ' ' . $b['time']) . '</td><td>' . esc_html($svc . ($b['option'] ? ' — ' . $b['option'] : '')) . ($b['notes'] ? '<br><small>' . esc_html($b['notes']) . '</small>' : '') . '</td>'
             . '<td>' . esc_html($b['name']) . '<br><a href="mailto:' . esc_attr($b['email']) . '">' . esc_html($b['email']) . '</a><br>' . esc_html($b['phone']) . '</td>'
             . '<td>' . esc_html(trim($b['year'] . ' ' . $b['make'] . ' ' . $b['model'] . ' ' . $b['reg'])) . '</td>'
-            . '<td>' . esc_html(sa_svc_locations()[$b['location']]['label'] ?? $b['location']) . '</td>'
+            . '<td>' . esc_html(sa_svc_locations()[$b['location']]['label'] ?? $b['location']) . '<br><small>' . ($b['mode'] === 'pickup' ? 'PICKUP: ' . esc_html($b['pickup']) : 'Drop-off') . ' · ' . esc_html(sa_svc_duration_label($b['service'])) . ($b['gcal'] ? ' · 📅 synced' : '') . '</small></td>'
             . '<td colspan="2"><form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'
             . '<input type="hidden" name="action" value="sa_svc_admin"><input type="hidden" name="b" value="' . (int) $id . '">' . wp_nonce_field('sa_svc_admin', '_wpnonce', true, false)
             . '<input name="estimate" value="' . esc_attr($b['estimate']) . '" style="width:150px"><select name="status">';
@@ -783,3 +857,173 @@ function sa_svc_admin_render(): void
     echo '</tbody></table></div>';
 }
 
+
+
+/* ---------- Contact page: garage address + map ---------- */
+
+add_filter('the_content', static function (string $c): string {
+    if (is_page('contact') && in_the_loop() && is_main_query()) {
+        $c .= '<h2>Visit our garage</h2>' . sa_svc_address_html() . '<p><a class="sa-svc-btn sa-svc-btn--primary" href="' . esc_url(sa_svc_book_url()) . '">Book a service</a></p>';
+    }
+    return $c;
+}, 30);
+
+/* ---------- Right-hand side menu (drawer) ---------- */
+
+add_action('wp_footer', static function (): void {
+    if (is_admin()) {
+        return;
+    }
+    $acct = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : home_url('/my-account/');
+    $ep = static fn(string $e): string => function_exists('wc_get_account_endpoint_url') ? wc_get_account_endpoint_url($e) : $acct;
+    $shop = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
+    $wa = 'https://wa.me/19174375121';
+    $user = wp_get_current_user();
+    $cats = function_exists('sa_megamenu_tree') ? sa_megamenu_tree() : [];
+    $link = static fn(string $u, string $i, string $l, string $sub = '', string $extra = ''): string =>
+        '<a class="sa-side__link" href="' . esc_url($u) . '"' . $extra . '>' . sa_svc_icon($i) . '<span>' . esc_html($l) . ($sub !== '' ? '<small>' . esc_html($sub) . '</small>' : '') . '</span></a>';
+    echo '<div class="sa-side" data-sa-side aria-hidden="true"><div class="sa-side__backdrop" data-sa-side-close></div>'
+        . '<aside class="sa-side__panel" role="dialog" aria-modal="true" aria-label="Menu">'
+        . '<div class="sa-side__head"><div><strong>' . ($user->ID ? 'Hi, ' . esc_html($user->first_name ?: $user->display_name) : 'Welcome') . '</strong>'
+        . ($user->ID ? '' : '<a href="' . esc_url($acct) . '">Sign in or create account</a>') . '</div>'
+        . '<button type="button" class="sa-side__x" data-sa-side-close aria-label="Close menu">' . sa_svc_icon('close') . '</button></div>'
+        . '<div class="sa-side__quick">'
+        . '<a href="' . esc_url($shop) . '">' . sa_svc_icon('grid') . 'Shop Parts</a>'
+        . '<a href="' . esc_url(sa_svc_book_url()) . '" class="is-hl">' . sa_svc_icon('calendar') . 'Book a Service</a>'
+        . '<a href="#" data-sa-side-cart>' . sa_svc_icon('cart') . 'Cart</a>'
+        . '<a href="' . esc_url(home_url('/track-order/')) . '">' . sa_svc_icon('truck') . 'Track Order</a></div>'
+        . '<nav class="sa-side__sec"><h4>Car service</h4>'
+        . $link(sa_svc_url(), 'service', 'All services', 'Oil, brakes, alignment, AC…')
+        . $link($ep('bookings'), 'calendar', 'My Bookings')
+        . $link($ep('bookings') . '#vehicles', 'car', 'My Garage / Vehicles')
+        . '</nav><nav class="sa-side__sec"><h4>Shop by category</h4><div class="sa-side__cats">';
+    foreach ($cats as $m) {
+        $u = get_term_link($m['slug'], 'product_cat');
+        echo '<a href="' . esc_url(is_wp_error($u) ? $shop : $u) . '">' . esc_html($m['label']) . '</a>';
+    }
+    foreach (['tires' => 'Tires', 'wheels' => 'Wheels'] as $sl => $lb) {
+        $u = get_term_link($sl, 'product_cat');
+        echo '<a href="' . esc_url(is_wp_error($u) ? $shop : $u) . '">' . esc_html($lb) . '</a>';
+    }
+    echo '</div></nav><nav class="sa-side__sec"><h4>Account</h4>'
+        . $link($ep('orders'), 'box', 'Orders')
+        . $link($acct, 'user', 'Account')
+        . '</nav><nav class="sa-side__sec"><h4>Help</h4>'
+        . $link($wa, 'chat', 'WhatsApp us', '+1 917 437 5121', ' target="_blank" rel="noopener"')
+        . $link(function_exists('sa_page_url') ? sa_page_url('contact') : home_url('/contact/'), 'chat', 'Contact')
+        . $link(sa_svc_map_url(), 'pin', 'Location', SA_SVC_GARAGE_ADDRESS, ' target="_blank" rel="noopener"')
+        . '</nav></aside></div>';
+    ?>
+<script>
+(function(){var s=document.querySelector('[data-sa-side]');if(!s)return;
+function o(e){if(e)e.preventDefault();s.classList.add('is-open');s.setAttribute('aria-hidden','false');document.body.classList.add('sa-side-open');}
+function c(){s.classList.remove('is-open');s.setAttribute('aria-hidden','true');document.body.classList.remove('sa-side-open');}
+document.addEventListener('click',function(e){var t=e.target.closest('[data-sa-side-open],[data-sa-nav-toggle]');if(t){e.stopImmediatePropagation();o(e);return;}
+if(e.target.closest('[data-sa-side-close]'))c();
+if(e.target.closest('[data-sa-side-cart]')){e.preventDefault();c();var b=document.querySelector('[data-sa-cart-open]');if(b)b.click();}},true);
+document.addEventListener('keydown',function(e){if(e.key==='Escape')c();});})();
+</script>
+    <?php
+}, 20);
+
+/* ---------- Google Calendar sync (service account; disabled until configured) ---------- */
+
+function sa_svc_gcal_config(): ?array
+{
+    $raw = (string) (getenv('SA_GCAL_SERVICE_ACCOUNT_JSON') ?: '');
+    $cal = (string) (getenv('SA_GCAL_CALENDAR_ID') ?: '');
+    if ($raw === '' || $cal === '') {
+        return null;
+    }
+    if ($raw[0] !== '{') {
+        $raw = (string) base64_decode($raw, true);
+    }
+    $j = json_decode($raw, true);
+    if (!is_array($j) || empty($j['client_email']) || empty($j['private_key'])) {
+        return null;
+    }
+    return ['email' => $j['client_email'], 'key' => $j['private_key'], 'calendar' => $cal, 'subject' => (string) (getenv('SA_GCAL_IMPERSONATE') ?: '')];
+}
+
+function sa_svc_gcal_status_html(): string
+{
+    $cfg = sa_svc_gcal_config();
+    $last = get_option('sa_svc_gcal_last', []);
+    if (!$cfg) {
+        return '<p class="notice notice-info" style="padding:8px 12px">Google Calendar sync: <strong>off</strong>. Set Railway env <code>SA_GCAL_SERVICE_ACCOUNT_JSON</code> and <code>SA_GCAL_CALENDAR_ID</code> (share the calendar with the service account, “Make changes to events”).</p>';
+    }
+    return '<p class="notice notice-success" style="padding:8px 12px">Google Calendar sync: <strong>on</strong> → ' . esc_html($cfg['calendar']) . (is_array($last) && $last ? ' · last: ' . esc_html(($last['ok'] ? 'OK' : 'ERROR ' . $last['msg']) . ' at ' . wp_date('j M H:i', (int) $last['t'])) : '') . '</p>';
+}
+
+function sa_svc_b64u(string $d): string
+{
+    return rtrim(strtr(base64_encode($d), '+/', '-_'), '=');
+}
+
+function sa_svc_gcal_token(array $cfg): string
+{
+    $cached = get_transient('sa_svc_gcal_tok');
+    if (is_string($cached) && $cached !== '') {
+        return $cached;
+    }
+    $now = time();
+    $claims = ['iss' => $cfg['email'], 'scope' => 'https://www.googleapis.com/auth/calendar.events', 'aud' => 'https://oauth2.googleapis.com/token', 'iat' => $now, 'exp' => $now + 3600];
+    if ($cfg['subject'] !== '') {
+        $claims['sub'] = $cfg['subject'];
+    }
+    $unsigned = sa_svc_b64u((string) wp_json_encode(['alg' => 'RS256', 'typ' => 'JWT'])) . '.' . sa_svc_b64u((string) wp_json_encode($claims));
+    $sig = '';
+    if (!openssl_sign($unsigned, $sig, $cfg['key'], OPENSSL_ALGO_SHA256)) {
+        throw new RuntimeException('Could not sign JWT (bad private key)');
+    }
+    $r = wp_remote_post('https://oauth2.googleapis.com/token', ['timeout' => 10, 'body' => ['grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer', 'assertion' => $unsigned . '.' . sa_svc_b64u($sig)]]);
+    $j = json_decode((string) wp_remote_retrieve_body($r), true);
+    if (empty($j['access_token'])) {
+        throw new RuntimeException('Token error: ' . substr((string) wp_remote_retrieve_body($r), 0, 160));
+    }
+    set_transient('sa_svc_gcal_tok', $j['access_token'], 3000);
+    return (string) $j['access_token'];
+}
+
+/** Create/update the booking's event; delete it when cancelled or the booking is deleted. */
+function sa_svc_gcal_sync(int $id, bool $deleting = false): void
+{
+    $cfg = sa_svc_gcal_config();
+    if (!$cfg) {
+        return;
+    }
+    $b = sa_svc_booking_data($id);
+    try {
+        $tok = sa_svc_gcal_token($cfg);
+        $base = 'https://www.googleapis.com/calendar/v3/calendars/' . rawurlencode($cfg['calendar']) . '/events';
+        $hdr = ['Authorization' => 'Bearer ' . $tok, 'Content-Type' => 'application/json'];
+        if ($deleting || $b['status'] === 'cancelled') {
+            if ($b['gcal'] !== '') {
+                wp_remote_request($base . '/' . rawurlencode($b['gcal']), ['method' => 'DELETE', 'headers' => $hdr, 'timeout' => 10]);
+                delete_post_meta($id, '_sa_bk_gcal');
+            }
+        } else {
+            $tz = wp_timezone();
+            $start = new DateTimeImmutable($b['date'] . ' ' . $b['time'], $tz);
+            $end = $start->modify('+' . (int) (sa_svc_catalog()[$b['service']]['duration'] ?? 60) . ' minutes');
+            $svc = sa_svc_catalog()[$b['service']]['name'] ?? $b['service'];
+            $ev = [
+                'summary' => '[' . (sa_svc_statuses()[$b['status']] ?? $b['status']) . '] ' . $svc . ' — ' . $b['name'] . ' (' . $b['ref'] . ')',
+                'location' => $b['mode'] === 'pickup' ? 'PICKUP: ' . $b['pickup'] : (sa_svc_locations()[$b['location']]['label'] ?? ''),
+                'description' => "Vehicle: {$b['year']} {$b['make']} {$b['model']} {$b['reg']}\nPhone: {$b['phone']}\nEmail: {$b['email']}\nEstimate: {$b['estimate']}\nNotes: {$b['notes']}\nAdmin: " . admin_url('admin.php?page=sa-super-bookings'),
+                'start' => ['dateTime' => $start->format(DATE_RFC3339), 'timeZone' => $tz->getName()],
+                'end' => ['dateTime' => $end->format(DATE_RFC3339), 'timeZone' => $tz->getName()],
+            ];
+            $url = $b['gcal'] !== '' ? $base . '/' . rawurlencode($b['gcal']) : $base;
+            $r = wp_remote_request($url, ['method' => $b['gcal'] !== '' ? 'PATCH' : 'POST', 'headers' => $hdr, 'body' => wp_json_encode($ev), 'timeout' => 10]);
+            $j = json_decode((string) wp_remote_retrieve_body($r), true);
+            if (empty($j['id'])) {
+                throw new RuntimeException('Calendar API: ' . substr((string) wp_remote_retrieve_body($r), 0, 160));
+            }
+            update_post_meta($id, '_sa_bk_gcal', (string) $j['id']);
+        }
+        update_option('sa_svc_gcal_last', ['ok' => true, 'msg' => '', 't' => time()], false);
+    } catch (Throwable $e) {
+        update_option('sa_svc_gcal_last', ['ok' => false, 'msg' => $e->getMessage(), 't' => time()], false);
+    }
+}

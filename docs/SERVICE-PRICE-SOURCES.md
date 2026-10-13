@@ -36,3 +36,12 @@ Not found (RepairPal Cloudflare-blocked or no page; Pep Boys bot-blocked; Firest
 ## Reference repos
 - viepovsky/Car-Service-Garage-Backend — no license. Used only as a feature reference (garages, schedules, catalog offers, repair status, vehicles). No code copied.
 - mohamedsamirmohamed/Car-Services — no license. Feature reference only. No code copied.
+
+## Job durations
+None of the price sources above publish job times (AutoXpress and RepairPal pages show prices only), so every duration on the site is labelled "(estimate)". Slots are 1 hour; a job reserves ceil(duration/60) consecutive hours, capacity 2 per hour.
+
+## Garage address
+Ground Floor, Midax Plaza, Kandundo Rd, Njiru, Nairobi (P.O. Box 00516-00100 G.P.O Nairobi) — from the Business Registration Certificate BN-93S9AZEJ (Standard Driveworks).
+
+## Google Calendar sync (off until configured)
+Railway env vars: `SA_GCAL_SERVICE_ACCOUNT_JSON` (service-account key JSON, raw or base64), `SA_GCAL_CALENDAR_ID` (e.g. the Gmail address or calendar id). Share that calendar with the service-account email with "Make changes to events". Optional `SA_GCAL_IMPERSONATE` for Workspace domain-wide delegation.
