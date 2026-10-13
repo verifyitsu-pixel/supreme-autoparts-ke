@@ -54,7 +54,7 @@ function sa_svc_locations(): array
 {
     return [
         'nairobi' => ['label' => 'Nairobi garage — Midax Plaza, Kandundo Rd, Njiru', 'region' => 'KE', 'note' => SA_SVC_GARAGE_ADDRESS],
-        'usa' => ['label' => 'United States — partner garage near you', 'region' => 'US', 'note' => 'Customers in the US: we forward your request to our support team, who route you to a suitable service centre near you. Services, pricing and booking work differently for customers outside Kenya.'],
+        'usa' => ['label' => 'United States — routed by our support team', 'region' => 'US', 'note' => 'Customers in the US: we forward your request to our support team, who route you to a suitable service centre near you. Services, pricing and booking work differently for customers outside Kenya.'],
     ];
 }
 
@@ -92,7 +92,7 @@ function sa_svc_source_note(array $svc, string $region): string
         return 'Reference price published by AutoXpress Kenya (Oct 2026). Final price confirmed before work starts.';
     }
     if ($region === 'US' && !empty($svc['usd'])) {
-        return 'US national average range (RepairPal, Sept 2026). Your partner garage confirms the exact price before work starts.';
+        return 'US national average range (RepairPal, Sept 2026). The service centre our support team routes you to confirms the exact price before work starts.';
     }
     return 'We confirm a written quote for your vehicle before any work starts.';
 }
