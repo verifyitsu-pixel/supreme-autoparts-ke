@@ -61,7 +61,7 @@ foreach (['customer_on_hold_order', 'customer_refunded_order', 'customer_partial
 function sa_ol_couriers(): array
 {
     return [
-        'fargo' => ['label' => 'Fargo Courier', 'url' => 'https://www.fargocourier.co.ke/track-your-shipment/'],
+        'fargo' => ['label' => 'Fargo Courier', 'url' => 'FARGO'],
         'ups'   => ['label' => 'UPS', 'url' => 'https://www.ups.com/track?loc=en_US&tracknum=%s'],
         'other' => ['label' => 'Other courier', 'url' => ''],
     ];
@@ -72,6 +72,9 @@ function sa_ol_tracking_url(WC_Order $o): string
     $c = (string) $o->get_meta('_sa_courier');
     $n = (string) $o->get_meta('_sa_tracking_no');
     $tpl = sa_ol_couriers()[$c]['url'] ?? '';
+    if ($tpl === 'FARGO') {
+        return $n !== '' ? add_query_arg('waybill', rawurlencode($n), home_url('/track-order/')) : '';
+    }
     return ($tpl !== '' && $n !== '') ? sprintf($tpl, rawurlencode($n)) : '';
 }
 

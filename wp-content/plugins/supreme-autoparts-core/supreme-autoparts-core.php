@@ -68,6 +68,7 @@ require_once SA_CORE_DIR . 'includes/booking-invoice.php';
 require_once SA_CORE_DIR . 'includes/payment-recovery.php';
 require_once SA_CORE_DIR . 'includes/email-footer.php';
 require_once SA_CORE_DIR . 'includes/order-lifecycle.php';
+require_once SA_CORE_DIR . 'includes/fargo-tracking.php';
 require_once SA_CORE_DIR . 'includes/garage/garage.php';
 require_once SA_CORE_DIR . 'includes/site-forms.php';
 require_once SA_CORE_DIR . 'includes/guest-pay.php';
