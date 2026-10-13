@@ -54,7 +54,7 @@
 
 @media (max-width: 900px) {
   .sa-market { grid-template-columns: 1fr; gap: .75rem; }
-  .sa-pf-bar { display: flex; position: sticky; top: 0; z-index: 30; background: #fff; padding: .5rem 0; }
+  .sa-pf-bar { display: flex; padding: .25rem 0; }
   .sa-pf-bar__btn { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; padding: 0 1.1rem; border: 1.5px solid #222; border-radius: 999px; background: #fff; color: #111; font-weight: 700; font-size: .95rem; cursor: pointer; }
   .sa-pf-bar__n { background: var(--sa-accent, #f26b1d); color: #fff; border-radius: 999px; min-width: 22px; height: 22px; display: inline-grid; place-items: center; font-size: .78rem; padding: 0 .35rem; }
   .sa-pf { display: none; position: fixed; inset: 0; z-index: 2000; border: 0; border-radius: 0; max-height: none; top: 0; }
