@@ -68,6 +68,14 @@ add_filter('the_content', static function (string $html): string {
     if ($slug === 'shipping-policy') {
         return sa_gc_shipping_html();
     }
+    if ($slug === 'contact') {
+        if (sa_gc_zone() === 'KE') {
+            $html = str_replace(['about fitment, US delivery, international shipping, or a special order', 'US delivery'], ['about fitment, delivery, store pickup or a special order', 'delivery'], $html);
+        } elseif (sa_gc_zone() === 'ROW') {
+            $html = str_replace('about fitment, US delivery, international shipping, or a special order', 'about fitment, international shipping or a special order', $html);
+        }
+        return $html;
+    }
     if ($slug === 'about-us') {
         return sa_gc_about_html();
     }

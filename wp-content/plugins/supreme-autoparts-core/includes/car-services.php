@@ -582,6 +582,8 @@ function sa_svc_icon(string $name): string
 
 function sa_svc_region_switch(string $region, string $base): string
 {
+    // Region follows the visitor's IP; no cross-country price toggle.
+    return '';
     $o = '<div class="sa-svc-region" role="group" aria-label="Pricing region">';
     foreach (['KE' => 'Kenya · KES', 'US' => 'USA · USD'] as $r => $l) {
         $o .= '<a class="' . ($r === $region ? 'is-active' : '') . '" href="' . esc_url(add_query_arg('region', strtolower($r), $base)) . '">' . esc_html($l) . '</a>';
