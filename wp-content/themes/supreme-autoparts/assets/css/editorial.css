@@ -73,3 +73,4 @@
 .sa-ed-cats{gap:10px}.sa-ed-cat__n{font-size:13px;margin-top:8px}
 .sa-ed-prods{grid-template-columns:repeat(2,1fr);gap:28px 12px}.sa-ed-prod__n{font-size:14px}
 .sa-ed-why{margin-top:64px;padding:56px 0}.sa-ed-facts{grid-template-columns:1fr;gap:24px}}
+.sa-ed-im img.is-fallback{width:50%;height:auto;opacity:.5}

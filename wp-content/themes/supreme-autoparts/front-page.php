@@ -65,7 +65,7 @@ $sa_ed_services = [
       $sa_ed_cats = ['brakes' => __('Brakes', 'supreme-autoparts'), 'suspension' => __('Suspension', 'supreme-autoparts'), 'engine' => __('Engine', 'supreme-autoparts'), 'air-intake' => __('Air intake', 'supreme-autoparts'), 'lighting' => __('Lighting', 'supreme-autoparts'), 'wheels' => __('Wheels', 'supreme-autoparts')];
       foreach ($sa_ed_cats as $slug => $label) : ?>
         <a class="sa-ed-cat" href="<?php echo esc_url(sa_term_link('product_cat', $slug)); ?>">
-          <span class="sa-ed-im"><img src="<?php echo esc_url(SA_THEME_URI . '/assets/images/home/ed/' . $slug . '.webp'); ?>" alt="" width="640" height="640" loading="lazy" decoding="async"></span>
+          <span class="sa-ed-im"><img src="<?php echo esc_url(SA_THEME_URI . '/assets/images/home/ed/' . $slug . '.jpg'); ?>" alt="" width="640" height="640" loading="lazy" decoding="async"></span>
           <span class="sa-ed-cat__n"><?php echo esc_html($label); ?></span>
         </a>
       <?php endforeach; ?>
@@ -87,7 +87,7 @@ $sa_ed_products = [];
 foreach ($sa_ed_slugs as $sl) {
     $pp = get_page_by_path($sl, OBJECT, 'product');
     $pr = $pp ? wc_get_product($pp->ID) : null;
-    if ($pr && $pr->is_visible()) {
+    if ($pr && $pr->is_visible() && str_starts_with((string) $pr->get_meta('_sa_shopify_image_src', true), 'https://cdn.shopify.com/')) {
         $sa_ed_products[$pr->get_id()] = $pr;
     }
 }
@@ -96,7 +96,9 @@ if (count($sa_ed_products) < 8 && function_exists('sa_get_homepage_latest_produc
         if (count($sa_ed_products) >= 8) {
             break;
         }
-        $sa_ed_products[$pr->get_id()] = $pr;
+        if (str_starts_with((string) $pr->get_meta('_sa_shopify_image_src', true), 'https://cdn.shopify.com/')) {
+            $sa_ed_products[$pr->get_id()] = $pr;
+        }
     }
 }
 if ($sa_ed_products) : ?>
@@ -105,12 +107,12 @@ if ($sa_ed_products) : ?>
     <div class="sa-ed-head"><h2 id="sa-ed-pop"><?php esc_html_e('Popular parts', 'supreme-autoparts'); ?></h2><a href="<?php echo esc_url($sa_shop_url); ?>"><?php esc_html_e('View all parts', 'supreme-autoparts'); ?> &rarr;</a></div>
     <div class="sa-ed-prods">
       <?php foreach (array_slice($sa_ed_products, 0, 8) as $pr) :
-          $img = $pr->get_image_id() ? wp_get_attachment_image_url($pr->get_image_id(), 'woocommerce_thumbnail') : (string) $pr->get_meta('_sa_shopify_image_src', true);
+          $img = (string) $pr->get_meta('_sa_shopify_image_src', true);
           $brand = strtok($pr->get_name(), ' ');
           $price = $pr->get_price() !== '' && (float) $pr->get_price() > 0 ? $pr->get_price_html() : esc_html__('Quote on request', 'supreme-autoparts');
           ?>
         <a class="sa-ed-prod" href="<?php echo esc_url($pr->get_permalink()); ?>">
-          <span class="sa-ed-im"><?php if ($img) : ?><img src="<?php echo esc_url($img); ?>" alt="<?php echo esc_attr($pr->get_name()); ?>" loading="lazy" decoding="async"><?php endif; ?></span>
+          <span class="sa-ed-im"><?php if ($img) : ?><img src="<?php echo esc_url($img); ?>" alt="<?php echo esc_attr($pr->get_name()); ?>" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='<?php echo esc_url(SA_THEME_URI . '/assets/logo-light.png'); ?>';this.classList.add('is-fallback')"><?php endif; ?></span>
           <small><?php echo esc_html($brand); ?></small>
           <span class="sa-ed-prod__n"><?php echo esc_html($pr->get_name()); ?></span>
           <span class="sa-ed-prod__p"><?php echo wp_kses_post($price); ?></span>
