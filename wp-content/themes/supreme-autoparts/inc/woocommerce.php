@@ -526,3 +526,31 @@ function sa_theme_added_sheet(): void
 }
 add_action('wp_ajax_sa_added_sheet', 'sa_theme_added_sheet');
 add_action('wp_ajax_nopriv_sa_added_sheet', 'sa_theme_added_sheet');
+
+/**
+ * Shipping option label: name, small secondary line, price (or Free) on the right. No "label:" colon.
+ */
+add_filter('woocommerce_cart_shipping_method_full_label', static function ($label, $method) {
+    if (!$method instanceof \WC_Shipping_Rate) {
+        return $label;
+    }
+    $meta = $method->get_meta_data();
+    $sub = '';
+    $cost = (float) $method->get_cost();
+    $is_fargo = str_contains(strtolower($method->get_method_id() . ' ' . $method->get_label()), 'fargo');
+    if ($is_fargo && isset($meta['Weight (kg)']) && (float) $meta['Weight (kg)'] > 0) {
+        $sub = sprintf(__('%s kg parcel', 'supreme-autoparts'), rtrim(rtrim(number_format((float) $meta['Weight (kg)'], 1), '0'), '.'));
+    } elseif (str_starts_with((string) $method->get_method_id(), 'local_pickup') || $method->get_label() === (defined('SA_STORE_PICKUP_TITLE') ? SA_STORE_PICKUP_TITLE : '')) {
+        $sub = __('Ground floor, Njiru, Nairobi', 'supreme-autoparts');
+    }
+    if ($cost > 0) {
+        $price = WC()->cart && WC()->cart->display_prices_including_tax() ? $cost + array_sum($method->get_taxes()) : $cost;
+        $price_html = wc_price($price);
+    } elseif ($is_fargo) {
+        $price_html = esc_html__('Quoted before dispatch', 'supreme-autoparts');
+        $sub = '';
+    } else {
+        $price_html = esc_html__('Free', 'supreme-autoparts');
+    }
+    return '<span class="sa-ship__name">' . esc_html($method->get_label()) . ($sub !== '' ? '<small class="sa-ship__sub">' . esc_html($sub) . '</small>' : '') . '</span><span class="sa-ship__price">' . $price_html . '</span>';
+}, 20, 2);

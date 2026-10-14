@@ -182,7 +182,7 @@ add_action('woocommerce_shipping_init', static function (): void {
                 ]);
                 return;
             }
-            $label = sprintf('%s to %s (KES %s, %s kg)', $this->title, $d['nearest_for'] !== '' ? $d['town'] . ' branch, nearest to ' . $d['nearest_for'] : $d['town'], number_format($kes), rtrim(rtrim(number_format($kg, 1), '0'), '.'));
+            $label = sprintf('%s, %s', $this->title, $d['nearest_for'] !== '' ? $d['town'] . ' branch (nearest to ' . $d['nearest_for'] . ')' : $d['town']);
             $this->add_rate([
                 'id'        => $this->get_rate_id(),
                 'label'     => $label,

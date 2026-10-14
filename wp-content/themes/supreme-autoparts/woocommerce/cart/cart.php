@@ -71,6 +71,9 @@ $free_ship = function_exists('sa_theme_cart_has_free_shipping') && sa_theme_cart
                   ?>
                 </h2>
                 <?php
+                if (!$is_fee && $_product->get_sku()) {
+                    echo '<p class="sa-cart-line__sku">' . esc_html(sprintf(__('Part no. %s', 'supreme-autoparts'), $_product->get_sku())) . '</p>';
+                }
                 do_action('woocommerce_after_cart_item_name', $cart_item, $cart_item_key);
                 if ($is_fee) {
                     echo '<p class="sa-mc__meta"><span class="sa-mc__chip">' . esc_html('Booking ' . ($cart_item['sa_booking_ref'] ?? '')) . '</span><span class="sa-mc__note">' . esc_html__('Credited to your service bill', 'supreme-autoparts') . '</span></p>';
@@ -109,7 +112,7 @@ $free_ship = function_exists('sa_theme_cart_has_free_shipping') && sa_theme_cart
                 </div>
                 <?php endif; ?>
                 <p class="sa-cart-line__price">
-                  <span class="sa-cart-line__now"><?php echo apply_filters('woocommerce_cart_item_price', WC()->cart->get_product_price($_product), $cart_item, $cart_item_key); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+                  <span class="sa-cart-line__now"><?php echo apply_filters('woocommerce_cart_item_subtotal', WC()->cart->get_product_subtotal($_product, $cart_item['quantity']), $cart_item, $cart_item_key); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
                   <?php if ($show_was) : ?>
                     <del class="sa-cart-line__was"><?php echo wp_kses_post(wc_price($regular)); ?></del>
                   <?php endif; ?>
