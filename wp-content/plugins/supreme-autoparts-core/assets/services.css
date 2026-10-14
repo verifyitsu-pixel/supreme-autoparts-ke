@@ -260,3 +260,7 @@ html,body{overflow-x:hidden;max-width:100%}
 html,body{overscroll-behavior-x:none}
 .sa-reco__list,.sa-hscroll,.related ul.products,.upsells ul.products,.cross-sells ul.products,.flex-control-thumbs,.sa-chips,.sa-sp{overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
 .sa-reco,.sa-reco-wrap{max-width:100%;overflow-x:clip}
+
+/* iOS pan fix: make scrollers/cards the containing block so absolutely-positioned children
+   (.screen-reader-text price/add-to-cart labels, sale badges) can't escape the scroller and widen the root. */
+.sa-hscroll,.sa-reco__list,ul.products,.sa-product-card,.sa-reco,.sa-reco-wrap{position:relative}

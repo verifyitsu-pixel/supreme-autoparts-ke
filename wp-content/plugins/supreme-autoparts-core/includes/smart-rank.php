@@ -749,7 +749,7 @@ add_action('wp_enqueue_scripts', static function (): void {
     $ctx['paged'] = max(1, (int) get_query_var('paged'));
     $ctx['api'] = esc_url_raw(rest_url('sa/v1/'));
     wp_add_inline_script('sa-reco', 'window.saPzCtx=' . wp_json_encode($ctx) . ';', 'before');
-    wp_add_inline_style('supreme-autoparts', '.sa-reco{margin:48px 0 8px}.sa-reco__head h2{font-size:1.25rem;font-weight:600;letter-spacing:-.01em;margin:0 0 16px}.sa-reco__list{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;margin:0!important;padding:0!important;list-style:none}.sa-reco__list>li{width:auto!important;margin:0!important;float:none!important}@media(max-width:900px){.sa-reco__list{grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:46%;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}.sa-reco__list>li{scroll-snap-align:start}}');
+    wp_add_inline_style('supreme-autoparts', '.sa-reco{margin:48px 0 8px}.sa-reco__head h2{font-size:1.25rem;font-weight:600;letter-spacing:-.01em;margin:0 0 16px}.sa-reco__list{position:relative;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;margin:0!important;padding:0!important;list-style:none}.sa-reco__list>li{width:auto!important;margin:0!important;float:none!important}@media(max-width:900px){.sa-reco__list{grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:46%;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}.sa-reco__list>li{scroll-snap-align:start}}');
 }, 30);
 
 /* Privacy note (appended to the Privacy Policy page). */
