@@ -33,7 +33,7 @@ function sa_core_quote_whatsapp_url($product): string
 /* Logo as the clean placeholder for photo-less products. */
 add_filter('woocommerce_placeholder_img_src', static function ($src) {
     if (function_exists('sa_core_invoice_logo_url')) {
-        $logo = sa_core_invoice_logo_url();
+        $logo = 'https://www.supremeautoparts.co.ke/wp-content/themes/supreme-autoparts/assets/logo-placeholder.jpg';
         if ($logo !== '') {
             return $logo;
         }

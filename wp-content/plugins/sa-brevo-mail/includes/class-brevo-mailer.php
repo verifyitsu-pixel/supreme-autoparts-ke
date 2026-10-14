@@ -192,13 +192,13 @@ class SA_Brevo_Mailer
             $logo = (string) get_option('woocommerce_email_header_image', '');
         }
         if ($logo === '' || !filter_var($logo, FILTER_VALIDATE_URL)) {
-            $logo = 'https://www.supremeautoparts.co.ke/wp-content/themes/supreme-autoparts/assets/logo-light.jpg';
+            $logo = 'https://www.supremeautoparts.co.ke/wp-content/themes/supreme-autoparts/assets/logo-light.jpg?v=emblem1';
         }
         $logo = set_url_scheme($logo, 'https');
         $alt  = esc_attr(get_bloginfo('name') ?: 'Supreme Autoparts');
         $header = '<div class="sa-email-brand-header" style="text-align:left;padding:16px 0 8px 0;border-bottom:1px solid #e4e4e7;margin-bottom:16px;">'
-            . '<img src="' . esc_url($logo) . '" alt="' . $alt . '" width="200" height="60" '
-            . 'style="display:block;max-height:64px;width:auto;max-width:220px;border:0;outline:none;text-decoration:none;" />'
+            . '<img src="' . esc_url($logo) . '" alt="' . $alt . '" width="220" height="50" '
+            . 'style="display:block;width:220px;max-width:220px;height:auto;border:0;outline:none;text-decoration:none;" />'
             . '</div>';
 
         if (preg_match('/<body[^>]*>/i', $html, $m, PREG_OFFSET_CAPTURE)) {

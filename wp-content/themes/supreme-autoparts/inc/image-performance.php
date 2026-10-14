@@ -46,17 +46,17 @@ function sa_theme_logo_url(bool $light = false): string
     if ($light) {
         foreach (['logo-light.jpg', 'logo-light.png'] as $f) {
             if (is_readable($base . $f)) {
-                return $uri . $f;
+                return $uri . $f . '?v=emblem1';
             }
         }
-        return $uri . 'logo-light.png';
+        return $uri . 'logo-light.png?v=emblem1';
     }
     foreach (['logo.jpg', 'logo.png'] as $f) {
         if (is_readable($base . $f)) {
-            return $uri . $f;
+            return $uri . $f . '?v=emblem1';
         }
     }
-    return $uri . 'logo.png';
+    return $uri . 'logo.png?v=emblem1';
 }
 
 /**

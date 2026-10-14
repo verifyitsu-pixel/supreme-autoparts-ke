@@ -146,7 +146,7 @@ add_filter('woocommerce_email_header_image', static function ($url) {
     // Always prefer a stable theme-hosted logo so every transactional email shows brand.
     foreach (['logo-light.jpg', 'logo-light.png', 'logo.png', 'icon.png'] as $f) {
         if (is_readable(SA_THEME_DIR . '/assets/' . $f)) {
-            return set_url_scheme(SA_THEME_URI . '/assets/' . $f, 'https');
+            return set_url_scheme(SA_THEME_URI . '/assets/' . $f . '?v=emblem1', 'https');
         }
     }
     $forced = (string) get_option('sa_email_logo_url', '');

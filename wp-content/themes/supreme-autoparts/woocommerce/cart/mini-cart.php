@@ -12,7 +12,7 @@ defined('ABSPATH') || exit;
 do_action('woocommerce_before_mini_cart');
 
 $sa_fee_pid = (int) get_option('sa_svc_fee_product', 0);
-$sa_logo    = function_exists('sa_theme_logo_url') ? sa_theme_logo_url() : '';
+$sa_logo    = defined('SA_THEME_URI') ? SA_THEME_URI . '/assets/emblem.png?v=emblem1' : '';
 ?>
 <?php if (WC()->cart && !WC()->cart->is_empty()) : ?>
   <ul class="woocommerce-mini-cart cart_list product_list_widget sa-mc">

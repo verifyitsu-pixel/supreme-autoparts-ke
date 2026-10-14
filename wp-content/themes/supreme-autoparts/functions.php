@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_THEME_VERSION', '1.4.89');
+define('SA_THEME_VERSION', '1.4.90');
 define('SA_THEME_DIR', get_template_directory());
 define('SA_THEME_URI', get_template_directory_uri());
 
@@ -25,7 +25,7 @@ add_action('init', static function (): void {
     if (defined('SA_THEME_DIR') && defined('SA_THEME_URI')) {
         foreach (['logo-light.jpg', 'logo-light.png'] as $f) {
             if (is_readable(SA_THEME_DIR . '/assets/' . $f)) {
-                $logo = set_url_scheme(SA_THEME_URI . '/assets/' . $f, 'https');
+                $logo = set_url_scheme(SA_THEME_URI . '/assets/' . $f . '?v=emblem1', 'https');
                 break;
             }
         }

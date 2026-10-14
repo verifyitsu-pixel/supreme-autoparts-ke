@@ -38,7 +38,7 @@ function sa_seo_brand(): array
     $url = home_url('/');
     $logo = '';
     if (defined('SA_THEME_URI')) {
-        foreach (['logo-light.png', 'logo.png', 'logo-light.jpg', 'logo.jpg'] as $f) {
+        foreach (['logo-stacked.png', 'logo-light.png', 'logo.png', 'logo-light.jpg', 'logo.jpg'] as $f) {
             $path = (defined('SA_THEME_DIR') ? SA_THEME_DIR : '') . '/assets/' . $f;
             if ($path !== '/assets/' . $f && is_readable($path)) {
                 $logo = trailingslashit(SA_THEME_URI) . 'assets/' . $f;
@@ -57,7 +57,7 @@ function sa_seo_brand(): array
     // Prefer a wide logo for OG (WhatsApp/Telegram); fall back to square icon.
     $og = $logo;
     if (defined('SA_THEME_DIR') && defined('SA_THEME_URI')) {
-        foreach (['logo-light.jpg', 'logo.jpg', 'icon.png'] as $f) {
+        foreach (['og-image.jpg', 'logo-light.jpg', 'logo.jpg', 'icon.png'] as $f) {
             if (is_readable(SA_THEME_DIR . '/assets/' . $f)) {
                 $og = set_url_scheme(SA_THEME_URI . '/assets/' . $f, 'https');
                 break;

@@ -364,7 +364,7 @@ add_filter('woocommerce_single_product_image_thumbnail_html', static function ($
     $urls = sa_core_get_stored_shopify_image_urls($product->get_id());
     if ($urls === []) {
         // No real photo: neutral store logo (never a stock/AI image).
-        $logo = function_exists('sa_core_invoice_logo_url') ? sa_core_invoice_logo_url() : '';
+        $logo = function_exists('sa_core_invoice_logo_url') ? 'https://www.supremeautoparts.co.ke/wp-content/themes/supreme-autoparts/assets/logo-placeholder.jpg' : '';
         if ($logo === '') {
             return '';
         }

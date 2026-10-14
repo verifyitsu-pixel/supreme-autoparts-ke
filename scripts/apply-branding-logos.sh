@@ -6,7 +6,7 @@ cd /var/www/html
 THEME_ASSETS="wp-content/themes/supreme-autoparts/assets"
 WP=(wp --allow-root --path=/var/www/html)
 FLAG_KEY="sa_branding_logos_ver"
-FLAG_VAL="sports-car-v1"
+FLAG_VAL="emblem-v1"
 
 logo_dark="${THEME_ASSETS}/logo.jpg"
 [[ -f "$logo_dark" ]] || logo_dark="${THEME_ASSETS}/logo.png"
@@ -36,7 +36,7 @@ if [[ -n "$CUSTOM_LOGO" && "$CUSTOM_LOGO" != "0" ]]; then
   fi
 fi
 
-if [[ "$FORCE" != "1" ]] && { [[ "$CURRENT_FLAG" == "$FLAG_VAL" && "$LOGO_OK" == "1" ]] || [[ "$LOGO_OK" == "1" ]]; }; then
+if [[ "$FORCE" != "1" ]] && { [[ "$CURRENT_FLAG" == "$FLAG_VAL" && "$LOGO_OK" == "1" ]]; }; then
   if [[ "$CURRENT_FLAG" != "$FLAG_VAL" ]]; then
     "${WP[@]}" option update "$FLAG_KEY" "$FLAG_VAL" || true
   fi
@@ -63,7 +63,10 @@ for title in \
   "Supreme Autoparts Apex Icon" \
   "Supreme Autoparts Sports Car Logo Dark" \
   "Supreme Autoparts Sports Car Logo Light" \
-  "Supreme Autoparts Sports Car Icon"
+  "Supreme Autoparts Sports Car Icon" \
+  "Supreme Autoparts Emblem Logo Dark" \
+  "Supreme Autoparts Emblem Logo Light" \
+  "Supreme Autoparts Emblem Icon"
 do
   ids=$("${WP[@]}" post list --post_type=attachment --title="$title" --field=ID --posts_per_page=20 2>/dev/null || true)
   for id in $ids; do
@@ -78,19 +81,17 @@ import_file() {
   "${WP[@]}" media import "$file" --title="$title" --porcelain
 }
 
-LOGO_ID=$(import_file "$logo_dark" "Supreme Autoparts Sports Car Logo Dark")
-LIGHT_ID=$(import_file "$logo_light" "Supreme Autoparts Sports Car Logo Light")
-ICON_ID=$(import_file "$icon" "Supreme Autoparts Sports Car Icon")
+LOGO_ID=$(import_file "$logo_dark" "Supreme Autoparts Emblem Logo Dark")
+LIGHT_ID=$(import_file "$logo_light" "Supreme Autoparts Emblem Logo Light")
+ICON_ID=$(import_file "$icon" "Supreme Autoparts Emblem Icon")
 
 echo "LOGO_ID=$LOGO_ID LIGHT_ID=$LIGHT_ID ICON_ID=$ICON_ID"
 
 "${WP[@]}" theme mod set custom_logo "$LOGO_ID"
 "${WP[@]}" option update site_icon "$ICON_ID"
 
-LIGHT_URL=$("${WP[@]}" eval "echo wp_get_attachment_url((int) $LIGHT_ID);")
-if [[ -z "${LIGHT_URL:-}" ]]; then
-  LIGHT_URL="https://www.supremeautoparts.co.ke/wp-content/themes/supreme-autoparts/assets/logo-light.jpg"
-fi
+# Theme-hosted URL (media uploads can vanish on redeploy); ?v busts Gmail's image proxy cache.
+LIGHT_URL="https://www.supremeautoparts.co.ke/wp-content/themes/supreme-autoparts/assets/logo-light.jpg?v=emblem1"
 LIGHT_URL="${LIGHT_URL/http:\/\//https:\/\/}"
 
 "${WP[@]}" option update woocommerce_email_header_image "$LIGHT_URL"

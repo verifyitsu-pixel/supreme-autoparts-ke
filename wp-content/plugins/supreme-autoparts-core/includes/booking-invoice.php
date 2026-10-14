@@ -55,7 +55,7 @@ function sa_bk_invoice_html(int $id, bool $embed_logo = false): string
     }
     $h = '<div style="font-family:Inter,Arial,sans-serif;max-width:720px;margin:24px auto;background:#fff;color:#1f2430;border:1px solid #e6e8ee;border-radius:14px;padding:28px">';
     $h .= '<table style="width:100%;border-collapse:collapse"><tr><td style="vertical-align:top">'
-        . ($logo ? '<img src="' . ($embed_logo ? esc_attr($logo) : esc_url($logo)) . '" width="160" alt="Supreme Autoparts" style="max-height:48px;margin-bottom:8px"><br>' : '')
+        . ($logo ? '<img src="' . ($embed_logo ? esc_attr($logo) : esc_url($logo)) . '" width="200" alt="Supreme Autoparts" style="max-height:46px;margin-bottom:8px"><br>' : '')
         . '<strong>Standard Driveworks / Supreme Autoparts</strong><br><span style="color:#5b6475;font-size:13px">Ground Floor, Midax Plaza, Kangundo Rd, Njiru, Nairobi<br>P.O. Box 00516-00100 G.P.O Nairobi<br>calvin@supremeautoparts.co.ke · +254 714 498 451</span></td>'
         . '<td style="vertical-align:top;text-align:right"><div style="font-size:22px;font-weight:800;color:#0b1f3a">' . ($paid ? 'INVOICE / BOOKING CONFIRMATION' : 'INVOICE') . '</div>'
         . '<div style="margin:6px 0;color:#5b6475;font-size:13px">No. ' . $e(sa_bk_invoice_no($b)) . '<br>Issued ' . $e(wp_date('j M Y', (int) $b['created'])) . '</div>' . $badge . '</td></tr></table>';

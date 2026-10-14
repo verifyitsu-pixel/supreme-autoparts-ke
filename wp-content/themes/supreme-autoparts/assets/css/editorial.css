@@ -7,7 +7,7 @@
 .sa-header{background:#fff;border-bottom:1px solid var(--ed-line);box-shadow:none}
 .sa-header .sa-logo__img{max-height:64px!important}
 .sa-header__link,.sa-header__icon-link,.sa-header__cart,.sa-header__menu{font-family:"SA Inter",Inter,sans-serif}
-@media(max-width:767px){.sa-header .sa-logo__img{max-height:46px!important}}
+@media(max-width:767px){.sa-header .sa-logo__img{max-height:40px!important;max-width:176px;object-fit:contain}}
 .home .sa-header__search-mobile{display:none!important}
 
 /* Homepage */
