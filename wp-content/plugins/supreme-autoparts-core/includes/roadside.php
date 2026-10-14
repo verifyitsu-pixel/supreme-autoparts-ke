@@ -254,8 +254,8 @@ function sa_rs_handle_request(): void
     }
     // Optional photo.
     if (!empty($_FILES['photo']['name']) && (int) $_FILES['photo']['size'] > 0 && (int) $_FILES['photo']['size'] <= 8 * MB_IN_BYTES) {
-        $ft = wp_check_filetype_and_ext((string) $_FILES['photo']['tmp_name'], (string) $_FILES['photo']['name']);
-        if (in_array($ft['type'] ?? '', ['image/jpeg', 'image/png', 'image/webp', 'image/heic'], true)) {
+        $ft = wp_check_filetype_and_ext((string) $_FILES['photo']['tmp_name'], (string) $_FILES['photo']['name'], ['jpg|jpeg|jpe' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'heic' => 'image/heic', 'heif' => 'image/heif']);
+        if (in_array($ft['type'] ?? '', ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'], true)) {
             require_once ABSPATH . 'wp-admin/includes/file.php';
             require_once ABSPATH . 'wp-admin/includes/media.php';
             require_once ABSPATH . 'wp-admin/includes/image.php';
@@ -654,7 +654,7 @@ function sa_rs_render_request(): void
         </fieldset>
         <fieldset><legend>5. Anything else?</legend>
           <label>Note <textarea name="note" rows="3" placeholder="What happened? Any warning lights? Is the car safely off the road?"></textarea></label>
-          <label>Photo (optional) <input type="file" name="photo" accept="image/*" capture="environment"></label>
+          <label>Photo (optional) <input type="file" name="photo" accept="image/*,.heic,.heif"></label>
           <div class="sa-svc-row"><label class="sa-rs-inline"><input type="radio" name="when" value="now" checked> Help now</label><label class="sa-rs-inline"><input type="radio" name="when" value="later"> Schedule for later <input type="datetime-local" name="when_at"></label></div>
         </fieldset>
         <label class="sa-rs-inline sa-rs-agree"><input type="checkbox" name="agree" value="1" required> I accept the <a href="<?php echo esc_url(home_url('/roadside-terms/')); ?>" target="_blank">Roadside Terms</a>. I understand the price is agreed on the call.</label>

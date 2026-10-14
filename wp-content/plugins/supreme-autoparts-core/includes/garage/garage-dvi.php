@@ -279,7 +279,7 @@ function sa_g_render_inspect_form(): void
         $first = false;
     }
     echo '</div><div class="sa-g-carwrap" data-car>' . sa_g_car_svg() . '</div><ol class="sa-g-dmglist" data-dmg-list></ol></section>';
-    echo '<section class="sa-g-sec"><h2>Photos</h2><p class="sa-g-muted">Take photos of all four sides, the dashboard (mileage and warning lights) and any damage.</p><label class="sa-btn sa-btn--outline sa-g-photo-btn">📷 Add photos<input type="file" accept="image/*" capture="environment" multiple data-photos hidden></label><div class="sa-g-thumbs" data-thumbs></div></section>';
+    echo '<section class="sa-g-sec"><h2>Photos</h2><p class="sa-g-muted">Take photos of all four sides, the dashboard (mileage and warning lights) and any damage.</p><label class="sa-btn sa-btn--outline sa-g-photo-btn">📷 Add photos<input type="file" accept="image/*,.heic,.heif" multiple data-photos hidden></label><div class="sa-g-thumbs" data-thumbs></div></section>';
     echo '<section class="sa-g-sec"><h2>Tyres</h2><div class="sa-g-checks">';
     foreach (sa_g_dvi_tyres() as $k => $l) {
         echo '<div class="sa-g-check"><span>' . esc_html($l) . '</span>' . sa_g_rag('tyre[' . $k . '][r]') . '<input type="number" name="tyre[' . $k . '][mm]" placeholder="Tread mm" step="0.5" min="0" max="20" inputmode="decimal" class="sa-g-mm"></div>';

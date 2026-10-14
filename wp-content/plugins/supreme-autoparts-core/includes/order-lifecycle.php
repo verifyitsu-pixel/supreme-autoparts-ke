@@ -274,7 +274,7 @@ add_action('woocommerce_order_status_changed', static function ($oid, $from, $to
             // Gateway-initiated hold (awaiting bank/M-Pesa confirmation): give the standard reason.
             $note = 'We are waiting for your payment to be confirmed. This is usually quick.';
         }
-        if ($to === 'on-hold' && $order->get_meta('_sa_hr_silent')) {
+        if (in_array($to, ['on-hold', 'cancelled'], true) && $order->get_meta('_sa_hr_silent')) {
             return; // A structured info-request email goes out instead.
         }
         sa_ol_send($order, $to, $note);
@@ -484,7 +484,7 @@ add_action('template_redirect', static function (): void {
         wp_nonce_field('sa_oi_' . $o->get_id(), '_sa_oi');
         echo '<input type="hidden" name="o" value="' . (int) $o->get_id() . '"><input type="hidden" name="k" value="' . esc_attr($o->get_order_key()) . '"><input type="text" name="sa_hp" value="" style="display:none" tabindex="-1" autocomplete="off">'
             . '<label style="display:grid;gap:6px;font-weight:600">Your message<textarea name="message" rows="5" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;font:inherit"></textarea></label>'
-            . '<label style="display:grid;gap:6px;font-weight:600">Photos or documents (up to 5, 8 MB each)<input type="file" name="files[]" multiple accept="image/*,.pdf"></label>'
+            . '<label style="display:grid;gap:6px;font-weight:600">Photos or documents (up to 5, 8 MB each)<input type="file" name="files[]" multiple data-limit="5" data-max="8388608" accept="image/*,application/pdf,.heic,.heif"></label>'
             . '<button class="sa-btn" type="submit" style="justify-self:start">Send to Supreme Autoparts</button></form>';
         echo '<div style="margin-top:24px">' . sa_ol_timeline_html($o) . '</div>';
     }
@@ -501,7 +501,7 @@ function sa_ol_handle_uploads(WC_Order $o): array
     }
     require_once ABSPATH . 'wp-admin/includes/file.php';
     $out = [];
-    $allowed = ['jpg|jpeg|jpe' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'heic' => 'image/heic', 'pdf' => 'application/pdf'];
+    $allowed = ['jpg|jpeg|jpe' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'heic' => 'image/heic', 'heif' => 'image/heif', 'pdf' => 'application/pdf'];
     $sub = static function (array $d) use ($o): array {
         $d['subdir'] = '/sa-order-info/' . $o->get_id();
         $d['path'] = $d['basedir'] . $d['subdir'];
