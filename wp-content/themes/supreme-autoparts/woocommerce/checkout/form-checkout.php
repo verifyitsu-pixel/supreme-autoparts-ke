@@ -61,7 +61,16 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
               <span class="sa-checkout-section__num" aria-hidden="true">2</span>
               <div>
                 <h2 id="sa-checkout-shipping-title" class="sa-checkout-section__title"><?php esc_html_e('Shipping', 'supreme-autoparts'); ?></h2>
-                <p class="sa-checkout-section__sub"><?php esc_html_e('Enter your delivery address. Kenya: Store pickup or Fargo Courier; US and international shipping available.', 'supreme-autoparts'); ?></p>
+                <p class="sa-checkout-section__sub"><?php
+                $sa_cc = function_exists('sa_geo_country') ? sa_geo_country() : 'KE';
+                if ($sa_cc === 'KE') {
+                    esc_html_e('Enter your delivery address. Choose Fargo Courier delivery or free store pickup.', 'supreme-autoparts');
+                } elseif ($sa_cc === 'US') {
+                    esc_html_e('Enter your US delivery address. Shipping options and prices show below.', 'supreme-autoparts');
+                } else {
+                    esc_html_e('Enter your delivery address. Shipping to your country is priced below.', 'supreme-autoparts');
+                }
+                ?></p>
               </div>
             </header>
             <div class="sa-checkout-section__body sa-checkout-customer__shipping">

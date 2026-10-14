@@ -25,7 +25,7 @@ if (!defined('ABSPATH')) {
   <?php if ((!function_exists('sa_geo_is_kenya') || sa_geo_is_kenya())) : ?>
   <div class="sa-rsbar"><div class="sa-container sa-rsbar__in"><span><?php esc_html_e('Car trouble? We\'ll come to you.', 'supreme-autoparts'); ?></span><a href="<?php echo esc_url(home_url('/roadside/')); ?>"><?php esc_html_e('Get roadside help', 'supreme-autoparts'); ?></a><a class="sa-rsbar__tel" href="tel:+254714498451">+254 714 498 451</a></div></div>
   <?php else : ?>
-  <div class="sa-rsbar sa-rsbar--intl"><div class="sa-container sa-rsbar__in"><span><?php esc_html_e('We ship to the US and worldwide.', 'supreme-autoparts'); ?></span><a href="https://wa.me/19174375121" rel="noopener"><?php esc_html_e('Fitment help on WhatsApp', 'supreme-autoparts'); ?></a><a class="sa-rsbar__tel" href="tel:+19174375121">+1 917 437 5121</a></div></div>
+  <div class="sa-rsbar sa-rsbar--intl"><div class="sa-container sa-rsbar__in"><span><?php (function_exists('sa_geo_country') && sa_geo_country() === 'US') ? esc_html_e('We ship across the US.', 'supreme-autoparts') : esc_html_e('We ship worldwide.', 'supreme-autoparts'); ?></span><a href="https://wa.me/19174375121" rel="noopener"><?php esc_html_e('Fitment help on WhatsApp', 'supreme-autoparts'); ?></a><a class="sa-rsbar__tel" href="tel:+19174375121">+1 917 437 5121</a></div></div>
   <?php endif; ?>
   <div class="sa-container sa-header__bar">
     <button type="button" class="sa-nav-toggle" data-sa-nav-toggle aria-expanded="false" aria-controls="sa-primary-nav">

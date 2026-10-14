@@ -1129,7 +1129,7 @@ add_action('wp_footer', static function (): void {
         . '<div class="sa-side__quick">'
         . '<a href="' . esc_url($shop) . '">' . sa_svc_icon('grid') . 'Shop Parts</a>'
         . '<a href="' . esc_url(sa_svc_book_url()) . '" class="is-hl">' . sa_svc_icon('calendar') . 'Book a Service</a>'
-        . (function_exists('sa_rs_url') ? '<a href="' . esc_url(sa_rs_url()) . '">' . sa_svc_icon('truck') . 'Roadside Rescue</a>' : '')
+        . (function_exists('sa_rs_url') && (!function_exists('sa_geo_is_kenya') || sa_geo_is_kenya()) ? '<a href="' . esc_url(sa_rs_url()) . '">' . sa_svc_icon('truck') . 'Roadside Rescue</a>' : '')
         . '<a href="#" data-sa-side-cart>' . sa_svc_icon('cart') . 'Cart</a>'
         . '<a href="' . esc_url(home_url('/track-order/')) . '">' . sa_svc_icon('truck') . 'Track Order</a></div>'
         . '<nav class="sa-side__sec"><h4>Car service</h4>'
@@ -1138,7 +1138,7 @@ add_action('wp_footer', static function (): void {
         . $link($ep('bookings') . '#vehicles', 'car', 'My Garage / Vehicles')
         . $link(home_url('/manage-booking/'), 'box', 'Manage booking', 'Booking number + email')
         . $link(home_url('/booking-terms/'), 'check', 'Booking Terms & Policies')
-        . '</nav>' . (function_exists('sa_rs_url') ? '<nav class="sa-side__sec"><h4>Roadside Rescue</h4>'
+        . '</nav>' . (function_exists('sa_rs_url') && (!function_exists('sa_geo_is_kenya') || sa_geo_is_kenya()) ? '<nav class="sa-side__sec"><h4>Roadside Rescue</h4>'
         . $link(sa_rs_url('request'), 'truck', 'Request roadside help', 'Towing, battery, tyre, fuel, lockout')
         . $link(sa_rs_url('track'), 'pin', 'Track a roadside request')
         . ($user->ID ? $link($ep('roadside'), 'box', 'My roadside requests') : '')
@@ -1159,7 +1159,7 @@ add_action('wp_footer', static function (): void {
         . '</nav><nav class="sa-side__sec"><h4>Help</h4>'
         . $link($wa, 'chat', 'WhatsApp us', '+1 917 437 5121', ' target="_blank" rel="noopener"')
         . $link(function_exists('sa_page_url') ? sa_page_url('contact') : home_url('/contact/'), 'chat', 'Contact')
-        . $link(sa_svc_map_url(), 'pin', 'Location', SA_SVC_GARAGE_ADDRESS, ' target="_blank" rel="noopener"')
+        . ((!function_exists('sa_geo_is_kenya') || sa_geo_is_kenya()) ? $link(sa_svc_map_url(), 'pin', 'Location', SA_SVC_GARAGE_ADDRESS, ' target="_blank" rel="noopener"') : '')
         . '</nav></aside></div>';
     ?>
 <script>

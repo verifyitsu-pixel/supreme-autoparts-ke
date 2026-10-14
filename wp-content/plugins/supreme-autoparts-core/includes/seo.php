@@ -70,16 +70,17 @@ function sa_seo_brand(): array
         'legal'        => 'Supreme Autoparts',
         'url'          => $url,
         'email'        => function_exists('sa_core_store_email') ? sa_core_store_email() : 'calvin@supremeautoparts.co.ke',
-        'phone'        => '+1 917 437 5121',
-        'phone_e164'   => '+19174375121',
+        'phone'        => '+254 714 498 451',
+        'phone_e164'   => '+254714498451',
+        'phone_intl_e164' => '+19174375121',
         'logo'         => $logo,
         'og_image'     => $og,
         'same_as'      => array_values(array_filter([
             // Add social profile URLs here when claimed (Instagram, Facebook, X, YouTube).
         ])),
         'area_served'  => [
-            ['@type' => 'Country', 'name' => 'United States'],
             ['@type' => 'Country', 'name' => 'Kenya'],
+            ['@type' => 'Country', 'name' => 'United States'],
         ],
     ];
 
@@ -208,14 +209,16 @@ function sa_seo_context(): array
     $img   = $brand['og_image'];
     $type  = 'website';
 
-    $default_desc = 'OE/OEM and aftermarket auto parts for US drivers — Japan, US & UK cars, EVs, and bikes. Search by part #. Ships continental US. Free shipping on qualifying orders.';
+    // Meta is the same for every visitor (crawlers and link previews fetch from datacentres
+    // with no real geo), so it is written Kenya-first and neutral, never US-only.
+    $default_desc = 'Car parts for Japanese, American, British and European cars. Search by part number or vehicle. Delivery across Kenya, store pickup in Nairobi, and international shipping.';
 
     $title = $site;
     $desc  = $default_desc;
 
     if (is_front_page() || is_home()) {
-        $title = 'Auto Parts & Accessories | Find Your Part # · Ships US | ' . $site;
-        $desc  = 'Find your part #. OE/OEM fit for US drivers. Ships continental US · free shipping on qualifying orders. Support +1 917 437 5121.';
+        $title = $site . ' | Car Parts, Servicing & Roadside Help in Kenya';
+        $desc  = 'Car parts for Japanese, American, British and European cars, searchable by part number or vehicle. Delivery to all 47 counties, a garage in Nairobi, and roadside help.';
     } elseif (function_exists('is_product') && is_product()) {
         $product = function_exists('wc_get_product') ? wc_get_product(get_the_ID()) : null;
         $name    = get_the_title();
@@ -226,7 +229,7 @@ function sa_seo_context(): array
             if (is_string($raw) && $raw !== '') {
                 $desc = sa_seo_clip($raw, 158);
             } else {
-                $desc = sa_seo_clip($name . ' — genuine aftermarket part. Ships continental US and internationally. Order at Supreme Autoparts.', 158);
+                $desc = sa_seo_clip($name . '. Check the part number, then order with delivery across Kenya or international shipping.', 158);
             }
             $thumb = (int) $product->get_image_id();
             if ($thumb > 0) {
@@ -262,7 +265,7 @@ function sa_seo_context(): array
                 $desc = sa_seo_clip($tdesc, 158);
             } else {
                 $desc = sa_seo_clip(
-                    'Shop ' . $term->name . ' for cars, trucks, and SUVs. US-spec fitments, free shipping on qualifying continental US orders. Browse ' . $term->name . ' at Supreme Autoparts.',
+                    'Shop ' . $term->name . ' for cars, trucks and SUVs at Supreme Autoparts. Search by part number or vehicle, with delivery across Kenya and international shipping.',
                     158
                 );
             }
@@ -274,8 +277,8 @@ function sa_seo_context(): array
             }
         }
     } elseif (function_exists('is_shop') && is_shop()) {
-        $title = 'Shop Auto Parts Online | Performance & Aftermarket | ' . $site;
-        $desc  = 'Browse brakes, suspension, wheels, lighting, and more. Search by part number. Ships continental US. Find your part at Supreme Autoparts.';
+        $title = 'Shop Car Parts Online | Brakes, Suspension, Wheels & More | ' . $site;
+        $desc  = 'Browse brakes, suspension, wheels, lighting and more. Search by part number, brand or vehicle. Delivery across Kenya and international shipping.';
     } elseif (is_singular(['page', 'post'])) {
         $id    = get_the_ID();
         $name  = get_the_title();
@@ -309,13 +312,13 @@ function sa_seo_context(): array
         if ($override_t === '' && is_string($slug)) {
             $special = [
                 'shipping-to-kenya' => 'Shipping Auto Parts to Kenya | Import & Delivery | ' . $site,
-                'how-to-order'      => 'How to Order Auto Parts Online | Free US Shipping | ' . $site,
+                'how-to-order'      => 'How to Order Car Parts Online | ' . $site,
                 'fitment-guide'     => 'Vehicle Fitment Guide | Year / Make / Model | ' . $site,
-                'auto-parts-kenya'  => 'Buy Auto Parts in Kenya | Import US Spec Parts | ' . $site,
-                'performance-truck-parts' => 'Performance Truck & Off-Road Parts | US Spec | ' . $site,
+                'auto-parts-kenya'  => 'Buy Car Parts in Kenya | Delivery to All 47 Counties | ' . $site,
+                'performance-truck-parts' => 'Performance Truck & Off-Road Parts | ' . $site,
                 'guides'            => 'Guides: Ordering, Fitment & Shipping | ' . $site,
-                'contact'           => 'Contact Supreme Autoparts | WhatsApp +1 917 437 5121 · Email | ' . $site,
-                'about-us'          => 'About Supreme Autoparts | US Spec Parts · Ships Across the US | ' . $site,
+                'contact'           => 'Contact Us | Phone, WhatsApp & Email | ' . $site,
+                'about-us'          => 'About Us | Car Parts & Garage in Nairobi | ' . $site,
             ];
             if (isset($special[$slug])) {
                 $title = $special[$slug];
@@ -403,8 +406,8 @@ function sa_seo_wp_head(): void
 
     // Open Graph
     $og_type = $ctx['type'] === 'product' ? 'product' : 'website';
-    printf('<meta property="og:locale" content="en_US" />' . "\n");
-    printf('<meta property="og:locale:alternate" content="en_KE" />' . "\n");
+    printf('<meta property="og:locale" content="en_KE" />' . "\n");
+    printf('<meta property="og:locale:alternate" content="en_US" />' . "\n");
     printf('<meta property="og:type" content="%s" />' . "\n", esc_attr($og_type));
     printf('<meta property="og:site_name" content="%s" />' . "\n", esc_attr($brand['name']));
     printf('<meta property="og:title" content="%s" />' . "\n", esc_attr($ctx['title']));
@@ -519,7 +522,15 @@ function sa_seo_print_json_ld(array $ctx, array $brand, string $url): void
                 'telephone'   => $brand['phone_e164'],
                 'contactType' => 'customer service',
                 'email'       => $brand['email'],
-                'areaServed'  => ['US', 'KE'],
+                'areaServed'  => ['KE'],
+                'availableLanguage' => ['English'],
+            ],
+            [
+                '@type'       => 'ContactPoint',
+                'telephone'   => $brand['phone_intl_e164'],
+                'contactType' => 'customer service',
+                'email'       => $brand['email'],
+                'areaServed'  => ['US'],
                 'availableLanguage' => ['English'],
             ],
         ],
@@ -642,7 +653,7 @@ function sa_seo_builtin_faqs(): array
         'shipping-to-kenya' => [
             [
                 'q' => 'Do you ship auto parts to Kenya?',
-                'a' => 'Yes. When your checkout country is Kenya, Nairobi Delivery ($8), Upcountry ($15), and local pickup options appear. For US delivery, see our main Shipping Policy — free shipping on orders $99+ in the continental US.',
+                'a' => 'Yes. When your checkout country is Kenya you can choose Fargo Courier delivery to any of the 47 counties, priced by town and weight, or free pickup from our shop at Midax Plaza, Kangundo Road, Njiru.',
             ],
             [
                 'q' => 'Is there free shipping?',
@@ -650,7 +661,7 @@ function sa_seo_builtin_faqs(): array
             ],
             [
                 'q' => 'Who do I contact about a Kenya delivery?',
-                'a' => 'Email ' . $email . ' or WhatsApp/SMS ' . $wa . ' with your order number. Business hours are Africa/Nairobi.',
+                'a' => 'Email ' . $email . ' or call/WhatsApp +254 714 498 451 with your order number.',
             ],
         ],
         'fitment-guide' => [
@@ -897,8 +908,8 @@ function sa_seo_seed_page_meta(): void
 {
     $map = [
         'how-to-order' => [
-            'title' => 'How to Order Auto Parts Online | Free US Shipping | Supreme Autoparts',
-            'desc'  => 'Step-by-step ordering: find fitment, checkout, free shipping $99+ continental US, international options, and WhatsApp support at +1 917 437 5121.',
+            'title' => 'How to Order Car Parts Online | Supreme Autoparts',
+            'desc'  => 'How to find the right part, check out as a guest, choose delivery or pickup, and get help on WhatsApp or email if you are unsure.',
         ],
         'shipping-to-kenya' => [
             'title' => 'Shipping Auto Parts to Kenya | Import & Delivery | Supreme Autoparts',
@@ -906,19 +917,19 @@ function sa_seo_seed_page_meta(): void
         ],
         'fitment-guide' => [
             'title' => 'Vehicle Fitment Guide | Year / Make / Model | Supreme Autoparts',
-            'desc'  => 'Confirm year, make, and model before you buy. US-spec truck and SUV fitments, plus tips for import vehicles in Kenya.',
+            'desc'  => 'Confirm year, make and model before you buy, with tips for Japanese and other imported cars. Send us your VIN if you are unsure.',
         ],
         'auto-parts-kenya' => [
-            'title' => 'Buy Auto Parts in Kenya | Import US Spec Parts | Supreme Autoparts',
-            'desc'  => 'Order US-spec performance and aftermarket parts online. Primary delivery: continental US. Support: calvin@supremeautoparts.co.ke · +1 917 437 5121.',
+            'title' => 'Buy Car Parts in Kenya | Delivery to All 47 Counties | Supreme Autoparts',
+            'desc'  => 'Order car parts online in Kenya. Delivery to every county by Fargo Courier or pickup at our shop on Kangundo Road, Njiru. Pay by M-Pesa or card.',
         ],
         'performance-truck-parts' => [
-            'title' => 'Performance Truck & Off-Road Parts | US Spec | Supreme Autoparts',
-            'desc'  => 'Suspension, brakes, wheels, lighting, and drivetrain for trucks and SUVs. Shop popular US-spec performance brands.',
+            'title' => 'Performance Truck & Off-Road Parts | Supreme Autoparts',
+            'desc'  => 'Suspension, brakes, wheels, lighting and drivetrain parts for trucks and SUVs from well-known performance brands.',
         ],
         'guides' => [
             'title' => 'Guides: Ordering, Fitment & Shipping | Supreme Autoparts',
-            'desc'  => 'Practical guides: how to order, fitment checks, continental US shipping & free shipping threshold, and buying auto parts online.',
+            'desc'  => 'Practical guides: how to order, checking fitment, delivery and shipping options, and buying car parts online.',
         ],
     ];
 
@@ -945,3 +956,12 @@ add_filter('wp_robots', static function (array $robots): array {
     // Always suppress core robots meta — sa_seo_wp_head prints the single canonical robots tag.
     return [];
 }, 20);
+
+// Re-seed page SEO meta once after the Kenya-first rewrite (v3).
+add_action('init', static function (): void {
+    if (get_option('sa_seo_meta_ver') === '3' || !function_exists('sa_seo_seed_page_meta')) {
+        return;
+    }
+    sa_seo_seed_page_meta();
+    update_option('sa_seo_meta_ver', '3');
+}, 40);

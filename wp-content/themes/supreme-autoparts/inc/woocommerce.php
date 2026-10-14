@@ -324,6 +324,9 @@ function sa_theme_product_card_meta(WC_Product $product): string
         ? __('Available on backorder', 'supreme-autoparts')
         : __('In stock', 'supreme-autoparts');
     $us = !function_exists('sa_ship_is_us') || sa_ship_is_us();
+    if (!$us && function_exists('sa_geo_is_kenya') && !sa_geo_is_kenya()) {
+        return $stock . ' · ' . __('Ships internationally', 'supreme-autoparts');
+    }
     if (!$us) {
         return $stock . ' · ' . __('Store pickup or Fargo delivery', 'supreme-autoparts');
     }

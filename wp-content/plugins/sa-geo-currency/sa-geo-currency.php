@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Supreme Geo Currency Display
  * Description: Display prices in visitor local currency (CF-IPCountry / geo fallback) while WooCommerce + Whop checkout remain USD.
- * Version: 1.1.3
+ * Version: 1.1.4
  * Author: Supreme Autoparts
  * Text Domain: sa-geo-currency
  * Requires at least: 6.4
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_GEO_CURRENCY_VERSION', '1.1.3');
+define('SA_GEO_CURRENCY_VERSION', '1.1.4');
 define('SA_GEO_CURRENCY_FILE', __FILE__);
 define('SA_GEO_CURRENCY_DIR', plugin_dir_path(__FILE__));
 define('SA_GEO_CURRENCY_URL', plugin_dir_url(__FILE__));
@@ -174,3 +174,53 @@ function sa_geo_zone_key(): string
     $cur = class_exists('SA_Geo_Detector') ? SA_Geo_Detector::display_currency() : 'USD';
     return sa_geo_country() . '|' . $cur;
 }
+
+/**
+ * Safety net for Kenyan visitors: any hard-coded US support line left in page copy,
+ * seeded pages or emails is swapped for the Kenyan line. (Content is gated per zone
+ * at the source; this catches stragglers so Kenya never sees +1 917.)
+ */
+function sa_geo_ke_swap(string $html): string
+{
+    return strtr($html, [
+        '+1 917 437 5121' => '+254 714 498 451',
+        '+1&nbsp;917&nbsp;437&nbsp;5121' => '+254&nbsp;714&nbsp;498&nbsp;451',
+        '+19174375121'    => '+254714498451',
+        '19174375121'     => '254714498451',
+        '(917) 437-5121'  => '+254 714 498 451',
+    ]);
+}
+
+add_action('template_redirect', static function (): void {
+    if (is_admin() || wp_doing_ajax() || is_feed() || (defined('REST_REQUEST') && REST_REQUEST) || is_robots()) {
+        return;
+    }
+    if (!sa_geo_is_kenya()) {
+        return;
+    }
+    ob_start('sa_geo_ke_swap');
+}, 0);
+
+// Woo cart/checkout fragments and our REST recs are HTML too.
+add_filter('woocommerce_add_to_cart_fragments', static function ($f) {
+    if (!is_array($f) || !sa_geo_is_kenya()) { return $f; }
+    return array_map(static fn ($v) => is_string($v) ? sa_geo_ke_swap($v) : $v, $f);
+}, 999);
+add_filter('woocommerce_update_order_review_fragments', static function ($f) {
+    if (!is_array($f) || !sa_geo_is_kenya()) { return $f; }
+    return array_map(static fn ($v) => is_string($v) ? sa_geo_ke_swap($v) : $v, $f);
+}, 999);
+
+add_filter('wp_mail', static function (array $a): array {
+    // Customer emails sent while a Kenyan visitor is checking out / booking.
+    if (!is_admin() && !wp_doing_cron() && sa_geo_is_kenya() && isset($a['message']) && is_string($a['message'])) {
+        $a['message'] = sa_geo_ke_swap($a['message']);
+    }
+    return $a;
+}, 999);
+
+add_action('send_headers', static function (): void {
+    if (!headers_sent()) {
+        header('Vary: X-Country-Code', false);
+    }
+}, 20);

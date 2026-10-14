@@ -37,7 +37,7 @@ $sa_chev       = '<svg class="sa-foot__chev" viewBox="0 0 24 24" width="18" heig
           <img src="<?php echo esc_url($sa_logo_f); ?>" alt="<?php echo esc_attr(get_bloginfo('name')); ?>" width="364" height="56" loading="lazy" decoding="async" />
         </a>
         <p class="sa-foot__blurb">
-          <?php esc_html_e('Performance parts & accessories for cars, trucks and SUVs, plus car servicing at our garage.', 'supreme-autoparts'); ?>
+          <?php (!function_exists('sa_geo_is_kenya') || sa_geo_is_kenya()) ? esc_html_e('Performance parts & accessories for cars, trucks and SUVs, plus car servicing at our garage.', 'supreme-autoparts') : esc_html_e('Performance parts & accessories for cars, trucks and SUVs. Search by part number and we check fitment for you.', 'supreme-autoparts'); ?>
         </p>
         <p class="sa-foot__email">
           <a href="mailto:calvin@supremeautoparts.co.ke">calvin@supremeautoparts.co.ke</a>
@@ -62,8 +62,10 @@ $sa_chev       = '<svg class="sa-foot__chev" viewBox="0 0 24 24" width="18" heig
           <li><a href="<?php echo esc_url(sa_page_url('fitment-guide')); ?>"><?php esc_html_e('Fitment guide', 'supreme-autoparts'); ?></a></li>
           <li><a href="<?php echo esc_url($sa_account); ?>"><?php esc_html_e('My Account', 'supreme-autoparts'); ?></a></li>
           <li><a href="<?php echo esc_url(home_url('/services/')); ?>"><?php esc_html_e('Car Services', 'supreme-autoparts'); ?></a></li>
+          <?php if ((!function_exists('sa_geo_is_kenya') || sa_geo_is_kenya())) : ?>
           <li><a href="<?php echo esc_url(home_url('/roadside/')); ?>"><?php esc_html_e('Roadside Rescue', 'supreme-autoparts'); ?></a></li>
           <li><a href="<?php echo esc_url(home_url('/roadside-terms/')); ?>"><?php esc_html_e('Roadside Terms', 'supreme-autoparts'); ?></a></li>
+          <?php endif; ?>
           <li><a href="<?php echo esc_url(home_url('/track-order/')); ?>"><?php esc_html_e('Track order', 'supreme-autoparts'); ?></a></li>
         </ul>
       </details>
@@ -85,6 +87,7 @@ $sa_chev       = '<svg class="sa-foot__chev" viewBox="0 0 24 24" width="18" heig
         </ul>
       </details>
 
+      <?php if ((!function_exists('sa_geo_is_kenya') || sa_geo_is_kenya())) : ?>
       <details class="sa-foot__acc sa-foot__acc--rs">
         <summary class="sa-foot__acc-sum">
           <span><?php esc_html_e('Roadside Rescue', 'supreme-autoparts'); ?></span>
@@ -98,6 +101,7 @@ $sa_chev       = '<svg class="sa-foot__chev" viewBox="0 0 24 24" width="18" heig
           <li><a href="<?php echo esc_url(home_url('/roadside-terms/')); ?>"><?php esc_html_e('Roadside terms', 'supreme-autoparts'); ?></a></li>
         </ul>
       </details>
+      <?php endif; ?>
 
       <details class="sa-foot__acc">
         <summary class="sa-foot__acc-sum">

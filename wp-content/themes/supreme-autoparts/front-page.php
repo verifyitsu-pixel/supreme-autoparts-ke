@@ -23,9 +23,13 @@ $sa_ed_services = [
 ];
 $sa_is_ke = (!function_exists('sa_geo_is_kenya') || sa_geo_is_kenya());
 if (!$sa_is_ke) {
-    $sa_ed_services[0]['text'] = __('Shipped to the US and worldwide', 'supreme-autoparts');
-    $sa_ed_services[1]['text'] = __('US bookings go to our support team, who point you to a service centre', 'supreme-autoparts');
+    $sa_is_us = function_exists('sa_geo_country') && sa_geo_country() === 'US';
+    $sa_ed_services[0]['text'] = $sa_is_us ? __('Shipped across the US', 'supreme-autoparts') : __('Shipped worldwide', 'supreme-autoparts');
+    $sa_ed_services[1]['text'] = __('We pass your request to our support team, who point you to a service centre', 'supreme-autoparts');
     $sa_ed_services[2] = ['icon' => 'service', 'url' => 'https://wa.me/19174375121', 'title' => __('Fitment help', 'supreme-autoparts'), 'text' => __('Send your year, make, model or VIN and we check the part number', 'supreme-autoparts')];
+    if (!$sa_is_us) {
+        unset($sa_ed_services[1]); // service-centre routing is only set up for the US
+    }
 }
 ?>
 <section class="sa-ed-hero" aria-labelledby="sa-hero-title">
@@ -33,7 +37,7 @@ if (!$sa_is_ke) {
     <div class="sa-ed-hero__copy">
       <p class="sa-ed-kicker"><?php esc_html_e('Supreme Autoparts', 'supreme-autoparts'); ?></p>
       <h1 id="sa-hero-title"><?php $sa_is_ke ? esc_html_e('Car parts, servicing and roadside help.', 'supreme-autoparts') : esc_html_e('Car parts, checked to fit your car.', 'supreme-autoparts'); ?></h1>
-      <p class="sa-ed-lead"><?php if (!$sa_is_ke) : esc_html_e('Parts for Japanese, American, British and European cars, shipped to the US and worldwide. Search by part number, or ask us to check fitment for your car.', 'supreme-autoparts'); else : ?><?php esc_html_e('We send parts for Japanese, American, British and European cars to every county, fix cars at our garage, and come out when you break down.', 'supreme-autoparts'); ?><?php endif; ?></p>
+      <p class="sa-ed-lead"><?php if (!$sa_is_ke) : (function_exists('sa_geo_country') && sa_geo_country() === 'US') ? esc_html_e('Parts for Japanese, American, British and European cars, shipped across the US. Search by part number, or ask us to check fitment for your car.', 'supreme-autoparts') : esc_html_e('Parts for Japanese, American, British and European cars, shipped worldwide. Search by part number, or ask us to check fitment for your car.', 'supreme-autoparts'); else : ?><?php esc_html_e('We send parts for Japanese, American, British and European cars to every county, fix cars at our garage, and come out when you break down.', 'supreme-autoparts'); ?><?php endif; ?></p>
       <form class="sa-ed-search" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>" data-sa-hx-search>
         <label class="screen-reader-text" for="sa-hero-search"><?php esc_html_e('Search products', 'supreme-autoparts'); ?></label>
         <input type="search" id="sa-hero-search" name="s" placeholder="<?php esc_attr_e('Part number, part name or brand', 'supreme-autoparts'); ?>" value="<?php echo esc_attr(get_search_query()); ?>" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="sa-hx-sugg" aria-autocomplete="list" />
@@ -156,9 +160,16 @@ if ($sa_ed_products) : ?>
     <div class="sa-ed-head"><h2 id="sa-ed-why"><?php esc_html_e('Why Supreme Autoparts', 'supreme-autoparts'); ?></h2></div>
     <div class="sa-ed-facts">
       <div><h3><?php echo esc_html($sa_count > 1000 ? sprintf(__('%s parts listed', 'supreme-autoparts'), number_format_i18n(floor($sa_count / 1000) * 1000) . '+') : __('Thousands of parts', 'supreme-autoparts')); ?></h3><p><?php esc_html_e('Search by part number, brand or your car’s make, model and year.', 'supreme-autoparts'); ?></p></div>
+      <?php if ($sa_is_ke) : ?>
       <div><h3><?php esc_html_e('Delivery across Kenya', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('We ship with Fargo Courier and you can track the parcel on our site.', 'supreme-autoparts'); ?></p></div>
       <div><h3><?php esc_html_e('Store pickup', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('Collect your order from our shop at Midax Plaza, Kangundo Road.', 'supreme-autoparts'); ?></p></div>
       <div><h3><?php esc_html_e('M-Pesa or card', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('Pay through Pesapal when you check out.', 'supreme-autoparts'); ?></p></div>
+      <?php else : ?>
+      <?php $sa_us = function_exists('sa_geo_country') && sa_geo_country() === 'US'; ?>
+      <div><h3><?php $sa_us ? esc_html_e('Shipping across the US', 'supreme-autoparts') : esc_html_e('International shipping', 'supreme-autoparts'); ?></h3><p><?php $sa_us ? printf(esc_html__('Standard and priority options at checkout, free on orders %s and up.', 'supreme-autoparts'), esc_html(sa_free_shipping_threshold())) : esc_html_e('Shipping to your country is priced at checkout before you pay.', 'supreme-autoparts'); ?></p></div>
+      <div><h3><?php esc_html_e('Fitment check', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('Send your year, make, model or VIN on WhatsApp and we confirm the part number.', 'supreme-autoparts'); ?></p></div>
+      <div><h3><?php esc_html_e('Pay by card', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('Secure card checkout. No account needed.', 'supreme-autoparts'); ?></p></div>
+      <?php endif; ?>
     </div>
   </div>
 </section>

@@ -18,6 +18,15 @@ if (!defined('ABSPATH')) {
  */
 function sa_enquire_contact(): array
 {
+    if (function_exists('sa_geo_is_kenya') && sa_geo_is_kenya()) {
+        // Kenyan visitors get the Kenyan line; everyone else the US WhatsApp line.
+        return [
+            'phone'         => '+254714498451',
+            'phone_display' => '+254 714 498 451',
+            'whatsapp'      => '254714498451',
+            'email'         => 'calvin@supremeautoparts.co.ke',
+        ];
+    }
     return [
         'phone'         => '+19174375121',
         'phone_display' => '+1 917 437 5121',
