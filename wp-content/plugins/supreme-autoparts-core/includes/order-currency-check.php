@@ -151,18 +151,18 @@ function sa_core_order_currency_check()
         );
         // Stricter forbid: KES/KSh must not appear for USD order under KE.
         if ($c['forbid'] === 'KES') {
-            $forbidden = (bool) preg_match('/\bKES\b|KSh/u', html_entity_decode(wp_strip_all_tags($blob), ENT_QUOTES, 'UTF-8'));
+            $forbidden = (bool) preg_match('/KES|KSh/u', html_entity_decode(wp_strip_all_tags($blob), ENT_QUOTES, 'UTF-8'));
         }
         if ($c['forbid'] === 'USD') {
-            // Allow the word only if expect KES dominates; flag if $ amounts without KES.
             $plain = html_entity_decode(wp_strip_all_tags($blob), ENT_QUOTES, 'UTF-8');
-            $forbidden = (bool) preg_match('/\bUSD\b/u', $plain) || (str_contains($plain, '$') && !preg_match('/\bKES\b|KSh/u', $plain));
+            $forbidden = (bool) preg_match('/\bUSD\b/u', $plain) || (str_contains($plain, '$') && !preg_match('/KES|KSh/u', $plain));
         }
 
+        $plain_all = html_entity_decode(wp_strip_all_tags($blob), ENT_QUOTES, 'UTF-8');
         $ok = !$forbidden && (
             $c['expect'] === 'USD'
-                ? (bool) preg_match('/\bUSD\b|\$/u', html_entity_decode(wp_strip_all_tags($blob), ENT_QUOTES, 'UTF-8'))
-                : (bool) preg_match('/\bKES\b|KSh/u', html_entity_decode(wp_strip_all_tags($blob), ENT_QUOTES, 'UTF-8'))
+                ? (bool) preg_match('/\bUSD\b|\$/u', $plain_all)
+                : (bool) preg_match('/KES|KSh/u', $plain_all)
         );
         if (!$ok) {
             $fail++;
