@@ -19,7 +19,7 @@ declare(strict_types=1);
 
 defined('ABSPATH') || exit;
 
-const SA_RK_VER = '2';
+const SA_RK_VER = '3';
 
 function sa_rk_t(string $n): string
 {
