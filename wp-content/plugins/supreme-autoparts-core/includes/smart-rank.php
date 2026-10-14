@@ -19,7 +19,7 @@ declare(strict_types=1);
 
 defined('ABSPATH') || exit;
 
-const SA_RK_VER = '1';
+const SA_RK_VER = '2';
 
 function sa_rk_t(string $n): string
 {
@@ -87,12 +87,31 @@ function sa_rk_root(int $tid, array $parent): int
  * @param array<int,array{s:float,leaf:int,top:int,brand:string}> $items
  * @return list<int>
  */
-function sa_rk_sequence(array $items, int $leaf_win, int $top_win): array
+function sa_rk_sequence(array $items, int $leaf_win, int $top_win, int $brand_win = 3): array
 {
+    // Diminishing returns: the n-th best item of a brand / leaf category is worth less,
+    // so big brands and big categories cannot crowd the first pages.
+    $by_b = []; $by_l = [];
+    foreach ($items as $pid => $it) {
+        $by_b[$it['brand'] !== '' ? $it['brand'] : 'pid' . $pid][] = [$it['s'], $pid];
+        $by_l[$it['leaf']][] = [$it['s'], $pid];
+    }
+    $adj = [];
+    foreach ([[$by_b, 4.0], [$by_l, 2.0]] as [$groups, $k]) {
+        foreach ($groups as $g) {
+            usort($g, static fn ($a, $b) => $b[0] <=> $a[0]);
+            foreach ($g as $rank => [, $pid]) {
+                $adj[$pid] = ($adj[$pid] ?? 0) - $k * log(1 + $rank, 2);
+            }
+        }
+    }
     $queues = [];
     foreach ($items as $pid => $it) {
-        $queues[$it['leaf']][] = [$it['s'], $pid];
+        $queues[$it['leaf']][] = [$it['s'] + ($adj[$pid] ?? 0), $pid];
     }
+    $brands = [];
+    foreach ($items as $it) { if ($it['brand'] !== '') { $brands[$it['brand']] = true; } }
+    $brand_win = min($brand_win, max(0, count($brands) - 1));
     $heap = new SplPriorityQueue();
     $heap->setExtractFlags(SplPriorityQueue::EXTR_DATA);
     $serial = PHP_INT_MAX;
@@ -107,7 +126,7 @@ function sa_rk_sequence(array $items, int $leaf_win, int $top_win): array
     $tops = [];
     foreach ($items as $it) { $tops[$it['top']] = true; }
     $top_win = min($top_win, max(0, count($tops) - 1));
-    $recent_leaf = []; $recent_top = []; $b1 = ''; $b2 = '';
+    $recent_leaf = []; $recent_top = []; $recent_b = []; $b1 = ''; $b2 = '';
     $out = [];
     while (!$heap->isEmpty()) {
         $deferred = [];
@@ -118,7 +137,8 @@ function sa_rk_sequence(array $items, int $leaf_win, int $top_win): array
             $it = $items[$pid];
             $ok = !in_array($leaf, $recent_leaf, true)
                 && !in_array($it['top'], $recent_top, true)
-                && !($it['brand'] !== '' && $it['brand'] === $b1 && $it['brand'] === $b2);
+                && !($it['brand'] !== '' && $it['brand'] === $b1 && $it['brand'] === $b2)
+                && !($it['brand'] !== '' && in_array($it['brand'], $recent_b, true));
             if ($ok) { $pick = $leaf; break; }
             $deferred[] = $leaf;
             if (count($deferred) > 400) { break; }
@@ -134,6 +154,7 @@ function sa_rk_sequence(array $items, int $leaf_win, int $top_win): array
         $it = $items[$pid];
         $out[] = $pid;
         $b2 = $b1; $b1 = $it['brand'];
+        if ($brand_win > 0 && $it['brand'] !== '') { $recent_b[] = $it['brand']; if (count($recent_b) > $brand_win) { array_shift($recent_b); } }
         if ($leaf_win > 0) { $recent_leaf[] = $pick; if (count($recent_leaf) > $leaf_win) { array_shift($recent_leaf); } }
         if ($top_win > 0) { $recent_top[] = $it['top']; if (count($recent_top) > $top_win) { array_shift($recent_top); } }
         $heads[$pick]++;
@@ -223,8 +244,8 @@ function sa_rk_build(): array
         $with = array_filter($set, static fn ($i) => $i['img']);
         $without = array_diff_key($set, $with);
         $seq = array_merge(
-            sa_rk_sequence($with, $scope === 0 ? 6 : 4, $scope === 0 ? 2 : 0),
-            sa_rk_sequence($without, $scope === 0 ? 6 : 4, $scope === 0 ? 2 : 0)
+            sa_rk_sequence($with, $scope === 0 ? 8 : 4, $scope === 0 ? 4 : 0),
+            sa_rk_sequence($without, $scope === 0 ? 8 : 4, $scope === 0 ? 4 : 0)
         );
         $stats[$scope] = count($seq);
         foreach (array_chunk($seq, 1000, true) as $chunk) {
@@ -250,7 +271,7 @@ function sa_rk_build(): array
         }
         $wpdb->query("INSERT INTO {$sc} (product_id, score, leaf, top, brand, img, priced) VALUES " . implode(',', $v));
     }
-    $state = ['built_at' => time(), 'products' => count($items), 'scopes' => count($scopes), 'secs' => round(microtime(true) - $t0, 2)];
+    $state = ['ver' => SA_RK_VER, 'built_at' => time(), 'products' => count($items), 'scopes' => count($scopes), 'secs' => round(microtime(true) - $t0, 2)];
     update_option('sa_rk_built_at', time(), true);
     update_option('sa_rk_state', $state, false);
     sa_rk_flush_cache();
@@ -677,7 +698,7 @@ add_action('rest_api_init', static function (): void {
         'permission_callback' => '__return_true',
         'callback'            => static function (WP_REST_Request $req) {
             $st = (array) get_option('sa_rk_state', []);
-            if ($req->get_param('run') && time() - (int) ($st['built_at'] ?? 0) > 10 * MINUTE_IN_SECONDS && !get_transient('sa_rk_lock')) {
+            if ($req->get_param('run') && (time() - (int) ($st['built_at'] ?? 0) > 10 * MINUTE_IN_SECONDS || ($st['ver'] ?? '') !== SA_RK_VER) && !get_transient('sa_rk_lock')) {
                 set_transient('sa_rk_lock', 1, 300);
                 try { $st = sa_rk_build(); } finally { delete_transient('sa_rk_lock'); }
             }
