@@ -9,7 +9,7 @@
  *    category / brand was not just used (max 2 in a row per brand). Photo-less last.
  * 2. Personal boost from a first-party cookie `sa_pz` (written by sa-reco.js from
  *    localStorage): recently viewed categories, brands and the selected vehicle.
- *    Order key = pos / (1 + boost). Respects DNT / GPC. No third-party trackers.
+ *    Order key = pos / (1 + boost)^2. Respects DNT / GPC. No third-party trackers.
  * 3. Recommendation rows via REST (/sa/v1/recs), rendered with the theme's card.
  *
  * @package Supreme_Autoparts_Core
@@ -414,7 +414,7 @@ add_filter('posts_clauses', static function (array $c, $q): array {
     $boost = sa_rk_boost_sql(sa_rk_profile());
     if ($boost !== '') {
         $c['join'] .= " LEFT JOIN {$boost} sa_pb ON sa_pb.product_id = {$wpdb->posts}.ID ";
-        $key = "({$key} / (1 + COALESCE(sa_pb.b, 0)))";
+        $key = "({$key} / POW(1 + COALESCE(sa_pb.b, 0), 2))";
     }
     $c['orderby'] = "{$key} ASC, {$wpdb->posts}.ID DESC";
     return $c;
@@ -442,7 +442,7 @@ function sa_rk_query(array $pz, array $opts): array
     $boost = !empty($opts['boost']) ? sa_rk_boost_sql($pz, !empty($opts['veh_boost'])) : '';
     if ($boost !== '') {
         $join .= " LEFT JOIN {$boost} pb ON pb.product_id = r.product_id";
-        $key = '(r.pos / (1 + COALESCE(pb.b, 0)))';
+        $key = '(r.pos / POW(1 + COALESCE(pb.b, 0), 2))';
     }
     $ex = array_values(array_filter(array_map('intval', (array) ($opts['exclude'] ?? []))));
     if ($ex !== []) {
