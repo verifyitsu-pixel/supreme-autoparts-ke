@@ -41,7 +41,7 @@ function sa_rcpt_lines(array $lines, bool $nolink = true): string
     return implode('<br>', $out);
 }
 
-/** Seller block by billing country. */
+/** Seller / ships-from block by fulfilment country (KE → Nairobi, else Portland). */
 function sa_rcpt_seller(string $cc): array
 {
     $cc = strtoupper($cc ?: 'KE');
@@ -107,6 +107,51 @@ function sa_rcpt_img_data(string $url): string
     }
     set_transient($ck, $data, $data === '' ? HOUR_IN_SECONDS : WEEK_IN_SECONDS);
     return $data;
+}
+
+
+/**
+ * Country code that decides the "Ships from" seller address + paper size.
+ * Prefer order shipping country; store pickup / fitting / virtual → Kenya garage;
+ * else billing country; else visitor geo.
+ *
+ * @param WC_Order $order
+ */
+function sa_rcpt_seller_cc_for_order($order): string
+{
+    // Garage / local fulfilment always ships-from Nairobi (pickup, fitting, workshop RO).
+    $pickup = (string) $order->get_meta('_sa_pickup') === '1'
+        || (method_exists($order, 'has_shipping_method') && $order->has_shipping_method('local_pickup'))
+        || (string) $order->get_meta('_sa_pickup_date') !== '';
+    $fitting = $order->get_meta('_sa_fit_visit') || (int) $order->get_meta('_sa_fit_booking') > 0
+        || (string) $order->get_meta('_sa_ro_id') !== '' || (string) $order->get_meta('_sa_g_ro') !== '';
+    if ($pickup || $fitting) {
+        return 'KE';
+    }
+
+    $ship = '';
+    if (method_exists($order, 'has_shipping_address') && $order->has_shipping_address()) {
+        $ship = strtoupper(trim((string) $order->get_shipping_country()));
+    }
+    if ($ship !== '') {
+        return $ship;
+    }
+
+    // No shipping address (virtual / open-pay / booking fee): billing country, else Kenya store, else visitor geo.
+    $bill = strtoupper(trim((string) $order->get_billing_country()));
+    if ($bill !== '') {
+        // Pure virtual with no ship-to still uses the store that serves that billing country.
+        // Store-pickup location is Kenya when billing is KE or unknown.
+        return $bill;
+    }
+
+    if (function_exists('sa_geo_country')) {
+        $geo = strtoupper(trim((string) sa_geo_country()));
+        if ($geo !== '') {
+            return $geo;
+        }
+    }
+    return 'KE';
 }
 
 /**
@@ -204,10 +249,11 @@ function sa_rcpt_order_data($order): array
         'file_no'  => $num,
         'date'     => wc_format_datetime($order->get_date_created(), 'j M Y'),
         'paid'     => $paid,
-        'seller'   => sa_rcpt_seller((string) $order->get_billing_country()),
-        'bill'     => $bill,
-        'ship'     => $ship,
-        'ship_lbl' => 'Ship to',
+        'seller'     => sa_rcpt_seller(sa_rcpt_seller_cc_for_order($order)),
+        'seller_lbl' => 'Ships from',
+        'bill'       => $bill,
+        'ship'       => $ship,
+        'ship_lbl'   => 'Ship to',
         'items'    => $items,
         'totals'   => $totals,
         'pay'      => $pay,
@@ -356,7 +402,7 @@ function sa_rcpt_render(array $d, string $mode = 'page', array $toolbar = []): s
     }
 
     // Parties.
-    $cols = [['From', sa_rcpt_lines($d['seller']['lines'], $nl)], ['Bill to', sa_rcpt_lines($d['bill'], $nl)]];
+    $cols = [[$d['seller_lbl'] ?? 'Ships from', sa_rcpt_lines($d['seller']['lines'], $nl)], ['Bill to', sa_rcpt_lines($d['bill'], $nl)]];
     if (!empty($d['ship'])) {
         $cols[] = [$d['ship_lbl'] ?? 'Ship to', sa_rcpt_lines($d['ship'], $nl)];
     }
