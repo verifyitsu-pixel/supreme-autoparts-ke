@@ -184,3 +184,13 @@ tr.cart-discount .woocommerce-remove-coupon::after{content:"Remove";font-size:12
 .sa-cart-layout__main .woocommerce-cart-form,.sa-cart-layout__main .sa-cart-lines{border-left:0!important;border-right:0!important;padding-left:0!important;padding-right:0!important;background:none!important;box-shadow:none!important;border-radius:0!important}
 .sa-cart-lines>li.sa-cart-line{padding-left:0!important;padding-right:0!important}
 .sa-cart-line__price{align-self:end!important;margin-bottom:4px!important}
+
+/* ===== Horizontal overflow guard (iOS zoom-out showed a wider layout viewport) ===== */
+html,body{overflow-x:clip;max-width:100%}
+.sa-cart-drawer,.sa-side{overflow:hidden!important;contain:layout paint}
+.sa-cart-drawer__panel{max-width:100%!important}
+.sa-ed-hero__in>*{min-width:0}
+@media(max-width:1100px){.sa-ed-hero__in{grid-template-columns:minmax(0,1fr)!important}}
+.sa-ed-search,.sa-ed-veh{max-width:100%;min-width:0}
+.woocommerce-product-gallery,.woocommerce div.product div.images{overflow:hidden;max-width:100%}
+.cross-sells,.related,.upsells{max-width:100%;overflow-x:clip}
