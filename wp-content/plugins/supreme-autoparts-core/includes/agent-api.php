@@ -300,7 +300,7 @@ function sa_agent_parts(WP_REST_Request $r): WP_REST_Response
         return sa_agent_err('missing_query', 'Tell me the part you need, a part number, or your vehicle (e.g. "brake pads for 2018 Toyota Tacoma").', 400);
     }
 
-    $ck = 'sa_ag_p6_' . md5(wp_json_encode([$q, $sku, $make, $model, $year, $limit, $cc]));
+    $ck = 'sa_ag_p7_' . md5(wp_json_encode([$q, $sku, $make, $model, $year, $limit, $cc]));
     $cached = get_transient($ck);
     if (is_array($cached)) {
         $resp = new WP_REST_Response($cached, 200);
@@ -323,8 +323,7 @@ function sa_agent_parts(WP_REST_Request $r): WP_REST_Response
         $steps = [];
         if ($year !== '') { $steps[] = ['year', [$q, $sku, $make, $model, '']]; }
         if ($model !== '') { $steps[] = ['model', [$q, $sku, $make, '', '']]; }
-        if ($make !== '' && ($q !== '' || $sku !== '')) { $steps[] = ['make', [$q, $sku, '', '', '']]; }
-        if ($sku !== '' && $q !== '') { $steps[] = ['sku', [$q, '', '', '', '']]; }
+        if ($sku !== '' && $q !== '') { $steps[] = ['sku', [$q, '', $make, '', '']]; }
         $dropped = [];
         foreach ($steps as [$what, $a]) {
             $dropped[] = $what;
@@ -332,8 +331,8 @@ function sa_agent_parts(WP_REST_Request $r): WP_REST_Response
             if ($ids) { $relaxed[] = 'no exact match; dropped ' . implode(', ', $dropped); break; }
         }
         if (!$ids && $q !== '' && $sku === '') {
-            $ids = sa_agent_exact_sku_ids($q);
-            if (!$ids) { $ids = sa_agent_find_ids('', $q, '', '', ''); }
+            $ids = $make === '' ? sa_agent_exact_sku_ids($q) : [];
+            if (!$ids) { $ids = sa_agent_find_ids('', $q, $make, '', ''); }
             if ($ids) { $relaxed[] = 'no match by name' . ($dropped ? ' (dropped ' . implode(', ', $dropped) . ')' : '') . '; matched q as part number'; }
         }
     }
@@ -387,6 +386,9 @@ function sa_agent_parts(WP_REST_Request $r): WP_REST_Response
         if ($relaxed) { $hint .= ' Note: ' . implode('; ', $relaxed) . '.'; }
         $hint .= ' Share the product link; confirm fitment by VIN if unsure.';
     } else {
+        if ($make !== '') {
+            $hint = 'No ' . ($q !== '' ? '"' . $q . '" ' : 'parts ') . 'listed for ' . trim($year . ' ' . $make . ' ' . $model) . ' right now. Do not suggest other makes. Offer a free VIN fitment check (' . home_url('/fitment-check/') . ') so we can source the right part, or connect a live agent.';
+        } else
         $hint = 'No catalogue match' . ($what !== '' ? ' for "' . $what . '"' : '') . ($vehTxt !== '' ? ' on ' . $vehTxt : '') . '. Offer a fitment check by VIN or a live agent; share search_url.';
     }
     $data = [
