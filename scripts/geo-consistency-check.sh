@@ -30,11 +30,11 @@ for cc in KE US GB; do
   chk "no woo error notice" "! grep -q 'woocommerce-error' $T/co.html"
   if [ "$cc" = KE ]; then
     chk "KE rates fargo+pickup" "echo '$rates' | grep -q sa_fargo && echo '$rates' | grep -q local_pickup"
-    chk "KE roadside bar" "grep -q 'Broken down in Nairobi' $T/home.html"
+    chk "KE roadside bar" "grep -q 'class=\"sa-rsbar\">' $T/home.html"
     chk "KE Book installation" "grep -q 'Book installation' $T/pdp.html"
   else
     chk "no fargo/pickup rate" "! echo '$rates' | grep -Eq 'sa_fargo|local_pickup'"
-    chk "no Nairobi roadside bar" "! grep -q 'Broken down in Nairobi' $T/home.html $T/shop.html $T/pdp.html"
+    chk "no Nairobi roadside bar" "! grep -q 'class=\"sa-rsbar\">' $T/home.html $T/shop.html $T/pdp.html"
     chk "no Book installation" "! grep -q 'Book installation' $T/pdp.html"
     chk "no Fargo on shop cards" "! grep -q 'Fargo delivery' $T/shop.html $T/recs.html"
   fi
