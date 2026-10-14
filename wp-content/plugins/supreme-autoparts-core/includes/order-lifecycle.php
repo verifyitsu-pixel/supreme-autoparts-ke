@@ -389,10 +389,23 @@ $sa_ol_save = static function ($order_id): void {
         return;
     }
     $u = static fn(string $k): string => sanitize_text_field(wp_unslash((string) ($_POST[$k] ?? '')));
-    // Avoid Woo's own status field overriding ours on the same save.
-    unset($_POST['order_status']);
-    sa_ol_admin_action($o, sanitize_key((string) $_POST['sa_ol_do']), sanitize_key($u('sa_ol_courier')), $u('sa_ol_tracking'), sanitize_textarea_field(wp_unslash((string) ($_POST['sa_ol_note'] ?? ''))));
+    // Woo's own order-data save (priority 40) throws "Order status is missing." if order_status is absent
+    // (that was the admin/mobile-app critical error). Run our action, then hand Woo the resulting status.
+    try {
+        sa_ol_admin_action($o, sanitize_key((string) $_POST['sa_ol_do']), sanitize_key($u('sa_ol_courier')), $u('sa_ol_tracking'), sanitize_textarea_field(wp_unslash((string) ($_POST['sa_ol_note'] ?? ''))));
+    } catch (\Throwable $e) {
+        error_log('[sa_ol] admin action failed: ' . $e->getMessage());
+    }
+    $fresh = wc_get_order((int) $order_id);
+    $_POST['order_status'] = 'wc-' . ($fresh instanceof WC_Order ? $fresh->get_status() : $o->get_status());
 };
+/* Safety net: never let a missing status field fatal the order screen (Woo mobile app webview posts). */
+add_action('woocommerce_process_shop_order_meta', static function ($order_id): void {
+    if (empty($_POST['order_status'])) {
+        $o = wc_get_order((int) $order_id);
+        $_POST['order_status'] = 'wc-' . ($o instanceof WC_Order && $o->get_status() ? $o->get_status() : 'pending');
+    }
+}, 39);
 add_action('woocommerce_process_shop_order_meta', $sa_ol_save, 5);
 
 /* ---------- Tokenized "Submit more info" form: /order-info/?o=ID&k=ORDER_KEY ---------- */
