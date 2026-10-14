@@ -82,27 +82,60 @@ function sa_agent_vehicle_ids(string $make, string $model, string $year): ?array
     return array_map('intval', $ids);
 }
 
-function sa_agent_parts(WP_REST_Request $r): WP_REST_Response
+/** Treat Jotform AI placeholder / junk values as empty. */
+function sa_agent_junk(string $v, string $name): string
 {
-    if (!sa_agent_rate_ok('parts|' . sa_agent_ip(), 60, 60) || !sa_agent_rate_ok('parts|all', 600, 60)) {
-        return sa_agent_err('rate_limited', 'Too many searches. Please wait a minute.', 429);
+    $t = strtolower(trim($v, " \t\n\r\0\x0B\"'"));
+    $junk = ['ai generated field', 'ai-generated field', 'unknown', 'n/a', 'na', 'none', 'null', 'undefined', '-', '?', 'nil', 'any', 'all', 'not provided', 'not specified'];
+    if ($t === '' || in_array($t, $junk, true) || $t === strtolower($name) || preg_match('/^\{\{.*\}\}$|^<.*>$|^\[.*\]$/', $t)) {
+        return '';
     }
-    $clean = static fn($k, $max = 80) => mb_substr(trim(sanitize_text_field((string) $r->get_param($k))), 0, $max);
-    $q = $clean('q'); $sku = $clean('sku', 60); $make = $clean('make', 40); $model = $clean('model', 60); $year = $clean('year', 4);
-    $cc = strtoupper($clean('country', 2));
-    $limit = max(1, min(10, (int) ($r->get_param('limit') ?: 10)));
-    if ($q === '' && $sku === '' && $make === '') {
-        return sa_agent_err('missing_query', 'Give a part name (q), a part number (sku) or a vehicle make.', 400);
-    }
+    return trim($v);
+}
 
-    $ck = 'sa_ag_p_' . md5(wp_json_encode([$q, $sku, $make, $model, $year, $limit, $cc]));
-    $cached = get_transient($ck);
-    if (is_array($cached)) {
-        $resp = new WP_REST_Response($cached, 200);
-        $resp->header('Cache-Control', 'public, max-age=120');
-        return $resp;
+/** Parse free text like "2018 Toyota Tacoma" into [year, make, model]. */
+function sa_agent_parse_vehicle(string $v): array
+{
+    $v = trim(preg_replace('/\s+/', ' ', $v) ?? '');
+    $year = '';
+    if (preg_match('/\b((?:19|20)\d{2})\b/', $v, $m)) {
+        $year = $m[1];
+        $v = trim(str_replace($m[0], ' ', $v));
+        $v = trim(preg_replace('/\s+/', ' ', $v) ?? '');
     }
+    $parts = $v === '' ? [] : explode(' ', $v);
+    $make = '';
+    $model = '';
+    if ($parts) {
+        $two = isset($parts[1]) ? strtolower($parts[0] . ' ' . $parts[1]) : '';
+        if (in_array($two, ['land rover', 'alfa romeo', 'aston martin', 'mercedes benz', 'rolls royce'], true)) {
+            $make = $parts[0] . ' ' . $parts[1];
+            $model = implode(' ', array_slice($parts, 2));
+        } else {
+            $make = $parts[0];
+            $model = implode(' ', array_slice($parts, 1));
+        }
+    }
+    return [$year, $make, $model];
+}
 
+/** Published product ids whose SKU equals $sku exactly (case-insensitive). */
+function sa_agent_exact_sku_ids(string $sku): array
+{
+    if ($sku === '') { return []; }
+    global $wpdb;
+    $lk = $wpdb->wc_product_meta_lookup;
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+    $ids = $wpdb->get_col($wpdb->prepare(
+        "SELECT p.ID FROM {$wpdb->posts} p JOIN {$lk} l ON l.product_id=p.ID WHERE p.post_type='product' AND p.post_status='publish' AND l.sku = %s ORDER BY (l.stock_status='instock') DESC, p.ID DESC LIMIT 10",
+        $sku
+    ));
+    return array_map('intval', $ids);
+}
+
+/** Product ids for a filtered search (SQL only; visibility checked by caller). */
+function sa_agent_find_ids(string $q, string $sku, string $make, string $model, string $year): array
+{
     global $wpdb;
     $lk = $wpdb->wc_product_meta_lookup;
     $where = ["p.post_type='product'", "p.post_status='publish'"];
@@ -149,6 +182,72 @@ function sa_agent_parts(WP_REST_Request $r): WP_REST_Response
         . ($rank !== '' ? "{$rank} ASC, " : '') . "COALESCE(l.total_sales,0) DESC, p.ID DESC LIMIT 60";
     // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
     $ids = $wpdb->get_col($args ? $wpdb->prepare($sql, $args) : $sql);
+    return array_map('intval', $ids);
+}
+
+function sa_agent_parts(WP_REST_Request $r): WP_REST_Response
+{
+    if (!sa_agent_rate_ok('parts|' . sa_agent_ip(), 60, 60) || !sa_agent_rate_ok('parts|all', 600, 60)) {
+        return sa_agent_err('rate_limited', 'Too many searches. Please wait a minute.', 429);
+    }
+    $clean = static fn($k, $max = 80) => mb_substr(trim(sanitize_text_field((string) $r->get_param($k))), 0, $max);
+    $get = static fn($k, $max = 80) => sa_agent_junk($clean($k, $max), $k);
+    $q = $get('q'); $sku = $get('sku', 60); $make = $get('make', 40); $model = $get('model', 60); $year = $get('year', 10);
+    if ($sku === '') { $sku = $get('part_number', 60); }
+    $veh = $get('vehicle', 120);
+    if ($veh !== '') {
+        [$vy, $vm, $vmo] = sa_agent_parse_vehicle($veh);
+        if ($year === '') { $year = $vy; }
+        if ($make === '') { $make = $vm; }
+        if ($model === '') { $model = $vmo; }
+    }
+    if (!preg_match('/^(19|20)\d{2}$/', $year)) {
+        $year = preg_match('/\b((?:19|20)\d{2})\b/', $year, $ym) ? $ym[1] : '';
+    }
+    $cc = strtoupper(sa_agent_junk($clean('country', 20), 'country'));
+    $cc = strlen($cc) === 2 ? $cc : (in_array($cc, ['KENYA'], true) ? 'KE' : (in_array($cc, ['USA', 'US', 'UNITED STATES'], true) ? 'US' : ''));
+    $limit = max(1, min(10, (int) ($r->get_param('limit') ?: 10)));
+    if ($q === '' && $sku === '' && $make === '') {
+        return sa_agent_err('missing_query', 'Give a part name (q), a part number (sku) or a vehicle make.', 400);
+    }
+
+    $ck = 'sa_ag_p2_' . md5(wp_json_encode([$q, $sku, $make, $model, $year, $limit, $cc]));
+    $cached = get_transient($ck);
+    if (is_array($cached)) {
+        $resp = new WP_REST_Response($cached, 200);
+        $resp->header('Cache-Control', 'public, max-age=120');
+        return $resp;
+    }
+
+    // Exact SKU wins regardless of other filters.
+    $relaxed = [];
+    $ids = [];
+    if ($sku !== '') {
+        $ids = sa_agent_exact_sku_ids($sku);
+        if ($ids) { $relaxed[] = 'exact part number match (other filters ignored)'; }
+    }
+    if (!$ids && ($q !== '' || $sku !== '' || $make !== '')) {
+        $ids = sa_agent_find_ids($q, $sku, $make, $model, $year);
+    }
+    // Progressive relaxation when filtered search returns nothing.
+    if (!$ids) {
+        $steps = [];
+        if ($year !== '') { $steps[] = ['year', [$q, $sku, $make, $model, '']]; }
+        if ($model !== '') { $steps[] = ['model', [$q, $sku, $make, '', '']]; }
+        if ($make !== '' && ($q !== '' || $sku !== '')) { $steps[] = ['make', [$q, $sku, '', '', '']]; }
+        if ($sku !== '' && $q !== '') { $steps[] = ['sku', [$q, '', '', '', '']]; }
+        $dropped = [];
+        foreach ($steps as [$what, $a]) {
+            $dropped[] = $what;
+            $ids = sa_agent_find_ids(...$a);
+            if ($ids) { $relaxed[] = 'no exact match; dropped ' . implode(', ', $dropped); break; }
+        }
+        if (!$ids && $q !== '' && $sku === '') {
+            $ids = sa_agent_exact_sku_ids($q);
+            if (!$ids) { $ids = sa_agent_find_ids('', $q, '', '', ''); }
+            if ($ids) { $relaxed[] = 'no match by name' . ($dropped ? ' (dropped ' . implode(', ', $dropped) . ')' : '') . '; matched q as part number'; }
+        }
+    }
 
     $out = [];
     foreach ($ids as $id) {
@@ -190,6 +289,7 @@ function sa_agent_parts(WP_REST_Request $r): WP_REST_Response
         'ok' => true,
         'query' => array_filter(['q' => $q, 'sku' => $sku, 'make' => $make, 'model' => $model, 'year' => $year, 'country' => $cc]),
         'count' => count($out),
+        'relaxed' => $relaxed ? implode('; ', $relaxed) : null,
         'results' => $out,
         'search_url' => add_query_arg(array_map('rawurlencode', array_filter(['s' => $sku ?: $q, 'post_type' => 'product', 'sa_make' => $make ? sanitize_title($make) : '', 'sa_model' => $model ? sanitize_title($model) : '', 'sa_year' => $year])), home_url('/')),
         'notes' => 'Live data. Fitment from catalogue data only; confirm with a fitment check (VIN) when unsure. Kenyan visitors pay in KES at checkout, others in USD.',
