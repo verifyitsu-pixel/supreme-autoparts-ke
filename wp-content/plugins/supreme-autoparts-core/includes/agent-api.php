@@ -107,7 +107,7 @@ function sa_agent_parts(WP_REST_Request $r): WP_REST_Response
     $lk = $wpdb->wc_product_meta_lookup;
     $where = ["p.post_type='product'", "p.post_status='publish'"];
     $args = [];
-    $rank = '5';
+    $rank = '';
     $needle = $sku !== '' ? $sku : $q;
     if ($sku !== '') {
         $where[] = '(l.sku = %s OR l.sku LIKE %s OR p.post_title LIKE %s)';
@@ -145,7 +145,8 @@ function sa_agent_parts(WP_REST_Request $r): WP_REST_Response
         $rank = $wpdb->prepare('CASE WHEN l.sku = %s THEN 0 WHEN l.sku LIKE %s THEN 1 WHEN p.post_title LIKE %s THEN 2 ELSE 3 END', $needle, $wpdb->esc_like($needle) . '%', $wpdb->esc_like($needle) . '%');
     }
     $sql = "SELECT p.ID FROM {$wpdb->posts} p LEFT JOIN {$lk} l ON l.product_id=p.ID WHERE " . implode(' AND ', $where)
-        . " ORDER BY {$rank} ASC, (l.stock_status='instock') DESC, l.total_sales DESC LIMIT 60";
+        . " ORDER BY " . ($rank !== '' ? "({$rank} = 0) DESC, " : '') . "(COALESCE(l.stock_status,'') = 'instock') DESC, "
+        . ($rank !== '' ? "{$rank} ASC, " : '') . "COALESCE(l.total_sales,0) DESC, p.ID DESC LIMIT 60";
     // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
     $ids = $wpdb->get_col($args ? $wpdb->prepare($sql, $args) : $sql);
 

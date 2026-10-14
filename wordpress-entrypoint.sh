@@ -255,6 +255,8 @@ bootstrap_wordpress() {
   wp_as plugin activate transactworld-payment-integration || true
   wp_as plugin activate woocommerce-paypal-payments || true
   wp_as plugin is-active jotform-ai-chatbot 2>/dev/null || wp_as plugin activate jotform-ai-chatbot || true
+  # Diagnostics only (no secrets): which Jotform render conditions are set.
+  wp_as eval '$o=json_decode((string)get_option("jotform_ai_chatbot_options"),true)?:[]; $p=$o["pages"]??null; echo "[supreme] jotform: active=".(is_plugin_active("jotform-ai-chatbot/jotform-ai-chatbot.php")?"yes":"no")." keys=".implode(",",array_keys($o))." embed=".(empty($o["embed"])?"EMPTY":"set(".strlen($o["embed"]).")")." preview=".(empty($o["preview"])?"empty":"set")." device=".var_export($o["device"]??null,true)." pages=".(is_string($p)?$p:json_encode($p))."\n";' 2>&1 | head -3 || true
   wp_as theme activate supreme-autoparts || true
 
   # Enable Whop gateway when Railway/env credentials are present.
