@@ -66,6 +66,7 @@ require_once SA_CORE_DIR . 'includes/car-services.php';
 require_once SA_CORE_DIR . 'includes/roadside.php';
 require_once SA_CORE_DIR . 'includes/booking-invoice.php';
 require_once SA_CORE_DIR . 'includes/fitting-waiver.php';
+require_once SA_CORE_DIR . 'includes/fitting-waiver-qa.php';
 require_once SA_CORE_DIR . 'includes/payment-recovery.php';
 require_once SA_CORE_DIR . 'includes/email-footer.php';
 require_once SA_CORE_DIR . 'includes/order-lifecycle.php';
