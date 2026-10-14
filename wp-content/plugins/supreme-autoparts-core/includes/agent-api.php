@@ -175,12 +175,6 @@ function sa_agent_parse_q(string $text): array
     $t = preg_replace('/\b(kenya|kenyan|nairobi|mombasa|kisumu|ke|kes|ksh|usa|us|america|united states|usd)\b/', ' ', $t) ?? $t;
     $year = '';
     if (preg_match('/\b((?:19|20)\d{2})\b/', $t, $m)) { $year = $m[1]; $t = str_replace(' ' . $m[1] . ' ', ' ', $t); }
-    $sku = '';
-    foreach (preg_split('/\s+/', trim($t)) ?: [] as $w) {
-        if (strlen($w) >= 5 && preg_match('/\d/', $w) && preg_match('/[a-z]/', $w) && preg_match('/^[a-z0-9\-\/]+$/', $w)) { $sku = strtoupper($w); break; }
-        if (strlen($w) >= 6 && preg_match('/^\d+$/', $w) && $w !== $year) { $sku = $w; break; }
-    }
-    if ($sku !== '') { $t = preg_replace('/\b' . preg_quote(strtolower($sku), '/') . '\b/', ' ', $t) ?? $t; }
     $make = ''; $model = '';
     $words = array_values(array_filter(preg_split('/\s+/', trim($t)) ?: [], 'strlen'));
     $makes = sa_agent_makes();
@@ -204,6 +198,14 @@ function sa_agent_parse_q(string $text): array
         array_splice($words, $i, $span + count($mw));
         break;
     }
+    $t = ' ' . implode(' ', $words) . ' ';
+    $sku = '';
+    foreach (preg_split('/\s+/', trim($t)) ?: [] as $w) {
+        if (strlen($w) >= 5 && preg_match('/\d/', $w) && preg_match('/[a-z]/', $w) && preg_match('/^[a-z0-9\-\/]+$/', $w)) { $sku = strtoupper($w); break; }
+        if (strlen($w) >= 6 && preg_match('/^\d+$/', $w) && $w !== $year) { $sku = $w; break; }
+    }
+    if ($sku !== '') { $t = preg_replace('/\b' . preg_quote(strtolower($sku), '/') . '\b/', ' ', $t) ?? $t; }
+    $words = array_values(array_filter(preg_split('/\s+/', trim($t)) ?: [], 'strlen'));
     $filler = ['find','search','show','me','do','you','have','has','got','is','are','there','any','for','a','an','the','my','i','need','want','looking','look','get','buy','sku','part','number','no','pn','oem','price','prices','of','cost','how','much','what','which','please','pls','can','could','would','in','on','to','fits','fit','fitment','available','availability','stock','car','vehicle','model','year','make','and','with','some','your','it'];
     $kw = array_values(array_filter($words, static fn($w) => !in_array($w, $filler, true) && mb_strlen($w) >= 2));
     return [implode(' ', $kw), $sku, $year, $make, $model, $cc];
@@ -298,7 +300,7 @@ function sa_agent_parts(WP_REST_Request $r): WP_REST_Response
         return sa_agent_err('missing_query', 'Tell me the part you need, a part number, or your vehicle (e.g. "brake pads for 2018 Toyota Tacoma").', 400);
     }
 
-    $ck = 'sa_ag_p5_' . md5(wp_json_encode([$q, $sku, $make, $model, $year, $limit, $cc]));
+    $ck = 'sa_ag_p6_' . md5(wp_json_encode([$q, $sku, $make, $model, $year, $limit, $cc]));
     $cached = get_transient($ck);
     if (is_array($cached)) {
         $resp = new WP_REST_Response($cached, 200);
