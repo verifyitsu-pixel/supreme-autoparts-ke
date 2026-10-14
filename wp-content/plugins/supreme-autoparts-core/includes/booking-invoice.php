@@ -25,57 +25,56 @@ function sa_bk_invoice_url(int $id, bool $download = false): string
     return add_query_arg($args, home_url('/'));
 }
 
-function sa_bk_invoice_html(int $id, bool $embed_logo = false): string
+/** Shared receipt-design data for a booking. */
+function sa_bk_rcpt_data(int $id): array
 {
     $b = sa_svc_booking_data($id);
     $svc = sa_svc_catalog()[$b['service']] ?? ['name' => $b['service']];
     $waived = $b['fee'] === 'waived';
     $paid = $waived || in_array($b['fee'], ['paid', 'applied'], true);
     $kes = $waived ? 0 : (int) ($b['fee_kes'] ?: sa_svc_setting('fee_kes'));
-    $usd = $waived ? null : sa_svc_fee_usd();
-    $wlabel = $waived && function_exists('sa_fw_label') ? sa_fw_label($id) : '';
+    $wlabel = $waived && function_exists('sa_fw_label') ? (string) preg_replace('/^waived \((.*)\)$/', '$1', (string) sa_fw_label($id)) : '';
     $loc = sa_svc_locations()[$b['location']]['label'] ?? $b['location'];
-    $pay = add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/pay/'));
-    $logo = $embed_logo && function_exists('sa_core_logo_data_uri') ? sa_core_logo_data_uri() : (function_exists('sa_core_invoice_logo_url') ? sa_core_invoice_logo_url() : '');
-    $e = static fn($s) => esc_html((string) $s);
-    $badge = $paid
-        ? '<span style="display:inline-block;padding:6px 14px;border-radius:999px;background:#e7f7ee;color:#137a3f;font-weight:700;letter-spacing:.08em">' . ($waived ? 'NO FEE · CONFIRMED' : 'PAID') . '</span>'
-        : '<span style="display:inline-block;padding:6px 14px;border-radius:999px;background:#fff1e0;color:#b45309;font-weight:700;letter-spacing:.08em">UNPAID</span>';
-    $rows = [
-        'Booking number' => $b['ref'],
-        'Customer' => trim($b['name'] . ' · ' . $b['email'] . ($b['phone'] ? ' · ' . $b['phone'] : '')),
-        'Vehicle' => trim($b['year'] . ' ' . $b['make'] . ' ' . $b['model'] . ' ' . $b['reg']),
-        'Service' => $svc['name'] . ($b['option'] ? ' — ' . $b['option'] : ''),
-        'Appointment' => ($b['date'] ? date_i18n('l j F Y', strtotime($b['date'])) : '') . ($b['time'] ? ' at ' . $b['time'] : '') . ' (' . sa_svc_duration_label($b['service']) . ')',
-        'Location' => $loc,
-        'Handover' => $b['mode'] === 'pickup' ? 'We pick up from: ' . $b['pickup'] : 'Customer drop-off at the garage',
+    $fmt = static fn(int $v): string => 'KES ' . number_format($v);
+    $meta = array_values(array_filter([
+        'Booking ' . $b['ref'],
+        trim($b['year'] . ' ' . $b['make'] . ' ' . $b['model'] . ' ' . $b['reg']),
+        ($b['date'] ? date_i18n('D j M Y', strtotime($b['date'])) : '') . ($b['time'] ? ', ' . $b['time'] : '') . ' (' . sa_svc_duration_label($b['service']) . ')',
+        $loc,
+        $b['mode'] === 'pickup' ? 'We collect from: ' . $b['pickup'] : 'Drop-off at the garage',
+    ]));
+    $items = [[
+        'thumb' => '', 'name' => $svc['name'] . ($b['option'] ? ' · ' . $b['option'] : '') . ' booking fee',
+        'meta' => array_merge($meta, [$waived ? 'Fee waived: ' . $wlabel : 'Deducted from your final service bill']),
+        'qty' => '1', 'unit' => $fmt($kes), 'total' => $fmt($kes),
+    ]];
+    $totals = [['Booking fee', $fmt($kes), false]];
+    $totals[] = ['Estimated service total (paid at the garage)', esc_html($b['estimate'] ?: 'Quote on request'), false];
+    $totals[] = [$paid ? 'Paid now' : 'Due now', $fmt($kes), true];
+    $pay = [['Status', $waived ? 'No fee, confirmed' : ($paid ? 'Paid' : 'Unpaid')]];
+    if ($b['fee_order']) {
+        $pay[] = ['Payment order', '#' . (int) $b['fee_order']];
+    }
+    return [
+        'doc' => $paid ? 'Receipt' : 'Invoice', 'title' => $paid ? 'Booking receipt' : 'Booking invoice',
+        'number' => sa_bk_invoice_no($b), 'file_no' => sa_bk_invoice_no($b),
+        'date' => wp_date('j M Y', (int) $b['created']), 'paid' => $paid,
+        'seller' => function_exists('sa_rcpt_seller') ? sa_rcpt_seller('KE') : [],
+        'bill' => array_filter([$b['name'], $b['email'], $b['phone']]), 'ship' => [],
+        'items' => $items, 'totals' => $totals, 'pay' => $pay, 'note' => '',
+        'extra_html' => '<div style="font-size:12px;color:#6B6B6B">This is an estimate; you approve the final quote before any work starts. Fee refunds follow our <a href="' . esc_url(home_url('/booking-terms/')) . '" style="color:#111111">Booking Terms</a>.</div>',
+        'view_url' => sa_bk_invoice_url($id),
+        'pay_url' => (!$paid && $b['status'] === 'pending' && $kes > 0) ? add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/pay/')) : '',
+        'greet' => '', 'lead' => '',
     ];
-    if ($waived) {
-        $rows['Booking fee'] = 'Waived — ' . preg_replace('/^waived \((.*)\)$/', '$1', $wlabel);
-    }
-    $h = '<div style="font-family:Inter,Arial,sans-serif;max-width:720px;margin:24px auto;background:#fff;color:#1a1a1a;border:1px solid #e4e3de;border-radius:14px;padding:28px">';
-    $h .= '<table style="width:100%;border-collapse:collapse"><tr><td style="vertical-align:top">'
-        . ($logo ? '<img src="' . ($embed_logo ? esc_attr($logo) : esc_url($logo)) . '" width="320" alt="Supreme Autoparts" style="max-height:50px;margin-bottom:8px"><br>' : '')
-        . '<strong>Standard Driveworks / Supreme Autoparts</strong><br><span style="color:#5f5f5b;font-size:13px">Ground Floor, Midax Plaza, Kangundo Rd, Njiru, Nairobi<br>P.O. Box 00516-00100 G.P.O Nairobi<br>calvin@supremeautoparts.co.ke · +254 714 498 451</span></td>'
-        . '<td style="vertical-align:top;text-align:right"><div style="font-size:22px;font-weight:800;color:#111111">' . ($paid ? 'INVOICE / BOOKING CONFIRMATION' : 'INVOICE') . '</div>'
-        . '<div style="margin:6px 0;color:#5f5f5b;font-size:13px">No. ' . $e(sa_bk_invoice_no($b)) . '<br>Issued ' . $e(wp_date('j M Y', (int) $b['created'])) . '</div>' . $badge . '</td></tr></table>';
-    $h .= '<table style="width:100%;border-collapse:collapse;margin-top:20px;font-size:14px">';
-    foreach ($rows as $k => $v) {
-        $h .= '<tr><td style="padding:8px 0;border-bottom:1px solid #eef0f4;color:#5f5f5b;width:34%">' . $e($k) . '</td><td style="padding:8px 0;border-bottom:1px solid #eef0f4"><strong>' . $e($v) . '</strong></td></tr>';
-    }
-    $h .= '</table><table style="width:100%;border-collapse:collapse;margin-top:18px;font-size:14px">'
-        . '<tr style="background:#f6f7fa"><th style="text-align:left;padding:10px">Item</th><th style="text-align:right;padding:10px">Amount</th></tr>'
-        . '<tr><td style="padding:10px;border-bottom:1px solid #eef0f4">' . ($waived ? 'Car service booking fee: waived (' . $e(preg_replace('/^waived \((.*)\)$/', '$1', $wlabel)) . ')' : 'Car service booking fee (deducted from your final service bill)') . '</td><td style="padding:10px;text-align:right;border-bottom:1px solid #eef0f4"><strong>KES ' . number_format($kes) . '</strong>' . ($usd !== null ? '<br><small style="color:#5f5f5b">≈ USD ' . number_format($usd, 2) . '</small>' : '') . '</td></tr>'
-        . '<tr><td style="padding:10px;color:#5f5f5b">' . ($waived ? 'Estimated labour / service total (quoted as normal, paid at the garage)' : 'Estimated service total (paid at the garage, less the booking fee)') . '</td><td style="padding:10px;text-align:right;color:#5f5f5b">' . $e($b['estimate'] ?: 'Quote on request') . '</td></tr>'
-        . '<tr><td style="padding:12px 10px;font-weight:700">' . ($waived ? 'Paid now' : ($paid ? 'Booking fee paid' : 'Amount due now')) . '</td><td style="padding:12px 10px;text-align:right;font-weight:800;font-size:18px">KES ' . number_format($kes) . '</td></tr></table>';
-    if (!$paid && $b['status'] === 'pending' && $kes > 0) {
-        $h .= '<p style="text-align:center;margin:22px 0 8px"><a href="' . esc_url($pay) . '" style="display:inline-block;background:#F5A623;color:#111;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:10px">Pay KES ' . number_format($kes) . ' now</a></p>';
-    }
-    if ($paid) {
-        $h .= '<p style="margin-top:18px;font-size:14px">Your booking is confirmed. Please keep booking number <strong>' . $e($b['ref']) . '</strong> for reference.' . ($b['fee_order'] ? ' Payment order #' . (int) $b['fee_order'] . '.' : '') . '</p>';
-    }
-    $h .= '<p style="color:#5f5f5b;font-size:12px;margin-top:18px">This is an estimate; you approve the final quote before any work starts. Fee refunds follow our <a href="' . esc_url(home_url('/booking-terms/')) . '">Booking Terms</a>.</p></div>';
-    return $h;
+}
+
+function sa_bk_invoice_html(int $id, bool $embed_logo = false): string
+{
+    return sa_rcpt_render(sa_bk_rcpt_data($id), $embed_logo ? 'pdf' : 'page', $embed_logo ? [] : [
+        ['label' => 'Print', 'print' => true, 'primary' => true],
+        ['label' => 'Download PDF', 'url' => sa_bk_invoice_url($id, true)],
+    ]);
 }
 
 function sa_bk_invoice_email(int $id, string $kind = ''): void
@@ -116,19 +115,15 @@ function sa_bk_invoice_email(int $id, string $kind = ''): void
             . ($b['mode'] === 'pickup' ? 'We pick up your car from: ' . esc_html($b['pickup']) . '. The pickup fee is confirmed with you on a call.' : 'Drop-off at our Njiru garage, Midax Plaza, Kangundo Rd.') . '</p>'
             . '<p style="font-size:14px"><a href="' . esc_url($mng) . '">Manage booking</a> · <a href="' . esc_url(add_query_arg(['service' => $b['service'], 'reschedule' => $id, 'rk' => $b['key']], home_url('/book-service/'))) . '">Reschedule</a> · <a href="' . esc_url($mng) . '#cancel">Cancel</a></p>';
     }
-    $body = '<div style="font-family:Arial,sans-serif;max-width:720px;margin:auto"><p>' . sa_email_greeting(sa_bk_greet_src($b), (string) $b['name']) . '</p><p>' . esc_html($lead) . '</p>' . $btn . '</div>' . sa_bk_invoice_html($id)
-        . '<p style="font-family:Arial,sans-serif;text-align:center;font-size:13px"><a href="' . esc_url(sa_bk_invoice_url($id)) . '">View or download this invoice online</a></p>';
-    $tmp = '';
-    $att = [];
-    $dir = function_exists('get_temp_dir') ? get_temp_dir() : sys_get_temp_dir() . '/';
-    $tmp = $dir . sanitize_file_name(sa_bk_invoice_no($b) . ($paid ? '-PAID' : '') . '.html');
-    if (@file_put_contents($tmp, '<!doctype html><meta charset="utf-8"><title>' . esc_html(sa_bk_invoice_no($b)) . '</title><body style="background:#f4f5f8">' . sa_bk_invoice_html($id, true) . '</body>') !== false) {
-        $att[] = $tmp;
-    }
-    wp_mail($b['email'], $subject, $body, ['Content-Type: text/html; charset=UTF-8'], $att);
-    if ($tmp !== '' && file_exists($tmp)) {
-        @unlink($tmp);
-    }
+    $d = sa_bk_rcpt_data($id);
+    $d['greet'] = sa_email_greeting(sa_bk_greet_src($b), (string) $b['name']);
+    $d['lead'] = $lead;
+    $d['pay_url'] = '';
+    $d['extra_html'] = ($btn !== '' ? str_replace('border-radius:10px', 'border-radius:0', $btn) : '') . $d['extra_html'];
+    $body = sa_rcpt_render($d, 'email');
+    $pdf = sa_rcpt_pdf_tempfile($d);
+    wp_mail($b['email'], $subject, $body, ['Content-Type: text/html; charset=UTF-8'], $pdf !== '' ? [$pdf] : []);
+    sa_rcpt_cleanup($pdf);
     update_post_meta($id, '_sa_bk_invoice_' . ($paid ? 'paid' : ($kind !== '' ? $kind : 'unpaid')) . '_sent', time());
 }
 
@@ -147,17 +142,13 @@ add_action('template_redirect', static function (): void {
     if (!$ok) {
         wp_die('Not allowed', 403);
     }
+    if (!empty($_GET['dl'])) {
+        sa_rcpt_send_pdf_download(sa_bk_rcpt_data($id));
+    }
     nocache_headers();
     header('Content-Type: text/html; charset=utf-8');
     header('X-Robots-Tag: noindex');
-    if (!empty($_GET['dl'])) {
-        header('Content-Disposition: attachment; filename="' . sanitize_file_name(sa_bk_invoice_no($b)) . '.html"');
-    }
-    echo '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>' . esc_html(sa_bk_invoice_no($b)) . '</title>'
-        . '<style>@media print{.noprint{display:none}body{background:#fff!important}}</style></head><body style="background:#f4f5f8;margin:0;padding:12px">'
-        . '<p class="noprint" style="font-family:Arial,sans-serif;text-align:center"><button onclick="window.print()" style="padding:10px 18px;border-radius:10px;border:0;background:#111111;color:#fff;font-weight:600;cursor:pointer">Print / Save as PDF</button> '
-        . '<a href="' . esc_url(sa_bk_invoice_url($id, true)) . '" style="margin-left:10px">Download</a></p>'
-        . sa_bk_invoice_html($id, !empty($_GET['dl'])) . '</body></html>';
+    echo sa_bk_invoice_html($id); // phpcs:ignore
     exit;
 });
 

@@ -178,6 +178,11 @@ function sa_mail_layout(string $heading, string $inner, string $cta_label = '', 
 
 function sa_ol_items_html(WC_Order $o): string
 {
+    if (function_exists('sa_rcpt_order_data')) {
+        $d = sa_rcpt_order_data($o);
+        return '<div style="margin:16px 0">' . sa_rcpt_items_html($d['items'], 'email', SA_RCPT_FONT)
+            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:8px;border-collapse:collapse">' . sa_rcpt_totals_html($d['totals'], SA_RCPT_FONT) . '</table></div>';
+    }
     $rows = '';
     foreach ($o->get_items() as $it) {
         $rows .= '<tr><td style="padding:6px 0;border-bottom:1px solid #eee">' . esc_html($it->get_name()) . ' × ' . (int) $it->get_quantity() . '</td><td style="padding:6px 0;border-bottom:1px solid #eee;text-align:right;white-space:nowrap">' . wp_kses_post($o->get_formatted_line_subtotal($it)) . '</td></tr>';
@@ -238,7 +243,11 @@ function sa_ol_send(WC_Order $o, string $stage, string $note = ''): bool
     if (!$c) {
         return false;
     }
-    $ok = (bool) wp_mail($to, $c['subject'], $c['html'], ['Content-Type: text/html; charset=UTF-8']);
+    $pdf = in_array($stage, ['processing', 'completed', 'refunded'], true) && function_exists('sa_rcpt_order_pdf') ? sa_rcpt_order_pdf($o) : '';
+    $ok = (bool) wp_mail($to, $c['subject'], $c['html'], ['Content-Type: text/html; charset=UTF-8'], $pdf !== '' ? [$pdf] : []);
+    if ($pdf !== '') {
+        sa_rcpt_cleanup($pdf);
+    }
     $o->add_order_note('Customer email sent: ' . (sa_ol_stage_labels()[$stage] ?? $stage) . ($ok ? '' : ' (send failed)'));
     return $ok;
 }

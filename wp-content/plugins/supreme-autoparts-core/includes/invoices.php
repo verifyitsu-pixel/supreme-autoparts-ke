@@ -199,7 +199,10 @@ add_action('template_redirect', static function (): void {
         );
     }
 
-    // Owner, staff, or valid stable/order key: render.
+    // Owner, staff, or valid stable/order key: render (PDF on ?format=pdf, falls back to HTML).
+    if (isset($_GET['format']) && $_GET['format'] === 'pdf' && function_exists('sa_rcpt_send_pdf_download')) {
+        sa_rcpt_send_pdf_download(sa_rcpt_order_data($order));
+    }
     sa_core_render_invoice_html($order);
     exit;
 }, 1);
@@ -211,214 +214,21 @@ add_action('template_redirect', static function (): void {
  */
 function sa_core_build_invoice_html($order, bool $for_email = false): string
 {
-    $store     = 'Supreme Autoparts';
-    $email     = function_exists('sa_core_store_email') ? sa_core_store_email() : 'calvin@supremeautoparts.co.ke';
-    $currency  = $order->get_currency();
-    $logo      = sa_core_invoice_logo_url();
-    $doc_title = sa_core_invoice_doc_title($order);
-    $order_id  = (int) $order->get_id();
-    $inv_url   = sa_core_invoice_url($order_id);
-    $email_url = sa_core_invoice_email_url($order_id);
-    $back_url  = $order->get_view_order_url();
-    $status    = $order->get_status();
-    $is_paid   = $order->is_paid() || $order->has_status(['processing', 'completed']);
-
-    ob_start();
-    ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title><?php echo esc_html($doc_title); ?> #<?php echo esc_html($order->get_order_number()); ?> — <?php echo esc_html($store); ?></title>
-  <style>
-    *{box-sizing:border-box}
-    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;padding:1.25rem;color:#1a1a1c;background:#f4f4f5;line-height:1.5}
-    .wrap{max-width:800px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(11,11,13,.08)}
-    .header{background:#0B0B0D;color:#F4F4F5;padding:1.35rem 1.5rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem}
-    .header__brand{display:flex;align-items:center;gap:.85rem}
-    .header__logo{height:52px;width:auto;max-width:340px;object-fit:contain;display:block;border-radius:4px}
-    .header__meta{text-align:right}
-    .header__doc{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:#F5A623;font-weight:700;margin:0 0 .15rem}
-    .header__num{font-size:1.35rem;font-weight:700;margin:0;color:#fff}
-    .accent{height:4px;background:#F5A623}
-    .body{padding:1.5rem}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem}
-    .card{border:1px solid #e8e8ea;border-radius:10px;padding:1rem 1.1rem;background:#fafafa}
-    .card h3{margin:0 0 .5rem;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:#8A8A90;font-weight:700}
-    .card p{margin:.2rem 0;font-size:.95rem}
-    .muted{color:#555;font-size:.88rem}
-    table.items{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.95rem}
-    table.items th{background:#0B0B0D;color:#F4F4F5;text-align:left;padding:.65rem .55rem;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase}
-    table.items th.right,table.items td.right{text-align:right}
-    table.items td{border-bottom:1px solid #ececee;padding:.65rem .55rem;vertical-align:top}
-    table.items tr:last-child td{border-bottom:0}
-    .totals{max-width:300px;margin-left:auto;width:100%}
-    .totals td{border:0;padding:.35rem .4rem;font-size:.95rem}
-    .totals tr td:last-child{text-align:right;font-weight:600}
-    .totals .grand td{border-top:2px solid #0B0B0D;padding-top:.65rem;font-size:1.05rem;color:#0B0B0D}
-    .totals .grand td:last-child{color:#F5A623}
-    .badge{display:inline-block;padding:.2rem .55rem;border-radius:999px;font-size:.75rem;font-weight:700;background:<?php echo $is_paid ? '#E8F8EF' : '#FFF4E0'; ?>;color:<?php echo $is_paid ? '#0B7A3B' : '#9A6200'; ?>}
-    .footer{padding:1rem 1.5rem 1.4rem;border-top:1px solid #ececee;color:#666;font-size:.85rem}
-    .no-print{display:flex;flex-wrap:wrap;gap:.5rem;margin:0 auto 1rem;max-width:800px}
-    .no-print a,.no-print button{appearance:none;border:0;border-radius:8px;padding:.6rem 1rem;font:inherit;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:.35rem}
-    .btn-primary{background:#0B0B0D;color:#fff}
-    .btn-amber{background:#F5A623;color:#0B0B0D}
-    .btn-outline{background:#fff;color:#0B0B0D;border:1px solid #ccc!important}
-    @media (max-width:560px){
-      body{padding:.65rem}
-      .grid{grid-template-columns:1fr}
-      .header{flex-direction:column;align-items:flex-start}
-      .header__meta{text-align:left}
-      table.items,table.items thead,table.items tbody,table.items th,table.items td,table.items tr{display:block;width:100%}
-      table.items thead{display:none}
-      table.items tr{border-bottom:1px solid #eee;padding:.55rem 0;margin:0}
-      table.items td{border:0;padding:.15rem 0;display:flex;justify-content:space-between;gap:1rem}
-      table.items td.right{text-align:left}
-      .totals{max-width:none}
+    $d = sa_rcpt_order_data($order);
+    if ($for_email) {
+        return sa_rcpt_render($d, 'email');
     }
-    @media print{
-      body{background:#fff;padding:0}
-      .no-print{display:none!important}
-      .wrap{box-shadow:none;border-radius:0}
+    $id = (int) $order->get_id();
+    $inv = sa_core_invoice_url($id);
+    $tb = [
+        ['label' => __('Print', 'supreme-autoparts-core'), 'print' => true, 'primary' => true],
+        ['label' => __('Download PDF', 'supreme-autoparts-core'), 'url' => add_query_arg('format', 'pdf', $inv)],
+        ['label' => $d['paid'] ? __('Email me this receipt', 'supreme-autoparts-core') : __('Email me this invoice', 'supreme-autoparts-core'), 'url' => sa_core_invoice_email_url($id)],
+    ];
+    if (is_user_logged_in()) {
+        $tb[] = ['label' => __('Back to order', 'supreme-autoparts-core'), 'url' => $order->get_view_order_url()];
     }
-  </style>
-</head>
-<body>
-<?php if (!$for_email) : ?>
-  <p class="no-print">
-    <button type="button" class="btn-primary" onclick="window.print()"><?php echo esc_html__('Print / Save PDF', 'supreme-autoparts-core'); ?></button>
-    <a class="btn-amber" href="<?php echo esc_url($email_url); ?>"><?php
-      echo $is_paid
-        ? esc_html__('Email me this receipt', 'supreme-autoparts-core')
-        : esc_html__('Email me this invoice', 'supreme-autoparts-core');
-    ?></a>
-    <a class="btn-outline" href="<?php echo esc_url($back_url); ?>"><?php echo esc_html__('Back to order', 'supreme-autoparts-core'); ?></a>
-  </p>
-<?php endif; ?>
-<?php if ($for_email) : ?>
-  <p style="font-family:Arial,sans-serif;font-size:15px;max-width:720px;margin:16px auto 8px;padding:0 16px"><?php echo sa_email_greeting($order); // phpcs:ignore -- escaped ?> <?php echo esc_html($is_paid ? __('Here is the receipt for your order.', 'supreme-autoparts-core') : __('Here is the invoice for your order.', 'supreme-autoparts-core')); ?></p>
-<?php endif; ?>
-  <div class="wrap">
-    <header class="header">
-      <div class="header__brand">
-        <img class="header__logo" src="<?php echo esc_url($logo); ?>" alt="<?php echo esc_attr($store); ?>" width="338" height="52" />
-        <div>
-          <strong><?php echo esc_html($store); ?></strong>
-          <div class="muted" style="color:#A0A0A8;font-size:.8rem"><?php echo esc_html($email); ?> · <?php echo esc_html(function_exists('sa_geo_business') ? sa_geo_business(strtoupper((string) ($order->get_billing_country() ?: 'KE')))['one_line'] : 'Nairobi, Kenya'); ?></div>
-        </div>
-      </div>
-      <div class="header__meta">
-        <p class="header__doc"><?php echo esc_html($doc_title); ?></p>
-        <p class="header__num">#<?php echo esc_html($order->get_order_number()); ?></p>
-      </div>
-    </header>
-    <div class="accent"></div>
-    <div class="body">
-      <div class="grid">
-        <div class="card">
-          <h3><?php echo esc_html__('Bill to', 'supreme-autoparts-core'); ?></h3>
-          <p><?php echo wp_kses_post($order->get_formatted_billing_address() ?: esc_html($order->get_billing_email())); ?></p>
-          <p class="muted"><?php echo esc_html($order->get_billing_email()); ?>
-            <?php if ($order->get_billing_phone()) : ?> · <?php echo esc_html($order->get_billing_phone()); ?><?php endif; ?>
-          </p>
-        </div>
-        <?php $ship_addr = $order->get_formatted_shipping_address(); ?>
-        <div class="card">
-          <h3><?php echo esc_html__('Ship to', 'supreme-autoparts-core'); ?></h3>
-          <p><?php echo wp_kses_post($ship_addr ?: ($order->get_formatted_billing_address() ?: '—')); ?></p>
-          <?php if ($order->get_shipping_method()) : ?>
-            <p class="muted"><?php echo esc_html__('Shipping method', 'supreme-autoparts-core'); ?>: <?php echo esc_html($order->get_shipping_method()); ?></p>
-          <?php endif; ?>
-        </div>
-        <div class="card">
-          <h3><?php echo esc_html__('Order details', 'supreme-autoparts-core'); ?></h3>
-          <p><strong><?php echo esc_html__('Date', 'supreme-autoparts-core'); ?>:</strong> <?php echo esc_html(wc_format_datetime($order->get_date_created())); ?></p>
-          <p><strong><?php echo esc_html__('Status', 'supreme-autoparts-core'); ?>:</strong> <span class="badge"><?php echo esc_html(wc_get_order_status_name($status)); ?></span></p>
-          <p><strong><?php echo esc_html__('Payment', 'supreme-autoparts-core'); ?>:</strong> <?php echo esc_html($order->get_payment_method_title() ?: '—'); ?></p>
-          <?php if ($order->get_date_paid()) : ?>
-            <p><strong><?php echo esc_html__('Paid', 'supreme-autoparts-core'); ?>:</strong> <?php echo esc_html(wc_format_datetime($order->get_date_paid(), get_option('date_format') . ' ' . get_option('time_format'))); ?></p>
-          <?php endif; ?>
-          <?php if ($order->get_transaction_id()) : ?>
-            <p class="muted"><?php echo esc_html__('Transaction', 'supreme-autoparts-core'); ?>: <?php echo esc_html($order->get_transaction_id()); ?></p>
-          <?php endif; ?>
-        </div>
-      </div>
-
-      <table class="items">
-        <thead>
-          <tr>
-            <th><?php echo esc_html__('Item', 'supreme-autoparts-core'); ?></th>
-            <th><?php echo esc_html__('Qty', 'supreme-autoparts-core'); ?></th>
-            <th class="right"><?php echo esc_html__('Total', 'supreme-autoparts-core'); ?></th>
-          </tr>
-        </thead>
-        <tbody>
-        <?php foreach ($order->get_items() as $item) : ?>
-          <?php
-          $inv_product = is_callable([$item, 'get_product']) ? $item->get_product() : null;
-          $inv_thumb = '';
-          if ($inv_product instanceof WC_Product && function_exists('sa_core_get_product_email_image_url')) {
-              $inv_thumb = sa_core_get_product_email_image_url($inv_product, 160);
-          }
-          $inv_qty = max(1, (int) $item->get_quantity());
-          ?>
-          <tr>
-            <td>
-              <div style="display:flex;gap:.75rem;align-items:flex-start">
-                <?php if ($inv_thumb !== '') : ?>
-                  <img src="<?php echo esc_url($inv_thumb); ?>" alt="<?php echo esc_attr($item->get_name()); ?>" width="72" height="72" style="width:72px;height:72px;object-fit:contain;background:#fff;border:1px solid #e8e8ea;border-radius:8px;flex:0 0 auto" />
-                <?php endif; ?>
-                <div>
-                  <div><?php echo esc_html($item->get_name()); ?></div>
-                  <?php if ($inv_product instanceof WC_Product && $inv_product->get_sku() !== '') : ?>
-                    <div class="muted" style="font-size:.82rem"><?php echo esc_html__('SKU', 'supreme-autoparts-core'); ?>: <?php echo esc_html($inv_product->get_sku()); ?></div>
-                  <?php endif; ?>
-                  <div class="muted" style="font-size:.82rem"><?php echo esc_html__('Unit price', 'supreme-autoparts-core'); ?>: <?php echo wp_kses_post(wc_price((float) $item->get_subtotal() / $inv_qty, ['currency' => $currency])); ?></div>
-                </div>
-              </div>
-            </td>
-            <td><?php echo esc_html((string) $item->get_quantity()); ?></td>
-            <td class="right"><?php echo wp_kses_post($order->get_formatted_line_subtotal($item)); ?></td>
-          </tr>
-        <?php endforeach; ?>
-        </tbody>
-      </table>
-
-      <table class="totals">
-        <tr><td><?php echo esc_html__('Subtotal', 'supreme-autoparts-core'); ?></td><td><?php echo wp_kses_post($order->get_subtotal_to_display()); ?></td></tr>
-        <?php if ((float) $order->get_shipping_total() > 0) : ?>
-          <tr><td><?php echo esc_html__('Shipping', 'supreme-autoparts-core'); ?><?php if ($order->get_shipping_method()) : ?> (<?php echo esc_html($order->get_shipping_method()); ?>)<?php endif; ?></td><td><?php echo wp_kses_post(wc_price((float) $order->get_shipping_total(), ['currency' => $currency])); ?></td></tr>
-        <?php endif; ?>
-        <?php foreach ($order->get_tax_totals() as $tax) : ?>
-          <tr><td><?php echo esc_html($tax->label); ?></td><td><?php echo wp_kses_post($tax->formatted_amount); ?></td></tr>
-        <?php endforeach; ?>
-        <?php if ((float) $order->get_total_discount() > 0) : ?>
-          <tr><td><?php echo esc_html__('Discount', 'supreme-autoparts-core'); ?></td><td>−<?php echo wp_kses_post(wc_price((float) $order->get_total_discount(), ['currency' => $currency])); ?></td></tr>
-        <?php endif; ?>
-        <tr class="grand"><td><?php echo esc_html__('Total', 'supreme-autoparts-core'); ?></td><td><?php echo wp_kses_post($order->get_formatted_order_total()); ?></td></tr>
-      </table>
-
-      <?php if ($order->get_customer_note()) : ?>
-        <div class="card" style="margin-top:1rem">
-          <h3><?php echo esc_html__('Note', 'supreme-autoparts-core'); ?></h3>
-          <p><?php echo esc_html($order->get_customer_note()); ?></p>
-        </div>
-      <?php endif; ?>
-    </div>
-    <footer class="footer">
-      <p><?php echo esc_html__('Thank you for shopping with Supreme Autoparts.', 'supreme-autoparts-core'); ?></p>
-      <p class="muted"><?php echo esc_html($store); ?> · <?php echo esc_html($email); ?> · <?php echo esc_html(function_exists('sa_geo_business') ? sa_geo_business(strtoupper((string) ($order->get_billing_country() ?: 'KE')))['one_line'] : 'Nairobi, Kenya'); ?>
-        <?php if ($for_email) : ?>
-          · <a href="<?php echo esc_url($inv_url); ?>"><?php echo esc_html__('View online', 'supreme-autoparts-core'); ?></a>
-        <?php endif; ?>
-      </p>
-    </footer>
-  </div>
-</body>
-</html>
-    <?php
-    return (string) ob_get_clean();
+    return sa_rcpt_render($d, 'page', $tb);
 }
 
 /**
@@ -472,7 +282,7 @@ function sa_core_email_invoice_to_customer($order)
     $doc_title = sa_core_invoice_doc_title($order);
     $subject   = sprintf(
         /* translators: 1: Invoice|Receipt 2: order number */
-        __('%1$s #%2$s — Supreme Autoparts', 'supreme-autoparts-core'),
+        __('%1$s #%2$s from Supreme Autoparts', 'supreme-autoparts-core'),
         $doc_title,
         $order->get_order_number()
     );
@@ -485,7 +295,11 @@ function sa_core_email_invoice_to_customer($order)
     // Do NOT BCC store owner on customer invoices — keeps admin/customer mailboxes separated.
     unset($from_email);
 
-    $sent = wp_mail($to, $subject, $body, $headers);
+    $pdf = function_exists('sa_rcpt_order_pdf') ? sa_rcpt_order_pdf($order) : '';
+    $sent = wp_mail($to, $subject, $body, $headers, $pdf !== '' ? [$pdf] : []);
+    if ($pdf !== '') {
+        sa_rcpt_cleanup($pdf);
+    }
     if (!$sent) {
         return new WP_Error('sa_invoice_send_fail', __('Could not send email. Please try again or contact support.', 'supreme-autoparts-core'));
     }

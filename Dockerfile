@@ -35,6 +35,15 @@ RUN curl -fsSL -o /tmp/ppcp.zip \
     && rm -f /tmp/ppcp.zip \
     && test -f /usr/src/wordpress/wp-content/plugins/woocommerce-paypal-payments/woocommerce-paypal-payments.php
 
+# dompdf (PDF receipts / invoices attached to customer emails). Release zip bundles its deps + DejaVu fonts.
+ARG DOMPDF_VERSION=3.1.6
+RUN mkdir -p /usr/src/sa-lib \
+    && curl -fsSL -o /tmp/dompdf.zip "https://github.com/dompdf/dompdf/releases/download/v${DOMPDF_VERSION}/dompdf-${DOMPDF_VERSION}.zip" \
+    && unzip -q /tmp/dompdf.zip -d /usr/src/sa-lib \
+    && rm -f /tmp/dompdf.zip \
+    && test -f /usr/src/sa-lib/dompdf/autoload.inc.php \
+    && chown -R www-data:www-data /usr/src/sa-lib
+
 # Custom theme + plugins (baked into image for Git auto-deploy)
 COPY wp-content/themes/supreme-autoparts /usr/src/wordpress/wp-content/themes/supreme-autoparts
 COPY wp-content/plugins/supreme-autoparts-core /usr/src/wordpress/wp-content/plugins/supreme-autoparts-core

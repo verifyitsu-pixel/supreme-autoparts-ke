@@ -417,7 +417,11 @@ function sa_g_ro_email(int $ro, string $kind): bool
         default:
             return false;
     }
-    $ok = (bool) wp_mail($c['email'], $subject, $html, ['Content-Type: text/html; charset=UTF-8']);
+    $pdf = ($kind === 'invoice' || $kind === 'ready') && isset($o) && $o instanceof WC_Order && function_exists('sa_rcpt_order_pdf') ? sa_rcpt_order_pdf($o) : '';
+    $ok = (bool) wp_mail($c['email'], $subject, $html, ['Content-Type: text/html; charset=UTF-8'], $pdf !== '' ? [$pdf] : []);
+    if ($pdf !== '') {
+        sa_rcpt_cleanup($pdf);
+    }
     sa_g_ro_log($ro, $r['status'], ucfirst($kind) . ' email ' . ($ok ? 'sent' : 'failed') . ' to ' . $c['email']);
     return $ok;
 }

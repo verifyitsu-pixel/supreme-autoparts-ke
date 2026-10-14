@@ -444,6 +444,10 @@ final class Whop_Open_Pay {
                     <a class="sa-open-pay__btn" href="<?php echo esc_url($received_url); ?>">
                         <?php echo esc_html__('View order details', 'whop-payments'); ?>
                     </a>
+                    <?php if (function_exists('sa_core_invoice_url')) : $sa_inv = sa_core_invoice_url((int) $order->get_id()); ?>
+                        <a class="sa-open-pay__link" href="<?php echo esc_url($sa_inv); ?>" target="_blank" rel="noopener"><?php echo esc_html__('View / print receipt', 'whop-payments'); ?></a>
+                        <a class="sa-open-pay__link" href="<?php echo esc_url(add_query_arg('format', 'pdf', $sa_inv)); ?>"><?php echo esc_html__('Download receipt (PDF)', 'whop-payments'); ?></a>
+                    <?php endif; ?>
                     <?php if ($view_url !== '') : ?>
                         <a class="sa-open-pay__link" href="<?php echo esc_url($view_url); ?>">
                             <?php echo esc_html__('Open in my account', 'whop-payments'); ?>
