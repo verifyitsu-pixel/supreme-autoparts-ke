@@ -74,6 +74,12 @@ function sa_fargo_destination(string $state, string $city): ?array
     if ($pick === '' && $county !== '') {
         $pick = (string) ($card['county_default_town'][$county] ?? '');
     }
+    $nearest_for = '';
+    if ($pick === '' && $county !== '' && isset($card['nearest_branch_for_no_branch_counties'][$county])) {
+        // No Fargo branch on the card (Wajir, Mandera): bill the published rate to the nearest branch, labelled as such.
+        $pick = (string) $card['nearest_branch_for_no_branch_counties'][$county];
+        $nearest_for = $county;
+    }
     if ($pick === '' || !isset($towns[$pick])) {
         return null;
     }
@@ -85,7 +91,7 @@ function sa_fargo_destination(string $state, string $city): ?array
     if (in_array($pick, $card['remote_150_towns'] ?? [], true)) {
         $excess = (float) ($ex['remote_150'] ?? 150);
     }
-    return ['town' => $pick, 'county' => (string) $towns[$pick]['county'], 'kes' => (float) $towns[$pick]['kes'], 'excess' => $excess];
+    return ['town' => $pick, 'county' => (string) $towns[$pick]['county'], 'kes' => (float) $towns[$pick]['kes'], 'excess' => $excess, 'nearest_for' => $nearest_for];
 }
 
 function sa_fargo_fee_kes(array $dest, float $kg): float
@@ -176,7 +182,7 @@ add_action('woocommerce_shipping_init', static function (): void {
                 ]);
                 return;
             }
-            $label = sprintf('%s to %s (KES %s, %s kg)', $this->title, $d['town'], number_format($kes), rtrim(rtrim(number_format($kg, 1), '0'), '.'));
+            $label = sprintf('%s to %s (KES %s, %s kg)', $this->title, $d['nearest_for'] !== '' ? $d['town'] . ' branch, nearest to ' . $d['nearest_for'] : $d['town'], number_format($kes), rtrim(rtrim(number_format($kg, 1), '0'), '.'));
             $this->add_rate([
                 'id'        => $this->get_rate_id(),
                 'label'     => $label,
@@ -295,3 +301,23 @@ add_action('rest_api_init', static function (): void {
         },
     ]);
 });
+
+/* Kenya visitors: preselect Nairobi county when none chosen, so Fargo + pickup show immediately at checkout. */
+add_filter('default_checkout_billing_state', static function ($v) {
+    if ($v === '' && function_exists('WC') && WC()->customer && strtoupper((string) WC()->customer->get_billing_country()) === 'KE') {
+        return 'KE30';
+    }
+    return $v;
+});
+add_action('woocommerce_before_calculate_totals', static function (): void {
+    if (!function_exists('WC') || !WC()->customer) {
+        return;
+    }
+    $c = WC()->customer;
+    if (strtoupper((string) $c->get_shipping_country()) === 'KE' && (string) $c->get_shipping_state() === '') {
+        $c->set_shipping_state('KE30');
+        if ((string) $c->get_billing_state() === '') {
+            $c->set_billing_state('KE30');
+        }
+    }
+}, 5);

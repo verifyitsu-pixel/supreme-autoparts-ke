@@ -2249,5 +2249,10 @@
    "total_kes": 350.0,
    "county": "Kajiado"
   }
- ]
+ ],
+ "nearest_branch_for_no_branch_counties": {
+  "Wajir": "Garissa",
+  "Mandera": "Garissa"
+ },
+ "nearest_branch_note": "Wajir and Mandera have no branch on the published card. Rate shown is the published Nairobi to Garissa branch rate (KES 750 + excess/kg), labelled \"Garissa branch, nearest to <county>\". Garissa is the nearest card branch by road to both (Isiolo is farther for Mandera). Flagged: confirm onward delivery with Fargo."
 }
