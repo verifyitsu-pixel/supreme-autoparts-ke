@@ -231,3 +231,5 @@ tr.sa-ff-line td,tr.sa-pk-row td{display:table-cell;width:100%;text-align:left!i
 .sa-ff-line__in{display:flex;justify-content:space-between;gap:12px;font-size:14px;color:#111}.sa-ff-line__v{text-align:right;white-space:nowrap}
 tr.sa-ff-line small{display:block;color:#666;font-size:12.5px;line-height:1.4;margin-top:2px}
 .sa-pk,.sa-pk *{max-width:100%;box-sizing:border-box;overflow-wrap:anywhere}.sa-pk__sel{width:100%}
+#order_review table tr.sa-ff-line td,#order_review table tr.sa-pk-row td,.cart_totals table tr.sa-ff-line td{text-align:left!important}
+.sa-ff-line__in{width:100%}.sa-pk{text-align:left;align-items:stretch}
