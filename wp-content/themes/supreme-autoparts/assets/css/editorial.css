@@ -225,3 +225,4 @@ html,body{overflow-x:clip;max-width:100%}
 .sa-rsline{font-family:"SA Inter",Inter,sans-serif;font-size:15px;color:var(--ed-mute);padding-top:24px;padding-bottom:24px}
 .sa-rsline a{color:var(--ed-ink);font-weight:600}
 @media(min-width:1101px){.sa-foot__grid{grid-template-columns:1.35fr 1fr 1fr 1fr 1fr!important}}
+@media(max-width:700px){body:has(.sa-rsfab) .sa-foot{padding-bottom:64px}}

@@ -222,7 +222,7 @@ $sa_chev       = '<svg class="sa-foot__chev" viewBox="0 0 24 24" width="18" heig
 </aside>
 <?php endif; ?>
 
-<?php if (!(function_exists('is_cart') && (is_cart() || is_checkout() || is_product())) && !get_query_var('sa_rs_view')) : ?>
+<?php if (!is_front_page() && !(function_exists('is_cart') && (is_cart() || is_checkout() || is_product())) && !get_query_var('sa_rs_view')) : ?>
 <a class="sa-rsfab" href="<?php echo esc_url(home_url('/roadside/')); ?>"><?php esc_html_e('Roadside help', 'supreme-autoparts'); ?></a>
 <?php endif; ?>
 <?php wp_footer(); ?>
