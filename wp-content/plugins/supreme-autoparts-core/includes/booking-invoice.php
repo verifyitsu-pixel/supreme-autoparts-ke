@@ -110,6 +110,12 @@ function sa_bk_invoice_email(int $id, string $kind = ''): void
         $lead = 'Thanks for booking. Pay the KES ' . $kes . ' booking fee to secure your slot. It is deducted from your final bill. Unpaid bookings are released after 2 hours (at ' . $release . ').';
     }
     $btn = $paid || $b['status'] !== 'pending' ? '' : '<p style="text-align:center;margin:18px 0"><a href="' . esc_url($pay) . '" style="display:inline-block;background:#F5A623;color:#111;text-decoration:none;font-weight:800;font-size:16px;padding:14px 30px;border-radius:10px">Pay booking fee — KES ' . $kes . '</a></p>';
+    if ($waived) {
+        $mng = add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/confirmed/'));
+        $btn .= '<p style="font-size:14px">Fitting job: ' . esc_html(($pt = (string) get_post_meta($id, '_sa_bk_part', true)) !== '' ? $pt : (sa_svc_catalog()[$b['service']]['name'] ?? $b['service'])) . '<br>'
+            . ($b['mode'] === 'pickup' ? 'We pick up your car from: ' . esc_html($b['pickup']) . '. The pickup fee is confirmed with you on a call.' : 'Drop-off at our Njiru garage, Midax Plaza, Kangundo Rd.') . '</p>'
+            . '<p style="font-size:14px"><a href="' . esc_url($mng) . '">Manage booking</a> · <a href="' . esc_url(add_query_arg(['service' => $b['service'], 'reschedule' => $id, 'rk' => $b['key']], home_url('/book-service/'))) . '">Reschedule</a> · <a href="' . esc_url($mng) . '#cancel">Cancel</a></p>';
+    }
     $body = '<div style="font-family:Arial,sans-serif;max-width:720px;margin:auto"><p>Hi ' . esc_html($b['name']) . ',</p><p>' . esc_html($lead) . '</p>' . $btn . '</div>' . sa_bk_invoice_html($id)
         . '<p style="font-family:Arial,sans-serif;text-align:center;font-size:13px"><a href="' . esc_url(sa_bk_invoice_url($id)) . '">View or download this invoice online</a></p>';
     $tmp = '';

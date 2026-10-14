@@ -1355,9 +1355,10 @@ add_action('woocommerce_single_product_summary', static function (): void {
     $svc = sa_svc_for_product((int) $product->get_id());
     $name = sa_svc_catalog()[$svc]['name'] ?? 'installation';
     $fo = function_exists('sa_fw_customer_order_for_product') ? sa_fw_customer_order_for_product((int) $product->get_id()) : null;
-    $url = $fo ? sa_fw_book_url($fo, (int) $product->get_id()) : add_query_arg(['service' => $svc, 'part' => (int) $product->get_id()], home_url('/book-service/'));
-    echo '<div class="sa-svc-fit">' . sa_svc_icon('service') . '<div><strong>Need it fitted?</strong><span>Book installation (' . esc_html($name) . ') at our Njiru, Nairobi garage. '
-        . ($fo ? 'You bought this part from us (order #' . esc_html($fo->get_order_number()) . '), so there is no booking fee.' : 'No booking fee if you bought this part from us; otherwise the KES ' . esc_html(number_format((float) sa_svc_setting('fee_kes'))) . ' booking fee comes off your bill.') . '</span></div>'
+    $direct = !$fo && function_exists('sa_fit_add_url') && $product->is_purchasable() && $product->is_in_stock() && !$product->is_type('variable');
+    $url = $fo ? sa_fw_book_url($fo, (int) $product->get_id()) : ($direct ? sa_fit_add_url((int) $product->get_id()) : add_query_arg(['service' => $svc, 'part' => (int) $product->get_id()], home_url('/book-service/')));
+    echo '<div class="sa-svc-fit">' . sa_svc_icon('service') . '<div><strong>Need it fitted?</strong><span>'
+        . ($fo ? 'You bought this from us (order #' . esc_html($fo->get_order_number()) . '). Book fitting with no booking fee.' : ($direct ? 'Buy it with fitting at our Njiru garage. No booking fee; labour quoted at the garage.' : 'Fitting at our Njiru garage. No booking fee for parts bought from us.')) . '</span></div>'
         . '<a class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--primary" href="' . esc_url($url) . '">Book installation</a></div>';
 }, 36);
 

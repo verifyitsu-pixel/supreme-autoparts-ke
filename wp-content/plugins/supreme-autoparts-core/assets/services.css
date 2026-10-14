@@ -204,3 +204,19 @@ body.sa-side-open{overflow:hidden}
 .sa-fw__msg{margin:8px 0 0;font-size:14px}.sa-fw__msg.is-ok{color:#137a3f;font-weight:600}.sa-fw__msg.is-bad{color:#b3261e}
 .sa-fw-waived{border-color:#9bd3ae!important;background:#eefaf2!important}.sa-svc-feebox[hidden]{display:none!important}
 .sa-fw-sumrow{margin:10px 0 0;padding-top:10px;border-top:1px solid rgba(255,255,255,.18);color:#8ff0b0;font-weight:600}.sa-svc-fine[hidden]{display:none}
+/* Editorial: "Need it fitted?" + checkout fitting */
+.sa-svc-fit{border:1px solid #e5e5e5!important;background:#fff!important;border-radius:4px!important;padding:16px!important;gap:14px!important;margin:18px 0!important}
+.sa-svc-fit>.sa-svc-ico{color:#111!important;width:22px!important;height:22px!important;flex:0 0 22px}
+.sa-svc-fit strong{font-weight:600;color:#111;font-size:15px}.sa-svc-fit span{color:#555;font-size:13.5px;line-height:1.45}
+.sa-svc-fit .sa-svc-btn{background:#111!important;color:#fff!important;border:0!important;border-radius:999px!important;padding:10px 18px!important;font-weight:600}
+.sa-fitco{margin:24px 0;padding:20px;border:1px solid #e5e5e5;border-radius:4px;background:#fff}
+.sa-fitco h3{margin:0 0 6px;font-size:18px;font-weight:600}.sa-fitco__lead,.sa-fitco__note{color:#555;font-size:13.5px;margin:0 0 12px}
+.sa-fitco fieldset{border:0;padding:0;margin:0 0 12px}.sa-fitco legend{font-weight:600;font-size:14px;margin-bottom:6px}
+.sa-fitco__modes label{display:flex;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:14px}
+.sa-fitco__row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px 14px;margin:0 0 12px}
+.sa-fitco__row label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:#333}
+.sa-fitco__row input,.sa-fitco__row select{width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;background:#fff}
+.sa-fitco__pk[hidden]{display:none}.sa-fitco__terms{display:flex;gap:8px;align-items:center;font-size:14px}
+.sa-fit-rm{margin-left:8px;font-size:12px;color:#111;text-decoration:underline}
+.sa-fit-row th,.sa-fit-row td{font-weight:400!important;color:#555}
+.sa-fit-block{display:flex;flex-direction:column;gap:4px;padding:16px;border:1px solid #e5e5e5;border-radius:4px;background:#fff}

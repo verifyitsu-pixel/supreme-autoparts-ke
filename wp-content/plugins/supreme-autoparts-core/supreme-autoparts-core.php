@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_CORE_VERSION', '1.3.65');
+define('SA_CORE_VERSION', '1.3.66');
 define('SA_CORE_FILE', __FILE__);
 define('SA_CORE_DIR', plugin_dir_path(__FILE__));
 define('SA_CORE_URL', plugin_dir_url(__FILE__));
@@ -66,6 +66,7 @@ require_once SA_CORE_DIR . 'includes/car-services.php';
 require_once SA_CORE_DIR . 'includes/roadside.php';
 require_once SA_CORE_DIR . 'includes/booking-invoice.php';
 require_once SA_CORE_DIR . 'includes/fitting-waiver.php';
+require_once SA_CORE_DIR . 'includes/fitting-checkout.php';
 require_once SA_CORE_DIR . 'includes/payment-recovery.php';
 require_once SA_CORE_DIR . 'includes/email-footer.php';
 require_once SA_CORE_DIR . 'includes/order-lifecycle.php';
