@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
 <html <?php language_attributes(); ?> class="no-js">
 <head>
   <meta charset="<?php bloginfo('charset'); ?>">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#ffffff">
   <?php $sa_iv = '?v=emblem2'; $sa_ia = SA_THEME_URI . '/assets/'; ?>
   <link rel="icon" href="<?php echo esc_url($sa_ia . 'favicon.ico' . $sa_iv); ?>" sizes="48x48">

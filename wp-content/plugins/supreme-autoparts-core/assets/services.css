@@ -244,3 +244,14 @@ tr.sa-ff-line small{display:block;color:#666;font-size:12.5px;line-height:1.4;ma
 .sa-svc-btn--primary{background:#111!important;border-color:#111!important;color:#fff!important}
 .sa-svc-btn--primary:hover{background:#000!important}
 .sa-side__x{color:#111!important}
+
+/* iOS zoom-out fix: closed off-canvas drawers must not exist in layout. visibility:hidden + translateX(100%)
+   still counts toward iOS Safari's scrollable width, letting users pinch out to ~50% (page in a narrow column). */
+.sa-cart-drawer:not(.is-open),.sa-side:not(.is-open){display:none!important}
+.sa-cart-drawer.is-open .sa-cart-drawer__panel,.sa-side.is-open .sa-side__panel{animation:saSlideIn .25s ease both}
+@keyframes saSlideIn{from{transform:translateX(100%)}to{transform:none}}
+@media (prefers-reduced-motion:reduce){.sa-cart-drawer.is-open .sa-cart-drawer__panel,.sa-side.is-open .sa-side__panel{animation:none}}
+html,body{overflow-x:hidden;max-width:100%}
+@supports (overflow:clip){html,body{overflow-x:clip}}
+#page,.site,.sa-site{max-width:100%;overflow-x:hidden}
+@supports (overflow:clip){#page,.site,.sa-site{overflow-x:clip}}
