@@ -12,6 +12,8 @@ if (!defined('ABSPATH')) {
 final class SA_Geo_Display
 {
     private static bool $busy = false;
+    /** Depth lock: order emails/PDFs/receipts/hold pages must never geo-convert. */
+    private static int $docs_lock = 0;
     private static bool $note_printed = false;
 
     public static function init(): void
@@ -40,11 +42,47 @@ final class SA_Geo_Display
     }
 
     /**
+     * Pause geo conversion while rendering order documents (emails, PDFs, hold pages).
+     * Nested calls are reference-counted.
+     */
+    public static function lock_order_docs(): void
+    {
+        self::$docs_lock++;
+    }
+
+    public static function unlock_order_docs(): void
+    {
+        self::$docs_lock = max(0, self::$docs_lock - 1);
+    }
+
+    /**
+     * Run $cb with geo conversion disabled. Prefer this over relying on request geo.
+     *
+     * @template T
+     * @param callable():T $cb
+     * @return T
+     */
+    public static function without_conversion(callable $cb)
+    {
+        self::lock_order_docs();
+        try {
+            return $cb();
+        } finally {
+            self::unlock_order_docs();
+        }
+    }
+
+    public static function order_docs_locked(): bool
+    {
+        return self::$docs_lock > 0;
+    }
+
+    /**
      * Whether this request should show converted prices (never change order math).
      */
     public static function should_convert(): bool
     {
-        if (self::$busy) {
+        if (self::$busy || self::$docs_lock > 0) {
             return false;
         }
 
@@ -56,7 +94,7 @@ final class SA_Geo_Display
             return false;
         }
 
-        // Cron / CLI / REST order writes — keep USD.
+        // Cron / CLI / REST order writes — keep order currency.
         if (defined('WP_CLI') && WP_CLI) {
             return false;
         }
@@ -68,15 +106,31 @@ final class SA_Geo_Display
         if (function_exists('is_account_page') && is_account_page()) {
             return false;
         }
-        if (function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('order-received')) {
+        if (function_exists('is_wc_endpoint_url') && (
+            is_wc_endpoint_url('order-received')
+            || is_wc_endpoint_url('view-order')
+            || is_wc_endpoint_url('view-subscription')
+        )) {
             return false;
         }
-        if (!empty($_GET['sa_invoice'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if (!empty($_GET['sa_invoice']) || !empty($_GET['sa_rcpt'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
             return false;
         }
 
-        // Emails: keep USD (matches charged amount).
-        if (doing_action('woocommerce_email_before_order_table') || doing_action('woocommerce_email_after_order_table')) {
+        // Hold-request customer page (/order-help/).
+        if ((int) get_query_var('sa_order_help') === 1 || isset($_GET['sa_order_help'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            return false;
+        }
+
+        // Emails: keep charged/order currency (staff preview, cron, Woo mailer).
+        if (
+            doing_action('woocommerce_email_before_order_table')
+            || doing_action('woocommerce_email_after_order_table')
+            || doing_action('woocommerce_email_order_details')
+            || did_action('woocommerce_email_header')
+            || !empty($GLOBALS['woocommerce_email'])
+            || !empty($GLOBALS['sa_sending_order_email'])
+        ) {
             return false;
         }
 
@@ -109,12 +163,13 @@ final class SA_Geo_Display
             return (string) $html;
         }
 
-        // If caller already forced a non-checkout currency, leave it.
-        $forced = isset($args['currency']) ? strtoupper((string) $args['currency']) : '';
-        $checkout = sa_geo_checkout_currency();
-        if ($forced !== '' && $forced !== $checkout) {
+        // Explicit currency (order docs, receipts, emails) = format as stored. Never geo-convert.
+        // Bug: USD order + KE staff preview used to convert because forced USD === checkout USD.
+        $forced = isset($args['currency']) ? strtoupper(trim((string) $args['currency'])) : '';
+        if ($forced !== '') {
             return (string) $html;
         }
+        $checkout = sa_geo_checkout_currency();
 
         $usd = is_numeric($unformatted_price) ? (float) $unformatted_price : NAN;
         if (!is_finite($usd) || $usd < 0) {

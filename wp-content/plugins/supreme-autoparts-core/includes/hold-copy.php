@@ -101,7 +101,12 @@ function sa_hr_pay(WC_Order $o): array
         $card = ($brand !== '' ? ucfirst(strtolower($brand)) : 'Card') . ' ending ' . $last4;
     }
     $t = (float) $o->get_total();
-    $amt = $cur . ' ' . number_format($t, (in_array($cur, ['KES', 'UGX', 'TZS', 'JPY'], true) || floor($t) == $t) ? 0 : 2);
+    // Always order currency (never geo/WCPBC-equivalent display conversion).
+    if (function_exists('wc_price')) {
+        $amt = html_entity_decode(wp_strip_all_tags(wc_price($t, ['currency' => $cur])), ENT_QUOTES, 'UTF-8');
+    } else {
+        $amt = $cur . ' ' . number_format($t, (in_array($cur, ['KES', 'UGX', 'TZS', 'JPY'], true) || floor($t) == $t) ? 0 : 2);
+    }
     return [
         'card'   => $card,
         'method' => $method,
@@ -134,6 +139,7 @@ function sa_hr_fill(string $s, WC_Order $o, array $pay): string
 /** Order + payment summary block, inline-styled (email + page). */
 function sa_hr_summary_html(WC_Order $o, bool $email = true): string
 {
+    $build = static function () use ($o, $email): string {
     $F = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
     $nl = static fn(string $s): string => function_exists('sa_rcpt_nolink') ? sa_rcpt_nolink($s) : esc_html($s);
     $pay = sa_hr_pay($o);
@@ -175,6 +181,10 @@ function sa_hr_summary_html(WC_Order $o, bool $email = true): string
         . ($ship ? '<div style="' . $lab . ';padding-top:12px">Ship to</div><div style="font-family:' . $F . ';font-size:13px;line-height:1.55;color:#111">' . $lines($ship) . '</div>' : '')
         . '</div></div>';
     return $h . '</td></tr></table>';
+    };
+    return function_exists('sa_geo_without_conversion')
+        ? sa_geo_without_conversion($build)
+        : $build();
 }
 
 /** Email shell: white, black, amber accent, auto-link safe, mobile stacking. */

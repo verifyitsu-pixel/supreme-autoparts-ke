@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Supreme Geo Currency Display
  * Description: Display prices in visitor local currency (CF-IPCountry / geo fallback) while WooCommerce + Whop checkout remain USD.
- * Version: 1.1.5
+ * Version: 1.1.6
  * Author: Supreme Autoparts
  * Text Domain: sa-geo-currency
  * Requires at least: 6.4
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_GEO_CURRENCY_VERSION', '1.1.5');
+define('SA_GEO_CURRENCY_VERSION', '1.1.6');
 define('SA_GEO_CURRENCY_FILE', __FILE__);
 define('SA_GEO_CURRENCY_DIR', plugin_dir_path(__FILE__));
 define('SA_GEO_CURRENCY_URL', plugin_dir_url(__FILE__));
@@ -28,6 +28,23 @@ require_once SA_GEO_CURRENCY_DIR . 'includes/class-sa-geo-display.php';
 /**
  * Feature flag: SA_GEO_CURRENCY=1 enables adaptive display.
  */
+
+/**
+ * Run a callback with storefront geo price conversion disabled.
+ * Use for order emails, PDFs, receipts, hold requests, admin previews.
+ *
+ * @template T
+ * @param callable():T $cb
+ * @return T
+ */
+function sa_geo_without_conversion(callable $cb)
+{
+    if (class_exists('SA_Geo_Display')) {
+        return SA_Geo_Display::without_conversion($cb);
+    }
+    return $cb();
+}
+
 function sa_geo_currency_enabled(): bool
 {
     $env = getenv('SA_GEO_CURRENCY');

@@ -161,6 +161,7 @@ function sa_rcpt_seller_cc_for_order($order): string
  */
 function sa_rcpt_order_data($order): array
 {
+    $build = static function () use ($order): array {
     $cur = $order->get_currency();
     $paid = $order->is_paid() || $order->has_status(['processing', 'completed']);
     $num = (string) $order->get_order_number();
@@ -263,6 +264,10 @@ function sa_rcpt_order_data($order): array
         'greet'    => function_exists('sa_email_greeting') ? sa_email_greeting($order) : 'Hello,',
         'lead'     => $paid ? 'Thanks for your order. Your receipt is below, and a PDF copy is attached.' : 'Here is the invoice for your order. A PDF copy is attached.',
     ];
+    };
+    return function_exists('sa_geo_without_conversion')
+        ? sa_geo_without_conversion($build)
+        : $build();
 }
 
 /** Totals rows html. */

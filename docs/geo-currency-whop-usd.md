@@ -60,6 +60,16 @@ Real hooks (no fictional `woocommerce_whop_payment_gateway_args`):
 
 Webhook settlement compares Whop paid amount to **USD order total** (unchanged).
 
+## Order documents (never geo-convert)
+
+Receipts, invoices, PDFs, Woo emails, hold-request emails, `/order-help/`, My Account order views, and admin order screens must always format amounts with the **order's stored currency** (`wc_price(…, ['currency' => $order->get_currency()])` on stored line totals).
+
+`sa-geo-currency` must **not** re-convert those amounts using the viewer/request zone (staff in Kenya previewing a USD order, cron, etc.).
+
+- Explicit `currency` arg to `wc_price` → no conversion.
+- `sa_geo_without_conversion()` / `SA_Geo_Display::without_conversion()` wraps document builders.
+- `SA_Geo_Display::should_convert()` is false for account/order-help/email/admin/CLI/cron.
+
 ## QA checklist
 
 | Visitor geo | Storefront shows | Whop API / meta |

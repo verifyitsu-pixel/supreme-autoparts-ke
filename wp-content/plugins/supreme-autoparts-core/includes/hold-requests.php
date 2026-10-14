@@ -216,6 +216,9 @@ function sa_hr_items_email(array $r): string
 
 function sa_hr_mail_build(WC_Order $o, array $r, string $kind, string $message = ''): array
 {
+    $build = static function () use ($o, $r, $kind, $message): array {
+    $GLOBALS['sa_sending_order_email'] = 1;
+    try {
     $n = $o->get_order_number();
     $pay = sa_hr_pay($o);
     $c = sa_hr_copy((string) $r['reason']);
@@ -276,6 +279,13 @@ function sa_hr_mail_build(WC_Order $o, array $r, string $kind, string $message =
             $inner = $hi . $msg . ($pend ? sa_hr_items_email($r) : '') . sa_hr_btn($pend ? $fill($c['cta']) : 'Reply securely', $url) . '<p style="font-size:13px;color:#555;margin:0 0 4px">You can also just reply to this email.</p>' . $sum . sa_hr_trust_html($o, $uploads);
     }
     return ['subject' => $subject, 'pre' => $pre, 'html' => sa_hr_mail_wrap($head, $inner, $pre)];
+    } finally {
+        unset($GLOBALS['sa_sending_order_email']);
+    }
+    };
+    return function_exists('sa_geo_without_conversion')
+        ? sa_geo_without_conversion($build)
+        : $build();
 }
 
 /* ---------- Automatic reminders (~48h and ~24h before expiry) ---------- */
@@ -682,7 +692,10 @@ add_action('template_redirect', static function (): void {
     }
     status_header($o ? 200 : 404);
     get_header();
-    echo sa_hr_page_html($o, $r, $state, $err);
+    $html = function_exists('sa_geo_without_conversion')
+        ? sa_geo_without_conversion(static fn() => sa_hr_page_html($o, $r, $state, $err))
+        : sa_hr_page_html($o, $r, $state, $err);
+    echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     get_footer();
     exit;
 });
