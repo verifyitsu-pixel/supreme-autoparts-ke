@@ -194,7 +194,8 @@ function sa_pk_slot_text(WC_Order $o): string
 }
 
 /* =========================================================
- * Cart packages: fitted lines → their own zero-cost package
+ * Cart packages: fitted lines are taken out of the shipping package (no Fargo weight/fee).
+ * One package only: WooCommerce drops Local pickup when a cart has several packages.
  * ======================================================= */
 function sa_ff_is_fitted(array $item): bool
 {
@@ -203,32 +204,41 @@ function sa_ff_is_fitted(array $item): bool
 add_filter('woocommerce_cart_shipping_packages', static function (array $packages): array {
     $out = [];
     foreach ($packages as $p) {
-        $fit = [];
-        $ship = [];
-        foreach ($p['contents'] as $k => $i) {
-            if (sa_ff_is_fitted($i)) {
-                $fit[$k] = $i;
-            } else {
-                $ship[$k] = $i;
-            }
-        }
-        if (!$fit) {
+        $ship = array_filter($p['contents'], static fn($i) => !sa_ff_is_fitted($i));
+        if (count($ship) === count($p['contents'])) {
             $out[] = $p;
-            continue;
+        } elseif ($ship) {
+            $out[] = array_merge($p, ['contents' => $ship, 'contents_cost' => array_sum(array_map(static fn($i) => (float) ($i['line_total'] ?? 0), $ship)), 'sa_has_fitted' => 1]);
         }
-        if ($ship) {
-            $out[] = array_merge($p, ['contents' => $ship, 'contents_cost' => array_sum(array_map(static fn($i) => (float) ($i['line_total'] ?? 0), $ship))]);
-        }
-        $out[] = array_merge($p, ['contents' => $fit, 'contents_cost' => array_sum(array_map(static fn($i) => (float) ($i['line_total'] ?? 0), $fit)), 'sa_fitted' => 1]);
     }
     return array_values($out);
 }, 50);
 
-add_filter('woocommerce_package_rates', static function ($rates, $package) {
-    if (!empty($package['sa_fitted'])) {
-        $r = new WC_Shipping_Rate('sa_fitted', 'Fitted at our garage (no shipping)', 0, [], 'sa_fitted');
-        return ['sa_fitted' => $r];
+/* Review row listing the fitted items. */
+function sa_ff_fitted_row(): void
+{
+    if (!function_exists('WC') || !WC()->cart) {
+        return;
     }
+    $n = [];
+    foreach (WC()->cart->get_cart() as $i) {
+        if (sa_ff_is_fitted($i)) {
+            $n[] = $i['data']->get_name() . ' ×' . (int) $i['quantity'];
+        }
+    }
+    if ($n) {
+        echo '<tr class="sa-fit-row sa-ff-fitted"><th>Fitted at our garage</th><td><small>' . esc_html(implode(', ', $n)) . '</small><br><small>No shipping: kept at our Njiru garage and fitted there.</small></td></tr>';
+    }
+}
+add_action('woocommerce_review_order_after_shipping', 'sa_ff_fitted_row', 5);
+add_action('woocommerce_cart_totals_after_shipping', 'sa_ff_fitted_row', 5);
+add_action('woocommerce_review_order_before_order_total', static function (): void {
+    if (function_exists('WC') && WC()->cart && !WC()->cart->needs_shipping()) {
+        sa_ff_fitted_row(); // all fitted: no shipping rows are printed
+    }
+}, 1);
+
+add_filter('woocommerce_package_rates', static function ($rates, $package) {
     $cc = strtoupper((string) ($package['destination']['country'] ?? ''));
     if ($cc !== 'KE') {
         return $rates;
@@ -350,8 +360,8 @@ add_action('woocommerce_checkout_create_order', static function ($order): void {
     }
 }, 20);
 add_action('woocommerce_checkout_create_order_shipping_item', static function ($item, $pkg_key, $package): void {
-    if (!empty($package['sa_fitted'])) {
-        $item->add_meta_data('Items', 'Fitted at our garage, not shipped', true);
+    if (!empty($package['sa_has_fitted'])) {
+        $item->add_meta_data('Note', 'Fitted items are not in this shipment (fitted at our garage)', true);
     }
 }, 10, 3);
 

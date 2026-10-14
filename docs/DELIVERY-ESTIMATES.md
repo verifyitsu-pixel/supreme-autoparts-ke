@@ -28,5 +28,5 @@ Code: `wp-content/plugins/supreme-autoparts-core/includes/fulfilment.php`.
 - "Ready for pickup" email = existing order status `ready-pickup` (now includes the window). Reminder email ~2 h before.
 
 ## Fitted items
-- Cart lines with fitting are a separate package, rate "Fitted at our garage (no shipping)", KES 0; they add no Fargo weight.
+- Cart lines with fitting are removed from the shipping package (no Fargo weight or fee) and listed as "Fitted at our garage" (KES 0). One package only, because WooCommerce drops Local pickup when a cart has several packages.
 - All-fitted carts need no shipping. Earliest fitting date = next open garage slot after payment.
