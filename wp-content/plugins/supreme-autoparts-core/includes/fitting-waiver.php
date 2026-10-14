@@ -80,8 +80,8 @@ function sa_fw_earliest_date(WC_Order $o): string
 {
     $tz = wp_timezone();
     $today = new DateTimeImmutable('now', $tz);
-    if ($o->get_status() === 'completed') {
-        return $today->format('Y-m-d');
+    if ($o->get_status() === 'completed' || $o->get_meta('_sa_fit_visit')) {
+        return $today->format('Y-m-d'); // Delivered, or a fitting-at-garage order: next open slot.
     }
     $pickup = false;
     foreach ($o->get_shipping_methods() as $sm) {
@@ -91,7 +91,10 @@ function sa_fw_earliest_date(WC_Order $o): string
     }
     $base = $o->get_date_paid() ?: $o->get_date_created();
     $start = $base ? (new DateTimeImmutable('@' . $base->getTimestamp()))->setTimezone($tz) : $today;
-    $eta = $start->modify($pickup ? '+1 day' : '+3 days');
+    if ($pickup) {
+        return $today->format('Y-m-d'); // Store pickup: part is already at our garage; the slot picker shows the next open slot.
+    }
+    $eta = $start->modify('+3 days');
     $custom = (string) $o->get_meta('_sa_expected_delivery'); // optional admin-set Y-m-d
     if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $custom)) {
         $eta = new DateTimeImmutable($custom, $tz);

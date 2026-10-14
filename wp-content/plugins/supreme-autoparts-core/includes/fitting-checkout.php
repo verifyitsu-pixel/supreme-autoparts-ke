@@ -42,18 +42,27 @@ function sa_fit_cart_services(): array
     return sa_fit_services(array_map(static fn($i) => (int) $i['product_id'], sa_fit_cart_items()));
 }
 
-/** Store pickup of the part: +1 day, otherwise delivery +3 days (from today, i.e. paid now). */
-function sa_fit_earliest(?bool $pickup = null): string
+/**
+ * Fitted parts stay at our garage (never shipped), so the earliest fitting date is the next open
+ * garage slot after payment. A stock lead time is added only when the product has one set.
+ */
+function sa_fit_earliest(): string
 {
-    if ($pickup === null) {
-        $pickup = false;
-        foreach ((array) (WC()->session ? WC()->session->get('chosen_shipping_methods') : []) as $m) {
-            if (str_contains((string) $m, 'pickup')) {
-                $pickup = true;
-            }
+    $lead = 0;
+    foreach (sa_fit_cart_items() as $i) {
+        $lead = max($lead, function_exists('sa_ff_lead_days') ? sa_ff_lead_days($i['data'] ?? null) : 0);
+    }
+    $s = sa_fit_cart_services();
+    $d = new DateTimeImmutable('now', wp_timezone());
+    if ($lead > 0 && function_exists('sa_ff_add_workdays')) {
+        $d = sa_ff_add_workdays($d, $lead);
+    }
+    for ($i = 0; $i < 30; $i++, $d = $d->modify('+1 day')) {
+        if (sa_svc_available_slots($d->format('Y-m-d'), 'nairobi', $s['main'], $s['extra'])) {
+            return $d->format('Y-m-d');
         }
     }
-    return (new DateTimeImmutable('now', wp_timezone()))->modify($pickup ? '+1 day' : '+3 days')->format('Y-m-d');
+    return $d->format('Y-m-d');
 }
 
 /** Labour line: only a price that exists in the service catalogue, otherwise "quoted at the garage". */
@@ -141,9 +150,9 @@ add_action('woocommerce_checkout_after_customer_details', static function (): vo
     $years = range((int) gmdate('Y') + 1, 1980);
     ?>
     <section class="sa-fitco" data-sa-fitco data-service="<?php echo esc_attr($s['main']); ?>" data-extra="<?php echo (int) $s['extra']; ?>" data-ajax="<?php echo esc_url(admin_url('admin-ajax.php')); ?>"
-      data-e1="<?php echo esc_attr(sa_fit_earliest(true)); ?>" data-e3="<?php echo esc_attr(sa_fit_earliest(false)); ?>">
+      data-e="<?php echo esc_attr(sa_fit_earliest()); ?>">
       <h3>Fitting appointment</h3>
-      <p class="sa-fitco__lead">Fitting for: <strong><?php echo esc_html($names); ?></strong>. Njiru, Nairobi garage. No booking fee because the part is bought from us.</p>
+      <p class="sa-fitco__lead">Fitting for: <strong><?php echo esc_html($names); ?></strong>. The part stays at our Njiru garage and is fitted there (not shipped). No booking fee because the part is bought from us.</p>
       <fieldset class="sa-fitco__modes"><legend>Handover</legend>
         <label><input type="radio" name="sa_fit_mode" value="dropoff" <?php checked($mode !== 'pickup'); ?>> Drop off my car at the Njiru garage</label>
         <label><input type="radio" name="sa_fit_mode" value="pickup" <?php checked($mode === 'pickup'); ?>> Pick up my car (Supreme Autoparts vehicle pickup)</label>
@@ -222,7 +231,7 @@ add_action('woocommerce_after_checkout_validation', static function ($data, $err
     }
     $earliest = sa_fit_earliest();
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $v['date']) || $v['date'] < $earliest) {
-        $errors->add('sa_fit', 'Fitting: please choose a date on or after ' . wp_date('D j M', strtotime($earliest)) . ' (after your part arrives).');
+        $errors->add('sa_fit', 'Fitting: please choose a date on or after ' . wp_date('D j M', strtotime($earliest)) . ' (next open slot at our garage).');
     } elseif (!in_array($v['time'], sa_svc_available_slots($v['date'], 'nairobi', $s['main'], $s['extra']), true)) {
         $errors->add('sa_fit', 'Fitting: that time slot is not available. Please pick another.');
     }
@@ -248,7 +257,7 @@ add_action('woocommerce_checkout_create_order', static function ($order): void {
 add_action('woocommerce_checkout_create_order_line_item', static function ($item, $key, $values): void {
     if (!empty($values['sa_fit'])) {
         $item->add_meta_data('_sa_fit', 1, true);
-        $item->add_meta_data('Fitting', 'Booked with this order (no booking fee)', true);
+        $item->add_meta_data('Fitting', 'Fitted at our garage, not shipped (no booking fee)', true);
     }
 }, 10, 3);
 

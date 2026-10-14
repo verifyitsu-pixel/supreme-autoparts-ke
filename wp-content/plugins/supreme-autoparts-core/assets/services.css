@@ -220,3 +220,10 @@ body.sa-side-open{overflow:hidden}
 .sa-fit-rm{display:block;margin:4px 0 0;font-size:12px;color:#111;text-decoration:underline;white-space:normal}
 .sa-fit-row th,.sa-fit-row td{font-weight:400!important;color:#555}
 .sa-fit-block{display:flex;flex-direction:column;gap:4px;padding:16px;border:1px solid #e5e5e5;border-radius:4px;background:#fff}
+/* Fulfilment: pickup slots, delivery estimate */
+.sa-pk{display:flex;flex-direction:column;gap:6px;padding:12px 0;font-size:13.5px}
+.sa-pk label{display:flex;flex-direction:column;gap:4px}.sa-pk__sel{padding:10px;border:1px solid #d9d9d9;border-radius:4px;font-size:14px;background:#fff;max-width:100%}
+.sa-pk__addr,.sa-pk small{color:#555}.sa-pk__ready{color:#137a3f;font-weight:600}
+.sa-ff-pdp{border:1px solid #e5e5e5;border-radius:4px;padding:14px 16px;margin:14px 0;background:#fff}
+.sa-ff-pdp div{display:flex;flex-direction:column;gap:3px;font-size:13.5px;color:#444}.sa-ff-pdp strong{color:#111;font-size:14.5px;font-weight:600}.sa-ff-pdp small{color:#777}
+.sa-ff-block{margin:16px 0;padding:14px 16px;border:1px solid #e5e5e5;border-radius:4px;background:#fff;font-size:14px;line-height:1.6}

@@ -3,10 +3,9 @@
   var box = document.querySelector('[data-sa-fitco]');
   if (!box) return;
   var date = box.querySelector('[data-fit-date]'), time = box.querySelector('[data-fit-time]'), pk = box.querySelector('[data-fit-pk]'), note = box.querySelector('[data-fit-earliest]');
-  function storePickup() { var m = document.querySelector('input[name^="shipping_method"]:checked') || document.querySelector('input[name^="shipping_method"][type=hidden]'); return !!(m && /pickup/.test(m.value)); }
   function earliest() {
-    var e = storePickup() ? box.dataset.e1 : box.dataset.e3; date.min = e;
-    note.textContent = 'Earliest date: ' + new Date(e + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) + (storePickup() ? ' (the day after you collect the part).' : ' (after your part is delivered).');
+    var e = box.dataset.e; date.min = e;
+    note.textContent = 'Earliest date: ' + new Date(e + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) + ' (next open slot at our garage).';
     if (date.value && date.value < e) { date.value = ''; time.innerHTML = '<option value="">Choose a date first</option>'; }
   }
   function slots() {
