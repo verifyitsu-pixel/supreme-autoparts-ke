@@ -255,8 +255,28 @@ bootstrap_wordpress() {
   wp_as plugin activate transactworld-payment-integration || true
   wp_as plugin activate woocommerce-paypal-payments || true
   wp_as plugin is-active jotform-ai-chatbot 2>/dev/null || wp_as plugin activate jotform-ai-chatbot || true
-  # Diagnostics only (no secrets): which Jotform render conditions are set.
-  wp_as eval '$o=json_decode((string)get_option("jotform_ai_chatbot_options"),true)?:[]; $p=$o["pages"]??null; echo "[supreme] jotform: active=".(is_plugin_active("jotform-ai-chatbot/jotform-ai-chatbot.php")?"yes":"no")." keys=".implode(",",array_keys($o))." embed=".(empty($o["embed"])?"EMPTY":"set(".strlen($o["embed"]).")")." preview=".(empty($o["preview"])?"empty":"set")." device=".var_export($o["device"]??null,true)." pages=".(is_string($p)?$p:json_encode($p))."\n";' 2>&1 | head -3 || true
+  # Diagnostics only (no secrets): classify why embed may not print.
+  wp_as eval '
+$o=json_decode((string)get_option("jotform_ai_chatbot_options"),true)?:[];
+$raw=(string)($o["embed"]??"");
+$dec=$raw!==""?strip_tags(rawurldecode(base64_decode($raw)),"<script>"):"";
+$kind="empty";
+if($dec!==""){
+  if(strpos($dec,"AgentInitializer")!==false)$kind="legacy_AgentInitializer";
+  elseif(preg_match("/<script[^>]+src=/i",$dec))$kind="script_src";
+  elseif(preg_match("/<script/i",$dec))$kind="script_no_src";
+  else $kind="other_len_".strlen($dec);
+}
+$p=$o["pages"]??null;
+$show=(!isset($o["pages"])||$o["pages"]===null||$o["pages"]===""||$o["pages"]===[]||$o["pages"]==="[]");
+echo "[supreme] jotform: active=".(is_plugin_active("jotform-ai-chatbot/jotform-ai-chatbot.php")?"yes":"no")
+  ." agentId=".(empty($o["agentId"])?"EMPTY":"set")
+  ." embed_kind=".$kind
+  ." device=".var_export($o["device"]??null,true)
+  ." pages_missing_or_empty=".($show?"yes":"no")
+  ." pages=".(is_string($p)?substr($p,0,120):json_encode($p))
+  ."\n";
+' 2>&1 | head -5 || true
   wp_as theme activate supreme-autoparts || true
 
   # Enable Whop gateway when Railway/env credentials are present.
