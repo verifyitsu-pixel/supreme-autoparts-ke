@@ -133,6 +133,82 @@ function sa_agent_exact_sku_ids(string $sku): array
     return array_map('intval', $ids);
 }
 
+/** Catalogue make slugs => display name (from fitment facet index), cached 12h. */
+function sa_agent_makes(): array
+{
+    $c = get_transient('sa_ag_makes');
+    if (is_array($c)) { return $c; }
+    $m = [];
+    if (function_exists('sa_fx_ready') && sa_fx_ready()) {
+        global $wpdb;
+        $t = sa_fx_table();
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+        foreach ($wpdb->get_col("SELECT DISTINCT value FROM {$t} WHERE facet='make' LIMIT 500") as $v) {
+            $m[(string) $v] = ucwords(str_replace('-', ' ', (string) $v));
+        }
+    }
+    foreach (['toyota','honda','nissan','ford','chevrolet','dodge','jeep','ram','gmc','subaru','mazda','mitsubishi','hyundai','kia','bmw','audi','volkswagen','mercedes-benz','lexus','infiniti','acura','porsche','volvo','land-rover','isuzu','suzuki','tesla','mini','jaguar','cadillac','buick','lincoln','chrysler'] as $d) {
+        $m[$d] = $m[$d] ?? ucwords(str_replace('-', ' ', $d));
+    }
+    set_transient('sa_ag_makes', $m, 12 * HOUR_IN_SECONDS);
+    return $m;
+}
+
+/** Does make/model exist in the facet index? */
+function sa_agent_model_exists(string $mk, string $model): bool
+{
+    if (!function_exists('sa_fx_ready') || !sa_fx_ready()) { return false; }
+    global $wpdb;
+    $t = sa_fx_table();
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+    return (bool) $wpdb->get_var($wpdb->prepare("SELECT 1 FROM {$t} WHERE facet='model' AND value=%s LIMIT 1", $mk . '/' . sanitize_title($model)));
+}
+
+/** Parse one free-text query into [keywords, sku, year, make, model, country]. */
+function sa_agent_parse_q(string $text): array
+{
+    $t = ' ' . strtolower(preg_replace('/[^\p{L}\p{N}\-\/ ]+/u', ' ', $text) ?? '') . ' ';
+    $t = preg_replace('/\s+/', ' ', $t) ?? '';
+    $cc = '';
+    if (preg_match('/\b(kenya|kenyan|nairobi|mombasa|kisumu|ke|kes|ksh)\b/', $t)) { $cc = 'KE'; }
+    elseif (preg_match('/\b(usa|us|america|united states|usd)\b/', $t)) { $cc = 'US'; }
+    $t = preg_replace('/\b(kenya|kenyan|nairobi|mombasa|kisumu|ke|kes|ksh|usa|us|america|united states|usd)\b/', ' ', $t) ?? $t;
+    $year = '';
+    if (preg_match('/\b((?:19|20)\d{2})\b/', $t, $m)) { $year = $m[1]; $t = str_replace(' ' . $m[1] . ' ', ' ', $t); }
+    $sku = '';
+    foreach (preg_split('/\s+/', trim($t)) ?: [] as $w) {
+        if (strlen($w) >= 5 && preg_match('/\d/', $w) && preg_match('/[a-z]/', $w) && preg_match('/^[a-z0-9\-\/]+$/', $w)) { $sku = strtoupper($w); break; }
+        if (strlen($w) >= 6 && preg_match('/^\d+$/', $w) && $w !== $year) { $sku = $w; break; }
+    }
+    if ($sku !== '') { $t = preg_replace('/\b' . preg_quote(strtolower($sku), '/') . '\b/', ' ', $t) ?? $t; }
+    $make = ''; $model = '';
+    $words = array_values(array_filter(preg_split('/\s+/', trim($t)) ?: [], 'strlen'));
+    $makes = sa_agent_makes();
+    $alias = ['chevy' => 'chevrolet', 'vw' => 'volkswagen', 'mercedes' => 'mercedes-benz', 'benz' => 'mercedes-benz', 'landrover' => 'land-rover'];
+    for ($i = 0, $n = count($words); $i < $n; $i++) {
+        $one = $alias[$words[$i]] ?? $words[$i];
+        $two = isset($words[$i + 1]) ? ($words[$i] . '-' . $words[$i + 1]) : '';
+        $slug = ($two !== '' && isset($makes[$two])) ? $two : (isset($makes[$one]) ? $one : '');
+        if ($slug === '') { continue; }
+        $span = $slug === $two ? 2 : 1;
+        $make = $makes[$slug];
+        $rest = array_slice($words, $i + $span);
+        $mw = [];
+        foreach ([3, 2, 1] as $k) {
+            if (count($rest) >= $k && sa_agent_model_exists($slug, implode(' ', array_slice($rest, 0, $k)))) { $mw = array_slice($rest, 0, $k); break; }
+        }
+        if (!$mw && $rest && !in_array($rest[0], ['for','with','and','or','the','in','front','rear','parts','part'], true) && !preg_match('/^(brake|pad|pads|shock|shocks|filter|oil|rotor|rotors|tire|tires|wheel|wheels|light|lights|bumper|exhaust)$/', $rest[0])) {
+            $mw = [$rest[0]];
+        }
+        $model = ucwords(implode(' ', $mw));
+        array_splice($words, $i, $span + count($mw));
+        break;
+    }
+    $filler = ['find','search','show','me','do','you','have','has','got','is','are','there','any','for','a','an','the','my','i','need','want','looking','look','get','buy','sku','part','number','no','pn','oem','price','prices','of','cost','how','much','what','which','please','pls','can','could','would','in','on','to','fits','fit','fitment','available','availability','stock','car','vehicle','model','year','make','and','with','some','your','it'];
+    $kw = array_values(array_filter($words, static fn($w) => !in_array($w, $filler, true) && mb_strlen($w) >= 2));
+    return [implode(' ', $kw), $sku, $year, $make, $model, $cc];
+}
+
 /** Product ids for a filtered search (SQL only; visibility checked by caller). */
 function sa_agent_find_ids(string $q, string $sku, string $make, string $model, string $year): array
 {
@@ -192,7 +268,8 @@ function sa_agent_parts(WP_REST_Request $r): WP_REST_Response
     }
     $clean = static fn($k, $max = 80) => mb_substr(trim(sanitize_text_field((string) $r->get_param($k))), 0, $max);
     $get = static fn($k, $max = 80) => sa_agent_junk($clean($k, $max), $k);
-    $q = $get('q'); $sku = $get('sku', 60); $make = $get('make', 40); $model = $get('model', 60); $year = $get('year', 10);
+    $q = $get('q', 200); if ($q === '') { $q = $get('query', 200); }
+    $sku = $get('sku', 60); $make = $get('make', 40); $model = $get('model', 60); $year = $get('year', 10);
     if ($sku === '') { $sku = $get('part_number', 60); }
     $veh = $get('vehicle', 120);
     if ($veh !== '') {
@@ -206,12 +283,22 @@ function sa_agent_parts(WP_REST_Request $r): WP_REST_Response
     }
     $cc = strtoupper(sa_agent_junk($clean('country', 20), 'country'));
     $cc = strlen($cc) === 2 ? $cc : (in_array($cc, ['KENYA'], true) ? 'KE' : (in_array($cc, ['USA', 'US', 'UNITED STATES'], true) ? 'US' : ''));
-    $limit = max(1, min(10, (int) ($r->get_param('limit') ?: 10)));
+    $parsed = false;
+    if ($q !== '') {
+        [$pk, $ps, $py, $pm, $pmo, $pc] = sa_agent_parse_q($q);
+        if ($sku === '' && $ps !== '') { $sku = $ps; }
+        if ($year === '' && $py !== '') { $year = $py; }
+        if ($make === '' && $pm !== '') { $make = $pm; if ($model === '') { $model = $pmo; } }
+        if ($cc === '' && $pc !== '') { $cc = $pc; }
+        $q = $pk;
+        $parsed = true;
+    }
+    $limit = max(1, min(5, (int) ($r->get_param('limit') ?: 5)));
     if ($q === '' && $sku === '' && $make === '') {
-        return sa_agent_err('missing_query', 'Give a part name (q), a part number (sku) or a vehicle make.', 400);
+        return sa_agent_err('missing_query', 'Tell me the part you need, a part number, or your vehicle (e.g. "brake pads for 2018 Toyota Tacoma").', 400);
     }
 
-    $ck = 'sa_ag_p2_' . md5(wp_json_encode([$q, $sku, $make, $model, $year, $limit, $cc]));
+    $ck = 'sa_ag_p3_' . md5(wp_json_encode([$q, $sku, $make, $model, $year, $limit, $cc]));
     $cached = get_transient($ck);
     if (is_array($cached)) {
         $resp = new WP_REST_Response($cached, 200);
@@ -273,7 +360,6 @@ function sa_agent_parts(WP_REST_Request $r): WP_REST_Response
             'price_kes' => $kes,
             'price_display' => $usd <= 0 ? 'Price on request' : (($cc === 'KE' && $kes) ? 'KES ' . number_format($kes) : ($cc !== '' && $cc !== 'KE' ? 'US$' . number_format($usd, 2) : 'US$' . number_format($usd, 2) . ($kes ? ' / KES ' . number_format($kes) : ''))),
             'stock_status' => sa_agent_stock_label($p),
-            'type' => $p->get_type(),
             'url' => $p->get_permalink(),
             'image' => $img ?: null,
         ];
@@ -285,14 +371,28 @@ function sa_agent_parts(WP_REST_Request $r): WP_REST_Response
             break;
         }
     }
+    $vehTxt = trim($year . ' ' . $make . ' ' . $model);
+    $what = trim(($q !== '' ? $q : '') . ($sku !== '' ? ' ' . $sku : ''));
+    if ($out) {
+        $f = $out[0];
+        $hint = sprintf('Found %d match%s%s%s. Top: %s (%s) %s, %s.',
+            count($out), count($out) === 1 ? '' : 'es',
+            $what !== '' ? ' for "' . $what . '"' : '',
+            $vehTxt !== '' ? ' on ' . $vehTxt : '',
+            $f['name'], $f['part_number'], $f['price_display'], str_replace('_', ' ', $f['stock_status']));
+        if ($relaxed) { $hint .= ' Note: ' . implode('; ', $relaxed) . '.'; }
+        $hint .= ' Share the product link; confirm fitment by VIN if unsure.';
+    } else {
+        $hint = 'No catalogue match' . ($what !== '' ? ' for "' . $what . '"' : '') . ($vehTxt !== '' ? ' on ' . $vehTxt : '') . '. Offer a fitment check by VIN or a live agent; share search_url.';
+    }
     $data = [
         'ok' => true,
+        'reply_hint' => mb_substr($hint, 0, 400),
         'query' => array_filter(['q' => $q, 'sku' => $sku, 'make' => $make, 'model' => $model, 'year' => $year, 'country' => $cc]),
         'count' => count($out),
         'relaxed' => $relaxed ? implode('; ', $relaxed) : null,
         'results' => $out,
         'search_url' => add_query_arg(array_map('rawurlencode', array_filter(['s' => $sku ?: $q, 'post_type' => 'product', 'sa_make' => $make ? sanitize_title($make) : '', 'sa_model' => $model ? sanitize_title($model) : '', 'sa_year' => $year])), home_url('/')),
-        'notes' => 'Live data. Fitment from catalogue data only; confirm with a fitment check (VIN) when unsure. Kenyan visitors pay in KES at checkout, others in USD.',
     ];
     set_transient($ck, $data, 5 * MINUTE_IN_SECONDS);
     $resp = new WP_REST_Response($data, 200);
