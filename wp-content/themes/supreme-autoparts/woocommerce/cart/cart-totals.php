@@ -60,7 +60,7 @@ $needs_shipping = WC()->cart && WC()->cart->needs_shipping() && WC()->cart->show
       </tr>
     <?php endif; ?>
 
-    <?php foreach (WC()->cart->get_fees() as $fee) : ?>
+    <?php foreach (WC()->cart->get_fees() as $fee) : if (abs((float) $fee->total) < 0.005) { continue; } ?>
       <tr class="fee">
         <th><?php echo esc_html($fee->name); ?></th>
         <td data-title="<?php echo esc_attr($fee->name); ?>"><?php wc_cart_totals_fee_html($fee); ?></td>
