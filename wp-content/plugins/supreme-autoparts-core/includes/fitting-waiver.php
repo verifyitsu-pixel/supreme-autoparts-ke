@@ -66,7 +66,7 @@ function sa_fw_owner_ok(WC_Order $o, string $contact, string $key = ''): bool
 function sa_fw_used_lines(WC_Order $o): array
 {
     $used = [];
-    foreach ((array) $o->get_meta('_sa_fw_bookings') as $item => $bid) {
+    foreach (array_filter((array) ($o->get_meta('_sa_fw_bookings') ?: [])) as $item => $bid) {
         $bid = (int) $bid;
         if ($bid && get_post_type($bid) === 'sa_booking' && get_post_meta($bid, '_sa_bk_status', true) !== 'cancelled' && get_post_meta($bid, '_sa_bk_fee', true) === 'waived') {
             $used[(int) $item] = $bid;
@@ -212,7 +212,7 @@ function sa_fw_apply(int $bid, array $r): void
         update_post_meta($bid, '_sa_bk_part', $name);
         update_post_meta($bid, '_sa_bk_notes', trim('Install part: ' . $name . '. ' . (string) get_post_meta($bid, '_sa_bk_notes', true)));
     }
-    $map = (array) $o->get_meta('_sa_fw_bookings');
+    $map = array_filter((array) ($o->get_meta('_sa_fw_bookings') ?: []));
     $map[$r['item']] = $bid;
     $o->update_meta_data('_sa_fw_bookings', $map);
     $o->add_order_note('Fee-free fitting booked for "' . $name . '": ' . get_post_meta($bid, '_sa_bk_ref', true) . '.');
@@ -240,7 +240,7 @@ function sa_fw_revoke_for_order($order_id): void
         return;
     }
     $full = in_array($o->get_status(), ['refunded', 'cancelled', 'failed'], true) || ((float) $o->get_total_refunded() > 0 && (float) $o->get_total_refunded() >= (float) $o->get_total());
-    foreach ((array) $o->get_meta('_sa_fw_bookings') as $item => $bid) {
+    foreach (array_filter((array) ($o->get_meta('_sa_fw_bookings') ?: [])) as $item => $bid) {
         $bid = (int) $bid;
         if (!$bid || get_post_type($bid) !== 'sa_booking' || get_post_meta($bid, '_sa_bk_fee', true) !== 'waived') {
             continue;

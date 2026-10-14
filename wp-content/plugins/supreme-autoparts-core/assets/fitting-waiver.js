@@ -5,12 +5,12 @@
   var form = root.closest('form'), on = root.querySelector('[data-fw-on]'), box = root.querySelector('[data-fw-box]'),
     ord = root.querySelector('[data-fw-order]'), con = root.querySelector('[data-fw-contact]'), key = root.querySelector('[data-fw-key]'),
     btn = root.querySelector('[data-fw-check]'), msg = root.querySelector('[data-fw-msg]'), sel = root.querySelector('[data-fw-item]'),
-    wrap = root.querySelector('[data-fw-itemwrap]'), feeW = document.querySelector('[data-fw-feebox]'), feeN = document.querySelector('[data-fw-normalfee]'),
+    wrap = root.querySelector('[data-fw-itemwrap]'), feeW = document.querySelector('[data-fw-feebox]'), feeN = document.querySelectorAll('[data-fw-normalfee]'),
     feeT = document.querySelector('[data-fw-feetext]'), lbl = document.querySelector('[data-fw-btn]'), date = form.querySelector('[data-sa-date]'),
     part = form.querySelector('input[name="part"]'), ok = false, normalLbl = lbl ? lbl.textContent : '', baseMin = date ? date.min : '';
   function setState(v, order, earliest) {
     ok = v;
-    if (feeW) feeW.hidden = !v; if (feeN) feeN.hidden = v;
+    if (feeW) feeW.hidden = !v; feeN.forEach(function (n) { n.hidden = v; });
     if (feeT && v) feeT.textContent = 'Booking fee: waived (part bought from us, order #' + order + ')';
     if (lbl) lbl.textContent = v ? lbl.getAttribute('data-free') : normalLbl;
     if (date) { date.min = v && earliest && earliest > baseMin ? earliest : baseMin; if (date.value && date.value < date.min) { date.value = ''; date.dispatchEvent(new Event('change')); } }

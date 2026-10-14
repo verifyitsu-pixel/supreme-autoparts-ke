@@ -203,4 +203,4 @@ body.sa-side-open{overflow:hidden}
 .sa-fw__box{margin-top:12px}.sa-fw__box[hidden]{display:none}
 .sa-fw__msg{margin:8px 0 0;font-size:14px}.sa-fw__msg.is-ok{color:#137a3f;font-weight:600}.sa-fw__msg.is-bad{color:#b3261e}
 .sa-fw-waived{border-color:#9bd3ae!important;background:#eefaf2!important}.sa-svc-feebox[hidden]{display:none!important}
-.sa-fw-sumrow{margin:10px 0 0;padding-top:10px;border-top:1px solid #eee;color:#137a3f}
+.sa-fw-sumrow{margin:10px 0 0;padding-top:10px;border-top:1px solid rgba(255,255,255,.18);color:#8ff0b0;font-weight:600}.sa-svc-fine[hidden]{display:none}

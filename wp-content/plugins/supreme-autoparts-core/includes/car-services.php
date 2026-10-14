@@ -866,7 +866,7 @@ function sa_svc_render_book(): void
       </form>
       <aside class="sa-svc-side">
         <div class="sa-svc-sum"><h3>Your estimate</h3><div data-sa-summary></div>
-          <p class="sa-svc-fine">This is an estimate. You approve the final quote before any work starts. The KES 1,000 booking fee is deducted from your bill.</p></div>
+          <p class="sa-svc-fine" data-fw-normalfee>This is an estimate. You approve the final quote before any work starts. The KES 1,000 booking fee is deducted from your bill.</p></div>
         <?php echo sa_svc_address_html(true); ?>
       </aside>
       </div>
