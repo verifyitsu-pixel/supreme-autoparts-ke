@@ -227,7 +227,7 @@ function sa_ff_fitted_row(): void
         }
     }
     if ($n) {
-        echo '<tr class="sa-fit-row sa-ff-fitted"><th>Fitted at our garage</th><td><small>' . esc_html(implode(', ', $n)) . '</small><br><small>No shipping: kept at our Njiru garage and fitted there.</small></td></tr>';
+        echo '<tr class="sa-ff-line"><td colspan="2"><div class="sa-ff-line__in"><span class="sa-ff-line__k">Fitted at our garage</span><span class="sa-ff-line__v">No shipping</span></div><small>' . esc_html(implode(', ', $n)) . '. Kept at our Njiru garage and fitted there.</small></td></tr>';
     }
 }
 add_action('woocommerce_review_order_after_shipping', 'sa_ff_fitted_row', 5);

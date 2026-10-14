@@ -215,8 +215,8 @@ add_action('woocommerce_review_order_before_order_total', static function (): vo
         return;
     }
     $s = sa_fit_cart_services();
-    echo '<tr class="sa-fit-row"><th>Fitting booking fee</th><td>KES 0 <small>(waived, part bought from us)</small></td></tr>'
-        . '<tr class="sa-fit-row"><th>Fitting labour</th><td><small>' . esc_html(sa_fit_labour_label($s['main'])) . '</small></td></tr>';
+    echo '<tr class="sa-ff-line"><td colspan="2"><div class="sa-ff-line__in"><span class="sa-ff-line__k">Fitting booking fee</span><span class="sa-ff-line__v">KES 0</span></div><small>Waived, part bought from us.</small></td></tr>'
+        . '<tr class="sa-ff-line"><td colspan="2"><div class="sa-ff-line__in"><span class="sa-ff-line__k">Fitting labour</span><span class="sa-ff-line__v">' . esc_html(sa_fit_labour_label($s['main']) === 'Quoted at the garage' ? 'Quoted at the garage' : '') . '</span></div>' . (sa_fit_labour_label($s['main']) !== 'Quoted at the garage' ? '<small>' . esc_html(sa_fit_labour_label($s['main'])) . '</small>' : '') . '</td></tr>';
 });
 
 /* Validation. */
