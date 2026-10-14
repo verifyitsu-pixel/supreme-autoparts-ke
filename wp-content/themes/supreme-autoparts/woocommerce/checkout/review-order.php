@@ -34,7 +34,7 @@ $sa_total_label = __('Total', 'supreme-autoparts');
                 <div class="sa-co-line">
                   <?php
                   $GLOBALS['sa_rendering_cart_item_thumbnail'] = true;
-                  $thumb_html = apply_filters('woocommerce_cart_item_thumbnail', $_product->get_image('woocommerce_gallery_thumbnail', ['class' => 'sa-co-line__img', 'loading' => 'lazy', 'decoding' => 'async', 'alt' => '']), $cart_item, $cart_item_key);
+                  $thumb_html = apply_filters('woocommerce_cart_item_thumbnail', $_product->get_image('woocommerce_gallery_thumbnail', ['class' => 'sa-co-line__img', 'loading' => 'eager', 'decoding' => 'async', 'alt' => '']), $cart_item, $cart_item_key);
                   unset($GLOBALS['sa_rendering_cart_item_thumbnail']);
                   ?>
                   <span class="sa-co-line__thumb"><?php echo $thumb_html; // phpcs:ignore ?><?php if ($cart_item['quantity'] > 1) : ?><b class="sa-co-line__badge"><?php echo esc_html((string) $cart_item['quantity']); ?></b><?php endif; ?></span>

@@ -177,3 +177,4 @@ tr.cart-discount .woocommerce-remove-coupon::after{content:"Remove";font-size:12
 .sa-nav__link.sa-nav__link--service{color:var(--ed-ink)!important;background:none!important;border:0!important;font-weight:600!important;box-shadow:none!important;border-radius:0!important;position:relative}
 .sa-nav__link.sa-nav__link--service::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ed-amber);margin-right:8px;vertical-align:middle;position:relative;top:-1px}
 .sa-nav__link.sa-nav__link--service:hover{text-decoration:underline;text-decoration-color:var(--ed-amber);text-underline-offset:5px}
+.cart_totals tr.order-total th,.cart_totals tr.order-total td,.cart_totals tr.order-total strong,.cart_totals tr.order-total .amount{color:var(--ed-ink)!important}
