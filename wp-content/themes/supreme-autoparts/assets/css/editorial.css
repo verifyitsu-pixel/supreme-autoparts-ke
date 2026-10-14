@@ -178,3 +178,9 @@ tr.cart-discount .woocommerce-remove-coupon::after{content:"Remove";font-size:12
 .sa-nav__link.sa-nav__link--service::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ed-amber);margin-right:8px;vertical-align:middle;position:relative;top:-1px}
 .sa-nav__link.sa-nav__link--service:hover{text-decoration:underline;text-decoration-color:var(--ed-amber);text-underline-offset:5px}
 .cart_totals tr.order-total th,.cart_totals tr.order-total td,.cart_totals tr.order-total strong,.cart_totals tr.order-total .amount{color:var(--ed-ink)!important}
+.cart_totals table.shop_table,.cart_totals table.shop_table tbody{display:block!important;width:100%!important}
+.cart_totals table.shop_table tr:not(.woocommerce-shipping-totals){display:flex!important;justify-content:space-between;align-items:baseline;gap:12px}
+.cart_totals tr.woocommerce-shipping-totals td,.cart_totals ul#shipping_method{width:100%!important;max-width:none!important}
+.sa-cart-layout__main .woocommerce-cart-form,.sa-cart-layout__main .sa-cart-lines{border-left:0!important;border-right:0!important;padding-left:0!important;padding-right:0!important;background:none!important;box-shadow:none!important;border-radius:0!important}
+.sa-cart-lines>li.sa-cart-line{padding-left:0!important;padding-right:0!important}
+.sa-cart-line__price{align-self:end!important;margin-bottom:4px!important}
