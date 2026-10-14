@@ -36,6 +36,14 @@ $sa_total_label = __('Total', 'supreme-autoparts');
                   $GLOBALS['sa_rendering_cart_item_thumbnail'] = true;
                   $thumb_html = apply_filters('woocommerce_cart_item_thumbnail', $_product->get_image('woocommerce_gallery_thumbnail', ['class' => 'sa-co-line__img', 'loading' => 'eager', 'decoding' => 'async', 'alt' => '']), $cart_item, $cart_item_key);
                   unset($GLOBALS['sa_rendering_cart_item_thumbnail']);
+                  $sa_cdn = (string) $_product->get_meta('_sa_shopify_image_src', true);
+                  if ($sa_cdn === '' && $_product->get_parent_id()) {
+                      $sa_par = wc_get_product($_product->get_parent_id());
+                      $sa_cdn = $sa_par ? (string) $sa_par->get_meta('_sa_shopify_image_src', true) : '';
+                  }
+                  if (str_starts_with($sa_cdn, 'https://')) {
+                      $thumb_html = '<img class="sa-co-line__img" src="' . esc_url($sa_cdn) . '" alt="" width="48" height="48" decoding="async" onerror="this.style.visibility=\'hidden\'">';
+                  }
                   ?>
                   <span class="sa-co-line__thumb"><?php echo $thumb_html; // phpcs:ignore ?><?php if ($cart_item['quantity'] > 1) : ?><b class="sa-co-line__badge"><?php echo esc_html((string) $cart_item['quantity']); ?></b><?php endif; ?></span>
                   <div class="sa-co-line__meta">
