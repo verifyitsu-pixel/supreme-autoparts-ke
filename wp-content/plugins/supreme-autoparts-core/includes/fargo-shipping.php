@@ -157,16 +157,23 @@ add_action('woocommerce_shipping_init', static function (): void {
                 return;
             }
             $d = sa_fargo_destination((string) ($dest['state'] ?? ''), (string) ($dest['city'] ?? ''));
-            if (!$d) {
-                return; // County not on card (Wajir/Mandera) or not chosen yet.
-            }
             $kg = 0.0;
             foreach (($package['contents'] ?? []) as $item) {
                 $kg += sa_fargo_item_kg($item['data'] ?? null) * (int) ($item['quantity'] ?? 1);
             }
-            $kes  = sa_fargo_fee_kes($d, $kg);
-            $cost = sa_fargo_kes_to_store($kes);
-            if ($cost === null) {
+            $kes  = $d ? sa_fargo_fee_kes($d, $kg) : 0.0;
+            $cost = $d ? sa_fargo_kes_to_store($kes) : null;
+            if (!$d || $cost === null) {
+                // Never hide Fargo for Kenya: no branch on the card (Wajir/Mandera), county not chosen yet,
+                // or no KES rate available. No invented price: fee is confirmed by us before dispatch.
+                $why = !$d ? ((string) ($dest['state'] ?? '') === '' ? 'choose your county for the exact fee' : 'rate confirmed before dispatch') : 'rate confirmed before dispatch';
+                $this->add_rate([
+                    'id'        => $this->get_rate_id(),
+                    'label'     => $this->title . ', ' . $why,
+                    'cost'      => 0,
+                    'taxes'     => false,
+                    'meta_data' => ['Fargo fee' => 'To be confirmed before dispatch', 'Weight (kg)' => round($kg, 2)],
+                ]);
                 return;
             }
             $label = sprintf('%s to %s (KES %s, %s kg)', $this->title, $d['town'], number_format($kes), rtrim(rtrim(number_format($kg, 1), '0'), '.'));
@@ -252,11 +259,39 @@ add_action('rest_api_init', static function (): void {
                 $stats = ['published' => (int) ($row['total'] ?? 0), 'missing_weight' => (int) ($row['missing'] ?? 0), 'default_kg' => SA_FARGO_DEFAULT_ITEM_KG, 'unit' => get_option('woocommerce_weight_unit')];
                 set_transient('sa_fargo_weight_stats', $stats, HOUR_IN_SECONDS);
             }
+            // Optional real-product weights: ?products=ID:QTY,ID:QTY
+            $items = [];
+            foreach (array_filter(explode(',', (string) $r->get_param('products'))) as $pq) {
+                [$pid, $q] = array_pad(explode(':', $pq), 2, 1);
+                $p = wc_get_product((int) $pid);
+                if ($p) {
+                    $ikg = sa_fargo_item_kg($p);
+                    $items[] = ['id' => $p->get_id(), 'name' => $p->get_name(), 'kg' => $ikg, 'qty' => max(1, (int) $q), 'needs_shipping' => $p->needs_shipping(), 'shipping_class' => $p->get_shipping_class(), 'weight_raw' => $p->get_weight()];
+                    $kg += $ikg * max(1, (int) $q);
+                }
+            }
+            if ((string) $r->get_param('audit') === '1') {
+                $stats['audit'] = get_transient('sa_fargo_audit');
+                if (!is_array($stats['audit'])) {
+                    global $wpdb;
+                    $pp = "FROM {$wpdb->posts} p JOIN {$wpdb->postmeta} m ON m.post_id=p.ID WHERE p.post_type IN ('product','product_variation') AND p.post_status='publish'";
+                    $stats['audit'] = [
+                        'virtual' => (int) $wpdb->get_var("SELECT COUNT(*) $pp AND m.meta_key='_virtual' AND m.meta_value='yes'"),
+                        'downloadable' => (int) $wpdb->get_var("SELECT COUNT(*) $pp AND m.meta_key='_downloadable' AND m.meta_value='yes'"),
+                        'over_30kg' => (int) $wpdb->get_var("SELECT COUNT(*) $pp AND m.meta_key='_weight' AND m.meta_value+0 > 30"),
+                        'max_weight' => (float) $wpdb->get_var("SELECT MAX(m.meta_value+0) $pp AND m.meta_key='_weight'"),
+                        'shipping_classes' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->term_taxonomy} WHERE taxonomy='product_shipping_class'"),
+                        'products_with_class' => (int) $wpdb->get_var("SELECT COUNT(DISTINCT tr.object_id) FROM {$wpdb->term_relationships} tr JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id=tr.term_taxonomy_id WHERE tt.taxonomy='product_shipping_class'"),
+                        'virtual_samples' => $wpdb->get_results("SELECT p.ID, p.post_title $pp AND m.meta_key='_virtual' AND m.meta_value='yes' LIMIT 15", ARRAY_A),
+                    ];
+                    set_transient('sa_fargo_audit', $stats['audit'], 10 * MINUTE_IN_SECONDS);
+                }
+            }
             if (!$d) {
-                return ['ok' => false, 'reason' => 'no Fargo branch for this county/town', 'weights' => $stats];
+                return ['ok' => false, 'reason' => 'no Fargo branch for this county/town', 'checkout_label' => 'Fargo Courier, rate confirmed before dispatch', 'items' => $items, 'kg' => $kg, 'weights' => $stats];
             }
             $kes = sa_fargo_fee_kes($d, $kg);
-            return ['ok' => true, 'dest' => $d, 'kg' => $kg, 'fee_kes' => $kes, 'fee_store' => sa_fargo_kes_to_store($kes), 'store_currency' => get_woocommerce_currency(), 'weights' => $stats];
+            return ['ok' => true, 'dest' => $d, 'kg' => $kg, 'fee_kes' => $kes, 'fee_store' => sa_fargo_kes_to_store($kes), 'store_currency' => get_woocommerce_currency(), 'items' => $items, 'weights' => $stats];
         },
     ]);
 });
