@@ -251,7 +251,7 @@ function sa_agent_find_ids(string $q, string $sku, string $make, string $model, 
     $fee = (int) get_option('sa_svc_fee_product', 0);
     if ($fee) { $where[] = 'p.ID <> ' . $fee; }
     if ($needle !== '') {
-        $rank = $wpdb->prepare('CASE WHEN l.sku = %s THEN 0 WHEN l.sku LIKE %s THEN 1 WHEN p.post_title LIKE %s THEN 2 WHEN p.post_title REGEXP %s THEN 2 WHEN p.post_title LIKE %s THEN 3 ELSE 4 END', $needle, $wpdb->esc_like($needle) . '%', $wpdb->esc_like($needle) . '%', '[[:<:]]' . preg_quote($needle) . 's?[[:>:]]', '%' . $wpdb->esc_like($needle) . '%');
+        $rank = $wpdb->prepare('CASE WHEN l.sku = %s THEN 0 WHEN l.sku LIKE %s THEN 1 WHEN p.post_title LIKE %s THEN 2 WHEN p.post_title LIKE %s THEN 2 WHEN p.post_title LIKE %s THEN 3 ELSE 4 END', $needle, $wpdb->esc_like($needle) . '%', $wpdb->esc_like($needle) . '%', '% ' . $wpdb->esc_like($needle) . '%', '%' . $wpdb->esc_like($needle) . '%');
     }
     $sql = "SELECT p.ID FROM {$wpdb->posts} p LEFT JOIN {$lk} l ON l.product_id=p.ID WHERE " . implode(' AND ', $where)
         . " ORDER BY " . ($rank !== '' ? "({$rank} = 0) DESC, " : '') . "(COALESCE(l.stock_status,'') = 'instock') DESC, "
@@ -298,7 +298,7 @@ function sa_agent_parts(WP_REST_Request $r): WP_REST_Response
         return sa_agent_err('missing_query', 'Tell me the part you need, a part number, or your vehicle (e.g. "brake pads for 2018 Toyota Tacoma").', 400);
     }
 
-    $ck = 'sa_ag_p4_' . md5(wp_json_encode([$q, $sku, $make, $model, $year, $limit, $cc]));
+    $ck = 'sa_ag_p5_' . md5(wp_json_encode([$q, $sku, $make, $model, $year, $limit, $cc]));
     $cached = get_transient($ck);
     if (is_array($cached)) {
         $resp = new WP_REST_Response($cached, 200);
