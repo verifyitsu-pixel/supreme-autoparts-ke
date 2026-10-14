@@ -73,6 +73,7 @@ require_once SA_CORE_DIR . 'includes/fargo-tracking.php';
 require_once SA_CORE_DIR . 'includes/garage/garage.php';
 require_once SA_CORE_DIR . 'includes/site-forms.php';
 require_once SA_CORE_DIR . 'includes/guest-pay.php';
+require_once SA_CORE_DIR . 'includes/smart-rank.php';
 // import-shopify.php is loaded by CLI/admin/boot import and by product-images helpers when needed.
 
 register_activation_hook(__FILE__, static function (): void {
