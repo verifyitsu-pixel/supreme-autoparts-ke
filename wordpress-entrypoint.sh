@@ -67,7 +67,7 @@ sync_custom_content() {
     rm -rf /var/www/html/wp-content/plugins/sa-geo-currency
     cp -a /usr/src/wordpress/wp-content/plugins/sa-geo-currency /var/www/html/wp-content/plugins/
   fi
-  for gw in pesapal-woocommerce transactworld-payment-integration woocommerce-paypal-payments; do
+  for gw in pesapal-woocommerce transactworld-payment-integration woocommerce-paypal-payments jotform-ai-chatbot; do
     if [[ -d /usr/src/wordpress/wp-content/plugins/$gw ]]; then
       rm -rf "/var/www/html/wp-content/plugins/$gw"
       cp -a "/usr/src/wordpress/wp-content/plugins/$gw" /var/www/html/wp-content/plugins/
@@ -254,6 +254,7 @@ bootstrap_wordpress() {
   wp_as plugin activate pesapal-woocommerce || true
   wp_as plugin activate transactworld-payment-integration || true
   wp_as plugin activate woocommerce-paypal-payments || true
+  wp_as plugin is-active jotform-ai-chatbot 2>/dev/null || wp_as plugin activate jotform-ai-chatbot || true
   wp_as theme activate supreme-autoparts || true
 
   # Enable Whop gateway when Railway/env credentials are present.

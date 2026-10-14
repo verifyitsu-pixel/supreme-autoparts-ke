@@ -190,7 +190,7 @@ function sa_agent_parts(WP_REST_Request $r): WP_REST_Response
         'query' => array_filter(['q' => $q, 'sku' => $sku, 'make' => $make, 'model' => $model, 'year' => $year, 'country' => $cc]),
         'count' => count($out),
         'results' => $out,
-        'search_url' => add_query_arg(array_filter(['s' => $sku ?: $q, 'post_type' => 'product', 'sa_make' => $make ? sanitize_title($make) : '', 'sa_model' => $model ? sanitize_title($model) : '', 'sa_year' => $year]), home_url('/')),
+        'search_url' => add_query_arg(array_map('rawurlencode', array_filter(['s' => $sku ?: $q, 'post_type' => 'product', 'sa_make' => $make ? sanitize_title($make) : '', 'sa_model' => $model ? sanitize_title($model) : '', 'sa_year' => $year])), home_url('/')),
         'notes' => 'Live data. Fitment from catalogue data only; confirm with a fitment check (VIN) when unsure. Kenyan visitors pay in KES at checkout, others in USD.',
     ];
     set_transient($ck, $data, 5 * MINUTE_IN_SECONDS);

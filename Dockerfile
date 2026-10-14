@@ -35,6 +35,14 @@ RUN curl -fsSL -o /tmp/ppcp.zip \
     && rm -f /tmp/ppcp.zip \
     && test -f /usr/src/wordpress/wp-content/plugins/woocommerce-paypal-payments/woocommerce-paypal-payments.php
 
+# Official Jotform AI Chatbot (WordPress.org), baked so redeploys never wipe it (agent "Ashley")
+ARG JOTFORM_AI_CHATBOT_VERSION=3.8.2
+RUN curl -fsSL -o /tmp/jaic.zip \
+        "https://downloads.wordpress.org/plugin/jotform-ai-chatbot.${JOTFORM_AI_CHATBOT_VERSION}.zip" \
+    && unzip -q /tmp/jaic.zip -d /usr/src/wordpress/wp-content/plugins \
+    && rm -f /tmp/jaic.zip \
+    && test -f /usr/src/wordpress/wp-content/plugins/jotform-ai-chatbot/jotform-ai-chatbot.php
+
 # dompdf (PDF receipts / invoices attached to customer emails). Release zip bundles its deps + DejaVu fonts.
 ARG DOMPDF_VERSION=3.1.6
 RUN mkdir -p /usr/src/sa-lib \
