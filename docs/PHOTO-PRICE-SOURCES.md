@@ -190,3 +190,4 @@ Applied by `includes/catalog-gaps.php` from `data/catalog-fixes.json` (meta `_sa
 | 10200 | weight 13.43 lb | https://milkymotorsports.com/products/wea441080-1-2im |
 | 9276 | photo | https://bankspower.com/products/boost-tube-26012-toyota-tacoma-2-4l |
 | 5908 | weight 41.0 lb | https://idspeedshop.com/ridetech-16-24-chevrolet-camaro-v6-v8-hq-series-coilover-kit-front-rear-11630201/ |
+| 26475 | photo | https://supreme-mods.com/products/cometic-honda-b18a1-b18b1-82mm-bore-036-inch-mls-head-gasket |
