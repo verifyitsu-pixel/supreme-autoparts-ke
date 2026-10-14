@@ -473,21 +473,39 @@ final class SA_Geo_Detector
             return '';
         }
 
-        // ipapi.co JSON — HTTPS free (no key, rate-limited).
-        $url = 'https://ipapi.co/' . rawurlencode($ip) . '/country/';
-        $res = wp_remote_get($url, [
-            'timeout' => 2.5,
-            'headers' => ['User-Agent' => 'SupremeAutoparts-GeoCurrency/1.0'],
-        ]);
-
+        // Provider chain: one free provider rate-limiting must not flip a visitor's
+        // zone (that was showing KES/Fargo to US visitors and vice versa).
+        $providers = [
+            'https://ipapi.co/' . rawurlencode($ip) . '/country/',
+            'https://ipwho.is/' . rawurlencode($ip) . '?fields=success,country_code',
+            'https://api.country.is/' . rawurlencode($ip),
+        ];
         $cc = '';
-        if (!is_wp_error($res) && (int) wp_remote_retrieve_response_code($res) === 200) {
-            $body = strtoupper(trim((string) wp_remote_retrieve_body($res)));
+        foreach ($providers as $url) {
+            $res = wp_remote_get($url, [
+                'timeout' => 2.0,
+                'headers' => ['User-Agent' => 'SupremeAutoparts-GeoCurrency/1.1', 'Accept' => 'application/json, text/plain'],
+            ]);
+            if (is_wp_error($res) || (int) wp_remote_retrieve_response_code($res) !== 200) {
+                continue;
+            }
+            $body = trim((string) wp_remote_retrieve_body($res));
+            $j = json_decode($body, true);
+            if (is_array($j)) {
+                $body = (string) ($j['country_code'] ?? $j['country'] ?? '');
+            }
+            $body = strtoupper(trim($body));
             if (preg_match('/^[A-Z]{2}$/', $body)) {
                 $cc = $body;
+                break;
             }
         }
 
+        // Cache hits 12h; misses only 10 min so a provider outage self-heals.
+        if ($cc === '') {
+            set_transient($key, '0', 10 * MINUTE_IN_SECONDS);
+            return '';
+        }
         set_transient($key, $cc !== '' ? $cc : '0', 12 * HOUR_IN_SECONDS);
         return $cc;
     }

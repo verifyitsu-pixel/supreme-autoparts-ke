@@ -22,7 +22,11 @@ if (!defined('ABSPATH')) {
 <?php wp_body_open(); ?>
 
 <header class="sa-header" role="banner">
+  <?php if ((!function_exists('sa_geo_is_kenya') || sa_geo_is_kenya())) : ?>
   <div class="sa-rsbar"><div class="sa-container sa-rsbar__in"><span><?php esc_html_e('Broken down in Nairobi?', 'supreme-autoparts'); ?></span><a href="<?php echo esc_url(home_url('/roadside/')); ?>"><?php esc_html_e('Get roadside help', 'supreme-autoparts'); ?></a><a class="sa-rsbar__tel" href="tel:+254714498451">+254 714 498 451</a></div></div>
+  <?php else : ?>
+  <div class="sa-rsbar sa-rsbar--intl"><div class="sa-container sa-rsbar__in"><span><?php esc_html_e('We ship to the US and worldwide.', 'supreme-autoparts'); ?></span><a href="https://wa.me/19174375121" rel="noopener"><?php esc_html_e('Fitment help on WhatsApp', 'supreme-autoparts'); ?></a><a class="sa-rsbar__tel" href="tel:+19174375121">+1 917 437 5121</a></div></div>
+  <?php endif; ?>
   <div class="sa-container sa-header__bar">
     <button type="button" class="sa-nav-toggle" data-sa-nav-toggle aria-expanded="false" aria-controls="sa-primary-nav">
       <?php echo sa_category_icon_svg('menu'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
@@ -52,7 +56,9 @@ if (!defined('ABSPATH')) {
 
     <div class="sa-header__actions">
       <a class="sa-hide-sm sa-header__link" href="<?php echo esc_url(home_url('/services/')); ?>"><?php esc_html_e('Car Service', 'supreme-autoparts'); ?></a>
+      <?php if ((!function_exists('sa_geo_is_kenya') || sa_geo_is_kenya())) : ?>
       <a class="sa-hide-sm sa-header__link" href="<?php echo esc_url(home_url('/roadside/')); ?>"><?php esc_html_e('Roadside Help', 'supreme-autoparts'); ?></a>
+      <?php endif; ?>
       <a class="sa-hide-sm sa-header__link" href="<?php echo esc_url(sa_page_url('contact')); ?>"><?php esc_html_e('Contact', 'supreme-autoparts'); ?></a>
       <?php if (function_exists('wc_get_page_permalink')) : ?>
         <a class="sa-header__icon-link" href="<?php echo esc_url(wc_get_page_permalink('myaccount')); ?>" aria-label="<?php esc_attr_e('Account', 'supreme-autoparts'); ?>">
@@ -118,9 +124,11 @@ if (!defined('ABSPATH')) {
         <li class="sa-nav__item">
           <a class="sa-nav__link sa-nav__link--service" href="<?php echo esc_url(home_url('/services/')); ?>"><?php esc_html_e('Book a Service', 'supreme-autoparts'); ?></a>
         </li>
+        <?php if ((!function_exists('sa_geo_is_kenya') || sa_geo_is_kenya())) : ?>
         <li class="sa-nav__item">
           <a class="sa-nav__link sa-nav__link--service" href="<?php echo esc_url(home_url('/roadside/')); ?>"><?php esc_html_e('Roadside Rescue', 'supreme-autoparts'); ?></a>
         </li>
+        <?php endif; ?>
         <?php if (function_exists('wc_get_page_permalink')) : ?>
           <li class="sa-nav__item">
             <a class="sa-nav__link" href="<?php echo esc_url(wc_get_page_permalink('shop')); ?>"><?php esc_html_e('Shop', 'supreme-autoparts'); ?></a>

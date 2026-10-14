@@ -660,7 +660,10 @@ add_action('rest_api_init', static function (): void {
                 $c = array_filter(array_map('intval', explode(',', (string) $req->get_param('cart'))));
                 $pz['cart'] = array_slice(array_values(array_unique(array_merge($c, $pz['cart']))), 0, 20);
             }
-            $country = isset($_SERVER['HTTP_CF_IPCOUNTRY']) ? sanitize_key((string) $_SERVER['HTTP_CF_IPCOUNTRY']) : '';
+            // Rendered HTML carries prices + zone copy: key by the SAME zone the page uses
+            // (detector country + display currency). CF-IPCountry is not set on Railway, so
+            // keying on it mixed KES and USD rows across visitors.
+            $country = function_exists('sa_geo_zone_key') ? sa_geo_zone_key() : (isset($_SERVER['HTTP_CF_IPCOUNTRY']) ? sanitize_key((string) $_SERVER['HTTP_CF_IPCOUNTRY']) : '');
             $ck = 'sa_rk_' . md5(wp_json_encode([$ctx, $pid, $pz, $country, (int) get_option('sa_rk_cache_gen', 0), SA_RK_VER]));
             $hit = get_transient($ck);
             if (!is_array($hit)) {
@@ -669,7 +672,8 @@ add_action('rest_api_init', static function (): void {
                 set_transient($ck, $hit, 15 * MINUTE_IN_SECONDS);
             }
             $res = new WP_REST_Response($hit);
-            $res->header('Cache-Control', 'private, max-age=300');
+            $res->header('Cache-Control', 'private, no-store');
+            $res->header('Vary', 'Cookie, CF-IPCountry');
             return $res;
         },
     ]);

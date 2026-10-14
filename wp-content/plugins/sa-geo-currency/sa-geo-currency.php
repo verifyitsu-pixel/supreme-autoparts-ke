@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Supreme Geo Currency Display
  * Description: Display prices in visitor local currency (CF-IPCountry / geo fallback) while WooCommerce + Whop checkout remain USD.
- * Version: 1.1.2
+ * Version: 1.1.3
  * Author: Supreme Autoparts
  * Text Domain: sa-geo-currency
  * Requires at least: 6.4
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_GEO_CURRENCY_VERSION', '1.1.2');
+define('SA_GEO_CURRENCY_VERSION', '1.1.3');
 define('SA_GEO_CURRENCY_FILE', __FILE__);
 define('SA_GEO_CURRENCY_DIR', plugin_dir_path(__FILE__));
 define('SA_GEO_CURRENCY_URL', plugin_dir_url(__FILE__));
@@ -153,3 +153,24 @@ add_action('woocommerce_before_pay_action', static function ($order): void {
     sa_geo_stamp_order_currency_meta($order);
 }, 5);
 
+
+/**
+ * Visitor zone helpers used by theme/core to tailor Kenya-only services.
+ * KE = Kenya (Fargo, store pickup, Nairobi garage + roadside). Everyone else = international.
+ */
+function sa_geo_country(): string
+{
+    return class_exists('SA_Geo_Detector') ? strtoupper((string) SA_Geo_Detector::country_code()) : 'KE';
+}
+
+function sa_geo_is_kenya(): bool
+{
+    return sa_geo_country() === 'KE';
+}
+
+/** Cache-key fragment so any cached HTML containing prices/zone copy never crosses zones. */
+function sa_geo_zone_key(): string
+{
+    $cur = class_exists('SA_Geo_Detector') ? SA_Geo_Detector::display_currency() : 'USD';
+    return sa_geo_country() . '|' . $cur;
+}

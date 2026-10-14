@@ -83,6 +83,11 @@ add_action('wp_loaded', static function (): void {
     if (!empty($_GET['sa_fit_add']) && function_exists('WC') && WC()->cart) {
         $pid = absint($_GET['sa_fit_add']);
         $p = wc_get_product($pid);
+        if (function_exists('sa_geo_is_kenya') && !sa_geo_is_kenya()) {
+            // Garage fitting is Nairobi-only; outside Kenya just go back to the product.
+            wp_safe_redirect($p ? $p->get_permalink() : home_url('/'));
+            exit;
+        }
         if (!$p || !$p->is_purchasable() || !$p->is_in_stock() || $p->is_type('variable')) {
             wp_safe_redirect($p ? $p->get_permalink() : home_url('/'));
             exit;

@@ -558,6 +558,7 @@ function sa_rs_render_index(): void
           <p class="sa-svc-eyebrow">Roadside Rescue &amp; Assistance · Nairobi</p>
           <h1>Stuck on the road? We'll come to you.</h1>
           <p class="sa-svc-lead">Towing, jump-starts, flat tyres, fuel, lockouts, winching and small fixes on the spot. Send your location in under a minute, no account needed, and follow your responder live.</p>
+          <?php $sa_rs_cc = sa_rs_country(); if ($sa_rs_cc !== '' && $sa_rs_cc !== 'KE') : ?><div class="sa-svc-alert sa-rs-us">This service only covers Nairobi, Kenya. We can't send help to you where you are. If you're arranging help for someone in Nairobi, you can still send a request. For parts and fitment questions, WhatsApp us on <a href="https://wa.me/19174375121" rel="noopener">+1 917 437 5121</a>.</div><?php endif; ?>
           <div class="sa-svc-cta">
             <a class="sa-svc-btn sa-svc-btn--primary sa-rs-btn--big" href="<?php echo esc_url($req); ?>"><?php echo sa_rs_icon('locate'); ?> Request help now</a>
             <a class="sa-svc-btn sa-svc-btn--ghost" href="tel:<?php echo esc_attr(SA_RS_PHONE); ?>"><?php echo sa_rs_icon('phone'); ?> Call <?php echo esc_html(SA_RS_PHONE_LABEL); ?></a>
@@ -619,7 +620,7 @@ function sa_rs_render_request(): void
     <div class="sa-container sa-rs-narrow">
       <h1>Request roadside help</h1>
       <p class="sa-svc-lead">Takes under a minute. No account and no payment needed. We call you to confirm the price before anyone is sent.</p>
-      <?php if ($cc === 'US') : ?><div class="sa-svc-alert sa-rs-us">Roadside Rescue covers Nairobi, Kenya only. You seem to be in the United States, so we can't send a responder to you, but you can still request help for someone in Nairobi.</div><?php endif; ?>
+      <?php if ($cc !== '' && $cc !== 'KE') : ?><div class="sa-svc-alert sa-rs-us">Roadside Rescue covers Nairobi, Kenya only. You seem to be outside Kenya, so we can't send a responder to you, but you can still request help for someone in Nairobi.</div><?php endif; ?>
       <?php if ($err !== '') : ?><div class="sa-svc-alert sa-svc-alert--err" role="alert"><?php echo esc_html($err); ?></div><?php endif; ?>
       <form class="sa-rs-form" method="post" enctype="multipart/form-data" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" data-rs-form>
         <input type="hidden" name="action" value="sa_rs_request"><?php wp_nonce_field('sa_rs_request', 'sa_rs_nonce'); ?>

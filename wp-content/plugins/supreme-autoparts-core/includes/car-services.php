@@ -1352,6 +1352,15 @@ add_action('woocommerce_single_product_summary', static function (): void {
     if (!$product) {
         return;
     }
+    if (function_exists('sa_geo_is_kenya') && !sa_geo_is_kenya()) {
+        // Fitting happens at our Nairobi garage only; outside Kenya offer fitment help instead.
+        $sku = (string) $product->get_sku();
+        $msg = 'Hi, I need fitment help for ' . $product->get_name() . ($sku !== '' ? ' (part # ' . $sku . ')' : '') . '. My vehicle is: ';
+        echo '<div class="sa-svc-fit">' . sa_svc_icon('service') . '<div><strong>Not sure it fits?</strong><span>'
+            . 'Send us your year, make, model and VIN and we will check the part number for you before you order. Fitting is done by your own mechanic or shop.</span></div>'
+            . '<a class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--primary" href="' . esc_url('https://wa.me/19174375121?text=' . rawurlencode($msg)) . '" rel="noopener">Ask about fitment</a></div>';
+        return;
+    }
     $svc = sa_svc_for_product((int) $product->get_id());
     $name = sa_svc_catalog()[$svc]['name'] ?? 'installation';
     $fo = function_exists('sa_fw_customer_order_for_product') ? sa_fw_customer_order_for_product((int) $product->get_id()) : null;
