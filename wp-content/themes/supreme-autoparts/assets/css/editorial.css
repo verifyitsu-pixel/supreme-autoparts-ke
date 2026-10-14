@@ -124,3 +124,9 @@ ul#shipping_method li input[type=hidden]+label{padding-left:14px!important}
 .sa-cart-drawer .sa-mc__total strong,.sa-cart-drawer .sa-mc__total span{font-weight:600!important}
 .sa-cart-drawer .sa-cart-drawer__head h2{font-family:"Inter Tight","SA Inter",sans-serif!important;font-weight:600!important}
 .home,.home #page,.home .site-main{background:#fff}
+.sa-co-line{grid-template-columns:56px minmax(0,1fr)!important;position:relative}
+.sa-co-line__thumb{width:56px;height:56px}.sa-co-line__thumb img{width:48px!important;height:48px!important}
+.sa-co-line__sku{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sa-co-line__p{position:absolute;right:0;bottom:3px}
+.sa-co-line__meta:not(:has(.sa-qty)){padding-bottom:22px}
+@media(max-width:700px){.sa-checkout-summary{padding:16px!important}}
