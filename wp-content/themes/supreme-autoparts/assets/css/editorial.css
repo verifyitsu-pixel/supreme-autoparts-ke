@@ -246,3 +246,8 @@ html,body{overflow-x:hidden;max-width:100%}
 @supports (overflow:clip){html,body{overflow-x:clip}}
 #page,.site,.sa-site{max-width:100%;overflow-x:hidden}
 @supports (overflow:clip){#page,.site,.sa-site{overflow-x:clip}}
+
+/* Horizontal scrollers: never chain overscroll to the page (iOS drags whole page sideways otherwise) */
+html,body{overscroll-behavior-x:none}
+.sa-reco__list,.sa-hscroll,.related ul.products,.upsells ul.products,.cross-sells ul.products,.flex-control-thumbs,.sa-chips,.sa-sp{overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+.sa-reco,.sa-reco-wrap{max-width:100%;overflow-x:clip}

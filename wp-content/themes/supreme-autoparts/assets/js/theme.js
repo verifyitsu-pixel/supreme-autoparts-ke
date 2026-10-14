@@ -488,3 +488,18 @@
   }
 
 })();
+
+/* Horizontal-scroller overscroll guard (iOS <16 lacks overscroll-behavior). Blocks only horizontal-dominant swipes past an edge. */
+(function(){
+  function isH(el){var s=getComputedStyle(el);return /(auto|scroll)/.test(s.overflowX)&&el.scrollWidth>el.clientWidth+1;}
+  function mark(){document.querySelectorAll('ul.products,[class*="scroll"],[class*="chips"],[class*="rail"],[class*="carousel"],[class*="thumbs"],[class*="__list"],.sa-sp *').forEach(function(el){if(!el.classList.contains('sa-hscroll')&&isH(el))el.classList.add('sa-hscroll');});}
+  if(document.readyState!=='loading')mark();else document.addEventListener('DOMContentLoaded',mark);
+  window.addEventListener('load',mark);window.addEventListener('resize',mark);setTimeout(mark,2500);
+  var sx=0,sy=0,sc=null,dir=0;
+  document.addEventListener('touchstart',function(e){if(e.touches.length!==1){sc=null;return;}var t=e.touches[0];sx=t.clientX;sy=t.clientY;dir=0;sc=null;var el=e.target;while(el&&el!==document.body){if(el.nodeType===1&&isH(el)){sc=el;break;}el=el.parentElement;}},{passive:true});
+  document.addEventListener('touchmove',function(e){if(!sc||e.touches.length!==1)return;var t=e.touches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+    if(!dir){if(Math.abs(dx)<6&&Math.abs(dy)<6)return;dir=Math.abs(dx)>Math.abs(dy)?1:2;}
+    if(dir!==1)return;var max=sc.scrollWidth-sc.clientWidth;
+    if((dx>0&&sc.scrollLeft<=0)||(dx<0&&sc.scrollLeft>=max-1)){if(e.cancelable)e.preventDefault();}
+  },{passive:false});
+})();
