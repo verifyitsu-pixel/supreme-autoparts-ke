@@ -274,6 +274,9 @@ add_action('woocommerce_order_status_changed', static function ($oid, $from, $to
             // Gateway-initiated hold (awaiting bank/M-Pesa confirmation): give the standard reason.
             $note = 'We are waiting for your payment to be confirmed. This is usually quick.';
         }
+        if ($to === 'on-hold' && $order->get_meta('_sa_hr_silent')) {
+            return; // A structured info-request email goes out instead.
+        }
         sa_ol_send($order, $to, $note);
     }
 }, 20, 4);
