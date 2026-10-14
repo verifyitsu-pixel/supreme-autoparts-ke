@@ -122,7 +122,10 @@ if (!defined('ABSPATH')) {
           <a class="sa-nav__link" href="<?php echo esc_url(sa_term_link('product_cat', 'wheels')); ?>"><?php esc_html_e('Wheels', 'supreme-autoparts'); ?></a>
         </li>
         <li class="sa-nav__item">
-          <a class="sa-nav__link sa-nav__link--service" href="<?php echo esc_url(home_url('/services/')); ?>"><?php esc_html_e('Book a Service', 'supreme-autoparts'); ?></a>
+          <a class="sa-nav__link" href="<?php echo esc_url(home_url('/categories/')); ?>"><?php esc_html_e('All categories', 'supreme-autoparts'); ?></a>
+        </li>
+        <li class="sa-nav__item">
+          <a class="sa-nav__link sa-nav__link--service" href="<?php echo esc_url(function_exists('sa_svc_book_url') ? sa_svc_book_url() : home_url('/book-service/')); ?>"><?php esc_html_e('Book a Service', 'supreme-autoparts'); ?></a>
         </li>
         <?php if ((!function_exists('sa_geo_is_kenya') || sa_geo_is_kenya())) : ?>
         <li class="sa-nav__item">

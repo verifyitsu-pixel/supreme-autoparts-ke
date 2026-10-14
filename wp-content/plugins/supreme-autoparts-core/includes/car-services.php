@@ -1147,7 +1147,7 @@ add_action('wp_footer', static function (): void {
         . '<a href="' . esc_url($shop) . '">' . sa_svc_icon('grid') . 'Shop Parts</a>'
         . '<a href="' . esc_url(sa_svc_book_url()) . '" class="is-hl">' . sa_svc_icon('calendar') . 'Book a Service</a>'
         . (function_exists('sa_rs_url') && (!function_exists('sa_geo_is_kenya') || sa_geo_is_kenya()) ? '<a href="' . esc_url(sa_rs_url()) . '">' . sa_svc_icon('truck') . 'Roadside Rescue</a>' : '')
-        . '<a href="#" data-sa-side-cart>' . sa_svc_icon('cart') . 'Cart</a>'
+        . '<a href="' . esc_url(function_exists('wc_get_cart_url') ? wc_get_cart_url() : home_url('/cart/')) . '" data-sa-side-cart>' . sa_svc_icon('cart') . 'Cart</a>'
         . '<a href="' . esc_url(home_url('/track-order/')) . '">' . sa_svc_icon('truck') . 'Track Order</a></div>'
         . '<nav class="sa-side__sec"><h4>Car service</h4>'
         . $link(sa_svc_url(), 'service', 'All services', 'Oil, brakes, alignment, AC…')
@@ -1160,7 +1160,7 @@ add_action('wp_footer', static function (): void {
         . $link(sa_rs_url('track'), 'pin', 'Track a roadside request')
         . ($user->ID ? $link($ep('roadside'), 'box', 'My roadside requests') : '')
         . $link('tel:+254714498451', 'chat', 'Call roadside', '+254 714 498 451')
-        . '</nav>' : '') . '<nav class="sa-side__sec"><h4>Shop by category</h4><div class="sa-side__cats">';
+        . '</nav>' : '') . '<nav class="sa-side__sec"><h4>Shop by category</h4><div class="sa-side__cats"><a href="' . esc_url(home_url('/categories/')) . '"><strong>All categories</strong></a>';
     foreach ($cats as $m) {
         $u = get_term_link($m['slug'], 'product_cat');
         echo '<a href="' . esc_url(is_wp_error($u) ? $shop : $u) . '">' . esc_html($m['label']) . '</a>';
@@ -1176,7 +1176,7 @@ add_action('wp_footer', static function (): void {
         . '</nav><nav class="sa-side__sec"><h4>Help</h4>'
         . $link($wa, 'chat', 'WhatsApp us', '+1 917 437 5121', ' target="_blank" rel="noopener"')
         . $link(function_exists('sa_page_url') ? sa_page_url('contact') : home_url('/contact/'), 'chat', 'Contact')
-        . ((!function_exists('sa_geo_is_kenya') || sa_geo_is_kenya()) ? $link(sa_svc_map_url(), 'pin', 'Location', SA_SVC_GARAGE_ADDRESS, ' target="_blank" rel="noopener"') : '')
+        . ((!function_exists('sa_geo_is_kenya') || sa_geo_is_kenya()) ? $link(sa_svc_map_url(), 'pin', 'Location', SA_SVC_GARAGE_ADDRESS, ' target="_blank" rel="noopener"') : $link('https://www.google.com/maps/search/?api=1&query=' . rawurlencode('12800 NE Sandy Blvd, Portland, OR 97230'), 'pin', 'Location', '12800 NE Sandy Blvd, Portland, OR 97230', ' target="_blank" rel="noopener"'))
         . '</nav></aside></div>';
     ?>
 <script>

@@ -91,7 +91,7 @@ if (!$sa_is_ke) {
 
 <section class="sa-ed-sec" aria-labelledby="sa-ed-cat">
   <div class="sa-container">
-    <div class="sa-ed-head"><h2 id="sa-ed-cat"><?php esc_html_e('Shop by category', 'supreme-autoparts'); ?></h2><a href="<?php echo esc_url($sa_shop_url); ?>"><?php esc_html_e('All categories', 'supreme-autoparts'); ?> &rarr;</a></div>
+    <div class="sa-ed-head"><h2 id="sa-ed-cat"><?php esc_html_e('Shop by category', 'supreme-autoparts'); ?></h2><a href="<?php echo esc_url(home_url('/categories/')); ?>"><?php esc_html_e('All categories', 'supreme-autoparts'); ?> &rarr;</a></div>
     <div class="sa-ed-cats">
       <?php
       $sa_ed_cats = ['brakes' => __('Brakes', 'supreme-autoparts'), 'suspension' => __('Suspension', 'supreme-autoparts'), 'engine' => __('Engine', 'supreme-autoparts'), 'air-intake' => __('Air intake', 'supreme-autoparts'), 'lighting' => __('Lighting', 'supreme-autoparts'), 'wheels' => __('Wheels', 'supreme-autoparts')];

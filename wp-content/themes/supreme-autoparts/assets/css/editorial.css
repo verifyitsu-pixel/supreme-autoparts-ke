@@ -255,3 +255,38 @@ html,body{overscroll-behavior-x:none}
 /* iOS pan fix: make scrollers/cards the containing block so absolutely-positioned children
    (.screen-reader-text price/add-to-cart labels, sale badges) can't escape the scroller and widen the root. */
 .sa-hscroll,.sa-reco__list,ul.products,.sa-product-card,.sa-reco,.sa-reco-wrap{position:relative}
+
+/* All categories page */
+.sa-cx{padding:48px 0 96px;font-family:"SA Inter",Inter,sans-serif;color:var(--ed-ink);background:#fff}
+.sa-cx h1{font-family:"Inter Tight","SA Inter",sans-serif;font-size:clamp(34px,4.4vw,56px);font-weight:600;letter-spacing:-.035em;line-height:1.05;margin:0}
+.sa-cx__crumb{font-size:14px;color:var(--ed-mute);margin-bottom:20px}.sa-cx__crumb a{color:var(--ed-mute);text-decoration:none}.sa-cx__crumb a:hover{color:var(--ed-ink)}
+.sa-cx__top{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:40px;padding-bottom:28px;border-bottom:1px solid var(--ed-line)}
+.sa-cx__lead{margin:12px 0 0;color:var(--ed-mute);font-size:17px;line-height:1.5}
+.sa-cx__filter{flex:0 0 340px;max-width:100%}
+.sa-cx__filter input{width:100%;height:52px;border:1.5px solid #cfcfc9;border-radius:8px;padding:0 16px;font:inherit;font-size:16px;color:var(--ed-ink);background:#fff;box-sizing:border-box}
+.sa-cx__filter input:focus{outline:none;border-color:var(--ed-ink)}
+.sa-cx__none{font-size:16px;color:var(--ed-mute)}.sa-cx__none a{color:var(--ed-ink);font-weight:600}
+.sa-cx__grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:48px 24px}
+.sa-cx__dept{min-width:0}
+.sa-cx__name{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.sa-cx__name small{font-size:13px;color:var(--ed-mute);white-space:nowrap;margin-top:12px}
+.sa-cx .sa-ed-cat__n{font-family:"Inter Tight","SA Inter",sans-serif;font-size:19px}
+.sa-cx .sa-ed-im img.is-fallback{width:56%;height:56%;opacity:.55}
+.sa-cx__subs{list-style:none;margin:12px 0 0;padding:12px 0 0;border-top:1px solid var(--ed-line)}
+.sa-cx__subs li,.sa-cx__list li{display:flex;justify-content:space-between;gap:10px;font-size:15px;line-height:1.35;padding:5px 0}
+.sa-cx__subs a,.sa-cx__list a{color:var(--ed-ink);text-decoration:none;min-width:0;overflow-wrap:anywhere}
+.sa-cx__subs a:hover,.sa-cx__list a:hover,.sa-cx__all:hover{text-decoration:underline;text-decoration-color:var(--ed-amber);text-underline-offset:4px}
+.sa-cx__subs span,.sa-cx__list span{color:var(--ed-mute);font-size:13px;flex:0 0 auto}
+.sa-cx__subs li:nth-child(n+9){display:none}
+.sa-cx__subs li.is-hit{display:flex;font-weight:600}
+.sa-cx__all{display:inline-block;margin-top:10px;font-weight:600;font-size:15px;color:var(--ed-ink);text-decoration:none}
+.sa-cx__block{margin-top:80px}
+.sa-cx__list{list-style:none;margin:0;padding:0;columns:4;column-gap:32px}
+.sa-cx__list li{break-inside:avoid;border-bottom:1px solid var(--ed-line);padding:10px 0}
+[data-sa-cx-group][hidden],[data-sa-cx-item][hidden]{display:none!important}
+@media(max-width:1100px){.sa-cx__grid{grid-template-columns:repeat(3,minmax(0,1fr))}.sa-cx__list{columns:3}}
+@media(max-width:767px){.sa-cx{padding:28px 0 64px}.sa-cx__top{flex-direction:column;align-items:stretch;margin-bottom:28px;padding-bottom:20px}.sa-cx__filter{flex:none;width:100%}.sa-cx__lead{font-size:15px}
+.sa-cx__grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:36px 14px}.sa-cx .sa-ed-cat__n{font-size:16px}.sa-cx__name{flex-direction:column;gap:0}.sa-cx__name small{margin-top:2px}
+.sa-cx__subs li{font-size:14px}.sa-cx__subs li:nth-child(n+6){display:none}.sa-cx__subs li.is-hit{display:flex}.sa-cx__all{font-size:14px}
+.sa-cx__block{margin-top:56px}.sa-cx__list{columns:2;column-gap:16px}.sa-cx__list li{font-size:14px}}
+@media(max-width:380px){.sa-cx__list{columns:1}}
