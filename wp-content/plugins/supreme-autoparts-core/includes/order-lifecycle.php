@@ -171,7 +171,7 @@ function sa_mail_layout(string $heading, string $inner, string $cta_label = '', 
         . '<span style="display:none;max-height:0;overflow:hidden">' . esc_html($preheader) . '</span>'
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4"><tr><td align="center" style="padding:24px 12px">'
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border:1px solid #e4e4e4;border-radius:8px">'
-        . '<tr><td class="sa-email-brand-header" style="padding:20px 28px 14px;border-bottom:1px solid #e4e4e4"><img src="' . esc_url($logo) . '" alt="Supreme Autoparts" height="52" style="display:block;height:52px;width:auto;border:0"></td></tr>'
+        . '<tr><td class="sa-email-brand-header" style="padding:20px 28px 14px;border-bottom:1px solid #e4e4e4"><img src="' . esc_url($logo) . '" alt="Supreme Autoparts" width="340" style="display:block;width:340px;max-width:100%;height:auto;border:0"></td></tr>'
         . '<tr><td style="padding:24px 28px 8px"><h1 style="margin:0 0 12px;font-size:21px;line-height:1.3;color:#191919">' . esc_html($heading) . '</h1><div style="font-size:15px;line-height:1.6;color:#333">' . $inner . '</div></td></tr>'
         . $btn . '</table></td></tr></table></body></html>';
 }

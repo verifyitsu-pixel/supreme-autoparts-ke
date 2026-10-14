@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
   <meta charset="<?php bloginfo('charset'); ?>">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#ffffff">
-  <?php $sa_iv = '?v=emblem1'; $sa_ia = SA_THEME_URI . '/assets/'; ?>
+  <?php $sa_iv = '?v=emblem2'; $sa_ia = SA_THEME_URI . '/assets/'; ?>
   <link rel="icon" href="<?php echo esc_url($sa_ia . 'favicon.ico' . $sa_iv); ?>" sizes="48x48">
   <link rel="icon" href="<?php echo esc_url($sa_ia . 'favicon-32.png' . $sa_iv); ?>" type="image/png" sizes="32x32">
   <link rel="icon" href="<?php echo esc_url($sa_ia . 'favicon-16.png' . $sa_iv); ?>" type="image/png" sizes="16x16">
@@ -33,7 +33,7 @@ if (!defined('ABSPATH')) {
       <?php
       $sa_logo = function_exists('sa_theme_logo_url') ? sa_theme_logo_url(true) : (SA_THEME_URI . '/assets/logo-light.png');
       printf(
-          '<img class="sa-logo__img" src="%s" alt="%s" width="282" height="64" loading="eager" fetchpriority="high" decoding="async" />',
+          '<img class="sa-logo__img" src="%s" alt="%s" width="390" height="60" loading="eager" fetchpriority="high" decoding="async" />',
           esc_url($sa_logo),
           esc_attr(get_bloginfo('name'))
       );

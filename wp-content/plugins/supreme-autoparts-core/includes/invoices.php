@@ -22,7 +22,7 @@ function sa_core_invoice_logo_url(): string
 {
     // Official logo bundled with the theme (same file as the site header). Media-library
     // uploads are not used: they can disappear on redeploy and show as broken images.
-    return 'https://www.supremeautoparts.co.ke/wp-content/themes/supreme-autoparts/assets/logo-light.jpg?v=emblem1';
+    return 'https://www.supremeautoparts.co.ke/wp-content/themes/supreme-autoparts/assets/logo-light.jpg?v=emblem2';
 }
 
 /** Same logo as a data: URI, for files opened offline (downloaded invoices, attachments, PDFs). */
@@ -237,7 +237,7 @@ function sa_core_build_invoice_html($order, bool $for_email = false): string
     .wrap{max-width:800px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(11,11,13,.08)}
     .header{background:#0B0B0D;color:#F4F4F5;padding:1.35rem 1.5rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem}
     .header__brand{display:flex;align-items:center;gap:.85rem}
-    .header__logo{height:48px;width:auto;max-width:220px;object-fit:contain;display:block;border-radius:4px}
+    .header__logo{height:52px;width:auto;max-width:340px;object-fit:contain;display:block;border-radius:4px}
     .header__meta{text-align:right}
     .header__doc{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:#F5A623;font-weight:700;margin:0 0 .15rem}
     .header__num{font-size:1.35rem;font-weight:700;margin:0;color:#fff}
@@ -299,7 +299,7 @@ function sa_core_build_invoice_html($order, bool $for_email = false): string
   <div class="wrap">
     <header class="header">
       <div class="header__brand">
-        <img class="header__logo" src="<?php echo esc_url($logo); ?>" alt="<?php echo esc_attr($store); ?>" width="212" height="48" />
+        <img class="header__logo" src="<?php echo esc_url($logo); ?>" alt="<?php echo esc_attr($store); ?>" width="338" height="52" />
         <div>
           <strong><?php echo esc_html($store); ?></strong>
           <div class="muted" style="color:#A0A0A8;font-size:.8rem"><?php echo esc_html($email); ?> · Nairobi, Kenya</div>

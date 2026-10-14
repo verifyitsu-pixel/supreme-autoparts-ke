@@ -452,7 +452,7 @@ function sa_g_dvi_pdf(int $id): string
     $pdf->AddPage();
     $logo = defined('SA_THEME_DIR') ? SA_THEME_DIR . '/assets/logo-light.jpg' : get_theme_root() . '/supreme-autoparts/assets/logo-light.jpg';
     if (is_readable($logo)) {
-        $pdf->Image($logo, 12, 10, 0, 12);
+        $pdf->Image($logo, 12, 10, 0, 13);
     }
     $pdf->SetFont('Helvetica', 'B', 15);
     $pdf->SetXY(100, 10);

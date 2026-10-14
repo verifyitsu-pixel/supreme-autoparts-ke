@@ -209,7 +209,7 @@ function sa_core_apply_store_settings(): void
     if (defined('SA_THEME_DIR') && defined('SA_THEME_URI')) {
         foreach (['logo-light.jpg', 'logo-light.png'] as $f) {
             if (is_readable(SA_THEME_DIR . '/assets/' . $f)) {
-                $email_logo = SA_THEME_URI . '/assets/' . $f . '?v=emblem1';
+                $email_logo = SA_THEME_URI . '/assets/' . $f . '?v=emblem2';
                 break;
             }
         }

@@ -6,7 +6,7 @@ cd /var/www/html
 THEME_ASSETS="wp-content/themes/supreme-autoparts/assets"
 WP=(wp --allow-root --path=/var/www/html)
 FLAG_KEY="sa_branding_logos_ver"
-FLAG_VAL="emblem-v1"
+FLAG_VAL="emblem-v2"
 
 logo_dark="${THEME_ASSETS}/logo.jpg"
 [[ -f "$logo_dark" ]] || logo_dark="${THEME_ASSETS}/logo.png"
@@ -91,7 +91,7 @@ echo "LOGO_ID=$LOGO_ID LIGHT_ID=$LIGHT_ID ICON_ID=$ICON_ID"
 "${WP[@]}" option update site_icon "$ICON_ID"
 
 # Theme-hosted URL (media uploads can vanish on redeploy); ?v busts Gmail's image proxy cache.
-LIGHT_URL="https://www.supremeautoparts.co.ke/wp-content/themes/supreme-autoparts/assets/logo-light.jpg?v=emblem1"
+LIGHT_URL="https://www.supremeautoparts.co.ke/wp-content/themes/supreme-autoparts/assets/logo-light.jpg?v=emblem2"
 LIGHT_URL="${LIGHT_URL/http:\/\//https:\/\/}"
 
 "${WP[@]}" option update woocommerce_email_header_image "$LIGHT_URL"

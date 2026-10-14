@@ -104,7 +104,7 @@ final class Whop_Open_Pay {
         $error   = isset($_GET['sa_pay_err']) ? sanitize_text_field(wp_unslash((string) $_GET['sa_pay_err'])) : '';
         $paid    = isset($_GET['paid']) && (string) $_GET['paid'] === '1';
         $order_q = isset($_GET['order']) ? absint($_GET['order']) : 0;
-        $logo    = WHOP_PAYMENTS_URL . 'assets/img/logo-light.png';
+        $logo    = WHOP_PAYMENTS_URL . 'assets/img/logo-light.png?v=emblem2';
         $action  = esc_url(admin_url('admin-post.php'));
         $nonce   = wp_nonce_field(self::ACTION, 'sa_open_pay_nonce', true, false);
         $prefill_email = '';
@@ -148,7 +148,7 @@ final class Whop_Open_Pay {
         <div class="sa-open-pay" id="sa-open-pay">
             <div class="sa-open-pay__card">
                 <div class="sa-open-pay__brand">
-                    <img class="sa-open-pay__logo" src="<?php echo esc_url($logo); ?>" alt="Supreme Autoparts" width="180" height="48" loading="eager" />
+                    <img class="sa-open-pay__logo" src="<?php echo esc_url($logo); ?>" alt="Supreme Autoparts" width="340" height="52" loading="eager" />
                     <h1 class="sa-open-pay__title"><?php echo esc_html__('Make a payment', 'whop-payments'); ?></h1>
                     <p class="sa-open-pay__sub"><?php echo esc_html__('Enter the amount. You will continue to our secure Pesapal payment page (card or M-Pesa). Paid amounts create an order in our store.', 'whop-payments'); ?></p>
                 </div>
@@ -246,7 +246,7 @@ final class Whop_Open_Pay {
             <div class="sa-open-pay sa-open-pay--success" id="sa-open-pay">
                 <div class="sa-open-pay__card sa-open-pay__card--success">
                     <div class="sa-open-pay__brand sa-open-pay__brand--success">
-                        <img class="sa-open-pay__logo" src="<?php echo esc_url($logo); ?>" alt="Supreme Autoparts" width="180" height="48" loading="eager" />
+                        <img class="sa-open-pay__logo" src="<?php echo esc_url($logo); ?>" alt="Supreme Autoparts" width="340" height="52" loading="eager" />
                     </div>
                     <div class="sa-open-pay__success-hero" role="status">
                         <div class="sa-open-pay__success-check" aria-hidden="true">
@@ -335,7 +335,7 @@ final class Whop_Open_Pay {
         <div class="sa-open-pay sa-open-pay--success" id="sa-open-pay">
             <div class="sa-open-pay__card sa-open-pay__card--success">
                 <div class="sa-open-pay__brand sa-open-pay__brand--success">
-                    <img class="sa-open-pay__logo" src="<?php echo esc_url($logo); ?>" alt="Supreme Autoparts" width="180" height="48" loading="eager" />
+                    <img class="sa-open-pay__logo" src="<?php echo esc_url($logo); ?>" alt="Supreme Autoparts" width="340" height="52" loading="eager" />
                 </div>
 
                 <div class="sa-open-pay__success-hero" role="status">

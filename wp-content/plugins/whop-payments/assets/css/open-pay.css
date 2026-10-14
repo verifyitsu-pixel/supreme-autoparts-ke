@@ -39,7 +39,8 @@
 
 .sa-open-pay__logo {
   display: inline-block;
-  max-width: 180px;
+  width: 100%;
+  max-width: 340px;
   height: auto;
   margin: 0 auto 0.75rem;
 }
@@ -229,7 +230,7 @@
 
 .sa-open-pay__brand--success .sa-open-pay__logo {
   margin-bottom: 0;
-  max-width: 150px;
+  max-width: 300px;
 }
 
 .sa-open-pay__success-hero {

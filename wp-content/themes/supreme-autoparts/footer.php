@@ -36,7 +36,7 @@ $sa_chev       = '<svg class="sa-foot__chev" viewBox="0 0 24 24" width="18" heig
     <div class="sa-foot__grid">
       <div class="sa-foot__brandcol">
         <a class="sa-foot__brand" href="<?php echo esc_url(home_url('/')); ?>">
-          <img src="<?php echo esc_url($sa_logo_f); ?>" alt="<?php echo esc_attr(get_bloginfo('name')); ?>" width="168" height="50" loading="lazy" decoding="async" />
+          <img src="<?php echo esc_url($sa_logo_f); ?>" alt="<?php echo esc_attr(get_bloginfo('name')); ?>" width="364" height="56" loading="lazy" decoding="async" />
         </a>
         <p class="sa-foot__blurb">
           <?php esc_html_e('Performance parts & accessories for cars, trucks and SUVs, plus car servicing at our Njiru, Nairobi garage.', 'supreme-autoparts'); ?>
