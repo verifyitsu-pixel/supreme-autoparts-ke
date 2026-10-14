@@ -113,6 +113,11 @@ add_action('wp_enqueue_scripts', static function (): void {
     ]);
 }, 1001);
 
+/* Editorial system (fonts, light header, homepage). */
+add_action('wp_enqueue_scripts', static function (): void {
+    wp_enqueue_style('supreme-autoparts-editorial', SA_THEME_URI . '/assets/css/editorial.css', [], SA_THEME_VERSION);
+}, 1003);
+
 /* Homepage cinematic hero: live suggestions, vehicle quick-select, scroll reveal. */
 add_action('wp_enqueue_scripts', static function (): void {
     if (!is_front_page()) {
