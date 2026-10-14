@@ -17,6 +17,7 @@ if (!defined('ABSPATH')) {
 <?php wp_body_open(); ?>
 
 <header class="sa-header" role="banner">
+  <div class="sa-rsbar"><div class="sa-container sa-rsbar__in"><span><?php esc_html_e('Broken down in Nairobi?', 'supreme-autoparts'); ?></span><a href="<?php echo esc_url(home_url('/roadside/')); ?>"><?php esc_html_e('Get roadside help', 'supreme-autoparts'); ?></a><a class="sa-rsbar__tel" href="tel:+254714498451">+254 714 498 451</a></div></div>
   <div class="sa-container sa-header__bar">
     <button type="button" class="sa-nav-toggle" data-sa-nav-toggle aria-expanded="false" aria-controls="sa-primary-nav">
       <?php echo sa_category_icon_svg('menu'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>

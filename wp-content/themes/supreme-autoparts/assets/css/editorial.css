@@ -194,3 +194,34 @@ html,body{overflow-x:clip;max-width:100%}
 .sa-ed-search,.sa-ed-veh{max-width:100%;min-width:0}
 .woocommerce-product-gallery,.woocommerce div.product div.images{overflow:hidden;max-width:100%}
 .cross-sells,.related,.upsells{max-width:100%;overflow-x:clip}
+
+/* ===== Roadside prominence ===== */
+.sa-rsbar{background:#f4f4f1;border-bottom:1px solid var(--ed-line);font-family:"SA Inter",Inter,sans-serif;font-size:13px;color:var(--ed-ink)}
+.sa-rsbar__in{display:flex;align-items:center;justify-content:flex-end;gap:14px;min-height:34px;flex-wrap:nowrap;white-space:nowrap;overflow:hidden}
+.sa-rsbar a{color:var(--ed-ink);font-weight:600;text-decoration:underline;text-decoration-color:var(--ed-amber);text-underline-offset:3px}
+.sa-rsbar__tel{font-weight:500!important;text-decoration:none!important}
+@media(max-width:700px){.sa-rsbar__in{justify-content:center;gap:10px;font-size:12.5px}.sa-rsbar__tel{display:none}}
+.sa-ed-rs{padding-top:96px}
+.sa-ed-rs__in{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:72px;align-items:start;border-top:1px solid var(--ed-ink);padding-top:48px}
+.sa-ed-rs h2{font-size:40px;font-weight:600;letter-spacing:-.03em;line-height:1.08;margin:0}
+.sa-ed-rs__lead{font-size:17px;line-height:1.55;color:var(--ed-mute);margin:18px 0 28px;max-width:520px}
+.sa-ed-rs__cta{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+.sa-ed-btn{display:inline-flex;align-items:center;height:50px;padding:0 24px;border-radius:8px;background:var(--ed-ink);color:#fff!important;font-weight:600;font-size:15px;text-decoration:none!important;border:1.5px solid var(--ed-ink)}
+.sa-ed-btn:hover{background:#333}
+.sa-ed-btn--ghost{background:#fff;color:var(--ed-ink)!important}
+.sa-ed-btn--ghost:hover{background:var(--ed-soft)}
+.sa-ed-rs__wa{font-weight:600;font-size:15px;color:var(--ed-ink);text-decoration:underline;text-decoration-color:var(--ed-amber);text-underline-offset:4px}
+.sa-ed-rs__steps{list-style:none;margin:0;padding:0}
+.sa-ed-rs__steps li{display:grid;grid-template-columns:36px 1fr;gap:16px;padding:20px 0;border-bottom:1px solid var(--ed-line)}
+.sa-ed-rs__steps li:first-child{padding-top:4px}
+.sa-ed-rs__steps b{font-family:"Inter Tight",sans-serif;font-size:15px;font-weight:600;width:32px;height:32px;border:1.5px solid var(--ed-ink);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.sa-ed-rs__steps strong{display:block;font-size:17px;font-weight:600;font-family:"Inter Tight",sans-serif}
+.sa-ed-rs__steps span{display:block;font-size:15px;color:var(--ed-mute);margin-top:2px;line-height:1.5}
+@media(max-width:900px){.sa-ed-rs__in{grid-template-columns:minmax(0,1fr);gap:28px}}
+@media(max-width:700px){.sa-ed-rs{padding-top:56px}.sa-ed-rs__in{padding-top:28px}.sa-ed-rs h2{font-size:28px}.sa-ed-rs__lead{font-size:16px}.sa-ed-btn{height:48px;padding:0 18px;font-size:14px;flex:1 1 auto;justify-content:center}}
+.sa-rsfab{display:none}
+@media(max-width:700px){.sa-rsfab{display:inline-flex;align-items:center;gap:8px;position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:900;height:40px;padding:0 14px;border-radius:20px;background:#fff;color:var(--ed-ink)!important;border:1px solid #cfcfc9;box-shadow:0 2px 10px rgba(0,0,0,.12);font:600 13px/1 "SA Inter",Inter,sans-serif;text-decoration:none!important}
+.sa-rsfab::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ed-amber)}}
+.sa-rsline{font-family:"SA Inter",Inter,sans-serif;font-size:15px;color:var(--ed-mute);padding-top:24px;padding-bottom:24px}
+.sa-rsline a{color:var(--ed-ink);font-weight:600}
+@media(min-width:1101px){.sa-foot__grid{grid-template-columns:1.35fr 1fr 1fr 1fr 1fr!important}}

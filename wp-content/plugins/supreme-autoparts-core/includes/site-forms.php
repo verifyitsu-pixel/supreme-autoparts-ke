@@ -256,6 +256,7 @@ add_action('woocommerce_single_product_summary', static function (): void {
         echo '<a class="sa-xlink sa-xlink--strong" href="' . esc_url(add_query_arg('product', $id, home_url('/request-a-part/'))) . '">Request a price for this part</a>';
     }
     echo '<a class="sa-xlink" href="' . esc_url(add_query_arg('product', $id, home_url('/fitment-check/'))) . '">Not sure it fits? Check fitment</a>';
+    echo '<a class="sa-xlink" href="' . esc_url(home_url('/roadside/')) . '">Broken down in Nairobi? Get roadside help</a>';
     echo '</div>';
 }, 38);
 
@@ -267,7 +268,7 @@ function sa_sf_next_steps(string $ctx): string
         'roadside' => ['Roadside Rescue', 'Towing, jump-starts and flat tyres in Nairobi.', home_url('/roadside/')],
         'fitment'  => ['Check fitment', 'Send your vehicle details and we confirm the right part.', home_url('/fitment-check/')],
     ];
-    $pick = ['roadside' => ['service', 'parts'], 'booking' => ['parts', 'roadside'], 'order' => ['service', 'fitment']][$ctx] ?? [];
+    $pick = ['roadside' => ['service', 'parts'], 'booking' => ['parts', 'roadside'], 'order' => ['service', 'roadside', 'fitment']][$ctx] ?? [];
     if (!$pick) {
         return '';
     }
@@ -286,6 +287,8 @@ add_action('get_footer', static function (): void {
         echo sa_sf_next_steps('roadside'); // phpcs:ignore
     } elseif ($svc === 'confirmed') {
         echo sa_sf_next_steps('booking'); // phpcs:ignore
+    } elseif ($svc !== '') {
+        echo '<p class="sa-container sa-rsline">Car won’t start or can’t be driven? <a href="' . esc_url(home_url('/roadside/')) . '">Request roadside help</a> or call <a href="tel:+254714498451">+254 714 498 451</a>.</p>'; // phpcs:ignore
     }
 });
 add_action('woocommerce_thankyou', static function (): void {
@@ -330,3 +333,15 @@ function sa_sf_suggest(): void
 }
 add_action('wp_ajax_sa_suggest', 'sa_sf_suggest');
 add_action('wp_ajax_nopriv_sa_suggest', 'sa_sf_suggest');
+
+/* One-line roadside mention in customer order emails. */
+add_action('woocommerce_email_after_order_table', static function ($order, $sent_to_admin, $plain_text = false): void {
+    if ($sent_to_admin) {
+        return;
+    }
+    if ($plain_text) {
+        echo "\nBroken down in Nairobi? Roadside help: " . esc_url_raw(home_url('/roadside/')) . " or call +254 714 498 451\n";
+        return;
+    }
+    echo '<p style="margin:16px 0 0;font-size:13px;color:#555">Broken down in Nairobi? <a href="' . esc_url(home_url('/roadside/')) . '" style="color:#111">Request roadside help</a> or call <a href="tel:+254714498451" style="color:#111">+254 714 498 451</a>.</p>';
+}, 40, 3);

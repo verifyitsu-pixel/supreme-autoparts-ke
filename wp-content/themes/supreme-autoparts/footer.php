@@ -87,6 +87,20 @@ $sa_chev       = '<svg class="sa-foot__chev" viewBox="0 0 24 24" width="18" heig
         </ul>
       </details>
 
+      <details class="sa-foot__acc sa-foot__acc--rs">
+        <summary class="sa-foot__acc-sum">
+          <span><?php esc_html_e('Roadside Rescue', 'supreme-autoparts'); ?></span>
+          <?php echo $sa_chev; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+        </summary>
+        <ul class="sa-foot__list">
+          <li><a href="<?php echo esc_url((function_exists('sa_rs_url') ? sa_rs_url('request') : home_url('/roadside/'))); ?>"><?php esc_html_e('Request roadside help', 'supreme-autoparts'); ?></a></li>
+          <li><a href="tel:+254714498451"><?php esc_html_e('Call +254 714 498 451', 'supreme-autoparts'); ?></a></li>
+          <li><a href="https://wa.me/254714498451" rel="noopener"><?php esc_html_e('WhatsApp us', 'supreme-autoparts'); ?></a></li>
+          <li><a href="<?php echo esc_url((function_exists('sa_rs_url') ? sa_rs_url('track') : home_url('/roadside/'))); ?>"><?php esc_html_e('Track a request', 'supreme-autoparts'); ?></a></li>
+          <li><a href="<?php echo esc_url(home_url('/roadside-terms/')); ?>"><?php esc_html_e('Roadside terms', 'supreme-autoparts'); ?></a></li>
+        </ul>
+      </details>
+
       <details class="sa-foot__acc">
         <summary class="sa-foot__acc-sum">
           <span><?php esc_html_e('Shop', 'supreme-autoparts'); ?></span>
@@ -208,6 +222,9 @@ $sa_chev       = '<svg class="sa-foot__chev" viewBox="0 0 24 24" width="18" heig
 </aside>
 <?php endif; ?>
 
+<?php if (!(function_exists('is_cart') && (is_cart() || is_checkout() || is_product())) && !get_query_var('sa_rs_view')) : ?>
+<a class="sa-rsfab" href="<?php echo esc_url(home_url('/roadside/')); ?>"><?php esc_html_e('Roadside help', 'supreme-autoparts'); ?></a>
+<?php endif; ?>
 <?php wp_footer(); ?>
 </body>
 </html>

@@ -57,6 +57,26 @@ $sa_ed_services = [
   </div>
 </section>
 
+<section class="sa-ed-sec sa-ed-rs" aria-labelledby="sa-ed-rs">
+  <div class="sa-container sa-ed-rs__in">
+    <div class="sa-ed-rs__copy">
+      <p class="sa-ed-kicker"><?php esc_html_e('Roadside Rescue, Nairobi', 'supreme-autoparts'); ?></p>
+      <h2 id="sa-ed-rs"><?php esc_html_e('Stuck on the road? We come to you.', 'supreme-autoparts'); ?></h2>
+      <p class="sa-ed-rs__lead"><?php esc_html_e('Towing, jump-starts, flat tyres, fuel delivery and lockouts anywhere in Nairobi. Tell us where you are and what happened, and we send help.', 'supreme-autoparts'); ?></p>
+      <div class="sa-ed-rs__cta">
+        <a class="sa-ed-btn" href="<?php echo esc_url((function_exists('sa_rs_url') ? sa_rs_url('request') : home_url('/roadside/'))); ?>"><?php esc_html_e('Request help now', 'supreme-autoparts'); ?></a>
+        <a class="sa-ed-btn sa-ed-btn--ghost" href="tel:+254714498451"><?php esc_html_e('Call +254 714 498 451', 'supreme-autoparts'); ?></a>
+        <a class="sa-ed-rs__wa" href="https://wa.me/254714498451" rel="noopener"><?php esc_html_e('WhatsApp', 'supreme-autoparts'); ?></a>
+      </div>
+    </div>
+    <ol class="sa-ed-rs__steps">
+      <li><b>1</b><div><strong><?php esc_html_e('Share your location', 'supreme-autoparts'); ?></strong><span><?php esc_html_e('Use your phone’s GPS or drop a pin on the map.', 'supreme-autoparts'); ?></span></div></li>
+      <li><b>2</b><div><strong><?php esc_html_e('Tell us the problem', 'supreme-autoparts'); ?></strong><span><?php esc_html_e('Flat battery, flat tyre, no fuel, locked out, or the car needs towing.', 'supreme-autoparts'); ?></span></div></li>
+      <li><b>3</b><div><strong><?php esc_html_e('We send help', 'supreme-autoparts'); ?></strong><span><?php esc_html_e('You get a request number and can follow progress on your phone.', 'supreme-autoparts'); ?></span></div></li>
+    </ol>
+  </div>
+</section>
+
 <section class="sa-ed-sec" aria-labelledby="sa-ed-cat">
   <div class="sa-container">
     <div class="sa-ed-head"><h2 id="sa-ed-cat"><?php esc_html_e('Shop by category', 'supreme-autoparts'); ?></h2><a href="<?php echo esc_url($sa_shop_url); ?>"><?php esc_html_e('All categories', 'supreme-autoparts'); ?> &rarr;</a></div>
