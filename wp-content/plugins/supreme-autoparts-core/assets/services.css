@@ -197,3 +197,10 @@ body.sa-side-open{overflow:hidden}
 /* Homepage: three service paths (Shop Parts, Book a Service, Roadside Rescue). */
 .sa-paths{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
 .sa-path--rs .sa-svc-ico{color:var(--sa-action,#0a0a0a)}
+/* Fitting waiver */
+.sa-fw{margin:14px 0;padding:14px 16px;border:1px solid #e3e5ea;border-radius:12px;background:#fafafa}
+.sa-fw__toggle span{display:flex;flex-direction:column}.sa-fw__toggle em{font-style:normal;color:#5b6475;font-size:13px}
+.sa-fw__box{margin-top:12px}.sa-fw__box[hidden]{display:none}
+.sa-fw__msg{margin:8px 0 0;font-size:14px}.sa-fw__msg.is-ok{color:#137a3f;font-weight:600}.sa-fw__msg.is-bad{color:#b3261e}
+.sa-fw-waived{border-color:#9bd3ae!important;background:#eefaf2!important}.sa-svc-feebox[hidden]{display:none!important}
+.sa-fw-sumrow{margin:10px 0 0;padding-top:10px;border-top:1px solid #eee;color:#137a3f}

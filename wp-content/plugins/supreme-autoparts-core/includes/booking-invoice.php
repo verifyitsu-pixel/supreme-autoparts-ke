@@ -29,15 +29,17 @@ function sa_bk_invoice_html(int $id, bool $embed_logo = false): string
 {
     $b = sa_svc_booking_data($id);
     $svc = sa_svc_catalog()[$b['service']] ?? ['name' => $b['service']];
-    $paid = in_array($b['fee'], ['paid', 'applied'], true);
-    $kes = (int) ($b['fee_kes'] ?: sa_svc_setting('fee_kes'));
-    $usd = sa_svc_fee_usd();
+    $waived = $b['fee'] === 'waived';
+    $paid = $waived || in_array($b['fee'], ['paid', 'applied'], true);
+    $kes = $waived ? 0 : (int) ($b['fee_kes'] ?: sa_svc_setting('fee_kes'));
+    $usd = $waived ? null : sa_svc_fee_usd();
+    $wlabel = $waived && function_exists('sa_fw_label') ? sa_fw_label($id) : '';
     $loc = sa_svc_locations()[$b['location']]['label'] ?? $b['location'];
     $pay = add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/pay/'));
     $logo = $embed_logo && function_exists('sa_core_logo_data_uri') ? sa_core_logo_data_uri() : (function_exists('sa_core_invoice_logo_url') ? sa_core_invoice_logo_url() : '');
     $e = static fn($s) => esc_html((string) $s);
     $badge = $paid
-        ? '<span style="display:inline-block;padding:6px 14px;border-radius:999px;background:#e7f7ee;color:#137a3f;font-weight:700;letter-spacing:.08em">PAID</span>'
+        ? '<span style="display:inline-block;padding:6px 14px;border-radius:999px;background:#e7f7ee;color:#137a3f;font-weight:700;letter-spacing:.08em">' . ($waived ? 'NO FEE · CONFIRMED' : 'PAID') . '</span>'
         : '<span style="display:inline-block;padding:6px 14px;border-radius:999px;background:#fff1e0;color:#b45309;font-weight:700;letter-spacing:.08em">UNPAID</span>';
     $rows = [
         'Booking number' => $b['ref'],
@@ -48,6 +50,9 @@ function sa_bk_invoice_html(int $id, bool $embed_logo = false): string
         'Location' => $loc,
         'Handover' => $b['mode'] === 'pickup' ? 'We pick up from: ' . $b['pickup'] : 'Customer drop-off at the garage',
     ];
+    if ($waived) {
+        $rows['Booking fee'] = 'Waived — ' . preg_replace('/^waived \((.*)\)$/', '$1', $wlabel);
+    }
     $h = '<div style="font-family:Inter,Arial,sans-serif;max-width:720px;margin:24px auto;background:#fff;color:#1f2430;border:1px solid #e6e8ee;border-radius:14px;padding:28px">';
     $h .= '<table style="width:100%;border-collapse:collapse"><tr><td style="vertical-align:top">'
         . ($logo ? '<img src="' . ($embed_logo ? esc_attr($logo) : esc_url($logo)) . '" width="160" alt="Supreme Autoparts" style="max-height:48px;margin-bottom:8px"><br>' : '')
@@ -60,10 +65,10 @@ function sa_bk_invoice_html(int $id, bool $embed_logo = false): string
     }
     $h .= '</table><table style="width:100%;border-collapse:collapse;margin-top:18px;font-size:14px">'
         . '<tr style="background:#f6f7fa"><th style="text-align:left;padding:10px">Item</th><th style="text-align:right;padding:10px">Amount</th></tr>'
-        . '<tr><td style="padding:10px;border-bottom:1px solid #eef0f4">Car service booking fee (deducted from your final service bill)</td><td style="padding:10px;text-align:right;border-bottom:1px solid #eef0f4"><strong>KES ' . number_format($kes) . '</strong>' . ($usd !== null ? '<br><small style="color:#5b6475">≈ USD ' . number_format($usd, 2) . '</small>' : '') . '</td></tr>'
-        . '<tr><td style="padding:10px;color:#5b6475">Estimated service total (paid at the garage, less the booking fee)</td><td style="padding:10px;text-align:right;color:#5b6475">' . $e($b['estimate'] ?: 'Quote on request') . '</td></tr>'
-        . '<tr><td style="padding:12px 10px;font-weight:700">' . ($paid ? 'Booking fee paid' : 'Amount due now') . '</td><td style="padding:12px 10px;text-align:right;font-weight:800;font-size:18px">KES ' . number_format($kes) . '</td></tr></table>';
-    if (!$paid && $b['status'] === 'pending') {
+        . '<tr><td style="padding:10px;border-bottom:1px solid #eef0f4">' . ($waived ? 'Car service booking fee: waived (' . $e(preg_replace('/^waived \((.*)\)$/', '$1', $wlabel)) . ')' : 'Car service booking fee (deducted from your final service bill)') . '</td><td style="padding:10px;text-align:right;border-bottom:1px solid #eef0f4"><strong>KES ' . number_format($kes) . '</strong>' . ($usd !== null ? '<br><small style="color:#5b6475">≈ USD ' . number_format($usd, 2) . '</small>' : '') . '</td></tr>'
+        . '<tr><td style="padding:10px;color:#5b6475">' . ($waived ? 'Estimated labour / service total (quoted as normal, paid at the garage)' : 'Estimated service total (paid at the garage, less the booking fee)') . '</td><td style="padding:10px;text-align:right;color:#5b6475">' . $e($b['estimate'] ?: 'Quote on request') . '</td></tr>'
+        . '<tr><td style="padding:12px 10px;font-weight:700">' . ($waived ? 'Paid now' : ($paid ? 'Booking fee paid' : 'Amount due now')) . '</td><td style="padding:12px 10px;text-align:right;font-weight:800;font-size:18px">KES ' . number_format($kes) . '</td></tr></table>';
+    if (!$paid && $b['status'] === 'pending' && $kes > 0) {
         $h .= '<p style="text-align:center;margin:22px 0 8px"><a href="' . esc_url($pay) . '" style="display:inline-block;background:#F5A623;color:#111;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:10px">Pay KES ' . number_format($kes) . ' now</a></p>';
     }
     if ($paid) {
@@ -79,11 +84,19 @@ function sa_bk_invoice_email(int $id, string $kind = ''): void
     if (!is_email($b['email'])) {
         return;
     }
-    $paid = in_array($b['fee'], ['paid', 'applied'], true);
+    $waived = $b['fee'] === 'waived';
+    $paid = $waived || in_array($b['fee'], ['paid', 'applied'], true);
     $kes = number_format((int) ($b['fee_kes'] ?: sa_svc_setting('fee_kes')));
     $pay = add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/pay/'));
     $release = wp_date('g:i A, j M', (int) $b['created'] + 2 * HOUR_IN_SECONDS) . ' EAT';
-    if ($paid) {
+    if ($waived) {
+        $subject = 'Booking confirmed — no booking fee (' . $b['ref'] . ')';
+        $lead = 'Your booking is confirmed. Booking fee: ' . sa_fw_label($id) . '. There is nothing to pay now; labour is quoted as normal before any work starts.';
+    } elseif ($kind === 'revoked') {
+        $subject = 'Booking fee now due for ' . $b['ref'];
+        $w = function_exists('sa_fw_waiver') ? sa_fw_waiver($id) : [];
+        $lead = 'The booking fee waiver on this booking has ended because ' . ($w['revoked_reason'] ?? 'the linked order changed') . '. To keep your appointment, please pay the KES ' . $kes . ' booking fee within 24 hours. It is deducted from your final bill.';
+    } elseif ($paid) {
         $subject = 'Booking confirmed — paid invoice ' . sa_bk_invoice_no($b) . ' (' . $b['ref'] . ')';
         $lead = 'Thank you, your booking fee is paid and your booking is confirmed. Your paid invoice is below.';
     } elseif ($kind === 'nudge1') {
