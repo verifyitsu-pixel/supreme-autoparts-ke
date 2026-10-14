@@ -233,7 +233,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem 1.35rem;
-  background: linear-gradient(135deg, rgba(245, 166, 35, 0.1), transparent 55%), var(--sa-bg-card);
+  background: var(--sa-bg-card);
   border: 1px solid var(--sa-border);
   border-left: 3px solid var(--sa-accent);
   border-radius: var(--sa-radius-lg);

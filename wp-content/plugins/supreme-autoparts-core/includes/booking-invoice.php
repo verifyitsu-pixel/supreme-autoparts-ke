@@ -53,20 +53,20 @@ function sa_bk_invoice_html(int $id, bool $embed_logo = false): string
     if ($waived) {
         $rows['Booking fee'] = 'Waived — ' . preg_replace('/^waived \((.*)\)$/', '$1', $wlabel);
     }
-    $h = '<div style="font-family:Inter,Arial,sans-serif;max-width:720px;margin:24px auto;background:#fff;color:#1f2430;border:1px solid #e6e8ee;border-radius:14px;padding:28px">';
+    $h = '<div style="font-family:Inter,Arial,sans-serif;max-width:720px;margin:24px auto;background:#fff;color:#1a1a1a;border:1px solid #e4e3de;border-radius:14px;padding:28px">';
     $h .= '<table style="width:100%;border-collapse:collapse"><tr><td style="vertical-align:top">'
         . ($logo ? '<img src="' . ($embed_logo ? esc_attr($logo) : esc_url($logo)) . '" width="320" alt="Supreme Autoparts" style="max-height:50px;margin-bottom:8px"><br>' : '')
-        . '<strong>Standard Driveworks / Supreme Autoparts</strong><br><span style="color:#5b6475;font-size:13px">Ground Floor, Midax Plaza, Kangundo Rd, Njiru, Nairobi<br>P.O. Box 00516-00100 G.P.O Nairobi<br>calvin@supremeautoparts.co.ke · +254 714 498 451</span></td>'
-        . '<td style="vertical-align:top;text-align:right"><div style="font-size:22px;font-weight:800;color:#0b1f3a">' . ($paid ? 'INVOICE / BOOKING CONFIRMATION' : 'INVOICE') . '</div>'
-        . '<div style="margin:6px 0;color:#5b6475;font-size:13px">No. ' . $e(sa_bk_invoice_no($b)) . '<br>Issued ' . $e(wp_date('j M Y', (int) $b['created'])) . '</div>' . $badge . '</td></tr></table>';
+        . '<strong>Standard Driveworks / Supreme Autoparts</strong><br><span style="color:#5f5f5b;font-size:13px">Ground Floor, Midax Plaza, Kangundo Rd, Njiru, Nairobi<br>P.O. Box 00516-00100 G.P.O Nairobi<br>calvin@supremeautoparts.co.ke · +254 714 498 451</span></td>'
+        . '<td style="vertical-align:top;text-align:right"><div style="font-size:22px;font-weight:800;color:#111111">' . ($paid ? 'INVOICE / BOOKING CONFIRMATION' : 'INVOICE') . '</div>'
+        . '<div style="margin:6px 0;color:#5f5f5b;font-size:13px">No. ' . $e(sa_bk_invoice_no($b)) . '<br>Issued ' . $e(wp_date('j M Y', (int) $b['created'])) . '</div>' . $badge . '</td></tr></table>';
     $h .= '<table style="width:100%;border-collapse:collapse;margin-top:20px;font-size:14px">';
     foreach ($rows as $k => $v) {
-        $h .= '<tr><td style="padding:8px 0;border-bottom:1px solid #eef0f4;color:#5b6475;width:34%">' . $e($k) . '</td><td style="padding:8px 0;border-bottom:1px solid #eef0f4"><strong>' . $e($v) . '</strong></td></tr>';
+        $h .= '<tr><td style="padding:8px 0;border-bottom:1px solid #eef0f4;color:#5f5f5b;width:34%">' . $e($k) . '</td><td style="padding:8px 0;border-bottom:1px solid #eef0f4"><strong>' . $e($v) . '</strong></td></tr>';
     }
     $h .= '</table><table style="width:100%;border-collapse:collapse;margin-top:18px;font-size:14px">'
         . '<tr style="background:#f6f7fa"><th style="text-align:left;padding:10px">Item</th><th style="text-align:right;padding:10px">Amount</th></tr>'
-        . '<tr><td style="padding:10px;border-bottom:1px solid #eef0f4">' . ($waived ? 'Car service booking fee: waived (' . $e(preg_replace('/^waived \((.*)\)$/', '$1', $wlabel)) . ')' : 'Car service booking fee (deducted from your final service bill)') . '</td><td style="padding:10px;text-align:right;border-bottom:1px solid #eef0f4"><strong>KES ' . number_format($kes) . '</strong>' . ($usd !== null ? '<br><small style="color:#5b6475">≈ USD ' . number_format($usd, 2) . '</small>' : '') . '</td></tr>'
-        . '<tr><td style="padding:10px;color:#5b6475">' . ($waived ? 'Estimated labour / service total (quoted as normal, paid at the garage)' : 'Estimated service total (paid at the garage, less the booking fee)') . '</td><td style="padding:10px;text-align:right;color:#5b6475">' . $e($b['estimate'] ?: 'Quote on request') . '</td></tr>'
+        . '<tr><td style="padding:10px;border-bottom:1px solid #eef0f4">' . ($waived ? 'Car service booking fee: waived (' . $e(preg_replace('/^waived \((.*)\)$/', '$1', $wlabel)) . ')' : 'Car service booking fee (deducted from your final service bill)') . '</td><td style="padding:10px;text-align:right;border-bottom:1px solid #eef0f4"><strong>KES ' . number_format($kes) . '</strong>' . ($usd !== null ? '<br><small style="color:#5f5f5b">≈ USD ' . number_format($usd, 2) . '</small>' : '') . '</td></tr>'
+        . '<tr><td style="padding:10px;color:#5f5f5b">' . ($waived ? 'Estimated labour / service total (quoted as normal, paid at the garage)' : 'Estimated service total (paid at the garage, less the booking fee)') . '</td><td style="padding:10px;text-align:right;color:#5f5f5b">' . $e($b['estimate'] ?: 'Quote on request') . '</td></tr>'
         . '<tr><td style="padding:12px 10px;font-weight:700">' . ($waived ? 'Paid now' : ($paid ? 'Booking fee paid' : 'Amount due now')) . '</td><td style="padding:12px 10px;text-align:right;font-weight:800;font-size:18px">KES ' . number_format($kes) . '</td></tr></table>';
     if (!$paid && $b['status'] === 'pending' && $kes > 0) {
         $h .= '<p style="text-align:center;margin:22px 0 8px"><a href="' . esc_url($pay) . '" style="display:inline-block;background:#F5A623;color:#111;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:10px">Pay KES ' . number_format($kes) . ' now</a></p>';
@@ -74,7 +74,7 @@ function sa_bk_invoice_html(int $id, bool $embed_logo = false): string
     if ($paid) {
         $h .= '<p style="margin-top:18px;font-size:14px">Your booking is confirmed. Please keep booking number <strong>' . $e($b['ref']) . '</strong> for reference.' . ($b['fee_order'] ? ' Payment order #' . (int) $b['fee_order'] . '.' : '') . '</p>';
     }
-    $h .= '<p style="color:#5b6475;font-size:12px;margin-top:18px">This is an estimate; you approve the final quote before any work starts. Fee refunds follow our <a href="' . esc_url(home_url('/booking-terms/')) . '">Booking Terms</a>.</p></div>';
+    $h .= '<p style="color:#5f5f5b;font-size:12px;margin-top:18px">This is an estimate; you approve the final quote before any work starts. Fee refunds follow our <a href="' . esc_url(home_url('/booking-terms/')) . '">Booking Terms</a>.</p></div>';
     return $h;
 }
 
@@ -155,7 +155,7 @@ add_action('template_redirect', static function (): void {
     }
     echo '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>' . esc_html(sa_bk_invoice_no($b)) . '</title>'
         . '<style>@media print{.noprint{display:none}body{background:#fff!important}}</style></head><body style="background:#f4f5f8;margin:0;padding:12px">'
-        . '<p class="noprint" style="font-family:Arial,sans-serif;text-align:center"><button onclick="window.print()" style="padding:10px 18px;border-radius:10px;border:0;background:#0b1f3a;color:#fff;font-weight:600;cursor:pointer">Print / Save as PDF</button> '
+        . '<p class="noprint" style="font-family:Arial,sans-serif;text-align:center"><button onclick="window.print()" style="padding:10px 18px;border-radius:10px;border:0;background:#111111;color:#fff;font-weight:600;cursor:pointer">Print / Save as PDF</button> '
         . '<a href="' . esc_url(sa_bk_invoice_url($id, true)) . '" style="margin-left:10px">Download</a></p>'
         . sa_bk_invoice_html($id, !empty($_GET['dl'])) . '</body></html>';
     exit;

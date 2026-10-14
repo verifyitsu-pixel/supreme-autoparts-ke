@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Supreme Geo Currency Display
  * Description: Display prices in visitor local currency (CF-IPCountry / geo fallback) while WooCommerce + Whop checkout remain USD.
- * Version: 1.1.4
+ * Version: 1.1.5
  * Author: Supreme Autoparts
  * Text Domain: sa-geo-currency
  * Requires at least: 6.4
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_GEO_CURRENCY_VERSION', '1.1.4');
+define('SA_GEO_CURRENCY_VERSION', '1.1.5');
 define('SA_GEO_CURRENCY_FILE', __FILE__);
 define('SA_GEO_CURRENCY_DIR', plugin_dir_path(__FILE__));
 define('SA_GEO_CURRENCY_URL', plugin_dir_url(__FILE__));
@@ -224,3 +224,38 @@ add_action('send_headers', static function (): void {
         header('Vary: X-Country-Code', false);
     }
 }, 20);
+
+/**
+ * Business contact block per country. Kenya: registered Nairobi shop/garage.
+ * Everyone else (US and rest of world): Portland, OR office + US line.
+ *
+ * @return array{zone:string,name:string,street:string,city:string,region:string,postal:string,country:string,country_name:string,one_line:string,map_q:string,phone:string,phone_display:string,whatsapp:string,email:string}
+ */
+function sa_geo_business(?string $cc = null): array
+{
+    $cc = strtoupper($cc ?? sa_geo_country());
+    $email = 'calvin@supremeautoparts.co.ke';
+    if ($cc === 'KE') {
+        return [
+            'zone' => 'KE', 'name' => 'Supreme Autoparts',
+            'street' => 'Ground Floor, Midax Plaza, Kangundo Rd, Njiru', 'city' => 'Nairobi', 'region' => 'Nairobi', 'postal' => '00100',
+            'country' => 'KE', 'country_name' => 'Kenya',
+            'one_line' => 'Ground Floor, Midax Plaza, Kangundo Rd, Njiru, Nairobi, Kenya',
+            'map_q' => 'Midax Plaza, Kangundo Rd, Njiru, Nairobi',
+            'phone' => '+254714498451', 'phone_display' => '+254 714 498 451', 'whatsapp' => '254714498451', 'email' => $email,
+        ];
+    }
+    return [
+        'zone' => $cc === 'US' ? 'US' : 'ROW', 'name' => 'Supreme Autoparts',
+        'street' => '12800 NE Sandy Blvd', 'city' => 'Portland', 'region' => 'OR', 'postal' => '97230',
+        'country' => 'US', 'country_name' => 'United States',
+        'one_line' => '12800 NE Sandy Blvd, Portland, OR 97230',
+        'map_q' => '12800 NE Sandy Blvd, Portland, OR 97230',
+        'phone' => '+19174375121', 'phone_display' => '+1 (917) 437-5121', 'whatsapp' => '19174375121', 'email' => $email,
+    ];
+}
+
+function sa_geo_map_url(?string $cc = null): string
+{
+    return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode(sa_geo_business($cc)['map_q']);
+}

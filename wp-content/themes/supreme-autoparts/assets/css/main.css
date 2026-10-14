@@ -2991,7 +2991,7 @@ a.remove.sa-cart-line__remove {
 .woocommerce div.product .woocommerce-product-gallery .flex-viewport { height: auto !important; max-width: 100%; }
 .woocommerce div.product .woocommerce-product-gallery { overflow: hidden; }
 .woocommerce div.product .woocommerce-product-gallery__image img.sa-logo-placeholder {
-  object-fit: contain; padding: 22%; background: #f6f7f9; aspect-ratio: 1 / 1; width: 100%;
+  object-fit: contain; padding: 22%; background: #f4f4f1; aspect-ratio: 1 / 1; width: 100%;
 }
 .woocommerce div.product { position: relative; }
 .woocommerce div.product > span.onsale { position: absolute; top: .6rem; left: .6rem; z-index: 3; margin: 0; }

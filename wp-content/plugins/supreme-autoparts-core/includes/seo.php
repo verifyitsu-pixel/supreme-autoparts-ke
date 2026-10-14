@@ -508,14 +508,21 @@ function sa_seo_print_json_ld(array $ctx, array $brand, string $url): void
         'telephone'   => $brand['phone_e164'],
         'image'       => $brand['logo'],
         'priceRange'  => '$$',
-        'currenciesAccepted' => 'USD',
-        'paymentAccepted'    => 'Credit Card, Debit Card',
+        'currenciesAccepted' => 'KES, USD',
+        'paymentAccepted'    => 'Credit Card, Debit Card, M-Pesa',
         'areaServed'  => $brand['area_served'],
         'address'     => [
             '@type'           => 'PostalAddress',
+            'streetAddress'   => 'Ground Floor, Midax Plaza, Kangundo Rd, Njiru',
             'addressLocality' => 'Nairobi',
             'addressCountry'  => 'KE',
         ],
+        'location' => [[
+            '@type'   => 'Place',
+            'name'    => 'Supreme Autoparts, Portland',
+            'address' => ['@type' => 'PostalAddress', 'streetAddress' => '12800 NE Sandy Blvd', 'addressLocality' => 'Portland', 'addressRegion' => 'OR', 'postalCode' => '97230', 'addressCountry' => 'US'],
+            'telephone' => '+19174375121',
+        ]],
         'contactPoint' => [
             [
                 '@type'       => 'ContactPoint',

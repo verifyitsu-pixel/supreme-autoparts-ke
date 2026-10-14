@@ -18,11 +18,21 @@ const SA_SVC_GARAGE_POSTAL = 'P.O. Box 00516-00100 G.P.O Nairobi';
 
 function sa_svc_map_url(): string
 {
+    if (function_exists('sa_geo_is_kenya') && !sa_geo_is_kenya()) {
+        return sa_geo_map_url();
+    }
     return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode('Midax Plaza, Kangundo Rd, Njiru, Nairobi');
 }
 
 function sa_svc_address_html(bool $compact = false): string
 {
+    if (function_exists('sa_geo_is_kenya') && !sa_geo_is_kenya()) {
+        $b = sa_geo_business();
+        return '<div class="sa-svc-addr' . ($compact ? ' sa-svc-addr--compact' : '') . '">' . sa_svc_icon('pin')
+            . '<div><strong>Supreme Autoparts</strong><span>' . esc_html($b['street']) . '</span><span>' . esc_html($b['city'] . ', ' . $b['region'] . ' ' . $b['postal']) . '</span>'
+            . '<span><a href="tel:' . esc_attr($b['phone']) . '">' . esc_html($b['phone_display']) . '</a> · <a href="mailto:' . esc_attr($b['email']) . '">' . esc_html($b['email']) . '</a></span>'
+            . '<a href="' . esc_url(sa_geo_map_url()) . '" target="_blank" rel="noopener">Open in Google Maps →</a></div></div>';
+    }
     return '<div class="sa-svc-addr' . ($compact ? ' sa-svc-addr--compact' : '') . '">' . sa_svc_icon('pin')
         . '<div><strong>Supreme Autoparts garage</strong><span>' . esc_html(SA_SVC_GARAGE_ADDRESS) . '</span>'
         . ($compact ? '' : '<span class="sa-svc-muted">' . esc_html(SA_SVC_GARAGE_POSTAL) . '</span>')
@@ -470,7 +480,7 @@ function sa_svc_send_emails(int $id, string $event): void
         'Estimate' => $b['estimate'] . ($b['fee'] === 'waived' ? '' : ' (booking fee deducted from the final bill)'), 'Booking fee' => sa_svc_fee_label($b), 'Status' => $status,
     ];
     $html = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#222">'
-        . '<h2 style="color:#0b1f3a">Supreme Autoparts — Car Service</h2><p>Hi ' . esc_html($b['name']) . ',</p><p>'
+        . '<h2 style="color:#111111">Supreme Autoparts — Car Service</h2><p>Hi ' . esc_html($b['name']) . ',</p><p>'
         . ($event === 'cancel_request' ? 'We have received your cancellation request. Our team will review it and email you the decision. Your booking stays on hold until then.' : ($event === 'cancel_approved' ? 'Your cancellation has been approved and your booking is cancelled. Your KES ' . number_format((int) ($b['fee_kes'] ?: 1000)) . ' booking fee is being refunded to the method you chose.' : ($event === 'cancel_declined' ? 'Your cancellation request was declined, so your booking remains active. Please contact us if you have questions.' . ($b['cancel_note'] ? ' Note from our team: ' . $b['cancel_note'] : '') : ''))) . ($event === 'reminder' ? 'This is a reminder of your appointment tomorrow.' : (in_array($event, ['cancel_request', 'cancel_approved', 'cancel_declined'], true) ? '' : ($event === 'created' ? ($b['fee'] === 'unpaid' ? 'Thanks for booking. Pay the KES ' . number_format((int) ($b['fee_kes'] ?: sa_svc_setting('fee_kes'))) . ' booking fee to secure your slot: <a href="' . esc_url(add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/pay/'))) . '">Pay booking fee</a>. Unpaid bookings are released after 2 hours.' : ($b['fee'] === 'waived' ? 'Thanks for booking. Your booking is confirmed. Booking fee: ' . sa_fw_label($id) . '. Labour is quoted as normal before any work starts.' : 'Thanks for booking. Your slot is secured.')) : ($event === 'cancelled' ? 'Your booking has been cancelled.' : 'Your booking status has changed.'))))
         . '</p><table style="border-collapse:collapse;width:100%">';
     foreach ($rows as $k => $v) {
@@ -622,7 +632,7 @@ function sa_svc_render_index(): void
             </article>
           <?php endforeach; ?>
         </div>
-      <div class="sa-svc-locbar"><?php echo sa_svc_address_html(); ?><iframe title="Garage map" loading="lazy" src="https://www.google.com/maps?q=<?php echo rawurlencode('Midax Plaza, Kangundo Rd, Njiru, Nairobi'); ?>&output=embed"></iframe></div>
+      <div class="sa-svc-locbar"><?php echo sa_svc_address_html(); ?><iframe title="Garage map" loading="lazy" src="https://www.google.com/maps?q=<?php echo rawurlencode(function_exists('sa_geo_business') ? sa_geo_business()['map_q'] : 'Midax Plaza, Kangundo Rd, Njiru, Nairobi'); ?>&output=embed"></iframe></div>
       <?php echo sa_svc_faq_html(sa_svc_faq_general(), 'Car service FAQ'); ?>
       <p class="sa-svc-fine">Job durations are typical estimates; your technician confirms timing. Prices shown are guide prices. Services without a listed price are quoted for your vehicle. You always approve the final price before work starts.</p>
     </section>
@@ -817,7 +827,7 @@ function sa_svc_render_book(): void
               <span><strong><?php echo esc_html($l['label']); ?></strong><em><?php echo esc_html($l['note']); ?></em></span></label>
           <?php endforeach; ?>
           </div>
-          <style>.sa-svc-wiz:has(input[name="location"][value="usa"]:checked) .sa-svc-usnote{display:block!important}</style><p class="sa-svc-usnote" hidden style="margin:12px 0;padding:10px 14px;border-left:3px solid #c8102e;background:#f6f7f9;color:#1a1f2b;font-size:14px;line-height:1.5"><strong style="color:#1a1f2b">Booking from the US?</strong> Customers in the US: we forward your request to our support team, who route you to a suitable service centre near you. Services, pricing and booking work differently for customers outside Kenya.</p>
+          <style>.sa-svc-wiz:has(input[name="location"][value="usa"]:checked) .sa-svc-usnote{display:block!important}</style><p class="sa-svc-usnote" hidden style="margin:12px 0;padding:10px 14px;border-left:3px solid #e0a200;background:#f4f4f1;color:#111111;font-size:14px;line-height:1.5"><strong style="color:#111111">Booking from the US?</strong> Customers in the US: we forward your request to our support team, who route you to a suitable service centre near you. Services, pricing and booking work differently for customers outside Kenya.</p>
           <div class="sa-svc-modes" data-sa-modes>
             <label class="sa-svc-choice sa-svc-choice--row"><input type="radio" name="mode" value="dropoff" checked><span><strong>Drop-off at the garage</strong><em>Bring the car in at your slot time. <a href="<?php echo esc_url(sa_svc_map_url()); ?>" target="_blank" rel="noopener">Map</a></em></span></label>
             <label class="sa-svc-choice sa-svc-choice--row" data-sa-pickup-opt><input type="radio" name="mode" value="pickup"><span><strong>Vehicle pickup from my address</strong><em>Nairobi area. Pickup fee confirmed on booking.</em></span></label>
@@ -844,7 +854,7 @@ function sa_svc_render_book(): void
         </fieldset>
 
         <fieldset class="sa-svc-step" data-step="5"><legend><span>5</span> Your details &amp; review</legend>
-          <p class="sa-svc-usnote" hidden style="margin:12px 0;padding:10px 14px;border-left:3px solid #c8102e;background:#f6f7f9;color:#1a1f2b;font-size:14px;line-height:1.5"><strong style="color:#1a1f2b">Booking from the US?</strong> Customers in the US: we forward your request to our support team, who route you to a suitable service centre near you. Services, pricing and booking work differently for customers outside Kenya.</p>
+          <p class="sa-svc-usnote" hidden style="margin:12px 0;padding:10px 14px;border-left:3px solid #e0a200;background:#f4f4f1;color:#111111;font-size:14px;line-height:1.5"><strong style="color:#111111">Booking from the US?</strong> Customers in the US: we forward your request to our support team, who route you to a suitable service centre near you. Services, pricing and booking work differently for customers outside Kenya.</p>
           <div class="sa-svc-row">
             <label>Full name* <input name="name" required value="<?php echo esc_attr($old ? $old['name'] : ($user->ID ? (trim($user->first_name . ' ' . $user->last_name) ?: $user->display_name) : '')); ?>"></label>
             <label>Email* <input type="email" name="email" required value="<?php echo esc_attr($old ? $old['email'] : ($user->ID ? $user->user_email : '')); ?>"></label>
@@ -1102,7 +1112,12 @@ function sa_svc_admin_render(): void
 
 add_filter('the_content', static function (string $c): string {
     if (is_page('contact') && in_the_loop() && is_main_query()) {
-        $c .= '<h2>Visit our garage</h2>' . sa_svc_address_html() . '<p><a class="sa-svc-btn sa-svc-btn--primary" href="' . esc_url(sa_svc_book_url()) . '">Book a service</a></p>';
+        if (function_exists('sa_geo_is_kenya') && !sa_geo_is_kenya()) {
+            $q = rawurlencode(sa_geo_business()['map_q']);
+            $c .= '<h2>Our address</h2>' . sa_svc_address_html() . '<iframe title="Map" loading="lazy" style="width:100%;height:320px;border:0;margin-top:12px" src="https://www.google.com/maps?q=' . $q . '&output=embed"></iframe>';
+        } else {
+            $c .= '<h2>Visit our garage</h2>' . sa_svc_address_html() . '<p><a class="sa-svc-btn sa-svc-btn--primary" href="' . esc_url(sa_svc_book_url()) . '">Book a service</a></p>';
+        }
     }
     return $c;
 }, 30);

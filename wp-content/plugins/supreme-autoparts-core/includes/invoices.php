@@ -302,7 +302,7 @@ function sa_core_build_invoice_html($order, bool $for_email = false): string
         <img class="header__logo" src="<?php echo esc_url($logo); ?>" alt="<?php echo esc_attr($store); ?>" width="338" height="52" />
         <div>
           <strong><?php echo esc_html($store); ?></strong>
-          <div class="muted" style="color:#A0A0A8;font-size:.8rem"><?php echo esc_html($email); ?> · Nairobi, Kenya</div>
+          <div class="muted" style="color:#A0A0A8;font-size:.8rem"><?php echo esc_html($email); ?> · <?php echo esc_html(function_exists('sa_geo_business') ? sa_geo_business(strtoupper((string) ($order->get_billing_country() ?: 'KE')))['one_line'] : 'Nairobi, Kenya'); ?></div>
         </div>
       </div>
       <div class="header__meta">
@@ -405,7 +405,7 @@ function sa_core_build_invoice_html($order, bool $for_email = false): string
     </div>
     <footer class="footer">
       <p><?php echo esc_html__('Thank you for shopping with Supreme Autoparts.', 'supreme-autoparts-core'); ?></p>
-      <p class="muted"><?php echo esc_html($store); ?> · <?php echo esc_html($email); ?> · Nairobi, Kenya
+      <p class="muted"><?php echo esc_html($store); ?> · <?php echo esc_html($email); ?> · <?php echo esc_html(function_exists('sa_geo_business') ? sa_geo_business(strtoupper((string) ($order->get_billing_country() ?: 'KE')))['one_line'] : 'Nairobi, Kenya'); ?>
         <?php if ($for_email) : ?>
           · <a href="<?php echo esc_url($inv_url); ?>"><?php echo esc_html__('View online', 'supreme-autoparts-core'); ?></a>
         <?php endif; ?>

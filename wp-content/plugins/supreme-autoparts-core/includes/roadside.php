@@ -395,10 +395,10 @@ function sa_rs_email(int $id, string $event, string $note = ''): void
     }
     $table = '<table style="border-collapse:collapse;width:100%;font-size:14px">';
     foreach (array_filter($rows) as $k => $v) {
-        $table .= '<tr><td style="padding:7px 8px;border-bottom:1px solid #eee;color:#5b6475">' . esc_html($k) . '</td><td style="padding:7px 8px;border-bottom:1px solid #eee"><strong>' . esc_html((string) $v) . '</strong></td></tr>';
+        $table .= '<tr><td style="padding:7px 8px;border-bottom:1px solid #eee;color:#5f5f5b">' . esc_html($k) . '</td><td style="padding:7px 8px;border-bottom:1px solid #eee"><strong>' . esc_html((string) $v) . '</strong></td></tr>';
     }
     $table .= '</table>';
-    $wrap = static fn(string $inner) => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:auto;color:#1d2433;line-height:1.5">' . $inner . '</div>';
+    $wrap = static fn(string $inner) => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:auto;color:#111111;line-height:1.5">' . $inner . '</div>';
     $call = '<p style="font-size:14px">Need us now? Call <a href="tel:' . SA_RS_PHONE . '">' . SA_RS_PHONE_LABEL . '</a> or <a href="' . esc_url(sa_rs_wa_url('Roadside request ' . $r['ref'])) . '">WhatsApp us</a>.</p>';
 
     if ($event === 'admin_alert') {
@@ -427,7 +427,7 @@ function sa_rs_email(int $id, string $event, string $note = ''): void
         $lead = 'Hi ' . esc_html($r['name']) . ', here is the secure Pesapal payment link for the amount we agreed on the call: <strong>' . esc_html((string) $r['pay_amount']) . '</strong>. Paying online is optional; you can also pay the responder directly.';
     } else {
         $subject = 'Request ' . $r['ref'] . ': ' . $label . ($r['status'] === 'completed' ? ' — rate your help' : '');
-        $lead = 'Hi ' . esc_html($r['name']) . ', ' . esc_html(lcfirst(sa_rs_status_text($r['status']))) . ($note !== '' ? '<br><span style="color:#5b6475">' . esc_html($note) . '</span>' : '');
+        $lead = 'Hi ' . esc_html($r['name']) . ', ' . esc_html(lcfirst(sa_rs_status_text($r['status']))) . ($note !== '' ? '<br><span style="color:#5f5f5b">' . esc_html($note) . '</span>' : '');
     }
     $cta = $event === 'pay' && $r['pay_order'] && ($o = wc_get_order((int) $r['pay_order'])) ? $btn($o->get_checkout_payment_url(), 'Pay ' . $r['pay_amount'] . ' securely')
         : $btn(sa_rs_status_url($id), $r['status'] === 'completed' && !$r['rated'] ? 'Rate your roadside help' : 'Track live status');

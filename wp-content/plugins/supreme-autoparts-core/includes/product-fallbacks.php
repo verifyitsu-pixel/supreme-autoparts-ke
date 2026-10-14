@@ -41,7 +41,7 @@ add_filter('woocommerce_placeholder_img_src', static function ($src) {
     return $src;
 }, 20);
 add_filter('woocommerce_placeholder_img', static function ($html) {
-    return is_string($html) ? str_replace('class="', 'style="object-fit:contain;padding:18%;background:#f6f7f9" class="sa-logo-placeholder ', $html) : $html;
+    return is_string($html) ? str_replace('class="', 'style="object-fit:contain;padding:18%;background:#f4f4f1" class="sa-logo-placeholder ', $html) : $html;
 }, 20);
 
 /* Quote on request for products without a real source price. */
