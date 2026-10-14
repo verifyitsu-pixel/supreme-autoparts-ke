@@ -79,12 +79,6 @@
 .sa-foot__list a{color:#555;font-size:.875rem;display:inline-block;padding:.1rem 0;transition:color .15s ease,transform .15s ease}
 .sa-foot__list a:hover{color:var(--sa-action,#0a0a0a);transform:translateX(2px)}
 .sa-foot__shopall{color:var(--sa-action,#0a0a0a)!important;font-weight:700}
-.sa-foot__contact{display:flex;flex-wrap:wrap;align-items:center;gap:.65rem .75rem;padding:1.15rem 0 1.35rem;border-top:1px solid var(--sa-ui-line,#e4e4e4)}
-.sa-foot__wa{display:inline-flex;align-items:center;gap:.45rem;background:#25d366;color:#fff!important;font-weight:700;padding:.6rem 1.1rem;border-radius:999px;box-shadow:0 4px 14px rgba(37,211,102,.28);transition:transform .15s ease,box-shadow .15s ease}
-.sa-foot__wa:hover{color:#fff!important;transform:translateY(-1px);box-shadow:0 6px 18px rgba(37,211,102,.35)}
-.sa-foot__chip{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem .95rem;border-radius:999px;border:1px solid var(--sa-ui-line,#e4e4e4);background:#fff;color:#333!important;font-weight:600;font-size:.84rem;transition:border-color .15s ease,color .15s ease}
-.sa-foot__chip:hover{border-color:var(--sa-action,#0a0a0a);color:var(--sa-action,#0a0a0a)!important}
-.sa-foot__chip--accent{background:rgba(242,163,27,.06);border-color:rgba(242,163,27,.28);color:var(--sa-action,#0a0a0a)!important}
 .sa-foot__bottom{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.75rem 1.25rem;border-top:1px solid var(--sa-ui-line,#e4e4e4);padding:1.1rem 0 1.6rem;font-size:.8rem}
 .sa-foot__copy{color:#777}
 .sa-foot__policies{display:flex;flex-wrap:wrap;gap:.35rem 1.05rem}
@@ -104,7 +98,7 @@
 /* Mobile accordion */
 @media (max-width:899px){
   .sa-foot--full .sa-container{padding-top:1.75rem}
-  .sa-foot__grid{grid-template-columns:1fr;gap:0;padding-bottom:.5rem}
+  .sa-foot__grid{grid-template-columns:1fr;gap:0;padding-bottom:.75rem}
   .sa-foot__brandcol{padding-bottom:1.25rem;margin-bottom:.25rem;border-bottom:1px solid var(--sa-ui-line,#e4e4e4)}
   .sa-foot__blurb{max-width:none}
   .sa-foot__acc{border-bottom:1px solid var(--sa-ui-line,#e4e4e4)}
@@ -113,8 +107,6 @@
   .sa-foot__acc-sum span::after{content:"";position:absolute;left:0;bottom:0;width:22px;height:2px;background:var(--sa-accent,#F5A623);border-radius:1px}
   .sa-foot__chev{display:block}
   .sa-foot__list{padding:0 0 1rem}
-  .sa-foot__contact{flex-direction:column;align-items:stretch}
-  .sa-foot__wa,.sa-foot__chip{justify-content:center;width:100%}
   .sa-foot__bottom{flex-direction:column;align-items:flex-start}
   .sa-foot__payments{align-items:flex-start}
   .sa-foot__pay-logos{justify-content:flex-start}

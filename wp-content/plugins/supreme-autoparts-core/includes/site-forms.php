@@ -256,7 +256,7 @@ add_action('woocommerce_single_product_summary', static function (): void {
         echo '<a class="sa-xlink sa-xlink--strong" href="' . esc_url(add_query_arg('product', $id, home_url('/request-a-part/'))) . '">Request a price for this part</a>';
     }
     echo '<a class="sa-xlink" href="' . esc_url(add_query_arg('product', $id, home_url('/fitment-check/'))) . '">Not sure it fits? Check fitment</a>';
-    echo '<a class="sa-xlink" href="' . esc_url(home_url('/roadside/')) . '">Broken down in Nairobi? Get roadside help</a>';
+    echo '<a class="sa-xlink" href="' . esc_url(home_url('/roadside/')) . '">Car trouble? Get roadside help</a>';
     echo '</div>';
 }, 38);
 
@@ -264,8 +264,8 @@ function sa_sf_next_steps(string $ctx): string
 {
     $items = [
         'parts'    => ['Shop parts', 'Order the parts your car needs, by part number or vehicle.', wc_get_page_permalink('shop')],
-        'service'  => ['Book a service', 'Get it checked and fixed at our Njiru, Nairobi garage.', home_url('/book-service/')],
-        'roadside' => ['Roadside Rescue', 'Towing, jump-starts and flat tyres in Nairobi.', home_url('/roadside/')],
+        'service'  => ['Book a service', 'Get it checked and fixed at our garage.', home_url('/book-service/')],
+        'roadside' => ['Roadside Rescue', 'Towing, jump-starts and flat tyres when you need them.', home_url('/roadside/')],
         'fitment'  => ['Check fitment', 'Send your vehicle details and we confirm the right part.', home_url('/fitment-check/')],
     ];
     $pick = ['roadside' => ['service', 'parts'], 'booking' => ['parts', 'roadside'], 'order' => ['service', 'roadside', 'fitment']][$ctx] ?? [];
@@ -340,8 +340,8 @@ add_action('woocommerce_email_after_order_table', static function ($order, $sent
         return;
     }
     if ($plain_text) {
-        echo "\nBroken down in Nairobi? Roadside help: " . esc_url_raw(home_url('/roadside/')) . " or call +254 714 498 451\n";
+        echo "\nCar trouble? Roadside help: " . esc_url_raw(home_url('/roadside/')) . " or call +254 714 498 451\n";
         return;
     }
-    echo '<p style="margin:16px 0 0;font-size:13px;color:#555">Broken down in Nairobi? <a href="' . esc_url(home_url('/roadside/')) . '" style="color:#111">Request roadside help</a> or call <a href="tel:+254714498451" style="color:#111">+254 714 498 451</a>.</p>';
+    echo '<p style="margin:16px 0 0;font-size:13px;color:#555">Car trouble? <a href="' . esc_url(home_url('/roadside/')) . '" style="color:#111">Request roadside help</a> or call <a href="tel:+254714498451" style="color:#111">+254 714 498 451</a>.</p>';
 }, 40, 3);

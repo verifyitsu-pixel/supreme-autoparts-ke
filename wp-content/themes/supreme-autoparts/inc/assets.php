@@ -99,7 +99,7 @@ add_action('wp_enqueue_scripts', static function (): void {
 }, 1000);
 
 add_action('wp_enqueue_scripts', static function (): void {
-    wp_enqueue_style('supreme-autoparts-cart-ui', SA_THEME_URI . '/assets/css/cart-ui.css', ['supreme-autoparts-polish'], SA_THEME_VERSION . '.cu9');
+    wp_enqueue_style('supreme-autoparts-cart-ui', SA_THEME_URI . '/assets/css/cart-ui.css', ['supreme-autoparts-polish'], SA_THEME_VERSION . '.cu10');
 }, 1001);
 
 /* Header search panel (optional filters) on every page. */

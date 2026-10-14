@@ -18,8 +18,8 @@ $sa_ed_icons = [
 ];
 $sa_ed_services = [
     ['icon' => 'parts', 'url' => $sa_shop_url, 'title' => __('Shop parts', 'supreme-autoparts'), 'text' => __('Delivered to any town in Kenya by Fargo Courier', 'supreme-autoparts')],
-    ['icon' => 'service', 'url' => home_url('/book-service/'), 'title' => __('Book a service', 'supreme-autoparts'), 'text' => __('At our garage in Njiru, off Kangundo Road', 'supreme-autoparts')],
-    ['icon' => 'roadside', 'url' => home_url('/roadside/'), 'title' => __('Roadside rescue', 'supreme-autoparts'), 'text' => __('Towing, jump-starts and flat tyres in Nairobi', 'supreme-autoparts')],
+    ['icon' => 'service', 'url' => home_url('/book-service/'), 'title' => __('Book a service', 'supreme-autoparts'), 'text' => __('Drop off at our garage, off Kangundo Road', 'supreme-autoparts')],
+    ['icon' => 'roadside', 'url' => home_url('/roadside/'), 'title' => __('Roadside rescue', 'supreme-autoparts'), 'text' => __('Towing, jump-starts and flat tyres when you need them', 'supreme-autoparts')],
 ];
 $sa_is_ke = (!function_exists('sa_geo_is_kenya') || sa_geo_is_kenya());
 if (!$sa_is_ke) {
@@ -31,9 +31,9 @@ if (!$sa_is_ke) {
 <section class="sa-ed-hero" aria-labelledby="sa-hero-title">
   <div class="sa-container sa-ed-hero__in">
     <div class="sa-ed-hero__copy">
-      <p class="sa-ed-kicker"><?php esc_html_e('Supreme Autoparts, Njiru, Nairobi', 'supreme-autoparts'); ?></p>
+      <p class="sa-ed-kicker"><?php esc_html_e('Supreme Autoparts', 'supreme-autoparts'); ?></p>
       <h1 id="sa-hero-title"><?php $sa_is_ke ? esc_html_e('Car parts, servicing and roadside help.', 'supreme-autoparts') : esc_html_e('Car parts, checked to fit your car.', 'supreme-autoparts'); ?></h1>
-      <p class="sa-ed-lead"><?php if (!$sa_is_ke) : esc_html_e('Parts for Japanese, American, British and European cars, shipped to the US and worldwide. Search by part number, or ask us to check fitment for your car.', 'supreme-autoparts'); else : ?><?php esc_html_e('We send parts for Japanese, American, British and European cars to every county, fix cars at our Njiru garage, and come out to breakdowns across Nairobi.', 'supreme-autoparts'); ?><?php endif; ?></p>
+      <p class="sa-ed-lead"><?php if (!$sa_is_ke) : esc_html_e('Parts for Japanese, American, British and European cars, shipped to the US and worldwide. Search by part number, or ask us to check fitment for your car.', 'supreme-autoparts'); else : ?><?php esc_html_e('We send parts for Japanese, American, British and European cars to every county, fix cars at our garage, and come out when you break down.', 'supreme-autoparts'); ?><?php endif; ?></p>
       <form class="sa-ed-search" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>" data-sa-hx-search>
         <label class="screen-reader-text" for="sa-hero-search"><?php esc_html_e('Search products', 'supreme-autoparts'); ?></label>
         <input type="search" id="sa-hero-search" name="s" placeholder="<?php esc_attr_e('Part number, part name or brand', 'supreme-autoparts'); ?>" value="<?php echo esc_attr(get_search_query()); ?>" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="sa-hx-sugg" aria-autocomplete="list" />
@@ -67,9 +67,9 @@ if (!$sa_is_ke) {
 <section class="sa-ed-sec sa-ed-rs" aria-labelledby="sa-ed-rs">
   <div class="sa-container sa-ed-rs__in">
     <div class="sa-ed-rs__copy">
-      <p class="sa-ed-kicker"><?php esc_html_e('Roadside Rescue, Nairobi', 'supreme-autoparts'); ?></p>
+      <p class="sa-ed-kicker"><?php esc_html_e('Roadside Rescue', 'supreme-autoparts'); ?></p>
       <h2 id="sa-ed-rs"><?php esc_html_e('Stuck on the road? We come to you.', 'supreme-autoparts'); ?></h2>
-      <p class="sa-ed-rs__lead"><?php esc_html_e('Towing, jump-starts, flat tyres, fuel delivery and lockouts anywhere in Nairobi. Tell us where you are and what happened, and we send help.', 'supreme-autoparts'); ?></p>
+      <p class="sa-ed-rs__lead"><?php esc_html_e('Towing, jump-starts, flat tyres, fuel delivery and lockouts. Tell us where you are and what happened, and we send help.', 'supreme-autoparts'); ?></p>
       <div class="sa-ed-rs__cta">
         <a class="sa-ed-btn" href="<?php echo esc_url((function_exists('sa_rs_url') ? sa_rs_url('request') : home_url('/roadside/'))); ?>"><?php esc_html_e('Request help now', 'supreme-autoparts'); ?></a>
         <a class="sa-ed-btn sa-ed-btn--ghost" href="tel:+254714498451"><?php esc_html_e('Call +254 714 498 451', 'supreme-autoparts'); ?></a>
@@ -157,7 +157,7 @@ if ($sa_ed_products) : ?>
     <div class="sa-ed-facts">
       <div><h3><?php echo esc_html($sa_count > 1000 ? sprintf(__('%s parts listed', 'supreme-autoparts'), number_format_i18n(floor($sa_count / 1000) * 1000) . '+') : __('Thousands of parts', 'supreme-autoparts')); ?></h3><p><?php esc_html_e('Search by part number, brand or your car’s make, model and year.', 'supreme-autoparts'); ?></p></div>
       <div><h3><?php esc_html_e('Delivery across Kenya', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('We ship with Fargo Courier and you can track the parcel on our site.', 'supreme-autoparts'); ?></p></div>
-      <div><h3><?php esc_html_e('Pickup in Njiru', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('Collect your order from our shop at Midax Plaza, Kangundo Road.', 'supreme-autoparts'); ?></p></div>
+      <div><h3><?php esc_html_e('Store pickup', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('Collect your order from our shop at Midax Plaza, Kangundo Road.', 'supreme-autoparts'); ?></p></div>
       <div><h3><?php esc_html_e('M-Pesa or card', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('Pay through Pesapal when you check out.', 'supreme-autoparts'); ?></p></div>
     </div>
   </div>

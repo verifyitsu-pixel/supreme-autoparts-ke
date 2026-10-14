@@ -227,7 +227,7 @@ function sa_ff_fitted_row(): void
         }
     }
     if ($n) {
-        echo '<tr class="sa-ff-line"><td colspan="2"><div class="sa-ff-line__in"><span class="sa-ff-line__k">Fitted at our garage</span><span class="sa-ff-line__v">No shipping</span></div><small>' . esc_html(implode(', ', $n)) . '. Kept at our Njiru garage and fitted there.</small></td></tr>';
+        echo '<tr class="sa-ff-line"><td colspan="2"><div class="sa-ff-line__in"><span class="sa-ff-line__k">Fitted at our garage</span><span class="sa-ff-line__v">No shipping</span></div><small>' . esc_html(implode(', ', $n)) . '. Kept at our garage and fitted there.</small></td></tr>';
     }
 }
 add_action('woocommerce_review_order_after_shipping', 'sa_ff_fitted_row', 5);
@@ -466,5 +466,5 @@ add_action('woocommerce_single_product_summary', static function (): void {
     $lead = sa_ff_lead_days($product);
     $pk = sa_pk_first_label($lead);
     echo '<div class="sa-ff-pdp"><div><strong>Delivery to ' . esc_html($county) . '</strong><span>Fargo Courier: ' . esc_html(sa_ff_fargo_eta($state, $city, $lead)) . '</span>'
-        . ($pk !== '' ? '<span>Store pickup, Njiru: estimated ready from ' . esc_html($pk) . '</span>' : '') . '<small>Estimates, not guaranteed. Change your county at checkout.</small></div></div>';
+        . ($pk !== '' ? '<span>Store pickup: estimated ready from ' . esc_html($pk) . '</span>' : '') . '<small>Estimates, not guaranteed. Change your county at checkout.</small></div></div>';
 }, 34);

@@ -586,18 +586,18 @@ function sa_svc_render_index(): void
     <section class="sa-svc-hero">
       <div class="sa-container sa-svc-hero__in">
         <div>
-          <p class="sa-svc-eyebrow">Supreme Autoparts garage · Njiru, Nairobi</p>
+          <p class="sa-svc-eyebrow">Supreme Autoparts garage</p>
           <h1>Car service, booked in two minutes</h1>
           <p class="sa-svc-lead">From oil changes and brake pads to alignment, AC and full servicing. Pick a time online, drop the car off or have us collect it, and we fit real parts from our own shop. Your KES 1,000 booking fee is deducted from the final bill.</p>
           <div class="sa-svc-cta">
             <a class="sa-svc-btn sa-svc-btn--primary" href="<?php echo esc_url(sa_svc_book_url()); ?>"><?php echo sa_svc_icon('calendar'); ?> Book a service</a>
             <a class="sa-svc-btn sa-svc-btn--ghost" href="<?php echo esc_url(function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/')); ?>">Shop parts</a>
           </div>
-          <ul class="sa-svc-points"><li><?php echo sa_svc_icon('check'); ?>Garage at Midax Plaza, Njiru</li><li><?php echo sa_svc_icon('check'); ?>Book online, any time</li><li><?php echo sa_svc_icon('check'); ?>Parts from our own shop</li><li><?php echo sa_svc_icon('check'); ?>Booking number + email confirmation</li><li><?php echo sa_svc_icon('check'); ?>Drop-off or pickup</li></ul>
+          <ul class="sa-svc-points"><li><?php echo sa_svc_icon('check'); ?>Garage at Midax Plaza, Kangundo Rd</li><li><?php echo sa_svc_icon('check'); ?>Book online, any time</li><li><?php echo sa_svc_icon('check'); ?>Parts from our own shop</li><li><?php echo sa_svc_icon('check'); ?>Booking number + email confirmation</li><li><?php echo sa_svc_icon('check'); ?>Drop-off or pickup</li></ul>
         </div>
         <ol class="sa-svc-steps">
           <li><span>1</span><strong>Book</strong><em>Pick a service and a time slot</em></li>
-          <li><span>2</span><strong>Drop off or we pick up</strong><em>Bring it to Njiru or we collect it</em></li>
+          <li><span>2</span><strong>Drop off or we pick up</strong><em>Drop it off or we collect it</em></li>
           <li><span>3</span><strong>We fix it</strong><em>You approve the quote before work starts</em></li>
           <li><span>4</span><strong>Drive away</strong><em>Pay the balance, fee already deducted</em></li>
         </ol>
@@ -748,7 +748,7 @@ function sa_svc_render_book(): void
       <nav class="sa-svc-crumbs"><a href="<?php echo esc_url(home_url('/')); ?>">Home</a> / <a href="<?php echo esc_url(sa_svc_url()); ?>">Services</a> / <span>Book</span></nav>
       <h1><?php echo $old ? 'Reschedule ' . esc_html($old['ref']) : 'Book a service'; ?></h1>
       <p class="sa-svc-lead">Five quick steps. Pay a KES <?php echo esc_html(number_format((float) sa_svc_setting('fee_kes'))); ?> booking fee to confirm, which is credited to your bill. You pay the rest at the service, after approving the final quote.</p>
-      <ul class="sa-svc-trust"><li><?php echo sa_svc_icon('check'); ?>Written quote before work</li><li><?php echo sa_svc_icon('check'); ?>Free online cancellation</li><li><?php echo sa_svc_icon('check'); ?>Parts from our own shop</li><li><?php echo sa_svc_icon('pin'); ?>Njiru, Nairobi garage</li></ul>
+      <ul class="sa-svc-trust"><li><?php echo sa_svc_icon('check'); ?>Written quote before work</li><li><?php echo sa_svc_icon('check'); ?>Free online cancellation</li><li><?php echo sa_svc_icon('check'); ?>Parts from our own shop</li><li><?php echo sa_svc_icon('pin'); ?>Our garage on Kangundo Rd</li></ul>
       <?php if ($err) : ?><div class="sa-svc-alert"><?php echo esc_html($err); ?></div><?php endif; ?>
       <ol class="sa-svc-progress" data-sa-progress><li class="is-on">Vehicle</li><li>Services</li><li>Location</li><li>Date &amp; time</li><li>Review</li></ol>
       <div class="sa-svc-wiz__grid">
@@ -1367,7 +1367,7 @@ add_action('woocommerce_single_product_summary', static function (): void {
     $direct = !$fo && function_exists('sa_fit_add_url') && $product->is_purchasable() && $product->is_in_stock() && !$product->is_type('variable');
     $url = $fo ? sa_fw_book_url($fo, (int) $product->get_id()) : ($direct ? sa_fit_add_url((int) $product->get_id()) : add_query_arg(['service' => $svc, 'part' => (int) $product->get_id()], home_url('/book-service/')));
     echo '<div class="sa-svc-fit">' . sa_svc_icon('service') . '<div><strong>Need it fitted?</strong><span>'
-        . ($fo ? 'You bought this from us (order #' . esc_html($fo->get_order_number()) . '). Book fitting with no booking fee.' : ($direct ? 'Buy it with fitting at our Njiru garage. No booking fee; labour quoted at the garage.' : 'Fitting at our Njiru garage. No booking fee for parts bought from us.')) . '</span></div>'
+        . ($fo ? 'You bought this from us (order #' . esc_html($fo->get_order_number()) . '). Book fitting with no booking fee.' : ($direct ? 'Buy it with fitting at our garage. No booking fee; labour quoted at the garage.' : 'Fitting at our garage. No booking fee for parts bought from us.')) . '</span></div>'
         . '<a class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--primary" href="' . esc_url($url) . '">Book installation</a></div>';
 }, 36);
 

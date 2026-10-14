@@ -157,9 +157,9 @@ add_action('woocommerce_checkout_after_customer_details', static function (): vo
     <section class="sa-fitco" data-sa-fitco data-service="<?php echo esc_attr($s['main']); ?>" data-extra="<?php echo (int) $s['extra']; ?>" data-ajax="<?php echo esc_url(admin_url('admin-ajax.php')); ?>"
       data-e="<?php echo esc_attr(sa_fit_earliest()); ?>">
       <h3>Fitting appointment</h3>
-      <p class="sa-fitco__lead">Fitting for: <strong><?php echo esc_html($names); ?></strong>. The part stays at our Njiru garage and is fitted there (not shipped). No booking fee because the part is bought from us.</p>
+      <p class="sa-fitco__lead">Fitting for: <strong><?php echo esc_html($names); ?></strong>. The part stays at our garage and is fitted there (not shipped). No booking fee because the part is bought from us.</p>
       <fieldset class="sa-fitco__modes"><legend>Handover</legend>
-        <label><input type="radio" name="sa_fit_mode" value="dropoff" <?php checked($mode !== 'pickup'); ?>> Drop off my car at the Njiru garage</label>
+        <label><input type="radio" name="sa_fit_mode" value="dropoff" <?php checked($mode !== 'pickup'); ?>> Drop off my car at our garage</label>
         <label><input type="radio" name="sa_fit_mode" value="pickup" <?php checked($mode === 'pickup'); ?>> Pick up my car (Supreme Autoparts vehicle pickup)</label>
       </fieldset>
       <div class="sa-fitco__pk" data-fit-pk <?php echo $mode === 'pickup' ? '' : 'hidden'; ?>>
@@ -368,7 +368,7 @@ add_action('woocommerce_thankyou', static function ($order_id): void {
     $bid = $o ? (int) $o->get_meta('_sa_fit_booking') : 0;
     if ($bid > 0) {
         $b = sa_svc_booking_data($bid);
-        echo '<div class="sa-fit-block" style="margin:18px 0"><strong>Fitting booked: ' . esc_html($b['ref']) . '</strong><span>' . esc_html(wp_date('D j M Y', strtotime($b['date'])) . ', ' . $b['time'] . ' · ' . ($b['mode'] === 'pickup' ? 'we pick up your car' : 'drop-off at Njiru')) . '. Booking fee KES 0. We have emailed the booking separately.</span>'
+        echo '<div class="sa-fit-block" style="margin:18px 0"><strong>Fitting booked: ' . esc_html($b['ref']) . '</strong><span>' . esc_html(wp_date('D j M Y', strtotime($b['date'])) . ', ' . $b['time'] . ' · ' . ($b['mode'] === 'pickup' ? 'we pick up your car' : 'drop-off at our garage')) . '. Booking fee KES 0. We have emailed the booking separately.</span>'
             . '<a href="' . esc_url(add_query_arg(['b' => $bid, 'k' => $b['key']], home_url('/book-service/confirmed/'))) . '">View booking</a></div>';
     } elseif ($o && is_array($o->get_meta('_sa_fit_visit'))) {
         echo '<div class="sa-fit-block" style="margin:18px 0"><strong>Fitting requested</strong><span>Your fitting is booked as soon as the payment is confirmed. You will get a separate booking email.</span></div>';

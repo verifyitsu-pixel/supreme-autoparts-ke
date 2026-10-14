@@ -7,8 +7,6 @@ if (!defined('ABSPATH')) {
 $sa_contact = function_exists('sa_enquire_contact') ? sa_enquire_contact() : [];
 $sa_wa_digits = preg_replace('/\D+/', '', (string) ($sa_contact['whatsapp'] ?? '19174375121')) ?: '19174375121';
 $sa_wa        = 'https://wa.me/' . $sa_wa_digits;
-$sa_phone_disp = (string) ($sa_contact['phone_display'] ?? '+1 917 437 5121');
-$sa_phone_tel  = (string) ($sa_contact['phone'] ?? '+19174375121');
 $sa_min        = (function_exists('is_cart') && is_cart()) || (function_exists('is_checkout') && is_checkout() && !is_order_received_page());
 $sa_logo_f     = function_exists('sa_theme_logo_url') ? sa_theme_logo_url(true) : (SA_THEME_URI . '/assets/logo-light.png');
 $sa_shop       = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
@@ -39,7 +37,7 @@ $sa_chev       = '<svg class="sa-foot__chev" viewBox="0 0 24 24" width="18" heig
           <img src="<?php echo esc_url($sa_logo_f); ?>" alt="<?php echo esc_attr(get_bloginfo('name')); ?>" width="364" height="56" loading="lazy" decoding="async" />
         </a>
         <p class="sa-foot__blurb">
-          <?php esc_html_e('Performance parts & accessories for cars, trucks and SUVs, plus car servicing at our Njiru, Nairobi garage.', 'supreme-autoparts'); ?>
+          <?php esc_html_e('Performance parts & accessories for cars, trucks and SUVs, plus car servicing at our garage.', 'supreme-autoparts'); ?>
         </p>
         <p class="sa-foot__email">
           <a href="mailto:calvin@supremeautoparts.co.ke">calvin@supremeautoparts.co.ke</a>
@@ -119,24 +117,6 @@ $sa_chev       = '<svg class="sa-foot__chev" viewBox="0 0 24 24" width="18" heig
           <li><a class="sa-foot__shopall" href="<?php echo esc_url($sa_shop); ?>"><?php esc_html_e('Shop all parts', 'supreme-autoparts'); ?></a></li>
         </ul>
       </details>
-    </div>
-
-    <div class="sa-foot__contact">
-      <a class="sa-foot__wa" href="<?php echo esc_url($sa_wa); ?>" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2.1 1-2.4c.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .5l-.3.5-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.6 2.1 1.1 1 2 1.3 2.3 1.4.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.6-.1l2 1c.3.1.5.2.5.3.1.2.1.7-.1 1.3z"/></svg>
-        <?php esc_html_e('WhatsApp us', 'supreme-autoparts'); ?>
-      </a>
-      <a class="sa-foot__chip" href="mailto:calvin@supremeautoparts.co.ke">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
-        calvin@supremeautoparts.co.ke
-      </a>
-      <a class="sa-foot__chip" href="<?php echo esc_url('tel:' . preg_replace('/\s+/', '', $sa_phone_tel)); ?>">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.9v2a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h2a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L7.1 9.5a16 16 0 0 0 6 6l1.1-1.1a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6A2 2 0 0 1 22 16.9z"/></svg>
-        <?php echo esc_html($sa_phone_disp); ?>
-      </a>
-      <a class="sa-foot__chip sa-foot__chip--accent" href="<?php echo esc_url(sa_page_url('contact')); ?>">
-        <?php esc_html_e('Contact page', 'supreme-autoparts'); ?>
-      </a>
     </div>
 
     <div class="sa-foot__bottom">

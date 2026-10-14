@@ -451,7 +451,7 @@ add_action('template_redirect', static function (): void {
     $wp_query->is_404 = false;
     $wp_query->is_page = true;
     status_header(200);
-    $titles = ['index' => 'Roadside Rescue & Assistance in Nairobi', 'request' => 'Request roadside help', 'status' => 'Roadside request status', 'track' => 'Track a roadside request',
+    $titles = ['index' => 'Roadside Rescue & Assistance', 'request' => 'Request roadside help', 'status' => 'Roadside request status', 'track' => 'Track a roadside request',
         'provider' => 'Responder dashboard', 'join' => 'Become a roadside responder', 'thanks' => 'Application received', 'terms' => 'Roadside Terms'];
     add_filter('pre_get_document_title', static fn() => ($titles[$view] ?? 'Roadside') . ' | ' . get_bloginfo('name'), 99);
     if (!in_array($view, ['index', 'terms', 'join'], true)) {
@@ -521,7 +521,7 @@ function sa_rs_faq_default(): array
         ['Which areas do you cover?', 'Nairobi and its environs, from our base at Midax Plaza, Njiru. Further out we will tell you on the call if we can reach you, and how long it will take.'],
         ['How long until someone arrives?', 'It depends on traffic and distance. Your responder sets an ETA when they head out, and you can watch their position live on your status page.'],
         ['How do I pay?', 'Pay the responder on site, or ask us for a secure Pesapal link (M-Pesa or card). Paying online is optional.'],
-        ['Can you tow my car to your garage?', 'Yes. Choose "Our Njiru garage" as the destination and we can book the repair with parts from our own shop.'],
+        ['Can you tow my car to your garage?', 'Yes. Choose our garage as the destination and we can book the repair with parts from our own shop.'],
         ['What if I am in an unsafe place?', 'Turn on hazard lights, stay inside with the doors locked if traffic is passing, or move well away from the road. If anyone is hurt or in danger, call 999 or 112 first.'],
         ['Can I cancel?', 'Yes, from your status page before the responder is on the way, at no charge. After that, please call us.'],
     ];
@@ -555,7 +555,7 @@ function sa_rs_render_index(): void
     <section class="sa-svc-hero sa-rs-hero">
       <div class="sa-container sa-svc-hero__in">
         <div>
-          <p class="sa-svc-eyebrow">Roadside Rescue &amp; Assistance · Nairobi</p>
+          <p class="sa-svc-eyebrow">Roadside Rescue &amp; Assistance</p>
           <h1>Stuck on the road? We'll come to you.</h1>
           <p class="sa-svc-lead">Towing, jump-starts, flat tyres, fuel, lockouts, winching and small fixes on the spot. Send your location in under a minute, no account needed, and follow your responder live.</p>
           <?php $sa_rs_cc = sa_rs_country(); if ($sa_rs_cc !== '' && $sa_rs_cc !== 'KE') : ?><div class="sa-svc-alert sa-rs-us">This service only covers Nairobi, Kenya. We can't send help to you where you are. If you're arranging help for someone in Nairobi, you can still send a request. For parts and fitment questions, WhatsApp us on <a href="https://wa.me/19174375121" rel="noopener">+1 917 437 5121</a>.</div><?php endif; ?>
@@ -563,7 +563,7 @@ function sa_rs_render_index(): void
             <a class="sa-svc-btn sa-svc-btn--primary sa-rs-btn--big" href="<?php echo esc_url($req); ?>"><?php echo sa_rs_icon('locate'); ?> Request help now</a>
             <a class="sa-svc-btn sa-svc-btn--ghost" href="tel:<?php echo esc_attr(SA_RS_PHONE); ?>"><?php echo sa_rs_icon('phone'); ?> Call <?php echo esc_html(SA_RS_PHONE_LABEL); ?></a>
           </div>
-          <ul class="sa-svc-points"><li><?php echo sa_svc_icon('check'); ?>No login, no payment to ask</li><li><?php echo sa_svc_icon('check'); ?>Price agreed on the call</li><li><?php echo sa_svc_icon('check'); ?>Live status and ETA</li><li><?php echo sa_svc_icon('check'); ?>Tow to our Njiru garage</li></ul>
+          <ul class="sa-svc-points"><li><?php echo sa_svc_icon('check'); ?>No login, no payment to ask</li><li><?php echo sa_svc_icon('check'); ?>Price agreed on the call</li><li><?php echo sa_svc_icon('check'); ?>Live status and ETA</li><li><?php echo sa_svc_icon('check'); ?>Tow to our garage</li></ul>
           <?php if ($ratings['count'] > 0) : ?><p class="sa-rs-rating"><?php echo sa_rs_icon('star'); ?> <?php echo esc_html(number_format($ratings['avg'], 1)); ?>/5 from <?php echo (int) $ratings['count']; ?> customer rating<?php echo $ratings['count'] === 1 ? '' : 's'; ?></p><?php endif; ?>
         </div>
         <ol class="sa-svc-steps">
@@ -631,7 +631,7 @@ function sa_rs_render_request(): void
             <label class="sa-rs-type"><input type="radio" name="type" value="<?php echo esc_attr($slug); ?>" required <?php checked($type, $slug); ?>><span><?php echo sa_rs_icon($s['icon']); ?><strong><?php echo esc_html($s['name']); ?></strong><small><?php echo esc_html(sa_rs_price_label($s) === 'Quote on request' ? 'Quote on call' : sa_rs_price_label($s)); ?></small></span></label>
           <?php endforeach; ?>
           </div>
-          <label class="sa-rs-dest" data-rs-dest>Tow to <input name="dest" list="rs-dest" placeholder="Our Njiru garage, your mechanic, home…"><datalist id="rs-dest"><option value="Supreme Autoparts garage, Midax Plaza, Njiru"></option></datalist></label>
+          <label class="sa-rs-dest" data-rs-dest>Tow to <input name="dest" list="rs-dest" placeholder="Our garage, your mechanic, home…"><datalist id="rs-dest"><option value="Supreme Autoparts garage, Midax Plaza, Njiru"></option></datalist></label>
         </fieldset>
         <fieldset><legend>2. Where are you?</legend>
           <button type="button" class="sa-svc-btn sa-svc-btn--primary sa-rs-locate" data-rs-locate><?php echo sa_rs_icon('locate'); ?> Use my current location</button>

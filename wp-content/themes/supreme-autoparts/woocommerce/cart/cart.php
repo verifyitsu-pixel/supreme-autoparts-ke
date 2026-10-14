@@ -171,7 +171,7 @@ $free_ship = function_exists('sa_theme_cart_has_free_shipping') && sa_theme_cart
           ?>
         </p>
         <?php else : ?>
-        <p class="sa-cart-ship-note"><?php esc_html_e('Kenya: free Store pickup in Njiru, Nairobi, or Fargo Courier to your town (priced by weight at checkout).', 'supreme-autoparts'); ?></p>
+        <p class="sa-cart-ship-note"><?php esc_html_e('Kenya: free store pickup, or Fargo Courier to your town (priced by weight at checkout).', 'supreme-autoparts'); ?></p>
         <?php endif; ?>
         <div class="sa-cart-trust">
           <a href="<?php echo esc_url(sa_page_url('shipping-policy')); ?>"><?php esc_html_e('Shipping', 'supreme-autoparts'); ?></a>

@@ -321,7 +321,7 @@ function sa_fw_order_cta($order_id): void
     if (!$r['ok']) {
         return;
     }
-    echo '<div class="sa-svc-fit" style="margin:18px 0"><div><strong>Want us to fit it?</strong><span>Book fitting at our Njiru, Nairobi garage with <b>no booking fee</b>, because you bought the part from us. Labour is quoted as normal. Pick a date on or after ' . esc_html(wp_date('D j M', strtotime($r['earliest']))) . '.</span></div>'
+    echo '<div class="sa-svc-fit" style="margin:18px 0"><div><strong>Want us to fit it?</strong><span>Book fitting at our garage with <b>no booking fee</b>, because you bought the part from us. Labour is quoted as normal. Pick a date on or after ' . esc_html(wp_date('D j M', strtotime($r['earliest']))) . '.</span></div>'
         . '<a class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--primary" href="' . esc_url(sa_fw_book_url($o)) . '">Book fitting</a></div>';
 }
 add_action('woocommerce_thankyou', 'sa_fw_order_cta', 30);
@@ -348,7 +348,7 @@ add_action('woocommerce_review_order_before_payment', static function (): void {
     echo '<p class="sa-fw-cartnote" style="margin:0 0 12px;font-size:13px;color:#4a5160">Need it fitted? After you pay, use <strong>Book fitting</strong> on your order page. There is no booking fee for parts bought from us.</p>';
 }, 5);
 add_action('woocommerce_cart_totals_after_order_total', static function (): void {
-    echo '<tr class="sa-fw-cartnote"><td colspan="2" style="font-size:13px;color:#4a5160">Fitting at our Nairobi garage: no booking fee for parts bought here. Book it from your order page after checkout.</td></tr>';
+    echo '<tr class="sa-fw-cartnote"><td colspan="2" style="font-size:13px;color:#4a5160">Fitting at our garage: no booking fee for parts bought here. Book it from your order page after checkout.</td></tr>';
 });
 
 /* ---------- Auto-release: give revoked bookings 24h to pay ---------- */
