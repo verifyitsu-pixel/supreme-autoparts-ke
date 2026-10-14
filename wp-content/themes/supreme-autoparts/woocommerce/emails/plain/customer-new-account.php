@@ -13,7 +13,7 @@ echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n";
 echo esc_html(wp_strip_all_tags($email_heading));
 echo "\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n";
 
-printf(esc_html__('Hi %s,', 'supreme-autoparts'), esc_html($user_login));
+echo function_exists('sa_email_greeting') ? sa_email_greeting(get_user_by('login', $user_login) ?: '') : esc_html__('Hello,', 'supreme-autoparts');
 echo "\n\n";
 
 printf(

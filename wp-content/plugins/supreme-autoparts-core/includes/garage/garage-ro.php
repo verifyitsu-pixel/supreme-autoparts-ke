@@ -392,7 +392,7 @@ function sa_g_ro_email(int $ro, string $kind): bool
         return false;
     }
     $v = sa_g_vehicle((int) $r['vehicle_id']);
-    $hi = '<p>Hi ' . esc_html(strtok((string) $c['name'], ' ') ?: 'there') . ',</p>';
+    $hi = '<p>' . sa_email_greeting((string) $c['name']) . '</p>';
     $veh = '<p><strong>Vehicle:</strong> ' . esc_html(sa_g_vehicle_label($v)) . '<br><strong>Repair order:</strong> ' . esc_html($r['ref']) . '</p>';
     $t = sa_g_ro_totals($ro);
     switch ($kind) {

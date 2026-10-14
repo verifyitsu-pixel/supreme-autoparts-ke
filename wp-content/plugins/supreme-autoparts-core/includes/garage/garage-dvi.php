@@ -666,7 +666,7 @@ function sa_g_dvi_email(int $id): bool
     $v = $d['d']['vehicle'];
     $summary = $d['kind'] === 'inspection' ? '<p>Summary: <strong style="color:#c13515">' . $reds . ' need attention now</strong>, <strong style="color:#b7770f">' . $yel . ' soon</strong>.</p>' : '<p>' . count($d['d']['damage'] ?? []) . ' exterior mark(s) recorded, fuel ' . (int) $d['fuel'] . '/8, mileage ' . number_format((int) $d['mileage']) . ' km.</p>';
     $subject = sa_g_dvi_kinds()[$d['kind']] . ' for ' . trim($v['make'] . ' ' . $v['model'] . ' ' . $v['plate']) . ' (' . $d['ref'] . ')';
-    $html = sa_mail_layout(sa_g_dvi_kinds()[$d['kind']], '<p>Hi ' . esc_html(strtok((string) $d['d']['customer']['name'], ' ') ?: 'there') . ',</p><p>We recorded the condition of your ' . esc_html(trim($v['year'] . ' ' . $v['make'] . ' ' . $v['model'])) . ' (' . esc_html($v['plate']) . ') on ' . esc_html(mysql2date('j M Y \a\t g:i A', $d['created'])) . ' EAT. The full report with photos is attached as a PDF.</p>' . $summary, 'View report online', sa_g_dvi_report_url($d), $subject);
+    $html = sa_mail_layout(sa_g_dvi_kinds()[$d['kind']], '<p>' . sa_email_greeting((string) $d['d']['customer']['name']) . '</p><p>We recorded the condition of your ' . esc_html(trim($v['year'] . ' ' . $v['make'] . ' ' . $v['model'])) . ' (' . esc_html($v['plate']) . ') on ' . esc_html(mysql2date('j M Y \a\t g:i A', $d['created'])) . ' EAT. The full report with photos is attached as a PDF.</p>' . $summary, 'View report online', sa_g_dvi_report_url($d), $subject);
     $ok = (bool) wp_mail($email, $subject, $html, ['Content-Type: text/html; charset=UTF-8'], is_readable($file) ? [$file] : []);
     if ($ok) {
         $wpdb->update(sa_g_t('dvi'), ['emailed_at' => sa_g_now()], ['id' => $id]);

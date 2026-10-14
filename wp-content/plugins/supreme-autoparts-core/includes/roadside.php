@@ -418,16 +418,16 @@ function sa_rs_email(int $id, string $event, string $note = ''): void
     }
     if ($event === 'created') {
         $subject = 'Help is being arranged — request ' . $r['ref'];
-        $lead = 'Hi ' . esc_html($r['name']) . ', we have your roadside request. Our dispatcher will call you on ' . esc_html($r['phone']) . ' to confirm the details and the price before anyone is sent. No payment is needed to request help.';
+        $lead = sa_email_greeting((string) $r['name']) . ' we have your roadside request. Our dispatcher will call you on ' . esc_html($r['phone']) . ' to confirm the details and the price before anyone is sent. No payment is needed to request help.';
     } elseif ($event === 'message') {
         $subject = 'New message about your request ' . $r['ref'];
-        $lead = 'Hi ' . esc_html($r['name']) . ', you have a new message from our team: <em>' . esc_html($note) . '</em>';
+        $lead = sa_email_greeting((string) $r['name']) . ' you have a new message from our team: <em>' . esc_html($note) . '</em>';
     } elseif ($event === 'pay') {
         $subject = 'Payment link for roadside request ' . $r['ref'];
-        $lead = 'Hi ' . esc_html($r['name']) . ', here is the secure Pesapal payment link for the amount we agreed on the call: <strong>' . esc_html((string) $r['pay_amount']) . '</strong>. Paying online is optional; you can also pay the responder directly.';
+        $lead = sa_email_greeting((string) $r['name']) . ' here is the secure Pesapal payment link for the amount we agreed on the call: <strong>' . esc_html((string) $r['pay_amount']) . '</strong>. Paying online is optional; you can also pay the responder directly.';
     } else {
         $subject = 'Request ' . $r['ref'] . ': ' . $label . ($r['status'] === 'completed' ? ' — rate your help' : '');
-        $lead = 'Hi ' . esc_html($r['name']) . ', ' . esc_html(lcfirst(sa_rs_status_text($r['status']))) . ($note !== '' ? '<br><span style="color:#5f5f5b">' . esc_html($note) . '</span>' : '');
+        $lead = sa_email_greeting((string) $r['name']) . ' ' . esc_html(lcfirst(sa_rs_status_text($r['status']))) . ($note !== '' ? '<br><span style="color:#5f5f5b">' . esc_html($note) . '</span>' : '');
     }
     $cta = $event === 'pay' && $r['pay_order'] && ($o = wc_get_order((int) $r['pay_order'])) ? $btn($o->get_checkout_payment_url(), 'Pay ' . $r['pay_amount'] . ' securely')
         : $btn(sa_rs_status_url($id), $r['status'] === 'completed' && !$r['rated'] ? 'Rate your roadside help' : 'Track live status');

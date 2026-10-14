@@ -507,10 +507,7 @@ function sa_core_email_customer_password(WP_User $user, string $password, string
         ? (string) wc_get_page_permalink('myaccount')
         : (string) wp_login_url();
 
-    $name = trim((string) $user->display_name);
-    if ($name === '') {
-        $name = $login;
-    }
+    $name = sa_email_first_name($user);
 
     $email_login = (string) $user->user_email;
     $login_hint = $email_login !== '' && is_email($email_login)
@@ -526,7 +523,7 @@ function sa_core_email_customer_password(WP_User $user, string $password, string
     }
 
     $lines = [
-        'Hi ' . $name . ',',
+        ($name !== '' ? 'Hi ' . $name . ',' : 'Hello,'),
         '',
         $intro,
         '',

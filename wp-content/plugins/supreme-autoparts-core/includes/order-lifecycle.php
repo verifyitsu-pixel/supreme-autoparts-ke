@@ -200,8 +200,7 @@ function sa_ol_info_url(WC_Order $o): string
 function sa_ol_email_content(WC_Order $o, string $stage, string $note = ''): array
 {
     $n = $o->get_order_number();
-    $name = esc_html($o->get_billing_first_name() ?: 'there');
-    $hi = '<p>Hi ' . $name . ',</p>';
+    $hi = '<p>' . sa_email_greeting($o) . '</p>';
     $noteh = $note !== '' ? '<p style="background:#f7f7f7;border-left:3px solid #F5A623;padding:10px 12px;margin:12px 0">' . nl2br(esc_html($note)) . '</p>' : '';
     $c = (string) $o->get_meta('_sa_courier');
     $trk_no = (string) $o->get_meta('_sa_tracking_no');

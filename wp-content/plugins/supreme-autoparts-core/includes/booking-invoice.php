@@ -116,7 +116,7 @@ function sa_bk_invoice_email(int $id, string $kind = ''): void
             . ($b['mode'] === 'pickup' ? 'We pick up your car from: ' . esc_html($b['pickup']) . '. The pickup fee is confirmed with you on a call.' : 'Drop-off at our Njiru garage, Midax Plaza, Kangundo Rd.') . '</p>'
             . '<p style="font-size:14px"><a href="' . esc_url($mng) . '">Manage booking</a> · <a href="' . esc_url(add_query_arg(['service' => $b['service'], 'reschedule' => $id, 'rk' => $b['key']], home_url('/book-service/'))) . '">Reschedule</a> · <a href="' . esc_url($mng) . '#cancel">Cancel</a></p>';
     }
-    $body = '<div style="font-family:Arial,sans-serif;max-width:720px;margin:auto"><p>Hi ' . esc_html($b['name']) . ',</p><p>' . esc_html($lead) . '</p>' . $btn . '</div>' . sa_bk_invoice_html($id)
+    $body = '<div style="font-family:Arial,sans-serif;max-width:720px;margin:auto"><p>' . sa_email_greeting(sa_bk_greet_src($b), (string) $b['name']) . '</p><p>' . esc_html($lead) . '</p>' . $btn . '</div>' . sa_bk_invoice_html($id)
         . '<p style="font-family:Arial,sans-serif;text-align:center;font-size:13px"><a href="' . esc_url(sa_bk_invoice_url($id)) . '">View or download this invoice online</a></p>';
     $tmp = '';
     $att = [];

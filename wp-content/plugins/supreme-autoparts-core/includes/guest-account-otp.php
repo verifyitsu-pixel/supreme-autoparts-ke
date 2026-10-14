@@ -389,10 +389,7 @@ function sa_core_email_login_otp(WP_User $user, string $code): bool
     }
 
     $site = wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES) ?: 'Supreme Autoparts';
-    $name = trim((string) $user->first_name);
-    if ($name === '') {
-        $name = trim((string) $user->display_name) ?: 'there';
-    }
+    $name = sa_email_first_name($user);
     $mins = (int) ceil(SA_OTP_TTL / 60);
     $account_url = function_exists('wc_get_page_permalink')
         ? (string) wc_get_page_permalink('myaccount')
@@ -410,7 +407,7 @@ function sa_core_email_login_otp(WP_User $user, string $code): bool
     $subject = sprintf('%s · Login code: %s', $site, $code);
 
     $lines = [
-        'Hi ' . $name . ',',
+        ($name !== '' ? 'Hi ' . $name . ',' : 'Hello,'),
         '',
         'Your one-time login code for ' . $site . ' is:',
         '',
@@ -439,7 +436,7 @@ function sa_core_email_login_otp(WP_User $user, string $code): bool
 
     if (class_exists('SA_Brevo_API') && function_exists('sa_brevo_is_configured') && sa_brevo_is_configured()) {
         $result = SA_Brevo_API::send_transactional([
-            'to'          => [['email' => $to, 'name' => $name]],
+            'to'          => [$name !== '' ? ['email' => $to, 'name' => $name] : ['email' => $to]],
             'subject'     => $subject,
             'textContent' => $body,
             'htmlContent' => $html,
@@ -471,7 +468,7 @@ function sa_core_email_login_otp(WP_User $user, string $code): bool
  */
 function sa_core_otp_email_html(array $ctx): string
 {
-    $name = esc_html((string) ($ctx['name'] ?? 'there'));
+    $greet = esc_html(sa_email_greeting_text((string) ($ctx['name'] ?? '')));
     $site = esc_html((string) ($ctx['site'] ?? 'Supreme Autoparts'));
     $code = esc_html((string) ($ctx['code'] ?? ''));
     $mins = (int) ($ctx['mins'] ?? 10);
@@ -480,7 +477,7 @@ function sa_core_otp_email_html(array $ctx): string
     $wa = esc_html((string) ($ctx['wa_display'] ?? '+1 917 437 5121'));
 
     return '<div class="sa-otp-mail" style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#18181b;max-width:560px;">'
-        . '<p style="margin:0 0 12px;font-size:15px;line-height:1.5;">Hi ' . $name . ',</p>'
+        . '<p style="margin:0 0 12px;font-size:15px;line-height:1.5;">' . $greet . '</p>'
         . '<p style="margin:0 0 12px;font-size:15px;line-height:1.5;">Your one-time login code for <strong>' . $site . '</strong> is:</p>'
         . '<p style="margin:20px 0;text-align:center;">'
         . '<span style="display:inline-block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:32px;letter-spacing:0.28em;font-weight:700;color:#0B0B0D;background:#f4f4f5;border:1px solid #e4e4e7;border-radius:10px;padding:14px 22px;">'
@@ -516,7 +513,7 @@ function sa_core_email_guest_account_ready(WP_User $user, WC_Order $order): void
     }
 
     $site = wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
-    $name = trim((string) $order->get_billing_first_name()) ?: 'there';
+    $name = sa_email_first_name($order);
     $account_url = function_exists('wc_get_page_permalink')
         ? (string) wc_get_page_permalink('myaccount')
         : home_url('/my-account/');
@@ -524,7 +521,7 @@ function sa_core_email_guest_account_ready(WP_User $user, WC_Order $order): void
 
     $subject = sprintf('%s · Order #%s — account ready', $site, $order_no);
     $body = implode("\n", [
-        'Hi ' . $name . ',',
+        ($name !== '' ? 'Hi ' . $name . ',' : 'Hello,'),
         '',
         'Thanks for your order #' . $order_no . ' at ' . $site . '.',
         '',
@@ -551,7 +548,7 @@ function sa_core_email_guest_account_ready(WP_User $user, WC_Order $order): void
         }
         $html .= '</div>';
         $result = SA_Brevo_API::send_transactional([
-            'to'          => [['email' => $to, 'name' => $name]],
+            'to'          => [$name !== '' ? ['email' => $to, 'name' => $name] : ['email' => $to]],
             'subject'     => $subject,
             'textContent' => $body,
             'htmlContent' => $html,

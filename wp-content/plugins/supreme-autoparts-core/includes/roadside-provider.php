@@ -168,7 +168,7 @@ function sa_rs_provider_email(int $pid, int $id, string $kind): void
     $r = sa_rs_data($id);
     $svc = sa_rs_catalog()[$r['type']]['name'] ?? $r['type'];
     $subject = ($kind === 'new' ? 'New roadside job near you: ' : 'Job assigned to you: ') . $svc . ' (' . $r['ref'] . ')';
-    $body = '<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:auto;color:#1d2433"><p>Hi ' . esc_html($p['name']) . ',</p><p>'
+    $body = '<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:auto;color:#1d2433"><p>' . sa_email_greeting((string) $p['name']) . '</p><p>'
         . ($kind === 'new' ? 'A new <strong>' . esc_html($svc) . '</strong> request is waiting near you.' : 'Request <strong>' . esc_html($r['ref']) . '</strong> (' . esc_html($svc) . ') has been assigned to you. Customer: ' . esc_html($r['name'] . ' · ' . $r['phone']))
         . '</p><p>Location: ' . esc_html(trim($r['address'] . ' ' . $r['landmark']) ?: 'map pin') . '</p>'
         . '<p><a href="' . esc_url(sa_rs_provider_link($pid)) . '" style="display:inline-block;background:#0a0a0a;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px">Open responder dashboard</a></p></div>';

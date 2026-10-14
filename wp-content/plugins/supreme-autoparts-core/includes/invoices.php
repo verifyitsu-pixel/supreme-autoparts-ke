@@ -296,6 +296,9 @@ function sa_core_build_invoice_html($order, bool $for_email = false): string
     <a class="btn-outline" href="<?php echo esc_url($back_url); ?>"><?php echo esc_html__('Back to order', 'supreme-autoparts-core'); ?></a>
   </p>
 <?php endif; ?>
+<?php if ($for_email) : ?>
+  <p style="font-family:Arial,sans-serif;font-size:15px;max-width:720px;margin:16px auto 8px;padding:0 16px"><?php echo sa_email_greeting($order); // phpcs:ignore -- escaped ?> <?php echo esc_html($is_paid ? __('Here is the receipt for your order.', 'supreme-autoparts-core') : __('Here is the invoice for your order.', 'supreme-autoparts-core')); ?></p>
+<?php endif; ?>
   <div class="wrap">
     <header class="header">
       <div class="header__brand">

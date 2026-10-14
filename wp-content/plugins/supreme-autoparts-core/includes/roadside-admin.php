@@ -128,7 +128,7 @@ add_action('admin_post_sa_rs_admin', static function (): void {
             if ($act === 'send' || $act === 'approve') {
                 $p = sa_rs_provider_data($pid);
                 if (is_email($p['email'])) {
-                    wp_mail($p['email'], 'Your Supreme Autoparts responder dashboard', '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto"><p>Hi ' . esc_html($p['name']) . ',</p><p>Here is your private link to the roadside responder dashboard. Keep it to yourself: anyone with this link can act as you.</p><p><a href="' . esc_url(sa_rs_provider_link($pid)) . '" style="display:inline-block;background:#0a0a0a;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px">Open my dashboard</a></p></div>', ['Content-Type: text/html; charset=UTF-8']);
+                    wp_mail($p['email'], 'Your Supreme Autoparts responder dashboard', '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto"><p>' . sa_email_greeting((string) $p['name']) . '</p><p>Here is your private link to the roadside responder dashboard. Keep it to yourself: anyone with this link can act as you.</p><p><a href="' . esc_url(sa_rs_provider_link($pid)) . '" style="display:inline-block;background:#0a0a0a;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px">Open my dashboard</a></p></div>', ['Content-Type: text/html; charset=UTF-8']);
                 }
             }
         }
