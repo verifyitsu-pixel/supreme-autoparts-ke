@@ -196,6 +196,13 @@ add_action('admin_post_sa_garage_vehicle', static function (): void {
             wp_safe_redirect(sa_garage_account_url('notfound'));
             exit;
         }
+        // Remove this customer's photos of the vehicle from their garage.
+        foreach (sa_garage_vehicle_photos($uid, $vid) as $paid) {
+            if (get_post_meta($paid, '_sa_garage_media', true) === '1') {
+                wp_delete_attachment($paid, true);
+            }
+        }
+        delete_user_meta($uid, 'sa_garage_photos_' . $vid);
         $cids = sa_g_customer_ids_for_user($uid);
         $in = implode(',', array_map('intval', $cids));
         // Detach from this customer: drop their links; delete the row only when nothing else references it.
@@ -292,6 +299,102 @@ add_action('admin_post_sa_garage_vehicle', static function (): void {
     exit;
 });
 
+/* ---------- Vehicle photos (up to 3 per vehicle, customer uploads) ---------- */
+
+/** Attachment IDs of this customer's photos for one garage vehicle. */
+function sa_garage_vehicle_photos(int $uid, int $vid): array
+{
+    $ids = get_user_meta($uid, 'sa_garage_photos_' . $vid, true);
+    if (!is_array($ids)) {
+        return [];
+    }
+    return array_values(array_filter(array_map('intval', $ids)));
+}
+
+add_action('admin_post_sa_garage_photo', static function (): void {
+    $uid = get_current_user_id();
+    if (!$uid || !wp_verify_nonce((string) ($_POST['_wpnonce'] ?? ''), 'sa_garage_photo')) {
+        wp_die('Not allowed', 403);
+    }
+    $vid = (int) ($_POST['vid'] ?? 0);
+    if (!$vid || !sa_garage_user_owns_vehicle($uid, $vid)) {
+        wp_safe_redirect(sa_garage_account_url('notfound'));
+        exit;
+    }
+    $do = sanitize_key((string) ($_POST['do'] ?? 'add'));
+    $photos = sa_garage_vehicle_photos($uid, $vid);
+
+    if ($do === 'remove') {
+        $aid = (int) ($_POST['aid'] ?? 0);
+        if ($aid && in_array($aid, $photos, true)) {
+            if (get_post_meta($aid, '_sa_garage_media', true) === '1') {
+                wp_delete_attachment($aid, true);
+            }
+            update_user_meta($uid, 'sa_garage_photos_' . $vid, array_values(array_diff($photos, [$aid])));
+            wp_safe_redirect(sa_garage_account_url('photo_removed'));
+        } else {
+            wp_safe_redirect(sa_garage_account_url('notfound'));
+        }
+        exit;
+    }
+
+    // Add: the 3-photo cap is enforced here, never only in the UI.
+    if (count($photos) >= 3) {
+        wp_safe_redirect(sa_garage_account_url('photo_limit'));
+        exit;
+    }
+    $aid = 0;
+    $data = (string) wp_unslash((string) ($_POST['photo_data'] ?? ''));
+    if ($data !== '') {
+        // Usual path: the page compresses the picked photo to a JPEG data URL first.
+        if (!preg_match('#^data:image/(jpeg|png);base64,#', $data)) {
+            wp_safe_redirect(sa_garage_account_url('photo_type'));
+            exit;
+        }
+        $aid = sa_g_save_dataurl($data, 'garage-vehicle-' . $vid);
+        if (!$aid) {
+            wp_safe_redirect(sa_garage_account_url('photo_fail'));
+            exit;
+        }
+    } elseif (!empty($_FILES['photo']) && is_array($_FILES['photo']) && (int) ($_FILES['photo']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+        // No-JS fallback: validate the raw upload ourselves (real image, type, size).
+        $f = $_FILES['photo'];
+        if ((int) $f['error'] !== UPLOAD_ERR_OK || !is_uploaded_file((string) $f['tmp_name'])) {
+            wp_safe_redirect(sa_garage_account_url('photo_fail'));
+            exit;
+        }
+        if ((int) $f['size'] > 8 * MB_IN_BYTES) {
+            wp_safe_redirect(sa_garage_account_url('photo_size'));
+            exit;
+        }
+        $info = @getimagesize((string) $f['tmp_name']);
+        if (!$info || !in_array((string) $info['mime'], ['image/jpeg', 'image/png', 'image/webp'], true)) {
+            wp_safe_redirect(sa_garage_account_url('photo_type'));
+            exit;
+        }
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        $up = wp_handle_upload($f, ['test_form' => false, 'mimes' => ['jpg|jpeg|jpe' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp']]);
+        if (!is_array($up) || !empty($up['error'])) {
+            wp_safe_redirect(sa_garage_account_url('photo_fail'));
+            exit;
+        }
+        $aid = wp_insert_attachment(['post_mime_type' => (string) $info['mime'], 'post_title' => 'garage-vehicle-' . $vid, 'post_status' => 'private'], (string) $up['file']);
+        if (!$aid || is_wp_error($aid)) {
+            wp_safe_redirect(sa_garage_account_url('photo_fail'));
+            exit;
+        }
+        update_post_meta((int) $aid, '_sa_garage_media', '1');
+        $aid = (int) $aid;
+    } else {
+        wp_safe_redirect(sa_garage_account_url('photo_missing'));
+        exit;
+    }
+    $photos[] = $aid;
+    update_user_meta($uid, 'sa_garage_photos_' . $vid, $photos);
+    wp_safe_redirect(sa_garage_account_url('photo_added'));
+    exit;
+});
+
 /** Small reusable vehicle form (add + edit). */
 function sa_garage_vehicle_form(array $v = []): void
 {
@@ -373,6 +476,13 @@ add_action('woocommerce_account_my-vehicles_endpoint', static function (): void 
         'dupeplate' => 'That number plate is already on another garage record. If it is yours, contact us and we will move it.',
         'exists' => 'That vehicle is already in your garage.',
         'notfound' => 'We could not find that vehicle on your account.',
+        'photo_added' => 'Photo added to your vehicle.',
+        'photo_removed' => 'Photo removed.',
+        'photo_limit' => 'You can keep up to 3 photos per vehicle. Remove one to add another.',
+        'photo_type' => 'Please choose a JPG, PNG or WebP image.',
+        'photo_size' => 'That photo is too large - please choose one under 8 MB.',
+        'photo_missing' => 'Please choose a photo first.',
+        'photo_fail' => 'That photo could not be saved. Please try a different image.',
     ];
     $msg = sanitize_key((string) ($_GET['sa-g'] ?? ''));
 
@@ -406,6 +516,34 @@ add_action('woocommerce_account_my-vehicles_endpoint', static function (): void 
             . ($v['vin'] ? '<span>VIN: ' . esc_html($v['vin']) . '</span>' : '')
             . '<span>' . count($hist) . ' record(s)</span>'
             . ($rem ? '<span>Next due: <strong>' . esc_html($rem['service']) . '</strong>' . ($rem['due_date'] ? ' by ' . esc_html(mysql2date('j M Y', $rem['due_date'])) : '') . ((int) $rem['due_km'] ? ' or ' . esc_html(number_format((int) $rem['due_km'])) . ' km' : '') . '</span>' : '') . '</div>';
+        $photos = sa_garage_vehicle_photos($uid, $vid);
+        $left = 3 - count($photos);
+        echo '<div class="sa-g-vehphotos"><div class="sa-g-vehphotos__head"><strong>Photos</strong><span class="sa-g-muted">' . count($photos) . ' of 3</span></div>';
+        if ($photos) {
+            echo '<div class="sa-g-thumbs">';
+            foreach ($photos as $aid) {
+                $url = wp_get_attachment_image_url($aid, 'medium');
+                if (!$url) {
+                    continue;
+                }
+                $full = wp_get_attachment_image_url($aid, 'large') ?: $url;
+                echo '<div class="sa-g-thumb"><a href="' . esc_url($full) . '" target="_blank" rel="noopener"><img src="' . esc_url($url) . '" alt="' . esc_attr(trim(($v['year'] ? $v['year'] . ' ' : '') . $v['make'] . ' ' . $v['model'])) . '" loading="lazy"></a>'
+                    . '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" onsubmit="return confirm(\'Remove this photo?\');"><input type="hidden" name="action" value="sa_garage_photo"><input type="hidden" name="do" value="remove"><input type="hidden" name="vid" value="' . $vid . '"><input type="hidden" name="aid" value="' . (int) $aid . '">' . wp_nonce_field('sa_garage_photo', '_wpnonce', true, false) . '<button type="submit" aria-label="Remove photo">&times;</button></form></div>';
+            }
+            echo '</div>';
+        }
+        if ($left > 0) {
+            echo '<form class="sa-g-vehphoto-add" method="post" enctype="multipart/form-data" action="' . esc_url(admin_url('admin-post.php')) . '" data-sa-g-vehphoto>'
+                . '<input type="hidden" name="action" value="sa_garage_photo"><input type="hidden" name="do" value="add"><input type="hidden" name="vid" value="' . $vid . '">' . wp_nonce_field('sa_garage_photo', '_wpnonce', true, false)
+                . '<input type="hidden" name="photo_data" value="" data-photo-data>'
+                . '<label class="sa-btn sa-btn--outline sa-g-photo-btn">&#128247; Choose photo<input type="file" name="photo" accept="image/*" data-photo-file hidden></label>'
+                . '<span class="sa-g-vehphoto-preview" data-photo-preview></span>'
+                . '<button class="sa-btn" type="submit">Add photo</button>'
+                . '<span class="sa-g-muted">JPG, PNG or WebP, up to 8 MB. ' . (int) $left . ' of 3 left.</span></form>';
+        } else {
+            echo '<p class="sa-g-muted" style="margin:6px 0 0">All 3 photo slots used. Remove a photo to add another.</p>';
+        }
+        echo '</div>';
         echo '<div class="sa-g-veh__actions">'
             . '<details class="sa-g-edit"><summary>Edit</summary>';
         sa_garage_vehicle_form($v);
@@ -425,6 +563,31 @@ add_action('woocommerce_account_my-vehicles_endpoint', static function (): void 
         echo '</article>';
     }
     echo '</div></div>';
+    ?>
+    <script>(function(){
+    document.querySelectorAll('form[data-sa-g-vehphoto]').forEach(function(form){
+        var file=form.querySelector('[data-photo-file]'),data=form.querySelector('[data-photo-data]'),prev=form.querySelector('[data-photo-preview]');
+        if(!file||!data){return;}
+        file.addEventListener('change',function(){
+            var f=file.files&&file.files[0];
+            if(!f){return;}
+            if(!/^image\//.test(f.type)){alert('Please choose a JPG, PNG or WebP image.');file.value='';return;}
+            if(f.size>8*1024*1024){alert('That photo is too large - please choose one under 8 MB.');file.value='';return;}
+            var img=new Image(),url=URL.createObjectURL(f);
+            img.onload=function(){
+                var s=Math.min(1,1400/Math.max(img.width,img.height)),c=document.createElement('canvas');
+                c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
+                c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+                var d=c.toDataURL('image/jpeg',0.8);
+                data.value=d;file.value='';
+                if(prev){prev.innerHTML='<img src="'+d+'" alt="Photo to add">';}
+                URL.revokeObjectURL(url);
+            };
+            img.onerror=function(){URL.revokeObjectURL(url);/* Leave the raw file in place; the server validates it. */};
+            img.src=url;
+        });
+    });})();</script>
+    <?php
 });
 
 /* ---------- Fitment badge on product pages ("Fits your car") ---------- */
@@ -550,4 +713,5 @@ add_action('woocommerce_single_product_summary', static function (): void {
         echo '<p class="sa-fit sa-fit--no">✗ Not listed for ' . esc_html($mine ? 'your ' : 'the ') . esc_html($veh['label']) . ' - <a href="' . esc_url(home_url('/contact/')) . '">ask us to confirm</a></p>';
     }
 }, 26);
+
 
