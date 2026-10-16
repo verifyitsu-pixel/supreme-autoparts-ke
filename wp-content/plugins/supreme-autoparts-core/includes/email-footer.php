@@ -245,8 +245,22 @@ add_filter('wp_mail', static function (array $args): array {
 
 // The shared wp_mail footer replaces WooCommerce's default boilerplate only.
 add_filter('woocommerce_email_footer_text', static fn ($text = ''): string => '', 100);
+/*
+ * Email layout (header band, status pill, large heading, rounded card, dark button) adapted from
+ * nirajrajgor/email-templates (https://github.com/nirajrajgor/email-templates)
+ * MIT License - Copyright (c) 2024 Niraj Rajgor
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+ * documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
+ * to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above
+ * copyright notice and this permission notice shall be included in all copies or substantial portions of the
+ * Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+ */
+add_action('woocommerce_email_header', static function (): void {
+    add_filter('option_woocommerce_email_header_image', static fn() => home_url('/wp-content/themes/supreme-autoparts/assets/logo-email-dark.png'), 20);
+}, 2);
 add_filter('woocommerce_email_styles', static function (string $css): string {
-    return $css . "\n#wrapper { padding-bottom:0 !important; }\na[x-apple-data-detectors], .sa-footer a { color:inherit !important; text-decoration:none !important; }\n#template_footer, #template_footer td, #credit { display:none !important; height:0 !important; max-height:0 !important; overflow:hidden !important; mso-hide:all; padding:0 !important; margin:0 !important; font-size:0 !important; line-height:0 !important; }\n"
+    return $css . "\n#template_header_image { background:#111111 !important; padding:22px 28px 0 !important; }\n#template_header_image img { width:180px !important; max-width:100% !important; height:auto !important; }\n#header_wrapper { background:#111111 !important; border-bottom:4px solid #f59e0b !important; padding:14px 28px 22px !important; }\n#header_wrapper h1 { color:#ffffff !important; font-size:24px !important; line-height:1.25 !important; text-shadow:none !important; }\n#body_content { background:#ffffff !important; }\n#body_content_inner, #body_content_inner p { color:#444444 !important; line-height:1.65 !important; }\n#template_container { border-radius:12px !important; overflow:hidden !important; }\n#wrapper { padding-bottom:0 !important; }\na[x-apple-data-detectors], .sa-footer a { color:inherit !important; text-decoration:none !important; }\n#template_footer, #template_footer td, #credit { display:none !important; height:0 !important; max-height:0 !important; overflow:hidden !important; mso-hide:all; padding:0 !important; margin:0 !important; font-size:0 !important; line-height:0 !important; }\n"
         // Phone width: drop the qty and unit price columns, show "qty x price" under the item name instead.
         . "body, table, td, p, div { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }\n"
         . "@media only screen and (max-width:620px){ .sa-hide-sm { display:none !important; } .sa-show-sm { display:block !important; max-height:none !important; overflow:visible !important; } .sa-col { display:block !important; width:100% !important; padding:0 0 14px !important; } }\n";
