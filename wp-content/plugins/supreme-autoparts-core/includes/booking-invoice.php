@@ -44,7 +44,7 @@ function sa_bk_rcpt_data(int $id): array
         $b['mode'] === 'pickup' ? 'We collect from: ' . $b['pickup'] : 'Drop-off at the garage',
     ]));
     $items = [[
-        'thumb' => '', 'name' => $svc['name'] . ($b['option'] ? ' · ' . $b['option'] : '') . ' booking fee',
+        'thumb' => '', 'no_thumb' => true, 'name' => $svc['name'] . ($b['option'] ? ' · ' . $b['option'] : '') . ' booking fee',
         'meta' => array_merge($meta, [$waived ? 'Fee waived: ' . $wlabel : 'Deducted from your final service bill']),
         'qty' => '1', 'unit' => $fmt($kes), 'total' => $fmt($kes),
     ]];
@@ -209,4 +209,5 @@ function sa_bk_run_pay_nudges(): array
     return $sent;
 }
 add_action('sa_bk_pay_nudges', 'sa_bk_run_pay_nudges');
+
 
