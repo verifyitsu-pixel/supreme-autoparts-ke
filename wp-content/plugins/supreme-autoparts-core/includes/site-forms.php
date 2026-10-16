@@ -363,6 +363,7 @@ add_action('woocommerce_email_customer_details', static function ($order, $sent_
         echo "\nCar trouble? Roadside help: " . esc_url_raw(home_url('/roadside/')) . " or call +254 714 498 451\n";
         return;
     }
-    echo '<p style="margin:0 0 16px;font-size:13px;color:#555">Car trouble? <a href="' . esc_url(home_url('/roadside/')) . '" style="color:#111">Request roadside help</a> or call <a href="tel:+254714498451" style="color:#111;white-space:nowrap">+254 714 498 451</a>.</p>';
+    // The HTML version of this line now lives inside the single help block (sa_email_help_html).
+    return;
 }, 100, 3);
 
