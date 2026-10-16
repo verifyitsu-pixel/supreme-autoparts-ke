@@ -4,9 +4,10 @@
  *
  * - TransactWorld is retired at code level: forced off at read time and
  *   removed from checkout, whatever the stored settings say.
- * - Whop stays hidden until SA_WHOP_CHECKOUT=1 is set (env). With the switch on,
- *   Whop and Pesapal are both offered, ordered by billing country: Kenya sees
- *   Pesapal first and preselected, everyone else sees Whop first and preselected.
+ * - Whop stays hidden until SA_WHOP_CHECKOUT=1 is set (env). In test mode it is
+ *   offered to shop admins only; SA_WHOP_CHECKOUT_PUBLIC=1 offers it to everyone.
+ *   When visible, Whop and Pesapal are both offered, ordered by billing country:
+ *   Kenya sees Pesapal first and preselected, everyone else sees Whop first.
  * - The Pesapal plugin registers a woocommerce_locate_template filter (priority 1)
  *   that replaces checkout/thankyou.php with its own bare template for EVERY order.
  *   Re-assert the theme's thankyou.php so customers get the full order details page.
@@ -32,14 +33,27 @@ add_filter('option_woocommerce_transactworld_settings', static function ($settin
     return $settings;
 }, 99);
 
+/* Whop checkout visibility: switch on + shop admin, unless the public flag is set. */
+if (!function_exists('sa_whop_checkout_visible')) {
+    function sa_whop_checkout_visible(): bool {
+        if (getenv('SA_WHOP_CHECKOUT') !== '1') {
+            return false;
+        }
+        if (getenv('SA_WHOP_CHECKOUT_PUBLIC') === '1') {
+            return true;
+        }
+        return function_exists('current_user_can') && current_user_can('manage_woocommerce');
+    }
+}
+
 /* Checkout gateway availability + order. TransactWorld is always removed;
-   Whop only appears while SA_WHOP_CHECKOUT=1. */
+   Whop only appears while sa_whop_checkout_visible() is true. */
 add_filter('woocommerce_available_payment_gateways', static function ($gateways) {
     if (!is_array($gateways)) {
         return $gateways;
     }
     unset($gateways['transactworld']);
-    if (getenv('SA_WHOP_CHECKOUT') !== '1') {
+    if (!sa_whop_checkout_visible()) {
         unset($gateways['whop']);
         return $gateways;
     }
@@ -74,7 +88,7 @@ add_filter('woocommerce_available_payment_gateways', static function ($gateways)
 
 /* Clear labels while the Whop switch is on; unchanged while it is off. */
 add_filter('woocommerce_gateway_title', static function ($title, $gateway_id) {
-    if (getenv('SA_WHOP_CHECKOUT') !== '1') {
+    if (!sa_whop_checkout_visible()) {
         return $title;
     }
     if ('whop' === $gateway_id) {
