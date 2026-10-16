@@ -383,7 +383,23 @@ function sa_svc_handle_booking(): void
 function sa_svc_vehicles(int $user): array
 {
     $v = get_user_meta($user, 'sa_vehicles', true);
-    return is_array($v) ? $v : [];
+    $list = is_array($v) ? $v : [];
+    // Merge in the customer's My Garage vehicles so the booking and roadside
+    // pickers always show every car on the account.
+    if ($user && function_exists('sa_garage_user_vehicles')) {
+        $have = [];
+        foreach ($list as $vv) {
+            $have[strtolower(trim(($vv['make'] ?? '') . '|' . ($vv['model'] ?? '') . '|' . ($vv['year'] ?? '') . '|' . ($vv['reg'] ?? '')))] = true;
+        }
+        foreach (sa_garage_user_vehicles($user) as $g) {
+            $k = strtolower(trim($g['make'] . '|' . $g['model'] . '|' . $g['year'] . '|' . $g['reg']));
+            if (!isset($have[$k])) {
+                $have[$k] = true;
+                $list[] = ['make' => $g['make'], 'model' => $g['model'], 'year' => $g['year'], 'reg' => $g['reg']];
+            }
+        }
+    }
+    return $list;
 }
 
 function sa_svc_save_vehicle(int $user, array $veh): void
