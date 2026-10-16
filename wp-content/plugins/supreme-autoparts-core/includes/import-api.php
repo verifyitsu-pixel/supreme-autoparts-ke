@@ -47,10 +47,16 @@ function sa_core_rest_import_batch(WP_REST_Request $req)
     $batch   = sanitize_text_field((string) ($body['batch'] ?? 'api'));
     $GLOBALS['sa_core_fast_import'] = true; // never web-search images
     sa_core_fast_bootstrap_claims();
+    wp_defer_term_counting(true);   // recount terms once at the end of the request
+    wp_defer_comment_counting(true);
+    global $wpdb;
     @set_time_limit(280);
     @ini_set('memory_limit', '1024M'); // image-claim registry scans every product
     $out = ['dry_run' => $dry, 'batch' => $batch, 'created' => [], 'updated' => [], 'skipped' => [], 'errors' => []];
+    $out['timing'] = [];
     foreach (array_slice($items, 0, 40) as $entry) {
+        $t0 = microtime(true);
+        $q0 = (int) $wpdb->num_queries;
         try {
             $type = (string) ($entry['type'] ?? 'single');
             if ($type === 'family') {
@@ -71,7 +77,12 @@ function sa_core_rest_import_batch(WP_REST_Request $req)
         } catch (Throwable $e) {
             $out['errors'][] = ['key' => (string) ($entry['key'] ?? ''), 'msg' => $e->getMessage()];
         }
+        $out['timing'][] = [round((microtime(true) - $t0) * 1000), (int) $wpdb->num_queries - $q0];
     }
+    $t1 = microtime(true);
+    wp_defer_term_counting(false);
+    wp_defer_comment_counting(false);
+    $out['recount_ms'] = round((microtime(true) - $t1) * 1000);
     return rest_ensure_response($out);
 }
 
