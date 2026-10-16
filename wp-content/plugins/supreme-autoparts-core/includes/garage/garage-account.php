@@ -441,6 +441,46 @@ function sa_garage_viewer_vehicle(): array
     return [];
 }
 
+/**
+ * Year-accurate fit check for one product against a vehicle.
+ * Returns true when the product's listed fitment covers the vehicle, false when it
+ * does not, and null when the product carries no fitment data at all.
+ * Mirrors the product-page fit badge rules below; the "Fits your vehicle"
+ * recommendation row (smart-rank.php) filters candidates through this so its claim
+ * never outruns the badge.
+ *
+ * @param string $mk_slug sanitize_title() make slug, e.g. 'toyota'.
+ * @param string $mo_slug sanitize_title() bare model slug, e.g. 'corolla' ('' = make-level check).
+ */
+function sa_garage_product_fits_vehicle(int $pid, string $mk_slug, string $mo_slug, int $year): ?bool
+{
+    if (!function_exists('sa_fx_vehicles_for') || !function_exists('sa_fx_vehicle_vocab')) {
+        return null;
+    }
+    $name = get_post_field('post_title', $pid);
+    if (!is_string($name) || $name === '') {
+        return null;
+    }
+    $tags = wp_get_post_terms($pid, 'product_tag', ['fields' => 'names']);
+    $entries = sa_fx_vehicles_for($name, is_array($tags) ? $tags : [], sa_fx_vehicle_vocab());
+    if (!$entries) {
+        return null;
+    }
+    foreach ($entries as $e) {
+        if (sanitize_title((string) $e['make']) !== $mk_slug) {
+            continue;
+        }
+        if ($mo_slug !== '' && (string) ($e['model'] ?? '') !== '' && sanitize_title((string) $e['model']) !== $mo_slug) {
+            continue;
+        }
+        $years = array_map('intval', (array) ($e['years'] ?? []));
+        if ($years === [] || $year <= 0 || in_array($year, $years, true)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 add_action('woocommerce_single_product_summary', static function (): void {
     global $product;
     if (!$product instanceof WC_Product || !function_exists('sa_fx_vehicles_for')) {
