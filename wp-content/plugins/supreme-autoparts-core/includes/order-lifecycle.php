@@ -121,7 +121,9 @@ function sa_ol_timeline_html(WC_Order $o): string
         $html .= '<ol class="sa-ol__steps" style="display:flex;gap:6px;list-style:none;padding:0;margin:0 0 16px;flex-wrap:wrap">';
         $reached = true;
         foreach ($flow as $i => $s) {
-            $done = in_array($s, $seen, true) || ($s === 'placed') || ($s === $cur);
+            $done = in_array($s, $seen, true) || ($s === 'placed') || ($s === $cur)
+                || ($s === 'completed' && (in_array('delivered', $seen, true) || $cur === 'delivered'))
+                || ($s === 'delivered' && (in_array('completed', $seen, true) || $cur === 'completed'));
             $html .= '<li style="flex:1 1 90px;min-width:90px;padding:8px 10px;border-radius:8px;font-size:.8rem;font-weight:600;border:1px solid ' . ($done ? '#0a0a0a;background:#eef2fe;color:#1f3fb0' : '#e4e4e4;background:#fff;color:#888') . '">' . ($done ? '✓ ' : ($i + 1) . '. ') . esc_html($lab[$s] ?? $s) . '</li>';
         }
         $html .= '</ol>';
@@ -627,7 +629,7 @@ function sa_ol_handle_uploads(WC_Order $o): array
     $out = [];
     $allowed = ['jpg|jpeg|jpe' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'heic' => 'image/heic', 'heif' => 'image/heif', 'pdf' => 'application/pdf'];
     $sub = static function (array $d) use ($o): array {
-        $d['subdir'] = '/sa-order-info/' . $o->get_id();
+        $d['subdir'] = '/' . basename(sa_priv_dir()) . '/oi/' . $o->get_id();
         $d['path'] = $d['basedir'] . $d['subdir'];
         $d['url'] = $d['baseurl'] . $d['subdir'];
         return $d;
@@ -641,7 +643,7 @@ function sa_ol_handle_uploads(WC_Order $o): array
         $f = ['name' => wp_generate_password(8, false) . '-' . sanitize_file_name((string) $_FILES['files']['name'][$i]), 'type' => $_FILES['files']['type'][$i], 'tmp_name' => $_FILES['files']['tmp_name'][$i], 'error' => 0, 'size' => $_FILES['files']['size'][$i]];
         $r = wp_handle_upload($f, ['test_form' => false, 'mimes' => $allowed]);
         if (!empty($r['url'])) {
-            $out[] = ['name' => sanitize_file_name((string) $_FILES['files']['name'][$i]), 'url' => (string) $r['url']];
+            $out[] = ['name' => sanitize_file_name((string) $_FILES['files']['name'][$i]), 'url' => sa_priv_url('oi', $o->get_id(), basename((string) $r['file']))];
         }
     }
     remove_filter('upload_dir', $sub);
