@@ -13,7 +13,7 @@ do_action('woocommerce_before_edit_account_form');
 <div class="sa-account-panel sa-edit-account">
   <header class="sa-account-panel__head">
     <h2><?php esc_html_e('Account details', 'supreme-autoparts'); ?></h2>
-    <p class="sa-account-panel__lead"><?php esc_html_e('Update your name, email, and password. Changes sync to your store profile.', 'supreme-autoparts'); ?></p>
+    <p class="sa-account-panel__lead"><?php esc_html_e('Update your name and email. Changes sync to your store profile.', 'supreme-autoparts'); ?></p>
   </header>
 
   <form class="woocommerce-EditAccountForm edit-account sa-form" action="" method="post" <?php do_action('woocommerce_edit_account_form_tag'); ?>>
@@ -41,23 +41,6 @@ do_action('woocommerce_before_edit_account_form');
       <input type="email" class="woocommerce-Input woocommerce-Input--email input-text" name="account_email" id="account_email" autocomplete="email" value="<?php echo esc_attr($user->user_email); ?>" required />
     </p>
 
-    <fieldset class="sa-form__fieldset">
-      <legend><?php esc_html_e('Password change', 'supreme-autoparts'); ?></legend>
-      <p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
-        <label for="password_current"><?php esc_html_e('Current password (leave blank to keep)', 'supreme-autoparts'); ?></label>
-        <input type="password" class="woocommerce-Input woocommerce-Input--password input-text" name="password_current" id="password_current" autocomplete="current-password" />
-      </p>
-      <div class="sa-form__row sa-form__row--2">
-        <p class="woocommerce-form-row form-row">
-          <label for="password_1"><?php esc_html_e('New password', 'supreme-autoparts'); ?></label>
-          <input type="password" class="woocommerce-Input woocommerce-Input--password input-text" name="password_1" id="password_1" autocomplete="new-password" />
-        </p>
-        <p class="woocommerce-form-row form-row">
-          <label for="password_2"><?php esc_html_e('Confirm new password', 'supreme-autoparts'); ?></label>
-          <input type="password" class="woocommerce-Input woocommerce-Input--password input-text" name="password_2" id="password_2" autocomplete="new-password" />
-        </p>
-      </div>
-    </fieldset>
 
     <?php do_action('woocommerce_edit_account_form'); ?>
 

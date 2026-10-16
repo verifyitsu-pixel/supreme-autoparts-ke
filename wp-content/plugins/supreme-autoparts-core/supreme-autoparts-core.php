@@ -82,6 +82,8 @@ require_once SA_CORE_DIR . 'includes/fargo-tracking.php';
 require_once SA_CORE_DIR . 'includes/garage/garage.php';
 require_once SA_CORE_DIR . 'includes/site-forms.php';
 require_once SA_CORE_DIR . 'includes/guest-pay.php';
+require_once SA_CORE_DIR . 'includes/otp-only-auth.php';
+require_once SA_CORE_DIR . 'includes/gateways-retired.php';
 require_once SA_CORE_DIR . 'includes/smart-rank.php';
 require_once SA_CORE_DIR . 'includes/geo-content.php';
 require_once SA_CORE_DIR . 'includes/agent-api.php';
