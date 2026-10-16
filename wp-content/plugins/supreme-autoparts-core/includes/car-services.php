@@ -1686,6 +1686,24 @@ add_action('woocommerce_payment_complete', 'sa_svc_order_paid');
 add_action('woocommerce_order_status_processing', 'sa_svc_order_paid');
 add_action('woocommerce_order_status_completed', 'sa_svc_order_paid');
 
+/* Pay page: say what is being paid for and how long the slot is held. */
+add_action('before_woocommerce_pay', static function (): void {
+    $oid = absint(get_query_var('order-pay'));
+    $o = $oid ? wc_get_order($oid) : null;
+    if (!$o) return;
+    foreach ($o->get_items() as $it) {
+        $bid = (int) $it->get_meta('_sa_booking');
+        if ($bid && get_post_type($bid) === 'sa_booking') {
+            $b = sa_svc_booking_data($bid);
+            $svc = sa_svc_catalog()[$b['service']]['name'] ?? 'your service';
+            if ($b['fee'] === 'unpaid' && $b['status'] === 'pending') {
+                echo '<div class="sa-svc-alert"><strong>Service booking ' . esc_html($b['ref']) . ': ' . esc_html($svc) . '.</strong> Your slot is reserved once the booking fee is paid. Until then it is held for 3 hours (until ' . esc_html(wp_date('g:i A, j M', (int) $b['created'] + 3 * HOUR_IN_SECONDS)) . ' EAT), then released. The fee is deducted from your final service bill.</div>';
+            }
+            return;
+        }
+    }
+}, 5);
+
 /* Thank-you page: link back to the booking. */
 add_action('woocommerce_thankyou', static function ($order_id): void {
     $o = wc_get_order($order_id);
@@ -1799,5 +1817,6 @@ function sa_svc_admin_cr_box(int $id, array $b): string
         . '<input name="cr_note" placeholder="Note to customer (optional)" style="width:200px"><button class="button button-primary" name="cr_decision" value="approve">Approve & mark refunded</button><button class="button" name="cr_decision" value="decline">Decline</button></form>'
         . '<small>Approving marks the fee refunded. Send the actual refund via M-Pesa, bank, or the Woo order refund.</small></div>';
 }
+
 
 
