@@ -87,10 +87,10 @@ function sa_sf_render(string $type): string
     $state = sanitize_key((string) ($_GET['sa_form'] ?? ''));
     $f = static fn(string $n, string $label, string $val = '', string $type = 'text', bool $req = false, string $ph = ''): string =>
         '<label>' . esc_html($label) . ($req ? ' *' : '') . '<input type="' . esc_attr($type) . '" name="' . esc_attr($n) . '" value="' . esc_attr($val) . '"' . ($req ? ' required' : '') . ($ph !== '' ? ' placeholder="' . esc_attr($ph) . '"' : '') . '></label>';
-    $sel = static function (string $n, string $label, array $opts, bool $req = true): string {
+    $sel = static function (string $n, string $label, array $opts, bool $req = true, string $selected = ''): string {
         $o = '<option value="">Choose…</option>';
         foreach ($opts as $x) {
-            $o .= '<option>' . esc_html($x) . '</option>';
+            $o .= '<option' . ($selected !== '' && $selected === $x ? ' selected' : '') . '>' . esc_html($x) . '</option>';
         }
         return '<label>' . esc_html($label) . ($req ? ' *' : '') . '<select name="' . esc_attr($n) . '"' . ($req ? ' required' : '') . '>' . $o . '</select></label>';
     };
@@ -113,7 +113,13 @@ function sa_sf_render(string $type): string
     echo '<p class="sa-sf-hp" aria-hidden="true"><label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label></p>';
     echo '<div class="sa-sf-grid">' . $f('name', 'Your name', $name, 'text', true) . $f('email', 'Email', $email, 'email', true) . $f('phone', 'Phone (optional)', $phone, 'tel') . '</div>';
     if ($type === 'contact') {
-        echo $sel('topic', 'Topic', ['An order', 'A part', 'A service booking', 'Roadside help', 'Something else']);
+        $topics = ['An order', 'A part', 'A service booking', 'Roadside help', 'Something else'];
+        $want = $order !== '' ? 'An order' : '';
+        $tq = sanitize_text_field((string) ($_GET['topic'] ?? ''));
+        if ($want === '' && in_array($tq, $topics, true)) {
+            $want = $tq;
+        }
+        echo '<div class="sa-sf-grid">' . $sel('topic', 'Topic', $topics, true, $want) . $f('order', 'Order or booking number (optional)', $order, 'text', false, 'e.g. 26488') . '</div>';
     }
     if ($type === 'return') {
         echo '<div class="sa-sf-grid">' . $f('order', 'Order number', $order, 'text', true, 'e.g. 26488') . $f('item', 'Which item?', '', 'text', true) . '</div>';
@@ -359,3 +365,4 @@ add_action('woocommerce_email_customer_details', static function ($order, $sent_
     }
     echo '<p style="margin:0 0 16px;font-size:13px;color:#555">Car trouble? <a href="' . esc_url(home_url('/roadside/')) . '" style="color:#111">Request roadside help</a> or call <a href="tel:+254714498451" style="color:#111;white-space:nowrap">+254 714 498 451</a>.</p>';
 }, 100, 3);
+
