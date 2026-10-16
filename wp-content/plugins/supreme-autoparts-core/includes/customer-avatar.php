@@ -175,12 +175,10 @@ add_action('admin_post_sa_avatar', static function (): void {
     $redir('added');
 });
 
-/* Greeting card with avatar controls above every My Account page. */
-add_action('woocommerce_before_my_account', static function (): void {
-    $uid = get_current_user_id();
-    if (!$uid) {
-        return;
-    }
+
+/* Upload feedback message from the redirect query arg, '' when none. */
+function sa_avatar_feedback_html(): string
+{
     $code = sanitize_key((string) ($_GET['sa-avatar'] ?? '')); // phpcs:ignore WordPress.Security.NonceVerification
     $messages = [
         'added'   => ['success', __('Profile photo updated.', 'supreme-autoparts-core')],
@@ -190,30 +188,48 @@ add_action('woocommerce_before_my_account', static function (): void {
         'fail'    => ['error', __('The upload failed. Please try again.', 'supreme-autoparts-core')],
         'missing' => ['error', __('Please choose a photo first.', 'supreme-autoparts-core')],
     ];
-    $has_photo = sa_avatar_attachment_id($uid) > 0;
+    if ($code === '' || !isset($messages[$code])) {
+        return '';
+    }
+    [$kind, $text] = $messages[$code];
+    return '<p class="sa-greet__msg sa-greet__msg--' . esc_attr($kind) . '">' . esc_html($text) . '</p>';
+}
+
+/* Add/change + remove photo forms (post to the login-gated admin-post handler). */
+function sa_avatar_controls_html(int $user_id): string
+{
+    $has_photo = sa_avatar_attachment_id($user_id) > 0;
+    $out = '<div class="sa-greet__actions">';
+    $out .= '<form class="sa-greet__form" method="post" enctype="multipart/form-data" action="' . esc_url(admin_url('admin-post.php')) . '">';
+    $out .= '<input type="hidden" name="action" value="sa_avatar"><input type="hidden" name="do" value="set">';
+    $out .= wp_nonce_field('sa_avatar', '_wpnonce', true, false);
+    $out .= '<label class="sa-greet__upload">' . esc_html($has_photo ? __('Change photo', 'supreme-autoparts-core') : __('Add a photo', 'supreme-autoparts-core'));
+    $out .= '<input type="file" name="avatar" accept="image/jpeg,image/png,image/webp" data-sa-avatar-file></label>';
+    $out .= '<noscript><button type="submit" class="sa-greet__save">' . esc_html__('Save photo', 'supreme-autoparts-core') . '</button></noscript>';
+    $out .= '</form>';
+    if ($has_photo) {
+        $out .= '<form class="sa-greet__form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '" onsubmit="return confirm(\'' . esc_js(__('Remove your profile photo?', 'supreme-autoparts-core')) . '\');">';
+        $out .= '<input type="hidden" name="action" value="sa_avatar"><input type="hidden" name="do" value="remove">';
+        $out .= wp_nonce_field('sa_avatar', '_wpnonce', true, false);
+        $out .= '<button type="submit" class="sa-greet__remove">' . esc_html__('Remove', 'supreme-autoparts-core') . '</button></form>';
+    }
+    $out .= '</div>';
+    return $out;
+}
+
+/* Greeting card above every My Account page. */
+add_action('woocommerce_before_my_account', static function (): void {
+    $uid = get_current_user_id();
+    if (!$uid) {
+        return;
+    }
     echo '<div class="sa-greet">';
     echo sa_avatar_html($uid, 72); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     echo '<div class="sa-greet__body">';
     echo '<p class="sa-greet__hello">' . sa_avatar_greeting_html($uid) . '</p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-    if ($code !== '' && isset($messages[$code])) {
-        [$kind, $text] = $messages[$code];
-        echo '<p class="sa-greet__msg sa-greet__msg--' . esc_attr($kind) . '">' . esc_html($text) . '</p>';
-    }
-    echo '<div class="sa-greet__actions">';
-    echo '<form class="sa-greet__form" method="post" enctype="multipart/form-data" action="' . esc_url(admin_url('admin-post.php')) . '">';
-    echo '<input type="hidden" name="action" value="sa_avatar"><input type="hidden" name="do" value="set">';
-    echo wp_nonce_field('sa_avatar', '_wpnonce', true, false); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-    echo '<label class="sa-greet__upload">' . esc_html($has_photo ? __('Change photo', 'supreme-autoparts-core') : __('Add a photo', 'supreme-autoparts-core'));
-    echo '<input type="file" name="avatar" accept="image/jpeg,image/png,image/webp" data-sa-avatar-file></label>';
-    echo '<noscript><button type="submit" class="sa-greet__save">' . esc_html__('Save photo', 'supreme-autoparts-core') . '</button></noscript>';
-    echo '</form>';
-    if ($has_photo) {
-        echo '<form class="sa-greet__form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '" onsubmit="return confirm(\'' . esc_js(__('Remove your profile photo?', 'supreme-autoparts-core')) . '\');">';
-        echo '<input type="hidden" name="action" value="sa_avatar"><input type="hidden" name="do" value="remove">';
-        echo wp_nonce_field('sa_avatar', '_wpnonce', true, false); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-        echo '<button type="submit" class="sa-greet__remove">' . esc_html__('Remove', 'supreme-autoparts-core') . '</button></form>';
-    }
-    echo '</div></div></div>';
+    echo sa_avatar_feedback_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    echo sa_avatar_controls_html($uid); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    echo '</div></div>';
 });
 
 /* Everywhere WordPress shows this user's avatar, use their photo. */
