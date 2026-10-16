@@ -442,7 +442,9 @@ function sa_rcpt_render(array $d, string $mode = 'page', array $toolbar = []): s
     }
 
     // Footer.
-    $foot = 'Thank you for choosing Supreme Autoparts. Questions about this ' . strtolower($d['doc']) . '? Reply to this email or write to ' . 'calvin@supremeautoparts.co.ke' . ' and quote ' . $d['number'] . '.';
+    $foot = $email
+        ? 'Thank you for choosing Supreme Autoparts. Please quote ' . $d['number'] . ' if you contact us.'
+        : 'Thank you for choosing Supreme Autoparts. Questions about this ' . strtolower($d['doc']) . '? Reply to this email or write to ' . 'calvin@supremeautoparts.co.ke' . ' and quote ' . $d['number'] . '.';
     $h .= '<tr><td class="sa-pad" style="padding:18px ' . $pad . ' 26px;border-top:1px solid ' . SA_RCPT_LINE . ';font-family:' . $font . ';font-size:12px;line-height:1.6;color:' . SA_RCPT_MUTED . '">'
         . sa_rcpt_nolink($foot, $nl)
         . ($email && !empty($d['view_url']) ? '<br><a href="' . esc_url($d['view_url']) . '" style="color:' . SA_RCPT_INK . ';text-decoration:underline">View or print online</a>' : '')
