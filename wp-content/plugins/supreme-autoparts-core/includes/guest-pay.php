@@ -66,19 +66,34 @@ add_action('template_redirect', static function (): void {
 /** The order being paid on /checkout/order-pay/, when it pays for a service (booking fee or roadside). */
 function sa_gp_service_order(): ?WC_Order
 {
-    if (!function_exists('is_checkout_pay_page') || !is_checkout_pay_page() || !function_exists('wc_get_order')) {
+    // Reentrancy guard: loading an order translates strings, which re-enters the gettext filter below.
+    static $busy = false;
+    static $done = false;
+    static $found = null;
+    if ($busy || !did_action('wp')) {
         return null;
     }
-    global $wp;
-    $oid = absint($wp->query_vars['order-pay'] ?? 0);
-    if (!$oid && isset($_GET['key'])) {
-        $oid = absint(wc_get_order_id_by_order_key(wc_clean(wp_unslash((string) $_GET['key']))));
+    if ($done) {
+        return $found;
     }
-    $o = $oid ? wc_get_order($oid) : null;
-    if (!$o instanceof WC_Order) {
-        return null;
+    $busy = true;
+    try {
+        if (function_exists('is_checkout_pay_page') && is_checkout_pay_page() && function_exists('wc_get_order')) {
+            global $wp;
+            $oid = absint($wp->query_vars['order-pay'] ?? 0);
+            if (!$oid && isset($_GET['key'])) {
+                $oid = absint(wc_get_order_id_by_order_key(wc_clean(wp_unslash((string) $_GET['key']))));
+            }
+            $o = $oid ? wc_get_order($oid) : null;
+            if ($o instanceof WC_Order && ($o->get_meta('_sa_booking_fee_for') || $o->get_meta('_sa_rs_for'))) {
+                $found = $o;
+            }
+        }
+        $done = true;
+    } finally {
+        $busy = false;
     }
-    return ($o->get_meta('_sa_booking_fee_for') || $o->get_meta('_sa_rs_for')) ? $o : null;
+    return $found;
 }
 
 /* Rename the product-table headers and the guest warning only while paying for a service order. */
