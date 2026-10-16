@@ -350,12 +350,22 @@ function sa_svc_handle_booking(): void
     if ($user && !empty($_POST['save_vehicle'])) {
         sa_svc_save_vehicle($user, ['make' => $meta['make'], 'model' => $meta['model'], 'year' => $meta['year'], 'reg' => $meta['reg']]);
     }
+    $sa_fee_carried = false;
     $rs = (int) ($_POST['reschedule'] ?? 0);
     if ($rs && get_post_type($rs) === 'sa_booking') {
         $ob = sa_svc_booking_data($rs);
         if (hash_equals($ob['key'], (string) ($_POST['rk'] ?? '')) && in_array($ob['status'], ['pending', 'confirmed'], true)) {
             update_post_meta($rs, '_sa_bk_status', 'cancelled');
-            update_post_meta((int) $id, '_sa_bk_notes', trim('Rescheduled from ' . $ob['ref'] . '. ' . $meta['notes']));
+            // A fee already paid on the old booking moves to the new one: no second charge, no refund owed.
+            if ($ob['fee'] === 'paid' && !$sa_fw) {
+                update_post_meta((int) $id, '_sa_bk_fee', 'paid');
+                update_post_meta((int) $id, '_sa_bk_fee_kes', (string) ($ob['fee_kes'] ?: sa_svc_setting('fee_kes')));
+                update_post_meta((int) $id, '_sa_bk_fee_order', (int) get_post_meta($rs, '_sa_bk_fee_order', true));
+                update_post_meta((int) $id, '_sa_bk_status', 'confirmed');
+                update_post_meta($rs, '_sa_bk_fee', 'transferred');
+                $sa_fee_carried = true;
+            }
+            update_post_meta((int) $id, '_sa_bk_notes', trim('Rescheduled from ' . $ob['ref'] . ($sa_fee_carried ? ' (booking fee carried over)' : '') . '. ' . $meta['notes']));
             sa_svc_gcal_sync($rs);
         }
     }
@@ -370,7 +380,7 @@ function sa_svc_handle_booking(): void
         sa_bk_invoice_email((int) $id);
     }
     sa_svc_gcal_sync((int) $id);
-    if ($sa_fw) {
+    if ($sa_fw || $sa_fee_carried) {
         wp_safe_redirect(add_query_arg(['b' => (int) $id, 'k' => $meta['key']], home_url('/book-service/confirmed/')));
         exit;
     }
@@ -1506,7 +1516,7 @@ function sa_svc_fee_usd(): ?float
 
 function sa_svc_fee_statuses(): array
 {
-    return ['unpaid' => 'Unpaid', 'paid' => 'Paid', 'applied' => 'Applied to bill', 'refund_due' => 'Refund due', 'refunded' => 'Refunded', 'forfeited' => 'Forfeited (late cancel / no-show)', 'waived' => 'Waived (part bought from us)'];
+    return ['unpaid' => 'Unpaid', 'paid' => 'Paid', 'applied' => 'Applied to bill', 'refund_due' => 'Refund due', 'refunded' => 'Refunded', 'transferred' => 'Carried over to rescheduled booking', 'forfeited' => 'Forfeited (late cancel / no-show)', 'waived' => 'Waived (part bought from us)'];
 }
 
 function sa_svc_fee_label(array $b): string
@@ -1788,3 +1798,4 @@ function sa_svc_admin_cr_box(int $id, array $b): string
         . '<input name="cr_note" placeholder="Note to customer (optional)" style="width:200px"><button class="button button-primary" name="cr_decision" value="approve">Approve & mark refunded</button><button class="button" name="cr_decision" value="decline">Decline</button></form>'
         . '<small>Approving marks the fee refunded. Send the actual refund via M-Pesa, bank, or the Woo order refund.</small></div>';
 }
+
