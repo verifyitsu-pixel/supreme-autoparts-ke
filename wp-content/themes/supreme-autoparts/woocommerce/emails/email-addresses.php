@@ -9,6 +9,10 @@
  */
 defined('ABSPATH') || exit;
 
+if (function_exists('sa_rcpt_order_data')) {
+    return; // Addresses are already shown above the items, laid out like the invoice.
+}
+
 $font = defined('SA_RCPT_FONT') ? SA_RCPT_FONT : 'Arial,Helvetica,sans-serif';
 $label = 'font-family:' . $font . ';font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6B6B6B;font-weight:600;margin:0 0 4px;line-height:1.3';
 $body = 'font-family:' . $font . ';font-size:14px;line-height:1.5;color:#222222;margin:0';
