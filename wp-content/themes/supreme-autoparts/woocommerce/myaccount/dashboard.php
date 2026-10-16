@@ -61,30 +61,17 @@ $links = [
 ];
 ?>
 <div class="sa-dash">
-  <header class="sa-dash__hero">
-    <p class="sa-dash__eyebrow"><?php esc_html_e('My Account', 'supreme-autoparts'); ?></p>
-    <?php if (function_exists('sa_avatar_html')) : ?>
+  <header class="sa-dash__hero sa-dash__hero--greet">
+    <?php if (function_exists('sa_avatar_picker_html')) : ?>
       <div class="sa-dash__hero-row">
-        <?php echo sa_avatar_html((int) $current_user->ID, 64); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+        <?php echo sa_avatar_picker_html((int) $current_user->ID, 72); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
         <div class="sa-dash__hero-text">
-          <h2 class="sa-dash__title">
-            <?php
-            if (function_exists('sa_avatar_first_name') && sa_avatar_first_name((int) $current_user->ID) !== '') {
-                echo sa_avatar_greeting_html((int) $current_user->ID); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-            } else {
-                printf(
-                    /* translators: %s: customer first name or display name */
-                    esc_html__('Welcome back, %s', 'supreme-autoparts'),
-                    esc_html($greeting)
-                );
-            }
-            ?>
-          </h2>
           <p class="sa-dash__sub">
             <?php esc_html_e('Manage orders, payment methods, and account details for Supreme Autoparts.', 'supreme-autoparts'); ?>
           </p>
+          <p class="sa-dash__hint"><?php esc_html_e('Tap your photo to change it.', 'supreme-autoparts'); ?></p>
           <?php echo sa_avatar_feedback_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-          <?php echo sa_avatar_controls_html((int) $current_user->ID); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+          <?php echo sa_avatar_remove_html((int) $current_user->ID); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
         </div>
       </div>
     <?php else : ?>
@@ -199,4 +186,5 @@ $links = [
     </div>
   </section>
 </div>
+
 
