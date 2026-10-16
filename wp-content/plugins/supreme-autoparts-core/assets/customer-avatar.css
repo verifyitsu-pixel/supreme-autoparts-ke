@@ -34,3 +34,28 @@
 .sa-dash__hero-text{min-width:0}
 .sa-dash__hero-row .sa-greet__actions{margin-top:8px}
 .sa-dash__hero-row .sa-greet__msg{margin:6px 0 0}
+
+
+/* Click-the-avatar upload */
+.sa-avatar-pick{margin:0;flex:0 0 auto}
+.sa-avatar-pick__btn{position:relative;display:inline-block;cursor:pointer;line-height:0;border-radius:50%}
+.sa-avatar-pick__btn .sa-avatar{border:2px solid #fff;box-shadow:0 0 0 1px #e4e4e4}
+.sa-avatar-pick__input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0}
+.sa-avatar-pick__cam{position:absolute;right:-2px;bottom:-2px;width:26px;height:26px;border-radius:50%;background:#F5A623;color:#111;display:flex;align-items:center;justify-content:center;border:2px solid #fff;pointer-events:none}
+.sa-avatar-pick__btn:hover .sa-avatar{opacity:.9}
+.sa-avatar-pick.is-busy .sa-avatar{opacity:.5}
+.sa-dash__hero-row .sa-avatar-pick__btn .sa-avatar{box-shadow:0 0 0 1px #e4e4e4}
+.sa-avatar-remove{display:block;margin:6px 0 0}
+.sa-dash__hint{margin:.35rem 0 0;font-size:.8125rem;color:#666}
+.sa-dash__hero--greet{padding:1rem 1.15rem}
+.sa-dash__hero--greet .sa-dash__hero-row{align-items:center}
+.sa-dash__hero--greet .sa-dash__sub{max-width:none}
+
+/* My Account page title = greeting; remove the blank gap under it */
+body.woocommerce-account .sa-page__content > h1.sa-page__greet{margin:0 0 .6rem;line-height:1.2}
+body.woocommerce-account .sa-page__content .entry-content > .woocommerce{padding-top:0;padding-bottom:0;margin:0}
+body.woocommerce-account .sa-page__content .sa-my-account{padding-top:.25rem;padding-bottom:1.5rem}
+@media (max-width:800px){
+  body.woocommerce-account .sa-page__content .sa-my-account{padding-top:.1rem}
+  .sa-dash__hero--greet{padding:.85rem}
+}
