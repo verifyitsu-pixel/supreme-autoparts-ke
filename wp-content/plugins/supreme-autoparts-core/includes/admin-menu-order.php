@@ -249,3 +249,13 @@ add_action('admin_menu', static function (): void {
         $submenu[$parent] = $rebuilt;
     }
 }, 999);
+
+// TEMP DEBUG: expose the real marketing sub-menu slugs in an HTML comment.
+add_action('admin_footer', static function (): void {
+    global $submenu;
+    $dump = [];
+    foreach ((array) ($submenu['woocommerce-marketing'] ?? []) as $item) {
+        $dump[] = (string) ($item[2] ?? '');
+    }
+    echo '<!-- SA-DEBUG-MARKETING ' . esc_html(implode(' | ', $dump)) . ' -->';
+});
