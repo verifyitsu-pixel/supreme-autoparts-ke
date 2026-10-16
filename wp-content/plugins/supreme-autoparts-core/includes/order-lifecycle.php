@@ -164,17 +164,46 @@ add_action('woocommerce_thankyou', static function ($order_id): void {
 
 /* ---------- Email layout (shared by order + workshop emails) ---------- */
 
-function sa_mail_layout(string $heading, string $inner, string $cta_label = '', string $cta_url = '', string $preheader = ''): string
+/*
+ * Email layout (header band, status pill, large heading, rounded card, dark button) adapted from
+ * nirajrajgor/email-templates (https://github.com/nirajrajgor/email-templates)
+ * MIT License - Copyright (c) 2024 Niraj Rajgor
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+ * documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
+ * to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above
+ * copyright notice and this permission notice shall be included in all copies or substantial portions of the
+ * Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+ */
+function sa_mail_layout(string $heading, string $inner, string $cta_label = '', string $cta_url = '', string $preheader = '', string $badge = ''): string
 {
-    $logo = function_exists('sa_theme_logo_url') ? sa_theme_logo_url(true) : home_url('/wp-content/themes/supreme-autoparts/assets/logo-light.jpg');
-    $btn = ($cta_label !== '' && $cta_url !== '') ? '<tr><td style="padding:8px 28px 24px"><a href="' . esc_url($cta_url) . '" style="display:inline-block;background:#0a0a0a;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 26px;border-radius:6px">' . esc_html($cta_label) . '</a></td></tr>' : '';
-    return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>' . esc_html($heading) . '</title></head>'
-        . '<body style="margin:0;background:#f4f4f4;font-family:Inter,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#333">'
+    $logo = home_url('/wp-content/themes/supreme-autoparts/assets/logo-email-dark.png');
+    if ($badge === '') {
+        $map = [
+            '/cancel/i' => 'Cancelled', '/ready for pickup|ready to collect/i' => 'Ready for pickup', '/out for delivery/i' => 'Out for delivery',
+            '/shipped|on its way/i' => 'On its way', '/delivered/i' => 'Delivered', '/refund/i' => 'Refund', '/return/i' => 'Return update',
+            '/info|information|need/i' => 'Action needed', '/complete/i' => 'Complete',
+        ];
+        foreach ($map as $re => $label) {
+            if (preg_match($re, $heading)) {
+                $badge = $label;
+                break;
+            }
+        }
+    }
+    $good = (bool) preg_match('/ready|delivered|complete|shipped|on its way|out for delivery/i', $badge);
+    $bad = (bool) preg_match('/cancel/i', $badge);
+    $pill_bg = $bad ? '#fee2e2' : ($good ? '#dcfce7' : '#fef3c7');
+    $pill_fg = $bad ? '#991b1b' : ($good ? '#166534' : '#92400e');
+    $pill = $badge !== '' ? '<span style="display:inline-block;background:' . $pill_bg . ';color:' . $pill_fg . ';font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border-radius:999px">' . esc_html($badge) . '</span>' : '';
+    $btn = ($cta_label !== '' && $cta_url !== '') ? '<tr><td align="center" style="padding:8px 28px 28px"><a href="' . esc_url($cta_url) . '" style="display:inline-block;background:#111111;color:#f59e0b;text-decoration:none;font-weight:700;font-size:15px;padding:14px 28px;border-radius:8px">' . esc_html($cta_label) . '</a></td></tr>' : '';
+    return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>' . esc_html($heading) . '</title></head>'
+        . '<body style="margin:0;background:#f4f4f2;font-family:Arial,Helvetica,sans-serif;color:#444444">'
         . '<span style="display:none;max-height:0;overflow:hidden">' . esc_html($preheader) . '</span>'
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4"><tr><td align="center" style="padding:24px 12px">'
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border:1px solid #e4e4e4;border-radius:8px">'
-        . '<tr><td class="sa-email-brand-header" style="padding:20px 28px 14px;border-bottom:1px solid #e4e4e4"><img src="' . esc_url($logo) . '" alt="Supreme Autoparts" width="340" style="display:block;width:340px;max-width:100%;height:auto;border:0"></td></tr>'
-        . '<tr><td style="padding:24px 28px 8px"><h1 style="margin:0 0 12px;font-size:21px;line-height:1.3;color:#191919">' . esc_html($heading) . '</h1><div style="font-size:15px;line-height:1.6;color:#333">' . $inner . '</div></td></tr>'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f2"><tr><td align="center" style="padding:24px 12px">'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:12px;border-collapse:separate;border-spacing:0;overflow:hidden">'
+        . '<tr><td class="sa-email-brand-header" style="background:#111111;padding:22px 28px;border-bottom:4px solid #f59e0b"><img src="' . esc_url($logo) . '" alt="Supreme Autoparts" width="180" height="28" style="display:block;width:180px;height:28px;max-width:100%;border:0"></td></tr>'
+        . '<tr><td style="padding:32px 28px 8px">' . $pill . '<h1 style="margin:10px 0 12px;font-size:26px;line-height:1.25;color:#111111">' . esc_html($heading) . '</h1><div style="font-size:15px;line-height:1.65;color:#444444">' . $inner . '</div></td></tr>'
         . $btn . '</table></td></tr></table></body></html>';
 }
 
