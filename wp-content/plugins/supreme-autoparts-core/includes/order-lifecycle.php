@@ -229,7 +229,7 @@ function sa_ol_email_content(WC_Order $o, string $stage, string $note = ''): arr
         return [];
     }
     [$subject, $heading, $body, $cta, $url] = $m[$stage];
-    return ['subject' => $subject, 'html' => sa_mail_layout($heading, $hi . $body . '<p style="color:#6b6b6b;font-size:13px">Order #' . esc_html($n) . '</p>', $cta, $url, $subject)];
+    return ['subject' => $subject, 'html' => sa_email_add_footer(sa_mail_layout($heading, $hi . $body . '<p style="color:#6b6b6b;font-size:13px">Order #' . esc_html($n) . '</p>', $cta, $url, $subject), (string) ($o->get_billing_country() ?: $o->get_shipping_country()))];
 }
 
 function sa_ol_send(WC_Order $o, string $stage, string $note = ''): bool
