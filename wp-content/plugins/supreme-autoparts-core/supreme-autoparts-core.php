@@ -105,6 +105,13 @@ try {
     error_log('admin-menu-order load failed: ' . $sa_admin_menu_order_e->getMessage());
 }
 
+// "Today" card on the wp-admin Dashboard (guarded the same way).
+try {
+    require_once SA_CORE_DIR . 'includes/admin-today-card.php';
+} catch (Throwable $sa_admin_today_card_e) {
+    error_log('admin-today-card load failed: ' . $sa_admin_today_card_e->getMessage());
+}
+
 register_activation_hook(__FILE__, static function (): void {
     require_once SA_CORE_DIR . 'includes/seed-categories.php';
     require_once SA_CORE_DIR . 'includes/category-thumbnails.php';
@@ -618,7 +625,6 @@ add_action('init', static function (): void {
     }
     sa_core_repair_inflated_usd_prices(['limit' => 5000, 'dry_run' => false]);
 }, 35);
-
 
 
 
