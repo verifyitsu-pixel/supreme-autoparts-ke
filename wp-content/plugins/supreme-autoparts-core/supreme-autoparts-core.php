@@ -89,6 +89,13 @@ require_once SA_CORE_DIR . 'includes/smart-rank.php';
 require_once SA_CORE_DIR . 'includes/geo-content.php';
 require_once SA_CORE_DIR . 'includes/agent-api.php';
 require_once SA_CORE_DIR . 'includes/customer-avatar.php';
+
+// Batch import API (guarded: a fault in it must never take the site down).
+try {
+    require_once SA_CORE_DIR . 'includes/import-api.php';
+} catch (Throwable $sa_import_api_e) {
+    error_log('import-api load failed: ' . $sa_import_api_e->getMessage());
+}
 // import-shopify.php is loaded by CLI/admin/boot import and by product-images helpers when needed.
 
 register_activation_hook(__FILE__, static function (): void {
@@ -604,6 +611,7 @@ add_action('init', static function (): void {
     }
     sa_core_repair_inflated_usd_prices(['limit' => 5000, 'dry_run' => false]);
 }, 35);
+
 
 
 
