@@ -276,6 +276,12 @@ function sa_seo_context(): array
                 }
             }
         }
+    } elseif (function_exists('is_product_tag') && is_product_tag()) {
+        $term = get_queried_object();
+        if ($term instanceof WP_Term) {
+            $title = $term->name . ' Parts | ' . $site;
+            $desc  = sa_seo_clip('Shop ' . $term->name . ' parts at Supreme Autoparts. Search by part number or vehicle, with delivery across Kenya and international shipping.', 158);
+        }
     } elseif (function_exists('is_shop') && is_shop()) {
         $title = 'Shop Car Parts Online | Brakes, Suspension, Wheels & More | ' . $site;
         $desc  = 'Browse brakes, suspension, wheels, lighting and more. Search by part number, brand or vehicle. Delivery across Kenya and international shipping.';
@@ -355,7 +361,7 @@ function sa_seo_document_title_parts(array $parts): array
     // If title already includes brand, leave as single segment.
     return $parts;
 }
-add_filter('document_title_parts', 'sa_seo_document_title_parts', 20);
+add_filter('document_title_parts', 'sa_seo_document_title_parts', 50);
 
 add_filter('document_title_separator', static fn (): string => '–');
 
