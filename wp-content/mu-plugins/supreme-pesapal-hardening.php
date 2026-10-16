@@ -34,6 +34,13 @@ add_filter('woocommerce_gateway_description', function ($desc, $id) {
     return trim((string) $desc) === '' ? $note : $desc . '<br><small>' . esc_html($note) . '</small>';
 }, 10, 2);
 
+/* Currency clarity at checkout, right under the Total (theme hides the gateway description). */
+add_action('woocommerce_review_order_after_order_total', function () {
+    echo '<tr class="sa-usd-note"><td colspan="2" style="font-size:13px;line-height:1.4;color:#555;padding-top:6px">'
+        . esc_html__("Charged in USD. M-Pesa / Airtel are shown in KES at Pesapal's rate.", 'supreme-autoparts')
+        . '</td></tr>';
+});
+
 /* Same note + exact total above the Pesapal iframe on the pay page. */
 add_action('woocommerce_receipt_pesapal', function ($order_id) {
     $order = wc_get_order($order_id);
