@@ -47,6 +47,7 @@ function sa_core_rest_import_batch(WP_REST_Request $req)
     $batch   = sanitize_text_field((string) ($body['batch'] ?? 'api'));
     $GLOBALS['sa_core_fast_import'] = true; // never web-search images
     @set_time_limit(120);
+    @ini_set('memory_limit', '1024M'); // image-claim registry scans every product
     $out = ['dry_run' => $dry, 'batch' => $batch, 'created' => [], 'updated' => [], 'skipped' => [], 'errors' => []];
     foreach (array_slice($items, 0, 40) as $entry) {
         try {
