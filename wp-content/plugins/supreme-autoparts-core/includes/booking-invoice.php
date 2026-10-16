@@ -26,6 +26,20 @@ function sa_bk_invoice_url(int $id, bool $download = false): string
 }
 
 /** Shared receipt-design data for a booking. */
+/** Fee text in the customer's currency: US bookings see USD (what they are charged), Kenya bookings see KES. */
+function sa_bk_fee_text(array $b, int $kes): string
+{
+    $is_us = (($b['region'] ?? '') === 'US') || (($b['location'] ?? '') === 'usa');
+    if ($is_us && function_exists('sa_svc_fee_usd')) {
+        $usd = sa_svc_fee_usd();
+        $base = (int) sa_svc_setting('fee_kes');
+        if ($usd !== null && $base > 0) {
+            return 'US$' . number_format($usd * ($kes / $base), 2);
+        }
+    }
+    return 'KES ' . number_format($kes);
+}
+
 function sa_bk_rcpt_data(int $id): array
 {
     $b = sa_svc_booking_data($id);
@@ -35,7 +49,7 @@ function sa_bk_rcpt_data(int $id): array
     $kes = $waived ? 0 : (int) ($b['fee_kes'] ?: sa_svc_setting('fee_kes'));
     $wlabel = $waived && function_exists('sa_fw_label') ? (string) preg_replace('/^waived \((.*)\)$/', '$1', (string) sa_fw_label($id)) : '';
     $loc = sa_svc_locations()[$b['location']]['label'] ?? $b['location'];
-    $fmt = static fn(int $v): string => 'KES ' . number_format($v);
+    $fmt = static fn(int $v): string => sa_bk_fee_text($b, $v);
     $meta = array_values(array_filter([
         'Booking ' . $b['ref'],
         trim($b['year'] . ' ' . $b['make'] . ' ' . $b['model'] . ' ' . $b['reg']),
@@ -86,6 +100,7 @@ function sa_bk_invoice_email(int $id, string $kind = ''): void
     $waived = $b['fee'] === 'waived';
     $paid = $waived || in_array($b['fee'], ['paid', 'applied'], true);
     $kes = number_format((int) ($b['fee_kes'] ?: sa_svc_setting('fee_kes')));
+    $feelbl = sa_bk_fee_text($b, (int) ($b['fee_kes'] ?: sa_svc_setting('fee_kes')));
     $pay = add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/pay/'));
     $release = wp_date('g:i A, j M', (int) $b['created'] + 3 * HOUR_IN_SECONDS) . ' EAT';
     if ($waived) {
@@ -94,21 +109,21 @@ function sa_bk_invoice_email(int $id, string $kind = ''): void
     } elseif ($kind === 'revoked') {
         $subject = 'Booking fee now due for ' . $b['ref'];
         $w = function_exists('sa_fw_waiver') ? sa_fw_waiver($id) : [];
-        $lead = 'The booking fee waiver on this booking has ended because ' . ($w['revoked_reason'] ?? 'the linked order changed') . '. To keep your appointment, please pay the KES ' . $kes . ' booking fee within 24 hours. It is deducted from your final bill.';
+        $lead = 'The booking fee waiver on this booking has ended because ' . ($w['revoked_reason'] ?? 'the linked order changed') . '. To keep your appointment, please pay the ' . $feelbl . ' booking fee within 24 hours. It is deducted from your final bill.';
     } elseif ($paid) {
         $subject = 'Booking confirmed — paid invoice ' . sa_bk_invoice_no($b) . ' (' . $b['ref'] . ')';
         $lead = 'Thank you, your booking fee is paid and your booking is confirmed. Your paid invoice is below.';
     } elseif ($kind === 'nudge1') {
         $subject = 'Complete your payment to secure booking ' . $b['ref'];
-        $lead = 'Your slot is on hold, but the KES ' . $kes . ' booking fee is still unpaid. Pay now to secure it. Unpaid bookings are released at ' . $release . '.';
+        $lead = 'Your slot is on hold, but the ' . $feelbl . ' booking fee is still unpaid. Pay now to secure it. Unpaid bookings are released at ' . $release . '.';
     } elseif ($kind === 'nudge2') {
         $subject = 'Final reminder: booking ' . $b['ref'] . ' is released at ' . $release;
-        $lead = 'This is your last reminder. If the KES ' . $kes . ' booking fee is not paid, your slot will be released at ' . $release . ' and offered to other customers.';
+        $lead = 'This is your last reminder. If the ' . $feelbl . ' booking fee is not paid, your slot will be released at ' . $release . ' and offered to other customers.';
     } else {
-        $subject = 'Booking received — pay KES ' . $kes . ' to secure your slot (' . $b['ref'] . ')';
-        $lead = 'Thanks for booking. Pay the KES ' . $kes . ' booking fee to secure your slot. It is deducted from your final bill. Unpaid bookings are released after 3 hours (at ' . $release . ').';
+        $subject = 'Booking received — pay ' . $feelbl . ' to secure your slot (' . $b['ref'] . ')';
+        $lead = 'Thanks for booking. Pay the ' . $feelbl . ' booking fee to secure your slot. It is deducted from your final bill. Unpaid bookings are released after 3 hours (at ' . $release . ').';
     }
-    $btn = $paid || $b['status'] !== 'pending' ? '' : '<p style="text-align:center;margin:18px 0"><a href="' . esc_url($pay) . '" style="display:inline-block;background:#F5A623;color:#111;text-decoration:none;font-weight:800;font-size:16px;padding:14px 30px;border-radius:10px">Pay booking fee — KES ' . $kes . '</a></p>';
+    $btn = $paid || $b['status'] !== 'pending' ? '' : '<p style="text-align:center;margin:18px 0"><a href="' . esc_url($pay) . '" style="display:inline-block;background:#F5A623;color:#111;text-decoration:none;font-weight:800;font-size:16px;padding:14px 30px;border-radius:10px">Pay booking fee — ' . $feelbl . '</a></p>';
     if ($waived) {
         $mng = add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/confirmed/'));
         $btn .= '<p style="font-size:14px">Fitting job: ' . esc_html(($pt = (string) get_post_meta($id, '_sa_bk_part', true)) !== '' ? $pt : (sa_svc_catalog()[$b['service']]['name'] ?? $b['service'])) . '<br>'
