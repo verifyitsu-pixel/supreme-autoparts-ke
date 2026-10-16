@@ -102,6 +102,7 @@
 .sa-g-veh__cta{display:flex;gap:8px;flex-wrap:wrap}
 .sa-g-veh__actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:8px}
 .sa-g-veh__actions form{margin:0}
+.sa-g-edit[open]{flex-basis:100%}
 .sa-g-edit summary{cursor:pointer;font-size:.85rem;color:var(--sa-link,#0a0a0a);text-decoration:underline;list-style:none;display:inline}
 .sa-g-edit summary::-webkit-details-marker{display:none}
 .sa-g-link--danger{color:#c13515}
