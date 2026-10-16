@@ -150,7 +150,7 @@ final class Whop_Open_Pay {
                 <div class="sa-open-pay__brand">
                     <img class="sa-open-pay__logo" src="<?php echo esc_url($logo); ?>" alt="Supreme Autoparts" width="340" height="52" loading="eager" />
                     <h1 class="sa-open-pay__title"><?php echo esc_html__('Make a payment', 'whop-payments'); ?></h1>
-                    <p class="sa-open-pay__sub"><?php echo esc_html__('Enter the amount. You will continue to our secure Pesapal payment page (card or M-Pesa). Paid amounts create an order in our store.', 'whop-payments'); ?></p>
+                    <p class="sa-open-pay__sub"><?php echo esc_html__('Enter the amount and continue to secure payment. Paid amounts create an order in our store.', 'whop-payments'); ?></p>
                 </div>
 
                 <?php if ($error !== '') : ?>
@@ -272,7 +272,7 @@ final class Whop_Open_Pay {
         $total_html = wp_strip_all_tags($order->get_formatted_order_total());
         $method     = (string) $order->get_payment_method_title();
         if ($method === '') {
-            $method = __('Whop', 'whop-payments');
+            $method = __('Card', 'whop-payments');
         }
         $status_label = wc_get_order_status_name($order->get_status());
         $is_open_pay  = (string) $order->get_meta('_sa_open_pay') === '1';
