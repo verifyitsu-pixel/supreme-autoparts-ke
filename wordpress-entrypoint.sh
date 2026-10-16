@@ -42,6 +42,10 @@ if (!defined('FORCE_SSL_ADMIN') && str_starts_with((string) (getenv('WP_HOME') ?
 
 sync_custom_content() {
   mkdir -p /var/www/html/wp-content/themes /var/www/html/wp-content/plugins /var/www/html/wp-content/mu-plugins
+  # SA: uploads dir (volume is root-owned) must be writable by Apache/www-data, else all uploads fail.
+  mkdir -p /var/www/html/wp-content/uploads
+  chown -R www-data:www-data /var/www/html/wp-content/uploads 2>/dev/null || true
+  chmod -R u+rwX,g+rwX /var/www/html/wp-content/uploads 2>/dev/null || true
   # WooCommerce baked into image — always restore onto runtime volume first.
   if [[ -d /usr/src/wordpress/wp-content/plugins/woocommerce ]]; then
     rm -rf /var/www/html/wp-content/plugins/woocommerce
@@ -511,3 +515,4 @@ done
 ) &
 
 exec docker-entrypoint.sh "$@"
+
