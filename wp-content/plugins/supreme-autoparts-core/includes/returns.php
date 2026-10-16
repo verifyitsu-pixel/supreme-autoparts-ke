@@ -945,3 +945,83 @@ add_filter('the_content', static function (string $c): string {
     $c = str_replace(['of the order date', '60 days'], ['of delivery', SA_RET_DAYS . ' days'], $c);
     return $c;
 }, 15);
+
+/* One-time admin tool: move old public upload folders into the private folder and rewrite stored links.
+ * Run as an administrator: /?sa_migrate_uploads=1 . Keeps a backup list in option sa_upload_migration_backup. */
+add_action('template_redirect', static function (): void {
+    if (empty($_GET['sa_migrate_uploads']) || !current_user_can('manage_options')) {
+        return;
+    }
+    $base = wp_upload_dir(null, false);
+    $map = [];
+    $moved = 0;
+    foreach (['sa-returns' => 'ret', 'sa-order-info' => 'oi'] as $old => $kind) {
+        $root = $base['basedir'] . '/' . $old;
+        if (!is_dir($root)) {
+            continue;
+        }
+        foreach ((array) glob($root . '/*', GLOB_ONLYDIR) as $dir) {
+            $id = (int) basename($dir);
+            if ($id < 1) {
+                continue;
+            }
+            $dest = sa_priv_dir() . '/' . $kind . '/' . $id;
+            wp_mkdir_p($dest);
+            foreach ((array) glob($dir . '/*') as $file) {
+                if (!is_file($file)) {
+                    continue;
+                }
+                $name = basename($file);
+                $oldurl = $base['baseurl'] . '/' . $old . '/' . $id . '/' . $name;
+                if (@rename($file, $dest . '/' . $name)) {
+                    $map[$oldurl] = sa_priv_url($kind, $id, $name);
+                    $moved++;
+                }
+            }
+        }
+    }
+    $backup = (array) get_option('sa_upload_migration_backup', []);
+    update_option('sa_upload_migration_backup', $backup + $map, false);
+    $rewritten = 0;
+    if ($map) {
+        $swap = static function ($v) use ($map) {
+            return is_string($v) ? strtr($v, $map) : $v;
+        };
+        foreach (get_posts(['post_type' => 'sa_return', 'post_status' => 'any', 'numberposts' => -1, 'fields' => 'ids']) as $pid) {
+            foreach (get_post_meta($pid) as $k => $rows) {
+                foreach ($rows as $raw) {
+                    $val = maybe_unserialize($raw);
+                    $new = map_deep($val, $swap);
+                    if ($new !== $val) {
+                        update_post_meta($pid, $k, wp_slash($new));
+                        $rewritten++;
+                    }
+                }
+            }
+        }
+        if (function_exists('wc_get_orders')) {
+            foreach (wc_get_orders(['limit' => -1, 'return' => 'objects', 'status' => array_keys(wc_get_order_statuses())]) as $o) {
+                $list = $o->get_meta('_sa_info_submissions');
+                if (is_array($list)) {
+                    $new = map_deep($list, $swap);
+                    if ($new !== $list) {
+                        $o->update_meta_data('_sa_info_submissions', $new);
+                        $o->save();
+                        $rewritten++;
+                    }
+                }
+                foreach (wc_get_order_notes(['order_id' => $o->get_id()]) as $n) {
+                    $c = strtr((string) $n->content, $map);
+                    if ($c !== (string) $n->content) {
+                        wp_update_comment(['comment_ID' => $n->id, 'comment_content' => $c]);
+                        $rewritten++;
+                    }
+                }
+            }
+        }
+    }
+    nocache_headers();
+    header('Content-Type: text/plain');
+    echo 'moved=' . $moved . ' rewritten=' . $rewritten . "\n" . implode("\n", array_map(static fn($a, $b) => $a . ' => ' . $b, array_keys($map), $map));
+    exit;
+}, 2);
