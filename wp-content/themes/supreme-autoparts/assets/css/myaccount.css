@@ -1682,3 +1682,20 @@ body.woocommerce-account .sa-my-account {
   color: #191919;
 }
 .sa-dash__hero, .sa-my-account { color: #333; }
+
+/* Full-width account content still needs natural table text and balanced tiles. */
+.sa-my-account .sa-dash__table td {
+  word-break: normal;
+  overflow-wrap: normal;
+}
+.sa-my-account .sa-dash__table .sa-btn {
+  white-space: nowrap;
+}
+.sa-my-account .sa-dash__table td:first-child a {
+  white-space: nowrap;
+}
+@media (min-width: 801px) {
+  .sa-my-account .sa-dash__links {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
