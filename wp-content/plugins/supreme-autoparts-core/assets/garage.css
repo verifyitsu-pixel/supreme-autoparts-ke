@@ -88,3 +88,23 @@
 .sa-g-hist li{position:relative;padding:0 0 10px 14px;font-size:.9rem}
 .sa-g-hist li:before{content:"";position:absolute;left:-6px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--sa-action,#0a0a0a)}
 .sa-g-hist small{color:#6b6b6b}
+
+
+/* My Garage: customer vehicle database (add/edit, default, fit badges) */
+.sa-g-notebox{background:#e7f6ec;border:1px solid #a7e3c0;color:#16794a;border-radius:8px;padding:10px 14px;font-size:.9rem;margin:0 0 12px}
+.sa-g-add summary{cursor:pointer;list-style:none;display:flex;flex-direction:column;gap:2px}
+.sa-g-add summary::-webkit-details-marker{display:none}
+.sa-g-vform{margin-top:12px}
+.sa-g-vform__grid{display:grid;gap:4px;grid-template-columns:1fr}
+@media(min-width:620px){.sa-g-vform__grid{grid-template-columns:1fr 1fr}}
+.sa-g-vform .sa-btn{margin-top:8px}
+.sa-g-default{display:inline-block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:#111;color:#F5A623;border-radius:4px;padding:2px 8px;vertical-align:middle;margin-left:6px}
+.sa-g-veh__cta{display:flex;gap:8px;flex-wrap:wrap}
+.sa-g-veh__actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:8px}
+.sa-g-veh__actions form{margin:0}
+.sa-g-edit summary{cursor:pointer;font-size:.85rem;color:var(--sa-link,#0a0a0a);text-decoration:underline;list-style:none;display:inline}
+.sa-g-edit summary::-webkit-details-marker{display:none}
+.sa-g-link--danger{color:#c13515}
+.sa-fit{margin:8px 0;padding:10px 14px;border-radius:8px;font-size:.92rem;font-weight:600}
+.sa-fit--yes{background:#e7f6ec;border:1px solid #a7e3c0;color:#16794a}
+.sa-fit--no{background:#fff4df;border:1px solid #f0d9a8;color:#8a5a00}
