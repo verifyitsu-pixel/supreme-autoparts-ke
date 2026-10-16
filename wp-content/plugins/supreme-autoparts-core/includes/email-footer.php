@@ -28,7 +28,7 @@ function sa_email_footer_html(string $country = ''): string
     return '<!--sa-email-footer--><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;border-collapse:collapse" data-sa-email-region="' . ($business['whatsapp'] === '254714498451' ? 'KE' : 'US') . '">'
         . '<tr><td style="padding:20px 28px 28px;color:#737373;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;text-align:center">'
         . '<div style="border-top:1px solid #dedede;padding-top:20px">'
-        . '<p style="margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#111111">Supreme Autoparts</p>'
+        . '<p style="margin:0 0 12px;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#111111;line-height:28px"><img src="' . esc_url($logo) . '" alt="Supreme Autoparts" width="180" height="28" border="0" style="display:block;margin:0 auto;width:180px;height:28px;max-width:100%;border:0;outline:none;text-decoration:none;font-size:13px;font-weight:700;color:#111111"></p>'
         . '<p style="margin:0 0 10px">' . esc_html($business['one_line']) . '</p>'
         . '<p style="margin:0"><a href="' . esc_url(home_url('/privacy-policy/')) . '" style="' . $link . '">Privacy</a> &nbsp;&middot;&nbsp; '
         . '<a href="' . esc_url(home_url('/terms/')) . '" style="' . $link . '">Terms</a> &nbsp;&middot;&nbsp; '
