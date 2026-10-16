@@ -374,6 +374,8 @@ function sa_core_otp_verify_and_login(string $email, string $code)
         wp_set_auth_cookie((int) $user->ID, true, is_ssl());
     }
     do_action('wp_login', $user->user_login, $user);
+    // A correct code proves the customer owns this inbox: mark the email confirmed in WooCommerce.
+    sa_core_wc_mark_email_verified((int) $user->ID);
 
     return true;
 }
@@ -632,3 +634,115 @@ add_action('wp_loaded', static function (): void {
         exit;
     }
 }, 18);
+
+/* -------------------------------------------------------------------------
+ * Confirm email address with a one-time code (replaces WooCommerce 11's link flow)
+ * ---------------------------------------------------------------------- */
+
+/** WooCommerce's internal email verification service, or null on versions without it. */
+function sa_core_wc_email_service()
+{
+    $class = 'Automattic\\WooCommerce\\Internal\\CustomerEmailVerification\\EmailVerificationService';
+    if (!function_exists('wc_get_container') || !class_exists($class)) {
+        return null;
+    }
+    try {
+        return wc_get_container()->get($class);
+    } catch (\Throwable $e) {
+        return null;
+    }
+}
+
+/** Marks the account email as confirmed; WooCommerce then links past guest orders to the account. */
+function sa_core_wc_mark_email_verified(int $user_id): void
+{
+    $svc = sa_core_wc_email_service();
+    $user = get_user_by('id', $user_id);
+    if ($svc && $user instanceof WP_User) {
+        try {
+            $svc->mark_verified($user_id, $user->user_email);
+        } catch (\Throwable $e) {
+            return;
+        }
+    }
+}
+
+// Hide WooCommerce's link-based prompt; the code prompt below replaces it.
+add_filter('woocommerce_customer_email_verification_should_show_prompt', '__return_false', 99);
+add_action('wp_loaded', static function (): void {
+    $class = 'Automattic\\WooCommerce\\Internal\\CustomerEmailVerification\\VerificationController';
+    if (!function_exists('wc_get_container') || !class_exists($class)) {
+        return;
+    }
+    try {
+        remove_action('woocommerce_before_account_orders', [wc_get_container()->get($class), 'render_prompt']);
+    } catch (\Throwable $e) {
+        return;
+    }
+}, 30);
+
+add_action('woocommerce_before_account_orders', static function (): void {
+    $uid = get_current_user_id();
+    $svc = sa_core_wc_email_service();
+    if (!$uid || !$svc || $svc->is_verified($uid) || get_user_option('default_password_nag', $uid)) {
+        return;
+    }
+    if (user_can($uid, 'manage_options') || user_can($uid, 'manage_woocommerce')) {
+        return;
+    }
+    $sent = isset($_GET['sa_ec']) && sanitize_key((string) wp_unslash($_GET['sa_ec'])) === 'sent'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+    $action = esc_url(wc_get_account_endpoint_url('orders'));
+    echo '<div class="woocommerce-info sa-ec" role="status"><form method="post" action="' . $action . '" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;width:100%">';
+    wp_nonce_field('sa_email_confirm', 'sa_ec_nonce');
+    if ($sent) {
+        echo '<span style="flex:1 1 220px">' . esc_html__('Enter the 6-digit code we emailed you to confirm your address and link past orders to your account.', 'supreme-autoparts-core') . '</span>'
+            . '<input type="text" name="sa_ec_code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required aria-label="6-digit code" placeholder="123456" style="width:140px;letter-spacing:.2em;text-align:center">'
+            . '<button type="submit" name="sa_ec_verify" value="1" class="button wc-forward">' . esc_html__('Confirm', 'supreme-autoparts-core') . '</button>'
+            . '<button type="submit" name="sa_ec_send" value="1" class="button" formnovalidate>' . esc_html__('Send a new code', 'supreme-autoparts-core') . '</button>';
+    } else {
+        echo '<span style="flex:1 1 220px">' . esc_html__('Confirm your email address to check for past orders and link them to your account. We will email you a 6-digit code.', 'supreme-autoparts-core') . '</span>'
+            . '<button type="submit" name="sa_ec_send" value="1" class="button wc-forward">' . esc_html__('Confirm email address', 'supreme-autoparts-core') . '</button>';
+    }
+    echo '</form></div>';
+}, 15);
+
+add_action('wp_loaded', static function (): void {
+    if (!is_user_logged_in() || (is_admin() && !wp_doing_ajax())) {
+        return;
+    }
+    $send = isset($_POST['sa_ec_send']);
+    $verify = isset($_POST['sa_ec_verify']);
+    if (!$send && !$verify) {
+        return;
+    }
+    $url = function_exists('wc_get_account_endpoint_url') ? wc_get_account_endpoint_url('orders') : home_url('/my-account/orders/');
+    $nonce = isset($_POST['sa_ec_nonce']) ? (string) wp_unslash($_POST['sa_ec_nonce']) : '';
+    if ($nonce === '' || !wp_verify_nonce($nonce, 'sa_email_confirm')) {
+        wc_add_notice(__('Security check failed. Please refresh and try again.', 'supreme-autoparts-core'), 'error');
+        wp_safe_redirect($url);
+        exit;
+    }
+    $user = wp_get_current_user();
+    $sent_url = add_query_arg('sa_ec', 'sent', $url);
+    if ($verify) {
+        $code = preg_replace('/\D+/', '', (string) wp_unslash($_POST['sa_ec_code'] ?? '')) ?? '';
+        $result = sa_core_otp_verify_and_login((string) $user->user_email, $code);
+        if (is_wp_error($result)) {
+            wc_add_notice($result->get_error_message(), 'error');
+            wp_safe_redirect($sent_url);
+            exit;
+        }
+        wc_add_notice(__('Email confirmed. Your past orders are now linked to your account.', 'supreme-autoparts-core'), 'success');
+        wp_safe_redirect($url);
+        exit;
+    }
+    $result = sa_core_otp_send((string) $user->user_email);
+    if (is_wp_error($result)) {
+        wc_add_notice($result->get_error_message(), 'error');
+        wp_safe_redirect($url);
+        exit;
+    }
+    wc_add_notice(__('We sent a 6-digit code to your email. It expires in 10 minutes, check your inbox and spam.', 'supreme-autoparts-core'), 'success');
+    wp_safe_redirect($sent_url);
+    exit;
+}, 19);
