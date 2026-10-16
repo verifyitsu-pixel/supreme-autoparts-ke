@@ -60,3 +60,40 @@ add_action('template_redirect', static function (): void {
         nocache_headers();
     }
 }, 1);
+
+/* ---------- Service wording on the pay page for booking-fee and roadside pay-link orders ---------- */
+
+/** The order being paid on /checkout/order-pay/, when it pays for a service (booking fee or roadside). */
+function sa_gp_service_order(): ?WC_Order
+{
+    if (!function_exists('is_checkout_pay_page') || !is_checkout_pay_page() || !function_exists('wc_get_order')) {
+        return null;
+    }
+    global $wp;
+    $oid = absint($wp->query_vars['order-pay'] ?? 0);
+    if (!$oid && isset($_GET['key'])) {
+        $oid = absint(wc_get_order_id_by_order_key(wc_clean(wp_unslash((string) $_GET['key']))));
+    }
+    $o = $oid ? wc_get_order($oid) : null;
+    if (!$o instanceof WC_Order) {
+        return null;
+    }
+    return ($o->get_meta('_sa_booking_fee_for') || $o->get_meta('_sa_rs_for')) ? $o : null;
+}
+
+/* Rename the product-table headers and the guest warning only while paying for a service order. */
+add_filter('gettext', static function (string $translated, string $text, string $domain): string {
+    if ($domain !== 'woocommerce' || !sa_gp_service_order()) {
+        return $translated;
+    }
+    if ($text === 'Product') {
+        return 'Service';
+    }
+    if ($text === 'Totals') {
+        return 'Amount';
+    }
+    if ($text === 'You are paying for a guest order. Please continue with payment only if you recognize this order.') {
+        return 'You are paying for a service as a guest. Please continue with payment only if you recognize it.';
+    }
+    return $translated;
+}, 20, 3);
