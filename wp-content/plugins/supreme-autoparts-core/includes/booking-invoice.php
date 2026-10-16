@@ -53,14 +53,14 @@ function sa_bk_rcpt_data(int $id): array
     $totals[] = [$paid ? 'Paid now' : 'Due now', $fmt($kes), true];
     $pay = [['Status', $waived ? 'No fee, confirmed' : ($paid ? 'Paid' : 'Unpaid')]];
     if ($b['fee_order']) {
-        $pay[] = ['Payment order', '#' . (int) $b['fee_order']];
+        $pay[] = ['Payment reference', '#' . (int) $b['fee_order']];
     }
     return [
         'doc' => $paid ? 'Receipt' : 'Invoice', 'title' => $paid ? 'Booking receipt' : 'Booking invoice',
         'number' => sa_bk_invoice_no($b), 'file_no' => sa_bk_invoice_no($b),
         'date' => wp_date('j M Y', (int) $b['created']), 'paid' => $paid,
         'seller' => function_exists('sa_rcpt_seller') ? sa_rcpt_seller('KE') : [],
-        'bill' => array_filter([$b['name'], $b['email'], $b['phone']]), 'ship' => [],
+        'bill' => array_filter([$b['name'], $b['email'], $b['phone']]), 'ship' => [], 'seller_lbl' => 'Provided by', 'bill_lbl' => 'Customer', 'item_lbl' => 'Service',
         'items' => $items, 'totals' => $totals, 'pay' => $pay, 'note' => '',
         'extra_html' => '<div style="font-size:12px;color:#6B6B6B">This is an estimate; you approve the final quote before any work starts. Fee refunds follow our <a href="' . esc_url(home_url('/booking-terms/')) . '" style="color:#111111">Booking Terms</a>.</div>',
         'view_url' => sa_bk_invoice_url($id),
