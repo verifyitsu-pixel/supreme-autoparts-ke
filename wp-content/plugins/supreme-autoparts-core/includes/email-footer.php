@@ -52,7 +52,7 @@ function sa_email_context(string $message, string $woo_id = '', bool $customer =
         'customer_failed_order' => 'failed', 'customer_reset_password' => 'account', 'customer_new_account' => 'account',
     ];
     if ($woo_id !== '' && isset($by_id[$woo_id])) {
-        return $by_id[$woo_id];
+        return ($by_id[$woo_id] === 'order' && $has('Store pickup:')) ? 'pickup_order' : $by_id[$woo_id];
     }
     if ($has('Your order is complete') || $has('order is complete')) {
         return 'delivered';
@@ -93,7 +93,10 @@ function sa_email_context(string $message, string $woo_id = '', bool $customer =
     if ($has('More info needed') || $has('on hold')) {
         return 'none';
     }
-    return $has('order') ? 'order' : 'generic';
+    if ($has('order')) {
+        return $has('Store pickup:') ? 'pickup_order' : 'order';
+    }
+    return 'generic';
 }
 
 function sa_email_help_lead(string $ctx): string
@@ -101,6 +104,7 @@ function sa_email_help_lead(string $ctx): string
     $lines = [
         'order'     => 'Need to change the address or an item? Message us with your order number before it ships.',
         'delivered' => 'Something not right with a part? Send us a photo and your order number and we will sort it out.',
+        'pickup_order' => 'Need to change the pickup time or an item? Message us with your order number before it is ready.',
         'pickup'    => 'Cannot collect it when expected? Message us with your order number and we will keep it for you.',
         'delivery'  => 'Problem with the delivery? Message us with your order number and the phone number you gave at checkout.',
         'cancelled' => 'Cancelled by mistake? Message us with the order number and we will help you order again.',
@@ -123,7 +127,7 @@ function sa_email_help_html(string $country = '', string $ctx = 'generic'): stri
     $reply = $ctx === 'contact';
     // Roadside rescue is a Nairobi service: mention it only in African-region help blocks on order emails.
     $roadside = '';
-    if ($business['whatsapp'] === '254714498451' && in_array($ctx, ['order', 'pickup', 'delivery', 'delivered'], true)) {
+    if ($business['whatsapp'] === '254714498451' && in_array($ctx, ['order', 'pickup_order', 'pickup', 'delivery', 'delivered'], true)) {
         $roadside = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #e4e4e0">Car trouble? <a href="' . esc_url(home_url('/roadside/')) . '" style="color:#333333;text-decoration:underline">Request roadside help</a> or call <a href="tel:+254714498451" style="color:#333333;text-decoration:underline;white-space:nowrap">+254 714 498 451</a>.</div>';
     }
     return '<!--sa-email-help--><div style="margin:20px 0 4px;padding:16px 0 0;border-top:1px solid #e4e4e0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.65;color:#555555">'
