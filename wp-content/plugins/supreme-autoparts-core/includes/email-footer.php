@@ -28,7 +28,7 @@ function sa_email_footer_html(string $country = ''): string
     return '<!--sa-email-footer--><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;border-collapse:collapse" data-sa-email-region="' . ($business['whatsapp'] === '254714498451' ? 'KE' : 'US') . '">'
         . '<tr><td style="padding:20px 28px 28px;color:#737373;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;text-align:center">'
         . '<div style="border-top:1px solid #dedede;padding-top:20px">'
-        . '<p style="margin:0 0 12px"><img src="' . esc_url($logo) . '" alt="Supreme Autoparts" width="180" style="display:block;width:180px;max-width:100%;height:auto;margin:0 auto;border:0;opacity:0.65"></p>'
+        . '<p style="margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#111111">Supreme Autoparts</p>'
         . '<p style="margin:0 0 10px">' . esc_html($business['one_line']) . '</p>'
         . '<p style="margin:0"><a href="' . esc_url(home_url('/privacy-policy/')) . '" style="' . $link . '">Privacy</a> &nbsp;&middot;&nbsp; '
         . '<a href="' . esc_url(home_url('/terms/')) . '" style="' . $link . '">Terms</a> &nbsp;&middot;&nbsp; '
@@ -121,10 +121,16 @@ function sa_email_help_html(string $country = '', string $ctx = 'generic'): stri
     }
     $business = sa_email_footer_business($country);
     $reply = $ctx === 'contact';
-    return '<!--sa-email-help--><div style="margin:12px 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.65;color:#666666">'
-        . esc_html(sa_email_help_lead($ctx)) . '<br>'
-        . ($reply ? '' : '<a href="mailto:calvin@supremeautoparts.co.ke" style="color:#333333;text-decoration:underline">Email us</a> or '
+    // Roadside rescue is a Nairobi service: mention it only in African-region help blocks on order emails.
+    $roadside = '';
+    if ($business['whatsapp'] === '254714498451' && in_array($ctx, ['order', 'pickup', 'delivery', 'delivered'], true)) {
+        $roadside = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #e4e4e0">Car trouble? <a href="' . esc_url(home_url('/roadside/')) . '" style="color:#333333;text-decoration:underline">Request roadside help</a> or call <a href="tel:+254714498451" style="color:#333333;text-decoration:underline;white-space:nowrap">+254 714 498 451</a>.</div>';
+    }
+    return '<!--sa-email-help--><div style="margin:16px 0 4px;padding:14px 16px;background:#f6f6f4;border-radius:8px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.65;color:#555555">'
+        . '<div>' . esc_html(sa_email_help_lead($ctx))
+        . ($reply ? '' : '<br><a href="mailto:calvin@supremeautoparts.co.ke" style="color:#333333;text-decoration:underline">Email us</a> or '
             . '<a href="https://wa.me/' . esc_attr($business['whatsapp']) . '" style="color:#333333;text-decoration:underline">chat on WhatsApp</a>.')
+        . '</div>' . $roadside
         . '</div><!--/sa-email-help-->';
 }
 
