@@ -99,8 +99,10 @@ function sa_sf_render(string $type): string
     if ($state === 'sent') {
         $ref = sanitize_text_field((string) ($_GET['ref'] ?? ''));
         echo '<div class="sa-sf-ok" role="status"><strong>Thanks, we have it' . ($ref ? ' (ref ' . esc_html($ref) . ')' : '') . '.</strong> A copy is in your inbox and our team will reply soon.</div>';
+    } elseif ($state === 'phone') {
+        echo '<div class="sa-svc-alert" role="alert">That phone number does not look right. Use digits with an optional +, for example 0712 345 678. We kept what you typed.</div>';
     } elseif ($state === 'error') {
-        echo '<div class="sa-svc-alert" role="alert">Please fill in the required fields with a valid email and try again.</div>';
+        echo '<div class="sa-svc-alert" role="alert">Something was missing or the email looks wrong. We kept what you typed, please check and try again.</div>';
     } elseif ($state === 'slow') {
         echo '<div class="sa-svc-alert" role="alert">You have sent several messages in a short time. Please wait a few minutes and try again.</div>';
     }
@@ -137,6 +139,10 @@ function sa_sf_render(string $type): string
     echo '<button type="submit" class="sa-svc-btn sa-svc-btn--primary">Send</button>';
     echo '<p class="sa-sf-note">No account needed. We only use your details to answer this request.</p>';
     echo '</form></div>';
+    echo '<script>'.<<<'SAJS'
+(function(){var f=document.querySelector('form.sa-sf-form');if(!f)return;var k='sa_fd:'+location.pathname;f.addEventListener('submit',function(){try{var o={};Array.prototype.forEach.call(f.elements,function(e){if(!e.name||e.type==='hidden'||e.type==='password'||e.type==='file'||e.name==='website'||e.name==='sa_hp')return;if(e.type==='checkbox'||e.type==='radio'){if(e.checked)(o[e.name]=o[e.name]||[]).push(e.value);}else o[e.name]=[e.value];});sessionStorage.setItem(k,JSON.stringify(o));}catch(x){}});window.addEventListener('load',function(){try{var d=sessionStorage.getItem(k);if(!d||!/[?&](sa_err=|sa_form=(error|phone|slow))/.test(location.search))return;sessionStorage.removeItem(k);d=JSON.parse(d);Array.prototype.forEach.call(f.elements,function(e){var v=d[e.name];if(!v||e.type==='hidden'||e.type==='file')return;if(e.type==='checkbox'||e.type==='radio'){if(v.indexOf(e.value)>-1&&!e.checked){e.checked=true;e.dispatchEvent(new Event('change',{bubbles:true}));}}else if(e.value===''){e.value=v[0];e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));}});}catch(x){}});})();
+SAJS
+    .'</script>';
     if (count($veh) > 1) {
         echo '<script>document.querySelectorAll("[data-sa-sf-veh]").forEach(function(s){s.addEventListener("change",function(){var o=s.options[s.selectedIndex],f=s.form;["make","model","year","reg"].forEach(function(k){if(f[k])f[k].value=o.dataset[k]||"";});});});</script>';
     }
@@ -192,6 +198,9 @@ function sa_sf_handle(): void
     }
     if (!is_email($d['email'])) {
         $go('error');
+    }
+    if ($d['phone'] !== '' && !preg_match('/^\+?[0-9][0-9 ()\-]{7,18}$/', $d['phone'])) {
+        $go('phone');
     }
 
     $labels = ['topic' => 'Topic', 'order' => 'Order', 'item' => 'Item', 'reason' => 'Reason', 'part' => 'Part', 'make' => 'Make', 'model' => 'Model', 'year' => 'Year', 'engine' => 'Engine', 'vin' => 'Chassis/VIN', 'reg' => 'Reg. plate', 'phone' => 'Phone', 'message' => 'Message'];
