@@ -1699,3 +1699,23 @@ body.woocommerce-account .sa-my-account {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* Woo notice buttons must not squeeze their message into a narrow mobile column. */
+@media (max-width: 640px) {
+  .sa-my-account .woocommerce-message,
+  .sa-my-account .woocommerce-info,
+  .sa-my-account .woocommerce-error {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .sa-my-account .woocommerce-message .button,
+  .sa-my-account .woocommerce-info .button,
+  .sa-my-account .woocommerce-error .button {
+    float: none;
+    order: 1;
+    margin: 0;
+    max-width: 100%;
+  }
+}
