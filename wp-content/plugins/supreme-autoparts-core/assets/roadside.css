@@ -99,3 +99,4 @@
 .sa-rs-bars div{display:grid;grid-template-columns:160px 1fr 40px;align-items:center;gap:8px;margin:4px 0}.sa-rs-bars i{display:block;height:12px;background:#0a0a0a;border-radius:6px}
 @media(max-width:600px){.sa-rs-steps li{font-size:.68rem}.sa-rs-prov,.sa-rs-pay{flex-wrap:wrap}}
 @media(max-width:899px){.sa-rs-callbar{padding-right:84px}.sa-rs{padding-bottom:120px}}
+@media(max-width:899px){.sa-rs-callbar .sa-svc-btn{font-size:13px;padding:10px 8px;gap:6px;line-height:1.25}.sa-rs-callbar .sa-svc-btn:first-child{flex:1.6}.sa-rs-callbar .sa-svc-btn svg{flex:none}}
