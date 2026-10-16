@@ -66,7 +66,7 @@
 .sa-rs-msg--customer{align-self:flex-end;background:#f4f4f1}
 .sa-rs-msgform{display:flex;gap:8px;margin-top:10px}.sa-rs-msgform input{flex:1;padding:10px;border:1px solid var(--sa-border-strong,#ccc);border-radius:var(--rs-r);font:inherit;font-size:16px;min-width:0}
 .sa-rs-dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:0}.sa-rs-dl dt{color:var(--sa-text-muted,#6b6b6b)}.sa-rs-dl dd{margin:0;font-weight:600}
-.sa-rs-hist ul{padding-left:18px;font-size:.9rem}.sa-rs-hist time{color:var(--sa-text-muted,#6b6b6b)}
+.sa-rs-hist ul{padding-left:18px;font-size:.9rem}.sa-rs-hist time{color:var(--sa-text-muted,#6b6b6b)}.sa-rs-hist li{display:flex;gap:10px;padding:3px 0}.sa-rs-hist li time{flex:0 0 auto;min-width:96px}
 .sa-rs-cancel{margin:16px 0}.sa-rs-cancel input{padding:10px;border:1px solid var(--sa-border-strong,#ccc);border-radius:var(--rs-r);width:100%;box-sizing:border-box;margin:6px 0}
 .sa-rs-badge{display:inline-block;font-size:.75rem;font-weight:700;padding:3px 9px;border-radius:999px;background:#f4f4f1;color:#333333;white-space:nowrap}
 .sa-rs-badge--received{background:#fff4e5;color:#9a5b00}.sa-rs-badge--dispatched,.sa-rs-badge--en_route{background:#f4f4f1;color:#111111}
