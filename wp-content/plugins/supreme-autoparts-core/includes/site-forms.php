@@ -343,14 +343,19 @@ function sa_sf_suggest(): void
 add_action('wp_ajax_sa_suggest', 'sa_sf_suggest');
 add_action('wp_ajax_nopriv_sa_suggest', 'sa_sf_suggest');
 
-/* One-line roadside mention in customer order emails. */
-add_action('woocommerce_email_after_order_table', static function ($order, $sent_to_admin, $plain_text = false): void {
-    if ($sent_to_admin) {
+/* One-line roadside mention in customer order emails. Roadside rescue is a Nairobi service, so it only shows on African orders,
+ * and it sits after the billing/shipping block so the order details stay together. */
+add_action('woocommerce_email_customer_details', static function ($order, $sent_to_admin = false, $plain_text = false): void {
+    if ($sent_to_admin || !($order instanceof WC_Order)) {
+        return;
+    }
+    $country = (string) ($order->get_billing_country() ?: $order->get_shipping_country());
+    if ($country === '' || WC()->countries->get_continent_code_for_country($country) !== 'AF') {
         return;
     }
     if ($plain_text) {
         echo "\nCar trouble? Roadside help: " . esc_url_raw(home_url('/roadside/')) . " or call +254 714 498 451\n";
         return;
     }
-    echo '<p style="margin:16px 0 0;font-size:13px;color:#555">Car trouble? <a href="' . esc_url(home_url('/roadside/')) . '" style="color:#111">Request roadside help</a> or call <a href="tel:+254714498451" style="color:#111">+254 714 498 451</a>.</p>';
-}, 40, 3);
+    echo '<p style="margin:0 0 16px;font-size:13px;color:#555">Car trouble? <a href="' . esc_url(home_url('/roadside/')) . '" style="color:#111">Request roadside help</a> or call <a href="tel:+254714498451" style="color:#111;white-space:nowrap">+254 714 498 451</a>.</p>';
+}, 100, 3);
