@@ -102,6 +102,20 @@ function sa_seo_google_verification(): string
 }
 
 /**
+ * Bing Webmaster Tools verification token (meta msvalidate.01).
+ * Env SA_BING_SITE_VERIFICATION wins; else option sa_bing_site_verification.
+ */
+function sa_seo_bing_verification(): string
+{
+    $env = getenv('SA_BING_SITE_VERIFICATION');
+    if (is_string($env) && $env !== '') {
+        return trim($env);
+    }
+    $opt = get_option('sa_bing_site_verification', '');
+    return is_string($opt) ? trim($opt) : '';
+}
+
+/**
  * Whether the current view should be noindexed (cart, checkout, account, thank-you, search).
  */
 function sa_seo_should_noindex(): bool
@@ -403,6 +417,14 @@ function sa_seo_wp_head(): void
         printf(
             '<meta name="google-site-verification" content="%s" />' . "\n",
             esc_attr($gsc)
+        );
+    }
+
+    $bing = sa_seo_bing_verification();
+    if ($bing !== '') {
+        printf(
+            '<meta name="msvalidate.01" content="%s" />' . "\n",
+            esc_attr($bing)
         );
     }
 
