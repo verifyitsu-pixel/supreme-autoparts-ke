@@ -283,12 +283,12 @@ function sa_rcpt_totals_html(array $totals, string $font): string
 }
 
 /** Line items table html. */
-function sa_rcpt_items_html(array $items, string $mode, string $font): string
+function sa_rcpt_items_html(array $items, string $mode, string $font, string $item_lbl = 'Item'): string
 {
     $pdf = $mode === 'pdf';
     $th = 'font-family:' . $font . ';font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:' . SA_RCPT_MUTED . ';font-weight:600;padding:0 0 10px;border-bottom:1px solid ' . SA_RCPT_INK . ';';
     $h = '<table role="presentation" class="sa-items" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%">'
-        . '<thead><tr><th colspan="2" style="' . $th . 'text-align:left">Item</th>'
+        . '<thead><tr><th colspan="2" style="' . $th . 'text-align:left">' . esc_html($item_lbl) . '</th>'
         . '<th class="sa-hide-sm" style="' . $th . 'text-align:right;width:44px">Qty</th>'
         . '<th class="sa-hide-sm" style="' . $th . 'text-align:right;width:96px">Unit price</th>'
         . '<th style="' . $th . 'text-align:right;width:96px">Amount</th></tr></thead><tbody>';
@@ -407,7 +407,7 @@ function sa_rcpt_render(array $d, string $mode = 'page', array $toolbar = []): s
     }
 
     // Parties.
-    $cols = [[$d['seller_lbl'] ?? 'Ships from', sa_rcpt_lines($d['seller']['lines'], $nl)], ['Bill to', sa_rcpt_lines($d['bill'], $nl)]];
+    $cols = [[$d['seller_lbl'] ?? 'Ships from', sa_rcpt_lines($d['seller']['lines'], $nl)], [$d['bill_lbl'] ?? 'Bill to', sa_rcpt_lines($d['bill'], $nl)]];
     if (!empty($d['ship'])) {
         $cols[] = [$d['ship_lbl'] ?? 'Ship to', sa_rcpt_lines($d['ship'], $nl)];
     }
@@ -419,7 +419,7 @@ function sa_rcpt_render(array $d, string $mode = 'page', array $toolbar = []): s
     $h .= '</tr></table></td></tr>';
 
     // Items + totals.
-    $h .= '<tr><td class="sa-pad" style="padding:14px ' . $pad . ' 8px">' . sa_rcpt_items_html($d['items'], $mode, $font) . '</td></tr>';
+    $h .= '<tr><td class="sa-pad" style="padding:14px ' . $pad . ' 8px">' . sa_rcpt_items_html($d['items'], $mode, $font, (string) ($d['item_lbl'] ?? 'Item')) . '</td></tr>';
     $h .= '<tr><td class="sa-pad" style="padding:8px ' . $pad . ' 20px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="sa-hide-sm" style="width:40%">&nbsp;</td><td>'
         . '<table role="presentation" class="sa-totals sa-keep" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse">' . sa_rcpt_totals_html($d['totals'], $font) . '</table></td></tr></table></td></tr>';
 
@@ -594,3 +594,4 @@ function sa_rcpt_send_pdf_download(array $d): void
     echo $bytes; // phpcs:ignore
     exit;
 }
+
