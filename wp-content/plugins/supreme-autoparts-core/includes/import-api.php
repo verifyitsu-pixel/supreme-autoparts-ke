@@ -76,6 +76,7 @@ function sa_core_rest_import_batch(WP_REST_Request $req)
     foreach (array_slice($items, 0, 40) as $entry) {
         $t0 = microtime(true);
         $q0 = (int) $wpdb->num_queries;
+        sa_core_prime_recent_products();
         try {
             $type = (string) ($entry['type'] ?? 'single');
             if ($type === 'family') {
@@ -351,4 +352,18 @@ function sa_core_fast_bootstrap_claims()
         $reg[sa_core_image_url_identity_key((string) $row['url'])] = (int) $row['parent'];
     }
     $GLOBALS['sa_core_image_claim_registry_bootstrapped'] = true;
+}
+
+/**
+ * The importer's title-fingerprint check reads the 400 newest published products one
+ * get_post() at a time (~130 queries per item). Prime them into the object cache with
+ * one query so the check returns the same result with far fewer round trips.
+ */
+function sa_core_prime_recent_products()
+{
+    global $wpdb;
+    $ids = $wpdb->get_col("SELECT ID FROM {$wpdb->posts} WHERE post_type = 'product' AND post_status = 'publish' ORDER BY ID DESC LIMIT 400");
+    if ($ids && function_exists('_prime_post_caches')) {
+        _prime_post_caches(array_map('intval', $ids), false, false);
+    }
 }
