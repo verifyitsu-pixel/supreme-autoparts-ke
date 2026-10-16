@@ -18,12 +18,13 @@
       var f = input.files && input.files[0];
       if (!form || !f) { return; }
       var max = parseInt(form.getAttribute('data-max') || '5242880', 10);
-      var msg = form.parentNode.querySelector('.sa-avatar-pick__err');
+      var host = form.parentNode.querySelector('.sa-dash__hero-text') || form.parentNode;
+      var msg = host.querySelector('.sa-avatar-pick__err');
       if (!msg) {
         msg = document.createElement('p');
         msg.className = 'sa-greet__msg sa-greet__msg--error sa-avatar-pick__err';
         msg.setAttribute('role', 'alert');
-        form.parentNode.appendChild(msg);
+        host.appendChild(msg);
       }
       msg.textContent = '';
       if (!/^image\/(jpeg|png|webp)$/.test(f.type)) {
