@@ -8,6 +8,43 @@
   padding: 1.75rem 0 3.25rem;
 }
 
+/* Woo's legacy percentage widths must not size items inside our grid. */
+.sa-my-account__nav {
+  min-width: 0;
+}
+.sa-my-account .woocommerce-MyAccount-navigation,
+.sa-my-account .woocommerce-MyAccount-content {
+  float: none;
+  width: 100%;
+  max-width: 100%;
+}
+.sa-my-account .woocommerce-MyAccount-navigation a {
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+/* Woo clearfix pseudo-elements would otherwise occupy a grid cell. */
+.sa-my-account .sa-addresses__grid::before,
+.sa-my-account .sa-addresses__grid::after,
+.sa-my-account .sa-view-order .col2-set::before,
+.sa-my-account .sa-view-order .col2-set::after {
+  content: none;
+  display: none;
+}
+.sa-my-account .sa-form__row > .form-row-first,
+.sa-my-account .sa-form__row > .form-row-last {
+  float: none;
+  width: 100%;
+  min-width: 0;
+}
+.sa-my-account .sa-dash__table th,
+.sa-my-account .woocommerce-orders-table th,
+.sa-my-account .woocommerce-orders-table .woocommerce-orders-table__cell-order-number {
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
 /* Avoid double card: content shell is transparent; panels provide surface */
 .sa-my-account__content,
 .woocommerce-MyAccount-content.sa-my-account__content {
@@ -735,7 +772,7 @@
 
 @media (max-width: 800px) {
   .sa-my-account {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     padding-top: 1rem;
   }
 
@@ -757,6 +794,10 @@
     scrollbar-width: thin;
     overscroll-behavior-x: contain;
     max-width: 100%;
+  }
+
+  .sa-account-nav li {
+    flex: 0 0 auto;
   }
 
   .sa-account-nav a {
