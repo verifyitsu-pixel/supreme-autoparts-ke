@@ -40,14 +40,20 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
       </div>
     <?php else : ?>
       <?php
-      $paid     = $order->is_paid() || $order->has_status(['processing', 'completed']);
+      $paid     = $order->is_paid() || $order->has_status(['processing', 'completed', 'ready-pickup', 'shipped', 'out-for-delivery', 'delivered']);
+      $is_pickup = false;
+      foreach ($order->get_shipping_methods() as $sa_sm) {
+          if (strpos((string) $sa_sm->get_method_id(), 'local_pickup') === 0) {
+              $is_pickup = true;
+          }
+      }
       $pending  = $order->has_status(['pending', 'on-hold']);
       $eyebrow  = $paid ? __('Order confirmed', 'supreme-autoparts') : __('Order received', 'supreme-autoparts');
       $heading  = $paid
           ? __('Thank you — payment received', 'supreme-autoparts')
           : __('Thank you — we have your order', 'supreme-autoparts');
       $lead = $paid
-          ? __('Everything about your order is below, and a copy is on its way to your email. Check inbox and spam. We will prepare your parts and update you on shipping.', 'supreme-autoparts')
+          ? __('Everything about your order is below, and a copy is on its way to your email. Check inbox and spam. We will prepare your parts and keep you updated by email.', 'supreme-autoparts')
           : __('If you just paid, confirmation can take a few seconds. Refresh this page if the status does not update.', 'supreme-autoparts');
       ?>
       <div class="sa-thankyou__card<?php echo $paid ? ' sa-thankyou__card--success' : ''; ?>">
@@ -95,7 +101,11 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
           <h2 id="sa-thankyou-next-title"><?php esc_html_e('What happens next', 'supreme-autoparts'); ?></h2>
           <ol class="sa-thankyou__steps">
             <li><?php esc_html_e('We verify payment and pick your parts.', 'supreme-autoparts'); ?></li>
-            <li><?php esc_html_e('You receive packing and shipping updates by email.', 'supreme-autoparts'); ?></li>
+            <?php if ($is_pickup) : ?>
+              <li><?php echo $order->has_status('ready-pickup') ? esc_html__('Your order is ready. Show your pickup code at the store; it is in your email.', 'supreme-autoparts') : esc_html__('We email you a pickup code when your order is ready at the store.', 'supreme-autoparts'); ?></li>
+            <?php else : ?>
+              <li><?php esc_html_e('You receive packing and shipping updates by email.', 'supreme-autoparts'); ?></li>
+            <?php endif; ?>
             <li><?php esc_html_e('Need fitment help? Message us on WhatsApp with your order number.', 'supreme-autoparts'); ?></li>
           </ol>
         </section>
