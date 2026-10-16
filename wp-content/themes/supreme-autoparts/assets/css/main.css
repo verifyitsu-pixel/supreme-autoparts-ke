@@ -3011,12 +3011,10 @@ a.remove.sa-cart-line__remove {
 }
 html, body { overflow-x: clip; }
 
-/* PDP gallery: WooCommerce's higher-specificity "position: relative" was leaving
-   the sticky offset applied, pushing the gallery ~84px below the title. Restore sticky. */
-@media (min-width: 901px) {
-  .woocommerce div.product div.images.woocommerce-product-gallery {
-    position: sticky;
-    top: calc(var(--sa-header-h) + 1rem);
-    align-self: start;
-  }
+/* PDP gallery: WooCommerce's higher-specificity "position: relative" kept the old sticky
+   offset (top: header + 1rem) active, pushing the gallery ~84px below the title.
+   Sticky also made it overlap the tabs below, so keep it in normal flow. */
+.woocommerce div.product div.images.woocommerce-product-gallery {
+  position: relative;
+  top: auto;
 }
