@@ -201,6 +201,77 @@ function sa_ol_info_url(WC_Order $o): string
     return add_query_arg(['o' => $o->get_id(), 'k' => $o->get_order_key()], home_url('/order-info/'));
 }
 
+/* ---------- Pickup code ---------- */
+
+function sa_ol_is_pickup(WC_Order $o): bool
+{
+    foreach ($o->get_shipping_methods() as $m) {
+        if (strpos((string) $m->get_method_id(), 'local_pickup') === 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/** Hard-to-guess code for pickup orders: brand name + order number mixed with the site secret. Stored once, never reused. */
+function sa_ol_pickup_code(WC_Order $o): string
+{
+    if (!sa_ol_is_pickup($o)) {
+        return '';
+    }
+    $code = (string) $o->get_meta('_sa_pickup_code');
+    if ($code !== '') {
+        return $code;
+    }
+    $hash = hash_hmac('sha256', 'SUPREME AUTOPARTS|' . $o->get_order_number() . '|' . $o->get_id() . '|' . $o->get_order_key(), wp_salt('auth'));
+    $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
+    $chars = '';
+    foreach (str_split(substr($hash, 0, 16), 2) as $pair) {
+        $chars .= $alphabet[hexdec($pair) % 32];
+    }
+    $code = 'SA-' . substr($chars, 0, 4) . '-' . substr($chars, 4, 4);
+    $o->update_meta_data('_sa_pickup_code', $code);
+    $o->add_order_note('Pickup code generated: ' . $code);
+    $o->save();
+    return $code;
+}
+
+function sa_ol_pickup_block(WC_Order $o, bool $email = true): string
+{
+    $code = sa_ol_pickup_code($o);
+    if ($code === '') {
+        return '';
+    }
+    return '<div style="margin:18px 0;padding:18px 16px;border:2px solid #111111;border-radius:6px;text-align:center;background:#fffaf0">'
+        . '<div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#6b6b6b;font-weight:700;margin:0 0 8px">Your pickup code</div>'
+        . '<div style="font-family:Menlo,Consolas,\'Courier New\',monospace;font-size:30px;line-height:1.2;font-weight:700;letter-spacing:.12em;color:#111111;white-space:nowrap">' . esc_html($code) . '</div>'
+        . '<div style="font-size:13px;line-height:1.5;color:#444444;margin:10px 0 0">Show or say this code at the store to collect your order. You can give it to someone else to collect for you. We check the code, not the name.</div>'
+        . '</div>';
+}
+
+add_action('woocommerce_email_before_order_table', static function ($order = null, $sent_to_admin = false): void {
+    if (!$sent_to_admin && $order instanceof WC_Order) {
+        echo sa_ol_pickup_block($order); // phpcs:ignore
+    }
+}, 6, 2);
+add_action('woocommerce_view_order', static function ($order_id): void {
+    $o = wc_get_order((int) $order_id);
+    if ($o instanceof WC_Order) {
+        echo sa_ol_pickup_block($o, false); // phpcs:ignore
+    }
+}, 4);
+add_action('woocommerce_admin_order_data_after_shipping_address', static function ($o): void {
+    if ($o instanceof WC_Order && sa_ol_pickup_code($o) !== '') {
+        echo '<p><strong>Pickup code:</strong> ' . esc_html(sa_ol_pickup_code($o)) . '<br><small>Staff: check the code, not the buyer\'s name.</small></p>';
+    }
+});
+add_action('woocommerce_checkout_order_processed', static function ($order_id): void {
+    $o = wc_get_order((int) $order_id);
+    if ($o instanceof WC_Order) {
+        sa_ol_pickup_code($o);
+    }
+}, 20);
+
 /** Carrier, tracking number and delivery address as one small block for shipped / out for delivery emails. */
 function sa_ol_delivery_block(WC_Order $o): string
 {
@@ -249,13 +320,13 @@ function sa_ol_email_content(WC_Order $o, string $stage, string $note = ''): arr
         }
     }
     $m = [
-        'processing' => ['We are preparing order #' . $n, 'Your order is being processed', '<p>We have your order and are getting it ready. We will email you again when it ships or is ready for pickup.</p>' . sa_ol_items_html($o), 'View your order', $view],
+        'processing' => ['We are preparing order #' . $n, 'Your order is being processed', '<p>We have your order and are getting it ready. We will email you again when it ships or is ready for pickup.</p>' . sa_ol_pickup_block($o) . sa_ol_items_html($o), 'View your order', $view],
         'on-hold' => ['Order #' . $n . ' is on hold', 'Your order is on hold', '<p>We have paused order #' . esc_html($n) . ' while we complete a quick check. You do not need to do anything unless we contact you.</p>' . ($noteh ? '<p><strong>Reason</strong></p>' . $noteh : '') . '<p>If you have details that could help, such as photos or documents, you can send them with the button below. No login needed.</p>', 'Send details', sa_ol_info_url($o)],
         'awaiting-info' => ['Information needed for order #' . $n, 'We need information to continue your order', '<p>We cannot continue with order #' . esc_html($n) . ' until we receive the information below.</p><p><strong>What we need</strong></p>' . ($noteh ?: ($hr_items !== '' ? '' : '<p style="background:#f7f7f7;border-left:3px solid #F5A623;padding:10px 12px;margin:12px 0">Details about your order. Reply with the button below and we will confirm what is missing.</p>')) . '<p><strong>Why we need it</strong><br>' . ($hr_why !== '' ? esc_html($hr_why) : 'We use it to confirm the order is correct, for example the right part for your vehicle or your delivery or payment details, so nothing is sent or charged by mistake.') . '</p>' . $hr_items . '<p><strong>How to send it</strong><br>Use the button below to reply and attach photos or documents. No login needed. Your order stays on hold until we hear from you.</p>', 'Send the information', sa_ol_info_url($o)],
         'shipped' => ['Order #' . $n . ' has shipped', 'Your order is on its way', '<p>Your order has been handed to the courier.</p>' . sa_ol_delivery_block($o) . $noteh, 'Track order', $trk ?: $view],
         'out-for-delivery' => ['Order #' . $n . ' is out for delivery', 'Out for delivery today', '<p>Your order is out for delivery today. Please keep your phone close so the rider can reach you.</p>' . sa_ol_delivery_block($o) . $noteh, 'Track order', $trk ?: $view],
         'delivered' => ['Order #' . $n . ' was delivered', 'Your order was delivered', '<p>Your order has been delivered.</p>' . $noteh, 'View your order', $view],
-        'ready-pickup' => ['Order #' . $n . ' is ready for pickup', 'Ready for pickup', '<p>Your order is ready to collect at our store:</p><p><strong>Ground Floor, Midax Plaza, Kangundo Rd, Njiru, Nairobi</strong></p><p>Please bring your order number (#' . esc_html($n) . ') and the phone number used at checkout.</p>' . apply_filters('sa_ol_ready_pickup_extra', '', $o) . $noteh, 'Get directions', 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode('Midax Plaza, Kangundo Rd, Njiru, Nairobi')],
+        'ready-pickup' => ['Order #' . $n . ' is ready for pickup', 'Ready for pickup', '<p>Your order is ready to collect at our store:</p><p><strong>Ground Floor, Midax Plaza, Kangundo Rd, Njiru, Nairobi</strong></p>' . (sa_ol_pickup_code($o) !== '' ? sa_ol_pickup_block($o) : '<p>Please bring your order number (#' . esc_html($n) . ') and the phone number used at checkout.</p>') . apply_filters('sa_ol_ready_pickup_extra', '', $o) . $noteh, 'Get directions', 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode('Midax Plaza, Kangundo Rd, Njiru, Nairobi')],
         'completed' => ['Order #' . $n . ' is complete', 'Thank you, your order is complete', '<p>Your order is complete. Thank you for shopping with Supreme Autoparts.</p>' . sa_ol_items_html($o) . $noteh, 'View your order', $view],
         'cancelled' => ['Order #' . $n . ' was cancelled', 'Your order was cancelled', '<p>Your order #' . esc_html($n) . ' has been cancelled.</p>' . $noteh . '<p>If you paid, any refund goes back to the original payment method.</p>', 'Shop again', home_url('/shop/')],
         'refunded' => ['Refund for order #' . $n, 'Your refund is on its way', '<p>We have refunded ' . wp_kses_post(wc_price((float) $o->get_total_refunded(), ['currency' => $o->get_currency()])) . ' for order #' . esc_html($n) . '. Depending on your bank or card it can take a few working days to show.</p>' . $noteh, 'View your order', $view],
