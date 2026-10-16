@@ -301,13 +301,17 @@ function sa_rcpt_items_html(array $items, string $mode, string $font, string $it
         $img = $src !== ''
             ? '<img src="' . ($pdf ? esc_attr($src) : esc_url($src)) . '" width="56" height="56" alt=""' . ($mode === 'page' ? ' onerror="this.style.visibility=\'hidden\'"' : '') . ' style="display:block;width:56px;height:56px;object-fit:contain;border:1px solid ' . SA_RCPT_LINE . ';background:#ffffff">'
             : '<div style="width:56px;height:56px;border:1px solid ' . SA_RCPT_LINE . ';background:#F7F7F7"></div>';
+        $nothumb = !empty($it['no_thumb']);
+        if ($nothumb) {
+            $img = '';
+        }
         $meta = '';
         foreach ((array) ($it['meta'] ?? []) as $m) {
             $meta .= '<div style="font-size:12px;color:' . SA_RCPT_MUTED . ';line-height:1.45;margin-top:2px">' . esc_html($m) . '</div>';
         }
         $sm = '<div class="sa-show-sm" style="display:none;mso-hide:all;max-height:0;overflow:hidden;font-size:12px;color:' . SA_RCPT_MUTED . ';margin-top:4px">' . esc_html($it['qty']) . ' × ' . wp_kses_post($it['unit']) . '</div>';
         $h .= '<tr class="sa-row">'
-            . '<td style="' . $td . 'width:68px;padding-right:12px">' . $img . '</td>'
+            . '<td style="' . $td . ($nothumb ? 'width:0;padding:0' : 'width:68px;padding-right:12px') . '">' . $img . '</td>'
             . '<td style="' . $td . 'font-size:14px;line-height:1.45;color:' . SA_RCPT_INK . '"><div style="font-weight:600">' . esc_html($it['name']) . '</div>' . $meta . ($pdf ? '' : $sm) . '</td>'
             . '<td class="sa-hide-sm" style="' . $td . 'font-size:14px;text-align:right;font-variant-numeric:tabular-nums;color:#333333">' . esc_html($it['qty']) . '</td>'
             . '<td class="sa-hide-sm" style="' . $td . 'font-size:14px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#333333">' . wp_kses_post($it['unit']) . '</td>'
@@ -594,4 +598,5 @@ function sa_rcpt_send_pdf_download(array $d): void
     echo $bytes; // phpcs:ignore
     exit;
 }
+
 
