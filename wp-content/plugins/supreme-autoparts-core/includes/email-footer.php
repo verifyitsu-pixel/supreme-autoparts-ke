@@ -20,15 +20,24 @@ function sa_email_footer_business(string $country = ''): array
     ];
 }
 
+/** Dark mode overrides shared by every email. The content card stays white so inline colours inside it keep their contrast; page background, footer card and footer logo switch. */
+function sa_email_dark_css(): string
+{
+    return '@media (prefers-color-scheme: dark){body,.sa-bg,#wrapper,#template_footer,#template_footer td{background:#0d0d0d !important;background-color:#0d0d0d !important}'
+        . '.sa-ft-t,.sa-ft-t p,.sa-ft-t div{color:#a3a3a3 !important}.sa-ft-t a{color:#d4d4d4 !important}.sa-ft-b{border-top-color:#333333 !important}'
+        . '.sa-lm{display:none !important}.sa-dm{display:block !important;max-height:none !important;overflow:visible !important}}';
+}
+
 function sa_email_footer_html(string $country = ''): string
 {
     $business = sa_email_footer_business($country);
     $logo = home_url('/wp-content/themes/supreme-autoparts/assets/logo-email.png');
+    $logo_dm = home_url('/wp-content/themes/supreme-autoparts/assets/logo-email-dark.png');
     $link = 'color:#555555;text-decoration:underline;';
     return '<!--sa-email-footer--><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;border-collapse:collapse" data-sa-email-region="' . ($business['whatsapp'] === '254714498451' ? 'KE' : 'US') . '">'
-        . '<tr><td style="padding:20px 28px 28px;color:#737373;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;text-align:center">'
-        . '<div style="border-top:1px solid #dedede;padding-top:20px">'
-        . '<p style="margin:0 0 12px;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#111111;line-height:28px"><img src="' . esc_url($logo) . '" alt="Supreme Autoparts" width="180" height="28" border="0" style="display:block;margin:0 auto;width:180px;height:28px;max-width:100%;border:0;outline:none;text-decoration:none;font-size:13px;font-weight:700;color:#111111"></p>'
+        . '<tr><td class="sa-ft-t" style="padding:20px 28px 28px;color:#737373;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;text-align:center">'
+        . '<div class="sa-ft-b" style="border-top:1px solid #dedede;padding-top:20px">'
+        . '<p style="margin:0 0 12px;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#111111;line-height:28px"><img class="sa-lm" src="' . esc_url($logo) . '" alt="Supreme Autoparts" width="180" height="28" border="0" style="display:block;margin:0 auto;width:180px;height:28px;max-width:100%;border:0;outline:none;text-decoration:none;font-size:13px;font-weight:700;color:#111111"><img class="sa-dm" src="' . esc_url($logo_dm) . '" alt="" width="180" height="28" border="0" style="display:none;margin:0 auto;width:180px;height:28px;max-width:100%;border:0;outline:none;mso-hide:all"></p>'
         . '<p style="margin:0 0 10px"><a href="' . esc_url('https://www.google.com/maps/search/?api=1&query=' . rawurlencode((string) $business['one_line'])) . '" style="color:#737373;text-decoration:none">' . esc_html($business['one_line']) . '</a></p>'
         . '<p style="margin:0"><a href="' . esc_url(home_url('/privacy-policy/')) . '" style="' . $link . '">Privacy</a> &nbsp;&middot;&nbsp; '
         . '<a href="' . esc_url(home_url('/terms/')) . '" style="' . $link . '">Terms</a> &nbsp;&middot;&nbsp; '
@@ -130,7 +139,7 @@ function sa_email_help_html(string $country = '', string $ctx = 'generic'): stri
     if ($business['whatsapp'] === '254714498451' && in_array($ctx, ['order', 'pickup_order', 'pickup', 'delivery', 'delivered'], true)) {
         $roadside = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #e4e4e0">Car trouble? <a href="' . esc_url(home_url('/roadside/')) . '" style="color:#333333;text-decoration:underline">Request roadside help</a> or call <a href="tel:+254714498451" style="color:#333333;text-decoration:underline;white-space:nowrap">+254 714 498 451</a>.</div>';
     }
-    return '<!--sa-email-help--><div style="margin:20px 0 4px;padding:16px 0 0;border-top:1px solid #e4e4e0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.65;color:#555555">'
+    return '<!--sa-email-help--><div class="sa-help" style="margin:20px 0 4px;padding:16px 0 0;border-top:1px solid #e4e4e0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.65;color:#555555">'
         . '<div>' . esc_html(sa_email_help_lead($ctx))
         . ($reply ? '' : '<br><a href="mailto:calvin@supremeautoparts.co.ke" style="color:#333333;text-decoration:underline">Email us</a> or '
             . '<a href="https://wa.me/' . esc_attr($business['whatsapp']) . '" style="color:#333333;text-decoration:underline">chat on WhatsApp</a>.')
@@ -260,7 +269,7 @@ add_action('woocommerce_email_header', static function (): void {
     add_filter('option_woocommerce_email_header_image', static fn() => home_url('/wp-content/themes/supreme-autoparts/assets/logo-email-dark.png'), 20);
 }, 2);
 add_filter('woocommerce_email_styles', static function (string $css): string {
-    return $css . "\n#template_header_image { background:#111111 !important; padding:22px 28px 0 !important; }\n#template_header_image img { width:180px !important; max-width:100% !important; height:auto !important; }\n#header_wrapper { background:#111111 !important; border-bottom:4px solid #f59e0b !important; padding:14px 28px 22px !important; }\n#header_wrapper h1 { color:#ffffff !important; font-size:24px !important; line-height:1.25 !important; text-shadow:none !important; }\n#body_content { background:#ffffff !important; }\n#body_content_inner, #body_content_inner p { color:#444444 !important; line-height:1.65 !important; }\n#template_container { border-radius:12px !important; overflow:hidden !important; }\n#wrapper { padding-bottom:0 !important; }\na[x-apple-data-detectors], .sa-footer a { color:inherit !important; text-decoration:none !important; }\n#template_footer, #template_footer td, #credit { display:none !important; height:0 !important; max-height:0 !important; overflow:hidden !important; mso-hide:all; padding:0 !important; margin:0 !important; font-size:0 !important; line-height:0 !important; }\n"
+    return $css . "\n" . sa_email_dark_css() . "\n#template_header_image { background:#111111 !important; padding:22px 28px 0 !important; }\n#template_header_image img { width:180px !important; max-width:100% !important; height:auto !important; }\n#header_wrapper { background:#111111 !important; border-bottom:4px solid #f59e0b !important; padding:14px 28px 22px !important; }\n#header_wrapper h1 { color:#ffffff !important; font-size:24px !important; line-height:1.25 !important; text-shadow:none !important; }\n#body_content { background:#ffffff !important; }\n#body_content_inner, #body_content_inner p { color:#444444 !important; line-height:1.65 !important; }\n#template_container { border-radius:12px !important; overflow:hidden !important; }\n#wrapper { padding-bottom:0 !important; }\na[x-apple-data-detectors], .sa-footer a { color:inherit !important; text-decoration:none !important; }\n#template_footer, #template_footer td, #credit { display:none !important; height:0 !important; max-height:0 !important; overflow:hidden !important; mso-hide:all; padding:0 !important; margin:0 !important; font-size:0 !important; line-height:0 !important; }\n"
         // Phone width: drop the qty and unit price columns, show "qty x price" under the item name instead.
         . "body, table, td, p, div { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }\n"
         . "@media only screen and (max-width:620px){ .sa-hide-sm { display:none !important; } .sa-show-sm { display:block !important; max-height:none !important; overflow:visible !important; } .sa-col { display:block !important; width:100% !important; padding:0 0 14px !important; } }\n";
