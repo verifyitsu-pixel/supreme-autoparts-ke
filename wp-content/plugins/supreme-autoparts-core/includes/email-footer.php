@@ -1,75 +1,110 @@
 <?php
-/**
- * Email footer — disabled.
- *
- * Previously appended a branded block (logo, address, phones, links, notice) to every
- * HTML/plain email via wp_mail. The store now ships emails with the logo header only
- * and no custom footer. WooCommerce default footer text is forced empty so templates
- * do not print leftover option junk.
- */
+/** Shared, compact footer for store email, including plain-text messages. */
 declare(strict_types=1);
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-/** @deprecated Returns empty — custom email footer removed. */
-function sa_email_footer_html(): string
+/** Country comes from the order when available, otherwise the site's geo lookup. */
+function sa_email_footer_business(string $country = ''): array
 {
-    return '';
+    $country = strtoupper($country !== '' ? $country : (function_exists('sa_geo_country') ? sa_geo_country() : 'US'));
+    $africa = function_exists('WC') && WC()->countries
+        ? WC()->countries->get_continent_code_for_country($country) === 'AF'
+        : $country === 'KE';
+    return function_exists('sa_geo_business') ? sa_geo_business($africa ? 'KE' : 'US') : [
+        'one_line' => $africa ? 'Ground Floor, Midax Plaza, Kangundo Rd, Njiru, Nairobi, Kenya' : '12800 NE Sandy Blvd, Portland, OR 97230',
+        'phone_display' => $africa ? '+254 714 498 451' : '+1 917 437 5121',
+        'whatsapp' => $africa ? '254714498451' : '19174375121',
+    ];
 }
 
-/** @deprecated Returns empty — custom email footer removed. */
-function sa_email_footer_text(): string
+function sa_email_footer_html(string $country = ''): string
 {
-    return '';
+    $business = sa_email_footer_business($country);
+    $link = 'color:#555555;text-decoration:underline;';
+    return '<!--sa-email-footer--><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;border-collapse:collapse" data-sa-email-region="' . ($business['whatsapp'] === '254714498451' ? 'KE' : 'US') . '">'
+        . '<tr><td style="padding:20px 28px 28px;color:#737373;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;text-align:center">'
+        . '<div style="border-top:1px solid #dedede;padding-top:20px">'
+        . '<p style="margin:0 0 6px;color:#333333;font-size:12px;font-weight:700;letter-spacing:1.1px">SUPREME AUTOPARTS</p>'
+        . '<p style="margin:0 0 14px">' . esc_html($business['one_line']) . '</p>'
+        . '<p style="margin:0 0 4px">Having an issue with your order or account? We are here to help.</p>'
+        . '<p style="margin:0 0 14px"><a href="mailto:calvin@supremeautoparts.co.ke" style="' . $link . '">calvin@supremeautoparts.co.ke</a><br><a href="https://wa.me/' . esc_attr($business['whatsapp']) . '" style="' . $link . '">WhatsApp ' . esc_html($business['phone_display']) . '</a></p>'
+        . '<p style="margin:0"><a href="' . esc_url(home_url('/privacy-policy/')) . '" style="' . $link . '">Privacy</a> &nbsp;&middot;&nbsp; '
+        . '<a href="' . esc_url(home_url('/terms/')) . '" style="' . $link . '">Terms</a> &nbsp;&middot;&nbsp; '
+        . '<a href="' . esc_url(home_url('/returns/')) . '" style="' . $link . '">Returns</a></p>'
+        . '</div></td></tr></table><!--/sa-email-footer-->';
 }
 
-/**
- * Strip any previously injected custom footer marker block from HTML (idempotent).
- */
+function sa_email_footer_text(string $country = ''): string
+{
+    $business = sa_email_footer_business($country);
+    return "Supreme Autoparts\n" . $business['one_line'] . "\n\n"
+        . "Having an issue with your order or account? We are here to help.\n"
+        . "Email: calvin@supremeautoparts.co.ke\nWhatsApp: " . $business['phone_display'] . " (https://wa.me/" . $business['whatsapp'] . ")\n\n"
+        . 'Privacy: ' . home_url('/privacy-policy/') . "\n"
+        . 'Terms: ' . home_url('/terms/') . "\n"
+        . 'Returns: ' . home_url('/returns/');
+}
+
+/** Remove only our own block, never unsubscribe text or provider footers. */
 function sa_email_strip_custom_footer(string $html): string
 {
-    if ($html === '' || strpos($html, 'sa-email-footer') === false) {
+    if (strpos($html, 'sa-email-footer') === false) {
         return $html;
     }
-    // Remove our style + table block (and optional trailing whitespace).
-    $html = (string) preg_replace(
-        '#<!--sa-email-footer-->.*?(?:</table>|(?=</body>))#is',
-        '',
-        $html
-    );
-    return $html;
+    $html = (string) preg_replace('#<!--sa-email-footer-->.*?<!--/sa-email-footer-->#is', '', $html);
+    return (string) preg_replace('#<!--sa-email-footer-->.*?</table>#is', '', $html);
 }
 
-// Never append a custom footer. Still strip a stale one if a caller already embedded it.
-add_filter('wp_mail', static function (array $args): array {
-    $msg = (string) ($args['message'] ?? '');
-    if ($msg === '') {
-        return $args;
+/** Idempotent across WooCommerce, wp_mail and direct transactional API sends. */
+function sa_email_add_footer(string $message, string $country = ''): string
+{
+    if ($message === '' || strpos($message, '<!--sa-email-footer-->') !== false) {
+        return $message;
     }
-    $args['message'] = sa_email_strip_custom_footer($msg);
+    // Plain mail converted to HTML already contains the text footer.
+    if (strpos($message, 'Having an issue with your order or account?') !== false
+        && strpos($message, 'Privacy:') !== false) {
+        return $message;
+    }
+    $footer = sa_email_footer_html($country);
+    $pos = strripos($message, '</body>');
+    return $pos === false ? $message . $footer : substr_replace($message, $footer, $pos, 0);
+}
+
+function sa_email_add_text_footer(string $message, string $country = ''): string
+{
+    if ($message === '' || strpos($message, 'Having an issue with your order or account?') !== false) {
+        return $message;
+    }
+    return rtrim($message) . "\n\n--\n" . sa_email_footer_text($country);
+}
+
+add_filter('woocommerce_mail_content', static function ($content) {
+    $email = $GLOBALS['sa_email_current'] ?? null;
+    $order = $email instanceof WC_Email ? $email->object : null;
+    $country = $order instanceof WC_Order ? (string) ($order->get_billing_country() ?: $order->get_shipping_country()) : '';
+    if (!is_string($content)) {
+        return $content;
+    }
+    return preg_match('/<(?:html|body|table|div|p)\b/i', $content)
+        ? sa_email_add_footer($content, $country) : sa_email_add_text_footer($content, $country);
+}, 90);
+
+add_filter('wp_mail', static function (array $args): array {
+    $message = (string) ($args['message'] ?? '');
+    if (preg_match('/<(?:html|body|table|div|p)\b/i', $message)) {
+        $args['message'] = sa_email_add_footer($message);
+    } elseif (!(function_exists('sa_brevo_is_configured') && sa_brevo_is_configured())) {
+        $args['message'] = sa_email_add_text_footer($message);
+    }
     return $args;
 }, 50);
 
-// WooCommerce email footer text (shown in email-footer.php templates) — keep blank.
+// The shared wp_mail footer replaces WooCommerce's default boilerplate only.
 add_filter('woocommerce_email_footer_text', static fn ($text = ''): string => '', 100);
-
-// Hide the WC #template_footer chrome if the template still renders an empty cell.
 add_filter('woocommerce_email_styles', static function (string $css): string {
-    $css .= "\n#template_footer, #template_footer td, #credit { display:none !important; height:0 !important; max-height:0 !important; overflow:hidden !important; mso-hide:all; padding:0 !important; margin:0 !important; font-size:0 !important; line-height:0 !important; }\n";
-    return $css;
+    return $css . "\n#template_footer, #template_footer td, #credit { display:none !important; height:0 !important; max-height:0 !important; overflow:hidden !important; mso-hide:all; padding:0 !important; margin:0 !important; font-size:0 !important; line-height:0 !important; }\n";
 }, 100);
-
-// Clear persisted footer option on boot (once per core version).
-add_action('init', static function (): void {
-    if (!function_exists('update_option')) {
-        return;
-    }
-    $flag = 'sa_email_footer_cleared_' . (defined('SA_CORE_VERSION') ? SA_CORE_VERSION : '1');
-    if (get_option($flag) === '1') {
-        return;
-    }
-    update_option('woocommerce_email_footer_text', '', false);
-    update_option($flag, '1', false);
-}, 20);
