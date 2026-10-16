@@ -270,7 +270,7 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
         ]);
 
         if (empty($result['success'])) {
-            $msg = (string) ($result['message'] ?? __('Could not start Whop Checkout.', 'whop-payments'));
+            $msg = (string) ($result['message'] ?? __('Could not start secure checkout.', 'whop-payments'));
             wc_add_notice($msg, 'error');
             $order->add_order_note('Whop checkout error: ' . $msg);
             return ['result' => 'failure'];
@@ -309,7 +309,7 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
 
         $purchase_url = (string) ($result['purchase_url'] ?? '');
         if (!class_exists('Whop_Checkout_Embed') || !Whop_Checkout_Embed::is_allowed_whop_url($purchase_url)) {
-            wc_add_notice(__('Could not start Whop Checkout.', 'whop-payments'), 'error');
+            wc_add_notice(__('Could not start secure checkout.', 'whop-payments'), 'error');
             $order->add_order_note(__('Whop checkout created but purchase URL was missing or not on whop.com.', 'whop-payments'));
             $order->save();
             return ['result' => 'failure'];
@@ -324,7 +324,7 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
 
         return [
             'result'   => 'success',
-            'redirect' => $purchase_url,
+            'redirect' => Whop_Checkout_Embed::pay_url($order),
         ];
     }
 
