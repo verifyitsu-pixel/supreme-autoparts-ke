@@ -36,13 +36,82 @@ function sa_email_footer_html(string $country = ''): string
         . '</div></td></tr></table><!--/sa-email-footer-->';
 }
 
-function sa_email_help_html(string $country = ''): string
+/** What kind of email this is, so the help line fits its purpose. 'none' = the email already has its own help text. */
+function sa_email_context(string $message, string $woo_id = '', bool $customer = true): string
 {
+    if (!$customer) {
+        return 'none';
+    }
+    $has = static fn(string $needle): bool => stripos($message, $needle) !== false;
+    if ($has('sa-otp-mail') || $has('Never share the code') || $has('Is this really us?') || $has('Need us now?') || $has('Need help? calvin@')) {
+        return 'none';
+    }
+    $by_id = [
+        'customer_processing_order' => 'order', 'customer_on_hold_order' => 'order', 'customer_invoice' => 'order', 'customer_note' => 'order',
+        'customer_completed_order' => 'delivered', 'customer_refunded_order' => 'refund', 'customer_partially_refunded_order' => 'refund',
+        'customer_failed_order' => 'failed', 'customer_reset_password' => 'account', 'customer_new_account' => 'account',
+    ];
+    if ($woo_id !== '' && isset($by_id[$woo_id])) {
+        return $by_id[$woo_id];
+    }
+    if ($has('Your reference is')) {
+        return 'contact';
+    }
+    if ($has('Booking number') || $has('Car Service') || $has('booking fee')) {
+        return 'booking';
+    }
+    if ($has('was cancelled') || $has('Your order was cancelled')) {
+        return 'cancelled';
+    }
+    if ($has('Your refund is on its way') || $has('Refund for order')) {
+        return 'refund';
+    }
+    if ($has('Your payment failed') || $has('did not go through')) {
+        return 'failed';
+    }
+    if ($has('out for delivery') || $has('has shipped') || $has('ready for pickup') || $has('handed to the courier')) {
+        return 'delivery';
+    }
+    if ($has('was delivered') || $has('has been delivered')) {
+        return 'delivered';
+    }
+    if ($has('reset') && $has('password')) {
+        return 'account';
+    }
+    if ($has('More info needed') || $has('on hold')) {
+        return 'none';
+    }
+    return $has('order') ? 'order' : 'generic';
+}
+
+function sa_email_help_lead(string $ctx): string
+{
+    $lines = [
+        'order'     => 'Need to change the address or an item? Message us with your order number before it ships.',
+        'delivered' => 'Something not right with a part? Send us a photo and your order number and we will sort it out.',
+        'delivery'  => 'Problem with the delivery? Message us with your order number and the phone number you gave at checkout.',
+        'cancelled' => 'Cancelled by mistake? Message us with the order number and we will help you order again.',
+        'refund'    => 'Refund not showing yet? Send us the order number and we will trace it.',
+        'failed'    => 'Payment keeps failing? Message us and we will help you finish the order.',
+        'account'   => 'Did not ask for this? Ignore this email. If you are worried about your account, message us.',
+        'booking'   => 'Need to change your booking? Use the manage link above or message us with your booking number.',
+        'contact'   => 'Forgot to mention something? Just reply to this email and we will add it to your request.',
+        'generic'   => 'Questions? We are happy to help.',
+    ];
+    return $lines[$ctx] ?? $lines['generic'];
+}
+
+function sa_email_help_html(string $country = '', string $ctx = 'generic'): string
+{
+    if ($ctx === 'none') {
+        return '<!--sa-email-help--><!--/sa-email-help-->';
+    }
     $business = sa_email_footer_business($country);
+    $reply = $ctx === 'contact';
     return '<!--sa-email-help--><div style="margin:12px 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.65;color:#666666">'
-        . 'Questions about your order or account?<br>'
-        . '<a href="mailto:calvin@supremeautoparts.co.ke" style="color:#333333;text-decoration:underline">Email us</a> or '
-        . '<a href="https://wa.me/' . esc_attr($business['whatsapp']) . '" style="color:#333333;text-decoration:underline">chat on WhatsApp</a>.'
+        . esc_html(sa_email_help_lead($ctx)) . '<br>'
+        . ($reply ? '' : '<a href="mailto:calvin@supremeautoparts.co.ke" style="color:#333333;text-decoration:underline">Email us</a> or '
+            . '<a href="https://wa.me/' . esc_attr($business['whatsapp']) . '" style="color:#333333;text-decoration:underline">chat on WhatsApp</a>.')
         . '</div><!--/sa-email-help-->';
 }
 
@@ -66,18 +135,19 @@ function sa_email_strip_custom_footer(string $html): string
 }
 
 /** Idempotent across WooCommerce, wp_mail and direct transactional API sends. */
-function sa_email_add_footer(string $message, string $country = ''): string
+function sa_email_add_footer(string $message, string $country = '', string $woo_id = '', bool $customer = true): string
 {
     if ($message === '' || strpos($message, '<!--sa-email-footer-->') !== false) {
         return $message;
     }
     // Plain mail converted to HTML already contains the text footer.
-    if (strpos($message, 'Questions about your order or account?') !== false
+    if (strpos($message, 'Email: calvin@supremeautoparts.co.ke') !== false
         && strpos($message, 'Privacy:') !== false) {
         return $message;
     }
-    $help = sa_email_help_html($country);
-    if (strpos($message, '<!--sa-email-help-->') === false) {
+    $ctx = sa_email_context($message, $woo_id, $customer);
+    $help = sa_email_help_html($country, $ctx);
+    if ($ctx !== 'none' && strpos($message, '<!--sa-email-help-->') === false) {
         // Shared order/booking cards: insert a row below the action button.
         preg_match_all('#(?:</tbody>\s*)?</table>\s*</td>\s*</tr>\s*(?:</tbody>\s*)?</table>#i', $message, $ends, PREG_OFFSET_CAPTURE);
         $card_end = !empty($ends[0]) ? $ends[0][count($ends[0]) - 1][1] : false;
@@ -96,21 +166,27 @@ function sa_email_add_footer(string $message, string $country = ''): string
     return $pos === false ? $message . $footer : substr_replace($message, $footer, $pos, 0);
 }
 
-function sa_email_add_text_footer(string $message, string $country = ''): string
+function sa_email_add_text_footer(string $message, string $country = '', string $woo_id = '', bool $customer = true): string
 {
-    if ($message === '' || strpos($message, 'Questions about your order or account?') !== false) {
+    if ($message === '' || strpos($message, 'Email: calvin@supremeautoparts.co.ke') !== false) {
         return $message;
     }
     $business = sa_email_footer_business($country);
-    return rtrim($message) . "\n\nQuestions about your order or account?\n"
-        . "Email: calvin@supremeautoparts.co.ke\nWhatsApp: " . $business['phone_display'] . " (https://wa.me/" . $business['whatsapp'] . ")\n\n--\n"
-        . sa_email_footer_text($country);
+    $ctx = sa_email_context($message, $woo_id, $customer);
+    $help = $ctx === 'none' ? '' : "\n\n" . sa_email_help_lead($ctx) . "\n"
+        . ($ctx === 'contact' ? '' : "Email: calvin@supremeautoparts.co.ke\nWhatsApp: " . $business['phone_display'] . " (https://wa.me/" . $business['whatsapp'] . ")");
+    if ($ctx === 'contact') {
+        $help .= "Email: calvin@supremeautoparts.co.ke";
+    }
+    return rtrim($message) . $help . "\n\n--\n" . sa_email_footer_text($country);
 }
 
 add_action('woocommerce_email_footer', static function ($email = null): void {
     $order = $email instanceof WC_Email ? $email->object : null;
     $country = $order instanceof WC_Order ? (string) ($order->get_billing_country() ?: $order->get_shipping_country()) : '';
-    echo sa_email_help_html($country); // Escaped by the shared renderer.
+    $customer = !($email instanceof WC_Email) || !method_exists($email, 'is_customer_email') || $email->is_customer_email();
+    $GLOBALS['sa_email_ctx'] = sa_email_context((string) ($GLOBALS['sa_email_body_hint'] ?? ''), $email instanceof WC_Email ? (string) $email->id : '', $customer);
+    echo sa_email_help_html($country, $GLOBALS['sa_email_ctx']); // Escaped by the shared renderer.
 }, 5);
 
 add_filter('woocommerce_mail_content', static function ($content) {
@@ -120,16 +196,19 @@ add_filter('woocommerce_mail_content', static function ($content) {
     if (!is_string($content)) {
         return $content;
     }
+    $woo_id = $email instanceof WC_Email ? (string) $email->id : '';
+    $customer = !($email instanceof WC_Email) || !method_exists($email, 'is_customer_email') || $email->is_customer_email();
     return preg_match('/<(?:html|body|table|div|p)\b/i', $content)
-        ? sa_email_add_footer($content, $country) : sa_email_add_text_footer($content, $country);
+        ? sa_email_add_footer($content, $country, $woo_id, $customer) : sa_email_add_text_footer($content, $country, $woo_id, $customer);
 }, 90);
 
 add_filter('wp_mail', static function (array $args): array {
     $message = (string) ($args['message'] ?? '');
+    $customer = strpos(ltrim((string) ($args['subject'] ?? '')), '[') !== 0; // "[Bookings] ...", "[Roadside] ..." go to the team.
     if (preg_match('/<(?:html|body|table|div|p)\b/i', $message)) {
-        $args['message'] = sa_email_add_footer($message);
+        $args['message'] = sa_email_add_footer($message, '', '', $customer);
     } elseif (!(function_exists('sa_brevo_is_configured') && sa_brevo_is_configured())) {
-        $args['message'] = sa_email_add_text_footer($message);
+        $args['message'] = sa_email_add_text_footer($message, '', '', $customer);
     }
     return $args;
 }, 50);
