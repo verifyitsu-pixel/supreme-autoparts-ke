@@ -1,0 +1,29 @@
+/* Customer avatars + greeting (supreme-autoparts-core customer-avatar.php) */
+.sa-avatar{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;overflow:hidden;flex:0 0 auto;vertical-align:middle;background:#ececec}
+.sa-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.sa-avatar--initials{background:#1a1a1a;color:#F5A623;font-weight:700;letter-spacing:.03em;line-height:1;font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+
+/* Header account chip */
+.sa-header__icon-link .sa-avatar{margin-right:2px}
+.sa-header__icon-link .sa-greet-word{font-weight:600}
+
+/* My Account greeting card */
+.sa-greet{display:flex;align-items:center;gap:14px;padding:14px 16px;margin:0 0 18px;background:#f7f7f7;border:1px solid #e4e4e4;border-radius:6px}
+.sa-greet .sa-avatar{flex:0 0 auto;border:2px solid #fff;box-shadow:0 0 0 1px #e4e4e4}
+.sa-greet__body{min-width:0}
+.sa-greet__hello{margin:0;font-size:1.125rem;font-weight:600;color:#191919}
+.sa-greet__hello .sa-greet-name{font-weight:700}
+.sa-greet__msg{margin:4px 0 0;font-size:.8125rem}
+.sa-greet__msg--success{color:#1e7b34}
+.sa-greet__msg--error{color:#c13515}
+.sa-greet__actions{display:flex;align-items:center;gap:12px;margin-top:6px;flex-wrap:wrap}
+.sa-greet__form{display:inline-flex;align-items:center;gap:8px;margin:0}
+.sa-greet__upload{display:inline-block;font-size:.8125rem;font-weight:600;color:#0a0a0a;text-decoration:underline;cursor:pointer}
+.sa-greet__upload:hover{color:#8a5a00}
+.sa-greet__upload input[type="file"]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.sa-greet__remove{background:none;border:0;padding:0;font-size:.8125rem;color:#c13515;text-decoration:underline;cursor:pointer}
+.sa-greet__save{font-size:.8125rem}
+@media (max-width:640px){
+  .sa-greet{gap:12px;padding:12px}
+  .sa-greet__hello{font-size:1rem}
+}
