@@ -63,18 +63,44 @@ $links = [
 <div class="sa-dash">
   <header class="sa-dash__hero">
     <p class="sa-dash__eyebrow"><?php esc_html_e('My Account', 'supreme-autoparts'); ?></p>
-    <h2 class="sa-dash__title">
-      <?php
-      printf(
-          /* translators: %s: customer first name or display name */
-          esc_html__('Welcome back, %s', 'supreme-autoparts'),
-          esc_html($greeting)
-      );
-      ?>
-    </h2>
-    <p class="sa-dash__sub">
-      <?php esc_html_e('Manage orders, payment methods, and account details for Supreme Autoparts.', 'supreme-autoparts'); ?>
-    </p>
+    <?php if (function_exists('sa_avatar_html')) : ?>
+      <div class="sa-dash__hero-row">
+        <?php echo sa_avatar_html((int) $current_user->ID, 64); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+        <div class="sa-dash__hero-text">
+          <h2 class="sa-dash__title">
+            <?php
+            if (function_exists('sa_avatar_first_name') && sa_avatar_first_name((int) $current_user->ID) !== '') {
+                echo sa_avatar_greeting_html((int) $current_user->ID); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            } else {
+                printf(
+                    /* translators: %s: customer first name or display name */
+                    esc_html__('Welcome back, %s', 'supreme-autoparts'),
+                    esc_html($greeting)
+                );
+            }
+            ?>
+          </h2>
+          <p class="sa-dash__sub">
+            <?php esc_html_e('Manage orders, payment methods, and account details for Supreme Autoparts.', 'supreme-autoparts'); ?>
+          </p>
+          <?php echo sa_avatar_feedback_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+          <?php echo sa_avatar_controls_html((int) $current_user->ID); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+        </div>
+      </div>
+    <?php else : ?>
+      <h2 class="sa-dash__title">
+        <?php
+        printf(
+            /* translators: %s: customer first name or display name */
+            esc_html__('Welcome back, %s', 'supreme-autoparts'),
+            esc_html($greeting)
+        );
+        ?>
+      </h2>
+      <p class="sa-dash__sub">
+        <?php esc_html_e('Manage orders, payment methods, and account details for Supreme Autoparts.', 'supreme-autoparts'); ?>
+      </p>
+    <?php endif; ?>
   </header>
 
   <section class="sa-dash__links" aria-label="<?php esc_attr_e('Quick links', 'supreme-autoparts'); ?>">
@@ -173,3 +199,4 @@ $links = [
     </div>
   </section>
 </div>
+
