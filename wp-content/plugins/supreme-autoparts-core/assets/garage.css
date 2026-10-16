@@ -109,3 +109,14 @@
 .sa-fit{margin:8px 0;padding:10px 14px;border-radius:8px;font-size:.92rem;font-weight:600}
 .sa-fit--yes{background:#e7f6ec;border:1px solid #a7e3c0;color:#16794a}
 .sa-fit--no{background:#fff4df;border:1px solid #f0d9a8;color:#8a5a00}
+
+
+/* My Garage: vehicle photos (up to 3 per vehicle) */
+.sa-g-vehphotos{margin-top:12px;border-top:1px solid #f0f0f0;padding-top:10px}
+.sa-g-vehphotos__head{display:flex;align-items:baseline;gap:8px;font-size:.9rem;margin:0 0 4px}
+.sa-g-vehphotos .sa-g-thumbs{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));margin-top:6px}
+.sa-g-vehphotos .sa-g-thumb form{margin:0}
+.sa-g-vehphotos .sa-g-thumb a{display:block}
+.sa-g-vehphoto-add{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}
+.sa-g-vehphoto-add .sa-g-muted{font-size:.8rem}
+.sa-g-vehphoto-preview img{width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #e4e4e4;display:block}
