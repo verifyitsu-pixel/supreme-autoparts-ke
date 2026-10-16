@@ -98,3 +98,4 @@
 .sa-rs-aform{margin:6px 0 12px}.sa-rs-ahist{font-size:13px}.sa-rs-ahist em{color:#6b6b6b}
 .sa-rs-bars div{display:grid;grid-template-columns:160px 1fr 40px;align-items:center;gap:8px;margin:4px 0}.sa-rs-bars i{display:block;height:12px;background:#0a0a0a;border-radius:6px}
 @media(max-width:600px){.sa-rs-steps li{font-size:.68rem}.sa-rs-prov,.sa-rs-pay{flex-wrap:wrap}}
+@media(max-width:899px){.sa-rs-callbar{padding-right:84px}.sa-rs{padding-bottom:120px}}
