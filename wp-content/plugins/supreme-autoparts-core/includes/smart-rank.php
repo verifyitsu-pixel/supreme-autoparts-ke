@@ -309,15 +309,29 @@ function sa_rk_dnt(): bool
         || (isset($_SERVER['HTTP_SEC_GPC']) && (string) $_SERVER['HTTP_SEC_GPC'] === '1');
 }
 
+/** Fill an empty profile vehicle from the logged-in customer's My Garage default vehicle. */
+function sa_rk_garage_vehicle(array $pz): array
+{
+    if ($pz['mk'] === '' && is_user_logged_in() && function_exists('sa_garage_vehicle_pz')) {
+        $g = sa_garage_vehicle_pz(get_current_user_id());
+        if ($g['mk'] !== '') {
+            $pz['mk'] = $g['mk'];
+            $pz['mo'] = $g['mo'];
+            $pz['y'] = $g['y'];
+        }
+    }
+    return $pz;
+}
+
 /** @return array{c:array<int,float>,b:array<string,float>,mk:string,mo:string,y:string,p:list<int>,q:list<string>,cart:list<int>} */
 function sa_rk_profile(): array
 {
     static $pz = null;
     if ($pz !== null) { return $pz; }
     $pz = ['c' => [], 'b' => [], 'mk' => '', 'mo' => '', 'y' => '', 'p' => [], 'q' => [], 'cart' => []];
-    if (sa_rk_dnt() || empty($_COOKIE['sa_pz'])) { return $pz; }
+    if (sa_rk_dnt() || empty($_COOKIE['sa_pz'])) { return sa_rk_garage_vehicle($pz); }
     $raw = json_decode(wp_unslash((string) $_COOKIE['sa_pz']), true); // phpcs:ignore
-    if (!is_array($raw)) { return $pz; }
+    if (!is_array($raw)) { return sa_rk_garage_vehicle($pz); }
     foreach (array_slice((array) ($raw['c'] ?? []), 0, 8, true) as $k => $w) {
         if ((int) $k > 0 && is_numeric($w)) { $pz['c'][(int) $k] = max(0.0, min(1.0, (float) $w)); }
     }
@@ -338,7 +352,7 @@ function sa_rk_profile(): array
         $q = sanitize_text_field((string) $q);
         if ($q !== '') { $pz['q'][] = substr($q, 0, 60); }
     }
-    return $pz;
+    return sa_rk_garage_vehicle($pz);
 }
 
 function sa_rk_has_profile(array $pz): bool
