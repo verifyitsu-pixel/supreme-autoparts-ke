@@ -88,6 +88,7 @@ require_once SA_CORE_DIR . 'includes/gateways-retired.php';
 require_once SA_CORE_DIR . 'includes/smart-rank.php';
 require_once SA_CORE_DIR . 'includes/geo-content.php';
 require_once SA_CORE_DIR . 'includes/agent-api.php';
+require_once SA_CORE_DIR . 'includes/customer-avatar.php';
 // import-shopify.php is loaded by CLI/admin/boot import and by product-images helpers when needed.
 
 register_activation_hook(__FILE__, static function (): void {
@@ -238,7 +239,7 @@ add_action('init', static function (): void {
         return;
     }
 
-    // Still marked running and not stale — another worker is importing.
+    // Still marked running and not stale â another worker is importing.
     if ((string) get_option('sa_boot_import_running', '') === '1') {
         return;
     }
@@ -386,9 +387,9 @@ add_action('sa_core_empty_catalog_import', static function (): void {
  * - SUPREME_RECOVER_TOKEN via header X-SA-Recover-Token / Authorization: Bearer (prefer header; ?token= also accepted)
  * - current user can manage_woocommerce / manage_options
  *
- * Empty-catalog emergency no longer opens this route publicly — set SUPREME_RECOVER_TOKEN.
+ * Empty-catalog emergency no longer opens this route publicly â set SUPREME_RECOVER_TOKEN.
  * Always imports at most 50 rows over HTTP (CDN meta only) so the request does not fatal.
- * Assigns parent IA categories (brakes, suspension, …) and flushes rewrites.
+ * Assigns parent IA categories (brakes, suspension, â¦) and flushes rewrites.
  */
 add_action('rest_api_init', static function (): void {
     register_rest_route('supreme/v1', '/recover-catalog', [
@@ -426,7 +427,7 @@ add_action('rest_api_init', static function (): void {
                     return new WP_REST_Response(['ok' => false, 'error' => 'woocommerce_inactive'], 503);
                 }
 
-                // REST requests are often unauthenticated — elevate so term/product writes succeed
+                // REST requests are often unauthenticated â elevate so term/product writes succeed
                 // (same capability surface as WP-CLI boot import).
                 if (!current_user_can('manage_woocommerce')) {
                     $admins = get_users([
@@ -443,7 +444,7 @@ add_action('rest_api_init', static function (): void {
                 $counts_now = wp_count_posts('product');
                 $published_now = isset($counts_now->publish) ? (int) $counts_now->publish : 0;
 
-                // Fast path: catalog already populated — seed + repair parents only.
+                // Fast path: catalog already populated â seed + repair parents only.
                 if ($published_now > 0 && !$force_reimport) {
                     if (function_exists('sa_core_seed_categories') && taxonomy_exists('product_cat')) {
                         sa_core_seed_categories();
@@ -475,7 +476,7 @@ add_action('rest_api_init', static function (): void {
                     sa_core_seed_categories();
                 }
 
-                // Prefer 400/50 — not auto-2000. Category-scoped by default (brakes).
+                // Prefer 400/50 â not auto-2000. Category-scoped by default (brakes).
                 $candidates = [
                     SA_CORE_DIR . 'data/scrape/chunks/batch-with-images-400.ndjson',
                     '/usr/src/supreme-data/scrape/chunks/batch-with-images-400.ndjson',
@@ -580,7 +581,7 @@ add_action('after_switch_theme', static function (): void {
 
 
 /**
- * One-shot: repair USD prices that were stored as Shopify USD × SUPREME_USD_TO_KES
+ * One-shot: repair USD prices that were stored as Shopify USD Ã SUPREME_USD_TO_KES
  * before the store currency switched to USD. Idempotent via sa_price_usd_repair_v1.
  */
 add_action('init', static function (): void {
@@ -603,5 +604,6 @@ add_action('init', static function (): void {
     }
     sa_core_repair_inflated_usd_prices(['limit' => 5000, 'dry_run' => false]);
 }, 35);
+
 
 
