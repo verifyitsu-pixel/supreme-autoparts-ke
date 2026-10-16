@@ -35,6 +35,8 @@ if (!defined('WP_SITEURL')) define('WP_SITEURL', getenv('WP_SITEURL') ?: WP_HOME
 if (!defined('FS_METHOD')) define('FS_METHOD', 'direct');
 if (!defined('DISALLOW_FILE_EDIT')) define('DISALLOW_FILE_EDIT', true);
 if (!defined('DISALLOW_FILE_MODS')) define('DISALLOW_FILE_MODS', false);
+// WP-Cron stays off the web request path: a WP-CLI loop in this entrypoint runs due events every minute.
+if (!defined('DISABLE_WP_CRON')) define('DISABLE_WP_CRON', true);
 if (!defined('FORCE_SSL_ADMIN') && str_starts_with((string) (getenv('WP_HOME') ?: ''), 'https://')) {
   define('FORCE_SSL_ADMIN', true);
 }
@@ -530,6 +532,21 @@ done
 (
   sleep 8
   bootstrap_wordpress || echo "[supreme] Bootstrap finished with warnings."
+) &
+
+# WP-Cron runner: with DISABLE_WP_CRON set (see WORDPRESS_CONFIG_EXTRA), page loads
+# no longer spawn wp-cron.php. This loop fires due cron events via WP-CLI every
+# minute instead, so scheduled work (facet index ticks, WooCommerce Action
+# Scheduler, core maintenance) runs without stealing Apache workers from requests.
+(
+  for _ in $(seq 1 90); do
+    wp_as core is-installed 2>/dev/null && break
+    sleep 2
+  done
+  while true; do
+    wp_as cron event run --due-now >/dev/null 2>&1 || true
+    sleep 60
+  done
 ) &
 
 exec docker-entrypoint.sh "$@"
