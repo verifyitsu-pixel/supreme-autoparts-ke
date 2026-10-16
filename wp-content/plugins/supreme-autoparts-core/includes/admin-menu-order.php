@@ -30,11 +30,14 @@ function sa_core_menu_sort(array $slugs, array $order): array
         $rank[$want] = $i;
     }
     $rankOf = static function (string $slug) use ($rank): int {
-        if (isset($rank[$slug])) {
-            return $rank[$slug];
+        // Some plugins store sub-menu slugs URL-escaped (&amp;); compare
+        // against the plain form so both spellings match.
+        $norm = str_replace('&amp;', '&', $slug);
+        if (isset($rank[$norm])) {
+            return $rank[$norm];
         }
         foreach ($rank as $want => $i) {
-            if (substr($want, -1) === '*' && strpos($slug, substr($want, 0, -1)) === 0) {
+            if (substr($want, -1) === '*' && strpos($norm, substr($want, 0, -1)) === 0) {
                 return $i;
             }
         }
