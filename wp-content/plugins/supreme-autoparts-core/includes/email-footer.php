@@ -23,7 +23,7 @@ function sa_email_footer_business(string $country = ''): array
 function sa_email_footer_html(string $country = ''): string
 {
     $business = sa_email_footer_business($country);
-    $logo = function_exists('sa_theme_logo_url') ? sa_theme_logo_url(true) : home_url('/wp-content/themes/supreme-autoparts/assets/logo-light.jpg');
+    $logo = home_url('/wp-content/themes/supreme-autoparts/assets/logo-email.png');
     $link = 'color:#555555;text-decoration:underline;';
     return '<!--sa-email-footer--><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;border-collapse:collapse" data-sa-email-region="' . ($business['whatsapp'] === '254714498451' ? 'KE' : 'US') . '">'
         . '<tr><td style="padding:20px 28px 28px;color:#737373;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;text-align:center">'
