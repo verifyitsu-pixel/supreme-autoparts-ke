@@ -62,8 +62,13 @@ if (!defined('ABSPATH')) {
       <a class="sa-hide-sm sa-header__link" href="<?php echo esc_url(sa_page_url('contact')); ?>"><?php esc_html_e('Contact', 'supreme-autoparts'); ?></a>
       <?php if (function_exists('wc_get_page_permalink')) : ?>
         <a class="sa-header__icon-link" href="<?php echo esc_url(wc_get_page_permalink('myaccount')); ?>" aria-label="<?php esc_attr_e('Account', 'supreme-autoparts'); ?>">
-          <?php echo sa_category_icon_svg('user'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-          <span class="sa-hide-sm"><?php esc_html_e('Account', 'supreme-autoparts'); ?></span>
+          <?php if (is_user_logged_in() && function_exists('sa_avatar_html')) : ?>
+            <?php echo sa_avatar_html(get_current_user_id(), 26); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+            <span class="sa-hide-sm"><?php echo function_exists('sa_avatar_greeting_html') ? sa_avatar_greeting_html(get_current_user_id()) : esc_html__('Account', 'supreme-autoparts'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+          <?php else : ?>
+            <?php echo sa_category_icon_svg('user'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+            <span class="sa-hide-sm"><?php esc_html_e('Account', 'supreme-autoparts'); ?></span>
+          <?php endif; ?>
         </a>
         <?php if (is_user_logged_in()) : ?>
           <a class="sa-hide-sm sa-header__logout" href="<?php echo esc_url(function_exists('sa_core_logout_link_url') ? sa_core_logout_link_url() : wc_logout_url()); ?>"><?php esc_html_e('Log out', 'supreme-autoparts'); ?></a>
@@ -141,3 +146,4 @@ if (!defined('ABSPATH')) {
     </div>
   </nav>
 </header>
+
