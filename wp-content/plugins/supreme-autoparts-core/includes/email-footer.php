@@ -21,6 +21,33 @@ function sa_email_footer_business(string $country = ''): array
 }
 
 /** Dark mode overrides shared by every email. The content card stays white so inline colours inside it keep their contrast; page background, footer card and footer logo switch. */
+/** Country for a recipient with no order attached (login codes, return updates): the customer's saved billing country, then their latest order, else '' (falls back to the request geo). */
+function sa_email_country_for_recipient($to): string
+{
+    $addr = is_array($to) ? (string) reset($to) : (string) $to;
+    if (preg_match('/<([^>]+)>/', $addr, $m)) {
+        $addr = $m[1];
+    }
+    $addr = strtolower(trim($addr));
+    if ($addr === '' || !is_email($addr)) {
+        return '';
+    }
+    $user = get_user_by('email', $addr);
+    if ($user) {
+        $cc = (string) get_user_meta($user->ID, 'billing_country', true);
+        if ($cc !== '') {
+            return strtoupper($cc);
+        }
+    }
+    if (function_exists('wc_get_orders')) {
+        $orders = wc_get_orders(['billing_email' => $addr, 'limit' => 1, 'orderby' => 'date', 'order' => 'DESC', 'return' => 'objects']);
+        if (!empty($orders[0])) {
+            return strtoupper((string) ($orders[0]->get_billing_country() ?: $orders[0]->get_shipping_country()));
+        }
+    }
+    return '';
+}
+
 function sa_email_dark_css(): string
 {
     return '@media (prefers-color-scheme: dark){body,.sa-bg,#wrapper,#template_footer,#template_footer td{background:#0d0d0d !important;background-color:#0d0d0d !important}'
@@ -249,9 +276,9 @@ add_filter('wp_mail', static function (array $args): array {
     $message = (string) ($args['message'] ?? '');
     $customer = strpos(ltrim((string) ($args['subject'] ?? '')), '[') !== 0; // "[Bookings] ...", "[Roadside] ..." go to the team.
     if (preg_match('/<(?:html|body|table|div|p)\b/i', $message)) {
-        $args['message'] = sa_email_add_footer($message, '', '', $customer);
+        $args['message'] = sa_email_add_footer($message, sa_email_country_for_recipient($args['to'] ?? ''), '', $customer);
     } elseif (!(function_exists('sa_brevo_is_configured') && sa_brevo_is_configured())) {
-        $args['message'] = sa_email_add_text_footer($message, '', '', $customer);
+        $args['message'] = sa_email_add_text_footer($message, sa_email_country_for_recipient($args['to'] ?? ''), '', $customer);
     }
     return $args;
 }, 50);
