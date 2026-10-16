@@ -299,6 +299,19 @@ function sa_ol_delivery_block(WC_Order $o): string
     return $h . '</td></tr></table>';
 }
 
+/** Pickup store for the order's region: Nairobi for African orders, Portland otherwise. */
+function sa_ol_pickup_store(WC_Order $o): array
+{
+    $country = (string) ($o->get_billing_country() ?: $o->get_shipping_country());
+    if (function_exists('sa_email_footer_business')) {
+        return sa_email_footer_business($country);
+    }
+    $africa = function_exists('WC') && WC()->countries && $country !== ''
+        ? WC()->countries->get_continent_code_for_country($country) === 'AF'
+        : true;
+    return ['one_line' => $africa ? 'Ground Floor, Midax Plaza, Kangundo Rd, Njiru, Nairobi, Kenya' : '12800 NE Sandy Blvd, Portland, OR 97230'];
+}
+
 /** Build subject + html for a stage. */
 function sa_ol_email_content(WC_Order $o, string $stage, string $note = ''): array
 {
@@ -326,10 +339,10 @@ function sa_ol_email_content(WC_Order $o, string $stage, string $note = ''): arr
         'shipped' => ['Order #' . $n . ' has shipped', 'Your order is on its way', '<p>Your order has been handed to the courier.</p>' . sa_ol_delivery_block($o) . $noteh, 'Track order', $trk ?: $view],
         'out-for-delivery' => ['Order #' . $n . ' is out for delivery', 'Out for delivery today', '<p>Your order is out for delivery today. Please keep your phone close so the rider can reach you.</p>' . sa_ol_delivery_block($o) . $noteh, 'Track order', $trk ?: $view],
         'delivered' => ['Order #' . $n . ' was delivered', 'Your order was delivered', '<p>Your order has been delivered.</p>' . $noteh, 'View your order', $view],
-        'ready-pickup' => ['Order #' . $n . ' is ready for pickup', 'Ready for pickup', '<p>Your order is ready to collect at our store:</p><p><strong>Ground Floor, Midax Plaza, Kangundo Rd, Njiru, Nairobi</strong></p>' . (sa_ol_pickup_code($o) !== '' ? sa_ol_pickup_block($o) : '<p>Please bring your order number (#' . esc_html($n) . ') and the phone number used at checkout.</p>') . apply_filters('sa_ol_ready_pickup_extra', '', $o) . $noteh, 'Get directions', 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode('Midax Plaza, Kangundo Rd, Njiru, Nairobi')],
+        'ready-pickup' => ['Order #' . $n . ' is ready for pickup', 'Ready for pickup', '<p>Your order is ready to collect at our store:</p><p><strong>' . esc_html(sa_ol_pickup_store($o)['one_line']) . '</strong></p>' . (sa_ol_pickup_code($o) !== '' ? sa_ol_pickup_block($o) : '<p>Please bring your order number (#' . esc_html($n) . ') and the phone number used at checkout.</p>') . apply_filters('sa_ol_ready_pickup_extra', '', $o) . $noteh, 'Get directions', 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode(sa_ol_pickup_store($o)['one_line'])],
         'completed' => ['Order #' . $n . ' is complete', 'Thank you, your order is complete', '<p>Your order is complete. Thank you for shopping with Supreme Autoparts.</p>' . sa_ol_items_html($o) . $noteh, 'View your order', $view],
         'cancelled' => ['Order #' . $n . ' was cancelled', 'Your order was cancelled', '<p>Your order #' . esc_html($n) . ' has been cancelled.</p>' . $noteh . '<p>If you paid, any refund goes back to the original payment method.</p>', 'Shop again', home_url('/shop/')],
-        'refunded' => ['Refund for order #' . $n, 'Your refund is on its way', '<p>We have refunded ' . wp_kses_post(wc_price((float) $o->get_total_refunded(), ['currency' => $o->get_currency()])) . ' for order #' . esc_html($n) . '. Depending on your bank or card it can take a few working days to show.</p>' . $noteh, 'View your order', $view],
+        'refunded' => ['Refund for order #' . $n, 'Your refund is on its way', '<p>We have refunded ' . esc_html(html_entity_decode(wp_strip_all_tags(wc_price((float) $o->get_total_refunded(), ['currency' => $o->get_currency()])), ENT_QUOTES | ENT_HTML5, 'UTF-8')) . ' for order #' . esc_html($n) . '. Depending on your bank or card it can take a few working days to show.</p>' . $noteh, 'View your order', $view],
         'failed' => ['Payment for order #' . $n . ' did not go through', 'Your payment failed', '<p>We could not take payment for order #' . esc_html($n) . '. Nothing was charged. You can try again with the button below.</p>' . sa_ol_items_html($o), 'Pay now', $o->get_checkout_payment_url()],
     ];
     if (!isset($m[$stage])) {
@@ -344,6 +357,10 @@ function sa_ol_send(WC_Order $o, string $stage, string $note = ''): bool
     $to = (string) $o->get_billing_email();
     // Booking-fee and roadside pay-link orders have their own customer emails.
     if (!is_email($to) || $o->get_meta('_sa_rs_for') || $o->get_meta('_sa_booking_fee_for') || ($o->get_meta('_sa_ro_id') && $stage !== 'failed')) {
+        return false;
+    }
+    if ($stage === 'ready-pickup' && !sa_ol_is_pickup($o)) {
+        $o->add_order_note('Ready-for-pickup email skipped: this order is not a store pickup order.');
         return false;
     }
     $c = sa_ol_email_content($o, $stage, $note);
