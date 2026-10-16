@@ -87,7 +87,7 @@ function sa_bk_invoice_email(int $id, string $kind = ''): void
     $paid = $waived || in_array($b['fee'], ['paid', 'applied'], true);
     $kes = number_format((int) ($b['fee_kes'] ?: sa_svc_setting('fee_kes')));
     $pay = add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/pay/'));
-    $release = wp_date('g:i A, j M', (int) $b['created'] + 2 * HOUR_IN_SECONDS) . ' EAT';
+    $release = wp_date('g:i A, j M', (int) $b['created'] + 3 * HOUR_IN_SECONDS) . ' EAT';
     if ($waived) {
         $subject = 'Booking confirmed — no booking fee (' . $b['ref'] . ')';
         $lead = 'Your booking is confirmed. Booking fee: ' . sa_fw_label($id) . '. There is nothing to pay now; labour is quoted as normal before any work starts.';
@@ -106,7 +106,7 @@ function sa_bk_invoice_email(int $id, string $kind = ''): void
         $lead = 'This is your last reminder. If the KES ' . $kes . ' booking fee is not paid, your slot will be released at ' . $release . ' and offered to other customers.';
     } else {
         $subject = 'Booking received — pay KES ' . $kes . ' to secure your slot (' . $b['ref'] . ')';
-        $lead = 'Thanks for booking. Pay the KES ' . $kes . ' booking fee to secure your slot. It is deducted from your final bill. Unpaid bookings are released after 2 hours (at ' . $release . ').';
+        $lead = 'Thanks for booking. Pay the KES ' . $kes . ' booking fee to secure your slot. It is deducted from your final bill. Unpaid bookings are released after 3 hours (at ' . $release . ').';
     }
     $btn = $paid || $b['status'] !== 'pending' ? '' : '<p style="text-align:center;margin:18px 0"><a href="' . esc_url($pay) . '" style="display:inline-block;background:#F5A623;color:#111;text-decoration:none;font-weight:800;font-size:16px;padding:14px 30px;border-radius:10px">Pay booking fee — KES ' . $kes . '</a></p>';
     if ($waived) {
@@ -170,7 +170,7 @@ add_action('woocommerce_payment_complete', 'sa_bk_invoice_on_paid', 20);
 add_action('woocommerce_order_status_processing', 'sa_bk_invoice_on_paid', 20);
 add_action('woocommerce_order_status_completed', 'sa_bk_invoice_on_paid', 20);
 
-/* Payment nudges: ~30 min after booking, and a final one ~25 min before the 2-hour release. Runs every 5 minutes. */
+/* Payment nudges: ~30 min after booking, and a final one ~25 min before the 3-hour release. Runs every 5 minutes. */
 add_filter('cron_schedules', static function (array $s): array {
     $s['sa_five_min'] = ['interval' => 300, 'display' => 'Every 5 minutes'];
     return $s;
@@ -183,25 +183,25 @@ add_action('init', static function (): void {
 function sa_bk_run_pay_nudges(): array
 {
     $sent = [];
-    $ids = get_posts(['post_type' => 'sa_booking', 'numberposts' => 100, 'fields' => 'ids', 'date_query' => [['after' => '3 hours ago']],
+    $ids = get_posts(['post_type' => 'sa_booking', 'numberposts' => 100, 'fields' => 'ids', 'date_query' => [['after' => '4 hours ago']],
         'meta_query' => [['key' => '_sa_bk_fee', 'value' => 'unpaid'], ['key' => '_sa_bk_status', 'value' => 'pending']]]);
     foreach ($ids as $id) {
         $id = (int) $id;
         $age = time() - (int) get_post_time('U', true, $id);
-        if ($age >= 2 * HOUR_IN_SECONDS) {
+        if ($age >= 3 * HOUR_IN_SECONDS) {
             // Release on time (the hourly job may lag up to an hour).
             update_post_meta($id, '_sa_bk_status', 'cancelled');
-            update_post_meta($id, '_sa_bk_notes', 'Auto-released: booking fee not paid within 2 hours. ' . get_post_meta($id, '_sa_bk_notes', true));
+            update_post_meta($id, '_sa_bk_notes', 'Auto-released: booking fee not paid within 3 hours. ' . get_post_meta($id, '_sa_bk_notes', true));
             if (function_exists('sa_svc_gcal_sync')) {
                 sa_svc_gcal_sync($id);
             }
             $sent[] = [$id, 'released'];
             continue;
         }
-        if ($age >= 95 * MINUTE_IN_SECONDS && !get_post_meta($id, '_sa_bk_invoice_nudge2_sent', true)) {
+        if ($age >= 155 * MINUTE_IN_SECONDS && !get_post_meta($id, '_sa_bk_invoice_nudge2_sent', true)) {
             sa_bk_invoice_email($id, 'nudge2');
             $sent[] = [$id, 'nudge2'];
-        } elseif ($age >= 30 * MINUTE_IN_SECONDS && $age < 95 * MINUTE_IN_SECONDS && !get_post_meta($id, '_sa_bk_invoice_nudge1_sent', true)) {
+        } elseif ($age >= 30 * MINUTE_IN_SECONDS && $age < 155 * MINUTE_IN_SECONDS && !get_post_meta($id, '_sa_bk_invoice_nudge1_sent', true)) {
             sa_bk_invoice_email($id, 'nudge1');
             $sent[] = [$id, 'nudge1'];
         }
@@ -209,3 +209,4 @@ function sa_bk_run_pay_nudges(): array
     return $sent;
 }
 add_action('sa_bk_pay_nudges', 'sa_bk_run_pay_nudges');
+
