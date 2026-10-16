@@ -216,5 +216,17 @@ add_filter('wp_mail', static function (array $args): array {
 // The shared wp_mail footer replaces WooCommerce's default boilerplate only.
 add_filter('woocommerce_email_footer_text', static fn ($text = ''): string => '', 100);
 add_filter('woocommerce_email_styles', static function (string $css): string {
-    return $css . "\n#template_footer, #template_footer td, #credit { display:none !important; height:0 !important; max-height:0 !important; overflow:hidden !important; mso-hide:all; padding:0 !important; margin:0 !important; font-size:0 !important; line-height:0 !important; }\n";
+    return $css . "\n#template_footer, #template_footer td, #credit { display:none !important; height:0 !important; max-height:0 !important; overflow:hidden !important; mso-hide:all; padding:0 !important; margin:0 !important; font-size:0 !important; line-height:0 !important; }\n"
+        // Phone width: drop the qty and unit price columns, show "qty x price" under the item name instead.
+        . "@media only screen and (max-width:620px){ .sa-hide-sm { display:none !important; } .sa-show-sm { display:block !important; max-height:none !important; overflow:visible !important; } }\n";
 }, 100);
+
+/** WooCommerce's stock "If you need any help with your order, please contact us at ..." sentence repeats the shared help line. */
+add_action('init', static function (): void {
+    foreach (['customer_invoice', 'customer_processing_order', 'customer_completed_order', 'customer_on_hold_order', 'customer_refunded_order', 'customer_partially_refunded_order', 'customer_failed_order', 'customer_cancelled_order', 'customer_note', 'customer_shipped_order', 'customer_delivered_order'] as $id) {
+        add_filter('woocommerce_email_additional_content_' . $id, static function ($text = ''): string {
+            $text = (string) $text;
+            return stripos($text, 'please contact us at') !== false ? '' : $text;
+        }, 100);
+    }
+});
