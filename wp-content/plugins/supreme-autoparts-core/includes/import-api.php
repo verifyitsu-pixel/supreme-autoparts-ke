@@ -35,6 +35,9 @@ add_action('rest_api_init', static function () {
 
 function sa_core_rest_import_batch(WP_REST_Request $req)
 {
+    if (!function_exists('sa_core_import_one_shopify_product') && defined('SA_CORE_DIR')) {
+        require_once SA_CORE_DIR . 'includes/import-shopify.php';
+    }
     if (!class_exists('WooCommerce') || !function_exists('sa_core_import_one_shopify_product')) {
         return new WP_Error('sa_import_unavailable', 'Importer not loaded', ['status' => 500]);
     }
