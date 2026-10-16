@@ -40,6 +40,26 @@ if (!defined('FORCE_SSL_ADMIN') && str_starts_with((string) (getenv('WP_HOME') ?
 }
 "
 
+# Atomic, no-downtime replacement of a baked directory. The old code did rm -rf + cp -a while
+# Apache was already serving, so requests hit a missing/half-copied WooCommerce (HTTP 500:
+# "Class WC_Breadcrumb not found", "undefined function is_checkout()"). Now: skip when
+# identical, otherwise copy aside then swap with two renames.
+swap_dir() {
+  local src="$1" dst="$2" tmp old
+  [[ -d "$src" ]] || return 0
+  if [[ -d "$dst" ]] && diff -rq "$src" "$dst" >/dev/null 2>&1; then
+    return 0
+  fi
+  tmp="/var/www/html/wp-content/.sa-swap-new-$$-$(basename "$dst")"
+  old="/var/www/html/wp-content/.sa-swap-old-$$-$(basename "$dst")"
+  rm -rf "$tmp" "$old"
+  if ! cp -a "$src" "$tmp"; then rm -rf "$tmp"; return 1; fi
+  chown -R www-data:www-data "$tmp" 2>/dev/null || true
+  if [[ -d "$dst" ]]; then mv "$dst" "$old"; fi
+  mv "$tmp" "$dst"
+  rm -rf "$old"
+}
+
 sync_custom_content() {
   mkdir -p /var/www/html/wp-content/themes /var/www/html/wp-content/plugins /var/www/html/wp-content/mu-plugins
   # SA: uploads dir (volume is root-owned) must be writable by Apache/www-data, else all uploads fail.
@@ -48,33 +68,26 @@ sync_custom_content() {
   chmod -R u+rwX,g+rwX /var/www/html/wp-content/uploads 2>/dev/null || true
   # WooCommerce baked into image — always restore onto runtime volume first.
   if [[ -d /usr/src/wordpress/wp-content/plugins/woocommerce ]]; then
-    rm -rf /var/www/html/wp-content/plugins/woocommerce
-    cp -a /usr/src/wordpress/wp-content/plugins/woocommerce /var/www/html/wp-content/plugins/
+    swap_dir /usr/src/wordpress/wp-content/plugins/woocommerce /var/www/html/wp-content/plugins/woocommerce
   fi
   if [[ -d /usr/src/wordpress/wp-content/themes/supreme-autoparts ]]; then
-    rm -rf /var/www/html/wp-content/themes/supreme-autoparts
-    cp -a /usr/src/wordpress/wp-content/themes/supreme-autoparts /var/www/html/wp-content/themes/
+    swap_dir /usr/src/wordpress/wp-content/themes/supreme-autoparts /var/www/html/wp-content/themes/supreme-autoparts
   fi
   if [[ -d /usr/src/wordpress/wp-content/plugins/supreme-autoparts-core ]]; then
-    rm -rf /var/www/html/wp-content/plugins/supreme-autoparts-core
-    cp -a /usr/src/wordpress/wp-content/plugins/supreme-autoparts-core /var/www/html/wp-content/plugins/
+    swap_dir /usr/src/wordpress/wp-content/plugins/supreme-autoparts-core /var/www/html/wp-content/plugins/supreme-autoparts-core
   fi
   if [[ -d /usr/src/wordpress/wp-content/plugins/whop-payments ]]; then
-    rm -rf /var/www/html/wp-content/plugins/whop-payments
-    cp -a /usr/src/wordpress/wp-content/plugins/whop-payments /var/www/html/wp-content/plugins/
+    swap_dir /usr/src/wordpress/wp-content/plugins/whop-payments /var/www/html/wp-content/plugins/whop-payments
   fi
   if [[ -d /usr/src/wordpress/wp-content/plugins/sa-brevo-mail ]]; then
-    rm -rf /var/www/html/wp-content/plugins/sa-brevo-mail
-    cp -a /usr/src/wordpress/wp-content/plugins/sa-brevo-mail /var/www/html/wp-content/plugins/
+    swap_dir /usr/src/wordpress/wp-content/plugins/sa-brevo-mail /var/www/html/wp-content/plugins/sa-brevo-mail
   fi
   if [[ -d /usr/src/wordpress/wp-content/plugins/sa-geo-currency ]]; then
-    rm -rf /var/www/html/wp-content/plugins/sa-geo-currency
-    cp -a /usr/src/wordpress/wp-content/plugins/sa-geo-currency /var/www/html/wp-content/plugins/
+    swap_dir /usr/src/wordpress/wp-content/plugins/sa-geo-currency /var/www/html/wp-content/plugins/sa-geo-currency
   fi
   for gw in pesapal-woocommerce transactworld-payment-integration woocommerce-paypal-payments jotform-ai-chatbot; do
     if [[ -d /usr/src/wordpress/wp-content/plugins/$gw ]]; then
-      rm -rf "/var/www/html/wp-content/plugins/$gw"
-      cp -a "/usr/src/wordpress/wp-content/plugins/$gw" /var/www/html/wp-content/plugins/
+      swap_dir "/usr/src/wordpress/wp-content/plugins/$gw" "/var/www/html/wp-content/plugins/$gw"
       chown -R www-data:www-data "/var/www/html/wp-content/plugins/$gw" 2>/dev/null || true
     fi
   done
@@ -150,8 +163,7 @@ ensure_woocommerce() {
   if [[ -d /usr/src/wordpress/wp-content/plugins/woocommerce ]]; then
     echo "[supreme] Syncing baked WooCommerce from image onto volume..."
     mkdir -p /var/www/html/wp-content/plugins
-    rm -rf /var/www/html/wp-content/plugins/woocommerce
-    cp -a /usr/src/wordpress/wp-content/plugins/woocommerce /var/www/html/wp-content/plugins/
+    swap_dir /usr/src/wordpress/wp-content/plugins/woocommerce /var/www/html/wp-content/plugins/woocommerce
     chown -R www-data:www-data /var/www/html/wp-content/plugins/woocommerce 2>/dev/null || true
   fi
 
