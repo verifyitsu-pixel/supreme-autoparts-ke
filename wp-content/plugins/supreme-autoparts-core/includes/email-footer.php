@@ -218,7 +218,8 @@ add_filter('woocommerce_email_footer_text', static fn ($text = ''): string => ''
 add_filter('woocommerce_email_styles', static function (string $css): string {
     return $css . "\n#template_footer, #template_footer td, #credit { display:none !important; height:0 !important; max-height:0 !important; overflow:hidden !important; mso-hide:all; padding:0 !important; margin:0 !important; font-size:0 !important; line-height:0 !important; }\n"
         // Phone width: drop the qty and unit price columns, show "qty x price" under the item name instead.
-        . "@media only screen and (max-width:620px){ .sa-hide-sm { display:none !important; } .sa-show-sm { display:block !important; max-height:none !important; overflow:visible !important; } }\n";
+        . "body, table, td, p, div { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }\n"
+        . "@media only screen and (max-width:620px){ .sa-hide-sm { display:none !important; } .sa-show-sm { display:block !important; max-height:none !important; overflow:visible !important; } .sa-col { display:block !important; width:100% !important; padding-right:0 !important; } }\n";
 }, 100);
 
 /** WooCommerce's stock "If you need any help with your order, please contact us at ..." sentence repeats the shared help line. */
