@@ -45,7 +45,7 @@ function sa_avatar_url(int $user_id): string
         return '';
     }
     $url = wp_get_attachment_url($aid);
-    return is_string($url) ? $url : '';
+    return is_string($url) ? add_query_arg('v', $aid, $url) : '';
 }
 
 /** Initials (up to 2 letters) for the fallback chip. */
@@ -195,6 +195,34 @@ function sa_avatar_feedback_html(): string
     return '<p class="sa-greet__msg sa-greet__msg--' . esc_attr($kind) . '">' . esc_html($text) . '</p>';
 }
 
+/* Click-the-avatar upload: the circle itself is the file picker and the form
+   submits as soon as a photo is chosen (customer-avatar.js). */
+function sa_avatar_picker_html(int $user_id, int $size = 72): string
+{
+    $out = '<form class="sa-avatar-pick" method="post" enctype="multipart/form-data" action="' . esc_url(admin_url('admin-post.php')) . '" data-max="' . (5 * MB_IN_BYTES) . '">';
+    $out .= '<input type="hidden" name="action" value="sa_avatar"><input type="hidden" name="do" value="set">';
+    $out .= '<input type="hidden" name="_wpnonce" value="' . esc_attr(wp_create_nonce('sa_avatar')) . '">';
+    $out .= '<label class="sa-avatar-pick__btn" title="' . esc_attr__('Change photo', 'supreme-autoparts-core') . '">';
+    $out .= sa_avatar_html($user_id, $size);
+    $out .= '<span class="sa-avatar-pick__cam" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>';
+    $out .= '<input type="file" name="avatar" class="sa-avatar-pick__input" accept="image/jpeg,image/png,image/webp" data-nodz="1" aria-label="' . esc_attr__('Change profile photo', 'supreme-autoparts-core') . '">';
+    $out .= '</label></form>';
+    return $out;
+}
+
+/* Small remove-photo link (only when a photo is set). */
+function sa_avatar_remove_html(int $user_id): string
+{
+    if (sa_avatar_attachment_id($user_id) <= 0) {
+        return '';
+    }
+    $out = '<form class="sa-greet__form sa-avatar-remove" method="post" action="' . esc_url(admin_url('admin-post.php')) . '" onsubmit="return confirm(\'' . esc_js(__('Remove your profile photo?', 'supreme-autoparts-core')) . '\');">';
+    $out .= '<input type="hidden" name="action" value="sa_avatar"><input type="hidden" name="do" value="remove">';
+    $out .= '<input type="hidden" name="_wpnonce" value="' . esc_attr(wp_create_nonce('sa_avatar')) . '">';
+    $out .= '<button type="submit" class="sa-greet__remove">' . esc_html__('Remove photo', 'supreme-autoparts-core') . '</button></form>';
+    return $out;
+}
+
 /* Add/change + remove photo forms (post to the login-gated admin-post handler).
    The file input is picked up by the site's standard file-drop.js dropzone;
    data-max keeps its size hint in line with the server-side 5 MB cap. */
@@ -254,3 +282,4 @@ add_filter('get_avatar', static function ($avatar, $id_or_email, $size = 96) {
     }
     return sa_avatar_html($uid, (int) $size);
 }, 10, 3);
+
