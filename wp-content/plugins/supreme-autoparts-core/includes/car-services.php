@@ -393,21 +393,35 @@ function sa_svc_handle_booking(): void
 function sa_svc_vehicles(int $user): array
 {
     $v = get_user_meta($user, 'sa_vehicles', true);
-    $list = is_array($v) ? $v : [];
+    $meta = is_array($v) ? $v : [];
     // Merge in the customer's My Garage vehicles so the booking and roadside
-    // pickers always show every car on the account.
+    // pickers always show every car on the account. Garage entries win: a meta
+    // row with the same plate (or same make|model|year|reg) is skipped.
+    $list = [];
     if ($user && function_exists('sa_garage_user_vehicles')) {
-        $have = [];
-        foreach ($list as $vv) {
-            $have[strtolower(trim(($vv['make'] ?? '') . '|' . ($vv['model'] ?? '') . '|' . ($vv['year'] ?? '') . '|' . ($vv['reg'] ?? '')))] = true;
-        }
         foreach (sa_garage_user_vehicles($user) as $g) {
-            $k = strtolower(trim($g['make'] . '|' . $g['model'] . '|' . $g['year'] . '|' . $g['reg']));
-            if (!isset($have[$k])) {
-                $have[$k] = true;
-                $list[] = ['make' => $g['make'], 'model' => $g['model'], 'year' => $g['year'], 'reg' => $g['reg']];
-            }
+            $list[] = ['make' => $g['make'], 'model' => $g['model'], 'year' => $g['year'], 'reg' => $g['reg']];
         }
+    }
+    $norm = static fn(string $p): string => strtoupper((string) preg_replace('/[^A-Za-z0-9]/', '', $p));
+    $have = [];
+    foreach ($list as $vv) {
+        $have[strtolower(trim($vv['make'] . '|' . $vv['model'] . '|' . $vv['year'] . '|' . $vv['reg']))] = true;
+        if ($vv['reg'] !== '') {
+            $have['plate:' . $norm($vv['reg'])] = true;
+        }
+    }
+    foreach ($meta as $vv) {
+        $k = strtolower(trim(($vv['make'] ?? '') . '|' . ($vv['model'] ?? '') . '|' . ($vv['year'] ?? '') . '|' . ($vv['reg'] ?? '')));
+        $reg = $norm((string) ($vv['reg'] ?? ''));
+        if (isset($have[$k]) || ($reg !== '' && isset($have['plate:' . $reg]))) {
+            continue;
+        }
+        $have[$k] = true;
+        if ($reg !== '') {
+            $have['plate:' . $reg] = true;
+        }
+        $list[] = $vv;
     }
     return $list;
 }
