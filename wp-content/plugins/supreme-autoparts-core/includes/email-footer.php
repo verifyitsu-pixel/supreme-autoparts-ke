@@ -52,7 +52,7 @@ function sa_email_context(string $message, string $woo_id = '', bool $customer =
         'customer_failed_order' => 'failed', 'customer_reset_password' => 'account', 'customer_new_account' => 'account',
     ];
     if ($woo_id !== '' && isset($by_id[$woo_id])) {
-        return ($by_id[$woo_id] === 'order' && $has('Store pickup:')) ? 'pickup_order' : $by_id[$woo_id];
+        return ($by_id[$woo_id] === 'order' && $has('Store pickup')) ? 'pickup_order' : $by_id[$woo_id];
     }
     if ($has('Your order is complete') || $has('order is complete')) {
         return 'delivered';
@@ -94,7 +94,7 @@ function sa_email_context(string $message, string $woo_id = '', bool $customer =
         return 'none';
     }
     if ($has('order')) {
-        return $has('Store pickup:') ? 'pickup_order' : 'order';
+        return $has('Store pickup') ? 'pickup_order' : 'order';
     }
     return 'generic';
 }
