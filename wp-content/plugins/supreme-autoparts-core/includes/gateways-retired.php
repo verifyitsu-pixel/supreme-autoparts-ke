@@ -78,10 +78,10 @@ add_filter('woocommerce_gateway_title', static function ($title, $gateway_id) {
         return $title;
     }
     if ('whop' === $gateway_id) {
-        return 'Card (Whop)';
+        return 'Card (Visa, Mastercard)';
     }
     if ('pesapal' === $gateway_id) {
-        return 'M-Pesa / Airtel / Card (Pesapal)';
+        return 'M-Pesa / Airtel Money';
     }
     return $title;
 }, 10, 2);
