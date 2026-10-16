@@ -30,7 +30,7 @@ add_filter('woocommerce_payment_gateways', function ($methods) {
 /* Clear total on checkout (shown under the Pesapal option). */
 add_filter('woocommerce_gateway_description', function ($desc, $id) {
     if ($id !== 'pesapal') { return $desc; }
-    $note = 'Pay with M-Pesa, Airtel Money or card. Your order total stays in US dollars; the equivalent in KES is shown on the payment screen, at the payment provider's exchange rate, before you confirm.';
+    $note = 'Pay with M-Pesa, Airtel Money or card. Your order total stays in US dollars; the equivalent in KES is shown on the payment screen, at the exchange rate of the payment provider, before you confirm.';
     return trim((string) $desc) === '' ? $note : $desc . '<br><small>' . esc_html($note) . '</small>';
 }, 10, 2);
 
@@ -47,7 +47,7 @@ add_action('woocommerce_receipt_pesapal', function ($order_id) {
     if (!$order) { return; }
     echo '<p class="sa-pesapal-total" style="margin:0 0 12px;font-size:15px;line-height:1.4">'
         . 'Order total: <strong>' . wp_kses_post($order->get_formatted_order_total()) . '</strong>. '
-        . 'The KES amount (converted at the provider's rate) is shown before you pay.</p>';
+        . 'The KES amount (converted at the rate of the payment provider) is shown before you pay.</p>';
 }, 1);
 
 /* Mobile: no sideways scroll from the Pesapal frame. */
