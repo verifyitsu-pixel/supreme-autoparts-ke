@@ -301,7 +301,7 @@ function sa_ret_email_customer(int $rid, string $status, string $note = ''): voi
             $body = '<p>Your return request for ' . $ordl . ' was cancelled.</p>' . $noteh;
             break;
     }
-    $inner = '<!--sa-return-mail--><p>' . $greet . '</p>' . $body . '<p style="margin:12px 0 4px;color:#666;font-size:13px">Return reference <strong>' . esc_html($ref) . '</strong></p>' . sa_ret_items_html($rid);
+    $inner = '<!--sa-return-mail--><p>' . $greet . '</p>' . $body . '<p style="margin:12px 0 4px;color:#666;font-size:13px">Your reference is <strong>' . esc_html($ref) . '</strong></p>' . sa_ret_items_html($rid);
     $html = function_exists('sa_mail_layout') ? sa_mail_layout($head, $inner, $cta[0], $cta[1]) : '<h1>' . esc_html($head) . '</h1>' . $inner;
     wp_mail($to, $subj, $html, ['Content-Type: text/html; charset=UTF-8']);
 }
