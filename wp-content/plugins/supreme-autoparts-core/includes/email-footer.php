@@ -126,7 +126,7 @@ function sa_email_help_html(string $country = '', string $ctx = 'generic'): stri
     if ($business['whatsapp'] === '254714498451' && in_array($ctx, ['order', 'pickup', 'delivery', 'delivered'], true)) {
         $roadside = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #e4e4e0">Car trouble? <a href="' . esc_url(home_url('/roadside/')) . '" style="color:#333333;text-decoration:underline">Request roadside help</a> or call <a href="tel:+254714498451" style="color:#333333;text-decoration:underline;white-space:nowrap">+254 714 498 451</a>.</div>';
     }
-    return '<!--sa-email-help--><div style="margin:16px 0 4px;padding:14px 16px;background:#f6f6f4;border-radius:8px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.65;color:#555555">'
+    return '<!--sa-email-help--><div style="margin:20px 0 4px;padding:16px 0 0;border-top:1px solid #e4e4e0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.65;color:#555555">'
         . '<div>' . esc_html(sa_email_help_lead($ctx))
         . ($reply ? '' : '<br><a href="mailto:calvin@supremeautoparts.co.ke" style="color:#333333;text-decoration:underline">Email us</a> or '
             . '<a href="https://wa.me/' . esc_attr($business['whatsapp']) . '" style="color:#333333;text-decoration:underline">chat on WhatsApp</a>.')
