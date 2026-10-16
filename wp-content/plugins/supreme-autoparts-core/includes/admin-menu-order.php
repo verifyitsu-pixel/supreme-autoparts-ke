@@ -8,6 +8,13 @@
  * or sub-menu not listed below keeps its original relative order at the
  * end of its section, so items added by other plugins still appear.
  *
+ * Also merges duplicated entries: the standalone top-level Returns and
+ * Payments menus point at screens that belong to the store workflow, so
+ * the top-level copies are removed and Returns is re-added inside the
+ * Supreme Autoparts hub (Payments was already there as sa-super-payments,
+ * which deep-links to the Woo gateways screen). Every destination URL
+ * keeps working - only the sidebar entries move.
+ *
  * Loaded from supreme-autoparts-core.php inside a guarded require.
  */
 
@@ -62,7 +69,7 @@ function sa_core_menu_sort(array $slugs, array $order): array
  * Top-level menu order:
  *   1. Dashboard
  *   2. Store operations: Supreme Autoparts hub, WooCommerce, Products,
- *      Returns, Payments, TransactWorld, Analytics, Marketing, chatbot
+ *      TransactWorld, Analytics, Marketing, chatbot
  *   3. Content: Posts, Media, Pages, Comments
  *   4. Site administration: Appearance, Plugins, Users, Tools, Settings
  * Existing separators are reused between the groups; anything unlisted
@@ -83,8 +90,8 @@ add_filter('menu_order', static function ($menu_order) {
             'supreme-autoparts',
             'woocommerce',
             'edit.php?post_type=product',
-            'edit.php?post_type=sa_return',
-            'admin.php?page=wc-settings&tab=checkout&from=PAYMENTS_MENU_ITEM',
+            // Returns and Payments used to sit here as top-level menus;
+            // they now live inside the Supreme Autoparts hub (see below).
             'twld-transactworld-reconciliation',
             'wc-admin&path=/analytics/overview',
             'woocommerce-marketing',
@@ -122,6 +129,23 @@ add_filter('menu_order', static function ($menu_order) {
  */
 add_action('admin_menu', static function (): void {
     global $submenu;
+
+    // Merge duplicated sidebar entries (approved by the store owner):
+    // - "Returns" (sa_return list) moves from top level into the hub.
+    // - The top-level "Payments" menu (Woo gateway settings) is dropped;
+    //   the hub's Payments screen links to the same gateways page, and
+    //   WooCommerce > Settings > Payments still opens it too.
+    // remove_menu_page only hides the sidebar entry; both URLs keep working.
+    remove_menu_page('edit.php?post_type=sa_return');
+    remove_menu_page('admin.php?page=wc-settings&tab=checkout&from=PAYMENTS_MENU_ITEM');
+    add_submenu_page(
+        'supreme-autoparts',
+        'Returns',
+        'Returns',
+        'manage_woocommerce',
+        'edit.php?post_type=sa_return'
+    );
+
     if (!is_array($submenu)) {
         return;
     }
@@ -131,6 +155,7 @@ add_action('admin_menu', static function (): void {
         'supreme-autoparts' => [
             'supreme-autoparts',      // Dashboard
             'sa-super-orders',
+            'edit.php?post_type=sa_return',
             'sa-super-bookings',
             'sa-super-roadside',
             'sa-super-workshop',
@@ -250,4 +275,3 @@ add_action('admin_menu', static function (): void {
         $submenu[$parent] = $rebuilt;
     }
 }, 999);
-
