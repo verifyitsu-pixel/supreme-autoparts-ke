@@ -54,6 +54,15 @@ function sa_email_context(string $message, string $woo_id = '', bool $customer =
     if ($woo_id !== '' && isset($by_id[$woo_id])) {
         return $by_id[$woo_id];
     }
+    if ($has('Your order is complete') || $has('order is complete')) {
+        return 'delivered';
+    }
+    if ($has('has been refunded') || $has('was refunded')) {
+        return 'refund';
+    }
+    if ($has('has been cancelled')) {
+        return 'cancelled';
+    }
     if ($has('Your reference is')) {
         return 'contact';
     }
@@ -231,3 +240,15 @@ add_action('init', static function (): void {
         }, 100);
     }
 });
+
+/** Remember which WooCommerce email is being built so the help line follows its type, not just its wording. */
+add_action('woocommerce_email_header', static function ($heading = '', $email = null): void {
+    if ($email instanceof WC_Email) {
+        $GLOBALS['sa_email_current'] = $email;
+    }
+}, 1, 2);
+add_action('woocommerce_email_before_order_table', static function ($order = null, $sent_to_admin = false, $plain_text = false, $email = null): void {
+    if ($email instanceof WC_Email) {
+        $GLOBALS['sa_email_current'] = $email;
+    }
+}, 1, 4);
