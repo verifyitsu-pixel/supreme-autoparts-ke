@@ -404,15 +404,16 @@ function sa_svc_vehicles(int $user): array
         }
     }
     $norm = static fn(string $p): string => strtoupper((string) preg_replace('/[^A-Za-z0-9]/', '', $p));
+    $vkey = static fn(array $vv): string => strtolower(trim((string) ($vv['make'] ?? '')) . '|' . trim((string) ($vv['model'] ?? '')) . '|' . trim((string) ($vv['year'] ?? '')) . '|' . trim((string) ($vv['reg'] ?? '')));
     $have = [];
     foreach ($list as $vv) {
-        $have[strtolower(trim($vv['make'] . '|' . $vv['model'] . '|' . $vv['year'] . '|' . $vv['reg']))] = true;
+        $have[$vkey($vv)] = true;
         if ($vv['reg'] !== '') {
             $have['plate:' . $norm($vv['reg'])] = true;
         }
     }
     foreach ($meta as $vv) {
-        $k = strtolower(trim(($vv['make'] ?? '') . '|' . ($vv['model'] ?? '') . '|' . ($vv['year'] ?? '') . '|' . ($vv['reg'] ?? '')));
+        $k = $vkey($vv);
         $reg = $norm((string) ($vv['reg'] ?? ''));
         if (isset($have[$k]) || ($reg !== '' && isset($have['plate:' . $reg]))) {
             continue;
@@ -429,9 +430,10 @@ function sa_svc_vehicles(int $user): array
 function sa_svc_save_vehicle(int $user, array $veh): void
 {
     $list = sa_svc_vehicles($user);
-    $key = strtolower(trim($veh['make'] . '|' . $veh['model'] . '|' . $veh['year'] . '|' . $veh['reg']));
+    $vkey = static fn(array $vv): string => strtolower(trim((string) ($vv['make'] ?? '')) . '|' . trim((string) ($vv['model'] ?? '')) . '|' . trim((string) ($vv['year'] ?? '')) . '|' . trim((string) ($vv['reg'] ?? '')));
+    $key = $vkey($veh);
     foreach ($list as $v) {
-        if (strtolower(trim($v['make'] . '|' . $v['model'] . '|' . $v['year'] . '|' . $v['reg'])) === $key) {
+        if ($vkey($v) === $key) {
             return;
         }
     }
@@ -1851,5 +1853,4 @@ function sa_svc_admin_cr_box(int $id, array $b): string
         . '<input name="cr_note" placeholder="Note to customer (optional)" style="width:200px"><button class="button button-primary" name="cr_decision" value="approve">Approve & mark refunded</button><button class="button" name="cr_decision" value="decline">Decline</button></form>'
         . '<small>Approving marks the fee refunded. Send the actual refund via M-Pesa, bank, or the Woo order refund.</small></div>';
 }
-
 
