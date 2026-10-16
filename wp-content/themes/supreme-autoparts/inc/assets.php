@@ -73,7 +73,7 @@ add_action('wp_enqueue_scripts', static function (): void {
             'supreme-autoparts-myaccount',
             SA_THEME_URI . '/assets/css/myaccount.css',
             ['supreme-autoparts-main'],
-            SA_THEME_VERSION . '.account3'
+            SA_THEME_VERSION . '.account4'
         );
     }
 
