@@ -492,7 +492,11 @@ add_action('woocommerce_single_product_summary', static function (): void {
     $mine = $veh['mine'];
     if ($fit) {
         echo '<p class="sa-fit sa-fit--yes">✓ Fits ' . esc_html($mine ? 'your ' : 'the ') . esc_html($veh['label']) . '</p>';
+    } elseif ($year_miss) {
+        // Same make and model but the listed years do not cover theirs - warn even when the
+        // fitment data came from the product title, because the mismatch is explicit.
+        echo '<p class="sa-fit sa-fit--no">✗ Listed for a different year range than ' . esc_html($mine ? 'your ' : 'the ') . esc_html($veh['label']) . ' - <a href="' . esc_url(home_url('/contact/')) . '">ask us to confirm</a></p>';
     } elseif ($authoritative && $same_make) {
-        echo '<p class="sa-fit sa-fit--no">✗ Not listed for ' . esc_html($mine ? 'your ' : 'the ') . esc_html($veh['label']) . ($year_miss ? ' (year outside the listed range)' : '') . ' - <a href="' . esc_url(home_url('/contact/')) . '">ask us to confirm</a></p>';
+        echo '<p class="sa-fit sa-fit--no">✗ Not listed for ' . esc_html($mine ? 'your ' : 'the ') . esc_html($veh['label']) . ' - <a href="' . esc_url(home_url('/contact/')) . '">ask us to confirm</a></p>';
     }
 }, 26);
