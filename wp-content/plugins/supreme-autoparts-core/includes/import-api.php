@@ -46,7 +46,8 @@ function sa_core_rest_import_batch(WP_REST_Request $req)
     $dry     = !empty($body['dry_run']);
     $batch   = sanitize_text_field((string) ($body['batch'] ?? 'api'));
     $GLOBALS['sa_core_fast_import'] = true; // never web-search images
-    @set_time_limit(120);
+    sa_core_fast_bootstrap_claims();
+    @set_time_limit(280);
     @ini_set('memory_limit', '1024M'); // image-claim registry scans every product
     $out = ['dry_run' => $dry, 'batch' => $batch, 'created' => [], 'updated' => [], 'skipped' => [], 'errors' => []];
     foreach (array_slice($items, 0, 40) as $entry) {
@@ -263,4 +264,57 @@ function sa_core_import_family(array $f, bool $dry, string $batch): array
         sa_core_claim_image_urls_for_product((int) $id, $images);
     }
     return ['status' => $existing ? 'updated' : 'created', 'id' => (int) $id];
+}
+
+/**
+ * Same registry the importer builds (image URL -> owning product), filled with a few
+ * chunked SQL queries instead of ~75k get_post_meta() calls. Sets the importer's
+ * bootstrapped flag so it is not rebuilt per request.
+ */
+function sa_core_fast_bootstrap_claims()
+{
+    if (!empty($GLOBALS['sa_core_image_claim_registry_bootstrapped']) || !function_exists('sa_core_image_claim_registry')) {
+        return;
+    }
+    global $wpdb;
+    $reg  = &sa_core_image_claim_registry();
+    $last = 0;
+    while (true) {
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT meta_id, post_id, meta_key, meta_value FROM {$wpdb->postmeta} WHERE meta_id > %d AND meta_key IN ('_sa_shopify_image_src','_sa_shopify_image_urls','_sa_web_fallback_image_url') ORDER BY meta_id ASC LIMIT 4000",
+            $last
+        ), ARRAY_A);
+        if (!$rows) {
+            break;
+        }
+        foreach ($rows as $row) {
+            $last = (int) $row['meta_id'];
+            $pid  = (int) $row['post_id'];
+            $val  = (string) $row['meta_value'];
+            if ($val === '') {
+                continue;
+            }
+            if ($row['meta_key'] === '_sa_shopify_image_urls') {
+                $dec = json_decode($val, true);
+                if (is_array($dec)) {
+                    foreach ($dec as $u) {
+                        if (is_string($u) && $u !== '') {
+                            $reg[sa_core_image_url_identity_key($u)] = $pid;
+                        }
+                    }
+                }
+            } else {
+                $reg[sa_core_image_url_identity_key($val)] = $pid;
+            }
+        }
+        unset($rows);
+    }
+    $rows = $wpdb->get_results(
+        "SELECT pm.meta_value AS url, p.post_parent AS parent FROM {$wpdb->postmeta} pm JOIN {$wpdb->posts} p ON p.ID = pm.post_id WHERE pm.meta_key = '_sa_source_image_url' AND pm.meta_value <> '' AND p.post_parent > 0 LIMIT 50000",
+        ARRAY_A
+    );
+    foreach ((array) $rows as $row) {
+        $reg[sa_core_image_url_identity_key((string) $row['url'])] = (int) $row['parent'];
+    }
+    $GLOBALS['sa_core_image_claim_registry_bootstrapped'] = true;
 }
