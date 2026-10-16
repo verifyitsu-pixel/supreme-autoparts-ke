@@ -373,7 +373,7 @@ function sa_ff_order_block(WC_Order $o, bool $email = false): string
     $rows = [];
     $pk = sa_pk_slot_text($o);
     if ($pk !== '') {
-        $rows[] = '<strong>Store pickup:</strong> ' . esc_html($pk) . ' at ' . esc_html(sa_pk_address()) . ' (<a href="' . esc_url(sa_pk_map()) . '">map</a>). We email you when it is ready.';
+        $rows[] = '<strong>Store pickup:</strong> ' . esc_html($pk) . ' at ' . esc_html(sa_pk_address()) . ' (<a href="' . esc_url(sa_pk_map()) . '">map</a>). ' . ($o->has_status('ready-pickup') ? 'Your order is ready: show your pickup code at the store.' : 'We email you when it is ready.');
     }
     $eta = (string) $o->get_meta('_sa_eta');
     if ($eta !== '' && $pk === '') {
