@@ -51,7 +51,7 @@ $links = [
     [
         'href'  => wc_get_account_endpoint_url('edit-account'),
         'title' => __('Account details', 'supreme-autoparts'),
-        'desc'  => __('Name, email, password', 'supreme-autoparts'),
+        'desc'  => __('Name and email', 'supreme-autoparts'),
     ],
     [
         'href'  => $support_url,
