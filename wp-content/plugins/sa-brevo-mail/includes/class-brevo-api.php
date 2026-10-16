@@ -82,6 +82,14 @@ class SA_Brevo_API
         ) {
             $payload['htmlContent'] = SA_Brevo_Mailer::brand_html($payload['htmlContent']);
         }
+        // Include direct API sends (such as login codes), not only wp_mail.
+        if (!empty($payload['htmlContent']) && function_exists('sa_email_add_footer')) {
+            $payload['htmlContent'] = sa_email_add_footer((string) $payload['htmlContent']);
+        }
+        if (!empty($payload['textContent']) && function_exists('sa_email_add_text_footer')) {
+            $country = preg_match('/data-sa-email-region="([A-Z]{2})"/', (string) ($payload['htmlContent'] ?? ''), $match) ? $match[1] : '';
+            $payload['textContent'] = sa_email_add_text_footer((string) $payload['textContent'], $country);
+        }
         return self::request('POST', '/smtp/email', $payload);
     }
 
