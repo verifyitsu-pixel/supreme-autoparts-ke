@@ -26,9 +26,9 @@ do_action('woocommerce_email_header', $email_heading, $email); ?>
     '<strong>' . esc_html($user_login) . '</strong>'
 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></p>
 
-<p><?php esc_html_e('A secure password was emailed to you separately. Use that password to log in. If you did not receive it, use “Email me a new password” on the login page and we will email you a new one.', 'supreme-autoparts'); ?></p>
+<p><?php esc_html_e('Your account is ready. To sign in, enter your email on the My Account page and we will email you a one-time login code. There is no password to remember.', 'supreme-autoparts'); ?></p>
 
-<p><?php esc_html_e('After you log in, you stay signed in on that browser until you use Log out. You can change the password anytime under Account details.', 'supreme-autoparts'); ?></p>
+<p><?php esc_html_e('After you sign in, you stay signed in on that browser until you use Log out.', 'supreme-autoparts'); ?></p>
 
 <p>
 	<a href="<?php echo esc_url(wc_get_page_permalink('myaccount')); ?>">
