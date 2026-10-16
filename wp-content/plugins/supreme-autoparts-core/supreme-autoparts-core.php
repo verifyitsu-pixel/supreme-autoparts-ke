@@ -98,6 +98,13 @@ try {
 }
 // import-shopify.php is loaded by CLI/admin/boot import and by product-images helpers when needed.
 
+// Admin sidebar order (guarded: a fault in it must never take the site down).
+try {
+    require_once SA_CORE_DIR . 'includes/admin-menu-order.php';
+} catch (Throwable $sa_admin_menu_order_e) {
+    error_log('admin-menu-order load failed: ' . $sa_admin_menu_order_e->getMessage());
+}
+
 register_activation_hook(__FILE__, static function (): void {
     require_once SA_CORE_DIR . 'includes/seed-categories.php';
     require_once SA_CORE_DIR . 'includes/category-thumbnails.php';
@@ -611,6 +618,7 @@ add_action('init', static function (): void {
     }
     sa_core_repair_inflated_usd_prices(['limit' => 5000, 'dry_run' => false]);
 }, 35);
+
 
 
 
