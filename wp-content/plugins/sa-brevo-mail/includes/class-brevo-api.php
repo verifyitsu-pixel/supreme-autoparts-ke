@@ -84,7 +84,9 @@ class SA_Brevo_API
         }
         // Include direct API sends (such as login codes), not only wp_mail.
         if (!empty($payload['htmlContent']) && function_exists('sa_email_add_footer')) {
-            $payload['htmlContent'] = sa_email_add_footer((string) $payload['htmlContent']);
+            $sa_to = (string) ($payload['to'][0]['email'] ?? '');
+            $sa_cc = function_exists('sa_email_country_for_recipient') ? sa_email_country_for_recipient($sa_to) : '';
+            $payload['htmlContent'] = sa_email_add_footer((string) $payload['htmlContent'], $sa_cc);
         }
         if (!empty($payload['textContent']) && function_exists('sa_email_add_text_footer')) {
             $country = preg_match('/data-sa-email-region="([A-Z]{2})"/', (string) ($payload['htmlContent'] ?? ''), $match) ? $match[1] : '';
