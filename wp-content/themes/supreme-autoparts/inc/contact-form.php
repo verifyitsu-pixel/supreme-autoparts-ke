@@ -149,6 +149,19 @@ function sa_handle_footer_contact(): void
         $ticket_id = sa_core_ticket_from_contact($name, $email, $phone, $message, $page_url);
     }
 
+    // Confirmation to the customer (the store copy above is the only mail they did not get before).
+    if ($sent || $ticket_id) {
+        $greet = function_exists('sa_email_greeting_text') ? sa_email_greeting_text($name, $email) : 'Hello,';
+        $ref_txt = $ticket_id ? "\nYour reference is #" . $ticket_id . '.' : '';
+        wp_mail(
+            $email,
+            'We received your message',
+            $greet . "\n\nThanks for contacting Supreme Autoparts. We received your message and will reply soon." . $ref_txt
+            . "\n\nYour message:\n" . $message,
+            ['Content-Type: text/plain; charset=UTF-8', 'From: Supreme Autoparts <' . $to . '>', 'Reply-To: Supreme Autoparts <' . $to . '>']
+        );
+    }
+
     // Rate-limit after attempt (even on failure) to reduce abuse.
     set_transient($rate_key, 1, MINUTE_IN_SECONDS);
 
