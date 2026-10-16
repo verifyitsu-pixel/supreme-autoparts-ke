@@ -255,6 +255,11 @@ add_action('admin_post_sa_garage_vehicle', static function (): void {
             wp_safe_redirect(sa_garage_account_url('dupeplate'));
             exit;
         }
+        if ($before) {
+            // Same plate already sits in this customer's garage; nothing to add.
+            wp_safe_redirect(sa_garage_account_url('exists'));
+            exit;
+        }
         $vid = sa_garage_link_vehicle($f + ['src_type' => 'profile', 'src_id' => 0], ['name' => $u->display_name, 'email' => $u->user_email, 'user_id' => $uid], 'profile', 0);
         if (!$vid) {
             wp_safe_redirect(sa_garage_account_url('missing'));
@@ -356,6 +361,7 @@ add_action('woocommerce_account_my-vehicles_endpoint', static function (): void 
         'default' => 'Default vehicle updated. We will use it for parts fitment, recommendations and bookings.',
         'missing' => 'Please enter at least the make and model.',
         'dupeplate' => 'That number plate is already on another garage record. If it is yours, contact us and we will move it.',
+        'exists' => 'That vehicle is already in your garage.',
         'notfound' => 'We could not find that vehicle on your account.',
     ];
     $msg = sanitize_key((string) ($_GET['sa-g'] ?? ''));
