@@ -402,6 +402,68 @@ add_action('woocommerce_before_customer_login_form', static function (): void {
 
 /* ---------- POST handling (before output so we can redirect) ---------- */
 
+/* Private customer uploads: stored outside public paths, served only to the owner customer and shop staff. */
+function sa_priv_dir(): string
+{
+    if (function_exists('sa_hr_dir')) {
+        return sa_hr_dir();
+    }
+    $key = get_option('sa_hr_dirkey');
+    if (!$key) {
+        $key = wp_generate_password(24, false);
+        update_option('sa_hr_dirkey', $key, false);
+    }
+    $d = wp_upload_dir(null, false)['basedir'] . '/sa-private-' . $key;
+    if (!is_dir($d)) {
+        wp_mkdir_p($d);
+    }
+    return $d;
+}
+
+function sa_priv_url(string $kind, int $id, string $file): string
+{
+    return add_query_arg(['sa_dl' => $kind, 'i' => $id, 'f' => rawurlencode($file)], home_url('/'));
+}
+
+add_action('template_redirect', static function (): void {
+    if (empty($_GET['sa_dl'])) {
+        return;
+    }
+    $kind = sanitize_key((string) $_GET['sa_dl']);
+    $id = (int) ($_GET['i'] ?? 0);
+    $file = basename(rawurldecode((string) ($_GET['f'] ?? '')));
+    if (!in_array($kind, ['ret', 'oi'], true) || $id < 1 || $file === '' || $file[0] === '.') {
+        status_header(404);
+        exit;
+    }
+    if (!is_user_logged_in()) {
+        wp_safe_redirect(wp_login_url(home_url(add_query_arg([]))));
+        exit;
+    }
+    $uid = get_current_user_id();
+    $ok = current_user_can('manage_woocommerce') || current_user_can('manage_options');
+    if (!$ok) {
+        if ($kind === 'ret') {
+            $ok = (int) get_post_field('post_author', $id) === $uid;
+        } elseif (function_exists('wc_get_order') && ($o = wc_get_order($id))) {
+            $ok = (int) $o->get_customer_id() === $uid;
+        }
+    }
+    $path = sa_priv_dir() . '/' . $kind . '/' . $id . '/' . $file;
+    if (!$ok || !is_file($path)) {
+        status_header($ok ? 404 : 403);
+        exit;
+    }
+    $t = wp_check_filetype($file);
+    nocache_headers();
+    header('Content-Type: ' . ($t['type'] ?: 'application/octet-stream'));
+    header('Content-Disposition: inline; filename="' . rawurlencode($file) . '"');
+    header('X-Content-Type-Options: nosniff');
+    header('Content-Length: ' . filesize($path));
+    readfile($path);
+    exit;
+}, 1);
+
 function sa_ret_upload(int $rid): array
 {
     if (empty($_FILES['photos']['name']) || !is_array($_FILES['photos']['name'])) {
@@ -411,7 +473,7 @@ function sa_ret_upload(int $rid): array
     $out = [];
     $allowed = ['jpg|jpeg|jpe' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'heic' => 'image/heic', 'heif' => 'image/heif', 'pdf' => 'application/pdf'];
     $sub = static function (array $d) use ($rid): array {
-        $d['subdir'] = '/sa-returns/' . $rid;
+        $d['subdir'] = '/' . basename(sa_priv_dir()) . '/ret/' . $rid;
         $d['path'] = $d['basedir'] . $d['subdir'];
         $d['url'] = $d['baseurl'] . $d['subdir'];
         return $d;
@@ -425,7 +487,7 @@ function sa_ret_upload(int $rid): array
         $f = ['name' => wp_generate_password(8, false) . '-' . sanitize_file_name((string) $_FILES['photos']['name'][$i]), 'type' => $_FILES['photos']['type'][$i], 'tmp_name' => $_FILES['photos']['tmp_name'][$i], 'error' => 0, 'size' => $_FILES['photos']['size'][$i]];
         $r = wp_handle_upload($f, ['test_form' => false, 'mimes' => $allowed]);
         if (!empty($r['url'])) {
-            $out[] = ['name' => sanitize_file_name((string) $_FILES['photos']['name'][$i]), 'url' => (string) $r['url']];
+            $out[] = ['name' => sanitize_file_name((string) $_FILES['photos']['name'][$i]), 'url' => sa_priv_url('ret', $rid, basename((string) $r['file']))];
         }
     }
     remove_filter('upload_dir', $sub);
