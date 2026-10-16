@@ -56,8 +56,22 @@ function sa_core_rest_import_batch(WP_REST_Request $req)
     $out['timing'] = [];
     $prof = !empty($body['profile']);
     if ($prof) {
-        $wpdb->save_queries = true;
-        $wpdb->queries = [];
+        $GLOBALS['sa_prof_q'] = [];
+        add_filter('query', static function ($sql) {
+            $k = substr(preg_replace('/\d+|\'[^\']*\'/', '?', (string) $sql), 0, 70);
+            $c = '';
+            foreach (debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 25) as $f) {
+                $fn = (string) ($f['function'] ?? '');
+                $file = (string) ($f['file'] ?? '');
+                if (strpos($file, 'wp-includes') === false && strpos($file, 'wp-admin') === false && strpos($file, 'import-api') === false) {
+                    $c = $fn . '@' . basename($file);
+                    break;
+                }
+            }
+            $kk = $k . ' <= ' . $c;
+            $GLOBALS['sa_prof_q'][$kk] = ($GLOBALS['sa_prof_q'][$kk] ?? 0) + 1;
+            return $sql;
+        });
     }
     foreach (array_slice($items, 0, 40) as $entry) {
         $t0 = microtime(true);
@@ -85,25 +99,8 @@ function sa_core_rest_import_batch(WP_REST_Request $req)
         $out['timing'][] = [round((microtime(true) - $t0) * 1000), (int) $wpdb->num_queries - $q0];
     }
     if ($prof) {
-        $agg = [];
-        foreach ((array) $wpdb->queries as $qq) {
-            $k = substr(preg_replace('/\d+|\'[^\']*\'/', '?', (string) $qq[0]), 0, 90);
-            $parts = array_map('trim', explode(',', (string) $qq[2]));
-            $c = '';
-            foreach ($parts as $pt) {
-                if (strpos($pt, 'wp-includes') === false && strpos($pt, 'wpdb') === false && strpos($pt, 'wp-settings') === false && strpos($pt, 'require') === false && strpos($pt, 'WP_Hook') === false && strpos($pt, 'do_action') === false && strpos($pt, 'apply_filters') === false) {
-                    $c = $pt;
-                    break;
-                }
-            }
-            $kk = $k . ' <= ' . $c;
-            $agg[$kk] = ($agg[$kk] ?? [0, 0.0]);
-            $agg[$kk][0]++;
-            $agg[$kk][1] += (float) $qq[1];
-        }
-        uasort($agg, static function ($a, $b) { return $b[1] <=> $a[1]; });
-        $out['profile'] = array_slice($agg, 0, 25, true);
-        $wpdb->save_queries = false;
+        arsort($GLOBALS['sa_prof_q']);
+        $out['profile'] = array_slice($GLOBALS['sa_prof_q'], 0, 30, true);
     }
     $t1 = microtime(true);
     wp_defer_term_counting(false);
