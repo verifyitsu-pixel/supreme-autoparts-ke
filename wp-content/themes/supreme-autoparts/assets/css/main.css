@@ -3010,3 +3010,13 @@ a.remove.sa-cart-line__remove {
   .woocommerce div.product .woocommerce-tabs ul.tabs li a { padding: .6rem .7rem; }
 }
 html, body { overflow-x: clip; }
+
+/* PDP gallery: WooCommerce's higher-specificity "position: relative" was leaving
+   the sticky offset applied, pushing the gallery ~84px below the title. Restore sticky. */
+@media (min-width: 901px) {
+  .woocommerce div.product div.images.woocommerce-product-gallery {
+    position: sticky;
+    top: calc(var(--sa-header-h) + 1rem);
+    align-self: start;
+  }
+}
