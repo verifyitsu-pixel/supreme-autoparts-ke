@@ -29,7 +29,7 @@ function sa_email_footer_html(string $country = ''): string
         . '<tr><td style="padding:20px 28px 28px;color:#737373;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;text-align:center">'
         . '<div style="border-top:1px solid #dedede;padding-top:20px">'
         . '<p style="margin:0 0 12px;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#111111;line-height:28px"><img src="' . esc_url($logo) . '" alt="Supreme Autoparts" width="180" height="28" border="0" style="display:block;margin:0 auto;width:180px;height:28px;max-width:100%;border:0;outline:none;text-decoration:none;font-size:13px;font-weight:700;color:#111111"></p>'
-        . '<p style="margin:0 0 10px">' . esc_html($business['one_line']) . '</p>'
+        . '<p style="margin:0 0 10px"><a href="' . esc_url('https://www.google.com/maps/search/?api=1&query=' . rawurlencode((string) $business['one_line'])) . '" style="color:#737373;text-decoration:none">' . esc_html($business['one_line']) . '</a></p>'
         . '<p style="margin:0"><a href="' . esc_url(home_url('/privacy-policy/')) . '" style="' . $link . '">Privacy</a> &nbsp;&middot;&nbsp; '
         . '<a href="' . esc_url(home_url('/terms/')) . '" style="' . $link . '">Terms</a> &nbsp;&middot;&nbsp; '
         . '<a href="' . esc_url(home_url('/returns/')) . '" style="' . $link . '">Returns</a></p>'
@@ -246,7 +246,7 @@ add_filter('wp_mail', static function (array $args): array {
 // The shared wp_mail footer replaces WooCommerce's default boilerplate only.
 add_filter('woocommerce_email_footer_text', static fn ($text = ''): string => '', 100);
 add_filter('woocommerce_email_styles', static function (string $css): string {
-    return $css . "\n#template_footer, #template_footer td, #credit { display:none !important; height:0 !important; max-height:0 !important; overflow:hidden !important; mso-hide:all; padding:0 !important; margin:0 !important; font-size:0 !important; line-height:0 !important; }\n"
+    return $css . "\n#wrapper { padding-bottom:0 !important; }\na[x-apple-data-detectors], .sa-footer a { color:inherit !important; text-decoration:none !important; }\n#template_footer, #template_footer td, #credit { display:none !important; height:0 !important; max-height:0 !important; overflow:hidden !important; mso-hide:all; padding:0 !important; margin:0 !important; font-size:0 !important; line-height:0 !important; }\n"
         // Phone width: drop the qty and unit price columns, show "qty x price" under the item name instead.
         . "body, table, td, p, div { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }\n"
         . "@media only screen and (max-width:620px){ .sa-hide-sm { display:none !important; } .sa-show-sm { display:block !important; max-height:none !important; overflow:visible !important; } .sa-col { display:block !important; width:100% !important; padding:0 0 14px !important; } }\n";
