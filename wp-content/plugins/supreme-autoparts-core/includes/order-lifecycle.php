@@ -239,10 +239,19 @@ function sa_ol_email_content(WC_Order $o, string $stage, string $note = ''): arr
     $trk = sa_ol_tracking_url($o);
     $trkh = $trk_no !== '' ? '<p><strong>Courier:</strong> ' . esc_html(sa_ol_couriers()[$c]['label'] ?? 'Courier') . '<br><strong>Tracking number:</strong> ' . esc_html($trk_no) . ($trk ? '<br><a href="' . esc_url($trk) . '" style="color:#0a0a0a">Track your parcel on the courier site</a>' : '') . '</p>' : '';
     $view = sa_ol_view_url($o);
+    // When a structured information request is open, list each document with why we need it and how to send it.
+    $hr_items = '';
+    $hr_why = '';
+    if (function_exists('sa_hr_open') && function_exists('sa_hr_items_email') && ($hr = sa_hr_open($o))) {
+        $hr_items = sa_hr_items_email($hr);
+        if (function_exists('sa_hr_copy')) {
+            $hr_why = (string) (sa_hr_copy((string) ($hr['reason'] ?? 'other'))['reason'] ?? '');
+        }
+    }
     $m = [
         'processing' => ['We are preparing order #' . $n, 'Your order is being processed', '<p>We have your order and are getting it ready. We will email you again when it ships or is ready for pickup.</p>' . sa_ol_items_html($o), 'View your order', $view],
         'on-hold' => ['Order #' . $n . ' is on hold', 'Your order is on hold', '<p>We have paused order #' . esc_html($n) . ' while we complete a quick check. You do not need to do anything unless we contact you.</p>' . ($noteh ? '<p><strong>Reason</strong></p>' . $noteh : '') . '<p>If you have details that could help, such as photos or documents, you can send them with the button below. No login needed.</p>', 'Send details', sa_ol_info_url($o)],
-        'awaiting-info' => ['Information needed for order #' . $n, 'We need information to continue your order', '<p>We cannot continue with order #' . esc_html($n) . ' until we receive the information below.</p><p><strong>What we need</strong></p>' . ($noteh ?: '<p style="background:#f7f7f7;border-left:3px solid #F5A623;padding:10px 12px;margin:12px 0">Details about your order. Reply with the button below and we will confirm what is missing.</p>') . '<p><strong>Why we need it</strong><br>We use it to confirm the order is correct, for example the right part for your vehicle or your delivery or payment details, so nothing is sent or charged by mistake.</p><p><strong>How to send it</strong><br>Use the button below to reply and attach photos or documents. No login needed. Your order stays on hold until we hear from you.</p>', 'Send the information', sa_ol_info_url($o)],
+        'awaiting-info' => ['Information needed for order #' . $n, 'We need information to continue your order', '<p>We cannot continue with order #' . esc_html($n) . ' until we receive the information below.</p><p><strong>What we need</strong></p>' . ($noteh ?: ($hr_items !== '' ? '' : '<p style="background:#f7f7f7;border-left:3px solid #F5A623;padding:10px 12px;margin:12px 0">Details about your order. Reply with the button below and we will confirm what is missing.</p>')) . '<p><strong>Why we need it</strong><br>' . ($hr_why !== '' ? esc_html($hr_why) : 'We use it to confirm the order is correct, for example the right part for your vehicle or your delivery or payment details, so nothing is sent or charged by mistake.') . '</p>' . $hr_items . '<p><strong>How to send it</strong><br>Use the button below to reply and attach photos or documents. No login needed. Your order stays on hold until we hear from you.</p>', 'Send the information', sa_ol_info_url($o)],
         'shipped' => ['Order #' . $n . ' has shipped', 'Your order is on its way', '<p>Your order has been handed to the courier.</p>' . sa_ol_delivery_block($o) . $noteh, 'Track order', $trk ?: $view],
         'out-for-delivery' => ['Order #' . $n . ' is out for delivery', 'Out for delivery today', '<p>Your order is out for delivery today. Please keep your phone close so the rider can reach you.</p>' . sa_ol_delivery_block($o) . $noteh, 'Track order', $trk ?: $view],
         'delivered' => ['Order #' . $n . ' was delivered', 'Your order was delivered', '<p>Your order has been delivered.</p>' . $noteh, 'View your order', $view],
