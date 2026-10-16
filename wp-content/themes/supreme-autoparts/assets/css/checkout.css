@@ -466,7 +466,7 @@
 
 .sa-thankyou__meta {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
   gap: .85rem;
   margin: 0 0 1.5rem;
   padding: 1rem;
@@ -489,6 +489,8 @@
   margin: .2rem 0 0;
   color: var(--sa-heading);
   font-size: .92rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .sa-thankyou__next {
