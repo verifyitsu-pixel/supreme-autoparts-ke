@@ -36,7 +36,6 @@ do_action('woocommerce_email_header', $email_heading, $email); ?>
 	</a>
 </p>
 
-<p style="color:#666;font-size:14px;"><?php esc_html_e('Need help? calvin@supremeautoparts.co.ke', 'supreme-autoparts'); ?></p>
 
 <?php
 if ($additional_content) {
