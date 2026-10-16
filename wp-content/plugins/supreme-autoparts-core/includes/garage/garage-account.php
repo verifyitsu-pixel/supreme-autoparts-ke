@@ -66,13 +66,23 @@ function sa_garage_user_vehicles(int $uid): array
     $in = implode(',', array_map('intval', $cids));
     $rows = $wpdb->get_results('SELECT DISTINCT v.* FROM ' . sa_g_t('vehicles') . ' v LEFT JOIN ' . sa_g_t('links') . " l ON l.vehicle_id=v.id WHERE v.customer_id IN ($in) OR l.customer_id IN ($in) ORDER BY v.updated DESC", ARRAY_A) ?: [];
     $out = [];
+    $seen = [];
     foreach ($rows as $v) {
+        // Distinct garage rows can still describe the same car when a customer has
+        // several CRM records (account + guest bookings): skip repeats so the garage
+        // page, booking pickers and recommendations never list one vehicle twice.
+        $reg = str_starts_with((string) $v['plate'], 'NOPLATE') ? '' : (string) $v['plate'];
+        $k = strtolower(trim((string) $v['make'])) . '|' . strtolower(trim((string) $v['model'])) . '|' . trim((string) $v['year']) . '|' . strtoupper((string) preg_replace('/[^A-Za-z0-9]/', '', $reg));
+        if (isset($seen[$k])) {
+            continue;
+        }
+        $seen[$k] = true;
         $out[] = [
             'id' => (int) $v['id'],
             'make' => (string) $v['make'],
             'model' => (string) $v['model'],
             'year' => $v['year'] ? (string) $v['year'] : '',
-            'reg' => str_starts_with((string) $v['plate'], 'NOPLATE') ? '' : (string) $v['plate'],
+            'reg' => $reg,
             'vin' => (string) $v['vin'],
             'engine' => (string) $v['engine'],
             'color' => (string) $v['color'],
@@ -540,3 +550,4 @@ add_action('woocommerce_single_product_summary', static function (): void {
         echo '<p class="sa-fit sa-fit--no">✗ Not listed for ' . esc_html($mine ? 'your ' : 'the ') . esc_html($veh['label']) . ' - <a href="' . esc_url(home_url('/contact/')) . '">ask us to confirm</a></p>';
     }
 }, 26);
+
