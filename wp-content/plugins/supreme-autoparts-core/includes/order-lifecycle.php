@@ -628,8 +628,9 @@ function sa_ol_handle_uploads(WC_Order $o): array
     require_once ABSPATH . 'wp-admin/includes/file.php';
     $out = [];
     $allowed = ['jpg|jpeg|jpe' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'heic' => 'image/heic', 'heif' => 'image/heif', 'pdf' => 'application/pdf'];
-    $sub = static function (array $d) use ($o): array {
-        $d['subdir'] = '/' . basename(sa_priv_dir()) . '/oi/' . $o->get_id();
+    $priv = basename(sa_priv_dir());
+    $sub = static function (array $d) use ($o, $priv): array {
+        $d['subdir'] = '/' . $priv . '/oi/' . $o->get_id();
         $d['path'] = $d['basedir'] . $d['subdir'];
         $d['url'] = $d['baseurl'] . $d['subdir'];
         return $d;
