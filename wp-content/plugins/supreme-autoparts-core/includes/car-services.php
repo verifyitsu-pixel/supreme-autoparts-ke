@@ -295,6 +295,7 @@ function sa_svc_handle_booking(): void
     $sa_fw = function_exists('sa_fw_validate_request') ? sa_fw_validate_request($date, $fail) : null;
     if ($sa_fw === null && sa_svc_fee_usd() === null) $fail('Online booking is temporarily unavailable (currency rate missing). Please contact us on WhatsApp.');
     if ($p('name') === '' || $p('phone') === '') $fail('Please enter your name and phone number.');
+    if (!preg_match('/^\+?[0-9][0-9 ()\-]{7,18}$/', trim($p('phone')))) $fail('Please enter a valid phone number, for example 0712 345 678 or +1 917 437 5121.');
     if ($p('make') === '' || $p('model') === '') $fail('Please enter your vehicle make and model.');
     $mode = $p('mode') === 'pickup' ? 'pickup' : 'dropoff';
     if ($mode === 'pickup' && $loc === 'usa') $mode = 'dropoff';
@@ -760,7 +761,7 @@ function sa_svc_render_book(): void
       <nav class="sa-svc-crumbs"><a href="<?php echo esc_url(home_url('/')); ?>">Home</a> / <a href="<?php echo esc_url(sa_svc_url()); ?>">Services</a> / <span>Book</span></nav>
       <h1><?php echo $old ? 'Reschedule ' . esc_html($old['ref']) : 'Book a service'; ?></h1>
       <p class="sa-svc-lead">Five quick steps. Pay a KES <?php echo esc_html(number_format((float) sa_svc_setting('fee_kes'))); ?> booking fee to confirm, which is credited to your bill. You pay the rest at the service, after approving the final quote.</p>
-      <ul class="sa-svc-trust"><li><?php echo sa_svc_icon('check'); ?>Written quote before work</li><li><?php echo sa_svc_icon('check'); ?>Free online cancellation</li><li><?php echo sa_svc_icon('check'); ?>Parts from our own shop</li><li><?php echo sa_svc_icon('pin'); ?>Our garage on Kangundo Rd</li></ul>
+      <ul class="sa-svc-trust"><li><?php echo sa_svc_icon('check'); ?>Written quote before work</li><li><?php echo sa_svc_icon('check'); ?>Cancel online anytime</li><li><?php echo sa_svc_icon('check'); ?>Parts from our own shop</li><li><?php echo sa_svc_icon('pin'); ?>Our garage on Kangundo Rd</li></ul>
       <?php if ($err) : ?><div class="sa-svc-alert"><?php echo esc_html($err); ?></div><?php endif; ?>
       <ol class="sa-svc-progress" data-sa-progress><li class="is-on">Vehicle</li><li>Services</li><li>Location</li><li>Date &amp; time</li><li>Review</li></ol>
       <div class="sa-svc-wiz__grid">
@@ -867,7 +868,8 @@ function sa_svc_render_book(): void
           <div class="sa-svc-feebox" data-fw-normalfee><strong>Booking fee: KES <?php echo esc_html(number_format((float) sa_svc_setting('fee_kes'))); ?><?php $usd = sa_svc_fee_usd(); unset($usd); ?></strong>
             <span>Paid now through our secure checkout. It is deducted from your final service bill. It is refunded if we cancel, or if you cancel at least <?php echo (int) sa_svc_setting('cancel_hours'); ?> hours before your appointment. Your booking is confirmed once the fee is paid.</span></div>
           <label class="sa-svc-check"><input type="checkbox" name="agree_terms" value="1" required> I agree to the <a href="<?php echo esc_url(home_url('/booking-terms/')); ?>" target="_blank">Booking Terms &amp; Policies</a></label>
-          <p class="sa-svc-fine">By booking you agree that we may contact you by email, phone or WhatsApp about this appointment. You can cancel for free online while the booking is pending or confirmed. You'll get a reminder the day before.</p>
+          <script>(function(){var f=(document.querySelector('input[name=sa_svc_nonce]')||{}).form;if(!f)return;var k='sa_fd:'+location.pathname;f.addEventListener('submit',function(){try{var o={};Array.prototype.forEach.call(f.elements,function(e){if(!e.name||e.type==='hidden'||e.type==='password'||e.type==='file'||e.name==='website'||e.name==='sa_hp')return;if(e.type==='checkbox'||e.type==='radio'){if(e.checked)(o[e.name]=o[e.name]||[]).push(e.value);}else o[e.name]=[e.value];});sessionStorage.setItem(k,JSON.stringify(o));}catch(x){}});window.addEventListener('load',function(){try{var d=sessionStorage.getItem(k);if(!d||!/[?&](sa_err=|sa_form=(error|phone|slow))/.test(location.search))return;sessionStorage.removeItem(k);d=JSON.parse(d);Array.prototype.forEach.call(f.elements,function(e){var v=d[e.name];if(!v||e.type==='hidden'||e.type==='file')return;if(e.type==='checkbox'||e.type==='radio'){if(v.indexOf(e.value)>-1&&!e.checked){e.checked=true;e.dispatchEvent(new Event('change',{bubbles:true}));}}else if(e.value===''){e.value=v[0];e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));}});}catch(x){}});})();</script>
+          <p class="sa-svc-fine">By booking you agree that we may contact you by email, phone or WhatsApp about this appointment. You can cancel online. The booking fee is refunded if you cancel at least <?php echo (int) sa_svc_setting('cancel_hours'); ?> hours before your appointment, or if we cancel. You'll get a reminder the day before.</p>
         </fieldset>
 
         <div class="sa-svc-nav">
