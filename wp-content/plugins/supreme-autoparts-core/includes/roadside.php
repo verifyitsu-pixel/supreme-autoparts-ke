@@ -429,9 +429,20 @@ function sa_rs_email(int $id, string $event, string $note = ''): void
         $subject = 'Request ' . $r['ref'] . ': ' . $label . ($r['status'] === 'completed' ? ' — rate your help' : '');
         $lead = sa_email_greeting((string) $r['name']) . ' ' . esc_html(lcfirst(sa_rs_status_text($r['status']))) . ($note !== '' ? '<br><span style="color:#5f5f5b">' . esc_html($note) . '</span>' : '');
     }
-    $cta = $event === 'pay' && $r['pay_order'] && ($o = wc_get_order((int) $r['pay_order'])) ? $btn($o->get_checkout_payment_url(), 'Pay ' . $r['pay_amount'] . ' securely')
-        : $btn(sa_rs_status_url($id), $r['status'] === 'completed' && !$r['rated'] ? 'Rate your roadside help' : 'Track live status');
-    wp_mail($r['email'], $subject, $wrap('<p>' . $lead . '</p>' . $cta . $table . $call), $headers);
+    $pay_order = $event === 'pay' && $r['pay_order'] ? wc_get_order((int) $r['pay_order']) : null;
+    $cta_url = $pay_order instanceof WC_Order ? $pay_order->get_checkout_payment_url() : sa_rs_status_url($id);
+    $cta_label = $pay_order instanceof WC_Order ? 'Pay ' . $r['pay_amount'] . ' securely' : ($r['status'] === 'completed' && !$r['rated'] ? 'Rate your roadside help' : 'Track live status');
+    if (function_exists('sa_mail_layout')) {
+        $heading = [
+            'created' => 'Help is being arranged',
+            'message' => 'New message about your request',
+            'pay'     => 'Payment link for your roadside request',
+        ][$event] ?? 'Request update: ' . $label;
+        $html = sa_mail_layout($heading, '<p>' . $lead . '</p>' . $table . $call, $cta_label, $cta_url, $subject);
+    } else {
+        $html = $wrap('<p>' . $lead . '</p>' . $btn($cta_url, $cta_label) . $table . $call);
+    }
+    wp_mail($r['email'], $subject, $html, $headers);
 }
 
 /* ---------- Routing ---------- */
@@ -699,7 +710,7 @@ function sa_rs_render_status(): void
     $form = esc_url(admin_url('admin-post.php'));
     ?>
     <div class="sa-container sa-rs-narrow" id="rs-main" data-rs-status data-r="<?php echo $id; ?>" data-k="<?php echo esc_attr($k); ?>" data-lat="<?php echo esc_attr((string) $r['lat']); ?>" data-lng="<?php echo esc_attr((string) $r['lng']); ?>">
-      <?php if (isset($_GET['new'])) : ?><div class="sa-svc-alert sa-svc-alert--ok"><strong>Request sent.</strong> Your request number is <strong><?php echo esc_html($r['ref']); ?></strong>. Keep this page open, or use the link we emailed you. We'll call you shortly.</div><?php endif; ?>
+      <?php if (isset($_GET['new'])) : ?><div class="sa-svc-alert sa-svc-alert--ok"><strong>Request sent.</strong> Your request number is <strong><?php echo esc_html($r['ref']); ?></strong>.<?php if ((string) $r['email'] !== '') : ?> Keep this page open, or use the link we emailed you.<?php else : ?> You gave no email address, so <strong>save this request number and this page link</strong> (a screenshot works) — it is the only written copy of your request. You can also <a href="<?php echo esc_url(sa_rs_wa_url('My roadside request is ' . $r['ref'] . '. Please send me the status link.')); ?>" target="_blank" rel="noopener">get the link on WhatsApp</a>.<?php endif; ?> We'll call you shortly.</div><?php endif; ?>
       <?php if (isset($_GET['rated'])) : ?><div class="sa-svc-alert sa-svc-alert--ok">Thank you for your rating.</div><?php endif; ?>
       <p class="sa-svc-eyebrow">Request <?php echo esc_html($r['ref']); ?></p>
       <h1 class="sa-rs-stat"><span data-rs-label><?php echo esc_html(sa_rs_statuses()[$r['status']]); ?></span></h1>
@@ -747,7 +758,7 @@ function sa_rs_render_status(): void
         <dt>When</dt><dd><?php echo esc_html($r['when'] === 'now' ? 'As soon as possible' : str_replace('T', ' ', (string) $r['when'])); ?></dd>
         <dt>Price</dt><dd><?php echo esc_html($r['quote'] ?: 'Confirmed on call'); ?></dd>
         <dt>Submitted</dt><dd><?php echo esc_html(wp_date('j M Y, g:i A', $r['created'])); ?> EAT</dd></dl>
-        <?php if ($r['history']) : ?><details class="sa-rs-hist"><summary>Full history</summary><ul><?php foreach (array_reverse($r['history']) as $h) echo '<li><time>' . esc_html(wp_date('j M, g:i A', (int) $h['t'])) . '</time> <strong>' . esc_html(sa_rs_statuses()[$h['s']] ?? $h['s']) . '</strong> ' . esc_html((string) $h['n']) . '</li>'; ?></ul></details><?php endif; ?>
+        <?php if ($r['history']) : ?><details class="sa-rs-hist"><summary>Full history</summary><ul><?php foreach (array_reverse($r['history']) as $h) echo '<li><time>' . esc_html(wp_date('j M, g:i A', (int) $h['t'])) . '</time><span><strong>' . esc_html(sa_rs_statuses()[$h['s']] ?? $h['s']) . '</strong>' . ((string) $h['n'] !== '' ? ' — ' . esc_html((string) $h['n']) : '') . '</span></li>'; ?></ul></details><?php endif; ?>
       </section>
       <?php if (in_array($r['status'], ['received', 'dispatched'], true)) : ?>
         <details class="sa-rs-cancel"><summary>Cancel this request</summary><form method="post" action="<?php echo $form; ?>"><?php echo $hidden; ?><input type="hidden" name="do" value="cancel"><label>Reason (optional) <input name="text" placeholder="e.g. car started"></label><button class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--ghost" onclick="return confirm('Cancel this request?')">Cancel request</button></form></details>
