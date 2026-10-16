@@ -202,3 +202,46 @@ function sa_core_seed_collections_from_json(int $limit = 80): void
     update_option('sa_collections_seeded', $n);
 }
 
+/**
+ * Original intro copy for top-level categories.
+ * Shown in the archive header (woocommerce_archive_description) and used as the
+ * meta description fallback in seo.php. Versioned so redeploys re-apply it once.
+ *
+ * @return array<string,string>
+ */
+function sa_core_category_description_map(): array
+{
+    return [
+        'air-intake' => 'Air filters, intake kits and MAF-friendly upgrades for Japanese, American and European cars. A clean intake keeps dust out of the engine, which matters on Kenyan roads, and a good kit can sharpen throttle response. Search by part number or vehicle, or send us your make, model and year and we confirm fitment before you pay. Delivery to all 47 counties, pickup in Nairobi, and international shipping.',
+        'brakes' => 'Brake pads, rotors, complete kits, calipers, lines and fluid, from daily-driver replacements to big brake kits. If you are choosing between compounds or disc sizes, message us your vehicle and driving style on WhatsApp and we check the right setup before you order. Genuine and trusted aftermarket brands, delivered across Kenya within days, with Nairobi store pickup and shipping to the US and worldwide.',
+        'drivetrain' => 'Axles, clutch kits, flywheels, differentials, driveshafts and transfer case parts for 2WD and 4WD vehicles. Drivetrain parts must match the exact gearbox and axle code, so search by part number where you can, or send your VIN and we verify fitment first. Delivery across Kenya, pickup at our Nairobi shop, and international shipping.',
+        'engine' => 'Cooling, ignition, fueling and internal engine parts, plus intakes, forced induction and tuners for builds big and small. From a replacement radiator for the family car to boost for a project truck, search by part number or vehicle and we help you match the right spec. Countrywide delivery in Kenya, Nairobi pickup, and international shipping.',
+        'exhaust' => 'Headers, downpipes, cat-back and axle-back systems, mufflers and tips. Whether you are fixing a leaking stock system or building for sound and flow, match the part number or tell us your make, model and engine and we confirm what fits. Delivery to every county in Kenya, store pickup in Nairobi, and international shipping.',
+        'exterior' => 'Bumpers, grilles, fender flares, roof racks, tonneau covers, winches, wipers and more for work trucks, family SUVs and off-road builds. Exterior parts are vehicle-specific, so send your year, make and model if you are unsure and we check before you pay. Delivery across all 47 counties, Nairobi pickup, and international shipping.',
+        'interior' => 'Floor mats, seat covers, cargo liners, organizers, gauges, steering wheels and trim pieces that handle daily use. Good interior protection pays for itself in Kenya\'s dust and mud seasons. Search by part number or vehicle, or ask us to confirm fitment. Delivery countrywide, pickup in Nairobi, and international shipping.',
+        'lighting' => 'Headlights, tail lights, fog lights, bulbs, LED upgrades and off-road light bars. Better lighting is one of the cheapest safety upgrades for night driving and rural roads. Match your bulb code or vehicle, or send us a photo of your current unit and we identify the right replacement. Delivery across Kenya, Nairobi pickup, and international shipping.',
+        'suspension' => 'Shocks, struts, coilovers, lift and leveling kits, control arms, bushings and sway bars. From restoring a tired daily driver to setting up for rough roads and overlanding, suspension choices depend on load and terrain, so tell us how you use the vehicle and we help you choose. Delivery to all 47 counties, Nairobi pickup, and international shipping.',
+        'tires' => 'Tires for highway, all-terrain and mud use, from commuter sizes to 4x4 fitments. Your size is printed on the sidewall (for example 265/70R16) - search it directly, or send us a photo and your vehicle details and we match options. Fitting advice included. Delivery across Kenya, pickup in Nairobi, and international shipping.',
+        'wheels' => 'Steel and alloy wheels in the bolt patterns, offsets and diameters Kenyan and US vehicles actually run. Getting offset and load rating right matters more than looks, so send your vehicle and current wheel size and we confirm fitment before you order. Delivery countrywide, store pickup in Nairobi, and international shipping.',
+        'american' => 'Parts for American vehicles: Ford, Chevrolet, GMC, Jeep, Dodge, RAM and more. Trucks and muscle cars included - search by part number or vehicle, or send your VIN and we confirm the exact variant. Delivery across Kenya, pickup in Nairobi, and fast US domestic shipping.',
+        'european' => 'Parts for European vehicles: Volkswagen, BMW, Mercedes-Benz, Audi, Land Rover and others. European models often have several part variants per year, so send your VIN for a guaranteed match. Delivery to all 47 Kenyan counties, Nairobi pickup, and international shipping.',
+        'asian' => 'Parts for Japanese and Asian vehicles: Toyota, Nissan, Honda, Mazda, Subaru, Mitsubishi, Isuzu and more - the heart of the Kenyan fleet. Search by part number or vehicle, or send your chassis number and we verify fitment. Delivery countrywide, pickup in Nairobi, and international shipping.',
+    ];
+}
+
+add_action('init', static function (): void {
+    if (!taxonomy_exists('product_cat')) {
+        return;
+    }
+    $ver = '1';
+    if (get_option('sa_cat_desc_ver', '') === $ver) {
+        return;
+    }
+    foreach (sa_core_category_description_map() as $slug => $desc) {
+        $term = get_term_by('slug', $slug, 'product_cat');
+        if ($term && !is_wp_error($term)) {
+            wp_update_term((int) $term->term_id, 'product_cat', ['description' => $desc]);
+        }
+    }
+    update_option('sa_cat_desc_ver', $ver, false);
+}, 30);
