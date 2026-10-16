@@ -605,8 +605,20 @@ function sa_rk_rows(string $ctx, int $pid, array $pz): array
         $label = sa_rk_vehicle_label($pz);
         $facet = $pz['mo'] !== '' ? ['model', [$pz['mo']]] : ['make', [$pz['mk']]];
         $cz = $pz; $cz['mk'] = ''; $cz['mo'] = '';
+        $veh_ids = sa_rk_query($cz, ['facet' => $facet, 'boost' => true, 'exclude' => $seen, 'limit' => 16]);
+        // The row title claims fitment, so keep only products whose listed fitment
+        // actually covers the customer's vehicle (same rules as the product-page fit
+        // badge). Without this a 2020+ part could show under "Fits your 2015 ...".
+        if ($veh_ids !== [] && function_exists('sa_garage_product_fits_vehicle')) {
+            $yr = (int) $pz['y'];
+            $mo_parts = explode('/', (string) $pz['mo']);
+            $mo_slug = $pz['mo'] !== '' ? sanitize_title((string) end($mo_parts)) : '';
+            $veh_ids = array_values(array_filter($veh_ids, static function (int $id) use ($pz, $mo_slug, $yr): bool {
+                return sa_garage_product_fits_vehicle($id, (string) $pz['mk'], $mo_slug, $yr) === true;
+            }));
+        }
         /* translators: %s: vehicle */
-        $add('veh', sprintf(__('Fits your %s', 'supreme-autoparts-core'), $label), sa_rk_query($cz, ['facet' => $facet, 'boost' => true, 'exclude' => $seen, 'limit' => 16]));
+        $add('veh', sprintf(__('Fits your %s', 'supreme-autoparts-core'), $label), $veh_ids);
     }
 
     if ($ctx !== 'product' && $pz['p'] !== []) {
@@ -772,3 +784,4 @@ add_filter('the_content', static function (string $html): string {
     if (!(($pp > 0 && is_page($pp)) || is_page('privacy-policy')) || !is_main_query() || str_contains($html, 'sa-pz-note')) { return $html; }
     return $html . '<h2 class="sa-pz-note">' . esc_html__('Personalised recommendations', 'supreme-autoparts-core') . '</h2><p>' . esc_html__('To show parts that suit you, our site remembers on your own device the products, categories and brands you look at, your searches, the vehicle you pick in the finder and what is in your cart. This is stored in your browser (local storage and a first-party cookie called sa_pz, kept for up to 30 days) and is only used on supremeautoparts.co.ke to order the catalogue and suggest parts. We count product views anonymously to rank popular parts. We do not use third-party trackers for this, sell this data or link it to your identity. If your browser sends Do Not Track or Global Privacy Control, personalisation is switched off. You can clear it at any time by clearing your browser data for this site.', 'supreme-autoparts-core') . '</p>';
 }, 99);
+
