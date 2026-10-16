@@ -249,7 +249,7 @@ function sa_sf_handle(): void
     $html = ['Content-Type: text/html; charset=UTF-8'];
     $layout = static fn(string $h, string $inner, string $cl = '', string $cu = ''): string => function_exists('sa_mail_layout') ? sa_mail_layout($h, $inner, $cl, $cu) : '<h1>' . esc_html($h) . '</h1>' . $inner;
     wp_mail($to, '[' . $ref . '] ' . $types[$type]['title'] . ' from ' . $d['name'], $layout($types[$type]['title'], '<p><strong>' . esc_html($d['name']) . '</strong> &lt;' . esc_html($d['email']) . '&gt;</p>' . $table, 'Open tickets', admin_url('admin.php?page=sa-super-tickets' . ($tid ? '&ticket=' . $tid : ''))), array_merge($html, ['Reply-To: ' . $d['name'] . ' <' . $d['email'] . '>']));
-    wp_mail($d['email'], 'We received your request (' . $ref . ')', $layout('We received your request', '<p>' . sa_email_greeting((string) $d['name']) . '</p><p>We received your ' . esc_html(['contact' => 'message', 'part' => 'part request', 'fitment' => 'fitment check', 'return' => 'return / order issue'][$type]) . ' and will reply soon. Your reference is <strong>' . esc_html($ref) . '</strong>.</p>' . $table, 'Visit Supreme Autoparts', home_url('/')), $html);
+    wp_mail($d['email'], 'We received your request (' . $ref . ')', $layout('We received your request', '<p>' . sa_email_greeting((string) $d['name'], (string) $d['email']) . '</p><p>We received your ' . esc_html(['contact' => 'message', 'part' => 'part request', 'fitment' => 'fitment check', 'return' => 'return / order issue'][$type]) . ' and will reply soon. Your reference is <strong>' . esc_html($ref) . '</strong>.</p>' . $table, 'Visit Supreme Autoparts', home_url('/')), $html);
     $go('sent', $ref);
 }
 
