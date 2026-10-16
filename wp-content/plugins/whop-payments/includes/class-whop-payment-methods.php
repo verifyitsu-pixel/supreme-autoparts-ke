@@ -87,7 +87,7 @@ final class Whop_Payment_Methods {
 
         if (in_array($status, ['error', 'cancel', 'failed'], true)) {
             wc_add_notice(
-                __('Verification payment was cancelled or failed. No $1.00 charge was completed. You can try again.', 'whop-payments'),
+                __('Card verification was cancelled or failed. No charge was made. You can try again.', 'whop-payments'),
                 'error'
             );
             wp_safe_redirect($redirect);
@@ -99,12 +99,12 @@ final class Whop_Payment_Methods {
             $count = (int) ($sync['count'] ?? 0);
             if ($count > 0) {
                 wc_add_notice(
-                    __('Verification payment received ($1.00). Your payment method is saved.', 'whop-payments'),
+                    __('Your payment method is saved.', 'whop-payments'),
                     'success'
                 );
             } else {
                 wc_add_notice(
-                    __('Verification payment received ($1.00). If your method is not listed yet, tap Refresh — sync may take a moment.', 'whop-payments'),
+                    __('Card confirmed. If your method is not listed yet, tap Refresh. Sync can take a moment.', 'whop-payments'),
                     'success'
                 );
             }
@@ -151,7 +151,7 @@ final class Whop_Payment_Methods {
             }
             $sync = self::sync_user_payment_methods($user_id, true);
             if (!empty($sync['success'])) {
-                wc_add_notice(__('Synced payment methods from Whop.', 'whop-payments'), 'success');
+                wc_add_notice(__('Payment methods synced.', 'whop-payments'), 'success');
             } else {
                 wc_add_notice((string) ($sync['message'] ?? __('Sync failed.', 'whop-payments')), 'error');
             }
@@ -195,7 +195,7 @@ final class Whop_Payment_Methods {
         if (!$client) {
             return [
                 'success' => false,
-                'message' => __('Whop payments are not configured.', 'whop-payments'),
+                'message' => __('Card payments are not configured.', 'whop-payments'),
             ];
         }
 
@@ -209,7 +209,7 @@ final class Whop_Payment_Methods {
 
         // Bank: prefer setup-mode us_bank_account (routing/account fields, no Plaid Link
         // required on our side). Multiple banks allowed — each Add bank creates a new session.
-        // Card: $1 payment verify first, setup fallback.
+        // Card: $0 setup-intent first (confirms the card, no charge); $1 verify is the fallback.
         if ($method === 'bank' && method_exists($client, 'create_setup_checkout')) {
             $result = $client->create_setup_checkout([
                 'currency'     => 'usd',
@@ -235,18 +235,8 @@ final class Whop_Payment_Methods {
                 ]);
             }
         } else {
-            $result = $client->create_verify_checkout([
-                'amount'       => self::VERIFY_FEE_USD,
-                'wp_user_id'   => (string) $user_id,
-                'email'        => $email,
-                'redirect_url' => $return_url,
-                'method'       => $method,
-                'title'        => $title,
-            ]);
-
-            // Optional fallback: free setup-only if payment-mode verify cannot be created.
-            if (empty($result['success']) && method_exists($client, 'create_setup_checkout')) {
-                error_log('[whop-payments] verify checkout failed, falling back to setup: ' . (string) ($result['message'] ?? ''));
+            $result = [];
+            if (method_exists($client, 'create_setup_checkout')) {
                 $result = $client->create_setup_checkout([
                     'currency'     => 'usd',
                     'redirect_url' => $return_url,
@@ -254,9 +244,22 @@ final class Whop_Payment_Methods {
                     'metadata'     => [
                         'wp_user_id' => (string) $user_id,
                         'email'      => $email,
-                        'fallback'   => 'setup_after_verify_fail',
+                        'purpose'    => 'save_card',
                         'pm_method'  => $method,
                     ],
+                ]);
+            }
+
+            // Fallback: $1 payment verify if a free setup-intent cannot be created.
+            if (empty($result['success'])) {
+                error_log('[whop-payments] card setup failed, trying $1 verify: ' . (string) ($result['message'] ?? ''));
+                $result = $client->create_verify_checkout([
+                    'amount'       => self::VERIFY_FEE_USD,
+                    'wp_user_id'   => (string) $user_id,
+                    'email'        => $email,
+                    'redirect_url' => $return_url,
+                    'method'       => $method,
+                    'title'        => $title,
                 ]);
             }
         }
@@ -277,7 +280,7 @@ final class Whop_Payment_Methods {
         if ($plan_id === '' || $checkout_id === '') {
             return [
                 'success' => false,
-                'message' => __('Whop did not return plan_id and checkout session for embed.', 'whop-payments'),
+                'message' => __('Could not start card verification. Please try again.', 'whop-payments'),
                 'raw'     => $result['raw'] ?? null,
             ];
         }
@@ -341,7 +344,7 @@ final class Whop_Payment_Methods {
         $sync    = self::sync_user_payment_methods($user_id, true);
         if (!empty($sync['success']) && (int) ($sync['count'] ?? 0) > 0) {
             wc_add_notice(
-                __('Verification payment received ($1.00). Your payment method is saved.', 'whop-payments'),
+                __('Your payment method is saved.', 'whop-payments'),
                 'success'
             );
         } elseif (!empty($sync['success'])) {
@@ -476,8 +479,8 @@ final class Whop_Payment_Methods {
                 'titleBank'   => __('Add bank', 'whop-payments'),
                 'verifyCard'  => __('Verify card', 'whop-payments'),
                 'verifyBank'  => __('Verify bank', 'whop-payments'),
-                'feeCard'     => __('You will be charged $1.00 USD once to verify this card is active. The charge is non-refundable.', 'whop-payments'),
-                'feeBank'     => __('Enter your US bank routing and account numbers below (no Plaid Link). Multiple banks allowed. Whop may charge $1.00 USD once to verify.', 'whop-payments'),
+                'feeCard'     => __('Your card is verified with a $0 authorization. No charge is made.', 'whop-payments'),
+                'feeBank'     => __('Enter your US bank routing and account numbers below. Multiple banks allowed. Your bank is verified with a $0 authorization.', 'whop-payments'),
                 'notReady'    => __('Form not ready yet. Wait a moment and try again.', 'whop-payments'),
                 'checkForm'   => __('Complete the highlighted fields, then tap Verify.', 'whop-payments'),
                 'tryAgain'    => __('Form reloaded. Fill details and tap Verify.', 'whop-payments'),
@@ -586,7 +589,7 @@ final class Whop_Payment_Methods {
     public static function sync_user_payment_methods(int $user_id, bool $force = false): array {
         $client = self::client_from_gateway();
         if (!$client) {
-            return ['success' => false, 'message' => __('Whop API unavailable.', 'whop-payments')];
+            return ['success' => false, 'message' => __('Payment service unavailable. Please try again.', 'whop-payments')];
         }
 
         $user = get_userdata($user_id);
@@ -610,7 +613,7 @@ final class Whop_Payment_Methods {
             return [
                 'success' => true,
                 'count'   => 0,
-                'message' => __('No Whop member found for this email yet. Add a card to create one.', 'whop-payments'),
+                'message' => __('No payment profile found for this email yet. Add a card to create one.', 'whop-payments'),
             ];
         }
 
@@ -622,7 +625,7 @@ final class Whop_Payment_Methods {
         if (empty($list['success'])) {
             return [
                 'success' => false,
-                'message' => (string) ($list['message'] ?? __('Could not list Whop payment methods.', 'whop-payments')),
+                'message' => (string) ($list['message'] ?? __('Could not load payment methods.', 'whop-payments')),
             ];
         }
 
@@ -917,7 +920,7 @@ final class Whop_Payment_Methods {
                 if (!str_contains($msg, 'not found') && !str_contains($msg, '404')) {
                     return [
                         'success' => false,
-                        'message' => (string) ($del['message'] ?? __('Whop refused to delete this method.', 'whop-payments')),
+                        'message' => (string) ($del['message'] ?? __('This payment method could not be removed.', 'whop-payments')),
                     ];
                 }
             }
