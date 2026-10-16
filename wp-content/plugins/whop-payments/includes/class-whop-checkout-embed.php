@@ -113,9 +113,17 @@ final class Whop_Checkout_Embed {
      * Unpaid Whop orders on /pay or order-pay go to Whop, not the card embed.
      */
     public static function maybe_redirect_to_whop(): void {
+        if (self::order_from_request() instanceof WC_Order) {
+            // On-site embed page (/pay/?sa_whop_pay=1): render the embed, never redirect out.
+            return;
+        }
         $order = self::unpaid_whop_order_from_request();
         if (!$order instanceof WC_Order) {
             return;
+        }
+        if (self::order_has_embed($order)) {
+            wp_safe_redirect(self::pay_url($order), 302);
+            exit;
         }
         $url = self::whop_checkout_url($order);
         if ($url === '') {
@@ -320,7 +328,7 @@ final class Whop_Checkout_Embed {
             return $content;
         }
 
-        return self::render_redirect_fallback($order);
+        return self::render_mount_markup($order);
     }
 
     /**
@@ -341,6 +349,10 @@ final class Whop_Checkout_Embed {
         if ($key === '' || !hash_equals($order->get_order_key(), $key)) {
             return;
         }
+        if (self::order_has_embed($order)) {
+            wp_safe_redirect(self::pay_url($order), 302);
+            exit;
+        }
         $url = self::whop_checkout_url($order);
         if ($url === '') {
             return;
@@ -353,6 +365,42 @@ final class Whop_Checkout_Embed {
      */
     public static function render_redirect_fallback(WC_Order $order): string {
         return self::render_embed_markup($order);
+    }
+
+    /**
+     * On-site payment embed markup (mount point for sa-whop-checkout-embed.js).
+     */
+    public static function render_mount_markup(WC_Order $order): string {
+        $logo  = WHOP_PAYMENTS_URL . 'assets/img/logo-light.png';
+        $total = wp_strip_all_tags($order->get_formatted_order_total());
+        $num   = $order->get_order_number();
+
+        ob_start();
+        ?>
+        <div class="sa-open-pay" id="sa-whop-pay-embed">
+            <div class="sa-open-pay__card">
+                <div class="sa-open-pay__brand">
+                    <img class="sa-open-pay__logo" src="<?php echo esc_url($logo); ?>" alt="Supreme Autoparts" width="180" height="48" loading="eager" />
+                    <h1 class="sa-open-pay__title"><?php echo esc_html__('Complete payment', 'whop-payments'); ?></h1>
+                    <p class="sa-open-pay__sub">
+                        <?php
+                        echo esc_html(
+                            sprintf(
+                                /* translators: 1: order number 2: formatted total */
+                                __('Order #%1$s - %2$s. Pay securely below.', 'whop-payments'),
+                                $num,
+                                $total
+                            )
+                        );
+                        ?>
+                    </p>
+                </div>
+                <p class="sa-open-pay__notice" id="sa-whop-pay-status" role="status"></p>
+                <div id="sa-whop-pay-mount"></div>
+            </div>
+        </div>
+        <?php
+        return (string) ob_get_clean();
     }
 
     public static function render_embed_markup(WC_Order $order): string {
@@ -373,7 +421,7 @@ final class Whop_Checkout_Embed {
                         echo esc_html(
                             sprintf(
                                 /* translators: 1: order number 2: formatted total */
-                                __('Order #%1$s — %2$s. Continue to Whop to pay securely.', 'whop-payments'),
+                                __('Order #%1$s — %2$s. Continue to secure payment.', 'whop-payments'),
                                 $num,
                                 $total
                             )
@@ -383,11 +431,11 @@ final class Whop_Checkout_Embed {
                 </div>
                 <?php if ($url !== '') : ?>
                     <p class="sa-open-pay__notice" role="status">
-                        <?php echo esc_html__('Redirecting to Whop…', 'whop-payments'); ?>
+                        <?php echo esc_html__('Taking you to secure payment…', 'whop-payments'); ?>
                     </p>
                     <p>
                         <a class="button" href="<?php echo esc_url($url); ?>">
-                            <?php echo esc_html__('Pay on Whop', 'whop-payments'); ?>
+                            <?php echo esc_html__('Continue to payment', 'whop-payments'); ?>
                         </a>
                     </p>
                     <script>
