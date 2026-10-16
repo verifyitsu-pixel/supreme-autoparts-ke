@@ -27,3 +27,10 @@
   .sa-greet{gap:12px;padding:12px}
   .sa-greet__hello{font-size:1rem}
 }
+
+/* Dashboard hero integration */
+.sa-dash__hero-row{display:flex;align-items:flex-start;gap:14px}
+.sa-dash__hero-row .sa-avatar{flex:0 0 auto;border:2px solid #fff;box-shadow:0 0 0 1px #e4e4e4}
+.sa-dash__hero-text{min-width:0}
+.sa-dash__hero-row .sa-greet__actions{margin-top:8px}
+.sa-dash__hero-row .sa-greet__msg{margin:6px 0 0}
