@@ -195,23 +195,25 @@ function sa_avatar_feedback_html(): string
     return '<p class="sa-greet__msg sa-greet__msg--' . esc_attr($kind) . '">' . esc_html($text) . '</p>';
 }
 
-/* Add/change + remove photo forms (post to the login-gated admin-post handler). */
+/* Add/change + remove photo forms (post to the login-gated admin-post handler).
+   The file input is picked up by the site's standard file-drop.js dropzone;
+   data-max keeps its size hint in line with the server-side 5 MB cap. */
 function sa_avatar_controls_html(int $user_id): string
 {
     $has_photo = sa_avatar_attachment_id($user_id) > 0;
     $out = '<div class="sa-greet__actions">';
-    $out .= '<form class="sa-greet__form" method="post" enctype="multipart/form-data" action="' . esc_url(admin_url('admin-post.php')) . '">';
+    $out .= '<form class="sa-greet__form sa-greet__form--upload" method="post" enctype="multipart/form-data" action="' . esc_url(admin_url('admin-post.php')) . '">';
     $out .= '<input type="hidden" name="action" value="sa_avatar"><input type="hidden" name="do" value="set">';
     $out .= wp_nonce_field('sa_avatar', '_wpnonce', true, false);
-    $out .= '<label class="sa-greet__upload">' . esc_html($has_photo ? __('Change photo', 'supreme-autoparts-core') : __('Add a photo', 'supreme-autoparts-core'));
-    $out .= '<input type="file" name="avatar" accept="image/jpeg,image/png,image/webp" data-sa-avatar-file></label>';
-    $out .= '<noscript><button type="submit" class="sa-greet__save">' . esc_html__('Save photo', 'supreme-autoparts-core') . '</button></noscript>';
+    $out .= '<span class="sa-greet__uploadlabel">' . esc_html($has_photo ? __('Change photo', 'supreme-autoparts-core') : __('Add a photo', 'supreme-autoparts-core')) . '</span>';
+    $out .= '<input type="file" id="sa-avatar-file" name="avatar" accept="image/jpeg,image/png,image/webp" data-max="5242880">';
+    $out .= '<button type="submit" class="sa-greet__save">' . esc_html__('Save photo', 'supreme-autoparts-core') . '</button>';
     $out .= '</form>';
     if ($has_photo) {
         $out .= '<form class="sa-greet__form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '" onsubmit="return confirm(\'' . esc_js(__('Remove your profile photo?', 'supreme-autoparts-core')) . '\');">';
         $out .= '<input type="hidden" name="action" value="sa_avatar"><input type="hidden" name="do" value="remove">';
         $out .= wp_nonce_field('sa_avatar', '_wpnonce', true, false);
-        $out .= '<button type="submit" class="sa-greet__remove">' . esc_html__('Remove', 'supreme-autoparts-core') . '</button></form>';
+        $out .= '<button type="submit" class="sa-greet__remove">' . esc_html__('Remove photo', 'supreme-autoparts-core') . '</button></form>';
     }
     $out .= '</div>';
     return $out;
