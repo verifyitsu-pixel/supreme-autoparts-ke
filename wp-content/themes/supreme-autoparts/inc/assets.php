@@ -5,6 +5,17 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+/**
+ * Resource hints: warm up connections to third-party hosts used above the fold
+ * (Google Fonts, Shopify CDN product images). Cheap LCP win on slow networks.
+ */
+add_action('wp_head', static function (): void {
+    echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />' . "\n";
+    echo '<link rel="preconnect" href="https://fonts.googleapis.com" />' . "\n";
+    echo '<link rel="preconnect" href="https://cdn.shopify.com" crossorigin />' . "\n";
+    echo '<link rel="dns-prefetch" href="https://cdn.shopify.com" />' . "\n";
+}, 1);
+
 add_action('wp_enqueue_scripts', static function (): void {
     wp_enqueue_style(
         'sa-google-fonts',
