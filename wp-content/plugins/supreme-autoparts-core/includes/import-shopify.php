@@ -332,7 +332,7 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
             $fp = sa_product_loop_fingerprint($title_preview);
             if ($fp !== '' && $fp !== 'empty' && !str_starts_with($fp, 'id:')) {
                 $by_fp = sa_core_find_published_by_fingerprint($fp, 0);
-                if ($by_fp > 0) {
+                if ($by_fp > 0 && (!function_exists('sa_core_fp_match_same_sku') || sa_core_fp_match_same_sku($by_fp, $item))) {
                     $existing_id = $by_fp;
                     if (count($result['messages']) < 50) {
                         $result['messages'][] = sprintf(
@@ -1818,4 +1818,20 @@ function sa_core_repair_product_parent_categories(int $limit = 500): array
         }
     }
     return $out;
+}
+
+/**
+ * A title-fingerprint match may only update an existing product when the part numbers
+ * agree. Distinct SKUs are distinct products even if their titles look alike.
+ */
+function sa_core_fp_match_same_sku(int $matched_id, array $item): bool
+{
+    $sku = '';
+    if (!empty($item['variants'][0]['sku'])) {
+        $sku = trim((string) $item['variants'][0]['sku']);
+    } elseif (!empty($item['sku'])) {
+        $sku = trim((string) $item['sku']);
+    }
+    $have = trim((string) get_post_meta($matched_id, '_sku', true));
+    return $sku === '' || $have === '' || strcasecmp($sku, $have) === 0;
 }
