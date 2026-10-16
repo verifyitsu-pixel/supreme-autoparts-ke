@@ -373,7 +373,7 @@ function sa_ff_order_block(WC_Order $o, bool $email = false): string
     $rows = [];
     $pk = sa_pk_slot_text($o);
     if ($pk !== '') {
-        $rows[] = '<strong>Store pickup:</strong> ' . esc_html($pk) . ' at ' . esc_html(sa_pk_address()) . ' (<a href="' . esc_url(sa_pk_map()) . '">map</a>). ' . ($o->has_status('ready-pickup') ? 'Your order is ready: show your pickup code at the store.' : 'We email you when it is ready.');
+        $rows[] = '<strong>Store pickup:</strong> ' . esc_html($pk) . ' at ' . esc_html(sa_pk_address()) . ' (<a href="' . esc_url(sa_pk_map()) . '">map</a>). We email you when it is ready.';
     }
     $eta = (string) $o->get_meta('_sa_eta');
     if ($eta !== '' && $pk === '') {
@@ -391,7 +391,7 @@ function sa_ff_order_block(WC_Order $o, bool $email = false): string
     if (!$rows) {
         return '';
     }
-    return $email ? '<div style="margin:16px 0;font-size:14px;line-height:1.6">' . implode('<br>', $rows) . '</div>'
+    return $email ? '<div style="margin:18px 0 8px;padding:14px 16px;background:#f6f6f4;border-radius:8px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#222222">' . implode('<div style="height:8px;line-height:8px;font-size:8px">&nbsp;</div>', $rows) . '</div>'
         : '<div class="sa-ff-block">' . implode('<br>', $rows) . '</div>';
 }
 add_action('woocommerce_order_details_after_order_table', static function ($o): void {
