@@ -478,7 +478,7 @@ function sa_core_otp_email_html(array $ctx): string
     $email = esc_html((string) ($ctx['store_email'] ?? 'calvin@supremeautoparts.co.ke'));
     $wa = esc_html((string) ($ctx['wa_display'] ?? '+1 917 437 5121'));
 
-    return '<div class="sa-otp-mail" style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#18181b;max-width:560px;">'
+    $inner = '<div class="sa-otp-mail" style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#18181b;">'
         . '<p style="margin:0 0 12px;font-size:15px;line-height:1.5;">' . $greet . '</p>'
         . '<p style="margin:0 0 12px;font-size:15px;line-height:1.5;">Your one-time login code for <strong>' . $site . '</strong> is:</p>'
         . '<p style="margin:20px 0;text-align:center;">'
@@ -486,13 +486,15 @@ function sa_core_otp_email_html(array $ctx): string
         . $code
         . '</span></p>'
         . '<p style="margin:0 0 16px;font-size:15px;line-height:1.5;">This code expires in <strong>' . $mins . ' minutes</strong>. Enter it on the My Account page to view orders, invoices, and payment methods.</p>'
-        . '<p style="margin:0 0 20px;text-align:center;">'
-        . '<a href="' . $url . '" style="display:inline-block;background:#111111;color:#f59e0b;text-decoration:none;font-weight:700;font-size:15px;padding:14px 28px;border-radius:8px;">Open My Account</a>'
-        . '</p>'
         . '<p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#52525b;">If the button does not work, use this link:<br />'
         . '<a href="' . $url . '" style="color:#111111;word-break:break-all;">' . esc_html((string) ($ctx['account_url'] ?? '')) . '</a></p>'
         . '<p style="margin:16px 0 0;font-size:13px;line-height:1.5;color:#71717a;">If you did not request this, you can ignore this email. Never share the code.</p>'
         . '</div>';
+    // Same black/amber layout and dark mode as the order emails (the layout carries the logo header, so the Brevo logo strip is skipped).
+    if (function_exists('sa_mail_layout')) {
+        return sa_mail_layout('Your login code', $inner, 'Open My Account', (string) ($ctx['account_url'] ?? ''), 'Login code', 'Login code');
+    }
+    return $inner;
 }
 
 /**
