@@ -114,8 +114,13 @@ add_action('wp_enqueue_scripts', static function (): void {
     if (!is_user_logged_in()) {
         return;
     }
-    wp_enqueue_style('sa-avatar', SA_CORE_URL . 'assets/customer-avatar.css', [], SA_CORE_VERSION);
-    wp_enqueue_script('sa-avatar', SA_CORE_URL . 'assets/customer-avatar.js', [], SA_CORE_VERSION, true);
+    $sa_av_dir = defined('SA_CORE_PATH') ? SA_CORE_PATH : dirname(__DIR__) . '/';
+    $sa_av_ver = static function (string $f) use ($sa_av_dir): string {
+        $m = @filemtime($sa_av_dir . 'assets/' . $f);
+        return SA_CORE_VERSION . ($m ? '.' . $m : '');
+    };
+    wp_enqueue_style('sa-avatar', SA_CORE_URL . 'assets/customer-avatar.css', [], $sa_av_ver('customer-avatar.css'));
+    wp_enqueue_script('sa-avatar', SA_CORE_URL . 'assets/customer-avatar.js', [], $sa_av_ver('customer-avatar.js'), true);
 });
 
 /* Upload / change / remove. POST-only, login-gated (no nopriv hook), nonce-checked. */
