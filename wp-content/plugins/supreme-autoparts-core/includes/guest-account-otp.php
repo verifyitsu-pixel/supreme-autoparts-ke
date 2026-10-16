@@ -490,11 +490,6 @@ function sa_core_otp_email_html(array $ctx): string
         . '<p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#52525b;">If the button does not work, use this link:<br />'
         . '<a href="' . $url . '" style="color:#16a34a;word-break:break-all;">' . esc_html((string) ($ctx['account_url'] ?? '')) . '</a></p>'
         . '<p style="margin:16px 0 0;font-size:13px;line-height:1.5;color:#71717a;">If you did not request this, you can ignore this email. Never share the code.</p>'
-        . '<p style="margin:20px 0 0;padding-top:14px;border-top:1px solid #e4e4e7;font-size:13px;line-height:1.5;color:#52525b;">'
-        . '— ' . $site . '<br />'
-        . '<a href="mailto:' . esc_attr((string) ($ctx['store_email'] ?? '')) . '" style="color:#16a34a;">' . $email . '</a>'
-        . ' · WhatsApp ' . $wa
-        . '</p>'
         . '</div>';
 }
 
