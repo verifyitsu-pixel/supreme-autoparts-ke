@@ -472,8 +472,9 @@ function sa_ret_upload(int $rid): array
     require_once ABSPATH . 'wp-admin/includes/file.php';
     $out = [];
     $allowed = ['jpg|jpeg|jpe' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'heic' => 'image/heic', 'heif' => 'image/heif', 'pdf' => 'application/pdf'];
-    $sub = static function (array $d) use ($rid): array {
-        $d['subdir'] = '/' . basename(sa_priv_dir()) . '/ret/' . $rid;
+    $priv = basename(sa_priv_dir());
+    $sub = static function (array $d) use ($rid, $priv): array {
+        $d['subdir'] = '/' . $priv . '/ret/' . $rid;
         $d['path'] = $d['basedir'] . $d['subdir'];
         $d['url'] = $d['baseurl'] . $d['subdir'];
         return $d;
