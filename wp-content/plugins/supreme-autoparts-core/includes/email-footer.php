@@ -209,6 +209,13 @@ add_action('woocommerce_email_footer', static function ($email = null): void {
     $country = $order instanceof WC_Order ? (string) ($order->get_billing_country() ?: $order->get_shipping_country()) : '';
     $customer = !($email instanceof WC_Email) || !method_exists($email, 'is_customer_email') || $email->is_customer_email();
     $GLOBALS['sa_email_ctx'] = sa_email_context((string) ($GLOBALS['sa_email_body_hint'] ?? ''), $email instanceof WC_Email ? (string) $email->id : '', $customer);
+    if ($GLOBALS['sa_email_ctx'] === 'order' && $order instanceof WC_Order) {
+        foreach ($order->get_shipping_methods() as $sa_sm) {
+            if (strpos((string) $sa_sm->get_method_id(), 'local_pickup') === 0) {
+                $GLOBALS['sa_email_ctx'] = 'pickup_order';
+            }
+        }
+    }
     echo sa_email_help_html($country, $GLOBALS['sa_email_ctx']); // Escaped by the shared renderer.
 }, 5);
 
