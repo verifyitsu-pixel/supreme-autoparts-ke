@@ -870,3 +870,16 @@ add_action('admin_menu', static function (): void {
         }
     }
 }, 99);
+
+/* ---------- policy pages follow the 15-day rule ---------- */
+add_filter('the_content', static function (string $c): string {
+    if (!is_main_query() || !in_the_loop() || !is_page(['returns', 'refund-policy'])) {
+        return $c;
+    }
+    $c = preg_replace('#<li>After 60 days[^<]*</li>#', '<li>After ' . SA_RET_DAYS . ' days you cannot start a return or refund online. Contact us with your issue and we will review it case by case.</li>', $c) ?? $c;
+    $c = preg_replace('#<li>An RMA must be issued.*?</li>#s', '<li>Start your return while signed in: open <strong>My Account &gt; Returns</strong>, pick the order and items, and follow the steps. We approve it before you send anything back.</li>', $c) ?? $c;
+    $c = str_replace('(with prior RMA)', '(approved through My Account &gt; Returns)', $c);
+    $c = preg_replace('#<p>To start a refund or RMA request[^<]*(<a[^>]*>[^<]*</a>)?[^<]*</p>#', '<p>To start a refund, sign in and open <strong>My Account &gt; Returns</strong>. After ' . SA_RET_DAYS . ' days, <a href="/contact/">contact us</a> with your issue.</p>', $c) ?? $c;
+    $c = str_replace(['of the order date', '60 days'], ['of delivery', SA_RET_DAYS . ' days'], $c);
+    return $c;
+}, 15);
