@@ -269,7 +269,13 @@ bootstrap_wordpress() {
   wp_as plugin activate sa-geo-currency || true
   wp_as plugin activate pesapal-woocommerce || true
   wp_as plugin activate transactworld-payment-integration || true
-  wp_as plugin activate woocommerce-paypal-payments || true
+  # PayPal Payments stays OFF: the plugin was never onboarded (no connected PayPal
+  # merchant account), so on product pages its SDK boot fails at
+  # /?wc-ajax=ppc-sdk-v6-client-token with HTTP 500 and loads paypal.com scripts
+  # for nothing. Files stay baked in the image; to go live later, complete PayPal
+  # onboarding (WooCommerce > Settings > Payments > PayPal) and restore
+  # 'plugin activate' here.
+  wp_as plugin deactivate woocommerce-paypal-payments || true
   wp_as plugin is-active jotform-ai-chatbot 2>/dev/null || wp_as plugin activate jotform-ai-chatbot || true
   # Diagnostics only (no secrets): classify why embed may not print.
   wp_as eval '
@@ -527,4 +533,3 @@ done
 ) &
 
 exec docker-entrypoint.sh "$@"
-
