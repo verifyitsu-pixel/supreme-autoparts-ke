@@ -25,6 +25,13 @@ add_action('wp_dashboard_setup', static function (): void {
         'Today - Supreme Autoparts',
         'sa_core_render_today_card'
     );
+    // Pin it to the top of the dashboard (it is the store's morning brief,
+    // it should not sit under the default WordPress widgets).
+    global $wp_meta_boxes;
+    $core = $wp_meta_boxes['dashboard']['normal']['core'] ?? [];
+    if (isset($core['sa-today-card'])) {
+        $wp_meta_boxes['dashboard']['normal']['core'] = ['sa-today-card' => $core['sa-today-card']] + $core;
+    }
 });
 
 function sa_core_render_today_card(): void
