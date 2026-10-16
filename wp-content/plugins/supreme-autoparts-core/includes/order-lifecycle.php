@@ -201,6 +201,33 @@ function sa_ol_info_url(WC_Order $o): string
     return add_query_arg(['o' => $o->get_id(), 'k' => $o->get_order_key()], home_url('/order-info/'));
 }
 
+/** Carrier, tracking number and delivery address as one small block for shipped / out for delivery emails. */
+function sa_ol_delivery_block(WC_Order $o): string
+{
+    $c = (string) $o->get_meta('_sa_courier');
+    $no = (string) $o->get_meta('_sa_tracking_no');
+    $label = sa_ol_couriers()[$c]['label'] ?? '';
+    $lbl = 'font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6b6b6b;font-weight:600;margin:0 0 4px';
+    $rows = '';
+    if ($label !== '' && $c !== 'other') {
+        $rows .= '<tr><td style="padding:2px 12px 2px 0;color:#6b6b6b;width:38%">Carrier</td><td style="padding:2px 0;font-weight:600">' . esc_html($label) . '</td></tr>';
+    } elseif ($label !== '') {
+        $rows .= '<tr><td style="padding:2px 12px 2px 0;color:#6b6b6b;width:38%">Carrier</td><td style="padding:2px 0;font-weight:600">Courier</td></tr>';
+    }
+    if ($no !== '') {
+        $rows .= '<tr><td style="padding:2px 12px 2px 0;color:#6b6b6b;width:38%">Tracking number</td><td style="padding:2px 0;font-weight:600;white-space:nowrap">' . esc_html($no) . '</td></tr>';
+    }
+    $addr = $o->has_shipping_address() ? $o->get_formatted_shipping_address() : $o->get_formatted_billing_address();
+    $h = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin:14px 0;font-size:14px;line-height:1.5"><tr><td style="padding:14px 0;border-top:1px solid #e4e4e4;border-bottom:1px solid #e4e4e4">';
+    if ($rows !== '') {
+        $h .= '<div style="' . $lbl . '">Shipment</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin:0 0 12px">' . $rows . '</table>';
+    }
+    if ($addr !== '') {
+        $h .= '<div style="' . $lbl . '">Delivering to</div><div>' . wp_kses_post($addr) . ($o->get_billing_phone() ? '<br>' . esc_html($o->get_billing_phone()) : '') . '</div>';
+    }
+    return $h . '</td></tr></table>';
+}
+
 /** Build subject + html for a stage. */
 function sa_ol_email_content(WC_Order $o, string $stage, string $note = ''): array
 {
@@ -214,10 +241,10 @@ function sa_ol_email_content(WC_Order $o, string $stage, string $note = ''): arr
     $view = sa_ol_view_url($o);
     $m = [
         'processing' => ['We are preparing order #' . $n, 'Your order is being processed', '<p>We have your order and are getting it ready. We will email you again when it ships or is ready for pickup.</p>' . sa_ol_items_html($o), 'View your order', $view],
-        'on-hold' => ['Order #' . $n . ' is on hold', 'Your order is on hold', '<p>Your order is on hold for now.</p>' . ($noteh ?: '<p>We need to check something before we continue. We will be in touch shortly.</p>') . '<p>If you can help, send us any details or files with the button below. No login needed.</p>', 'Submit more info', sa_ol_info_url($o)],
-        'awaiting-info' => ['We need a little more info for order #' . $n, 'More info needed', '<p>To continue with your order we need some more information from you:</p>' . $noteh . '<p>Use the button below to reply and upload photos or documents. No login needed.</p>', 'Submit more info', sa_ol_info_url($o)],
-        'shipped' => ['Order #' . $n . ' has shipped', 'Your order is on its way', '<p>Good news, your order has been handed to the courier.</p>' . $trkh . $noteh, $trk ? 'Track parcel' : 'View your order', $trk ?: $view],
-        'out-for-delivery' => ['Order #' . $n . ' is out for delivery', 'Out for delivery today', '<p>Your order is out for delivery. Please keep your phone close so the rider can reach you.</p>' . $trkh . $noteh, 'View your order', $view],
+        'on-hold' => ['Order #' . $n . ' is on hold', 'Your order is on hold', '<p>We have paused order #' . esc_html($n) . ' while we complete a quick check. You do not need to do anything unless we contact you.</p>' . ($noteh ? '<p><strong>Reason</strong></p>' . $noteh : '') . '<p>If you have details that could help, such as photos or documents, you can send them with the button below. No login needed.</p>', 'Send details', sa_ol_info_url($o)],
+        'awaiting-info' => ['Information needed for order #' . $n, 'We need information to continue your order', '<p>We cannot continue with order #' . esc_html($n) . ' until we receive the information below.</p><p><strong>What we need</strong></p>' . ($noteh ?: '<p style="background:#f7f7f7;border-left:3px solid #F5A623;padding:10px 12px;margin:12px 0">Details about your order. Reply with the button below and we will confirm what is missing.</p>') . '<p><strong>Why we need it</strong><br>We use it to confirm the order is correct, for example the right part for your vehicle or your delivery or payment details, so nothing is sent or charged by mistake.</p><p><strong>How to send it</strong><br>Use the button below to reply and attach photos or documents. No login needed. Your order stays on hold until we hear from you.</p>', 'Send the information', sa_ol_info_url($o)],
+        'shipped' => ['Order #' . $n . ' has shipped', 'Your order is on its way', '<p>Your order has been handed to the courier.</p>' . sa_ol_delivery_block($o) . $noteh, 'Track order', $trk ?: $view],
+        'out-for-delivery' => ['Order #' . $n . ' is out for delivery', 'Out for delivery today', '<p>Your order is out for delivery today. Please keep your phone close so the rider can reach you.</p>' . sa_ol_delivery_block($o) . $noteh, 'Track order', $trk ?: $view],
         'delivered' => ['Order #' . $n . ' was delivered', 'Your order was delivered', '<p>Your order has been delivered.</p>' . $noteh, 'View your order', $view],
         'ready-pickup' => ['Order #' . $n . ' is ready for pickup', 'Ready for pickup', '<p>Your order is ready to collect at our store:</p><p><strong>Ground Floor, Midax Plaza, Kangundo Rd, Njiru, Nairobi</strong></p><p>Please bring your order number (#' . esc_html($n) . ') and the phone number used at checkout.</p>' . apply_filters('sa_ol_ready_pickup_extra', '', $o) . $noteh, 'Get directions', 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode('Midax Plaza, Kangundo Rd, Njiru, Nairobi')],
         'completed' => ['Order #' . $n . ' is complete', 'Thank you, your order is complete', '<p>Your order is complete. Thank you for shopping with Supreme Autoparts.</p>' . sa_ol_items_html($o) . $noteh, 'View your order', $view],
