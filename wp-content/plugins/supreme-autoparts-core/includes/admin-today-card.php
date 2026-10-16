@@ -34,6 +34,31 @@ add_action('wp_dashboard_setup', static function (): void {
     }
 });
 
+// Store admins who already have a saved dashboard widget order would
+// otherwise never see the card rise: prepend it to their saved order once
+// (only when missing - it never moves again and can be dragged freely).
+add_action('admin_init', static function (): void {
+    if (!current_user_can('manage_woocommerce')) {
+        return;
+    }
+    $order = get_user_option('meta-box-order_dashboard');
+    if (!is_array($order)) {
+        return; // no saved layout: the default pin above already wins
+    }
+    $known = [];
+    foreach (['normal', 'side', 'column3', 'column4'] as $ctx) {
+        if (!empty($order[$ctx]) && is_string($order[$ctx])) {
+            $known = array_merge($known, explode(',', $order[$ctx]));
+        }
+    }
+    if (in_array('sa-today-card', $known, true)) {
+        return;
+    }
+    $normal = isset($order['normal']) && is_string($order['normal']) ? $order['normal'] : '';
+    $order['normal'] = 'sa-today-card' . ($normal !== '' ? ',' . $normal : '');
+    update_user_option(get_current_user_id(), 'meta-box-order_dashboard', $order);
+});
+
 function sa_core_render_today_card(): void
 {
     if (!current_user_can('manage_woocommerce')) {
