@@ -18,7 +18,7 @@ function sa_email_clean_first(string $raw, string $email = ''): string
     if ($first === '' || preg_match('/\d/', $first) || !preg_match('/\p{L}/u', $first) || mb_strlen($first) > 40) {
         return '';
     }
-    if (in_array(mb_strtolower($first), ['there', 'customer', 'guest', 'user', 'n/a', 'na', 'none', 'test'], true)) {
+    if (in_array(mb_strtolower($first), ['there', 'customer', 'guest', 'user', 'n/a', 'na', 'none'], true)) {
         return '';
     }
     $local = $email !== '' && str_contains($email, '@') ? mb_strtolower(strstr($email, '@', true)) : '';
