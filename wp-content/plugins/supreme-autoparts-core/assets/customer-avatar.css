@@ -56,6 +56,9 @@ body.woocommerce-account .sa-page__content > h1.sa-page__greet{margin:0 0 .6rem;
 body.woocommerce-account .sa-page__content .entry-content > .woocommerce{padding-top:0;padding-bottom:0;margin:0}
 body.woocommerce-account .sa-page__content .sa-my-account{padding-top:.25rem;padding-bottom:1.5rem}
 @media (max-width:800px){
-  body.woocommerce-account .sa-page__content .sa-my-account{padding-top:.1rem}
+  body.woocommerce-account .sa-page__content .sa-my-account{padding-top:.1rem;gap:.75rem}
+  .sa-dash__hero--greet .sa-avatar{width:56px!important;height:56px!important;font-size:22px!important}
+  .sa-dash__hero--greet .sa-dash__sub{font-size:.875rem}
+  .sa-dash__hero-text{flex:1 1 0}
   .sa-dash__hero--greet{padding:.85rem}
 }
