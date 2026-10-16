@@ -506,14 +506,22 @@ function sa_svc_send_emails(int $id, string $event): void
         'Handover' => $b['mode'] === 'pickup' ? 'Vehicle pickup from: ' . $b['pickup'] . ' (pickup fee confirmed on booking)' : 'Drop-off at the garage', 'Vehicle' => trim($b['year'] . ' ' . $b['make'] . ' ' . $b['model'] . ' ' . $b['reg']),
         'Estimate' => $b['estimate'] . ($b['fee'] === 'waived' ? '' : ' (booking fee deducted from the final bill)'), 'Booking fee' => sa_svc_fee_label($b), 'Status' => $status,
     ];
-    $html = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#222">'
-        . '<h2 style="color:#111111">Supreme Autoparts — Car Service</h2><p>' . sa_email_greeting(sa_bk_greet_src($b), (string) $b['name']) . '</p><p>'
-        . ($event === 'cancel_request' ? 'We have received your cancellation request. Our team will review it and email you the decision. Your booking stays on hold until then.' : ($event === 'cancel_approved' ? 'Your cancellation has been approved and your booking is cancelled. Your KES ' . number_format((int) ($b['fee_kes'] ?: 1000)) . ' booking fee is being refunded to the method you chose.' : ($event === 'cancel_declined' ? 'Your cancellation request was declined, so your booking remains active. Please contact us if you have questions.' . ($b['cancel_note'] ? ' Note from our team: ' . $b['cancel_note'] : '') : ''))) . ($event === 'reminder' ? 'This is a reminder of your appointment tomorrow.' : (in_array($event, ['cancel_request', 'cancel_approved', 'cancel_declined'], true) ? '' : ($event === 'created' ? ($b['fee'] === 'unpaid' ? 'Thanks for booking. Pay the KES ' . number_format((int) ($b['fee_kes'] ?: sa_svc_setting('fee_kes'))) . ' booking fee to secure your slot: <a href="' . esc_url(add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/pay/'))) . '">Pay booking fee</a>. Unpaid bookings are released after 3 hours.' : ($b['fee'] === 'waived' ? 'Thanks for booking. Your booking is confirmed. Booking fee: ' . sa_fw_label($id) . '. Labour is quoted as normal before any work starts.' : 'Thanks for booking. Your slot is secured.')) : ($event === 'cancelled' ? 'Your booking has been cancelled.' : 'Your booking status has changed.'))))
-        . '</p><table style="border-collapse:collapse;width:100%">';
+    $msg = ($event === 'cancel_request' ? 'We have received your cancellation request. Our team will review it and email you the decision. Your booking stays on hold until then.' : ($event === 'cancel_approved' ? 'Your cancellation has been approved and your booking is cancelled. Your KES ' . number_format((int) ($b['fee_kes'] ?: 1000)) . ' booking fee is being refunded to the method you chose.' : ($event === 'cancel_declined' ? 'Your cancellation request was declined, so your booking remains active. Please contact us if you have questions.' . ($b['cancel_note'] ? ' Note from our team: ' . $b['cancel_note'] : '') : ''))) . ($event === 'reminder' ? 'This is a reminder of your appointment tomorrow.' : (in_array($event, ['cancel_request', 'cancel_approved', 'cancel_declined'], true) ? '' : ($event === 'created' ? ($b['fee'] === 'unpaid' ? 'Thanks for booking. Pay the KES ' . number_format((int) ($b['fee_kes'] ?: sa_svc_setting('fee_kes'))) . ' booking fee to secure your slot: <a href="' . esc_url(add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/pay/'))) . '">Pay booking fee</a>. Unpaid bookings are released after 3 hours.' : ($b['fee'] === 'waived' ? 'Thanks for booking. Your booking is confirmed. Booking fee: ' . sa_fw_label($id) . '. Labour is quoted as normal before any work starts.' : 'Thanks for booking. Your slot is secured.')) : ($event === 'cancelled' ? 'Your booking has been cancelled.' : 'Your booking status has changed.'))));
+    $manage = add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/confirmed/'));
+    $resched = add_query_arg(['service' => $b['service'], 'reschedule' => $id, 'rk' => $b['key']], home_url('/book-service/'));
+    $inner = '<p>' . sa_email_greeting(sa_bk_greet_src($b), (string) $b['name']) . '</p><p>' . $msg . '</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:14px;margin:12px 0">';
     foreach ($rows as $k => $v) {
-        $html .= '<tr><td style="padding:6px 8px;border-bottom:1px solid #eee;color:#666">' . esc_html($k) . '</td><td style="padding:6px 8px;border-bottom:1px solid #eee"><strong>' . esc_html($v) . '</strong></td></tr>';
+        $inner .= '<tr><td style="padding:6px 8px;border-bottom:1px solid #eee;color:#666">' . esc_html($k) . '</td><td style="padding:6px 8px;border-bottom:1px solid #eee"><strong>' . esc_html($v) . '</strong></td></tr>';
     }
-    $html .= '</table><p><a href="' . esc_url(add_query_arg(['b' => $id, 'k' => $b['key']], home_url('/book-service/confirmed/'))) . '">View, cancel or reschedule your booking</a> · <a href="' . esc_url(home_url('/booking-terms/')) . '">Booking Terms</a> · <a href="' . esc_url(add_query_arg(['service' => $b['service'], 'reschedule' => $id, 'rk' => $b['key']], home_url('/book-service/'))) . '">Reschedule</a></p></div>';
+    $inner .= '</table><p style="font-size:13px;color:#6b6b6b"><a href="' . esc_url($manage) . '" style="color:#0a0a0a">View, cancel or reschedule your booking</a> &middot; <a href="' . esc_url(home_url('/booking-terms/')) . '" style="color:#0a0a0a">Booking Terms</a> &middot; <a href="' . esc_url($resched) . '" style="color:#0a0a0a">Reschedule</a></p>';
+    $headings = [
+        'created' => 'Booking received', 'cancelled' => 'Booking cancelled', 'status' => 'Booking update: ' . $status,
+        'cancel_request' => 'Cancellation request received', 'cancel_approved' => 'Cancellation approved',
+        'cancel_declined' => 'Cancellation request declined', 'reminder' => 'Your service is tomorrow',
+    ];
+    $html = function_exists('sa_mail_layout')
+        ? sa_mail_layout($headings[$event] ?? 'Booking update', $inner, 'View booking', $manage, $subjects[$event] ?? $subjects['status'])
+        : '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#222"><h2 style="color:#111111">Supreme Autoparts &mdash; Car Service</h2>' . $inner . '</div>';
     $headers = ['Content-Type: text/html; charset=UTF-8'];
     // Unpaid new bookings: the customer gets the combined invoice + pay email instead (no duplicate).
     if (!($event === 'created' && in_array($b['fee'], ['unpaid', 'waived'], true) && function_exists('sa_bk_invoice_email'))) {
@@ -1817,6 +1825,5 @@ function sa_svc_admin_cr_box(int $id, array $b): string
         . '<input name="cr_note" placeholder="Note to customer (optional)" style="width:200px"><button class="button button-primary" name="cr_decision" value="approve">Approve & mark refunded</button><button class="button" name="cr_decision" value="decline">Decline</button></form>'
         . '<small>Approving marks the fee refunded. Send the actual refund via M-Pesa, bank, or the Woo order refund.</small></div>';
 }
-
 
 
