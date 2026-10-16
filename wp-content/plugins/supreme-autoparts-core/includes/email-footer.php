@@ -194,6 +194,10 @@ function sa_email_add_footer(string $message, string $country = '', string $woo_
         }
     }
     $footer = sa_email_footer_html($country);
+    // The mail client sees the footer classes only after injection, so the dark mode rules for them go in the final head.
+    if (strpos($message, '.sa-ft-t') === false && ($hp = stripos($message, '</head>')) !== false) {
+        $message = substr_replace($message, '<meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"><style>' . sa_email_dark_css() . '</style>', $hp, 0);
+    }
     $pos = strripos($message, '</body>');
     return $pos === false ? $message . $footer : substr_replace($message, $footer, $pos, 0);
 }
