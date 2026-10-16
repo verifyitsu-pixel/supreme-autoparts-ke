@@ -78,6 +78,9 @@ function sa_email_context(string $message, string $woo_id = '', bool $customer =
     if ($has('Your payment failed') || $has('did not go through')) {
         return 'failed';
     }
+    if ($has('ready for pickup') || $has('ready to collect')) {
+        return 'pickup';
+    }
     if ($has('out for delivery') || $has('has shipped') || $has('ready for pickup') || $has('handed to the courier')) {
         return 'delivery';
     }
@@ -98,6 +101,7 @@ function sa_email_help_lead(string $ctx): string
     $lines = [
         'order'     => 'Need to change the address or an item? Message us with your order number before it ships.',
         'delivered' => 'Something not right with a part? Send us a photo and your order number and we will sort it out.',
+        'pickup'    => 'Cannot collect it when expected? Message us with your order number and we will keep it for you.',
         'delivery'  => 'Problem with the delivery? Message us with your order number and the phone number you gave at checkout.',
         'cancelled' => 'Cancelled by mistake? Message us with the order number and we will help you order again.',
         'refund'    => 'Refund not showing yet? Send us the order number and we will trace it.',
