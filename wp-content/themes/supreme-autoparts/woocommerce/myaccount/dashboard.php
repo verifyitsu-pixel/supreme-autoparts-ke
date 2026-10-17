@@ -23,8 +23,7 @@ if (function_exists('wc_get_orders')) {
 
 $support_url = wc_get_account_endpoint_url('support');
 $contact     = function_exists('sa_enquire_contact') ? sa_enquire_contact() : ['whatsapp' => '19174375121', 'phone_display' => '+1 917 437 5121'];
-$wa_digits   = preg_replace('/\D+/', '', (string) ($contact['whatsapp'] ?? '19174375121')) ?: '19174375121';
-$wa_url      = 'https://wa.me/' . $wa_digits;
+$wa_url      = function_exists('sa_whatsapp_url') ? sa_whatsapp_url() : 'https://wa.me/supremeautopart';
 $wa_display  = (string) ($contact['phone_display'] ?? '+1 917 437 5121');
 
 $links = [
@@ -180,11 +179,10 @@ $links = [
           <?php esc_html_e('Enquire now', 'supreme-autoparts'); ?>
         </a>
         <a class="sa-btn sa-btn--outline" href="<?php echo esc_url($wa_url); ?>" target="_blank" rel="noopener noreferrer">
-          <?php echo esc_html(sprintf(/* translators: %s: WhatsApp number */ __('WhatsApp %s', 'supreme-autoparts'), $wa_display)); ?>
+          <?php esc_html_e('Chat on WhatsApp', 'supreme-autoparts'); ?>
         </a>
       </div>
     </div>
   </section>
 </div>
-
 
