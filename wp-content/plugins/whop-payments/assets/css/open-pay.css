@@ -591,3 +591,14 @@
   border: 1px solid rgba(245, 166, 35, 0.25);
   color: #191919;
 }
+
+/* Store-styled pay form (Whop Elements) */
+.sa-cpay { display: block; width: 100%; }
+.sa-cpay__note { background: #fff8e6; border: 1px solid #f5a623; color: #7a5200; border-radius: 10px; padding: 10px 12px; font-size: 13px; margin: 0 0 14px; }
+.sa-cpay__payment { min-height: 160px; }
+.sa-cpay__branding { margin: 12px 0 0; font-size: 12px; }
+.sa-cpay__error { color: #b42318; font-size: 14px; margin: 12px 0 0; }
+.sa-cpay__btn { display: block; width: 100%; margin: 16px 0 0; padding: 15px 18px; border: 0; border-radius: 10px; background: #f5a623; color: #111; font-size: 17px; font-weight: 700; cursor: pointer; }
+.sa-cpay__btn[disabled] { opacity: .55; cursor: not-allowed; }
+.sa-cpay__alt { text-align: center; margin: 14px 0 0; font-size: 13px; }
+.sa-cpay__alt a { color: #666; text-decoration: underline; }
