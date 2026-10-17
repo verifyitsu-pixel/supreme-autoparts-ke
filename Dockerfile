@@ -60,6 +60,7 @@ COPY wp-content/plugins/sa-brevo-mail /usr/src/wordpress/wp-content/plugins/sa-b
 COPY wp-content/plugins/sa-geo-currency /usr/src/wordpress/wp-content/plugins/sa-geo-currency
 COPY wp-content/plugins/pesapal-woocommerce /usr/src/wordpress/wp-content/plugins/pesapal-woocommerce
 COPY wp-content/plugins/transactworld-payment-integration /usr/src/wordpress/wp-content/plugins/transactworld-payment-integration
+COPY wp-content/plugins/supreme-agent-intake /usr/src/wordpress/wp-content/plugins/supreme-agent-intake
 COPY wp-content/mu-plugins /usr/src/wordpress/wp-content/mu-plugins
 COPY data /usr/src/supreme-data
 COPY scripts /usr/src/supreme-scripts
