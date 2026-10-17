@@ -208,18 +208,18 @@ function sa_term_link(string $taxonomy, string $slug): string
  * Formatted free-shipping threshold for banners.
  *
  * Stored / env value is USD (checkout currency). Geo display converts via wc_price.
- * Default 99 keeps a clean round local amount after FX (no marketplace-looking decimals).
+ * Default 199 keeps a clean round local amount after FX (no marketplace-looking decimals).
  */
 function sa_free_shipping_threshold(): string
 {
     $raw = getenv('SUPREME_FREE_SHIPPING_THRESHOLD');
     if ($raw === false || $raw === '') {
-        $raw = get_option('sa_free_shipping_threshold', '99');
+        $raw = get_option('sa_free_shipping_threshold', '199');
     }
     $usd = (float) $raw;
     // Guard against legacy KES-mistaken-as-USD values (e.g. 15000 → ~KES 1.9M).
     if ($usd > 1000) {
-        $usd = 99.0;
+        $usd = 199.0;
     }
     $currency = function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : 'USD';
     if (function_exists('wc_price')) {
