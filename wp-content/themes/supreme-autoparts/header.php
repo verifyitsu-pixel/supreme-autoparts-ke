@@ -133,6 +133,9 @@ if (!defined('ABSPATH')) {
           <a class="sa-nav__link" href="<?php echo esc_url(sa_term_link('product_cat', 'wheels')); ?>"><?php esc_html_e('Wheels', 'supreme-autoparts'); ?></a>
         </li>
         <li class="sa-nav__item">
+          <a class="sa-nav__link" href="<?php echo esc_url(home_url('/motorcycle-parts-riding-gear-in-kenya/')); ?>"><?php esc_html_e('Motorcycle', 'supreme-autoparts'); ?></a>
+        </li>
+        <li class="sa-nav__item">
           <a class="sa-nav__link" href="<?php echo esc_url(home_url('/categories/')); ?>"><?php esc_html_e('All categories', 'supreme-autoparts'); ?></a>
         </li>
         <li class="sa-nav__item">
