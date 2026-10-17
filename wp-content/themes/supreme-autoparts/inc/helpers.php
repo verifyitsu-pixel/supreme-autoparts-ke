@@ -427,6 +427,15 @@ function sa_brand_logo_map(): array
     ];
 }
 
+/** Hand-picked picture overrides for brands whose auto-picked photo is unsuitable. */
+function sa_brand_image_overrides(): array
+{
+    return [
+        // AlphaRex's top-ranked catalog image is a Prop 65 warning graphic; use its brand logo.
+        'alpharex' => 'https://cdn.shopify.com/s/files/1/0643/0779/0001/files/0287070f7de7dcad92713342a8224b46L_0391544c-8ab3-411e-8adc-5c50fef5647c.png?v=1784492022',
+    ];
+}
+
 /** Shopify CDN photo URL for a product id, or '' when none is available. */
 function sa_brand_product_photo(int $product_id): string
 {
@@ -484,7 +493,7 @@ function sa_category_brand_picker(WP_Term $term): array
     if (!function_exists('sa_fx_table') || !function_exists('sa_fx_ready') || !sa_fx_ready()) {
         return [];
     }
-    $cache_key = 'sa_bpick_v1_' . (int) $term->term_id;
+    $cache_key = 'sa_bpick_v2_' . (int) $term->term_id;
     $hit = get_transient($cache_key);
     if (is_array($hit)) {
         return $hit;
@@ -532,10 +541,11 @@ function sa_category_brand_picker(WP_Term $term): array
     }
 
     $logos = sa_brand_logo_map();
+    $overrides = sa_brand_image_overrides();
     $out = [];
     foreach ($rows as $r) {
         $slug = (string) $r->slug;
-        $img = $logos[$slug] ?? '';
+        $img = $overrides[$slug] ?? ($logos[$slug] ?? '');
         if ($img === '' && isset($photo_of[$slug])) {
             $img = sa_brand_product_photo($photo_of[$slug]);
         }
