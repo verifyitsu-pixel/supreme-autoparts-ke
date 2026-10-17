@@ -39,6 +39,15 @@ HTML,
 <p>For order issues, include your order number and vehicle year/make/model.</p>
 HTML,
         ],
+        'careers' => [
+            'title'   => 'Careers',
+            'content' => <<<'HTML'
+<p>Supreme Autoparts is a garage and car parts store in Nairobi. We sell genuine and aftermarket parts online and in store, service and repair cars at our garage, and run roadside assistance across the city.</p>
+<p>We are growing and hiring for the roles below. All roles are based at our garage: <strong>Midax Plaza, Kangundo Rd, Njiru, Nairobi</strong>.</p>
+<p>To apply, pick a role and send the form below. Tell us about your experience and we will reply by email or phone.</p>
+[sa_careers]
+HTML,
+        ],
         'enquire' => [
             'title'   => 'Can\'t find a part?',
             'content' => <<<HTML
