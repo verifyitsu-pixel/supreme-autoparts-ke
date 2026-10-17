@@ -50,10 +50,10 @@ HTML,
         'free-shipping' => [
             'title'   => 'Free Shipping Details',
             'content' => <<<'HTML'
-<p><strong>Free shipping</strong> applies to qualifying orders of <strong>$99+</strong> (or the local amount shown in the site banner) within the <strong>continental United States</strong>. Always confirm the live figure on the banner and at checkout.</p>
+<p><strong>Free shipping</strong> applies to qualifying orders of <strong>$199+</strong> (or the local amount shown in the site banner) within the <strong>continental United States</strong>. Always confirm the live figure on the banner and at checkout.</p>
 <p>Alaska, Hawaii, and international destinations may use different rates — see live options at checkout. Oversized, heavy, or supplier-direct items can be excluded.</p>
 <ul>
-<li>Continental US: free when your cart subtotal meets the $99 threshold (eligible items).</li>
+<li>Continental US: free when your cart subtotal meets the $199 threshold (eligible items).</li>
 <li>Below threshold: Standard Shipping (Continental US) from $8 · Priority Shipping (US) $15.</li>
 <li>International: flat rate shown at checkout (typically $25), with free shipping when eligible over the same threshold.</li>
 <li>Direct-ship / supplier-fulfilled items may carry separate shipping charges.</li>
@@ -166,7 +166,7 @@ HTML,
 <ul>
 <li><strong>Standard Shipping (Continental US):</strong> $8 flat.</li>
 <li><strong>Priority Shipping (US):</strong> $15 flat.</li>
-<li><strong>Free shipping:</strong> $0 when your cart subtotal meets the threshold (usually $99+) — see <a href="/free-shipping/">Free Shipping Details</a>. Oversized, heavy, or direct-ship items may be excluded.</li>
+<li><strong>Free shipping:</strong> $0 when your cart subtotal meets the threshold (usually $199+) — see <a href="/free-shipping/">Free Shipping Details</a>. Oversized, heavy, or direct-ship items may be excluded.</li>
 <li><strong>Kenya — Nairobi Delivery:</strong> $8 · <strong>Upcountry:</strong> $15 · <strong>Local pickup (Nairobi):</strong> free (arrange with support).</li>
 <li><strong>International (other destinations):</strong> $25 flat (free over the same threshold when eligible).</li>
 <li><strong>Direct-ship items:</strong> Some products ship from suppliers. We will notify you if an item cannot ship promptly.</li>
@@ -244,7 +244,7 @@ HTML,
 <ul>
 <li><a href="/how-to-order/"><strong>How to order</strong></a> — cart, checkout, accounts</li>
 <li><a href="/fitment-guide/"><strong>Fitment guide</strong></a> — year / make / model checks for US-spec trucks &amp; SUVs</li>
-<li><a href="/shipping-policy/"><strong>Shipping &amp; delivery</strong></a> — continental US rates, free shipping $99+, international</li>
+<li><a href="/shipping-policy/"><strong>Shipping &amp; delivery</strong></a> — continental US rates, free shipping $199+, international</li>
 <li><a href="/free-shipping/"><strong>Free shipping details</strong></a> — threshold, exclusions, Alaska/Hawaii &amp; intl notes</li>
 <li><a href="/performance-truck-parts/"><strong>Performance truck &amp; off-road</strong></a> — suspension, brakes, wheels, lighting</li>
 </ul>
@@ -275,7 +275,7 @@ HTML,
 <p>Cannot find a listing? Use <a href="/enquire/">Can&rsquo;t find a part?</a> with vehicle details.</p>
 <h2>Quick FAQ</h2>
 <ul>
-<li><strong>US buyers:</strong> Free shipping on orders $99+ in the continental US (eligible items). Standard from $8 · Priority $15 below threshold.</li>
+<li><strong>US buyers:</strong> Free shipping on orders $199+ in the continental US (eligible items). Standard from $8 · Priority $15 below threshold.</li>
 <li><strong>International:</strong> Select your country at checkout — international flat rate applies when free shipping does not.</li>
 <li><strong>Kenya buyers:</strong> Same catalog — Kenya methods appear when your address is in Kenya. See <a href="/shipping-to-kenya/">Shipping to Kenya</a> if needed.</li>
 </ul>
@@ -290,12 +290,12 @@ HTML,
 <li><strong>Nairobi Delivery:</strong> $8 flat</li>
 <li><strong>Upcountry Kenya:</strong> $15 flat</li>
 <li><strong>Local pickup (Nairobi):</strong> free — arrange with support after you order</li>
-<li><strong>Free shipping:</strong> when your cart meets the banner threshold (often ~$99) on eligible items — see <a href="/free-shipping/">Free Shipping</a></li>
+<li><strong>Free shipping:</strong> when your cart meets the banner threshold (often ~$199) on eligible items — see <a href="/free-shipping/">Free Shipping</a></li>
 </ul>
 <h2>Duties &amp; import notes</h2>
 <p>Customs duties, VAT, or brokerage for Kenya imports are the buyer&rsquo;s responsibility unless we explicitly state otherwise on an order. Keep your invoice handy for clearance. Questions before you buy: WhatsApp <a href="https://wa.me/19174375121">+1 917 437 5121</a>.</p>
 <h2>US &amp; international buyers</h2>
-<p>For continental US free shipping ($99+), Standard $8, Priority $15, and international $25, use the main <a href="/shipping-policy/">Shipping Policy</a>.</p>
+<p>For continental US free shipping ($199+), Standard $8, Priority $15, and international $25, use the main <a href="/shipping-policy/">Shipping Policy</a>.</p>
 <h2>Support</h2>
 <p>Email <a href="mailto:{$email}">{$email}</a> with your order number. Related: <a href="/how-to-order/">How to order</a> · <a href="/fitment-guide/">Fitment</a>.</p>
 HTML,
@@ -338,7 +338,7 @@ HTML,
 </ul>
 <h2>How ordering works</h2>
 <p>Follow <a href="/how-to-order/">How to order</a>, confirm fitment with the <a href="/fitment-guide/">Fitment guide</a>, then review <a href="/shipping-policy/">Shipping &amp; delivery</a> before you pay. Policies: <a href="/returns/">Returns</a> · <a href="/shipping-to-kenya/">Kenya shipping notes</a>.</p>
-<p><em>US customers:</em> free shipping on orders $99+ in the continental US (eligible items) — choose your US address at checkout.</p>
+<p><em>US customers:</em> free shipping on orders $199+ in the continental US (eligible items) — choose your US address at checkout.</p>
 HTML,
         ],
         'performance-truck-parts' => [
@@ -354,7 +354,7 @@ HTML,
 <li><a href="/product-category/drivetrain/"><strong>Drivetrain</strong></a> · <a href="/product-category/exhaust/">Exhaust</a> · <a href="/product-category/exterior/">Exterior</a></li>
 </ul>
 <h2>Shipping</h2>
-<p>Free shipping on qualifying continental US orders ($99+). International available at checkout. Support: WhatsApp <a href="https://wa.me/19174375121">+1 917 437 5121</a> · <a href="mailto:{$email}">{$email}</a>.</p>
+<p>Free shipping on qualifying continental US orders ($199+). International available at checkout. Support: WhatsApp <a href="https://wa.me/19174375121">+1 917 437 5121</a> · <a href="mailto:{$email}">{$email}</a>.</p>
 <p>New here? Start with <a href="/how-to-order/">How to order</a> and the <a href="/fitment-guide/">Fitment guide</a>.</p>
 HTML,
         ],
