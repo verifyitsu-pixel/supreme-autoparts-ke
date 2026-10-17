@@ -278,10 +278,24 @@ function sa_seo_context(): array
             if (is_string($tdesc) && trim(wp_strip_all_tags($tdesc)) !== '') {
                 $desc = sa_seo_clip($tdesc, 158);
             } else {
-                $desc = sa_seo_clip(
-                    'Shop ' . $term->name . ' for cars, trucks and SUVs at Supreme Autoparts. Search by part number or vehicle, with delivery across Kenya and international shipping.',
-                    158
+                $sa_moto_slugs = array(
+                    'motorcycle-boots', 'helmets-and-accessories', 'hand-guards', 'sprockets',
+                    'handlebars', 'handlebars-powersports', 'motorcycle-tires-on-road', 'motorcycle-tires-off-road',
+                    'one-piece-motorcycle-seats', 'two-piece-motorcycle-seats', 'passenger-motorcycle-seats', 'solo-motorcycle-seats',
+                    'bike-stands', 'bike-racks', 'bike-covers', 'bags-bike-bags', 'bags-saddlebags',
+                    'bikemaster', 'bikers-choice', 'mustang-motorcycle', 'motorcycle-slip-on',
                 );
+                if (in_array($term->slug, $sa_moto_slugs, true)) {
+                    $desc = sa_seo_clip(
+                        'Shop ' . $term->name . ' for motorcycles at Supreme Autoparts. Parts, gear and accessories for sport, cruiser, dirt and commuter bikes, delivered across Kenya.',
+                        158
+                    );
+                } else {
+                    $desc = sa_seo_clip(
+                        'Shop ' . $term->name . ' for cars, trucks and SUVs at Supreme Autoparts. Search by part number or vehicle, with delivery across Kenya and international shipping.',
+                        158
+                    );
+                }
             }
             if (function_exists('sa_category_image_url')) {
                 $cat_img = sa_category_image_url($term->slug);
