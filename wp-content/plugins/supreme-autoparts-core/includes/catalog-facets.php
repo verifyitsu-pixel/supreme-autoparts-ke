@@ -552,8 +552,21 @@ function sa_fx_state(): array
         $v = $list($g('f_' . $f));
         if ($v !== []) { $specs[$f] = $v; }
     }
+    // Scoped search (AliExpress-style): sa_cat=<product_cat slug> scopes results
+    // to that category, subcategory or brand term. Explicit "all" widens out of
+    // an archive's implicit scope; no sa_cat keeps the archive default.
     $cat = 0;
-    if (function_exists('is_product_category') && did_action('wp') && is_product_category()) {
+    $sa_cat_set = isset($_GET['sa_cat']); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+    if ($sa_cat_set) {
+        $raw_cat = sanitize_title((string) wp_unslash((string) $_GET['sa_cat'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if ($raw_cat !== '' && $raw_cat !== 'all' && taxonomy_exists('product_cat')) {
+            $t = get_term_by('slug', $raw_cat, 'product_cat');
+            if ($t instanceof WP_Term) {
+                $cat = (int) $t->term_id;
+            }
+        }
+    }
+    if ($cat === 0 && !$sa_cat_set && function_exists('is_product_category') && did_action('wp') && is_product_category()) {
         $o = get_queried_object();
         $cat = $o instanceof WP_Term ? (int) $o->term_id : 0;
     }
