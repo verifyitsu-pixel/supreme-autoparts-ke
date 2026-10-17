@@ -37,8 +37,25 @@ function sa_couriers_enabled(): bool
     if ($env === '1' || $env === 'yes') {
         return true;
     }
-    return isset($_GET['sa_couriers']) && $_GET['sa_couriers'] === '1'; // phpcs:ignore
+    if (isset($_GET['sa_couriers']) && $_GET['sa_couriers'] === '1') { // phpcs:ignore
+        return true;
+    }
+    // Preview flag persists via cookie so it survives wc-ajax calls (update_order_review etc.)
+    return isset($_COOKIE['sa_couriers_preview']) && $_COOKIE['sa_couriers_preview'] === '1';
 }
+
+add_action('init', function () {
+    if (!isset($_GET['sa_couriers']) || headers_sent()) { // phpcs:ignore
+        return;
+    }
+    $path   = defined('COOKIEPATH') && COOKIEPATH ? COOKIEPATH : '/';
+    $domain = defined('COOKIE_DOMAIN') ? COOKIE_DOMAIN : '';
+    if ($_GET['sa_couriers'] === '1') { // phpcs:ignore
+        setcookie('sa_couriers_preview', '1', time() + HOUR_IN_SECONDS, $path, $domain, is_ssl(), true);
+    } elseif ($_GET['sa_couriers'] === '0') { // phpcs:ignore
+        setcookie('sa_couriers_preview', '', time() - 3600, $path, $domain, is_ssl(), true);
+    }
+});
 
 function sa_courier_data(string $slug): array
 {
