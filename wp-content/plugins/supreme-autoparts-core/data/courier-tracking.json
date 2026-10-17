@@ -1,0 +1,56 @@
+{
+ "note": "Tracking stays on supremeautoparts.co.ke (Rock 2026-10-17): our server fetches status from the courier and renders it on the order page and in emails. No customer redirect to courier sites. All endpoints verified live 2026-10-17; none require auth; all fetched server-side.",
+ "couriers": {
+  "fargo": {
+   "name": "Fargo Courier (Wells Fargo)",
+   "tracking_page_public": "https://www.fargocourier.co.ke/track-your-shipment/",
+   "status_fetch": {
+    "method": "GET",
+    "url": "https://portal.fargocourier.co.ke/track?blank=1&wayBillNumber={waybill}",
+    "format": "HTML (server-rendered)",
+    "parse": "Extract 'Waybill Status : <status>' and the Waybill Event Tracking rows (event + timestamp). Verified live with a test waybill showing 'Delivered' and event lines."
+   },
+   "embeddable": true,
+   "notes": "The public track-your-shipment page itself iframes portal.fargocourier.co.ke/track; we call the portal URL directly and parse the HTML. No JSON API found - scraping is brittle to their template changes, add a fallback that shows courier name + tracking number if parsing yields nothing."
+  },
+  "g4s": {
+   "name": "G4S Kenya Courier",
+   "tracking_page_public": "https://www.g4s.com/en-ke/track-my-shipment (portal: https://g4s-portal.logixplatform.com/Home-G4S.html)",
+   "status_fetch": {
+    "method": "GET",
+    "url": "https://g4scourier.logixerp.com/API/webservice/v2/MultipleWaybillTracking?SecureKey=36C77BABF551458BB88AFD993CC0965F&WaybillNumber={waybill}",
+    "format": "JSON",
+    "parse": "messageType=Error -> show 'not found'; otherwise response carries waybill detail/status. Verified live: dummy number returns {\"message\":\"Waybill Detail Unavailable\",\"messageType\":\"Error\"}."
+   },
+   "embeddable": true,
+   "notes": "SecureKey is public - it ships in G4S's own portal JS (g4s-portal.logixplatform.com/js/secureKey.js)."
+  },
+  "speedaf": {
+   "name": "Speedaf Kenya",
+   "tracking_page_public": "https://www.speedaf.com/ke-en (track widget)",
+   "status_fetch": {
+    "list": {
+     "method": "POST",
+     "url": "https://speedaf.com/publicservice/v1/api/express/track/listExpressTrack",
+     "body": {
+      "mailNoList": [
+       "{waybill}"
+      ]
+     },
+     "format": "JSON"
+    },
+    "details": {
+     "method": "GET",
+     "url": "https://speedaf.com/publicservice/v1/api/express/track/expressTrack/details?mailNo={waybill}",
+     "format": "JSON"
+    },
+    "parse": "data[0].tracks[] holds scan events. Verified live: dummy number returns success:true with empty tracks."
+   },
+   "embeddable": true,
+   "notes": "Same public endpoints their own site uses."
+  }
+ },
+ "not_embeddable": [],
+ "out_of_scope_couriers": "Easy Coach, ENA Coach, Guardian, SGA - excluded from checkout build per Rock 2026-10-17 10:26.",
+ "updated_at": "2026-10-17T07:39:59.428418Z"
+}
