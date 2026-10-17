@@ -13,8 +13,7 @@ defined('ABSPATH') || exit;
 $shop_url    = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
 $account_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : home_url('/my-account/');
 $contact     = function_exists('sa_enquire_contact') ? sa_enquire_contact() : ['whatsapp' => '19174375121', 'phone_display' => '+1 917 437 5121'];
-$wa_digits   = preg_replace('/\D+/', '', (string) ($contact['whatsapp'] ?? '19174375121')) ?: '19174375121';
-$wa_url      = 'https://wa.me/' . $wa_digits;
+$wa_url      = function_exists('sa_whatsapp_url') ? sa_whatsapp_url() : 'https://wa.me/supremeautopart';
 $wa_display  = (string) ($contact['phone_display'] ?? '+1 917 437 5121');
 $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : home_url('/enquire/');
 ?>
@@ -53,7 +52,7 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
           ? __('Thank you — payment received', 'supreme-autoparts')
           : __('Thank you — we have your order', 'supreme-autoparts');
       $lead = $paid
-          ? __('Everything about your order is below, and a copy is on its way to your email. Check inbox and spam. We will prepare your parts and keep you updated by email.', 'supreme-autoparts')
+          ? __('Your order is confirmed and a copy is on its way to your email. Check inbox and spam. We will prepare your parts and keep you updated by email.', 'supreme-autoparts')
           : __('If you just paid, confirmation can take a few seconds. Refresh this page if the status does not update.', 'supreme-autoparts');
       ?>
       <div class="sa-thankyou__card<?php echo $paid ? ' sa-thankyou__card--success' : ''; ?>">
@@ -106,56 +105,59 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
             <?php else : ?>
               <li><?php esc_html_e('You receive packing and shipping updates by email.', 'supreme-autoparts'); ?></li>
             <?php endif; ?>
-            <li><?php esc_html_e('Need fitment help? Message us on WhatsApp with your order number.', 'supreme-autoparts'); ?></li>
+            <li><?php esc_html_e('Need fitment help?', 'supreme-autoparts'); ?> <a href="<?php echo esc_url($wa_url); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Message us on WhatsApp', 'supreme-autoparts'); ?></a> <?php esc_html_e('with your order number.', 'supreme-autoparts'); ?></li>
           </ol>
         </section>
 
       </div>
 
-      <?php /* Full order details (items, totals, addresses) - Shopify/eBay style; reachable with the order key in the URL, no login. */ ?>
-      <section class="sa-thankyou__details" aria-labelledby="sa-thankyou-details-title">
-        <h2 id="sa-thankyou-details-title"><?php esc_html_e('Your order details', 'supreme-autoparts'); ?></h2>
-        <?php woocommerce_order_details_table($order->get_id()); ?>
-      </section>
+      <?php /* Rock 2026-10-17 13:14: this page is confirmation only. The full order
+                 details, receipt and invoice live in the logged-in account section
+                 (My Account > Orders), not on the thank-you page. */ ?>
 
       <div class="sa-thankyou__card sa-thankyou__card--actions">
-        <?php
-        $invoice_url = '';
-        if (function_exists('sa_core_invoice_url')) {
-            $invoice_url = sa_core_invoice_url((int) $order->get_id(), true);
-        }
-        $doc_label = function_exists('sa_core_invoice_doc_title')
-            ? sa_core_invoice_doc_title($order)
-            : ($paid ? __('Receipt', 'supreme-autoparts') : __('Invoice', 'supreme-autoparts'));
-        ?>
+        <?php /* Rock 2026-10-17: one clear next action. Receipt/invoice/order details are in
+                 My Account > Orders once logged in; WhatsApp is the inline link above. */ ?>
         <div class="sa-thankyou__actions">
-          <?php if ($invoice_url) : ?>
-            <a class="sa-btn" href="<?php echo esc_url($invoice_url); ?>" target="_blank" rel="noopener">
-              <?php echo esc_html(sprintf(/* translators: Invoice or Receipt */ __('View %s', 'supreme-autoparts'), $doc_label)); ?>
-            </a>
-          <?php endif; ?>
-          <a class="sa-btn<?php echo $invoice_url ? ' sa-btn--outline' : ''; ?>" href="<?php echo esc_url($shop_url); ?>">
+          <a class="sa-btn" href="<?php echo esc_url($shop_url); ?>">
             <?php esc_html_e('Continue shopping', 'supreme-autoparts'); ?>
-          </a>
-          <?php if (is_user_logged_in()) : ?>
-            <a class="sa-btn sa-btn--outline" href="<?php echo esc_url($order->get_view_order_url()); ?>">
-              <?php esc_html_e('View order', 'supreme-autoparts'); ?>
-            </a>
-          <?php endif; ?>
-          <a class="sa-btn sa-btn--outline" href="<?php echo esc_url($wa_url); ?>" target="_blank" rel="noopener noreferrer">
-            <?php echo esc_html(sprintf(/* translators: %s: WhatsApp number */ __('WhatsApp %s', 'supreme-autoparts'), $wa_display)); ?>
           </a>
         </div>
 
         <?php if ($pending && !$paid) : ?>
-          <p class="sa-thankyou__pending-note">
-            <?php esc_html_e('Still seeing “pending”? Wait a moment after paying, then refresh. If it stays pending, WhatsApp us with your order number.', 'supreme-autoparts'); ?>
+          <p class="sa-thankyou__pending-note" data-sa-pending-order="<?php echo esc_attr((string) $order->get_id()); ?>">
+            <span class="sa-spin-arc" aria-hidden="true"></span>
+            <?php esc_html_e('Confirming your payment - this page checks again automatically every few seconds. If it stays pending, ', 'supreme-autoparts'); ?><a href="<?php echo esc_url($wa_url); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('WhatsApp us', 'supreme-autoparts'); ?></a><?php esc_html_e(' with your order number.', 'supreme-autoparts'); ?>
           </p>
         <?php endif; ?>
       </div>
 
+      <?php
+      /* WC core hooks woocommerce_order_details_table onto woocommerce_thankyou (priority 10).
+         This page is confirmation only (Rock 2026-10-17): detach the core copy so no order
+         details table renders here at all - it stays available in My Account > Orders. */
+      remove_action('woocommerce_thankyou', 'woocommerce_order_details_table', 10);
+      ?>
       <?php do_action('woocommerce_thankyou_' . $order->get_payment_method(), $order->get_id()); ?>
       <?php do_action('woocommerce_thankyou', $order->get_id()); ?>
+
+      <?php /* Get the app (Rock 2026-10-17): compact block at the bottom of the page.
+                 Android gets the direct APK download; iPhone gets Add to Home Screen
+                 steps. spinners.js flags the platform so the right option leads. */ ?>
+      <section class="sa-getapp" data-sa-get-app aria-labelledby="sa-getapp-title">
+        <h2 id="sa-getapp-title" class="sa-getapp__title"><?php esc_html_e('Get the Supreme app', 'supreme-autoparts'); ?></h2>
+        <div class="sa-getapp__row sa-getapp__row--android">
+          <strong><?php esc_html_e('Android', 'supreme-autoparts'); ?></strong>
+          <span><?php esc_html_e('Install the app for faster ordering and order tracking.', 'supreme-autoparts'); ?></span>
+          <a class="sa-btn sa-getapp__btn" href="https://drive.usercontent.google.com/download?id=1ZkQD7498GshIKQLZg_wdrbizRm2iNohd&amp;export=download&amp;confirm=t" target="_blank" rel="noopener noreferrer">
+            <?php esc_html_e('Download for Android', 'supreme-autoparts'); ?>
+          </a>
+        </div>
+        <div class="sa-getapp__row sa-getapp__row--ios">
+          <strong><?php esc_html_e('iPhone', 'supreme-autoparts'); ?></strong>
+          <span><?php esc_html_e('In Safari tap Share, then "Add to Home Screen", then Add. It opens full screen like an app.', 'supreme-autoparts'); ?></span>
+        </div>
+      </section>
     <?php endif; ?>
 
   <?php else : ?>
