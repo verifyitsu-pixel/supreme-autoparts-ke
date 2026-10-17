@@ -55,6 +55,7 @@ if (!$sa_is_ke) {
         <select id="sa-hx-year" name="sa_year" disabled><option value=""><?php esc_html_e('Year', 'supreme-autoparts'); ?></option></select>
         <button type="submit"><?php esc_html_e('Find parts for my car', 'supreme-autoparts'); ?></button>
       </form>
+      <p class="sa-ed-hero__moto"><a href="<?php echo esc_url(home_url('/product-category/motorcycle/')); ?>"><?php esc_html_e('Shop motorcycle parts', 'supreme-autoparts'); ?> &rarr;</a></p>
     </div>
     <nav class="sa-ed-svc" aria-label="<?php esc_attr_e('Our services', 'supreme-autoparts'); ?>">
       <?php foreach ($sa_ed_services as $s) : ?>
