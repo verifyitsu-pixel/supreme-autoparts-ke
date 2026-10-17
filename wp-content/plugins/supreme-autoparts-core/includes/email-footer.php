@@ -169,7 +169,7 @@ function sa_email_help_html(string $country = '', string $ctx = 'generic'): stri
     return '<!--sa-email-help--><div class="sa-help" style="margin:20px 0 4px;padding:16px 0 0;border-top:1px solid #e4e4e0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.65;color:#555555">'
         . '<div>' . esc_html(sa_email_help_lead($ctx))
         . ($reply ? '' : '<br><a href="mailto:calvin@supremeautoparts.co.ke" style="color:#333333;text-decoration:underline">Email us</a> or '
-            . '<a href="https://wa.me/' . esc_attr($business['whatsapp']) . '" style="color:#333333;text-decoration:underline">chat on WhatsApp</a>.')
+            . '<a href="' . esc_url(function_exists('sa_whatsapp_url') ? sa_whatsapp_url() : 'https://wa.me/supremeautopart') . '" style="color:#333333;text-decoration:underline">chat on WhatsApp</a>.')
         . '</div>' . $roadside
         . '</div><!--/sa-email-help-->';
 }
@@ -237,7 +237,7 @@ function sa_email_add_text_footer(string $message, string $country = '', string 
     $business = sa_email_footer_business($country);
     $ctx = sa_email_context($message, $woo_id, $customer);
     $help = $ctx === 'none' ? '' : "\n\n" . sa_email_help_lead($ctx) . "\n"
-        . ($ctx === 'contact' ? '' : "Email: calvin@supremeautoparts.co.ke\nWhatsApp: " . $business['phone_display'] . " (https://wa.me/" . $business['whatsapp'] . ")");
+        . ($ctx === 'contact' ? '' : "Email: calvin@supremeautoparts.co.ke");
     if ($ctx === 'contact') {
         $help .= "Email: calvin@supremeautoparts.co.ke";
     }
