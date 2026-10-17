@@ -27,7 +27,7 @@ function sa_core_quote_whatsapp_url($product): string
         $msg .= ' (Part ' . $sku . ')';
     }
     $msg .= ' ' . get_permalink($product->get_id());
-    return 'https://wa.me/19174375121?text=' . rawurlencode($msg);
+    return 'https://wa.me/supremeautopart?text=' . rawurlencode($msg);
 }
 
 /* Logo as the clean placeholder for photo-less products. */
