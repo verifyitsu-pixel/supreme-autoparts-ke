@@ -106,6 +106,7 @@
         iframeWatch = null;
         embedReady = true;
         setStatus(i18n('ready', 'Enter payment details below.'), '');
+        setPayEnabled(true);
         return;
       }
       if (Date.now() - started > 20000) {
@@ -114,6 +115,54 @@
         setStatus(i18n('error', 'Could not load payment form.'), 'error');
       }
     }, 200);
+  }
+
+  var payBtn = null;
+  var payTimer = null;
+
+  function payLabel() {
+    return cfg.payLabel || i18n('pay', 'Pay');
+  }
+
+  function setPayEnabled(on) {
+    if (!payBtn) return;
+    payBtn.disabled = !on;
+    payBtn.textContent = on ? payLabel() : i18n('processing', 'Processing\u2026');
+    if (on && payTimer) {
+      window.clearTimeout(payTimer);
+      payTimer = null;
+    }
+  }
+
+  function ensurePayButton() {
+    if (payBtn || !mount) return;
+    payBtn = document.createElement('button');
+    payBtn.type = 'button';
+    payBtn.id = 'sa-whop-pay-btn';
+    payBtn.className = 'sa-open-pay__btn';
+    payBtn.textContent = payLabel();
+    payBtn.disabled = true;
+    payBtn.addEventListener('click', function () {
+      if (!checkoutEl || !window.wco || typeof window.wco.submit !== 'function') {
+        setStatus(i18n('error', 'Could not load payment form. Refresh and try again.'), 'error');
+        return;
+      }
+      setStatus('', '');
+      setPayEnabled(false);
+      // If the form is incomplete the embed shows its own field errors and never calls back; re-enable.
+      payTimer = window.setTimeout(function () {
+        setPayEnabled(true);
+      }, 8000);
+      try {
+        window.wco.submit(checkoutEl.id);
+      } catch (e) {
+        setPayEnabled(true);
+        setStatus(i18n('payError', 'Payment failed. Check details and try again.'), 'error');
+      }
+    });
+    if (mount.parentNode) {
+      mount.parentNode.insertBefore(payBtn, mount.nextSibling);
+    }
   }
 
   function buildCheckoutEl(gen) {
@@ -130,6 +179,8 @@
     el.setAttribute('data-whop-checkout-theme-background-color', '#0B0B0D');
     // Stay on supremeautoparts.co.ke — never top-level navigate to whop.com.
     el.setAttribute('data-whop-checkout-skip-redirect', 'true');
+    // Whop labels its own button "Join" for plan checkouts; hide it and use our own Pay button.
+    el.setAttribute('data-whop-checkout-hide-submit-button', 'true');
     el.setAttribute('data-whop-checkout-on-complete', 'saWhopPayComplete');
     el.setAttribute('data-whop-checkout-on-payment-error', 'saWhopPayPaymentError');
     if (cfg.email) {
@@ -153,6 +204,9 @@
     setStatus(i18n('loading', 'Loading secure payment…'), 'loading');
     checkoutEl = buildCheckoutEl(gen);
     mount.appendChild(checkoutEl);
+    ensurePayButton();
+    setPayEnabled(false);
+    if (payBtn) payBtn.textContent = payLabel();
     watchForIframe(checkoutEl, gen);
     waitForWco().catch(function (err) {
       if (gen !== mountGeneration) return;
@@ -179,6 +233,7 @@
       (err && (err.message || err.error || err.msg)) ||
       i18n('payError', 'Payment failed.');
     setStatus(String(msg), 'error');
+    setPayEnabled(true);
   };
 
   function init() {
