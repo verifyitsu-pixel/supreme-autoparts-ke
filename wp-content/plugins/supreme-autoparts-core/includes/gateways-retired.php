@@ -97,8 +97,9 @@ add_filter('woocommerce_available_payment_gateways', static function ($gateways)
         unset($gateways['pesapal']);
         return $gateways;
     }
-    $first  = $is_africa ? 'pesapal' : 'whop';
-    $second = $is_africa ? 'whop' : 'pesapal';
+    // Rock 2026-10-18: card (Whop) first and preselected for everyone, Pesapal second where offered.
+    $first  = 'whop';
+    $second = 'pesapal';
     $ordered = [$first => $gateways[$first], $second => $gateways[$second]];
     foreach ($gateways as $id => $gateway) {
         if ($id !== 'whop' && $id !== 'pesapal') {
@@ -184,5 +185,5 @@ add_action('template_redirect', static function () {
     if ($country === '' && class_exists('WC_Geolocation')) {
         $country = (string) (WC_Geolocation::geolocate_ip()['country'] ?? '');
     }
-    WC()->session->set('chosen_payment_method', $country === 'KE' ? 'pesapal' : 'whop');
+    WC()->session->set('chosen_payment_method', 'whop');
 });
