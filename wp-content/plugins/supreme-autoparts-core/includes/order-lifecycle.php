@@ -14,6 +14,7 @@ if (!defined('ABSPATH')) {
 function sa_ol_custom_statuses(): array
 {
     return [
+        'staged'           => 'Staged to ship',
         'shipped'          => 'Shipped',
         'out-for-delivery' => 'Out for delivery',
         'delivered'        => 'Delivered',
@@ -45,8 +46,8 @@ add_filter('wc_order_statuses', static function (array $st): array {
     }
     return $out;
 });
-add_filter('woocommerce_order_is_paid_statuses', static fn(array $s): array => array_merge($s, ['shipped', 'out-for-delivery', 'delivered', 'ready-pickup']));
-add_filter('woocommerce_reports_order_statuses', static fn($s) => is_array($s) ? array_merge($s, ['shipped', 'out-for-delivery', 'delivered', 'ready-pickup']) : $s);
+add_filter('woocommerce_order_is_paid_statuses', static fn(array $s): array => array_merge($s, ['staged', 'shipped', 'out-for-delivery', 'delivered', 'ready-pickup']));
+add_filter('woocommerce_reports_order_statuses', static fn($s) => is_array($s) ? array_merge($s, ['staged', 'shipped', 'out-for-delivery', 'delivered', 'ready-pickup']) : $s);
 add_filter('woocommerce_valid_order_statuses_for_payment', static fn(array $s): array => array_merge($s, ['awaiting-info']));
 add_filter('woocommerce_order_is_download_permitted', static fn($ok, $o) => $ok || ($o instanceof WC_Order && in_array($o->get_status(), ['shipped', 'out-for-delivery', 'delivered', 'ready-pickup'], true)), 10, 2);
 
@@ -60,11 +61,16 @@ foreach (['customer_on_hold_order', 'customer_refunded_order', 'customer_partial
 
 function sa_ol_couriers(): array
 {
-    return [
+    $out = [
         'fargo' => ['label' => 'Fargo Courier', 'url' => 'FARGO'],
         'ups'   => ['label' => 'UPS', 'url' => 'https://www.ups.com/track?loc=en_US&tracknum=%s'],
         'other' => ['label' => 'Other courier', 'url' => ''],
     ];
+    if (function_exists('sa_couriers_enabled') && sa_couriers_enabled()) {
+        $out['g4s'] = ['label' => 'G4S Courier', 'url' => home_url('/track-order/?courier=g4s&waybill=%s')];
+        $out['speedaf'] = ['label' => 'Speedaf Courier', 'url' => home_url('/track-order/?courier=speedaf&waybill=%s')];
+    }
+    return $out;
 }
 
 function sa_ol_tracking_url(WC_Order $o): string
@@ -92,7 +98,7 @@ function sa_ol_log(WC_Order $o, string $stage, string $note = ''): void
 function sa_ol_stage_labels(): array
 {
     return [
-        'placed' => 'Order placed', 'pending' => 'Awaiting payment', 'processing' => 'Processing', 'on-hold' => 'On hold',
+        'placed' => 'Order placed', 'pending' => 'Awaiting payment', 'confirmed' => 'Payment confirmed', 'processing' => 'Processing', 'staged' => 'Staged to ship', 'on-hold' => 'On hold',
         'awaiting-info' => 'More info requested', 'info-received' => 'Info received from you', 'shipped' => 'Shipped',
         'out-for-delivery' => 'Out for delivery', 'delivered' => 'Delivered', 'ready-pickup' => 'Ready for pickup',
         'completed' => 'Completed', 'cancelled' => 'Cancelled', 'refunded' => 'Refunded', 'failed' => 'Payment failed',
@@ -110,9 +116,9 @@ function sa_ol_timeline_html(WC_Order $o): string
         }
     }
     $lab = sa_ol_stage_labels();
-    $flow = ['placed', 'processing', 'shipped', 'out-for-delivery', 'delivered'];
+    $flow = ['placed', 'confirmed', 'processing', 'staged', 'shipped', 'out-for-delivery', 'delivered'];
     if ((string) $o->get_meta('_sa_pickup') === '1' || $o->has_shipping_method('local_pickup')) {
-        $flow = ['placed', 'processing', 'ready-pickup', 'completed'];
+        $flow = ['placed', 'confirmed', 'processing', 'ready-pickup', 'completed'];
     }
     $seen = array_column($h, 's');
     $cur = $o->get_status();
@@ -367,8 +373,9 @@ function sa_ol_email_content(WC_Order $o, string $stage, string $note = ''): arr
         'processing' => ['We are preparing order #' . $n, 'Your order is being processed', '<p>We have your order and are getting it ready. We will email you again when it ships or is ready for pickup.</p>' . sa_ol_pickup_block($o) . sa_ol_items_html($o), 'View your order', $view],
         'on-hold' => ['Order #' . $n . ' is on hold', 'Your order is on hold', '<p>We have paused order #' . esc_html($n) . ' while we complete a quick check. You do not need to do anything unless we contact you.</p>' . ($noteh ? '<p><strong>Reason</strong></p>' . $noteh : '') . '<p>If you have details that could help, such as photos or documents, you can send them with the button below. No login needed.</p>', 'Send details', sa_ol_info_url($o)],
         'awaiting-info' => ['Information needed for order #' . $n, 'We need information to continue your order', '<p>We cannot continue with order #' . esc_html($n) . ' until we receive the information below.</p><p><strong>What we need</strong></p>' . ($noteh ?: ($hr_items !== '' ? '' : '<p style="background:#f7f7f7;border-left:3px solid #F5A623;padding:10px 12px;margin:12px 0">Details about your order. Reply with the button below and we will confirm what is missing.</p>')) . '<p><strong>Why we need it</strong><br>' . ($hr_why !== '' ? esc_html($hr_why) : 'We use it to confirm the order is correct, for example the right part for your vehicle or your delivery or payment details, so nothing is sent or charged by mistake.') . '</p>' . $hr_items . '<p><strong>How to send it</strong><br>Use the button below to reply and attach photos or documents. No login needed. Your order stays on hold until we hear from you.</p>', 'Send the information', sa_ol_info_url($o)],
-        'shipped' => ['Order #' . $n . ' has shipped', 'Your order is on its way', '<p>Your order has been handed to the courier.</p>' . sa_ol_delivery_block($o) . $noteh, 'Track order', $trk ?: $view],
-        'out-for-delivery' => ['Order #' . $n . ' is out for delivery', 'Out for delivery today', '<p>Your order is out for delivery today. Please keep your phone close so the rider can reach you.</p>' . sa_ol_delivery_block($o) . $noteh, 'Track order', $trk ?: $view],
+        'staged' => ['Order #' . $n . ' is packed and ready to ship', 'Your order is staged to ship', '<p>Your order is packed and waiting for courier pickup. We will email you the tracking details as soon as it is on its way.</p>' . $noteh, 'Track order', $view],
+        'shipped' => ['Order #' . $n . ' has shipped', 'Your order is on its way', '<p>Your order has been handed to the courier.</p>' . sa_ol_delivery_block($o) . $noteh, 'Track order', $view],
+        'out-for-delivery' => ['Order #' . $n . ' is out for delivery', 'Out for delivery today', '<p>Your order is out for delivery today. Please keep your phone close so the rider can reach you.</p>' . sa_ol_delivery_block($o) . $noteh, 'Track order', $view],
         'delivered' => ['Order #' . $n . ' was delivered', 'Your order was delivered', '<p>Your order has been delivered.</p>' . $noteh, 'View your order', $view],
         'ready-pickup' => ['Order #' . $n . ' is ready for pickup', 'Ready for pickup', '<p>Your order is ready to collect at our store:</p><p><strong>' . esc_html(sa_ol_pickup_store($o)['one_line']) . '</strong></p>' . (sa_ol_pickup_code($o) !== '' ? sa_ol_pickup_block($o) : '<p>Please bring your order number (#' . esc_html($n) . ') and the phone number used at checkout.</p>') . apply_filters('sa_ol_ready_pickup_extra', '', $o) . $noteh, 'Get directions', 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode(sa_ol_pickup_store($o)['one_line'])],
         'completed' => ['Order #' . $n . ' is complete', 'Thank you, your order is complete', '<p>Your order is complete. Thank you for shopping with Supreme Autoparts.</p>' . sa_ol_items_html($o) . $noteh, 'View your order', $view],
@@ -414,6 +421,9 @@ add_action('woocommerce_order_status_changed', static function ($oid, $from, $to
     }
     $note = (string) $order->get_meta('_sa_stage_note');
     $order->delete_meta_data('_sa_stage_note');
+    if ($to === 'processing' && !in_array('confirmed', array_column((array) $order->get_meta('_sa_timeline'), 's'), true)) {
+        sa_ol_log($order, 'confirmed');
+    }
     sa_ol_log($order, $to, $note);
     if ($to === 'processing') {
         return;
@@ -424,7 +434,7 @@ add_action('woocommerce_order_status_changed', static function ($oid, $from, $to
     if ($to === 'cancelled' && $from === 'pending' && !is_admin()) {
         return; // Unpaid order auto-released by stock hold timeout: no "cancelled" email.
     }
-    if (in_array($to, ['on-hold', 'awaiting-info', 'shipped', 'out-for-delivery', 'delivered', 'ready-pickup', 'completed', 'cancelled', 'refunded', 'failed'], true)) {
+    if (in_array($to, ['on-hold', 'awaiting-info', 'staged', 'shipped', 'out-for-delivery', 'delivered', 'ready-pickup', 'completed', 'cancelled', 'refunded', 'failed'], true)) {
         if ($to === 'on-hold' && $from === 'pending' && !$order->get_meta('_sa_hold_reason') && $note === '') {
             // Gateway-initiated hold (awaiting bank/M-Pesa confirmation): give the standard reason.
             $note = 'We are waiting for your payment to be confirmed. This is usually quick.';
@@ -436,6 +446,14 @@ add_action('woocommerce_order_status_changed', static function ($oid, $from, $to
     }
 }, 20, 4);
 
+/* Payment confirmed (any gateway: Pesapal, Whop, manual) => timeline stage. Email stays the processing receipt. */
+add_action('woocommerce_payment_complete', static function ($oid): void {
+    $o = wc_get_order($oid);
+    if ($o instanceof WC_Order) {
+        sa_ol_log($o, 'confirmed');
+    }
+}, 20);
+
 add_action('woocommerce_new_order', static function ($oid): void {
     $o = wc_get_order($oid);
     if ($o instanceof WC_Order && !$o->get_meta('_sa_timeline')) {
@@ -446,6 +464,7 @@ add_action('woocommerce_new_order', static function ($oid): void {
 /* Bulk actions for the new statuses. */
 foreach (['bulk_actions-edit-shop_order', 'bulk_actions-woocommerce_page_wc-orders'] as $sa_ol_h) {
     add_filter($sa_ol_h, static function (array $a): array {
+        $a['mark_staged'] = 'Change status to staged to ship';
         $a['mark_shipped'] = 'Change status to shipped';
         $a['mark_out-for-delivery'] = 'Change status to out for delivery';
         $a['mark_delivered'] = 'Change status to delivered';
@@ -477,6 +496,7 @@ function sa_ol_metabox($post_or_order): void
     echo '</select></label></p><p><label><strong>Tracking number</strong><br><input type="text" name="sa_ol_tracking" value="' . esc_attr((string) $o->get_meta('_sa_tracking_no')) . '" style="width:100%"></label></p>';
     echo '<p><label><strong>Message to customer</strong> (reason / request / note)<br><textarea name="sa_ol_note" rows="3" style="width:100%"></textarea></label></p>';
     echo '<p style="display:flex;flex-wrap:wrap;gap:6px">'
+        . '<button class="button" name="sa_ol_do" value="staged">Staged to ship</button>'
         . '<button class="button button-primary" name="sa_ol_do" value="shipped">Save tracking &amp; mark shipped</button>'
         . '<button class="button" name="sa_ol_do" value="out-for-delivery">Out for delivery</button>'
         . '<button class="button" name="sa_ol_do" value="delivered">Delivered</button>'
@@ -512,7 +532,7 @@ function sa_ol_admin_action(WC_Order $o, string $do, string $courier = '', strin
         $o->add_order_note('Tracking saved: ' . $tracking);
         return;
     }
-    if (!in_array($do, ['shipped', 'out-for-delivery', 'delivered', 'ready-pickup', 'awaiting-info', 'on-hold'], true)) {
+    if (!in_array($do, ['staged', 'shipped', 'out-for-delivery', 'delivered', 'ready-pickup', 'awaiting-info', 'on-hold'], true)) {
         return;
     }
     if ($do === 'on-hold') {
