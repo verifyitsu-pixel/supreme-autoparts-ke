@@ -69,6 +69,13 @@ if ($sa_total <= 0 && isset($GLOBALS['wp_query']) && $GLOBALS['wp_query'] instan
   </div>
 </header>
 <?php
+if ($sa_is_cat && $sa_term instanceof WP_Term && function_exists('sa_render_category_brand_picker') && function_exists('sa_rk_cat_maps') && function_exists('sa_rk_root')) {
+    // Brand archives are already a single brand; the picker belongs to part categories.
+    [$sa_bp_parent, , $sa_bp_brands] = sa_rk_cat_maps();
+    if (sa_rk_root((int) $sa_term->term_id, $sa_bp_parent) !== $sa_bp_brands) {
+        sa_render_category_brand_picker($sa_term);
+    }
+}
 echo '<div class="sa-market">';
 get_template_part('template-parts/catalog', 'filters');
 echo '<div class="sa-market__results">';
