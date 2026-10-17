@@ -134,10 +134,11 @@ add_action('wp_head', static function () {
 });
 
 /* Preselection follows row order. On a full checkout page load the first
-   gateway row for the visitor's zone becomes the selected one (KE: the
-   mobile-money row, elsewhere: the card row). AJAX refreshes are skipped so a
-   customer's own pick is never overridden mid-checkout. If the picked gateway
-   is not available for the viewer, WooCommerce falls back to the first row. */
+   gateway row for the customer's billing country becomes the selected one (KE:
+   the mobile-money row, elsewhere: the card row), matching the ordering filter
+   above. AJAX refreshes are skipped so a customer's own pick is never
+   overridden mid-checkout. If the picked gateway is not available for the
+   viewer, WooCommerce falls back to the first row. */
 add_action('template_redirect', static function () {
     if (wp_doing_ajax() || isset($_GET['wc-ajax'])) {
         return;
@@ -148,6 +149,12 @@ add_action('template_redirect', static function () {
     if (!function_exists('WC') || !WC()->session) {
         return;
     }
-    $ke = function_exists('sa_gc_zone') && sa_gc_zone() === 'KE';
-    WC()->session->set('chosen_payment_method', $ke ? 'pesapal' : 'whop');
+    $country = '';
+    if (WC()->customer) {
+        $country = (string) WC()->customer->get_billing_country();
+    }
+    if ($country === '' && class_exists('WC_Geolocation')) {
+        $country = (string) (WC_Geolocation::geolocate_ip()['country'] ?? '');
+    }
+    WC()->session->set('chosen_payment_method', $country === 'KE' ? 'pesapal' : 'whop');
 });
