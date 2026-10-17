@@ -1,0 +1,140 @@
+{
+ "courier": "ENA Coach",
+ "slug": "ena-coach",
+ "service": "pickup_only",
+ "fee": "fargo_card",
+ "door_surcharge_kes": 0,
+ "source": {
+  "url": "https://enacoachkenya.com/",
+  "note": "Towns from ENA Coach's own live booking backend (31 active routes across 14 towns, queried 2026-10-20 date). Named offices + helpline 0750097542 from https://enacoachkenya.com/contact. Other offices listed town-level only.",
+  "synced": "2026-10-17"
+ },
+ "stations": [
+  {
+   "name": "ENA Coach Bungoma office",
+   "town": "Bungoma",
+   "county": null,
+   "address": "",
+   "phone": "0750097542",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "ENA Coach Busia office",
+   "town": "Busia",
+   "county": null,
+   "address": "",
+   "phone": "0750097542",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "ENA Coach Eldoret office",
+   "town": "Eldoret",
+   "county": null,
+   "address": "",
+   "phone": "0750097542",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "ENA Coach Embu office",
+   "town": "Embu",
+   "county": null,
+   "address": "",
+   "phone": "0750097542",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "ENA Coach Homa Bay office",
+   "town": "Homa Bay",
+   "county": null,
+   "address": "",
+   "phone": "0750097542",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "ENA Coach Kakamega office",
+   "town": "Kakamega",
+   "county": null,
+   "address": "",
+   "phone": "0750097542",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "ENA Coach Kisii office",
+   "town": "Kisii",
+   "county": null,
+   "address": "",
+   "phone": "0750097542",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "ENA Coach Kisumu office",
+   "town": "Kisumu",
+   "county": null,
+   "address": "Near KPLC, off Oginga Odinga Street, Kisumu",
+   "phone": "0750097542",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "ENA Coach Kitale office",
+   "town": "Kitale",
+   "county": null,
+   "address": "",
+   "phone": "0750097542",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "ENA Coach Malaba office",
+   "town": "Malaba",
+   "county": null,
+   "address": "",
+   "phone": "0750097542",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "ENA Coach Migori office",
+   "town": "Migori",
+   "county": null,
+   "address": "",
+   "phone": "0750097542",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "ENA Coach Mombasa office",
+   "town": "Mombasa",
+   "county": null,
+   "address": "Majengo, opposite KCB Bank, Mvita, Mombasa",
+   "phone": "0750097542",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "ENA Coach Nairobi office",
+   "town": "Nairobi",
+   "county": null,
+   "address": "KPCU Building (Wakulima House), Haile Selassie Avenue, Nairobi",
+   "phone": "0750097542",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "ENA Coach Nakuru office",
+   "town": "Nakuru",
+   "county": null,
+   "address": "",
+   "phone": "0750097542",
+   "lat": null,
+   "lng": null
+  }
+ ]
+}
