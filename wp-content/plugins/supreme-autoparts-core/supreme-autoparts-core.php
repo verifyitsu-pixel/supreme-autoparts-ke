@@ -80,6 +80,8 @@ require_once SA_CORE_DIR . 'includes/hold-copy.php';
 require_once SA_CORE_DIR . 'includes/hold-requests.php';
 require_once SA_CORE_DIR . 'includes/file-drop.php';
 require_once SA_CORE_DIR . 'includes/fargo-tracking.php';
+require_once SA_CORE_DIR . 'includes/courier-shipping.php';
+require_once SA_CORE_DIR . 'includes/courier-tracking.php';
 require_once SA_CORE_DIR . 'includes/garage/garage.php';
 require_once SA_CORE_DIR . 'includes/site-forms.php';
 require_once SA_CORE_DIR . 'includes/returns.php';
@@ -626,5 +628,4 @@ add_action('init', static function (): void {
     }
     sa_core_repair_inflated_usd_prices(['limit' => 5000, 'dry_run' => false]);
 }, 35);
-
 
