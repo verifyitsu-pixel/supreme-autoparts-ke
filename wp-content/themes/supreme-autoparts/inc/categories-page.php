@@ -36,7 +36,7 @@ function sa_cats_photo(int $term_id): string
 
 function sa_cats_data(): array
 {
-    $key = 'sa_cats_page_v2';
+    $key = 'sa_cats_page_v3';
     $c = get_transient($key);
     if (is_array($c)) {
         return $c;
@@ -86,14 +86,14 @@ function sa_cats_data(): array
         }
         usort($brands, static fn($a, $b) => strcasecmp($a['n'], $b['n']));
     }
-    $c = ['dept' => $dept, 'more' => $more, 'brands' => $brands, 'brands_url' => isset($by_slug['brands']) ? (string) get_term_link($by_slug['brands']) : ''];
+    $c = ['dept' => $dept, 'more' => $more, 'brands' => $brands, 'brands_url' => home_url('/brands/')];
     set_transient($key, $c, 6 * HOUR_IN_SECONDS);
     return $c;
 }
 
-add_action('edited_product_cat', static fn() => delete_transient('sa_cats_page_v2'));
-add_action('created_product_cat', static fn() => delete_transient('sa_cats_page_v2'));
-add_action('delete_product_cat', static fn() => delete_transient('sa_cats_page_v2'));
+add_action('edited_product_cat', static fn() => delete_transient('sa_cats_page_v3'));
+add_action('created_product_cat', static fn() => delete_transient('sa_cats_page_v3'));
+add_action('delete_product_cat', static fn() => delete_transient('sa_cats_page_v3'));
 
 add_filter('pre_get_document_title', static function ($t) {
     return sa_cats_is_request() ? __('All categories', 'supreme-autoparts') . ' | ' . get_bloginfo('name') : $t;
