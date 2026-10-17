@@ -5,8 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 $sa_contact = function_exists('sa_enquire_contact') ? sa_enquire_contact() : [];
-$sa_wa_digits = preg_replace('/\D+/', '', (string) ($sa_contact['whatsapp'] ?? '19174375121')) ?: '19174375121';
-$sa_wa        = 'https://wa.me/' . $sa_wa_digits;
+$sa_wa        = function_exists('sa_whatsapp_url') ? sa_whatsapp_url() : 'https://wa.me/supremeautopart';
 $sa_min        = (function_exists('is_cart') && is_cart()) || (function_exists('is_checkout') && is_checkout() && !is_order_received_page());
 $sa_logo_f     = function_exists('sa_theme_logo_url') ? sa_theme_logo_url(true) : (SA_THEME_URI . '/assets/logo-light.png');
 $sa_shop       = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
@@ -96,7 +95,7 @@ $sa_chev       = '<svg class="sa-foot__chev" viewBox="0 0 24 24" width="18" heig
         <ul class="sa-foot__list">
           <li><a href="<?php echo esc_url((function_exists('sa_rs_url') ? sa_rs_url('request') : home_url('/roadside/'))); ?>"><?php esc_html_e('Request roadside help', 'supreme-autoparts'); ?></a></li>
           <li><a href="tel:+254714498451"><?php esc_html_e('Call +254 714 498 451', 'supreme-autoparts'); ?></a></li>
-          <li><a href="https://wa.me/254714498451" rel="noopener"><?php esc_html_e('WhatsApp us', 'supreme-autoparts'); ?></a></li>
+          <li><a href="<?php echo esc_url($sa_wa); ?>" rel="noopener"><?php echo function_exists('sa_whatsapp_icon') ? sa_whatsapp_icon() : ''; esc_html_e('Chat on WhatsApp', 'supreme-autoparts'); ?></a></li>
           <li><a href="<?php echo esc_url((function_exists('sa_rs_url') ? sa_rs_url('track') : home_url('/roadside/'))); ?>"><?php esc_html_e('Track a request', 'supreme-autoparts'); ?></a></li>
           <li><a href="<?php echo esc_url(home_url('/roadside-terms/')); ?>"><?php esc_html_e('Roadside terms', 'supreme-autoparts'); ?></a></li>
         </ul>
@@ -125,6 +124,10 @@ $sa_chev       = '<svg class="sa-foot__chev" viewBox="0 0 24 24" width="18" heig
 
     <div class="sa-foot__bottom">
       <span class="sa-foot__copy">&copy; <?php echo esc_html(gmdate('Y')); ?> Supreme Autoparts · supremeautoparts.co.ke</span>
+      <nav class="sa-foot__social" aria-label="<?php esc_attr_e('Social', 'supreme-autoparts'); ?>">
+        <a href="<?php echo esc_url(function_exists('sa_instagram_url') ? sa_instagram_url() : 'https://www.instagram.com/standarddriveworks/'); ?>" target="_blank" rel="noopener" aria-label="<?php esc_attr_e('Supreme Autoparts on Instagram', 'supreme-autoparts'); ?>"><?php echo function_exists('sa_instagram_icon') ? sa_instagram_icon() : 'Instagram'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
+        <a href="<?php echo esc_url($sa_wa); ?>" target="_blank" rel="noopener" aria-label="<?php esc_attr_e('Chat on WhatsApp', 'supreme-autoparts'); ?>"><?php echo function_exists('sa_whatsapp_icon') ? sa_whatsapp_icon() : 'WhatsApp'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
+      </nav>
       <nav class="sa-foot__policies" aria-label="<?php esc_attr_e('Policies', 'supreme-autoparts'); ?>">
         <a href="<?php echo esc_url(sa_page_url('terms')); ?>"><?php esc_html_e('Terms', 'supreme-autoparts'); ?></a>
         <a href="<?php echo esc_url(sa_page_url('privacy-policy')); ?>"><?php esc_html_e('Privacy', 'supreme-autoparts'); ?></a>
