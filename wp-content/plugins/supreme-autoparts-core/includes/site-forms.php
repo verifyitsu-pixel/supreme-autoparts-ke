@@ -306,9 +306,9 @@ add_action('get_footer', static function (): void {
         echo '<p class="sa-container sa-rsline">Car won’t start or can’t be driven? <a href="' . esc_url(home_url('/roadside/')) . '">Request roadside help</a> or call <a href="tel:+254714498451">+254 714 498 451</a>.</p>'; // phpcs:ignore
     }
 });
-add_action('woocommerce_thankyou', static function (): void {
-    echo sa_sf_next_steps('order'); // phpcs:ignore
-}, 30);
+/* Rock 2026-10-17 ("a lot of unnecessary buttons" on the thank-you page): the "What next?"
+   promo cards no longer render after an order. sa_sf_next_steps() stays for the
+   roadside/booking footer contexts below. */
 
 /* Woo's order-tracking form posts to the global post (was /hello-world/); point it at /track-order/. */
 add_filter('do_shortcode_tag', static function ($out, $tag) {
@@ -366,4 +366,3 @@ add_action('woocommerce_email_customer_details', static function ($order, $sent_
     // The HTML version of this line now lives inside the single help block (sa_email_help_html).
     return;
 }, 100, 3);
-
