@@ -46,7 +46,7 @@
 .sa-ed-im{display:flex;aspect-ratio:1;background:var(--ed-soft);border-radius:4px;overflow:hidden;align-items:center;justify-content:center}
 .sa-ed-im img{width:84%;height:84%;object-fit:contain;mix-blend-mode:multiply}
 .sa-ed-cats{display:grid;grid-template-columns:repeat(6,1fr);gap:16px}
-.sa-ed-cat,.sa-ed-prod{color:var(--ed-ink);text-decoration:none;display:block;min-width:0}
+.sa-ed-cat,.sa-ed-prod__link{color:var(--ed-ink);text-decoration:none;display:block;min-width:0}
 .sa-ed-cat__n{display:block;margin-top:12px;font-weight:600;font-size:15px}.sa-brand-picker{padding-top:48px}.sa-ed-cat__c{display:block;margin-top:2px;font-size:13px;font-weight:400;color:var(--ed-mute)}
 .sa-ed-prods{display:grid;grid-template-columns:repeat(4,1fr);gap:40px 20px}
 .sa-ed-prod small{display:block;margin-top:16px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ed-mute)}
@@ -320,3 +320,7 @@ html,body{overscroll-behavior-x:none}
 .sa-search .sa-search__cat:focus{outline:none}
 .sa-ed-search .sa-search__cat{flex:0 1 auto;max-width:34%;min-width:0;height:56px;border:1.5px solid #cfcfc9;border-radius:8px;background:#fff;color:var(--ed-mute);font:inherit;font-size:14px;padding:0 12px;cursor:pointer}
 .sa-ed-search .sa-search__cat:focus{outline:none;border-color:var(--ed-ink);color:var(--ed-ink)}
+
+/* Home Popular parts: Buy now / Add to cart actions, same look as shop cards */
+.sa-ed-prod__actions{margin-top:12px}
+.sa-ed-prod__actions .button{font-size:13px;padding:0.55em 1em}
