@@ -95,6 +95,7 @@ require_once SA_THEME_DIR . '/inc/woocommerce.php';
 require_once SA_THEME_DIR . '/inc/helpers.php';
 require_once SA_THEME_DIR . '/inc/categories-page.php';
 require_once SA_THEME_DIR . '/inc/brands-page.php';
+require_once SA_THEME_DIR . '/inc/motorcycle-cat.php';
 require_once SA_THEME_DIR . '/inc/enquire.php';
 require_once SA_THEME_DIR . '/inc/contact-form.php';
 
