@@ -631,7 +631,7 @@ function sa_render_category_brand_picker(WP_Term $term): void
  */
 function sa_search_scope_categories(): array
 {
-    $hit = get_transient('sa_search_scope_cats_v1');
+    $hit = get_transient('sa_search_scope_cats_v2');
     if (is_array($hit)) {
         return $hit;
     }
@@ -659,7 +659,7 @@ function sa_search_scope_categories(): array
             $out[] = ['id' => $t ? (int) $t->term_id : 0, 'slug' => (string) $d['slug'], 'name' => (string) $d['title']];
         }
     }
-    set_transient('sa_search_scope_cats_v1', $out, 6 * HOUR_IN_SECONDS);
+    set_transient('sa_search_scope_cats_v2', $out, 6 * HOUR_IN_SECONDS);
     return $out;
 }
 
@@ -690,13 +690,22 @@ function sa_search_scope_select(string $id): void
     $cur = sa_search_scope_current_term();
     echo '<select class="sa-search__cat" id="' . esc_attr($id) . '" name="sa_cat" aria-label="' . esc_attr__('Search scope', 'supreme-autoparts') . '">';
     echo '<option value="all">' . esc_html__('Search all', 'supreme-autoparts') . '</option>';
+    $cats = sa_search_scope_categories();
+    foreach ($cats as $i => $c) {
+        if ($c['slug'] === 'motorcycle') {
+            $sel = ($cur instanceof WP_Term && $cur->slug === 'motorcycle') ? ' selected' : '';
+            echo '<option value="motorcycle"' . $sel . '>' . esc_html($c['name']) . '</option>';
+            unset($cats[$i]);
+            break;
+        }
+    }
     if ($cur instanceof WP_Term) {
         $top = array_column(sa_search_scope_categories(), 'slug');
         if (!in_array($cur->slug, $top, true)) {
             echo '<option value="' . esc_attr($cur->slug) . '" selected>' . esc_html($cur->name) . '</option>';
         }
     }
-    foreach (sa_search_scope_categories() as $c) {
+    foreach ($cats as $c) {
         $sel = ($cur instanceof WP_Term && $cur->slug === $c['slug']) ? ' selected' : '';
         echo '<option value="' . esc_attr($c['slug']) . '"' . $sel . '>' . esc_html($c['name']) . '</option>';
     }
