@@ -44,12 +44,15 @@ add_filter('option_woocommerce_transactworld_settings', static function ($settin
 
 /* Whop checkout visibility: switch on + shop admin, unless the public flag is set. */
 if (!function_exists('sa_whop_checkout_visible')) {
+    /* Card checkout (Whop) is on for all customers. Kill switch: set env
+       SA_WHOP_CHECKOUT_OFF=1 to hide it again (admin-only test mode via
+       SA_WHOP_CHECKOUT=1 still works while the kill switch is on). */
     function sa_whop_checkout_visible(): bool {
+        if (getenv('SA_WHOP_CHECKOUT_OFF') !== '1') {
+            return true;
+        }
         if (getenv('SA_WHOP_CHECKOUT') !== '1') {
             return false;
-        }
-        if (getenv('SA_WHOP_CHECKOUT_PUBLIC') === '1') {
-            return true;
         }
         return function_exists('current_user_can') && current_user_can('manage_woocommerce');
     }
