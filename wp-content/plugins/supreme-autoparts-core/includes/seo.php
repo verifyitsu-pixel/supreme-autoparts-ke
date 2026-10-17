@@ -396,6 +396,9 @@ function sa_seo_wp_head(): void
     // Robots
     if ($noindex) {
         echo '<meta name="robots" content="noindex, nofollow" />' . "\n";
+    } elseif (function_exists('is_product_tag') && is_product_tag()) {
+        // Product-tag archives are supplier-junk thin pages: out of the index, links still flow.
+        echo '<meta name="robots" content="noindex, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />' . "\n";
     } else {
         echo '<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />' . "\n";
     }
@@ -1000,3 +1003,10 @@ add_action('init', static function (): void {
     sa_seo_seed_page_meta();
     update_option('sa_seo_meta_ver', '3');
 }, 40);
+
+// --- SEO: drop product-tag archives from core sitemaps (reversible) ---
+add_filter('wp_sitemaps_taxonomies', function (array $taxonomies): array {
+    return array_values(array_filter($taxonomies, function ($t) {
+        return $t->name !== 'product_tag';
+    }));
+});
