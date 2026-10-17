@@ -13,7 +13,7 @@ $contact = function_exists('sa_enquire_contact') ? sa_enquire_contact() : [
     'whatsapp'      => '19174375121',
     'email'         => $email,
 ];
-$wa      = 'https://wa.me/' . preg_replace('/\D+/', '', (string) ($contact['whatsapp'] ?? '19174375121'));
+$wa      = function_exists('sa_whatsapp_url') ? sa_whatsapp_url() : 'https://wa.me/supremeautopart';
 $policies = [
     ['slug' => 'shipping-policy', 'label' => __('Shipping policy', 'supreme-autoparts')],
     ['slug' => 'refund-policy', 'label' => __('Refund policy', 'supreme-autoparts')],
