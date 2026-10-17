@@ -493,7 +493,7 @@ add_action('template_redirect', static function (): void {
     sa_g_public_head('Your estimate');
     echo '<main class="sa-g-public sa-container">';
     if (!$ok) {
-        echo '<h1>Link not valid</h1><p>This estimate link is incorrect or has expired. Please use the link in your latest email, or contact us on WhatsApp.</p></main>';
+        echo '<h1>Link not valid</h1><p>This estimate link is incorrect or has expired. Please use the link in your latest email, or <a href="https://wa.me/supremeautopart">chat with us on WhatsApp</a>.</p></main>';
         get_footer();
         exit;
     }
