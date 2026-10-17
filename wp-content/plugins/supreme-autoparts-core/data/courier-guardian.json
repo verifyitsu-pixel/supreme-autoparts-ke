@@ -7,134 +7,164 @@
  "source": {
   "url": "https://theguardian.co.ke/",
   "note": "Destination towns with scheduled departures ex-Nairobi on Guardian's own booking API (api/search-buses, checked for 2026-10-20; Mombasa and Homa Bay returned none that day - may be date-limited, not absent). Nairobi booking office: River Rd Opp Barclays Bank, View Plaza Ground Floor, 0718880256 (their homepage). HQ: Railways Godowns, Haile Selassie Ave, +254 726 511 628.",
-  "synced": "2026-10-17"
+  "synced": "2026-10-17",
+  "maps_note": "Google Maps pins added 2026-10-17. maps_verified=true: exact Maps listing (address from Maps where published). false: no listing on Google Maps for that town."
  },
  "stations": [
   {
    "name": "Guardian Bomet office",
    "town": "Bomet",
-   "county": null,
+   "county": "Bomet",
    "address": "",
    "phone": "",
    "lat": null,
-   "lng": null
+   "lng": null,
+   "maps_name": null,
+   "maps_verified": false
   },
   {
    "name": "Guardian Bungoma office",
    "town": "Bungoma",
-   "county": null,
+   "county": "Bungoma",
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.567865,
+   "lng": 34.558805,
+   "maps_name": "Guardian Angel - Booking & Parcels Office",
+   "maps_verified": true
   },
   {
    "name": "Guardian Busia office",
    "town": "Busia",
-   "county": null,
-   "address": "",
+   "county": "Busia",
+   "address": "Marachi West, Butula, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.463384,
+   "lng": 34.104359,
+   "maps_name": "The Guardian Coach-Busia",
+   "maps_verified": true
   },
   {
    "name": "Guardian Eldoret office",
    "town": "Eldoret",
-   "county": null,
-   "address": "",
+   "county": "Uasin Gishu",
+   "address": "G7C8+F6W, Eldoret, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.521226,
+   "lng": 35.265584,
+   "maps_name": "Guardian angel booking office Eldoret",
+   "maps_verified": true
   },
   {
    "name": "Guardian Kakamega office",
    "town": "Kakamega",
-   "county": null,
+   "county": "Kakamega",
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.28445,
+   "lng": 34.746886,
+   "maps_name": "The Guardian Angel Booking",
+   "maps_verified": true
   },
   {
    "name": "Guardian Kericho office",
    "town": "Kericho",
-   "county": null,
-   "address": "",
+   "county": "Kericho",
+   "address": "Total Petrol Station, Kisumu - Busia Rd, Kericho, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.372087,
+   "lng": 35.282161,
+   "maps_name": "The Guardian Coach-Kericho",
+   "maps_verified": true
   },
   {
    "name": "Guardian Kisii office",
    "town": "Kisii",
-   "county": null,
-   "address": "",
+   "county": "Kisii",
+   "address": "8QHF+8FQ, Kisii, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.671652,
+   "lng": 34.773735,
+   "maps_name": "Guardian, Booking Office",
+   "maps_verified": true
   },
   {
    "name": "Guardian Kisumu office",
    "town": "Kisumu",
-   "county": null,
+   "county": "Kisumu",
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.102527,
+   "lng": 34.751405,
+   "maps_name": "The Guardian Coach-Kisumu",
+   "maps_verified": true
   },
   {
    "name": "Guardian Kitale office",
    "town": "Kitale",
-   "county": null,
-   "address": "",
+   "county": "Trans Nzoia",
+   "address": "2272+HW7, Kitale, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 1.016257,
+   "lng": 35.001457,
+   "maps_name": "Guardian Bus Kitale",
+   "maps_verified": true
   },
   {
    "name": "Guardian Malaba office",
    "town": "Malaba",
-   "county": null,
-   "address": "",
+   "county": "Busia",
+   "address": "Busia - Malaba Rd, Malaba, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.490962,
+   "lng": 34.132258,
+   "maps_name": "Guardian Coach Main office Malaba",
+   "maps_verified": true
   },
   {
    "name": "Guardian Migori office",
    "town": "Migori",
-   "county": null,
+   "county": "Migori",
    "address": "",
    "phone": "",
    "lat": null,
-   "lng": null
+   "lng": null,
+   "maps_name": null,
+   "maps_verified": false
   },
   {
    "name": "Guardian Mumias office",
    "town": "Mumias",
-   "county": null,
+   "county": "Kakamega",
    "address": "",
    "phone": "",
    "lat": null,
-   "lng": null
+   "lng": null,
+   "maps_name": null,
+   "maps_verified": false
   },
   {
    "name": "Guardian Nakuru office",
    "town": "Nakuru",
-   "county": null,
+   "county": "Nakuru",
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.293849,
+   "lng": 36.061813,
+   "maps_name": "Guardian Coach Nakuru Office",
+   "maps_verified": true
   },
   {
    "name": "Guardian Siaya office",
    "town": "Siaya",
-   "county": null,
+   "county": "Siaya",
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.059515,
+   "lng": 34.287177,
+   "maps_name": "Guardian Bus Company",
+   "maps_verified": true
   }
- ]
+ ],
+ "updated_at": "2026-10-17T07:17:01.454438Z"
 }
