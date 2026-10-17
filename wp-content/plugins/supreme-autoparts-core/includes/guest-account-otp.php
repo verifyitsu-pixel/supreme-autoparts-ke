@@ -422,7 +422,7 @@ function sa_core_email_login_otp(WP_User $user, string $code): bool
         'If you did not request this, you can ignore this email. Never share the code.',
         '',
         '— ' . $site,
-        $store_email . ' · WhatsApp ' . $wa_display,
+        $store_email,
     ];
     $body = implode("\n", $lines);
 
@@ -531,7 +531,7 @@ function sa_core_email_guest_account_ready(WP_User $user, WC_Order $order): void
         'My Account: ' . $account_url,
         '',
         '— Supreme Autoparts',
-        'calvin@supremeautoparts.co.ke · WhatsApp +1 917 437 5121',
+        'calvin@supremeautoparts.co.ke',
     ]);
 
     $ok = false;
