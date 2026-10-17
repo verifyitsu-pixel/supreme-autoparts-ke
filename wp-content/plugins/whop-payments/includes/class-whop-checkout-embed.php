@@ -305,6 +305,11 @@ final class Whop_Checkout_Embed {
             'completeUrl'=> $complete,
             'email'      => (string) $order->get_billing_email(),
             'orderId'    => (string) $order->get_id(),
+            'payLabel'   => sprintf(
+                /* translators: %s: formatted order total */
+                __('Pay %s', 'whop-payments'),
+                html_entity_decode(wp_strip_all_tags($order->get_formatted_order_total()), ENT_QUOTES, 'UTF-8')
+            ),
             'i18n'       => [
                 'loading'  => __('Loading secure payment…', 'whop-payments'),
                 'ready'    => __('Enter payment details below.', 'whop-payments'),
