@@ -99,3 +99,27 @@ add_action('woocommerce_init', static function (): void {
     }
     update_option('sa_junk_product_cleanup_v2', '1');
 }, 20);
+
+/**
+ * Hide junk supplier tags on the front end: Turn14 fitment terms
+ * (`fits_...`), Parts Authority fitment (`...-esi<ID>`), supplier attribute
+ * dumps (`ClearanceItem:...`, `TURN14_ID:...`, `EPA:...` - any name with a
+ * colon) and supplier category-path dumps (names containing '>').
+ * Import writes (wp_set_object_terms) and the catalog-facets Vehicle filter
+ * (raw SQL) never pass through get_the_terms, so they are unaffected;
+ * wp-admin keeps every tag.
+ */
+add_filter('get_the_terms', static function ($terms, $post_id, $taxonomy) {
+    if ($taxonomy !== 'product_tag' || is_admin() || ! is_array($terms)) {
+        return $terms;
+    }
+    $kept = [];
+    foreach ($terms as $term) {
+        $name = (string) ($term->name ?? '');
+        if (str_starts_with($name, 'fits_') || str_contains($name, ':') || str_contains($name, '>') || preg_match('/-esi\d+$/i', $name)) {
+            continue;
+        }
+        $kept[] = $term;
+    }
+    return $kept;
+}, 10, 3);
