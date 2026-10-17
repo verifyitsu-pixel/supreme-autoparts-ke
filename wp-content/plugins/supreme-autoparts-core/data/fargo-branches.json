@@ -1,0 +1,1307 @@
+{
+ "courier": "Fargo Courier",
+ "type": "pickup_and_door",
+ "source": {
+  "url": "https://www.fargocourier.co.ke/our-branches/",
+  "note": "Official Fargo Courier store locator (WP Store Locator AJAX on their own site), merged from 8 regional center queries, deduped by id.",
+  "synced": "2026-10-17"
+ },
+ "branches": [
+  {
+   "id": 1207,
+   "name": "Athi River SC",
+   "address": "Athi River SC",
+   "city": "Athi River",
+   "lat": -1.447979,
+   "lng": 36.97578,
+   "phone": ""
+  },
+  {
+   "id": 1033,
+   "name": "Eldama Ravine Office",
+   "address": "Eldama Ravine Office",
+   "city": "Baringo",
+   "lat": 0.04929,
+   "lng": 35.726474,
+   "phone": "0110123738"
+  },
+  {
+   "id": 1044,
+   "name": "Kabarnet Office",
+   "address": "Kabarnet Office",
+   "city": "Baringo",
+   "lat": 0.493307,
+   "lng": 35.743705,
+   "phone": "0113560583"
+  },
+  {
+   "id": 985,
+   "name": "Bomet Office",
+   "address": "Bomet Office",
+   "city": "Bomet",
+   "lat": -0.752546,
+   "lng": 35.338824,
+   "phone": "0780542432"
+  },
+  {
+   "id": 1029,
+   "name": "Sotik Office",
+   "address": "Sotik Office",
+   "city": "Bomet",
+   "lat": -0.690566,
+   "lng": 35.111469,
+   "phone": "0780545117"
+  },
+  {
+   "id": 987,
+   "name": "Bungoma Office",
+   "address": "Bungoma Office",
+   "city": "Bungoma",
+   "lat": 0.565755,
+   "lng": 34.563898,
+   "phone": "0780542540"
+  },
+  {
+   "id": 989,
+   "name": "Busia Office",
+   "address": "Busia Office",
+   "city": "Busia",
+   "lat": 0.461371,
+   "lng": 34.10963,
+   "phone": "0780542563"
+  },
+  {
+   "id": 1013,
+   "name": "Malaba Office",
+   "address": "Malaba Office",
+   "city": "Busia",
+   "lat": 0.636217,
+   "lng": 34.278299,
+   "phone": "0780543603"
+  },
+  {
+   "id": 1130,
+   "name": "Takaba Office",
+   "address": "Takaba Office",
+   "city": "Central",
+   "lat": -1.283038,
+   "lng": 36.818748,
+   "phone": "0115977685"
+  },
+  {
+   "id": 1081,
+   "name": "Chuka Office",
+   "address": "Chuka Office",
+   "city": "Chuka",
+   "lat": -0.329669,
+   "lng": 37.651594,
+   "phone": "0780542590"
+  },
+  {
+   "id": 945,
+   "name": "Diani Office",
+   "address": "Diani Office",
+   "city": "Diani",
+   "lat": -4.281531,
+   "lng": 39.568016,
+   "phone": "0780542606"
+  },
+  {
+   "id": 1037,
+   "name": "Eldoret Barangetuny SC",
+   "address": "Eldoret Barangetuny SC",
+   "city": "Eldoret",
+   "lat": 0.517351,
+   "lng": 35.276971,
+   "phone": "0780541942"
+  },
+  {
+   "id": 1035,
+   "name": "Eldoret Office",
+   "address": "Eldoret Office",
+   "city": "Eldoret",
+   "lat": 0.519441,
+   "lng": 35.281998,
+   "phone": "0780542631"
+  },
+  {
+   "id": 1039,
+   "name": "Eldoret SC 2",
+   "address": "Eldoret SC 2",
+   "city": "Eldoret",
+   "lat": 0.515617,
+   "lng": 35.255613,
+   "phone": "0780542129"
+  },
+  {
+   "id": 1134,
+   "name": "Emali Office",
+   "address": "Emali Office",
+   "city": "Emali",
+   "lat": -2.079936,
+   "lng": 37.474468,
+   "phone": "0780542653"
+  },
+  {
+   "id": 1083,
+   "name": "Embu Office",
+   "address": "Embu Office",
+   "city": "Embu",
+   "lat": -0.53412,
+   "lng": 37.45275,
+   "phone": "0780542690"
+  },
+  {
+   "id": 1136,
+   "name": "Garissa Office",
+   "address": "Garissa Office",
+   "city": "Garissa",
+   "lat": -0.457691,
+   "lng": 39.638768,
+   "phone": "0780542791"
+  },
+  {
+   "id": 991,
+   "name": "Homabay Office",
+   "address": "Homabay Office",
+   "city": "Homabay",
+   "lat": -0.528491,
+   "lng": 34.456965,
+   "phone": "0780542947"
+  },
+  {
+   "id": 1021,
+   "name": "Mbita Office",
+   "address": "Mbita Office",
+   "city": "Homabay",
+   "lat": -0.425887,
+   "lng": 34.208338,
+   "phone": "0780543932"
+  },
+  {
+   "id": 1096,
+   "name": "Isiolo Office",
+   "address": "Isiolo Office",
+   "city": "Isiolo",
+   "lat": 0.355754,
+   "lng": 37.584368,
+   "phone": "0780542962"
+  },
+  {
+   "id": 1098,
+   "name": "Juja SC",
+   "address": "Juja SC",
+   "city": "Juja",
+   "lat": -1.102225,
+   "lng": 37.015789,
+   "phone": "0780542332"
+  },
+  {
+   "id": 1138,
+   "name": "Kajiado Office",
+   "address": "Kajiado Office",
+   "city": "Kajiado",
+   "lat": -1.844098,
+   "lng": 36.786533,
+   "phone": "0780542975"
+  },
+  {
+   "id": 993,
+   "name": "Kakamega Office",
+   "address": "Kakamega Office",
+   "city": "Kakamega",
+   "lat": 0.284497,
+   "lng": 34.755383,
+   "phone": "0780542985"
+  },
+  {
+   "id": 959,
+   "name": "Mariakani Office",
+   "address": "Mariakani Office",
+   "city": "Kaloleni",
+   "lat": -3.864256,
+   "lng": 39.475829,
+   "phone": "0780543710"
+  },
+  {
+   "id": 1168,
+   "name": "Kapenguria Office",
+   "address": "Kapenguria Office",
+   "city": "Kapenguria",
+   "lat": 1.25464,
+   "lng": 35.091524,
+   "phone": "0780542990"
+  },
+  {
+   "id": 1046,
+   "name": "Kapsabet Office",
+   "address": "Kapsabet Office",
+   "city": "Kapsabet",
+   "lat": 0.202314,
+   "lng": 35.100314,
+   "phone": "0780543019"
+  },
+  {
+   "id": 1100,
+   "name": "Karatina Office",
+   "address": "Karatina Office",
+   "city": "Karatina",
+   "lat": -0.482818,
+   "lng": 37.129613,
+   "phone": "0780543087"
+  },
+  {
+   "id": 1077,
+   "name": "Ol-Kalau Office",
+   "address": "Ol-Kalau Office",
+   "city": "Karau",
+   "lat": -0.268493,
+   "lng": 36.377406,
+   "phone": "0780545087"
+  },
+  {
+   "id": 995,
+   "name": "Kericho Office",
+   "address": "Kericho Office",
+   "city": "Kericho",
+   "lat": -0.368479,
+   "lng": 35.284934,
+   "phone": "0110593170"
+  },
+  {
+   "id": 997,
+   "name": "Kericho SC 1",
+   "address": "Kericho SC 1",
+   "city": "Kericho",
+   "lat": -0.368451,
+   "lng": 35.284968,
+   "phone": "0780545483"
+  },
+  {
+   "id": 999,
+   "name": "Kericho SC 2",
+   "address": "Kericho SC 2",
+   "city": "Kericho",
+   "lat": -0.365869,
+   "lng": 35.289987,
+   "phone": "0780543102"
+  },
+  {
+   "id": 1009,
+   "name": "Litein Office",
+   "address": "Litein Office",
+   "city": "Kericho",
+   "lat": -0.585447,
+   "lng": 35.191144,
+   "phone": "0113034669"
+  },
+  {
+   "id": 1102,
+   "name": "Kerugoya Office",
+   "address": "Kerugoya Office",
+   "city": "Kerugoya",
+   "lat": -0.500347,
+   "lng": 37.278354,
+   "phone": "0780543106"
+  },
+  {
+   "id": 1140,
+   "name": "Kibwezi Office",
+   "address": "Kibwezi Office",
+   "city": "Kibwezi",
+   "lat": -2.411025,
+   "lng": 37.966531,
+   "phone": "0780543179"
+  },
+  {
+   "id": 949,
+   "name": "Kilifi Office",
+   "address": "Kilifi Office",
+   "city": "Kilifi",
+   "lat": -3.630202,
+   "lng": 39.854018,
+   "phone": "0780543274"
+  },
+  {
+   "id": 1001,
+   "name": "Kisii Office",
+   "address": "Kisii Office",
+   "city": "Kisii",
+   "lat": -0.677077,
+   "lng": 34.780032,
+   "phone": "0780542310"
+  },
+  {
+   "id": 983,
+   "name": "Bondo Office",
+   "address": "Bondo Office",
+   "city": "Kisumu",
+   "lat": -0.077384,
+   "lng": 34.325709,
+   "phone": "0780542444"
+  },
+  {
+   "id": 1007,
+   "name": "Kisumu Ang&#8217;awa SC",
+   "address": "Kisumu Ang'awa SC",
+   "city": "Kisumu",
+   "lat": -0.100371,
+   "lng": 34.7604,
+   "phone": "0780541948"
+  },
+  {
+   "id": 1003,
+   "name": "Kisumu Office",
+   "address": "Kisumu Office",
+   "city": "Kisumu",
+   "lat": -0.050616,
+   "lng": 34.796537,
+   "phone": "0780543398"
+  },
+  {
+   "id": 1005,
+   "name": "Kisumu Town SC",
+   "address": "Kisumu Town SC",
+   "city": "Kisumu",
+   "lat": -0.051045,
+   "lng": 34.801601,
+   "phone": "0780541945"
+  },
+  {
+   "id": 1048,
+   "name": "Kitale Office",
+   "address": "Kitale Office",
+   "city": "Kitale",
+   "lat": 1.013965,
+   "lng": 35.002705,
+   "phone": "0780543442"
+  },
+  {
+   "id": 1050,
+   "name": "Kitale SC",
+   "address": "Kitale SC",
+   "city": "Kitale",
+   "lat": 1.013924,
+   "lng": 35.002721,
+   "phone": "0780542192"
+  },
+  {
+   "id": 1142,
+   "name": "Kitengela Office",
+   "address": "Kitengela Office",
+   "city": "Kitengela",
+   "lat": -1.473412,
+   "lng": 36.962197,
+   "phone": "0780543468"
+  },
+  {
+   "id": 1145,
+   "name": "Kitengela SC",
+   "address": "Kitengela SC",
+   "city": "Kitengela",
+   "lat": -1.503614,
+   "lng": 36.95782,
+   "phone": "0780541788"
+  },
+  {
+   "id": 1147,
+   "name": "Kitui Office",
+   "address": "Kitui Office",
+   "city": "Kitui",
+   "lat": -1.366745,
+   "lng": 38.009534,
+   "phone": "0780543483"
+  },
+  {
+   "id": 951,
+   "name": "Lamu Office",
+   "address": "Lamu Office",
+   "city": "Lamu",
+   "lat": -2.267433,
+   "lng": 40.90224,
+   "phone": "0780543551"
+  },
+  {
+   "id": 969,
+   "name": "Mpeketoni SC",
+   "address": "Mpeketoni SC",
+   "city": "Lamu",
+   "lat": -2.387838,
+   "lng": 40.699681,
+   "phone": "0780544273"
+  },
+  {
+   "id": 1052,
+   "name": "Limuru Office",
+   "address": "Limuru Office",
+   "city": "LImuru",
+   "lat": -1.107882,
+   "lng": 36.642153,
+   "phone": "0780543566"
+  },
+  {
+   "id": 1054,
+   "name": "Lodwar Office",
+   "address": "Lodwar Office",
+   "city": "Lodwar",
+   "lat": 3.115875,
+   "lng": 35.60468,
+   "phone": "0780545782"
+  },
+  {
+   "id": 1149,
+   "name": "Loitoktok Office",
+   "address": "Loitoktok Office",
+   "city": "Loitoktok",
+   "lat": -2.925993,
+   "lng": 37.510076,
+   "phone": "0780543578"
+  },
+  {
+   "id": 1151,
+   "name": "Machakos Office",
+   "address": "Machakos Office",
+   "city": "Machakos",
+   "lat": -1.519078,
+   "lng": 37.266563,
+   "phone": "0780543601"
+  },
+  {
+   "id": 955,
+   "name": "Malindi Office",
+   "address": "Malindi Office",
+   "city": "Malindi",
+   "lat": -3.213082,
+   "lng": 40.118747,
+   "phone": "0780543679"
+  },
+  {
+   "id": 957,
+   "name": "Malindi SC",
+   "address": "Malindi SC",
+   "city": "Malindi",
+   "lat": -3.219107,
+   "lng": 40.116864,
+   "phone": "0111562317"
+  },
+  {
+   "id": 1104,
+   "name": "Marsabit Office",
+   "address": "Marsabit Office",
+   "city": "Marsabit",
+   "lat": 2.331726,
+   "lng": 37.989536,
+   "phone": "0780543722"
+  },
+  {
+   "id": 1106,
+   "name": "Matuu Office",
+   "address": "Matuu Office",
+   "city": "Matuu",
+   "lat": -1.146828,
+   "lng": 37.548756,
+   "phone": "0780543761"
+  },
+  {
+   "id": 1108,
+   "name": "Maua Office",
+   "address": "Maua Office",
+   "city": "Maua",
+   "lat": 0.336911,
+   "lng": 37.936338,
+   "phone": "0780543795"
+  },
+  {
+   "id": 1110,
+   "name": "Meru SC",
+   "address": "Meru SC",
+   "city": "Maua",
+   "lat": 0.051482,
+   "lng": 37.64564,
+   "phone": "0780543940"
+  },
+  {
+   "id": 1112,
+   "name": "Meru Office",
+   "address": "Meru Office",
+   "city": "Meru",
+   "lat": 0.04788,
+   "lng": 37.651777,
+   "phone": "0792827398"
+  },
+  {
+   "id": 1015,
+   "name": "Migori Office",
+   "address": "Migori Office",
+   "city": "Migori",
+   "lat": -1.061438,
+   "lng": 34.474268,
+   "phone": "0780543997"
+  },
+  {
+   "id": 1025,
+   "name": "Rongo Office",
+   "address": "Rongo Office",
+   "city": "Migori",
+   "lat": -0.760513,
+   "lng": 34.604278,
+   "phone": "0780545362"
+  },
+  {
+   "id": 1060,
+   "name": "Molo Office",
+   "address": "Molo Office",
+   "city": "Molo",
+   "lat": -0.201546,
+   "lng": 35.743987,
+   "phone": "0780544100"
+  },
+  {
+   "id": 943,
+   "name": "Changamwe SC",
+   "address": "Changamwe SC",
+   "city": "Mombasa",
+   "lat": -4.023869,
+   "lng": 39.62402,
+   "phone": "0780542353"
+  },
+  {
+   "id": 965,
+   "name": "Fargo Mombasa",
+   "address": "Fargo Mombasa, Lumumba rd",
+   "city": "Mombasa",
+   "lat": -4.046756,
+   "lng": 39.6574,
+   "phone": "0780544143"
+  },
+  {
+   "id": 947,
+   "name": "Kengeleni SC",
+   "address": "Kengeleni SC",
+   "city": "Mombasa",
+   "lat": -4.040072,
+   "lng": 39.683073,
+   "phone": "0780540831"
+  },
+  {
+   "id": 953,
+   "name": "Likoni SC",
+   "address": "Likoni SC",
+   "city": "Mombasa",
+   "lat": -3.988441,
+   "lng": 39.677306,
+   "phone": "0780541890"
+  },
+  {
+   "id": 963,
+   "name": "Moi Avenue SC",
+   "address": "Moi Avenue SC",
+   "city": "Mombasa",
+   "lat": -4.060752,
+   "lng": 39.662489,
+   "phone": "0780542066"
+  },
+  {
+   "id": 975,
+   "name": "Ratna SC",
+   "address": "Ratna SC",
+   "city": "Mombasa",
+   "lat": -4.046712,
+   "lng": 39.684985,
+   "phone": "0780541963"
+  },
+  {
+   "id": 1114,
+   "name": "Moyale Office",
+   "address": "Moyale Office",
+   "city": "Moyale",
+   "lat": 3.756074,
+   "lng": 39.655445,
+   "phone": "0790419836"
+  },
+  {
+   "id": 1153,
+   "name": "Mtito Andei Office",
+   "address": "Mtito Andei Office",
+   "city": "Mtito Andei",
+   "lat": -2.622157,
+   "lng": 38.024134,
+   "phone": "0780545497"
+  },
+  {
+   "id": 971,
+   "name": "Mtwapa SC",
+   "address": "Mtwapa SC",
+   "city": "Mtwapa",
+   "lat": -3.942808,
+   "lng": 39.744596,
+   "phone": "0780541850"
+  },
+  {
+   "id": 1017,
+   "name": "Mumias Office",
+   "address": "Mumias Office",
+   "city": "Mumias",
+   "lat": 0.334817,
+   "lng": 34.491325,
+   "phone": "0780544482"
+  },
+  {
+   "id": 1116,
+   "name": "Murang&#8217;a Office",
+   "address": "Murang'a Office",
+   "city": "Murang'a",
+   "lat": -0.673096,
+   "lng": 37.276652,
+   "phone": "0780544703"
+  },
+  {
+   "id": 1118,
+   "name": "Mwea Office",
+   "address": "Mwea Office",
+   "city": "Mwea",
+   "lat": -0.682793,
+   "lng": 37.355657,
+   "phone": "0745902769"
+  },
+  {
+   "id": 1120,
+   "name": "Mwingi Office",
+   "address": "Mwingi Office",
+   "city": "Mwingi",
+   "lat": -0.935433,
+   "lng": 38.062316,
+   "phone": "0780544722"
+  },
+  {
+   "id": 861,
+   "name": "ABC PLACE SC",
+   "address": "ABC PLACE",
+   "city": "NAIROBI",
+   "lat": -1.259193,
+   "lng": 36.778503,
+   "phone": "0780541715"
+  },
+  {
+   "id": 863,
+   "name": "BURU BURU SC",
+   "address": "Buru Buru SC",
+   "city": "NAIROBI",
+   "lat": -1.29468,
+   "lng": 36.876881,
+   "phone": "0780541268"
+  },
+  {
+   "id": 870,
+   "name": "Chester House SC",
+   "address": "Chester House SC",
+   "city": "Nairobi",
+   "lat": -1.284325,
+   "lng": 36.818697,
+   "phone": "0780541670"
+  },
+  {
+   "id": 873,
+   "name": "Enterprise SC 2",
+   "address": "Enterprise SC 2",
+   "city": "Nairobi",
+   "lat": -1.321861,
+   "lng": 36.869809,
+   "phone": "0780541445"
+  },
+  {
+   "id": 868,
+   "name": "Fargo &#8211; Main Hub &#8211; Central Business Park",
+   "address": "Fargo - Main Hub - Central Business Park",
+   "city": "Nairobi",
+   "lat": -1.322146,
+   "lng": 36.865584,
+   "phone": "0780540828"
+  },
+  {
+   "id": 1214,
+   "name": "Fargo Buruburu SC",
+   "address": "Fargo Buruburu SC",
+   "city": "Nairobi",
+   "lat": -1.29466,
+   "lng": 36.876625,
+   "phone": ""
+  },
+  {
+   "id": 875,
+   "name": "Fargo House SC",
+   "address": "Fargo House SC",
+   "city": "Nairobi",
+   "lat": -1.323893,
+   "lng": 36.833757,
+   "phone": "0780541108"
+  },
+  {
+   "id": 929,
+   "name": "Fargo Total Mombasa Road SC",
+   "address": "Fargo Total Mombasa Road SC",
+   "city": "Nairobi",
+   "lat": -1.325468,
+   "lng": 36.850326,
+   "phone": "0780541713"
+  },
+  {
+   "id": 877,
+   "name": "Galleria Mall SC",
+   "address": "Galleria Mall SC",
+   "city": "Nairobi",
+   "lat": -1.342857,
+   "lng": 36.765423,
+   "phone": "0780540655"
+  },
+  {
+   "id": 879,
+   "name": "Gigiri SC",
+   "address": "Gigiri SC",
+   "city": "Nairobi",
+   "lat": -1.238074,
+   "lng": 36.810331,
+   "phone": "0780540939"
+  },
+  {
+   "id": 881,
+   "name": "Globe Cinema SC",
+   "address": "Globe Cinema SC",
+   "city": "Nairobi",
+   "lat": -1.278159,
+   "lng": 36.82388,
+   "phone": "0780541213"
+  },
+  {
+   "id": 883,
+   "name": "Haile Selassie Avenue SC",
+   "address": "Haile Selassie Avenue SC",
+   "city": "Nairobi",
+   "lat": -1.290221,
+   "lng": 36.825436,
+   "phone": "0780541408"
+  },
+  {
+   "id": 885,
+   "name": "Highridge SC",
+   "address": "Highridge SC",
+   "city": "Nairobi",
+   "lat": -1.264278,
+   "lng": 36.824472,
+   "phone": "0780541124"
+  },
+  {
+   "id": 887,
+   "name": "Hurlingham SC",
+   "address": "Hurlingham SC",
+   "city": "Nairobi",
+   "lat": -1.295079,
+   "lng": 36.79972,
+   "phone": "0780540665"
+  },
+  {
+   "id": 923,
+   "name": "Industrial Park SC",
+   "address": "Industrial Park SC",
+   "city": "Nairobi",
+   "lat": -1.366525,
+   "lng": 36.916404,
+   "phone": "0780540979"
+  },
+  {
+   "id": 889,
+   "name": "Karen SC",
+   "address": "Karen SC",
+   "city": "Nairobi",
+   "lat": -1.322915,
+   "lng": 36.707262,
+   "phone": "0780540822"
+  },
+  {
+   "id": 891,
+   "name": "Kiambu SC",
+   "address": "Kiambu SC",
+   "city": "Nairobi",
+   "lat": -1.171016,
+   "lng": 36.829318,
+   "phone": "0780541694"
+  },
+  {
+   "id": 893,
+   "name": "Kikuyu SC",
+   "address": "Kikuyu SC",
+   "city": "Nairobi",
+   "lat": -1.245627,
+   "lng": 36.663486,
+   "phone": "0780541614"
+  },
+  {
+   "id": 895,
+   "name": "Kimathi Street SC",
+   "address": "Kimathi Street SC",
+   "city": "Nairobi",
+   "lat": -1.28287,
+   "lng": 36.821417,
+   "phone": "0780541003"
+  },
+  {
+   "id": 897,
+   "name": "Latema Road SC",
+   "address": "Latema Road SC",
+   "city": "Nairobi",
+   "lat": -1.282503,
+   "lng": 36.825017,
+   "phone": "0780541399"
+  },
+  {
+   "id": 905,
+   "name": "Lavington SC",
+   "address": "Lavington SC",
+   "city": "Nairobi",
+   "lat": -1.271241,
+   "lng": 36.766734,
+   "phone": "0780541353"
+  },
+  {
+   "id": 899,
+   "name": "Likoni Road SC",
+   "address": "Likoni Road SC",
+   "city": "Nairobi",
+   "lat": -1.30395,
+   "lng": 36.85679,
+   "phone": "0780541217"
+  },
+  {
+   "id": 901,
+   "name": "Lusaka Road SC",
+   "address": "Lusaka Road SC",
+   "city": "Nairobi",
+   "lat": -1.303465,
+   "lng": 36.829124,
+   "phone": "0780540798"
+  },
+  {
+   "id": 903,
+   "name": "Luthuli Avenue SC",
+   "address": "Luthuli Avenue SC",
+   "city": "Nairobi",
+   "lat": -1.284196,
+   "lng": 36.827706,
+   "phone": "0780545786"
+  },
+  {
+   "id": 907,
+   "name": "Moi Avenue SC",
+   "address": "Moi Avenue SC",
+   "city": "Nairobi",
+   "lat": -1.286577,
+   "lng": 36.826326,
+   "phone": "0780541498"
+  },
+  {
+   "id": 909,
+   "name": "Mountain Mall Thika Road SC",
+   "address": "Mountain Mall Thika Road SC",
+   "city": "Nairobi",
+   "lat": -1.23272,
+   "lng": 36.874822,
+   "phone": "0780541375"
+  },
+  {
+   "id": 911,
+   "name": "Ngong Road SC",
+   "address": "Ngong Road SC",
+   "city": "Nairobi",
+   "lat": -1.295057,
+   "lng": 36.800765,
+   "phone": "0780541388"
+  },
+  {
+   "id": 913,
+   "name": "Ngong Town SC",
+   "address": "Ngong Town SC",
+   "city": "Nairobi",
+   "lat": -1.299367,
+   "lng": 36.796004,
+   "phone": "0780541702"
+  },
+  {
+   "id": 915,
+   "name": "Ongata Rongai SC",
+   "address": "Ongata Rongai SC",
+   "city": "Nairobi",
+   "lat": -1.396513,
+   "lng": 36.755805,
+   "phone": "0780541520"
+  },
+  {
+   "id": 917,
+   "name": "Pipeline SC",
+   "address": "Pipeline SC",
+   "city": "Nairobi",
+   "lat": -1.327929,
+   "lng": 36.892009,
+   "phone": "0780545988"
+  },
+  {
+   "id": 919,
+   "name": "River Road SC 1",
+   "address": "River Road SC 1",
+   "city": "Nairobi",
+   "lat": -1.282556,
+   "lng": 36.827443,
+   "phone": "0780545984"
+  },
+  {
+   "id": 921,
+   "name": "River Road SC 2",
+   "address": "River Road SC 2",
+   "city": "Nairobi",
+   "lat": -1.289179,
+   "lng": 36.829219,
+   "phone": "0780541393"
+  },
+  {
+   "id": 925,
+   "name": "Taifa Road SC",
+   "address": "Taifa Road SC",
+   "city": "Nairobi",
+   "lat": -1.283768,
+   "lng": 36.82426,
+   "phone": "0780540540"
+  },
+  {
+   "id": 927,
+   "name": "Tom Mboya Street SC",
+   "address": "Tom Mboya Street SC",
+   "city": "Nairobi",
+   "lat": -1.281607,
+   "lng": 36.824172,
+   "phone": "0780541363"
+  },
+  {
+   "id": 931,
+   "name": "Tsavo Road SC",
+   "address": "Tsavo Road SC",
+   "city": "Nairobi",
+   "lat": -1.283218,
+   "lng": 36.826605,
+   "phone": "0780540765"
+  },
+  {
+   "id": 933,
+   "name": "Two Rivers SC",
+   "address": "Two Rivers SC",
+   "city": "Nairobi",
+   "lat": -1.210531,
+   "lng": 36.794551,
+   "phone": "0780545430"
+  },
+  {
+   "id": 941,
+   "name": "University Way SC",
+   "address": "University Way SC",
+   "city": "Nairobi",
+   "lat": -1.281041,
+   "lng": 36.81677,
+   "phone": "0780541442"
+  },
+  {
+   "id": 935,
+   "name": "Upperhill SC",
+   "address": "Upperhill SC",
+   "city": "Nairobi",
+   "lat": -1.299003,
+   "lng": 36.813253,
+   "phone": "0780541058"
+  },
+  {
+   "id": 939,
+   "name": "Westgate Mall SC",
+   "address": "Westgate Mall SC",
+   "city": "Nairobi",
+   "lat": -1.257132,
+   "lng": 36.803644,
+   "phone": "0780541296"
+  },
+  {
+   "id": 937,
+   "name": "Westlands SC",
+   "address": "Westlands SC",
+   "city": "Nairobi",
+   "lat": -1.264302,
+   "lng": 36.802446,
+   "phone": "0780540408"
+  },
+  {
+   "id": 1067,
+   "name": "Naivasha Office",
+   "address": "Naivasha Office",
+   "city": "Naivasha",
+   "lat": -0.715885,
+   "lng": 36.431599,
+   "phone": "0780544844"
+  },
+  {
+   "id": 1041,
+   "name": "Gilgil Office",
+   "address": "Gilgil Office",
+   "city": "Nakuru",
+   "lat": -0.497915,
+   "lng": 36.321372,
+   "phone": "0780542828"
+  },
+  {
+   "id": 1064,
+   "name": "Nakuru Gilani SC",
+   "address": "Nakuru Gilani SC",
+   "city": "Nakuru",
+   "lat": -0.257189,
+   "lng": 36.15174,
+   "phone": "0770129188"
+  },
+  {
+   "id": 1062,
+   "name": "Nakuru Office",
+   "address": "Nakuru Office",
+   "city": "Nakuru",
+   "lat": -0.287989,
+   "lng": 36.063317,
+   "phone": "0780542083"
+  },
+  {
+   "id": 1079,
+   "name": "Rumuruti Office",
+   "address": "Rumuruti Office",
+   "city": "Nakuru",
+   "lat": 0.260167,
+   "lng": 36.536917,
+   "phone": "0780545677"
+  },
+  {
+   "id": 1069,
+   "name": "Nandi Hills Office",
+   "address": "Nandi Hills Office",
+   "city": "Nandi",
+   "lat": 0.106719,
+   "lng": 35.185945,
+   "phone": "0780544874"
+  },
+  {
+   "id": 1122,
+   "name": "Nanyuki Office",
+   "address": "Nanyuki Office",
+   "city": "Nanyuki",
+   "lat": 0.00763,
+   "lng": 37.072866,
+   "phone": "0780544895"
+  },
+  {
+   "id": 1251,
+   "name": "Fargo Talek Sc",
+   "address": "Talek SC",
+   "city": "Narok",
+   "lat": -1.442142,
+   "lng": 35.215588,
+   "phone": ""
+  },
+  {
+   "id": 1072,
+   "name": "Narok Office",
+   "address": "Narok Office",
+   "city": "Narok",
+   "lat": -1.089058,
+   "lng": 35.87782,
+   "phone": "0780544898"
+  },
+  {
+   "id": 1124,
+   "name": "Nkubu Office",
+   "address": "Nkubu Office",
+   "city": "Nkubu",
+   "lat": -0.065155,
+   "lng": 37.662535,
+   "phone": "0769198728"
+  },
+  {
+   "id": 1074,
+   "name": "Nyahururu Office",
+   "address": "Nyahururu Office",
+   "city": "Nyahururu",
+   "lat": 0.038279,
+   "lng": 36.365096,
+   "phone": "0780545042"
+  },
+  {
+   "id": 973,
+   "name": "Nyali SC",
+   "address": "Nyali SC",
+   "city": "Nyali",
+   "lat": -4.020406,
+   "lng": 39.720225,
+   "phone": "0780542027"
+  },
+  {
+   "id": 1023,
+   "name": "Nyamira Office",
+   "address": "Nyamira Office",
+   "city": "Nyamira",
+   "lat": -0.776505,
+   "lng": 34.946157,
+   "phone": "0780545422"
+  },
+  {
+   "id": 1126,
+   "name": "Nyeri Office",
+   "address": "Nyeri Office",
+   "city": "Nyeri",
+   "lat": -0.4209,
+   "lng": 36.949593,
+   "phone": "0780545048"
+  },
+  {
+   "id": 1128,
+   "name": "Ruiru SC",
+   "address": "Ruiru SC",
+   "city": "Ruiru",
+   "lat": -1.148333,
+   "lng": 36.956953,
+   "phone": "0780541906"
+  },
+  {
+   "id": 1155,
+   "name": "Sabaki SC",
+   "address": "Sabaki SC",
+   "city": "Sabaki",
+   "lat": -1.419782,
+   "lng": 36.954704,
+   "phone": "0780541722"
+  },
+  {
+   "id": 1057,
+   "name": "Maralal Office",
+   "address": "Maralal Office",
+   "city": "Samburu",
+   "lat": 1.098981,
+   "lng": 36.698144,
+   "phone": "0780543694"
+  },
+  {
+   "id": 1027,
+   "name": "Siaya Office",
+   "address": "Siaya Office",
+   "city": "Siaya",
+   "lat": 0.06054,
+   "lng": 34.285437,
+   "phone": "0780545095"
+  },
+  {
+   "id": 1157,
+   "name": "Tala Office",
+   "address": "Tala Office",
+   "city": "Tala",
+   "lat": -1.26673,
+   "lng": 37.322595,
+   "phone": "0780545157"
+  },
+  {
+   "id": 961,
+   "name": "Minjila Office",
+   "address": "Minjila Office",
+   "city": "Tana River",
+   "lat": -2.323577,
+   "lng": 40.110777,
+   "phone": "0112317382"
+  },
+  {
+   "id": 977,
+   "name": "Taveta Office",
+   "address": "Taveta Office",
+   "city": "Taveta",
+   "lat": -3.399652,
+   "lng": 37.673195,
+   "phone": "0791183798"
+  },
+  {
+   "id": 1094,
+   "name": "Furaha Thika SC",
+   "address": "Furaha Thika SC",
+   "city": "Thika",
+   "lat": -1.038279,
+   "lng": 37.073351,
+   "phone": "0780541801"
+  },
+  {
+   "id": 1132,
+   "name": "Thika Office",
+   "address": "Thika Office",
+   "city": "Thika",
+   "lat": -1.040437,
+   "lng": 37.071078,
+   "phone": "0780545166"
+  },
+  {
+   "id": 1011,
+   "name": "Luanda Office",
+   "address": "Luanda Office",
+   "city": "Vihiga",
+   "lat": 0.023126,
+   "lng": 34.58969,
+   "phone": "0793256650"
+  },
+  {
+   "id": 1019,
+   "name": "Mbale Office",
+   "address": "Mbale Office",
+   "city": "Vihiga",
+   "lat": 0.084583,
+   "lng": 34.721278,
+   "phone": "0780543904"
+  },
+  {
+   "id": 979,
+   "name": "Voi Office",
+   "address": "Voi Office",
+   "city": "Voi",
+   "lat": -3.393849,
+   "lng": 38.56355,
+   "phone": "0780545219"
+  },
+  {
+   "id": 1210,
+   "name": "Wajir Office",
+   "address": "Wajir Office",
+   "city": "Wajir",
+   "lat": 1.746169,
+   "lng": 40.057215,
+   "phone": ""
+  },
+  {
+   "id": 981,
+   "name": "Watamu Office",
+   "address": "Watamu Office",
+   "city": "Watamu",
+   "lat": -3.346542,
+   "lng": 40.02603,
+   "phone": "0780545321"
+  },
+  {
+   "id": 1031,
+   "name": "Webuye Office",
+   "address": "Webuye Office",
+   "city": "Webuye",
+   "lat": 1.015354,
+   "lng": 35.002894,
+   "phone": "0780545334"
+  },
+  {
+   "id": 1159,
+   "name": "Wote Office",
+   "address": "Wote Office",
+   "city": "Wote",
+   "lat": -1.780995,
+   "lng": 37.627417,
+   "phone": "0780545353"
+  }
+ ]
+}
