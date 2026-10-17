@@ -7,89 +7,108 @@
  "source": {
   "url": "https://easycoachkenya.com/",
   "note": "Town list from the booking widget on Easy Coach's own site (pickup/dropoff option lists, 41 towns). Parcel division: 'over 30 branches', same-day/24h delivery, tariffs on https://easycoachkenya.com/parcel. Street addresses per office not published on their site; town-level stations until Rock supplies their booklet.",
-  "synced": "2026-10-17"
+  "synced": "2026-10-17",
+  "maps_note": "Google Maps pins added 2026-10-17. maps_verified=true: exact Maps listing (address from Maps where published). false: no Easy Coach listing on Google Maps for that town."
  },
  "stations": [
   {
    "name": "Easy Coach Awendo office",
    "town": "Awendo",
-   "county": null,
-   "address": "",
+   "county": "Migori",
+   "address": "3GQH+2R5 Bus Station, Sare, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.912485,
+   "lng": 34.529606,
+   "maps_name": "EASY COACH BOOKING OFFICE~AWENDO",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Bomet office",
    "town": "Bomet",
-   "county": null,
-   "address": "",
+   "county": "Bomet",
+   "address": "689R+JV3, Bomet, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.780989,
+   "lng": 35.342179,
+   "maps_name": "Easy Coach Boooking Office Bomet",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Bondo office",
    "town": "Bondo",
-   "county": null,
-   "address": "",
+   "county": "Siaya",
+   "address": "Bondo, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.102844,
+   "lng": 34.274149,
+   "maps_name": "Easy Coach - Bondo",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Bumala office",
    "town": "Bumala",
    "county": null,
-   "address": "",
+   "address": "Kisumu - Busia Rd, Busia, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.304613,
+   "lng": 34.202463,
+   "maps_name": "Easy Coach Ltd-Bumala",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Bungoma office",
    "town": "Bungoma",
-   "county": null,
+   "county": "Bungoma",
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.568409,
+   "lng": 34.559148,
+   "maps_name": "Easy Coach Ltd-Bungoma",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Busia office",
    "town": "Busia",
-   "county": null,
+   "county": "Busia",
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.461695,
+   "lng": 34.108163,
+   "maps_name": "Easy Coach Booking Office",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Butere office",
    "town": "Butere",
    "county": null,
-   "address": "",
+   "address": "Tsalwa Plaza, Butere, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.217604,
+   "lng": 34.499583,
+   "maps_name": "Easy couch bus off, Butere",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Eldoret office",
    "town": "Eldoret",
-   "county": null,
-   "address": "",
+   "county": "Uasin Gishu",
+   "address": "Kipkenyo, Malaba Rd, Kapseret, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.521282,
+   "lng": 35.265329,
+   "maps_name": "Easy Coach Ltd-Eldoret",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Homabay office",
    "town": "Homabay",
-   "county": null,
-   "address": "",
+   "county": "Homa Bay",
+   "address": "Homa Bay, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.530304,
+   "lng": 34.456367,
+   "maps_name": "Easy Coach Booking Office",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Kaimosi office",
@@ -98,196 +117,240 @@
    "address": "",
    "phone": "",
    "lat": null,
-   "lng": null
+   "lng": null,
+   "maps_name": null,
+   "maps_verified": false
   },
   {
    "name": "Easy Coach Kakamega office",
    "town": "Kakamega",
-   "county": null,
+   "county": "Kakamega",
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.281922,
+   "lng": 34.751277,
+   "maps_name": "Easy Coach Ltd-Kakamega",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Kapsabet office",
    "town": "Kapsabet",
-   "county": null,
+   "county": "Nandi",
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.202176,
+   "lng": 35.099452,
+   "maps_name": "Easy Coach Ltd-Kapsabet",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Kehancha office",
    "town": "Kehancha",
    "county": null,
-   "address": "",
+   "address": "RJ5C+48, Kehancha, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -1.192268,
+   "lng": 34.620804,
+   "maps_name": "EASY COACH BOOKING & PARCEL OFFICE ~KEHANCHA",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Kendubay office",
    "town": "Kendubay",
-   "county": null,
-   "address": "",
+   "county": "Homa Bay",
+   "address": "JMJ2+8RM, C19, Kendu Bay, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.369175,
+   "lng": 34.652037,
+   "maps_name": "Easy Coach office - Kendu bay",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Kericho office",
    "town": "Kericho",
-   "county": null,
-   "address": "",
+   "county": "Kericho",
+   "address": "Londiani Moi Ave Kipkelion, East, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.365475,
+   "lng": 35.290384,
+   "maps_name": "Easy Coach Ltd-Kericho",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Keroka office",
    "town": "Keroka",
-   "county": null,
-   "address": "",
+   "county": "Nyamira",
+   "address": "6W9X+W8M, Keroka, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.78016,
+   "lng": 34.948295,
+   "maps_name": "Easy Coach ltd - Keroka",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Kimilili office",
    "town": "Kimilili",
-   "county": null,
+   "county": "Bungoma",
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.77976,
+   "lng": 34.719065,
+   "maps_name": "Easy Coach Office",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Kisii office",
    "town": "Kisii",
-   "county": null,
+   "county": "Kisii",
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.668345,
+   "lng": 34.766732,
+   "maps_name": "Easy Coach Ltd-Kisii",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Kisumu office",
    "town": "Kisumu",
-   "county": null,
+   "county": "Kisumu",
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.098415,
+   "lng": 34.762948,
+   "maps_name": "Easy Coach Ltd-United Mall Kisumu",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Kitale office",
    "town": "Kitale",
-   "county": null,
+   "county": "Trans Nzoia",
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 1.014904,
+   "lng": 35.002888,
+   "maps_name": "Easy Coach Ltd-Kitale",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Malaba office",
    "town": "Malaba",
-   "county": null,
-   "address": "",
+   "county": "Busia",
+   "address": "Marachi Central, Eldoret-Malaba Rd, Butula, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.635431,
+   "lng": 34.271848,
+   "maps_name": "Easy Coach Ltd-Malaba",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Maseno office",
    "town": "Maseno",
-   "county": null,
+   "county": "Kisumu",
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.007485,
+   "lng": 34.598194,
+   "maps_name": "Easy Coach Ltd-Maseno",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Mbale office",
    "town": "Mbale",
-   "county": null,
+   "county": "Vihiga",
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.080407,
+   "lng": 34.72118,
+   "maps_name": "Easy Coach bus station",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Mbita office",
    "town": "Mbita",
-   "county": null,
-   "address": "",
+   "county": "Homa Bay",
+   "address": "H6G5+5CG, Mbita, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.424564,
+   "lng": 34.20857,
+   "maps_name": "Easy Coach ltd - MBITA",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Migori office",
    "town": "Migori",
-   "county": null,
-   "address": "",
+   "county": "Migori",
+   "address": "Suna Central, Homa Bay, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -1.070283,
+   "lng": 34.469261,
+   "maps_name": "Easy Coach Ltd-Migori",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Moi's Bridge office",
    "town": "Moi's Bridge",
-   "county": null,
+   "county": "Uasin Gishu",
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.8734,
+   "lng": 35.12091,
+   "maps_name": "Easy Coach Ltd",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Mumias office",
    "town": "Mumias",
-   "county": null,
+   "county": "Kakamega",
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.335549,
+   "lng": 34.489758,
+   "maps_name": "Easy Coach Ltd-Mumias",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Nairobi office",
    "town": "Nairobi",
-   "county": null,
+   "county": "Nairobi",
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -1.288294,
+   "lng": 36.827498,
+   "maps_name": "Easy Coach Ltd-Nairobi",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Nakuru office",
    "town": "Nakuru",
-   "county": null,
+   "county": "Nakuru",
    "address": "",
    "phone": "",
    "lat": null,
-   "lng": null
+   "lng": null,
+   "maps_name": null,
+   "maps_verified": false
   },
   {
    "name": "Easy Coach Narok office",
    "town": "Narok",
-   "county": null,
+   "county": "Narok",
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -1.099038,
+   "lng": 35.86182,
+   "maps_name": "Easy Coach Ltd-Narok",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Ndhiwa office",
    "town": "Ndhiwa",
    "county": null,
-   "address": "",
+   "address": "7998+6P3, Ndhiwa, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.732506,
+   "lng": 34.36356,
+   "maps_name": "Easy Coach Ltd - NDHIWA",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Ndori office",
@@ -295,44 +358,54 @@
    "county": null,
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.068609,
+   "lng": 34.381117,
+   "maps_name": "Easy Coach Booking Office - Ndori",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Oyugis office",
    "town": "Oyugis",
-   "county": null,
-   "address": "",
+   "county": "Homa Bay",
+   "address": "FPVP+5JP, Oyugis, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.507032,
+   "lng": 34.736572,
+   "maps_name": "Easy Coach Booking & Parcel",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Rodikopany office",
    "town": "Rodikopany",
    "county": null,
-   "address": "",
+   "address": "9GG3+F2X, Rodi Kopany, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.623756,
+   "lng": 34.5026,
+   "maps_name": "Easy Coach office - Rodi Kopany",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Rongo office",
    "town": "Rongo",
-   "county": null,
-   "address": "",
+   "county": "Migori",
+   "address": "Rongo, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.758274,
+   "lng": 34.602394,
+   "maps_name": "Easy Coach Ltd booking office ~ Rongo",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Siaya office",
    "town": "Siaya",
-   "county": null,
-   "address": "",
+   "county": "Siaya",
+   "address": "Alego Usonga, Siaya, Kenya",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.05934,
+   "lng": 34.287389,
+   "maps_name": "Easy Coach - Siaya",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Sirare office",
@@ -341,7 +414,9 @@
    "address": "",
    "phone": "",
    "lat": null,
-   "lng": null
+   "lng": null,
+   "maps_name": null,
+   "maps_verified": false
   },
   {
    "name": "Easy Coach Sori office",
@@ -349,8 +424,10 @@
    "county": null,
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": -0.842316,
+   "lng": 34.158619,
+   "maps_name": "Easy Coach Ltd - SORI",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Ugunja office",
@@ -358,8 +435,10 @@
    "county": null,
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.178927,
+   "lng": 34.297523,
+   "maps_name": "Easy Coach Ugunja Office",
+   "maps_verified": true
   },
   {
    "name": "Easy Coach Usenge office",
@@ -368,16 +447,21 @@
    "address": "",
    "phone": "",
    "lat": null,
-   "lng": null
+   "lng": null,
+   "maps_name": null,
+   "maps_verified": false
   },
   {
    "name": "Easy Coach Webuye office",
    "town": "Webuye",
-   "county": null,
+   "county": "Bungoma",
    "address": "",
    "phone": "",
-   "lat": null,
-   "lng": null
+   "lat": 0.608745,
+   "lng": 34.757509,
+   "maps_name": "Easy Coach Ltd-Webuye",
+   "maps_verified": true
   }
- ]
+ ],
+ "updated_at": "2026-10-17T07:12:15.744481Z"
 }
