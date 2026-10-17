@@ -43,6 +43,15 @@ RUN curl -fsSL -o /tmp/jaic.zip \
     && rm -f /tmp/jaic.zip \
     && test -f /usr/src/wordpress/wp-content/plugins/jotform-ai-chatbot/jotform-ai-chatbot.php
 
+# Forminator (WordPress.org), baked like WooCommerce - site forms (careers/booking/roadside)
+ARG FORMINATOR_VERSION=1.44.2
+RUN curl -fsSL -o /tmp/forminator.zip \
+        "https://downloads.wordpress.org/plugin/forminator.${FORMINATOR_VERSION}.zip" \
+    && unzip -q /tmp/forminator.zip -d /usr/src/wordpress/wp-content/plugins \
+    && rm -f /tmp/forminator.zip \
+    && test -f /usr/src/wordpress/wp-content/plugins/forminator/forminator.php \
+    && chown -R www-data:www-data /usr/src/wordpress/wp-content/plugins/forminator
+
 # dompdf (PDF receipts / invoices attached to customer emails). Release zip bundles its deps + DejaVu fonts.
 ARG DOMPDF_VERSION=3.1.6
 RUN mkdir -p /usr/src/sa-lib \
