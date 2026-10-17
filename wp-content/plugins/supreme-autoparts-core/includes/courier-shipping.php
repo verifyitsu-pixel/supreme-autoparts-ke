@@ -456,7 +456,7 @@ add_action('wp_footer', static function (): void {
 (function(){
 var REST=<?php echo wp_json_encode($rest); ?>;
 function chosenRate(){var r=document.querySelector('input[name^="shipping_method"]:checked');return r?r.value:'';}
-function courierOf(v){var m=v.match(/^sa_(g4s|speedaf)[0-9_]*_pickup/);return m?m[1]:null;}
+function courierOf(v){var m=v.match(/^sa_(g4s|speedaf)[^_]*_pickup/);return m?m[1]:null;}
 function fieldWrap(){return document.getElementById('sa_pickup_station_field');}
 function val(id){var e=document.getElementById(id);return e?e.value:'';}
 function refresh(){
