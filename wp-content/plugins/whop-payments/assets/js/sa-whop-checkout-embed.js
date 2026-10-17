@@ -125,9 +125,10 @@
       el.setAttribute('data-whop-checkout-session', cfg.sessionId);
     }
     el.setAttribute('data-whop-checkout-return-url', cfg.returnUrl || '');
-    el.setAttribute('data-whop-checkout-theme', 'dark');
-    el.setAttribute('data-whop-checkout-theme-accent-color', 'amber');
-    el.setAttribute('data-whop-checkout-theme-background-color', '#0B0B0D');
+    el.setAttribute('data-whop-checkout-theme', 'light');
+    el.setAttribute('data-whop-checkout-theme-accent-color', '#F5A623');
+    el.setAttribute('data-whop-checkout-theme-background-color', '#FFFFFF');
+    el.setAttribute('data-whop-checkout-theme-border-radius', '10');
     // Stay on supremeautoparts.co.ke — never top-level navigate to whop.com.
     el.setAttribute('data-whop-checkout-skip-redirect', 'true');
     el.setAttribute('data-whop-checkout-on-complete', 'saWhopPayComplete');
