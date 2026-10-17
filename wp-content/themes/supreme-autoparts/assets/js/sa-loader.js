@@ -1,5 +1,5 @@
 /**
- * Supreme Autoparts — sitewide branded tyre loading overlay.
+ * Supreme Autoparts — sitewide loading overlay (dots ring per Rock ref set).
  * Triggers on real navigations / form posts / WC + Whop payment waits.
  * Skips tabs, accordions, qty +/- and other harmless UI.
  */
@@ -26,21 +26,22 @@
   var visible = false;
   var navPending = false;
 
-  var TYRE_SVG =
-    '<svg class="sa-loader__wheel" viewBox="0 0 64 64" width="72" height="72" aria-hidden="true" focusable="false">' +
-    '<circle cx="32" cy="32" r="30" fill="#121214" stroke="currentColor" stroke-width="2"/>' +
-    '<circle cx="32" cy="32" r="27.5" fill="none" stroke="#2A2A2E" stroke-width="5"/>' +
-    '<circle cx="32" cy="32" r="27.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-dasharray="3.2 4.8" opacity="0.85"/>' +
-    '<circle cx="32" cy="32" r="17" fill="#0B0B0D" stroke="currentColor" stroke-width="1.6"/>' +
-    '<g stroke="currentColor" stroke-width="3.4" stroke-linecap="round">' +
-    '<line x1="32" y1="17.5" x2="32" y2="28"/>' +
-    '<line x1="45.8" y1="26.5" x2="36.8" y2="31.2"/>' +
-    '<line x1="40.5" y1="43.5" x2="34.5" y2="35.2"/>' +
-    '<line x1="23.5" y1="43.5" x2="29.5" y2="35.2"/>' +
-    '<line x1="18.2" y1="26.5" x2="27.2" y2="31.2"/>' +
+  var DOTS_SVG =
+    '<svg class="sa-loader__dots" viewBox="0 0 64 64" width="72" height="72" aria-hidden="true" focusable="false">' +
+    '<g fill="currentColor">' +
+    '<circle cx=\"32.0\" cy=\"8.0\" r=\"4.6\" opacity=\"1.00\"/>' +
+    '<circle cx=\"44.0\" cy=\"11.2\" r=\"4.4\" opacity=\"0.93\"/>' +
+    '<circle cx=\"52.8\" cy=\"20.0\" r=\"4.2\" opacity=\"0.85\"/>' +
+    '<circle cx=\"56.0\" cy=\"32.0\" r=\"4.1\" opacity=\"0.78\"/>' +
+    '<circle cx=\"52.8\" cy=\"44.0\" r=\"3.9\" opacity=\"0.70\"/>' +
+    '<circle cx=\"44.0\" cy=\"52.8\" r=\"3.7\" opacity=\"0.62\"/>' +
+    '<circle cx=\"32.0\" cy=\"56.0\" r=\"3.5\" opacity=\"0.55\"/>' +
+    '<circle cx=\"20.0\" cy=\"52.8\" r=\"3.3\" opacity=\"0.47\"/>' +
+    '<circle cx=\"11.2\" cy=\"44.0\" r=\"3.2\" opacity=\"0.40\"/>' +
+    '<circle cx=\"8.0\" cy=\"32.0\" r=\"3.0\" opacity=\"0.33\"/>' +
+    '<circle cx=\"11.2\" cy=\"20.0\" r=\"2.8\" opacity=\"0.25\"/>' +
+    '<circle cx=\"20.0\" cy=\"11.2\" r=\"2.6\" opacity=\"0.18\"/>' +
     '</g>' +
-    '<circle cx="32" cy="32" r="5" fill="currentColor"/>' +
-    '<circle cx="32" cy="32" r="2.2" fill="#0B0B0D"/>' +
     '</svg>';
 
   function resolveLabel(keyOrText) {
@@ -60,7 +61,7 @@
     overlay.setAttribute('aria-hidden', 'true');
     overlay.innerHTML =
       '<div class="sa-loader__panel">' +
-      TYRE_SVG +
+      DOTS_SVG +
       '<p class="sa-loader__label" data-sa-loader-label>' +
       LABELS.loading +
       '</p>' +
