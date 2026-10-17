@@ -76,7 +76,16 @@ function sa_ct_normalize($node): array
                         $loc = $vs;
                     }
                 }
-                if ($status !== '') {
+                $has_children = false;
+                foreach ($item as $v) {
+                    if (is_array($v)) {
+                        $has_children = true;
+                        break;
+                    }
+                }
+                // A node with its own nested scan list is a wrapper (e.g. G4S waybillTrackDetails):
+                // recurse into it instead of swallowing the scans as one status-only event.
+                if ($status !== '' && !$has_children) {
                     $t = $time !== '' ? strtotime(str_replace('/', '-', $time)) : false;
                     $out['events'][] = ['time' => $time, 'ts' => $t ?: null, 'status' => $status, 'location' => $loc];
                 } else {
