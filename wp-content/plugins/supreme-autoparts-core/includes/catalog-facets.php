@@ -65,8 +65,8 @@ function sa_fx_free_ship_min(): float
         return (float) sa_core_shipping_free_min();
     }
     $raw = getenv('SUPREME_FREE_SHIPPING_THRESHOLD');
-    $v = (float) (($raw === false || $raw === '') ? get_option('sa_free_shipping_threshold', '99') : $raw);
-    return ($v <= 0 || $v > 1000) ? 99.0 : $v;
+    $v = (float) (($raw === false || $raw === '') ? get_option('sa_free_shipping_threshold', '199') : $raw);
+    return ($v <= 0 || $v > 1000) ? 199.0 : $v;
 }
 
 /* ------------------------------------------------------------------ */
