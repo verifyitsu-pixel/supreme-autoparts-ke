@@ -118,6 +118,17 @@ final class Whop_Checkout_Embed {
      * Unpaid Whop orders on /pay or order-pay go to Whop, not the card embed.
      */
     public static function maybe_redirect_to_whop(): void {
+        // Default: send customers to Whop's hosted checkout. The on-site embed stays
+        // as the fallback: env SA_WHOP_REDIRECT_OFF=1, or ?sa_embed=1 for shop admins.
+        if (self::hosted_redirect_enabled()) {
+            $hosted_order = self::unpaid_whop_order_from_request();
+            if ($hosted_order instanceof WC_Order) {
+                $hosted_url = self::whop_checkout_url($hosted_order);
+                if ($hosted_url !== '') {
+                    self::redirect_customer_to_whop($hosted_url);
+                }
+            }
+        }
         if (self::order_from_request() instanceof WC_Order) {
             // On-site embed page (/pay/?sa_whop_pay=1): render the embed, never redirect out.
             return;
@@ -251,6 +262,17 @@ final class Whop_Checkout_Embed {
      * Store-styled pay form switch. Stage 1: shop admins only (preview, no charging).
      * Kill switch: env SA_WHOP_CUSTOM_PAY_OFF=1. The standard embed is always the fallback.
      */
+    public static function hosted_redirect_enabled(): bool {
+        if (getenv('SA_WHOP_REDIRECT_OFF') === '1') {
+            return false;
+        }
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if (!empty($_GET['sa_embed']) && function_exists('current_user_can') && current_user_can('manage_woocommerce')) {
+            return false;
+        }
+        return true;
+    }
+
     public static function custom_pay_enabled(): bool {
         if (getenv('SA_WHOP_CUSTOM_PAY_OFF') === '1') {
             return false;
