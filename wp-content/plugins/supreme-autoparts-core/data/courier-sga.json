@@ -1,0 +1,23 @@
+{
+ "courier": "SGA Courier",
+ "slug": "sga",
+ "service": "pickup_and_door",
+ "fee": "fargo_card",
+ "door_surcharge_kes": 250,
+ "source": {
+  "url": "https://www.sgasecurity.com/our-contacts/our-contacts",
+  "note": "SGA's own site publishes NO branch booklet - only HQ contacts (Tulip House, Mombasa Road, Nairobi, +254 111 024000). sgacourier.com is a TLS-misconfigured alias of the security site. No stations imported; needs Rock to supply SGA's branch list.",
+  "synced": "2026-10-17"
+ },
+ "stations": [
+  {
+   "name": "SGA Courier Nairobi HQ",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Tulip House, Ground Floor, Mombasa Road, Nairobi",
+   "phone": "+254 111 024000",
+   "lat": null,
+   "lng": null
+  }
+ ]
+}
