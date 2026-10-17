@@ -247,6 +247,28 @@ final class Whop_Checkout_Embed {
         return $headers;
     }
 
+    /**
+     * Store-styled pay form switch. Stage 1: shop admins only (preview, no charging).
+     * Kill switch: env SA_WHOP_CUSTOM_PAY_OFF=1. The standard embed is always the fallback.
+     */
+    public static function custom_pay_enabled(): bool {
+        if (getenv('SA_WHOP_CUSTOM_PAY_OFF') === '1') {
+            return false;
+        }
+        return function_exists('current_user_can') && current_user_can('manage_woocommerce');
+    }
+
+    private static function company_id(): string {
+        if (function_exists('WC') && WC()->payment_gateways()) {
+            $gateways = WC()->payment_gateways()->payment_gateways();
+            $gateway = $gateways['whop'] ?? null;
+            if ($gateway instanceof WC_Gateway_Whop) {
+                return (string) $gateway->get_company_id();
+            }
+        }
+        return '';
+    }
+
     public static function enqueue_for_order(WC_Order $order): void {
         wp_enqueue_style(
             'sa-whop-open-pay',
@@ -299,6 +321,9 @@ final class Whop_Checkout_Embed {
             : $order->get_checkout_order_received_url();
 
         wp_localize_script('sa-whop-checkout-embed', 'saWhopCheckoutEmbed', [
+            'customPay'  => self::custom_pay_enabled() ? '1' : '',
+            'accountId'  => self::company_id(),
+            'orderTotal' => html_entity_decode(wp_strip_all_tags($order->get_formatted_order_total()), ENT_QUOTES, 'UTF-8'),
             'planId'     => (string) $order->get_meta('_whop_plan_id'),
             'sessionId'  => (string) $order->get_meta('_whop_checkout_id'),
             'returnUrl'  => $return,
