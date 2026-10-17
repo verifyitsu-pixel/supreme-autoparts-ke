@@ -116,7 +116,10 @@ add_filter('get_the_terms', static function ($terms, $post_id, $taxonomy) {
     $kept = [];
     foreach ($terms as $term) {
         $name = (string) ($term->name ?? '');
-        if (str_starts_with($name, 'fits_') || str_contains($name, ':') || str_contains($name, '>') || preg_match('/-esi\d+$/i', $name)) {
+        // Supplier dumps store HTML entities inside the term name itself
+        // ('Lights&gt;Headlights'), so match on the decoded form too.
+        $decoded = html_entity_decode($name, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        if (str_starts_with($name, 'fits_') || str_contains($decoded, ':') || str_contains($decoded, '>') || preg_match('/-esi\d+$/i', $name)) {
             continue;
         }
         $kept[] = $term;
