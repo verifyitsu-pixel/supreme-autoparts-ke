@@ -275,17 +275,17 @@ add_action('wp_ajax_sa_checkout_update_qty', 'sa_theme_checkout_update_qty');
 add_action('wp_ajax_nopriv_sa_checkout_update_qty', 'sa_theme_checkout_update_qty');
 
 /**
- * USD amount that qualifies the cart for free US shipping. Store option, default 99.
+ * USD amount that qualifies the cart for free US shipping. Store option, default 199.
  */
 function sa_theme_free_ship_amount(): float
 {
     $raw = getenv('SUPREME_FREE_SHIPPING_THRESHOLD');
     if ($raw === false || $raw === '') {
-        $raw = (string) get_option('sa_free_shipping_threshold', '99');
+        $raw = (string) get_option('sa_free_shipping_threshold', '199');
     }
     $usd = (float) $raw;
     if ($usd <= 0 || $usd > 1000) {
-        $usd = 99.0;
+        $usd = 199.0;
     }
     return $usd;
 }
