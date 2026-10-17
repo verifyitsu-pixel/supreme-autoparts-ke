@@ -26,7 +26,7 @@ if (!$sa_is_ke) {
     $sa_is_us = function_exists('sa_geo_country') && sa_geo_country() === 'US';
     $sa_ed_services[0]['text'] = $sa_is_us ? __('Shipped across the US', 'supreme-autoparts') : __('Shipped worldwide', 'supreme-autoparts');
     $sa_ed_services[1]['text'] = __('We pass your request to our support team, who point you to a service centre', 'supreme-autoparts');
-    $sa_ed_services[2] = ['icon' => 'service', 'url' => 'https://wa.me/19174375121', 'title' => __('Fitment help', 'supreme-autoparts'), 'text' => __('Send your year, make, model or VIN and we check the part number', 'supreme-autoparts')];
+    $sa_ed_services[2] = ['icon' => 'service', 'url' => 'https://wa.me/supremeautopart', 'title' => __('Fitment help', 'supreme-autoparts'), 'text' => __('Send your year, make, model or VIN and we check the part number', 'supreme-autoparts')];
     if (!$sa_is_us) {
         unset($sa_ed_services[1]); // service-centre routing is only set up for the US
     }
@@ -40,6 +40,7 @@ if (!$sa_is_ke) {
       <p class="sa-ed-lead"><?php if (!$sa_is_ke) : (function_exists('sa_geo_country') && sa_geo_country() === 'US') ? esc_html_e('Parts for Japanese, American, British and European cars, shipped across the US. Search by part number, or ask us to check fitment for your car.', 'supreme-autoparts') : esc_html_e('Parts for Japanese, American, British and European cars, shipped worldwide. Search by part number, or ask us to check fitment for your car.', 'supreme-autoparts'); else : ?><?php esc_html_e('We send parts for Japanese, American, British and European cars to every county, fix cars at our garage, and come out when you break down.', 'supreme-autoparts'); ?><?php endif; ?></p>
       <form class="sa-ed-search" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>" data-sa-hx-search>
         <label class="screen-reader-text" for="sa-hero-search"><?php esc_html_e('Search products', 'supreme-autoparts'); ?></label>
+        <?php if (function_exists('sa_search_scope_select')) { sa_search_scope_select('sa-search-cat-hero'); } ?>
         <input type="search" id="sa-hero-search" name="s" placeholder="<?php esc_attr_e('Part number, part name or brand', 'supreme-autoparts'); ?>" value="<?php echo esc_attr(get_search_query()); ?>" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="sa-hx-sugg" aria-autocomplete="list" />
         <input type="hidden" name="post_type" value="product" />
         <button type="submit"><?php esc_html_e('Search', 'supreme-autoparts'); ?></button>
@@ -77,7 +78,7 @@ if (!$sa_is_ke) {
       <div class="sa-ed-rs__cta">
         <a class="sa-ed-btn" href="<?php echo esc_url((function_exists('sa_rs_url') ? sa_rs_url('request') : home_url('/roadside/'))); ?>"><?php esc_html_e('Request help now', 'supreme-autoparts'); ?></a>
         <a class="sa-ed-btn sa-ed-btn--ghost" href="tel:+254714498451"><?php esc_html_e('Call +254 714 498 451', 'supreme-autoparts'); ?></a>
-        <a class="sa-ed-rs__wa" href="https://wa.me/254714498451" rel="noopener"><?php esc_html_e('WhatsApp', 'supreme-autoparts'); ?></a>
+        <a class="sa-ed-rs__wa" href="https://wa.me/supremeautopart" rel="noopener"><?php echo function_exists('sa_whatsapp_icon') ? sa_whatsapp_icon() : ''; esc_html_e('Chat on WhatsApp', 'supreme-autoparts'); ?></a>
       </div>
     </div>
     <ol class="sa-ed-rs__steps">
@@ -182,6 +183,60 @@ if ($sa_ed_products) : ?>
 </section>
 <?php endif; ?>
 
+<?php
+/* Shop by brand: logo grid modelled on the source store's "Shop Top Brands"
+   section near its page bottom. Logos are the source store's own CDN files
+   (sa_brand_logo_map, hotlinked per the image rules); each card links to that
+   brand's catalog page on this site (term archive, shop-filter fallback). */
+$sa_ed_brands = [];
+if (function_exists('sa_brand_logo_map')) {
+    $sa_ed_brand_names = [
+        'act' => 'ACT Clutch', 'afe' => 'aFe Power', 'awe-tuning' => 'AWE',
+        'bilstein' => 'Bilstein', 'bushwacker' => 'Bushwacker', 'corsa-performance' => 'Corsa',
+        'ebc' => 'EBC Brakes', 'fox' => 'Fox Shocks', 'garrett' => 'Garrett',
+        'king-shocks' => 'King Shocks', 'oracle-lighting' => 'Oracle',
+        'road-armor' => 'Road Armor', 'weathertech' => 'WeatherTech',
+    ];
+    foreach (sa_brand_logo_map() as $slug => $logo) {
+        $t = get_term_by('slug', $slug, 'product_cat');
+        $u = ($t && !is_wp_error($t)) ? get_term_link($t) : '';
+        if (!is_string($u) || $u === '') {
+            $u = add_query_arg('filter_brand', $slug, $sa_shop_url);
+        }
+        $sa_ed_brands[] = [
+            'name' => $sa_ed_brand_names[$slug] ?? ucwords(str_replace('-', ' ', $slug)),
+            'logo' => $logo,
+            'url'  => $u,
+        ];
+    }
+}
+if ($sa_ed_brands !== []) : ?>
+<section class="sa-ed-sec sa-ed-brands" aria-labelledby="sa-ed-brands-h">
+  <div class="sa-container">
+    <div class="sa-ed-head"><h2 id="sa-ed-brands-h"><?php esc_html_e('Shop by brand', 'supreme-autoparts'); ?></h2><a href="<?php echo esc_url($sa_shop_url); ?>"><?php esc_html_e('View all parts', 'supreme-autoparts'); ?> &rarr;</a></div>
+    <div class="sa-ed-brandgrid">
+      <?php foreach ($sa_ed_brands as $b) : ?>
+        <a class="sa-ed-brand" href="<?php echo esc_url($b['url']); ?>">
+          <span class="sa-ed-brand__im"><img src="<?php echo esc_url($b['logo']); ?>" alt="<?php echo esc_attr($b['name']); ?>" loading="lazy" decoding="async"></span>
+          <span class="sa-ed-brand__n"><?php echo esc_html($b['name']); ?></span>
+        </a>
+      <?php endforeach; ?>
+      <?php
+      $sa_ed_allbrands_t = get_term_by('slug', 'brands', 'product_cat');
+      $sa_ed_allbrands_url = ($sa_ed_allbrands_t && !is_wp_error($sa_ed_allbrands_t)) ? get_term_link($sa_ed_allbrands_t) : '';
+      if (!is_string($sa_ed_allbrands_url) || $sa_ed_allbrands_url === '') {
+          $sa_ed_allbrands_url = $sa_shop_url;
+      }
+      ?>
+      <a class="sa-ed-brand" href="<?php echo esc_url($sa_ed_allbrands_url); ?>">
+        <span class="sa-ed-brand__im"><img src="https://supreme-mods.com/cdn/shop/t/6/assets/shop-all-brands.jpg?v=71672433036115235571712041050" alt="<?php esc_attr_e('View all brands', 'supreme-autoparts'); ?>" loading="lazy" decoding="async"></span>
+        <span class="sa-ed-brand__n"><?php esc_html_e('View All Brands', 'supreme-autoparts'); ?></span>
+      </a>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
+
 <section class="sa-ed-sec sa-ed-why" aria-labelledby="sa-ed-why">
   <div class="sa-container">
     <div class="sa-ed-head"><h2 id="sa-ed-why"><?php esc_html_e('Why Supreme Autoparts', 'supreme-autoparts'); ?></h2></div>
@@ -205,6 +260,8 @@ if ($sa_ed_products) : ?>
     </div>
   </div>
 </section>
+
+
 
 <?php
 get_footer();
