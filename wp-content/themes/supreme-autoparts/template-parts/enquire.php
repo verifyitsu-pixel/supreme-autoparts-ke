@@ -139,11 +139,11 @@ $lead    = (string) ($lead ?? '');
         <a
           class="sa-btn sa-enquire__btn sa-enquire__btn--wa"
           data-sa-enquire-channel="whatsapp"
-          href="https://wa.me/<?php echo esc_attr($contact['whatsapp']); ?>"
+          href="<?php echo esc_url(function_exists('sa_whatsapp_url') ? sa_whatsapp_url() : 'https://wa.me/supremeautopart'); ?>"
           target="_blank"
           rel="noopener noreferrer"
         >
-          <?php esc_html_e('WhatsApp', 'supreme-autoparts'); ?>
+          <?php echo function_exists('sa_whatsapp_icon') ? sa_whatsapp_icon() : ''; esc_html_e('Chat on WhatsApp', 'supreme-autoparts'); ?>
         </a>
         <a
           class="sa-btn sa-btn--outline sa-enquire__btn"
@@ -164,7 +164,7 @@ $lead    = (string) ($lead ?? '');
         <?php
         printf(
             /* translators: 1: phone, 2: email */
-            esc_html__('WhatsApp & SMS: %1$s · Email: %2$s', 'supreme-autoparts'),
+            esc_html__('WhatsApp chat available · SMS: %1$s · Email: %2$s', 'supreme-autoparts'),
             esc_html($contact['phone_display']),
             esc_html($contact['email'])
         );
@@ -175,7 +175,7 @@ $lead    = (string) ($lead ?? '');
     <script type="application/json" data-sa-enquire-config>
 <?php
 echo wp_json_encode([
-    'whatsapp' => $contact['whatsapp'],
+    'whatsapp' => (function_exists('sa_whatsapp_username') ? sa_whatsapp_username() : $contact['whatsapp']),
     'phone'    => $contact['phone'],
     'email'    => $contact['email'],
     'subject'  => 'Part enquiry — Supreme Autoparts',
