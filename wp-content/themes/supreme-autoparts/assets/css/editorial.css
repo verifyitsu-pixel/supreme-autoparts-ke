@@ -290,3 +290,17 @@ html,body{overscroll-behavior-x:none}
 .sa-cx__subs li{font-size:14px}.sa-cx__subs li:nth-child(n+6){display:none}.sa-cx__subs li.is-hit{display:flex}.sa-cx__all{font-size:14px}
 .sa-cx__block{margin-top:56px}.sa-cx__list{columns:2;column-gap:16px}.sa-cx__list li{font-size:14px}}
 @media(max-width:380px){.sa-cx__list{columns:1}}
+
+/* Compact brand picker: replaces the full grid once a brand is selected. */
+.sa-brand-picker--compact{padding:14px 0 0}
+.sa-bp-row{display:flex;align-items:center;gap:8px;overflow-x:auto;padding:0 0 8px;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.sa-bp-label{flex:0 0 auto;font-size:13px;font-weight:600;color:var(--ed-mute);text-transform:uppercase;letter-spacing:.04em}
+.sa-bp-chip{flex:0 0 auto;display:inline-flex;align-items:baseline;gap:6px;padding:8px 14px;border:1px solid var(--ed-line);border-radius:999px;background:#fff;font-size:14px;font-weight:600;color:var(--ed-ink);text-decoration:none;white-space:nowrap}
+.sa-bp-chip__c{font-size:12px;font-weight:400;color:var(--ed-mute)}
+.sa-bp-chip:hover{border-color:var(--ed-ink)}
+.sa-bp-chip--active,.sa-bp-chip--active:hover{background:var(--ed-ink);border-color:var(--ed-ink);color:#fff}
+.sa-bp-chip--active .sa-bp-chip__c{color:rgba(255,255,255,.75)}
+/* Brand-filtered archives: hide the hero image and long intro so products start at the top. */
+.sa-archive-header--compact{grid-template-columns:1fr}
+.sa-archive-header--compact .sa-archive-header__media{display:none}
+.sa-archive-header--compact .sa-archive-header__desc{display:none}
