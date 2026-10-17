@@ -293,6 +293,10 @@ add_action('rest_api_init', static function (): void {
                     set_transient('sa_fargo_audit', $stats['audit'], 10 * MINUTE_IN_SECONDS);
                 }
             }
+            if ((string) $r->get_param('missing') === '1') {
+                global $wpdb;
+                $stats['missing_list'] = $wpdb->get_results("SELECT p.ID, p.post_title, sku.meta_value AS sku FROM {$wpdb->posts} p LEFT JOIN {$wpdb->postmeta} pm ON pm.post_id=p.ID AND pm.meta_key='_weight' LEFT JOIN {$wpdb->postmeta} sku ON sku.post_id=p.ID AND sku.meta_key='_sku' WHERE p.post_type='product' AND p.post_status='publish' AND IFNULL(pm.meta_value,'') IN ('','0') ORDER BY p.ID LIMIT 2000", ARRAY_A);
+            }
             if (!$d) {
                 return ['ok' => false, 'reason' => 'no Fargo branch for this county/town', 'checkout_label' => 'Fargo Courier, rate confirmed before dispatch', 'items' => $items, 'kg' => $kg, 'weights' => $stats];
             }
