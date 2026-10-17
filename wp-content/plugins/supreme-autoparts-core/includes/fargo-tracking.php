@@ -228,6 +228,11 @@ add_filter('do_shortcode_tag', static function ($out, $tag) {
     if ($tag !== 'woocommerce_order_tracking' || !is_string($out)) {
         return $out;
     }
+    // G4S/Speedaf waybills on /track-order/ are handled by courier-tracking.php.
+    $sa_c = isset($_GET['courier']) ? sanitize_key((string) $_GET['courier']) : ''; // phpcs:ignore
+    if ($sa_c !== '' && $sa_c !== 'fargo') {
+        return $out;
+    }
     $wb = isset($_GET['waybill']) ? sa_ft_clean_waybill(sanitize_text_field(wp_unslash((string) $_GET['waybill']))) : '';
     $pre = sa_ft_css();
     if ($wb !== '') {
