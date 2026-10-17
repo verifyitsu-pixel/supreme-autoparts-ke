@@ -229,6 +229,36 @@ function sa_free_shipping_threshold(): string
 }
 
 /**
+ * Representative category-tile photos: department slug => product slug whose real
+ * photo represents the department on the home grid and on /categories/.
+ */
+function sa_category_tile_products(): array
+{
+    return [
+        'engine' => 'turbosmart-ts-1-turbocharger-6466-v-band-1-07ar-externally-wastegated-reversed-rotation',
+        'interior' => 'sparco-seat-sprint-red',
+        'exterior' => 'ford-racing-mustang-fp350s-rear-wing-kit',
+        'exhaust' => 'corsa-25-26-ram-1500-rho-crew-cab-3-0l-turbo-cat-back-dual-rear-exit-w-5in-single-satin-pro-series',
+    ];
+}
+
+/** Shopify CDN photo URL for a category tile, or '' when none is mapped or resolvable. */
+function sa_category_tile_image(string $slug): string
+{
+    $map = sa_category_tile_products();
+    if (!isset($map[$slug])) {
+        return '';
+    }
+    $pp = get_page_by_path($map[$slug], OBJECT, 'product');
+    $pr = $pp ? wc_get_product($pp->ID) : null;
+    if (!$pr || !$pr->is_visible()) {
+        return '';
+    }
+    $src = (string) $pr->get_meta('_sa_shopify_image_src', true);
+    return str_starts_with($src, 'https://cdn.shopify.com/') ? $src : '';
+}
+
+/**
  * Homepage "Latest Parts" — mega-store merchandising across car-part departments.
  *
  * Round-robins parent categories (Brakes, Suspension, Engine, …), requires a real
