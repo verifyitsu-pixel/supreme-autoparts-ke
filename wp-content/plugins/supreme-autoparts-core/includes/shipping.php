@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
  * Rates (USD):
  * - Standard Shipping (Continental US) .. $8.00  (flat_rate)
  * - Priority Shipping (US) .............. $15.00 (flat_rate)
- * - Free shipping ....................... $0 when cart subtotal ≥ $99
+ * - Free shipping ....................... $0 when cart subtotal ≥ $199
  * - Nairobi Delivery .................... $8.00  (flat_rate, KE)
  * - Upcountry Kenya ..................... $15.00 (flat_rate, KE)
  * - Local pickup (Nairobi) .............. $0.00  (local_pickup, KE)
@@ -83,11 +83,11 @@ function sa_core_shipping_free_min(): float
 {
     $raw = getenv('SUPREME_FREE_SHIPPING_THRESHOLD');
     if ($raw === false || $raw === '') {
-        $raw = get_option('sa_free_shipping_threshold', '99');
+        $raw = get_option('sa_free_shipping_threshold', '199');
     }
     $usd = (float) $raw;
     if ($usd <= 0 || $usd > 1000) {
-        $usd = 99.0;
+        $usd = 199.0;
     }
     return $usd;
 }
