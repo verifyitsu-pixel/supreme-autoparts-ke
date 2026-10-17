@@ -182,12 +182,119 @@
     setStatus(String(msg), 'error');
   };
 
+
+  // ---------------------------------------------------------------------
+  // Store-styled pay form (Whop Elements). Admin-only preview until switched on.
+  // Any problem falls back to the standard embed (mountEmbed).
+  // ---------------------------------------------------------------------
+  var customState = { handle: null, done: false, fellBack: false };
+
+  function fallbackToEmbed(reason) {
+    if (customState.fellBack) return;
+    customState.fellBack = true;
+    try {
+      if (customState.handle && typeof customState.handle.destroy === 'function') {
+        customState.handle.destroy();
+      }
+    } catch (e) {}
+    if (window.console) console.warn('[sa-pay] custom form unavailable, using standard form:', reason);
+    mountEmbed();
+  }
+
+  function loadElementsScript() {
+    return new Promise(function (resolve, reject) {
+      if (window.WhopElements) return resolve();
+      var s = document.createElement('script');
+      s.src = 'https://cdn.whop.com/elements/amber/elements.js';
+      s.setAttribute('data-whop-elements', '');
+      s.async = true;
+      s.onload = function () {
+        window.WhopElements ? resolve() : reject(new Error('WhopElements missing'));
+      };
+      s.onerror = function () {
+        reject(new Error('elements script failed'));
+      };
+      document.head.appendChild(s);
+      window.setTimeout(function () {
+        reject(new Error('elements script timeout'));
+      }, 10000);
+    });
+  }
+
+  function initCustom() {
+    if (!cfg.accountId) return fallbackToEmbed('no account id');
+    mount.innerHTML = '';
+    setStatus(i18n('loading', 'Loading secure payment…'), 'loading');
+    var wrap = document.createElement('div');
+    wrap.className = 'sa-cpay';
+    wrap.innerHTML =
+      '<div class="sa-cpay__note" id="sa-cpay-note">Admin preview of the new payment form. Charging is not enabled yet.</div>' +
+      '<div id="sa-cpay-payment" class="sa-cpay__payment"></div>' +
+      '<div id="sa-cpay-branding" class="sa-cpay__branding"></div>' +
+      '<p class="sa-cpay__error" id="sa-cpay-error" role="alert" hidden></p>' +
+      '<button type="button" class="sa-cpay__btn" id="sa-cpay-btn" disabled></button>' +
+      '<p class="sa-cpay__alt"><a href="#" id="sa-cpay-alt">Use the standard payment form instead</a></p>';
+    mount.appendChild(wrap);
+    var btn = $('#sa-cpay-btn', wrap);
+    btn.textContent = cfg.payLabel || 'Pay';
+    $('#sa-cpay-alt', wrap).addEventListener('click', function (ev) {
+      ev.preventDefault();
+      fallbackToEmbed('user chose standard form');
+    });
+    loadElementsScript()
+      .then(function () {
+        var whop = window.WhopElements();
+        var payments = whop.payments.create({
+          accountId: cfg.accountId,
+          plan: cfg.planId,
+          appearance: {
+            theme: { appearance: 'light', accentColor: 'amber', grayColor: 'gray' },
+            variables: { '--radius': '10px' }
+          }
+        });
+        customState.handle = payments;
+        payments
+          .create('payment', {
+            layout: 'accordion',
+            onChange: function (e) {
+              var ok = !!(e && (e.isComplete || e.complete));
+              btn.disabled = true; // Stage 1: preview only
+              btn.setAttribute('data-ready', ok ? '1' : '');
+            },
+            onReady: function () {
+              setStatus('', '');
+            },
+            onLoadError: function () {
+              fallbackToEmbed('payment element load error');
+            }
+          })
+          .mount('#sa-cpay-payment');
+        payments.create('branding').mount('#sa-cpay-branding');
+        window.setTimeout(function () {
+          var f = $('#sa-cpay-payment iframe');
+          if (!f && !customState.fellBack) fallbackToEmbed('no iframe after 12s');
+        }, 12000);
+        setStatus('', '');
+      })
+      .catch(function (err) {
+        fallbackToEmbed(err && err.message);
+      });
+  }
+
   function init() {
     mount = $('#sa-whop-pay-mount');
     statusEl = $('#sa-whop-pay-status');
     if (!mount) return;
     if (!cfg.planId) {
       setStatus(i18n('error', 'Missing payment session.'), 'error');
+      return;
+    }
+    if (cfg.customPay === '1') {
+      try {
+        initCustom();
+      } catch (e) {
+        fallbackToEmbed(e && e.message);
+      }
       return;
     }
     ensureWhopIndex();
