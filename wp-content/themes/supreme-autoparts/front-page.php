@@ -37,7 +37,7 @@ if (!$sa_is_ke) {
     <div class="sa-ed-hero__copy">
       <p class="sa-ed-kicker"><?php esc_html_e('Supreme Autoparts', 'supreme-autoparts'); ?></p>
       <h1 id="sa-hero-title"><?php $sa_is_ke ? esc_html_e('Car parts, servicing and roadside help.', 'supreme-autoparts') : esc_html_e('Car parts, checked to fit your car.', 'supreme-autoparts'); ?></h1>
-      <p class="sa-ed-lead"><?php if (!$sa_is_ke) : (function_exists('sa_geo_country') && sa_geo_country() === 'US') ? esc_html_e('Parts for Japanese, American, British and European cars, shipped across the US. Search by part number, or ask us to check fitment for your car.', 'supreme-autoparts') : esc_html_e('Parts for Japanese, American, British and European cars, shipped worldwide. Search by part number, or ask us to check fitment for your car.', 'supreme-autoparts'); else : ?><?php esc_html_e('We send parts for Japanese, American, British and European cars to every county, fix cars at our garage, and come out when you break down.', 'supreme-autoparts'); ?><?php endif; ?></p>
+      <p class="sa-ed-lead"><?php if (!$sa_is_ke) : (function_exists('sa_geo_country') && sa_geo_country() === 'US') ? esc_html_e('Parts for Japanese, American, British and European cars, plus sport, cruiser and dirt bike parts, shipped across the US. Search by part number, or ask us to check fitment.', 'supreme-autoparts') : esc_html_e('Parts for Japanese, American, British and European cars, plus sport, cruiser and dirt bike parts, shipped worldwide. Search by part number, or ask us to check fitment.', 'supreme-autoparts'); else : ?><?php esc_html_e('We send parts for Japanese, American, British and European cars, plus sport, cruiser and dirt bike parts, to every county, fix cars at our garage, and come out when you break down.', 'supreme-autoparts'); ?><?php endif; ?></p>
       <form class="sa-ed-search" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>" data-sa-hx-search>
         <label class="screen-reader-text" for="sa-hero-search"><?php esc_html_e('Search products', 'supreme-autoparts'); ?></label>
         <?php if (function_exists('sa_search_scope_select')) { sa_search_scope_select('sa-search-cat-hero'); } ?>
@@ -111,6 +111,10 @@ if (!$sa_is_ke) {
           <span class="sa-ed-cat__n"><?php echo esc_html($label); ?></span>
         </a>
       <?php endforeach; ?>
+        <a class="sa-ed-cat" href="<?php echo esc_url(home_url('/motorcycle-parts-riding-gear-in-kenya/')); ?>">
+          <span class="sa-ed-im"><img src="https://cdn.shopify.com/s/files/1/0643/0779/0001/files/9ccadc7f3924b4fd8f37e9d5d3da7e7b.jpg?v=1711627219" alt="" width="640" height="640" loading="lazy" decoding="async"></span>
+          <span class="sa-ed-cat__n"><?php esc_html_e('Motorcycle & Bike', 'supreme-autoparts'); ?></span>
+        </a>
       <?php
       // Show every other department (root category with sub-categories) after the curated
       // six, so all categories are visible here without opening All categories.
