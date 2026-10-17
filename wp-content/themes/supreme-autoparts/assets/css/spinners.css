@@ -1,0 +1,123 @@
+/* Supreme Autoparts — contextual loading spinners (Rock 2026-10-17).
+   Distinct pure-CSS icons per context, styled from his reference sheet:
+   dots ring = search suggestions, bars ring = add-to-cart, arc ring = payment waits.
+   No images. */
+
+@keyframes sa-spin-rot { to { transform: rotate(360deg); } }
+@keyframes sa-spin-dots-chase { to { transform: rotate(360deg); } }
+
+/* ---- Dots ring (search suggestions) ---- */
+.sa-spin-dots {
+  display: inline-block;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  color: #0a0a0a;
+  background: currentColor;
+  box-shadow:
+    0 -10px 0 0,
+    7.1px -7.1px 0 -0.4px,
+    10px 0 0 -0.8px,
+    7.1px 7.1px 0 -1.1px,
+    0 10px 0 -1.3px,
+    -7.1px 7.1px 0 -1.5px,
+    -10px 0 0 -1.7px,
+    -7.1px -7.1px 0 -1.9px;
+  animation: sa-spin-dots-chase 0.9s steps(8) infinite;
+}
+[data-sa-hx-search] { position: relative; }
+[data-sa-hx-search].is-suggest-loading::after {
+  content: "";
+  position: absolute;
+  right: 16px; top: 50%;
+  margin-top: -2px;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  color: #0a0a0a;
+  background: currentColor;
+  pointer-events: none;
+  box-shadow:
+    0 -10px 0 0,
+    7.1px -7.1px 0 -0.4px,
+    10px 0 0 -0.8px,
+    7.1px 7.1px 0 -1.1px,
+    0 10px 0 -1.3px,
+    -7.1px 7.1px 0 -1.5px,
+    -10px 0 0 -1.7px,
+    -7.1px -7.1px 0 -1.9px;
+  animation: sa-spin-dots-chase 0.9s steps(8) infinite;
+}
+
+/* ---- Bars ring (add-to-cart buttons) ---- */
+.woocommerce a.add_to_cart_button.loading::after,
+.woocommerce button.add_to_cart_button.loading::after,
+.woocommerce .single_add_to_cart_button.loading::after {
+  content: "" !important;
+  font-family: none !important;
+  position: static !important;
+  display: inline-block;
+  vertical-align: -3px;
+  margin-left: 8px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    currentColor 0deg 12deg, transparent 12deg 30deg,
+    currentColor 30deg 42deg, transparent 42deg 60deg,
+    currentColor 60deg 72deg, transparent 72deg 90deg,
+    currentColor 90deg 102deg, transparent 102deg 120deg,
+    currentColor 120deg 132deg, transparent 132deg 150deg,
+    currentColor 150deg 162deg, transparent 162deg 180deg,
+    currentColor 180deg 192deg, transparent 192deg 210deg,
+    currentColor 210deg 222deg, transparent 222deg 240deg,
+    currentColor 240deg 252deg, transparent 252deg 270deg,
+    currentColor 270deg 282deg, transparent 282deg 300deg,
+    currentColor 300deg 312deg, transparent 312deg 330deg,
+    currentColor 330deg 342deg, transparent 342deg 360deg
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.4px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.4px));
+  animation: sa-spin-rot 0.9s steps(12) infinite;
+}
+
+/* ---- Arc ring (generic, light surfaces: thank-you pending note) ---- */
+.sa-spin-arc {
+  display: inline-block;
+  width: 14px; height: 14px;
+  margin-right: 7px;
+  vertical-align: -2px;
+  border-radius: 50%;
+  border: 2px solid #d8d5cf;
+  border-top-color: #0a0a0a;
+  animation: sa-spin-rot 0.8s linear infinite;
+}
+.sa-thankyou__pending-note {
+  display: flex;
+  align-items: center;
+}
+.sa-thankyou__pending-note .sa-spin-arc {
+  flex: 0 0 auto;
+}
+
+/* ---- Payment variant of the sitewide overlay: arc ring instead of the tyre ---- */
+#sa-loader.sa-loader--arc .sa-loader__wheel { display: none; }
+#sa-loader.sa-loader--arc .sa-loader__panel::before {
+  content: "";
+  display: block;
+  width: 56px; height: 56px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  border: 4px solid rgba(140, 140, 140, 0.3);
+  border-top-color: currentColor;
+  animation: sa-spin-rot 0.8s linear infinite;
+}
+
+/* Official WhatsApp glyph (brand icon from WhatsApp-served wa.me page) + chat button */
+.sa-wa-ic{width:1em;height:1em;vertical-align:-0.125em;margin-right:0.4em;border-radius:26%}
+.sa-wa-btn{display:inline-flex;align-items:center;gap:0.45em;background:#25D366;color:#fff!important;padding:0.6em 1.15em;border-radius:8px;font-weight:600;text-decoration:none}
+.sa-wa-btn:hover{background:#1fb857}
+
+/* Footer social row: official Instagram glyph + WhatsApp icon */
+.sa-foot__social{display:flex;gap:14px;align-items:center;margin:6px 0}
+.sa-foot__social a{display:inline-flex;align-items:center;color:inherit;text-decoration:none}
+.sa-ig-ic{width:18px;height:18px}
+.sa-foot__social .sa-wa-ic{width:18px;height:18px;margin-right:0}
