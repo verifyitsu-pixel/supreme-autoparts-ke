@@ -166,7 +166,7 @@ $free_ship = function_exists('sa_theme_cart_has_free_shipping') && sa_theme_cart
           printf(
               /* translators: %s: formatted free-shipping threshold */
               esc_html__('Free US shipping on orders %s and up. Shipping is calculated at checkout when the order is under that.', 'supreme-autoparts'),
-              esc_html(function_exists('sa_free_shipping_threshold') ? sa_free_shipping_threshold() : '$99')
+              esc_html(function_exists('sa_free_shipping_threshold') ? sa_free_shipping_threshold() : '$199')
           );
           ?>
         </p>
