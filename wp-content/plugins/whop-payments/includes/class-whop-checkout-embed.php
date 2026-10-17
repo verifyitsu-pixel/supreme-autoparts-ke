@@ -19,6 +19,11 @@ final class Whop_Checkout_Embed {
         add_action('template_redirect', [self::class, 'maybe_redirect_to_whop'], 6);
         add_filter('the_content', [self::class, 'filter_pay_page_content'], 20);
         add_action('before_woocommerce_pay', [self::class, 'hijack_order_pay'], 5);
+
+        // Enqueue on-site embed scripts, preloads and CSP for /pay/?sa_whop_pay=1
+        add_action('wp_enqueue_scripts', [self::class, 'maybe_enqueue'], 20);
+        add_action('wp_head', [self::class, 'maybe_print_preloads'], 2);
+        add_filter('wp_headers', [self::class, 'filter_csp_headers'], 21);
     }
 
     /**
