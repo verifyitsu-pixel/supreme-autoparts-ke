@@ -8,14 +8,18 @@ if (!defined('ABSPATH')) {
 <head>
   <meta charset="<?php bloginfo('charset'); ?>">
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#ffffff">
-  <?php $sa_iv = '?v=emblem2'; $sa_ia = SA_THEME_URI . '/assets/'; ?>
+  <meta name="theme-color" content="#fcb900">
+  <?php $sa_iv = '?v=app1'; $sa_ia = SA_THEME_URI . '/assets/'; ?>
   <link rel="icon" href="<?php echo esc_url($sa_ia . 'favicon.ico' . $sa_iv); ?>" sizes="48x48">
   <link rel="icon" href="<?php echo esc_url($sa_ia . 'favicon-32.png' . $sa_iv); ?>" type="image/png" sizes="32x32">
   <link rel="icon" href="<?php echo esc_url($sa_ia . 'favicon-16.png' . $sa_iv); ?>" type="image/png" sizes="16x16">
   <link rel="icon" href="<?php echo esc_url($sa_ia . 'icon.png' . $sa_iv); ?>" type="image/png" sizes="192x192">
   <link rel="apple-touch-icon" sizes="180x180" href="<?php echo esc_url($sa_ia . 'apple-touch-icon.png' . $sa_iv); ?>">
   <link rel="manifest" href="<?php echo esc_url($sa_ia . 'site.webmanifest' . $sa_iv); ?>">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Supreme Autoparts">
   <?php wp_head(); ?>
 </head>
 <body <?php body_class(); ?>>
@@ -25,7 +29,7 @@ if (!defined('ABSPATH')) {
   <?php if ((!function_exists('sa_geo_is_kenya') || sa_geo_is_kenya())) : ?>
   <div class="sa-rsbar"><div class="sa-container sa-rsbar__in"><span><?php esc_html_e('Car trouble? We\'ll come to you.', 'supreme-autoparts'); ?></span><a href="<?php echo esc_url(home_url('/roadside/')); ?>"><?php esc_html_e('Get roadside help', 'supreme-autoparts'); ?></a><a class="sa-rsbar__tel" href="tel:+254714498451">+254 714 498 451</a></div></div>
   <?php else : ?>
-  <div class="sa-rsbar sa-rsbar--intl"><div class="sa-container sa-rsbar__in"><span><?php (function_exists('sa_geo_country') && sa_geo_country() === 'US') ? esc_html_e('We ship across the US.', 'supreme-autoparts') : esc_html_e('We ship worldwide.', 'supreme-autoparts'); ?></span><a href="https://wa.me/19174375121" rel="noopener"><?php esc_html_e('Fitment help on WhatsApp', 'supreme-autoparts'); ?></a><a class="sa-rsbar__tel" href="tel:+19174375121">+1 917 437 5121</a></div></div>
+  <div class="sa-rsbar sa-rsbar--intl"><div class="sa-container sa-rsbar__in"><span><?php (function_exists('sa_geo_country') && sa_geo_country() === 'US') ? esc_html_e('We ship across the US.', 'supreme-autoparts') : esc_html_e('We ship worldwide.', 'supreme-autoparts'); ?></span><a href="https://wa.me/supremeautopart" rel="noopener"><?php esc_html_e('Fitment help on WhatsApp', 'supreme-autoparts'); ?></a><a class="sa-rsbar__tel" href="tel:+19174375121">+1 917 437 5121</a></div></div>
   <?php endif; ?>
   <div class="sa-container sa-header__bar">
     <button type="button" class="sa-nav-toggle" data-sa-nav-toggle aria-expanded="false" aria-controls="sa-primary-nav">
@@ -46,6 +50,7 @@ if (!defined('ABSPATH')) {
 
     <form class="sa-search" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>">
       <label class="screen-reader-text" for="sa-search-field"><?php esc_html_e('Search products', 'supreme-autoparts'); ?></label>
+      <?php if (function_exists('sa_search_scope_select')) { sa_search_scope_select('sa-search-cat'); } ?>
       <input type="search" id="sa-search-field" name="s" placeholder="<?php esc_attr_e('Part number, brand, or keyword…', 'supreme-autoparts'); ?>" value="<?php echo esc_attr(get_search_query()); ?>">
       <input type="hidden" name="post_type" value="product">
       <button type="submit" aria-label="<?php esc_attr_e('Search', 'supreme-autoparts'); ?>">
@@ -86,6 +91,7 @@ if (!defined('ABSPATH')) {
   <div class="sa-header__search-mobile sa-container">
     <form class="sa-search sa-search--mobile" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>">
       <label class="screen-reader-text" for="sa-search-field-mobile"><?php esc_html_e('Search products', 'supreme-autoparts'); ?></label>
+      <?php if (function_exists('sa_search_scope_select')) { sa_search_scope_select('sa-search-cat-mobile'); } ?>
       <input type="search" id="sa-search-field-mobile" name="s" placeholder="<?php esc_attr_e('Part number, brand, or keyword…', 'supreme-autoparts'); ?>" value="<?php echo esc_attr(get_search_query()); ?>">
       <input type="hidden" name="post_type" value="product">
       <button type="submit" aria-label="<?php esc_attr_e('Search', 'supreme-autoparts'); ?>">
@@ -146,4 +152,3 @@ if (!defined('ABSPATH')) {
     </div>
   </nav>
 </header>
-
