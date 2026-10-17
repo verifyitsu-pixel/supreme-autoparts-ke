@@ -233,6 +233,20 @@ function sa_ol_view_url(WC_Order $o): string
     return $o->get_customer_id() ? $o->get_view_order_url() : add_query_arg(['orderid' => $o->get_id(), 'order_email' => $o->get_billing_email()], home_url('/track-order/'));
 }
 
+/* The emailed "Track order" link (sa_ol_view_url) uses GET params, but Woo's tracking shortcode
+ * requires its form nonce before it renders the result. Inject a fresh nonce on the track-order
+ * page so the link opens the timeline directly; order id + billing email remain the access check.
+ * nocache_headers so a cached copy can never serve a stale timeline. */
+add_action('wp', static function (): void {
+    if (!is_page('track-order') || !isset($_GET['orderid'], $_GET['order_email'])) {
+        return;
+    }
+    nocache_headers();
+    if (!isset($_REQUEST['woocommerce-order-tracking-nonce']) && !isset($_REQUEST['_wpnonce'])) {
+        $_REQUEST['woocommerce-order-tracking-nonce'] = wp_create_nonce('woocommerce-order_tracking');
+    }
+});
+
 function sa_ol_info_url(WC_Order $o): string
 {
     return add_query_arg(['o' => $o->get_id(), 'k' => $o->get_order_key()], home_url('/order-info/'));
