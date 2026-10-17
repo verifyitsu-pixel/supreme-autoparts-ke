@@ -116,3 +116,11 @@ add_filter('woocommerce_locate_template', static function ($template, $template_
     }
     return $template;
 }, 999, 2);
+
+/* No processor logos in the checkout gateway rows. */
+add_filter('woocommerce_gateway_icon', static function ($icon, $gateway_id) {
+    if ('pesapal' === $gateway_id || 'whop' === $gateway_id) {
+        return '';
+    }
+    return $icon;
+}, 30, 2);
