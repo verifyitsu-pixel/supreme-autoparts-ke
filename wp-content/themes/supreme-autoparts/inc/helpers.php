@@ -401,3 +401,188 @@ function sa_page_url(string $slug): string
     $page = get_page_by_path($slug);
     return $page ? get_permalink($page) : home_url('/' . $slug . '/');
 }
+
+/**
+ * Brand logos hotlinked from the source store's CDN, keyed by catalog brand slug.
+ * supreme-mods.com only ships curated logos for these brands; every other brand
+ * gets a real product photo instead (see sa_category_brand_picker()).
+ */
+function sa_brand_logo_map(): array
+{
+    $b = 'https://supreme-mods.com/cdn/shop/t/6/assets/';
+    return [
+        'act'               => $b . 'act-clutch.jpg?v=877660881676118800417120',
+        'afe'               => $b . 'afe-power.jpg?v=7379905215355194742171204',
+        'awe-tuning'        => $b . 'awe.jpg?v=58668561627008722301712041050',
+        'bilstein'          => $b . 'bilstein-logo.jpg?v=106208031347697701921',
+        'bushwacker'        => $b . 'bushwacker.jpg?v=793193105674690329717120',
+        'corsa-performance' => $b . 'corsa.jpg?v=11053963790621030875171204105',
+        'ebc'               => $b . 'ebc-brakes.jpg?v=112805996274052291761712',
+        'fox'               => $b . 'fox.jpg?v=56675246140297125901712041050',
+        'garrett'           => $b . 'garrett-logo.jpg?v=1447387850268329355317',
+        'king-shocks'       => $b . 'king-shocks.jpg?v=17573415329741842147171',
+        'oracle-lighting'   => $b . 'oracle-lighting.jpg?v=1528571330345682071',
+        'road-armor'        => $b . 'road-armor.jpg?v=166739901789122643117120',
+        'weathertech'       => $b . 'weathertech.jpg?v=94333569090744589461712',
+    ];
+}
+
+/** Shopify CDN photo URL for a product id, or '' when none is available. */
+function sa_brand_product_photo(int $product_id): string
+{
+    if (!function_exists('wc_get_product')) {
+        return '';
+    }
+    $p = wc_get_product($product_id);
+    if (!$p) {
+        return '';
+    }
+    $src = (string) $p->get_meta('_sa_shopify_image_src', true);
+    if (str_starts_with($src, 'https://cdn.shopify.com/')) {
+        return $src;
+    }
+    $att = (int) $p->get_image_id();
+    return $att > 0 ? (string) wp_get_attachment_image_url($att, 'medium') : '';
+}
+
+/** First photographed product of a brand inside a category (both product_cat slugs). */
+function sa_brand_fallback_photo(string $brand_slug, string $category_slug): string
+{
+    if (!function_exists('wc_get_products')) {
+        return '';
+    }
+    $ids = wc_get_products([
+        'limit'    => 8,
+        'status'   => 'publish',
+        'return'   => 'ids',
+        'tax_query' => [
+            'relation' => 'AND',
+            ['taxonomy' => 'product_cat', 'field' => 'slug', 'terms' => [$category_slug]],
+            ['taxonomy' => 'product_cat', 'field' => 'slug', 'terms' => [$brand_slug]],
+        ],
+    ]);
+    foreach ((array) $ids as $pid) {
+        $img = sa_brand_product_photo((int) $pid);
+        if ($img !== '') {
+            return $img;
+        }
+    }
+    return '';
+}
+
+/**
+ * Brands with products in a product category (subcategories included), each with a
+ * picture and product count, for the "Shop by brand" picker on category pages.
+ * Counts come from the same facet index as the sidebar brand filter, so the picker
+ * always matches what filtering by that brand returns.
+ *
+ * @return list<array{slug:string,name:string,count:int,image:string}>
+ */
+function sa_category_brand_picker(WP_Term $term): array
+{
+    global $wpdb;
+    if (!function_exists('sa_fx_table') || !function_exists('sa_fx_ready') || !sa_fx_ready()) {
+        return [];
+    }
+    $cache_key = 'sa_bpick_v1_' . (int) $term->term_id;
+    $hit = get_transient($cache_key);
+    if (is_array($hit)) {
+        return $hit;
+    }
+    $fx = sa_fx_table();
+    // Ancestor category ids are indexed per product, so one term id covers the
+    // whole subtree. COUNT(DISTINCT) guards against multi-brand products.
+    $rows = $wpdb->get_results($wpdb->prepare(
+        "SELECT i.value AS slug, MAX(i.label) AS name, COUNT(DISTINCT i.product_id) AS c
+           FROM {$fx} i
+          WHERE i.facet = 'brand'
+            AND i.product_id IN (SELECT product_id FROM {$fx} WHERE facet = 'cat' AND value = %s)
+          GROUP BY i.value
+          ORDER BY c DESC, name ASC
+          LIMIT 400",
+        (string) $term->term_id
+    ));
+    if (!$rows) {
+        return [];
+    }
+
+    // Best photographed product per brand, ranked by the existing smart-rank score.
+    $photo_of = [];
+    if (function_exists('sa_rk_t') && function_exists('sa_rk_ready') && sa_rk_ready() && function_exists('sa_rk_cat_maps')) {
+        [$parent] = sa_rk_cat_maps();
+        $ids = [(int) $term->term_id];
+        $stack = [(int) $term->term_id];
+        while ($stack !== []) {
+            $tid = array_pop($stack);
+            foreach ($parent as $cid => $pid2) {
+                if ((int) $pid2 === (int) $tid) {
+                    $ids[] = (int) $cid;
+                    $stack[] = (int) $cid;
+                }
+            }
+        }
+        $in = implode(',', array_unique(array_map('intval', $ids)));
+        $rs = sa_rk_t('sa_rank_score');
+        // phpcs:ignore WordPress.DB.PreparedSQL — $in is ints only.
+        foreach ((array) $wpdb->get_results("SELECT product_id, brand FROM {$rs} WHERE img = 1 AND leaf IN ({$in}) ORDER BY score DESC LIMIT 3000") as $r) {
+            if (!isset($photo_of[(string) $r->brand])) {
+                $photo_of[(string) $r->brand] = (int) $r->product_id;
+            }
+        }
+    }
+
+    $logos = sa_brand_logo_map();
+    $out = [];
+    foreach ($rows as $r) {
+        $slug = (string) $r->slug;
+        $img = $logos[$slug] ?? '';
+        if ($img === '' && isset($photo_of[$slug])) {
+            $img = sa_brand_product_photo($photo_of[$slug]);
+        }
+        if ($img === '') {
+            $img = sa_brand_fallback_photo($slug, (string) $term->slug);
+        }
+        $name = trim((string) $r->name);
+        $out[] = [
+            'slug'  => $slug,
+            'name'  => $name !== '' ? $name : ucwords(str_replace('-', ' ', $slug)),
+            'count' => (int) $r->c,
+            'image' => $img,
+        ];
+    }
+    set_transient($cache_key, $out, 6 * HOUR_IN_SECONDS);
+    return $out;
+}
+
+/** Render the "Shop <Category> by brand" picker on a product-category archive. */
+function sa_render_category_brand_picker(WP_Term $term): void
+{
+    $items = sa_category_brand_picker($term);
+    if ($items === []) {
+        return;
+    }
+    $base = get_term_link($term);
+    if (is_wp_error($base)) {
+        return;
+    }
+    ?>
+    <section class="sa-ed-sec sa-brand-picker" aria-labelledby="sa-brand-pick-h">
+      <div class="sa-container">
+        <div class="sa-ed-head"><h2 id="sa-brand-pick-h"><?php echo esc_html(sprintf(/* translators: %s: category name */ __('Shop %s by brand', 'supreme-autoparts'), $term->name)); ?></h2></div>
+        <div class="sa-ed-cats">
+          <?php foreach ($items as $it) : ?>
+            <a class="sa-ed-cat" href="<?php echo esc_url(add_query_arg('filter_brand', $it['slug'], $base)); ?>">
+              <span class="sa-ed-im">
+                <?php if ($it['image'] !== '') : ?>
+                  <img src="<?php echo esc_url($it['image']); ?>" alt="" width="640" height="640" loading="lazy" decoding="async" />
+                <?php endif; ?>
+              </span>
+              <span class="sa-ed-cat__n"><?php echo esc_html($it['name']); ?></span>
+              <span class="sa-ed-cat__c"><?php echo esc_html(sprintf(/* translators: %s: product count */ _n('%s part', '%s parts', $it['count'], 'supreme-autoparts'), number_format_i18n($it['count']))); ?></span>
+            </a>
+          <?php endforeach; ?>
+        </div>
+      </div>
+    </section>
+    <?php
+}
