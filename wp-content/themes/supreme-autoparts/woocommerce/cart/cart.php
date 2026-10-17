@@ -171,19 +171,7 @@ $free_ship = function_exists('sa_theme_cart_has_free_shipping') && sa_theme_cart
           ?>
         </p>
         <?php else : ?>
-        <?php if (function_exists('sa_couriers_enabled') && sa_couriers_enabled()) : ?>
-        <p class="sa-cart-ship-note">
-          <?php
-          printf(
-              /* translators: %s: formatted free-shipping threshold */
-              esc_html__('Kenya: free shipping on orders %s and up. Under that: pickup at a courier station near you or door delivery, priced by weight at checkout. Free store pickup, Midax Plaza.', 'supreme-autoparts'),
-              esc_html(function_exists('sa_free_shipping_threshold') ? sa_free_shipping_threshold() : '$199')
-          );
-          ?>
-        </p>
-        <?php else : ?>
-        <p class="sa-cart-ship-note"><?php esc_html_e('Kenya: free store pickup, or Fargo Courier to your town (priced by weight at checkout).', 'supreme-autoparts'); ?></p>
-        <?php endif; ?>
+        <p class="sa-cart-ship-note"><?php esc_html_e('Kenya: free store pickup, or courier delivery to your town (priced by weight at checkout).', 'supreme-autoparts'); ?></p>
         <?php endif; ?>
         <div class="sa-cart-trust">
           <a href="<?php echo esc_url(sa_page_url('shipping-policy')); ?>"><?php esc_html_e('Shipping', 'supreme-autoparts'); ?></a>
