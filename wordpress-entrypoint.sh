@@ -37,6 +37,7 @@ if (!defined('DISALLOW_FILE_EDIT')) define('DISALLOW_FILE_EDIT', true);
 if (!defined('DISALLOW_FILE_MODS')) define('DISALLOW_FILE_MODS', false);
 // WP-Cron stays off the web request path: a WP-CLI loop in this entrypoint runs due events every minute.
 if (!defined('DISABLE_WP_CRON')) define('DISABLE_WP_CRON', true);
+if (!defined('SA_AGENT_INTAKE_TOKEN') && getenv('SA_AGENT_INTAKE_TOKEN')) define('SA_AGENT_INTAKE_TOKEN', getenv('SA_AGENT_INTAKE_TOKEN'));
 if (!defined('FORCE_SSL_ADMIN') && str_starts_with((string) (getenv('WP_HOME') ?: ''), 'https://')) {
   define('FORCE_SSL_ADMIN', true);
 }
@@ -87,7 +88,7 @@ sync_custom_content() {
   if [[ -d /usr/src/wordpress/wp-content/plugins/sa-geo-currency ]]; then
     swap_dir /usr/src/wordpress/wp-content/plugins/sa-geo-currency /var/www/html/wp-content/plugins/sa-geo-currency
   fi
-  for gw in pesapal-woocommerce transactworld-payment-integration woocommerce-paypal-payments jotform-ai-chatbot; do
+  for gw in pesapal-woocommerce transactworld-payment-integration woocommerce-paypal-payments jotform-ai-chatbot supreme-agent-intake; do
     if [[ -d /usr/src/wordpress/wp-content/plugins/$gw ]]; then
       swap_dir "/usr/src/wordpress/wp-content/plugins/$gw" "/var/www/html/wp-content/plugins/$gw"
       chown -R www-data:www-data "/var/www/html/wp-content/plugins/$gw" 2>/dev/null || true
@@ -271,6 +272,7 @@ bootstrap_wordpress() {
   wp_as plugin activate sa-geo-currency || true
   wp_as plugin activate pesapal-woocommerce || true
   wp_as plugin activate transactworld-payment-integration || true
+  wp_as plugin activate supreme-agent-intake || true
   # PayPal Payments stays OFF: the plugin was never onboarded (no connected PayPal
   # merchant account), so on product pages its SDK boot fails at
   # /?wc-ajax=ppc-sdk-v6-client-token with HTTP 500 and loads paypal.com scripts
