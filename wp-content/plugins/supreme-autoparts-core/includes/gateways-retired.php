@@ -19,10 +19,12 @@ declare(strict_types=1);
 
 defined('ABSPATH') || exit;
 
-/* Force the retired gateways' enabled flag off without writing the database. */
+/* Force the retired gateways' enabled flag off without writing the database.
+   Also blank the Whop gateway description: no processor branding at checkout. */
 add_filter('option_woocommerce_whop_settings', static function ($settings) {
     if (is_array($settings)) {
         $settings['enabled'] = 'no';
+        $settings['description'] = '';
     }
     return $settings;
 }, 99);
