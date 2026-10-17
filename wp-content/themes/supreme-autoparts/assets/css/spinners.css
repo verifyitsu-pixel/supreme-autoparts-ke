@@ -99,7 +99,7 @@
 }
 
 /* ---- Payment variant of the sitewide overlay: arc ring instead of the tyre ---- */
-#sa-loader.sa-loader--arc .sa-loader__wheel { display: none; }
+#sa-loader.sa-loader--arc .sa-loader__dots { display: none; }
 #sa-loader.sa-loader--arc .sa-loader__panel::before {
   content: "";
   display: block;
