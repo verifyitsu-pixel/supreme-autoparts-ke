@@ -100,6 +100,19 @@ add_filter('woocommerce_available_payment_gateways', static function ($gateways)
         unset($gateways['pesapal']);
         return $gateways;
     }
+    // 2026-10-18 (user answer relayed via the main agent): card (Whop) only offers
+    // bank wire above its per-checkout cap, so African customers with a cart above the cap
+    // are sent to Pesapal only. Cap is USD, env SA_WHOP_MAX_USD overrides (default 2500).
+    if ($is_africa && function_exists('WC') && WC()->cart) {
+        $cap = (float) (getenv('SA_WHOP_MAX_USD') !== false && getenv('SA_WHOP_MAX_USD') !== '' ? getenv('SA_WHOP_MAX_USD') : 2500);
+        if ((float) WC()->cart->get_total('edit') > $cap) {
+            unset($gateways['whop']);
+            if (WC()->session) {
+                WC()->session->set('chosen_payment_method', 'pesapal');
+            }
+            return $gateways;
+        }
+    }
     // Rock 2026-10-18: card (Whop) first and preselected for everyone, Pesapal second where offered.
     $first  = 'whop';
     $second = 'pesapal';
@@ -188,5 +201,21 @@ add_action('template_redirect', static function () {
     if ($country === '' && class_exists('WC_Geolocation')) {
         $country = (string) (WC_Geolocation::geolocate_ip()['country'] ?? '');
     }
-    WC()->session->set('chosen_payment_method', 'whop');
+    // Remember the last payment method (cookie set when an order is placed); default card.
+    $last = isset($_COOKIE['sa_last_pm']) ? sanitize_key(wp_unslash((string) $_COOKIE['sa_last_pm'])) : '';
+    WC()->session->set('chosen_payment_method', in_array($last, ['whop', 'pesapal'], true) ? $last : 'whop');
 });
+
+/* Remember the payment method the customer used on their last order (1 year). */
+add_action('woocommerce_checkout_order_processed', static function ($order_id, $posted = []) {
+    $method = is_array($posted) ? (string) ($posted['payment_method'] ?? '') : '';
+    if (in_array($method, ['whop', 'pesapal'], true) && !headers_sent()) {
+        setcookie('sa_last_pm', $method, [
+            'expires'  => time() + 365 * DAY_IN_SECONDS,
+            'path'     => '/',
+            'secure'   => true,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+    }
+}, 10, 2);
