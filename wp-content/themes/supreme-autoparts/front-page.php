@@ -96,22 +96,12 @@ if (!$sa_is_ke) {
       <?php
       $sa_ed_cats = ['brakes' => __('Brakes', 'supreme-autoparts'), 'suspension' => __('Suspension', 'supreme-autoparts'), 'engine' => __('Engine', 'supreme-autoparts'), 'air-intake' => __('Air intake', 'supreme-autoparts'), 'lighting' => __('Lighting', 'supreme-autoparts'), 'wheels' => __('Wheels', 'supreme-autoparts')];
       // Category tiles that need a clearer photo than the curated art or the latest-product
-      // pick: department slug => product slug whose real photo represents the department.
-      $sa_ed_tile_products = [
-          'engine' => 'turbosmart-ts-1-turbocharger-6466-v-band-1-07ar-externally-wastegated-reversed-rotation',
-          'interior' => 'sparco-seat-sprint-red',
-          'exterior' => 'ford-racing-mustang-fp350s-rear-wing-kit',
-          'exhaust' => 'corsa-25-26-ram-1500-rho-crew-cab-3-0l-turbo-cat-back-dual-rear-exit-w-5in-single-satin-pro-series',
-      ];
+      // pick: shared representative-product photos (see sa_category_tile_image()).
       $sa_ed_tile_imgs = [];
-      foreach ($sa_ed_tile_products as $sa_ed_ts => $sa_ed_tp) {
-          $sa_ed_tpp = get_page_by_path($sa_ed_tp, OBJECT, 'product');
-          $sa_ed_tpr = $sa_ed_tpp ? wc_get_product($sa_ed_tpp->ID) : null;
-          if ($sa_ed_tpr && $sa_ed_tpr->is_visible()) {
-              $sa_ed_tsrc = (string) $sa_ed_tpr->get_meta('_sa_shopify_image_src', true);
-              if (str_starts_with($sa_ed_tsrc, 'https://cdn.shopify.com/')) {
-                  $sa_ed_tile_imgs[$sa_ed_ts] = $sa_ed_tsrc;
-              }
+      foreach (sa_category_tile_products() as $sa_ed_ts => $sa_ed_tp) {
+          $sa_ed_timg = sa_category_tile_image($sa_ed_ts);
+          if ($sa_ed_timg !== '') {
+              $sa_ed_tile_imgs[$sa_ed_ts] = $sa_ed_timg;
           }
       }
       foreach ($sa_ed_cats as $slug => $label) : ?>
