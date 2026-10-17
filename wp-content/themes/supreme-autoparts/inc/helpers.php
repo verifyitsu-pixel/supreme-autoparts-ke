@@ -575,6 +575,32 @@ function sa_render_category_brand_picker(WP_Term $term): void
     if (is_wp_error($base)) {
         return;
     }
+    $active = [];
+    if (function_exists('sa_fx_state')) {
+        $st = sa_fx_state();
+        if (isset($st['brand']) && is_array($st['brand'])) {
+            $active = $st['brand'];
+        }
+    }
+    if ($active !== []) {
+        // A brand is selected: keep every brand one tap away as a compact
+        // chip row so products start near the top of the page.
+        ?>
+    <section class="sa-ed-sec sa-brand-picker sa-brand-picker--compact" aria-label="<?php echo esc_attr(sprintf(/* translators: %s: category name */ __('Shop %s by brand', 'supreme-autoparts'), $term->name)); ?>">
+      <div class="sa-container">
+        <div class="sa-bp-row">
+          <span class="sa-bp-label"><?php esc_html_e('Brand', 'supreme-autoparts'); ?></span>
+          <a class="sa-bp-chip" href="<?php echo esc_url($base); ?>"><?php esc_html_e('All brands', 'supreme-autoparts'); ?></a>
+          <?php foreach ($items as $it) : ?>
+            <?php $on = in_array($it['slug'], $active, true); ?>
+            <a class="sa-bp-chip<?php echo $on ? ' sa-bp-chip--active' : ''; ?>" href="<?php echo esc_url(add_query_arg('filter_brand', $it['slug'], $base)); ?>"<?php echo $on ? ' aria-current="true"' : ''; ?>><?php echo esc_html($it['name']); ?> <span class="sa-bp-chip__c"><?php echo esc_html(number_format_i18n($it['count'])); ?></span></a>
+          <?php endforeach; ?>
+        </div>
+      </div>
+    </section>
+        <?php
+        return;
+    }
     ?>
     <section class="sa-ed-sec sa-brand-picker" aria-labelledby="sa-brand-pick-h">
       <div class="sa-container">
