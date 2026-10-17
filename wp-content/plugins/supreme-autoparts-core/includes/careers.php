@@ -107,6 +107,9 @@ add_shortcode('sa_careers', static function (): string {
         echo '<div class="sa-svc-alert" role="alert">You have sent several applications in a short time. Please wait a few minutes and try again.</div>';
     }
 
+    // Jotform application form (CV upload lives there); native form below is the automatic fallback.
+    echo '<div class="sa-careers__jf" id="sa-jotform-wrap"><script src="https://form.jotform.com/jsform/262897629019169"></script></div>';
+    echo '<div id="sa-careers-native" hidden>';
     echo '<form class="sa-svc-form sa-sf-form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
     echo '<input type="hidden" name="action" value="sa_careers_apply">';
     wp_nonce_field('sa_careers_apply', 'sa_careers_nonce');
@@ -127,6 +130,11 @@ add_shortcode('sa_careers', static function (): string {
     echo '<button type="submit" class="sa-svc-btn sa-svc-btn--primary">Send application</button>';
     echo '<p class="sa-sf-note">No account needed. We only use your details to review your application.</p>';
     echo '</form>';
+    echo '</div>'; // #sa-careers-native
+    echo '<script>' . <<<'SAJFJS'
+(function(){var w=document.getElementById('sa-jotform-wrap');if(!w)return;function showNative(){var n=document.getElementById('sa-careers-native');if(n)n.hidden=false;w.style.display='none';}window.addEventListener('load',function(){setTimeout(function(){var f=w.querySelector('iframe');if(!f||f.offsetHeight<80)showNative();},6000);});})();
+SAJFJS
+        . '</script>';
     echo '</div>'; // .sa-careers__form
 
     echo '<script>' . <<<'SAJS'
