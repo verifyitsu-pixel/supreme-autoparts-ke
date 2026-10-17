@@ -36,7 +36,7 @@ function sa_cats_photo(int $term_id): string
 
 function sa_cats_data(): array
 {
-    $key = 'sa_cats_page_v1';
+    $key = 'sa_cats_page_v2';
     $c = get_transient($key);
     if (is_array($c)) {
         return $c;
@@ -69,7 +69,8 @@ function sa_cats_data(): array
             usort($kids, static fn($a, $b) => (int) $b->count <=> (int) $a->count);
             $d = $row($t);
             $d['s'] = $t->slug;
-            $d['img'] = in_array($t->slug, $ed, true) ? SA_THEME_URI . '/assets/images/home/ed/' . $t->slug . '.jpg' : sa_cats_photo((int) $t->term_id);
+            $sa_tile = function_exists('sa_category_tile_image') ? sa_category_tile_image($t->slug) : '';
+            $d['img'] = $sa_tile !== '' ? $sa_tile : (in_array($t->slug, $ed, true) ? SA_THEME_URI . '/assets/images/home/ed/' . $t->slug . '.jpg' : sa_cats_photo((int) $t->term_id));
             $d['kids'] = array_map($row, $kids);
             $dept[] = $d;
         } else {
@@ -90,9 +91,9 @@ function sa_cats_data(): array
     return $c;
 }
 
-add_action('edited_product_cat', static fn() => delete_transient('sa_cats_page_v1'));
-add_action('created_product_cat', static fn() => delete_transient('sa_cats_page_v1'));
-add_action('delete_product_cat', static fn() => delete_transient('sa_cats_page_v1'));
+add_action('edited_product_cat', static fn() => delete_transient('sa_cats_page_v2'));
+add_action('created_product_cat', static fn() => delete_transient('sa_cats_page_v2'));
+add_action('delete_product_cat', static fn() => delete_transient('sa_cats_page_v2'));
 
 add_filter('pre_get_document_title', static function ($t) {
     return sa_cats_is_request() ? __('All categories', 'supreme-autoparts') . ' | ' . get_bloginfo('name') : $t;
