@@ -111,7 +111,7 @@ add_action('template_redirect', static function (): void {
       <?php foreach ($brands as $b) : ?>
       <a class="sa-ed-brand" href="<?php echo esc_url($b['u']); ?>" data-sa-cx-item data-k="<?php echo esc_attr(strtolower($b['n'])); ?>">
         <span class="sa-ed-brand__im"><img src="<?php echo esc_url($b['img'] ?: $logo); ?>" alt="<?php echo esc_attr($b['n']); ?>" width="640" height="640" loading="lazy" decoding="async"<?php echo $b['img'] ? '' : ' class="is-fallback"'; ?> onerror="this.onerror=null;this.src='<?php echo esc_url($logo); ?>';this.classList.add('is-fallback')"></span>
-        <span class="sa-ed-brand__n"><?php echo esc_html($b['n']); ?><small><?php echo esc_html(sprintf(_n('%s part', '%s parts', $b['c'], 'supreme-autoparts'), number_format_i18n($b['c']))); ?></small></span>
+        <span class="sa-ed-brand__n"><?php echo esc_html($b['n']); ?> <small><?php echo esc_html(sprintf(_n('%s part', '%s parts', $b['c'], 'supreme-autoparts'), number_format_i18n($b['c']))); ?></small></span>
       </a>
       <?php endforeach; ?>
     </div>
