@@ -171,12 +171,40 @@ if ($sa_ed_products) : ?>
           $brand = strtok($pr->get_name(), ' ');
           $price = $pr->get_price() !== '' && (float) $pr->get_price() > 0 ? $pr->get_price_html() : esc_html__('Quote on request', 'supreme-autoparts');
           ?>
-        <a class="sa-ed-prod" href="<?php echo esc_url($pr->get_permalink()); ?>">
-          <span class="sa-ed-im"><?php if ($img) : ?><img src="<?php echo esc_url($img); ?>" alt="<?php echo esc_attr($pr->get_name()); ?>" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='<?php echo esc_url(SA_THEME_URI . '/assets/logo-light.png'); ?>';this.classList.add('is-fallback')"><?php endif; ?></span>
-          <small><?php echo esc_html($brand); ?></small>
-          <span class="sa-ed-prod__n"><?php echo esc_html($pr->get_name()); ?></span>
-          <span class="sa-ed-prod__p"><?php echo wp_kses_post($price); ?></span>
-        </a>
+        <div class="sa-ed-prod">
+          <a class="sa-ed-prod__link" href="<?php echo esc_url($pr->get_permalink()); ?>">
+            <span class="sa-ed-im"><?php if ($img) : ?><img src="<?php echo esc_url($img); ?>" alt="<?php echo esc_attr($pr->get_name()); ?>" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='<?php echo esc_url(SA_THEME_URI . '/assets/logo-light.png'); ?>';this.classList.add('is-fallback')"><?php endif; ?></span>
+            <small><?php echo esc_html($brand); ?></small>
+            <span class="sa-ed-prod__n"><?php echo esc_html($pr->get_name()); ?></span>
+            <span class="sa-ed-prod__p"><?php echo wp_kses_post($price); ?></span>
+          </a>
+          <span class="sa-ed-prod__actions sa-product-card__actions">
+            <?php
+            if ($pr->is_type('simple') && $pr->is_purchasable() && $pr->is_in_stock()) {
+                $sa_buy = add_query_arg(
+                    [
+                        'add-to-cart' => $pr->get_id(),
+                        'sa_buy_now'  => '1',
+                    ],
+                    $pr->get_permalink()
+                );
+                printf(
+                    '<a class="button sa-btn sa-btn--block sa-product-card__buy" href="%s">%s</a>',
+                    esc_url($sa_buy),
+                    esc_html__('Buy now', 'supreme-autoparts')
+                );
+            }
+            $sa_ed_prev_product = isset($GLOBALS['product']) ? $GLOBALS['product'] : null;
+            $GLOBALS['product'] = $pr;
+            woocommerce_template_loop_add_to_cart();
+            if ($sa_ed_prev_product instanceof WC_Product) {
+                $GLOBALS['product'] = $sa_ed_prev_product;
+            } else {
+                unset($GLOBALS['product']);
+            }
+            ?>
+          </span>
+        </div>
       <?php endforeach; ?>
     </div>
   </div>
