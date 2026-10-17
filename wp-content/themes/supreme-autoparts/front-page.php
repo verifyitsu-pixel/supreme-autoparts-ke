@@ -245,7 +245,7 @@ if (function_exists('sa_brand_logo_map')) {
 if ($sa_ed_brands !== []) : ?>
 <section class="sa-ed-sec sa-ed-brands" aria-labelledby="sa-ed-brands-h">
   <div class="sa-container">
-    <div class="sa-ed-head"><h2 id="sa-ed-brands-h"><?php esc_html_e('Shop by brand', 'supreme-autoparts'); ?></h2><a href="<?php echo esc_url(home_url('/product-category/brands/')); ?>"><?php esc_html_e('View all brands', 'supreme-autoparts'); ?> &rarr;</a></div>
+    <div class="sa-ed-head"><h2 id="sa-ed-brands-h"><?php esc_html_e('Shop by brand', 'supreme-autoparts'); ?></h2><a href="<?php echo esc_url(home_url('/brands/')); ?>"><?php esc_html_e('View all brands', 'supreme-autoparts'); ?> &rarr;</a></div>
     <div class="sa-ed-brandgrid">
       <?php foreach ($sa_ed_brands as $b) : ?>
         <a class="sa-ed-brand" href="<?php echo esc_url($b['url']); ?>">
@@ -254,11 +254,7 @@ if ($sa_ed_brands !== []) : ?>
         </a>
       <?php endforeach; ?>
       <?php
-      $sa_ed_allbrands_t = get_term_by('slug', 'brands', 'product_cat');
-      $sa_ed_allbrands_url = ($sa_ed_allbrands_t && !is_wp_error($sa_ed_allbrands_t)) ? get_term_link($sa_ed_allbrands_t) : '';
-      if (!is_string($sa_ed_allbrands_url) || $sa_ed_allbrands_url === '') {
-          $sa_ed_allbrands_url = $sa_shop_url;
-      }
+      $sa_ed_allbrands_url = home_url('/brands/');
       ?>
       <a class="sa-ed-brand" href="<?php echo esc_url($sa_ed_allbrands_url); ?>">
         <span class="sa-ed-brand__im"><img src="https://supreme-mods.com/cdn/shop/t/6/assets/shop-all-brands.jpg?v=71672433036115235571712041050" alt="<?php esc_attr_e('View all brands', 'supreme-autoparts'); ?>" loading="lazy" decoding="async"></span>
