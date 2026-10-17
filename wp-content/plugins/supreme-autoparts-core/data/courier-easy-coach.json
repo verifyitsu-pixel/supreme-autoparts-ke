@@ -1,0 +1,383 @@
+{
+ "courier": "Easy Coach",
+ "slug": "easy-coach",
+ "service": "pickup_only",
+ "fee": "fargo_card",
+ "door_surcharge_kes": 0,
+ "source": {
+  "url": "https://easycoachkenya.com/",
+  "note": "Town list from the booking widget on Easy Coach's own site (pickup/dropoff option lists, 41 towns). Parcel division: 'over 30 branches', same-day/24h delivery, tariffs on https://easycoachkenya.com/parcel. Street addresses per office not published on their site; town-level stations until Rock supplies their booklet.",
+  "synced": "2026-10-17"
+ },
+ "stations": [
+  {
+   "name": "Easy Coach Awendo office",
+   "town": "Awendo",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Bomet office",
+   "town": "Bomet",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Bondo office",
+   "town": "Bondo",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Bumala office",
+   "town": "Bumala",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Bungoma office",
+   "town": "Bungoma",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Busia office",
+   "town": "Busia",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Butere office",
+   "town": "Butere",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Eldoret office",
+   "town": "Eldoret",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Homabay office",
+   "town": "Homabay",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Kaimosi office",
+   "town": "Kaimosi",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Kakamega office",
+   "town": "Kakamega",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Kapsabet office",
+   "town": "Kapsabet",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Kehancha office",
+   "town": "Kehancha",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Kendubay office",
+   "town": "Kendubay",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Kericho office",
+   "town": "Kericho",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Keroka office",
+   "town": "Keroka",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Kimilili office",
+   "town": "Kimilili",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Kisii office",
+   "town": "Kisii",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Kisumu office",
+   "town": "Kisumu",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Kitale office",
+   "town": "Kitale",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Malaba office",
+   "town": "Malaba",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Maseno office",
+   "town": "Maseno",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Mbale office",
+   "town": "Mbale",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Mbita office",
+   "town": "Mbita",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Migori office",
+   "town": "Migori",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Moi's Bridge office",
+   "town": "Moi's Bridge",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Mumias office",
+   "town": "Mumias",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Nairobi office",
+   "town": "Nairobi",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Nakuru office",
+   "town": "Nakuru",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Narok office",
+   "town": "Narok",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Ndhiwa office",
+   "town": "Ndhiwa",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Ndori office",
+   "town": "Ndori",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Oyugis office",
+   "town": "Oyugis",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Rodikopany office",
+   "town": "Rodikopany",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Rongo office",
+   "town": "Rongo",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Siaya office",
+   "town": "Siaya",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Sirare office",
+   "town": "Sirare",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Sori office",
+   "town": "Sori",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Ugunja office",
+   "town": "Ugunja",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Usenge office",
+   "town": "Usenge",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Easy Coach Webuye office",
+   "town": "Webuye",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  }
+ ]
+}
