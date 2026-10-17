@@ -1,0 +1,556 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ---------------------------------------------------------------------------
+# Map Railway MySQL plugin → WordPress DB env
+# ---------------------------------------------------------------------------
+if [[ -z "${WORDPRESS_DB_HOST:-}" && -n "${MYSQLHOST:-}" ]]; then
+  export WORDPRESS_DB_HOST="${MYSQLHOST}:${MYSQLPORT:-3306}"
+fi
+[[ -z "${WORDPRESS_DB_USER:-}" && -n "${MYSQLUSER:-}" ]] && export WORDPRESS_DB_USER="$MYSQLUSER"
+[[ -z "${WORDPRESS_DB_PASSWORD:-}" && -n "${MYSQLPASSWORD:-}" ]] && export WORDPRESS_DB_PASSWORD="$MYSQLPASSWORD"
+[[ -z "${WORDPRESS_DB_NAME:-}" && -n "${MYSQLDATABASE:-}" ]] && export WORDPRESS_DB_NAME="$MYSQLDATABASE"
+# Runtime guard: ensure Apache starts with only prefork MPM.
+rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf 2>/dev/null || true
+a2enmod mpm_prefork >/dev/null 2>&1 || true
+
+export WORDPRESS_DB_HOST="${WORDPRESS_DB_HOST:-db:3306}"
+export WORDPRESS_DB_USER="${WORDPRESS_DB_USER:-wordpress}"
+export WORDPRESS_DB_PASSWORD="${WORDPRESS_DB_PASSWORD:-wordpress}"
+export WORDPRESS_DB_NAME="${WORDPRESS_DB_NAME:-wordpress}"
+export WP_HOME="${WP_HOME:-http://localhost:8080}"
+export WP_SITEURL="${WP_SITEURL:-${WP_HOME}}"
+export WOO_CURRENCY="${WOO_CURRENCY:-USD}"
+export SA_CHECKOUT_CURRENCY="${SA_CHECKOUT_CURRENCY:-USD}"
+export SA_GEO_CURRENCY="${SA_GEO_CURRENCY:-1}"
+export TZ="${TZ:-Africa/Nairobi}"
+export WORDPRESS_ADMIN_USER="${WORDPRESS_ADMIN_USER:-admin}"
+export WORDPRESS_ADMIN_PASSWORD="${WORDPRESS_ADMIN_PASSWORD:-adminpass}"
+export WORDPRESS_ADMIN_EMAIL="${WORDPRESS_ADMIN_EMAIL:-calvin@supremeautoparts.co.ke}"
+export WORDPRESS_TITLE="${WORDPRESS_TITLE:-Supreme Autoparts}"
+
+export WORDPRESS_CONFIG_EXTRA="${WORDPRESS_CONFIG_EXTRA:-}
+if (!defined('WP_HOME')) define('WP_HOME', getenv('WP_HOME') ?: 'http://localhost:8080');
+if (!defined('WP_SITEURL')) define('WP_SITEURL', getenv('WP_SITEURL') ?: WP_HOME);
+if (!defined('FS_METHOD')) define('FS_METHOD', 'direct');
+if (!defined('DISALLOW_FILE_EDIT')) define('DISALLOW_FILE_EDIT', true);
+if (!defined('DISALLOW_FILE_MODS')) define('DISALLOW_FILE_MODS', false);
+// WP-Cron stays off the web request path: a WP-CLI loop in this entrypoint runs due events every minute.
+if (!defined('DISABLE_WP_CRON')) define('DISABLE_WP_CRON', true);
+if (!defined('WP_CACHE')) define('WP_CACHE', true);
+if (!defined('SA_AGENT_INTAKE_TOKEN') && getenv('SA_AGENT_INTAKE_TOKEN')) define('SA_AGENT_INTAKE_TOKEN', getenv('SA_AGENT_INTAKE_TOKEN'));
+if (!defined('SA_JOTFORM_API_KEY') && getenv('SA_JOTFORM_API_KEY')) define('SA_JOTFORM_API_KEY', getenv('SA_JOTFORM_API_KEY'));
+if (!defined('FORCE_SSL_ADMIN') && str_starts_with((string) (getenv('WP_HOME') ?: ''), 'https://')) {
+  define('FORCE_SSL_ADMIN', true);
+}
+"
+
+# Atomic, no-downtime replacement of a baked directory. The old code did rm -rf + cp -a while
+# Apache was already serving, so requests hit a missing/half-copied WooCommerce (HTTP 500:
+# "Class WC_Breadcrumb not found", "undefined function is_checkout()"). Now: skip when
+# identical, otherwise copy aside then swap with two renames.
+swap_dir() {
+  local src="$1" dst="$2" tmp old
+  [[ -d "$src" ]] || return 0
+  if [[ -d "$dst" ]] && diff -rq "$src" "$dst" >/dev/null 2>&1; then
+    return 0
+  fi
+  tmp="/var/www/html/wp-content/.sa-swap-new-$$-$(basename "$dst")"
+  old="/var/www/html/wp-content/.sa-swap-old-$$-$(basename "$dst")"
+  rm -rf "$tmp" "$old"
+  if ! cp -a "$src" "$tmp"; then rm -rf "$tmp"; return 1; fi
+  chown -R www-data:www-data "$tmp" 2>/dev/null || true
+  if [[ -d "$dst" ]]; then mv "$dst" "$old"; fi
+  mv "$tmp" "$dst"
+  rm -rf "$old"
+}
+
+sync_custom_content() {
+  mkdir -p /var/www/html/wp-content/themes /var/www/html/wp-content/plugins /var/www/html/wp-content/mu-plugins
+  # SA: uploads dir (volume is root-owned) must be writable by Apache/www-data, else all uploads fail.
+  mkdir -p /var/www/html/wp-content/uploads
+  chown -R www-data:www-data /var/www/html/wp-content/uploads 2>/dev/null || true
+  chmod -R u+rwX,g+rwX /var/www/html/wp-content/uploads 2>/dev/null || true
+  # WooCommerce baked into image — always restore onto runtime volume first.
+  if [[ -d /usr/src/wordpress/wp-content/plugins/woocommerce ]]; then
+    swap_dir /usr/src/wordpress/wp-content/plugins/woocommerce /var/www/html/wp-content/plugins/woocommerce
+  fi
+  if [[ -d /usr/src/wordpress/wp-content/themes/supreme-autoparts ]]; then
+    swap_dir /usr/src/wordpress/wp-content/themes/supreme-autoparts /var/www/html/wp-content/themes/supreme-autoparts
+  fi
+  if [[ -d /usr/src/wordpress/wp-content/plugins/supreme-autoparts-core ]]; then
+    swap_dir /usr/src/wordpress/wp-content/plugins/supreme-autoparts-core /var/www/html/wp-content/plugins/supreme-autoparts-core
+  fi
+  if [[ -d /usr/src/wordpress/wp-content/plugins/whop-payments ]]; then
+    swap_dir /usr/src/wordpress/wp-content/plugins/whop-payments /var/www/html/wp-content/plugins/whop-payments
+  fi
+  if [[ -d /usr/src/wordpress/wp-content/plugins/sa-brevo-mail ]]; then
+    swap_dir /usr/src/wordpress/wp-content/plugins/sa-brevo-mail /var/www/html/wp-content/plugins/sa-brevo-mail
+  fi
+  if [[ -d /usr/src/wordpress/wp-content/plugins/sa-geo-currency ]]; then
+    swap_dir /usr/src/wordpress/wp-content/plugins/sa-geo-currency /var/www/html/wp-content/plugins/sa-geo-currency
+  fi
+  for gw in pesapal-woocommerce transactworld-payment-integration woocommerce-paypal-payments jotform-ai-chatbot supreme-agent-intake; do
+    if [[ -d /usr/src/wordpress/wp-content/plugins/$gw ]]; then
+      swap_dir "/usr/src/wordpress/wp-content/plugins/$gw" "/var/www/html/wp-content/plugins/$gw"
+      chown -R www-data:www-data "/var/www/html/wp-content/plugins/$gw" 2>/dev/null || true
+    fi
+  done
+  [[ -f /usr/src/wordpress/wp-content/mu-plugins/supreme-gateways-env.php ]] && cp -f /usr/src/wordpress/wp-content/mu-plugins/supreme-gateways-env.php /var/www/html/wp-content/mu-plugins/ || true
+  if [[ -f /usr/src/wordpress/wp-content/mu-plugins/supreme-loader.php ]]; then
+    cp -f /usr/src/wordpress/wp-content/mu-plugins/supreme-loader.php /var/www/html/wp-content/mu-plugins/ || true
+  fi
+  if [[ -f /usr/src/wordpress/wp-content/mu-plugins/supreme-security.php ]]; then
+    cp -f /usr/src/wordpress/wp-content/mu-plugins/supreme-security.php /var/www/html/wp-content/mu-plugins/ || true
+  fi
+  if [[ -f /usr/src/wordpress/wp-content/mu-plugins/supreme-whop-pixel.php ]]; then
+    cp -f /usr/src/wordpress/wp-content/mu-plugins/supreme-whop-pixel.php /var/www/html/wp-content/mu-plugins/ || true
+  fi
+  if [[ -f /usr/src/wordpress/wp-content/mu-plugins/supreme-meta-pixel.php ]]; then
+    cp -f /usr/src/wordpress/wp-content/mu-plugins/supreme-meta-pixel.php /var/www/html/wp-content/mu-plugins/ || true
+  fi
+  [[ -f /usr/src/wordpress/healthz.php ]] && cp -f /usr/src/wordpress/healthz.php /var/www/html/healthz.php
+  if [[ -d /usr/src/supreme-data ]]; then
+    mkdir -p /var/www/html/wp-content/plugins/supreme-autoparts-core/data
+    cp -a /usr/src/supreme-data/. /var/www/html/wp-content/plugins/supreme-autoparts-core/data/ || true
+  fi
+  if [[ -d /usr/src/supreme-scripts ]]; then
+    mkdir -p /var/www/html/wp-content/plugins/supreme-autoparts-core/scripts
+    cp -a /usr/src/supreme-scripts/. /var/www/html/wp-content/plugins/supreme-autoparts-core/scripts/ || true
+    # Also expose at /var/www/html/scripts for ops + boot (symlink preferred, copy fallback).
+    mkdir -p /var/www/html/scripts
+    if [[ ! -e /var/www/html/scripts/apply-branding-logos.sh ]]; then
+      ln -sfn /usr/src/supreme-scripts/apply-branding-logos.sh /var/www/html/scripts/apply-branding-logos.sh 2>/dev/null \
+        || cp -f /usr/src/supreme-scripts/apply-branding-logos.sh /var/www/html/scripts/apply-branding-logos.sh || true
+    else
+      # Refresh symlink/copy so deploys pick up script updates.
+      ln -sfn /usr/src/supreme-scripts/apply-branding-logos.sh /var/www/html/scripts/apply-branding-logos.sh 2>/dev/null \
+        || cp -f /usr/src/supreme-scripts/apply-branding-logos.sh /var/www/html/scripts/apply-branding-logos.sh || true
+    fi
+    chmod +x /usr/src/supreme-scripts/apply-branding-logos.sh \
+      /var/www/html/scripts/apply-branding-logos.sh \
+      /var/www/html/wp-content/plugins/supreme-autoparts-core/scripts/apply-branding-logos.sh 2>/dev/null || true
+  fi
+  chown -R www-data:www-data \
+    /var/www/html/wp-content/themes/supreme-autoparts \
+    /var/www/html/wp-content/plugins/woocommerce \
+    /var/www/html/wp-content/plugins/supreme-autoparts-core \
+    /var/www/html/wp-content/plugins/whop-payments \
+    /var/www/html/wp-content/plugins/sa-brevo-mail \
+    /var/www/html/wp-content/plugins/sa-geo-currency 2>/dev/null || true
+}
+
+wait_for_db() {
+  local host port
+  host="${WORDPRESS_DB_HOST%%:*}"
+  port="${WORDPRESS_DB_HOST##*:}"
+  [[ "$host" == "$port" ]] && port=3306
+  echo "[supreme] Waiting for MySQL at ${host}:${port}..."
+  for _ in $(seq 1 90); do
+    if mysqladmin ping -h"$host" -P"$port" -u"$WORDPRESS_DB_USER" -p"$WORDPRESS_DB_PASSWORD" --silent 2>/dev/null; then
+      echo "[supreme] MySQL ready."
+      return 0
+    fi
+    sleep 2
+  done
+  echo "[supreme] WARNING: MySQL not reachable after wait." >&2
+  return 1
+}
+
+wp_as() {
+  wp --allow-root --path=/var/www/html "$@"
+}
+
+
+ensure_woocommerce() {
+  # Never skip: missing on disk OR not active → restore/install then activate.
+  # Always re-sync baked Woo from image first (volume can lag behind new deploys).
+  if [[ -d /usr/src/wordpress/wp-content/plugins/woocommerce ]]; then
+    echo "[supreme] Syncing baked WooCommerce from image onto volume..."
+    mkdir -p /var/www/html/wp-content/plugins
+    swap_dir /usr/src/wordpress/wp-content/plugins/woocommerce /var/www/html/wp-content/plugins/woocommerce
+    chown -R www-data:www-data /var/www/html/wp-content/plugins/woocommerce 2>/dev/null || true
+  fi
+
+  if [[ ! -f /var/www/html/wp-content/plugins/woocommerce/woocommerce.php ]]; then
+    echo "[supreme] WooCommerce missing on disk — installing from wordpress.org (11.1.0)..."
+    wp_as plugin install woocommerce --version=11.1.0 --force || wp_as plugin install woocommerce --force || true
+  fi
+
+  # Activate if missing from active list — never skip this check.
+  if ! wp_as plugin is-active woocommerce 2>/dev/null; then
+    echo "[supreme] Activating WooCommerce..."
+    wp_as plugin activate woocommerce || true
+  else
+    echo "[supreme] WooCommerce already active."
+  fi
+
+  if [[ ! -f /var/www/html/wp-content/plugins/woocommerce/woocommerce.php ]]; then
+    echo "[supreme] ERROR: WooCommerce still missing after ensure_woocommerce" >&2
+    return 1
+  fi
+  if ! wp_as plugin is-active woocommerce 2>/dev/null; then
+    echo "[supreme] ERROR: WooCommerce present but not active — retrying activate" >&2
+    wp_as plugin activate woocommerce || true
+  fi
+  echo "[supreme] WooCommerce on disk + active check done."
+}
+
+# ---------------------------------------------------------------------------
+# Admin account: NEVER reset the password on boot/deploy.
+# Previously every boot ran `wp user update --user_pass=...`, which re-hashed the
+# password and made WordPress email "[Supreme Autoparts] Password Changed" on
+# EVERY deploy (and reverted any password the owner set in wp-admin).
+#   - Admin user missing  -> create it with WORDPRESS_ADMIN_PASSWORD (no email).
+#   - Admin user present  -> leave the password alone. Only if
+#     SUPREME_ADMIN_PASSWORD_SYNC=1 AND the stored hash does not already match
+#     WORDPRESS_ADMIN_PASSWORD is it re-set — silently (no email, sessions kept).
+# ---------------------------------------------------------------------------
+ensure_admin_account() {
+  local pw="${WORDPRESS_ADMIN_PASSWORD:-}"
+  if ! wp_as user get "$WORDPRESS_ADMIN_USER" --field=ID >/dev/null 2>&1; then
+    if [[ -n "$pw" && "$pw" != "adminpass" && "$pw" != "change-me-strong" ]]; then
+      echo "[supreme] Admin user $WORDPRESS_ADMIN_USER missing — creating it (no email)."
+      wp_as user create "$WORDPRESS_ADMIN_USER" "$WORDPRESS_ADMIN_EMAIL" --role=administrator \
+        --user_pass="$pw" 2>/dev/null || echo "[supreme] WARN: could not create admin $WORDPRESS_ADMIN_USER" >&2
+    fi
+    return 0
+  fi
+  if [[ "${SUPREME_ADMIN_PASSWORD_SYNC:-0}" != "1" ]]; then
+    echo "[supreme] Admin password left unchanged (set SUPREME_ADMIN_PASSWORD_SYNC=1 to force a one-off silent sync)."
+    return 0
+  fi
+  if [[ -z "$pw" || "$pw" == "adminpass" || "$pw" == "change-me-strong" ]]; then
+    return 0
+  fi
+  SA_SYNC_USER="$WORDPRESS_ADMIN_USER" SA_SYNC_PW="$pw" wp_as eval '
+$u = get_user_by("login", getenv("SA_SYNC_USER"));
+$pw = (string) getenv("SA_SYNC_PW");
+if (!$u || $pw === "") { echo "admin_sync_skipped\n"; return; }
+if (wp_check_password($pw, $u->user_pass, $u->ID)) { echo "admin_password_already_matches\n"; return; }
+global $wpdb;
+$wpdb->update($wpdb->users, ["user_pass" => wp_hash_password($pw), "user_activation_key" => ""], ["ID" => $u->ID]);
+clean_user_cache($u);
+echo "admin_password_synced_silently\n";
+' 2>/dev/null || echo "[supreme] WARN: admin password sync check failed" >&2
+}
+
+bootstrap_wordpress() {
+  # Wait until core files + wp-config exist (official entrypoint creates them)
+  for _ in $(seq 1 60); do
+    [[ -f /var/www/html/wp-settings.php && -f /var/www/html/wp-config.php ]] && break
+    sleep 2
+  done
+  sync_custom_content
+  wait_for_db || true
+
+  if ! wp_as core is-installed 2>/dev/null; then
+    echo "[supreme] Running wp core install..."
+    wp_as core install \
+      --url="$WP_HOME" \
+      --title="$WORDPRESS_TITLE" \
+      --admin_user="$WORDPRESS_ADMIN_USER" \
+      --admin_password="$WORDPRESS_ADMIN_PASSWORD" \
+      --admin_email="$WORDPRESS_ADMIN_EMAIL" \
+      --skip-email || true
+  else
+    echo "[supreme] WordPress already installed — syncing URLs and admin email from env (admin password is NOT touched on boot)."
+    wp_as option update home "$WP_HOME" || true
+    wp_as option update siteurl "$WP_SITEURL" || true
+    wp_as option update admin_email "$WORDPRESS_ADMIN_EMAIL" || true
+    wp_as user update "$WORDPRESS_ADMIN_USER" --user_email="$WORDPRESS_ADMIN_EMAIL" --skip-email 2>/dev/null || true
+    ensure_admin_account
+  fi
+
+  wp_as option update timezone_string "Africa/Nairobi" || true
+  wp_as rewrite structure '/%postname%/' --hard || true
+
+  # Woo MUST be on disk + active before any other boot work (never skip).
+  ensure_woocommerce
+
+  wp_as plugin activate supreme-autoparts-core || true
+  wp_as plugin activate whop-payments || true
+  wp_as plugin activate sa-brevo-mail || true
+  wp_as plugin activate sa-geo-currency || true
+  wp_as plugin activate pesapal-woocommerce || true
+  wp_as plugin activate transactworld-payment-integration || true
+  wp_as plugin activate supreme-agent-intake || true
+  # PayPal Payments stays OFF: the plugin was never onboarded (no connected PayPal
+  # merchant account), so on product pages its SDK boot fails at
+  # /?wc-ajax=ppc-sdk-v6-client-token with HTTP 500 and loads paypal.com scripts
+  # for nothing. Files stay baked in the image; to go live later, complete PayPal
+  # onboarding (WooCommerce > Settings > Payments > PayPal) and restore
+  # 'plugin activate' here.
+  wp_as plugin deactivate woocommerce-paypal-payments || true
+  wp_as plugin is-active jotform-ai-chatbot 2>/dev/null || wp_as plugin activate jotform-ai-chatbot || true
+  # Diagnostics only (no secrets): classify why embed may not print.
+  wp_as eval '
+$o=json_decode((string)get_option("jotform_ai_chatbot_options"),true)?:[];
+$raw=(string)($o["embed"]??"");
+$dec=$raw!==""?strip_tags(rawurldecode(base64_decode($raw)),"<script>"):"";
+$kind="empty";
+if($dec!==""){
+  if(strpos($dec,"AgentInitializer")!==false)$kind="legacy_AgentInitializer";
+  elseif(preg_match("/<script[^>]+src=/i",$dec))$kind="script_src";
+  elseif(preg_match("/<script/i",$dec))$kind="script_no_src";
+  else $kind="other_len_".strlen($dec);
+}
+$p=$o["pages"]??null;
+$show=(!isset($o["pages"])||$o["pages"]===null||$o["pages"]===""||$o["pages"]===[]||$o["pages"]==="[]");
+echo "[supreme] jotform: active=".(is_plugin_active("jotform-ai-chatbot/jotform-ai-chatbot.php")?"yes":"no")
+  ." agentId=".(empty($o["agentId"])?"EMPTY":"set")
+  ." embed_kind=".$kind
+  ." device=".var_export($o["device"]??null,true)
+  ." pages_missing_or_empty=".($show?"yes":"no")
+  ." pages=".(is_string($p)?substr($p,0,120):json_encode($p))
+  ."\n";
+' 2>&1 | head -5 || true
+  wp_as theme activate supreme-autoparts || true
+
+  # Enable Whop gateway when Railway/env credentials are present.
+  if [[ -n "${WHOP_API_KEY:-}" && -n "${WHOP_COMPANY_ID:-}" ]]; then
+    echo "[supreme] WHOP_* env set — enabling Whop payment gateway (webhook: https://www.supremeautoparts.co.ke/?wc-api=whop_webhook)"
+    wp_as eval '
+$s = get_option("woocommerce_whop_settings", []);
+if (!is_array($s)) { $s = []; }
+$s["enabled"] = "yes";
+if (empty($s["title"])) { $s["title"] = "Whop Checkout"; }
+if (empty($s["description"])) {
+  $s["description"] = "Pay securely with Whop — cards (Visa, Mastercard) and supported local methods.";
+}
+update_option("woocommerce_whop_settings", $s);
+echo "whop_enabled\n";
+' || true
+  else
+    echo "[supreme] WHOP_API_KEY / WHOP_COMPANY_ID not set — Whop gateway left as-is (configure later)."
+  fi
+
+  wp_as option update woocommerce_currency "${SA_CHECKOUT_CURRENCY:-$WOO_CURRENCY}" || true
+  # Default customer location = Geolocate (with page caching support).
+  wp_as option update woocommerce_default_customer_address "geolocation" || true
+  # Ensure store base currency stays USD for Whop (sa-geo-currency display is separate).
+  echo "[supreme] Store currency=$(wp_as option get woocommerce_currency 2>/dev/null || echo ?) customer_address=$(wp_as option get woocommerce_default_customer_address 2>/dev/null || echo ?) SA_GEO_CURRENCY=${SA_GEO_CURRENCY:-1}"
+
+  # One-shot: fix catalog amounts stored as Shopify USD × SUPREME_USD_TO_KES after USD switch.
+  REPAIR_DONE="$(wp_as option get sa_price_usd_repair_v1 2>/dev/null || true)"
+  if [[ "${REPAIR_DONE}" != "1" ]]; then
+    echo "[supreme] Repairing inflated USD catalog prices (legacy ×KES import)..."
+    if wp_as supreme repair_prices 2>/dev/null; then
+      echo "[supreme] Price repair finished (flag sa_price_usd_repair_v1)."
+    else
+      echo "[supreme] Price repair CLI unavailable — PHP init hook will retry."
+    fi
+  fi
+
+  wp_as option update woocommerce_default_country "US" || true
+  wp_as option update woocommerce_currency_pos "left" || true
+  wp_as option update woocommerce_price_thousand_sep "," || true
+  wp_as option update woocommerce_price_decimal_sep "." || true
+  wp_as option update woocommerce_price_num_decimals "2" || true
+  wp_as option update woocommerce_store_city "" || true
+  # Durable guest checkout (redeploys must not wipe — also enforced in mu-plugin/core).
+  wp_as option update woocommerce_enable_guest_checkout "yes" || true
+  wp_as option update woocommerce_enable_checkout_login_reminder "yes" || true
+  # Optional account from checkout (checkbox) — never require registration to place order.
+  wp_as option update woocommerce_enable_signup_and_login_from_checkout "yes" || true
+  wp_as option update woocommerce_enable_myaccount_registration "yes" || true
+
+  if [[ "${SUPREME_SEED_ON_BOOT:-1}" == "1" ]]; then
+    wp_as supreme seed_categories 2>/dev/null || true
+    wp_as supreme seed_pages 2>/dev/null || true
+  fi
+
+  # Force customer-service email + www URLs (apex may be unbound on Railway).
+  wp_as option update admin_email "${WORDPRESS_ADMIN_EMAIL}" || true
+  wp_as option update woocommerce_email_from_address "${WORDPRESS_ADMIN_EMAIL}" || true
+  wp_as option update woocommerce_email_from_name "Supreme Autoparts" || true
+  wp_as option update sa_brevo_sender_name "Supreme Autoparts" || true
+  # Force www — apex is unbound on Railway (Application not found).
+  WWW_HOME="https://www.supremeautoparts.co.ke"
+  wp_as option update home "$WWW_HOME" || true
+  wp_as option update siteurl "$WWW_HOME" || true
+  wp_as option update woocommerce_enable_myaccount_registration yes || true
+  wp_as option update woocommerce_enable_signup_and_login_from_checkout yes || true
+  wp_as option update users_can_register 1 || true
+  wp_as option update woocommerce_enable_checkout_login_reminder yes || true
+  # Email: Brevo plugin reads BREVO_API_KEY / BREVO_SMTP_* from env.
+  echo "[supreme] Email From: Supreme Autoparts <${WORDPRESS_ADMIN_EMAIL}> — set BREVO_API_KEY for transactional delivery"
+
+  # Ensure product_cat terms exist before rewrite flush / import.
+  wp_as supreme seed_categories 2>/dev/null || true
+
+  # Catalog recovery: wipe stuck boot-import flags when products are gone or forced.
+  # SUPREME_FORCE_IMPORT=1 → clear sa_boot_import_* and re-import even if catalog non-empty.
+  PRODUCT_COUNT="$(wp_as post list --post_type=product --post_status=publish --format=count 2>/dev/null || echo 0)"
+  PRODUCT_COUNT="$(echo "$PRODUCT_COUNT" | tr -cd "0-9")"
+  PRODUCT_COUNT="${PRODUCT_COUNT:-0}"
+  echo "[supreme] Published product count: ${PRODUCT_COUNT}"
+
+  if [[ "${SUPREME_FORCE_IMPORT:-0}" == "1" ]]; then
+    echo "[supreme] SUPREME_FORCE_IMPORT=1 — clearing sa_boot_import_* flags"
+    wp_as option delete sa_boot_import_done >/dev/null 2>&1 || true
+    wp_as option delete sa_boot_import_batch50 >/dev/null 2>&1 || true
+    wp_as option delete sa_boot_import_running >/dev/null 2>&1 || true
+    wp_as option delete sa_boot_import_running_at >/dev/null 2>&1 || true
+  elif [[ "$PRODUCT_COUNT" -eq 0 ]]; then
+    echo "[supreme] Catalog empty — resetting sa_boot_import_* so boot re-import runs"
+    wp_as option delete sa_boot_import_done >/dev/null 2>&1 || true
+    wp_as option delete sa_boot_import_batch50 >/dev/null 2>&1 || true
+    wp_as option delete sa_boot_import_running >/dev/null 2>&1 || true
+    wp_as option delete sa_boot_import_running_at >/dev/null 2>&1 || true
+  fi
+
+  # Optional catalog import from baked scrape chunk (Shopify CDN photos only).
+  # Prefer batch-with-images-400 when present, else batch-with-images-50.
+  # Triggers when: SUPREME_FORCE_IMPORT=1, SUPREME_IMPORT_ON_BOOT=1, catalog empty, or first boot.
+  BOOT_IMPORT_DONE="$(wp_as option get sa_boot_import_done 2>/dev/null || true)"
+  if [[ -z "$BOOT_IMPORT_DONE" ]]; then
+    BOOT_IMPORT_DONE="$(wp_as option get sa_boot_import_batch50 2>/dev/null || true)"
+  fi
+  NEED_IMPORT=0
+  if [[ "${SUPREME_FORCE_IMPORT:-0}" == "1" ]]; then NEED_IMPORT=1; fi
+  if [[ "${SUPREME_IMPORT_ON_BOOT:-0}" == "1" ]]; then NEED_IMPORT=1; fi
+  if [[ "$PRODUCT_COUNT" -eq 0 ]]; then NEED_IMPORT=1; fi
+  if [[ -z "${BOOT_IMPORT_DONE}" ]]; then NEED_IMPORT=1; fi
+
+  if [[ "$NEED_IMPORT" == "1" ]]; then
+    IMPORT_FILE="${SUPREME_IMPORT_FILE:-}"
+    if [[ -z "$IMPORT_FILE" ]]; then
+      # Prefer small/medium batches — never auto-pick 2000 (set SUPREME_IMPORT_FILE explicitly for that).
+      for c in \
+        /var/www/html/wp-content/plugins/supreme-autoparts-core/data/scrape/chunks/batch-with-images-400.ndjson \
+        /usr/src/supreme-data/scrape/chunks/batch-with-images-400.ndjson \
+        /var/www/html/data/scrape/chunks/batch-with-images-400.ndjson \
+        /var/www/html/wp-content/plugins/supreme-autoparts-core/data/scrape/chunks/batch-with-images-50.ndjson \
+        /usr/src/supreme-data/scrape/chunks/batch-with-images-50.ndjson \
+        /var/www/html/data/scrape/chunks/batch-with-images-50.ndjson
+      do
+        if [[ -r "$c" ]]; then IMPORT_FILE="$c"; break; fi
+      done
+    fi
+    # Safe defaults: one category family first (brakes), small limit — not a blind 2000 dump.
+    # Set SUPREME_IMPORT_CATEGORY=all (or empty with explicit LIMIT) to import unscoped.
+    IMPORT_CATEGORY="${SUPREME_IMPORT_CATEGORY:-brakes}"
+    if [[ "$IMPORT_CATEGORY" == "all" || "$IMPORT_CATEGORY" == "*" || "$IMPORT_CATEGORY" == "any" ]]; then
+      IMPORT_CATEGORY=""
+    fi
+    if [[ -z "${SUPREME_IMPORT_LIMIT:-}" ]]; then
+      if [[ -n "$IMPORT_CATEGORY" ]]; then
+        IMPORT_LIMIT=50
+      elif [[ "$IMPORT_FILE" == *batch-with-images-400* ]]; then
+        IMPORT_LIMIT=100
+      else
+        IMPORT_LIMIT=50
+      fi
+    else
+      IMPORT_LIMIT="${SUPREME_IMPORT_LIMIT}"
+    fi
+    SKIP_IMG_FLAG=()
+    # Default: store CDN meta + sideload. Set SUPREME_IMPORT_SKIP_IMAGES=1 for CDN-meta-only (faster boot).
+    if [[ "${SUPREME_IMPORT_SKIP_IMAGES:-0}" == "1" ]]; then
+      SKIP_IMG_FLAG=(--skip-images)
+    fi
+    CATEGORY_FLAG=()
+    if [[ -n "$IMPORT_CATEGORY" ]]; then
+      CATEGORY_FLAG=(--category="$IMPORT_CATEGORY")
+    fi
+    MAPPING_FLAG=()
+    if [[ -n "${SUPREME_IMPORT_MAPPING:-}" && -r "${SUPREME_IMPORT_MAPPING}" ]]; then
+      MAPPING_FLAG=(--mapping="$SUPREME_IMPORT_MAPPING")
+    elif [[ -r /var/www/html/wp-content/plugins/supreme-autoparts-core/data/product-type-parent-map.json ]]; then
+      MAPPING_FLAG=(--mapping=/var/www/html/wp-content/plugins/supreme-autoparts-core/data/product-type-parent-map.json)
+    fi
+    if [[ -n "$IMPORT_FILE" && -r "$IMPORT_FILE" ]]; then
+      echo "[supreme] Boot import: file=$IMPORT_FILE limit=$IMPORT_LIMIT category=${IMPORT_CATEGORY:-all} require-images force=${SUPREME_FORCE_IMPORT:-0}"
+      wp_as option update sa_boot_import_running 1 >/dev/null 2>&1 || true
+      # Run in background so healthchecks stay green while images sideload.
+      (
+        mkdir -p /var/www/html/wp-content/uploads
+        wp_as option update sa_boot_import_running_at "$(date +%s)" >/dev/null 2>&1 || true
+        wp_as supreme seed_categories >> /var/www/html/wp-content/uploads/sa-boot-import.log 2>&1 || true
+        wp_as supreme import_ndjson --file="$IMPORT_FILE" --limit="$IMPORT_LIMIT" --require-images "${CATEGORY_FLAG[@]}" "${MAPPING_FLAG[@]}" "${SKIP_IMG_FLAG[@]}" \
+          >> /var/www/html/wp-content/uploads/sa-boot-import.log 2>&1 \
+          || echo "[supreme] Boot import finished with errors (see sa-boot-import.log)."
+        wp_as rewrite flush --hard >> /var/www/html/wp-content/uploads/sa-boot-import.log 2>&1 || true
+        AFTER_COUNT="$(wp_as post list --post_type=product --post_status=publish --format=count 2>/dev/null || echo 0)"
+        AFTER_COUNT="$(echo "$AFTER_COUNT" | tr -cd "0-9")"
+        AFTER_COUNT="${AFTER_COUNT:-0}"
+        echo "[supreme] Boot import after-count=${AFTER_COUNT}" >> /var/www/html/wp-content/uploads/sa-boot-import.log
+        if [[ "$AFTER_COUNT" -gt 0 ]]; then
+          wp_as option update sa_boot_import_done 1 >/dev/null 2>&1 || true
+          wp_as option update sa_boot_import_batch50 1 >/dev/null 2>&1 || true
+        else
+          echo "[supreme] Boot import produced 0 products — leaving flags clear for retry." >> /var/www/html/wp-content/uploads/sa-boot-import.log
+          wp_as option delete sa_boot_import_done >/dev/null 2>&1 || true
+          wp_as option delete sa_boot_import_batch50 >/dev/null 2>&1 || true
+        fi
+        wp_as option delete sa_boot_import_running >/dev/null 2>&1 || true
+        wp_as option delete sa_boot_import_running_at >/dev/null 2>&1 || true
+        echo "[supreme] Boot import finished at $(date -Iseconds)" >> /var/www/html/wp-content/uploads/sa-boot-import.log
+      ) &
+    else
+      echo "[supreme] Boot import requested but batch NDJSON not found." >&2
+    fi
+  else
+    echo "[supreme] Boot import skipped (catalog has ${PRODUCT_COUNT} products; flags present)."
+  fi
+
+  # Idempotent sports-car logos + email header (scripts live under /usr/src/supreme-scripts).
+  BRAND_SCRIPT=""
+  for cand in \
+    /usr/src/supreme-scripts/apply-branding-logos.sh \
+    /var/www/html/scripts/apply-branding-logos.sh \
+    /var/www/html/wp-content/plugins/supreme-autoparts-core/scripts/apply-branding-logos.sh
+  do
+    if [[ -x "$cand" || -f "$cand" ]]; then BRAND_SCRIPT="$cand"; break; fi
+  done
+  if [[ -n "$BRAND_SCRIPT" ]]; then
+    echo "[supreme] Applying branding logos via $BRAND_SCRIPT"
+    bash "$BRAND_SCRIPT" || echo "[supreme] Branding logos script finished with warnings." >&2
+  else
+    echo "[supreme] apply-branding-logos.sh not found — skipped."
+  fi
+
+  # Flush product / product_cat rewrite rules after seed (and again after import in bg).
+  wp_as rewrite flush --hard || true
+  echo "[supreme] Bootstrap complete."
+}
+
+# Ensure healthz + custom code are in the image source tree for volume seeding
+mkdir -p /usr/src/wordpress/wp-content/mu-plugins
+if [[ -f /var/www/html/../.. ]]; then :; fi
+# healthz already copied into image at /usr/src/wordpress/healthz.php via Dockerfile
+
+# WordPress auth keys/salts must be STABLE across deploys. /var/www/html is not on the
+# Railway volume, so the official image regenerates wp-config.php on every deploy and,
+# without WORDPRESS_AUTH_KEY & friends in env, fills them with fresh random salts —
+# logging every admin/customer out and breaking emailed links after each redeploy.
+for _salt in AUTH_KEY SECURE_AUTH_KEY LOGGED_IN_KEY NONCE_KEY AUTH_SALT SECURE_AUTH_SALT LOGGED_IN_SALT NONCE_SALT; do
+  _v="WORDPRESS_${_salt}"
+  if [[ -z "${!_v:-}" ]]; then
+    echo "[supreme] WARNING: ${_v} not set in env — WordPress salts will be random this boot (all logins reset)." >&2
+  fi
+done
+
+# Background bootstrap after Apache/official entrypoint brings files online
+(
+  sleep 8
+  bootstrap_wordpress || echo "[supreme] Bootstrap finished with warnings."
+) &
+
+# WP-Cron runner: with DISABLE_WP_CRON set (see WORDPRESS_CONFIG_EXTRA), page loads
+# no longer spawn wp-cron.php. This loop fires due cron events via WP-CLI every
+# minute instead, so scheduled work (facet index ticks, WooCommerce Action
+# Scheduler, core maintenance) runs without stealing Apache workers from requests.
+(
+  for _ in $(seq 1 90); do
+    wp_as core is-installed 2>/dev/null && break
+    sleep 2
+  done
+  while true; do
+    wp_as cron event run --due-now >/dev/null 2>&1 || true
+    sleep 60
+  done
+) &
+
+exec docker-entrypoint.sh "$@"
