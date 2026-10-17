@@ -20,10 +20,17 @@ declare(strict_types=1);
 defined('ABSPATH') || exit;
 
 /* Force the retired gateways' enabled flag off without writing the database.
-   Also blank the Whop gateway description: no processor branding at checkout. */
+   Also blank the Whop and Pesapal gateway descriptions: no processor branding
+   at checkout. */
 add_filter('option_woocommerce_whop_settings', static function ($settings) {
     if (is_array($settings)) {
         $settings['enabled'] = 'no';
+        $settings['description'] = '';
+    }
+    return $settings;
+}, 99);
+add_filter('option_woocommerce_pesapal_settings', static function ($settings) {
+    if (is_array($settings)) {
         $settings['description'] = '';
     }
     return $settings;
@@ -125,12 +132,13 @@ add_filter('woocommerce_gateway_icon', static function ($icon, $gateway_id) {
     return $icon;
 }, 30, 2);
 
-/* The Whop gateway renders no inline fields at checkout; hide its empty box. */
+/* Neither gateway renders inline fields at this checkout (payment happens on
+   the next step); hide their description boxes. */
 add_action('wp_head', static function () {
     if (!function_exists('is_checkout') || !is_checkout()) {
         return;
     }
-    echo '<style>.payment_box.payment_method_whop{display:none!important}</style>';
+    echo '<style>.payment_box.payment_method_whop,.payment_box.payment_method_pesapal{display:none!important}</style>';
 });
 
 /* Preselection follows row order. On a full checkout page load the first
