@@ -69,16 +69,36 @@ add_filter('woocommerce_available_payment_gateways', static function ($gateways)
     if (!isset($gateways['whop'], $gateways['pesapal'])) {
         return $gateways;
     }
-    // Order by billing country (fallback: IP geolocation before billing is entered).
+    // Order by billing country (fallback: site geo detector, then WC IP geolocation).
     $country = '';
     if (function_exists('WC') && WC()->customer) {
         $country = (string) WC()->customer->get_billing_country();
     }
+    if ($country === '' && class_exists('SA_Geo_Detector')) {
+        $country = (string) SA_Geo_Detector::country_code();
+    }
     if ($country === '' && class_exists('WC_Geolocation')) {
         $country = (string) (WC_Geolocation::geolocate_ip()['country'] ?? '');
     }
-    $first  = $country === 'KE' ? 'pesapal' : 'whop';
-    $second = $country === 'KE' ? 'whop' : 'pesapal';
+    // Rock 2026-10-17 (12:58 clarification): African customers get Pesapal + card
+    // (Whop); customers outside Africa get card only. Africa membership comes from
+    // WooCommerce's own continent table (WC_Countries::get_continents()['AF']) so it
+    // matches exactly the countries the checkout dropdown offers. Applies only while
+    // the Whop switch is on - before that, production keeps Pesapal for everyone so
+    // no checkout is ever left empty. If the continent table is unreadable, keep both
+    // gateways (conservative: never strip a working option on a guess).
+    $africa = [];
+    if (function_exists('WC') && WC()->countries && method_exists(WC()->countries, 'get_continents')) {
+        $continents = (array) WC()->countries->get_continents();
+        $africa = array_map('strtoupper', array_map('strval', (array) ($continents['AF']['countries'] ?? [])));
+    }
+    $is_africa = $country !== '' && in_array(strtoupper($country), $africa, true);
+    if ($country !== '' && !$is_africa && $africa !== []) {
+        unset($gateways['pesapal']);
+        return $gateways;
+    }
+    $first  = $is_africa ? 'pesapal' : 'whop';
+    $second = $is_africa ? 'whop' : 'pesapal';
     $ordered = [$first => $gateways[$first], $second => $gateways[$second]];
     foreach ($gateways as $id => $gateway) {
         if ($id !== 'whop' && $id !== 'pesapal') {
