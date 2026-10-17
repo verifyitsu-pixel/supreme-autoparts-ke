@@ -681,7 +681,7 @@ function sa_seo_builtin_faqs(): array
             ],
             [
                 'q' => 'Do you ship within the United States?',
-                'a' => 'Yes. We ship across the continental United States — free shipping on qualifying orders $199+, Standard from $8, Priority $15. International delivery is also available. Support: WhatsApp ' . $wa . ' or email ' . $email . '.',
+                'a' => 'Yes. We ship across the continental United States — free shipping on qualifying orders $199+, Standard from $8, Priority $15. International delivery is also available. Support: chat with us on WhatsApp (the Chat on WhatsApp button on our site) or email ' . $email . '.',
             ],
             [
                 'q' => 'What if I cannot find my part?',
@@ -699,7 +699,7 @@ function sa_seo_builtin_faqs(): array
             ],
             [
                 'q' => 'Who do I contact about a Kenya delivery?',
-                'a' => 'Email ' . $email . ' or call/WhatsApp +254 714 498 451 with your order number.',
+                'a' => 'Email ' . $email . ', chat on WhatsApp (button on our site), or call +254 714 498 451 with your order number.',
             ],
         ],
         'fitment-guide' => [
@@ -719,7 +719,7 @@ function sa_seo_builtin_faqs(): array
         'auto-parts-kenya' => [
             [
                 'q' => 'Can I buy US-spec auto parts and have them shipped to Kenya?',
-                'a' => 'Yes. Shop online, complete checkout, and we arrange shipping per the live Shipping Policy. Local support is available on WhatsApp ' . $wa . '.',
+                'a' => 'Yes. Shop online, complete checkout, and we arrange shipping per the live Shipping Policy. Local support is available on WhatsApp - use the Chat on WhatsApp button on our site.',
             ],
             [
                 'q' => 'Do you have a physical walk-in store in Nairobi?',
@@ -745,7 +745,7 @@ function sa_seo_builtin_faqs(): array
         'contact' => [
             [
                 'q' => 'What is the fastest way to reach Supreme Autoparts?',
-                'a' => 'WhatsApp or SMS ' . $wa . ' for quick fitment and order questions. Email ' . $email . ' for RMA, invoices, and detailed requests. Hours: Monday–Friday, Africa/Nairobi business hours.',
+                'a' => 'Chat with us on WhatsApp (button on our site) or SMS ' . $wa . ' for quick fitment and order questions. Email ' . $email . ' for RMA, invoices, and detailed requests. Hours: Monday–Friday, Africa/Nairobi business hours.',
             ],
         ],
         'free-shipping' => [
