@@ -287,7 +287,7 @@ function sa_seo_context(): array
                 );
                 if (in_array($term->slug, $sa_moto_slugs, true)) {
                     $desc = sa_seo_clip(
-                        'Shop ' . $term->name . ' for motorcycles at Supreme Autoparts. Parts, gear and accessories for sport, cruiser, dirt and commuter bikes, delivered across Kenya.',
+                        'Shop ' . $term->name . ' for motorcycles at Supreme Autoparts. Parts, gear and accessories for sport, cruiser and dirt bikes, delivered across Kenya.',
                         158
                     );
                 } else {
