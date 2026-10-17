@@ -252,6 +252,19 @@ function sa_core_super_render_integrations(): void
     echo '<p>Transactional API: <strong>' . ($brevo ? 'configured' : 'not configured') . '</strong></p>';
     echo '<p class="sa-muted">Used for order mail, password mail, and OTP login codes.</p>';
     echo '<p><a class="button" href="' . esc_url(admin_url('admin.php?page=sa-brevo-settings')) . '">Brevo settings</a></p></div>';
+    // Geoapify: checkout address autocomplete key (option sa_geoapify_key)
+    if (isset($_POST['sa_geoapify_key_save']) && check_admin_referer('sa_geoapify_key')) {
+        $new_key = sanitize_text_field(wp_unslash((string) ($_POST['sa_geoapify_key'] ?? '')));
+        update_option('sa_geoapify_key', $new_key, false);
+        echo '<div class="notice notice-success"><p>Geoapify key ' . ($new_key === '' ? 'cleared.' : 'saved.') . '</p></div>';
+    }
+    $geo_key = function_exists('sa_geoapify_key') ? sa_geoapify_key() : (string) get_option('sa_geoapify_key', '');
+    echo '<div class="sa-panel"><h2 class="sa-panel__title">Geoapify</h2>';
+    echo '<p>Checkout address autocomplete: <strong>' . ($geo_key !== '' ? 'key set' : 'no key yet') . '</strong></p>';
+    echo '<form method="post">' . wp_nonce_field('sa_geoapify_key', '_wpnonce', true, false);
+    echo '<p><input type="password" name="sa_geoapify_key" value="" class="regular-text" placeholder="Paste Geoapify API key" autocomplete="off" /></p>';
+    echo '<p><button class="button button-primary" name="sa_geoapify_key_save" value="1">Save key</button></p></form>';
+    echo '<p class="sa-muted">Free key from myprojects.geoapify.com (3,000 credits/day). Autocomplete stays off until a key is saved and the courier feature flag is on.</p></div>';
     echo '</div></div>';
 }
 
