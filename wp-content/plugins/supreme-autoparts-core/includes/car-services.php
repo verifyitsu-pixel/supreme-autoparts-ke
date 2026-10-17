@@ -1227,7 +1227,7 @@ add_action('wp_footer', static function (): void {
         . $link($acct, 'user', 'Account')
         . ($user->ID && function_exists('sa_core_logout_link_url') ? str_replace('class="sa-side__link"', 'class="sa-side__link sa-side__link--logout"', $link(sa_core_logout_link_url(), 'close', 'Log out')) : '')
         . '</nav><nav class="sa-side__sec"><h4>Help</h4>'
-        . $link($wa, 'chat', 'WhatsApp us', '+1 917 437 5121', ' target="_blank" rel="noopener"')
+        . $link($wa, 'chat', 'Chat on WhatsApp', '', ' target="_blank" rel="noopener"')
         . $link(function_exists('sa_page_url') ? sa_page_url('contact') : home_url('/contact/'), 'chat', 'Contact')
         . ((!function_exists('sa_geo_is_kenya') || sa_geo_is_kenya()) ? $link(sa_svc_map_url(), 'pin', 'Location', SA_SVC_GARAGE_ADDRESS, ' target="_blank" rel="noopener"') : $link('https://www.google.com/maps/search/?api=1&query=' . rawurlencode('12800 NE Sandy Blvd, Portland, OR 97230'), 'pin', 'Location', '12800 NE Sandy Blvd, Portland, OR 97230', ' target="_blank" rel="noopener"'))
         . '</nav></aside></div>';
