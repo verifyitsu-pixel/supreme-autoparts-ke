@@ -1,0 +1,50 @@
+{
+ "courier": "Speedaf",
+ "slug": "speedaf",
+ "service": "pickup_and_door",
+ "fee": "fargo_card",
+ "door_surcharge_kes": 250,
+ "source": {
+  "url": "https://www.speedaf.com/ke-en/location-map",
+  "note": "Speedaf Kenya sells door-to-door nationwide on their own site; their official map API lists 4 Nairobi depots only. No pickup-station booklet online (stations live in their app). Door delivery is the primary mode; depots listed as Nairobi pickup points. Support: +254 741 000 666, kenya.info@speedaf.com.",
+  "synced": "2026-10-17"
+ },
+ "stations": [
+  {
+   "name": "Nairobi Speedaf",
+   "town": "Nairobi",
+   "county": null,
+   "address": "",
+   "phone": "+254741000666",
+   "lat": -1.3358547,
+   "lng": 36.8950035
+  },
+  {
+   "name": "Kenya Warehouse",
+   "town": "Nairobi",
+   "county": null,
+   "address": "",
+   "phone": "+254741000666",
+   "lat": -1.3345922,
+   "lng": 36.8856305
+  },
+  {
+   "name": "Address confirmation (NRB)",
+   "town": "Nairobi",
+   "county": null,
+   "address": "",
+   "phone": "+254741000666",
+   "lat": -1.3360615,
+   "lng": 36.8944911
+  },
+  {
+   "name": "Speedaf new",
+   "town": "Nairobi",
+   "county": null,
+   "address": "",
+   "phone": "+254741000666",
+   "lat": -1.328436,
+   "lng": 36.8806499
+  }
+ ]
+}
