@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
  * - Local pickup (Nairobi) .............. $0.00  (local_pickup, KE)
  * - International ....................... $25.00 (Rest of World flat_rate)
  */
-const SA_SHIPPING_ZONES_VER = '6';
+const SA_SHIPPING_ZONES_VER = '7';
 const SA_STORE_PICKUP_TITLE = 'Store pickup, Midax Plaza, Kangundo Rd';
 
 /**
@@ -65,7 +65,12 @@ add_filter('woocommerce_package_rates', static function ($rates, $package) {
             unset($rates[$id]);
             continue;
         }
-        if ($cc === 'KE' && !in_array($mid, ['local_pickup', 'sa_fargo'], true)) {
+        $sa_ke_ok = ['local_pickup', 'sa_fargo'];
+        if (function_exists('sa_couriers_enabled') && sa_couriers_enabled()) {
+            $sa_ke_ok[] = 'sa_g4s';
+            $sa_ke_ok[] = 'sa_speedaf';
+        }
+        if ($cc === 'KE' && !in_array($mid, $sa_ke_ok, true)) {
             unset($rates[$id]);
             continue;
         }
@@ -168,12 +173,30 @@ function sa_core_ensure_shipping_zones(): void
                 'meta_key' => '_sa_ship_code',
                 'meta_val' => 'fargo',
             ],
+            // v7: G4S + Speedaf sit in the zone but only produce rates at checkout
+            // while sa_couriers_enabled() is on (see the package-rates gate above).
+            [
+                'id'       => 'sa_g4s',
+                'title'    => 'G4S Courier',
+                'tax'      => 'none',
+                'order'    => 2,
+                'meta_key' => '_sa_ship_code',
+                'meta_val' => 'g4s',
+            ],
+            [
+                'id'       => 'sa_speedaf',
+                'title'    => 'Speedaf Courier',
+                'tax'      => 'none',
+                'order'    => 3,
+                'meta_key' => '_sa_ship_code',
+                'meta_val' => 'speedaf',
+            ],
             [
                 'id'       => 'local_pickup',
                 'title'    => SA_STORE_PICKUP_TITLE,
                 'cost'     => '0',
                 'tax'      => 'no',
-                'order'    => 3,
+                'order'    => 4,
                 'meta_key' => '_sa_ship_code',
                 'meta_val' => 'pickup',
             ],
@@ -221,6 +244,8 @@ function sa_core_ensure_shipping_zones(): void
         ],
         'kenya' => [
             'fargo_courier'    => 'KES rate card by town/county + weight (data/fargo-rates.json)',
+            'g4s_courier'      => 'Fargo card math; pickup = base, door = base + KES 250 (behind flag)',
+            'speedaf_courier'  => 'Own 2025 tariff (data/speedaf-tariff.json); pickup = base, door = base + KES 250 (behind flag)',
             'free_min'         => $free_min,
             'local_pickup'     => 0.0,
         ],
