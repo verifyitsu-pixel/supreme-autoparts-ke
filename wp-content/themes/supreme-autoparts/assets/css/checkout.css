@@ -1225,3 +1225,15 @@ body.woocommerce-order-pay #payment #place_order{width:100%;min-height:52px;bord
 }
 body.woocommerce-order-pay ul.order_details::before,body.woocommerce-order-pay ul.order_details::after{content:none!important;display:none!important;}
 @media (max-width:600px){body.woocommerce-order-pay .sa-page__content{padding:14px 12px;}}
+
+/* Get the app (thank-you page, Rock 2026-10-17) */
+.sa-getapp{margin-top:22px;padding:18px;border:1px solid #e4e3de;border-radius:14px;background:#fff}
+.sa-getapp__title{font-size:16px;margin:0 0 10px}
+.sa-getapp__row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:9px 0;font-size:14px;color:#444;line-height:1.45}
+.sa-getapp__row strong{min-width:62px;color:#111}
+.sa-getapp__row span{flex:1 1 220px}
+.sa-getapp__btn{padding:8px 14px;font-size:13px;border-radius:10px;white-space:nowrap}
+.sa-getapp.is-ios .sa-getapp__row--android,
+.sa-getapp.is-android .sa-getapp__row--ios{opacity:.55}
+.sa-getapp.is-ios .sa-getapp__row--ios,
+.sa-getapp.is-android .sa-getapp__row--android{border-left:3px solid #fcb900;padding-left:10px}
