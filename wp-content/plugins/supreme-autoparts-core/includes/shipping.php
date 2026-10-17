@@ -17,13 +17,13 @@ if (!defined('ABSPATH')) {
  * Rates (USD):
  * - Standard Shipping (Continental US) .. $8.00  (flat_rate)
  * - Priority Shipping (US) .............. $15.00 (flat_rate)
- * - Free shipping ....................... $0 when cart subtotal ≥ $199
+ * - Free shipping (US only) .............. $0 when cart subtotal ≥ $199
  * - Nairobi Delivery .................... $8.00  (flat_rate, KE)
  * - Upcountry Kenya ..................... $15.00 (flat_rate, KE)
  * - Local pickup (Nairobi) .............. $0.00  (local_pickup, KE)
  * - International ....................... $25.00 (Rest of World flat_rate)
  */
-const SA_SHIPPING_ZONES_VER = '8';
+const SA_SHIPPING_ZONES_VER = '9';
 const SA_STORE_PICKUP_TITLE = 'Store pickup, Midax Plaza, Kangundo Rd';
 
 /**
@@ -63,17 +63,14 @@ add_filter('woocommerce_package_rates', static function ($rates, $package) {
     foreach ($rates as $id => $rate) {
         $mid = is_object($rate) && method_exists($rate, 'get_method_id') ? $rate->get_method_id() : '';
         if ($cc !== 'US' && $mid === 'free_shipping') {
-            // v8: Kenya gets free shipping over the threshold once couriers go live.
-            if (!($cc === 'KE' && $sa_couriers_on)) {
-                unset($rates[$id]);
-                continue;
-            }
+            // Free shipping is US-only (Rock 2026-10-18: no free-shipping tier for Kenya).
+            unset($rates[$id]);
+            continue;
         }
         $sa_ke_ok = ['local_pickup', 'sa_fargo'];
         if ($sa_couriers_on) {
             $sa_ke_ok[] = 'sa_g4s';
             $sa_ke_ok[] = 'sa_speedaf';
-            $sa_ke_ok[] = 'free_shipping';
         }
         if ($cc === 'KE' && !in_array($mid, $sa_ke_ok, true)) {
             unset($rates[$id]);
@@ -170,17 +167,6 @@ function sa_core_ensure_shipping_zones(): void
     $ke_zone = sa_core_find_or_create_zone('Kenya', [['type' => 'country', 'code' => 'KE']], 20);
     if ($ke_zone) {
         sa_core_sync_zone_methods($ke_zone, [
-            // v8: free shipping over the shared threshold (Rock 2026-10-17). Only reaches
-            // customers while sa_couriers_enabled() (see the package-rates gate above).
-            [
-                'id'         => 'free_shipping',
-                'title'      => $free_title,
-                'requires'   => 'min_amount',
-                'min_amount' => (string) $free_min,
-                'order'      => 0,
-                'meta_key'   => '_sa_ship_code',
-                'meta_val'   => 'free_ke',
-            ],
             [
                 'id'       => 'sa_fargo',
                 'title'    => 'Fargo Courier',
@@ -220,16 +206,13 @@ function sa_core_ensure_shipping_zones(): void
         // v5: Fargo Courier (weight + county) replaces the flat Nairobi / Upcountry rates.
         foreach ($ke_zone->get_shipping_methods(false) as $iid => $m) {
             $t = strtolower((string) ($m->title ?? ''));
-            // v6: no legacy flat methods in Kenya. v8: keep the SA-managed free_shipping (free_ke).
+            // v6: no legacy flat methods in Kenya. v9: no free_shipping in Kenya at all.
             if (($m->id ?? '') === 'flat_rate') {
                 $ke_zone->delete_shipping_method((int) $iid);
                 continue;
             }
             if (($m->id ?? '') === 'free_shipping') {
-                $st = get_option('woocommerce_free_shipping_' . (int) $iid . '_settings', []);
-                if (!is_array($st) || (string) ($st['_sa_ship_code'] ?? '') !== 'free_ke') {
-                    $ke_zone->delete_shipping_method((int) $iid);
-                }
+                $ke_zone->delete_shipping_method((int) $iid);
             }
         }
     }
@@ -267,7 +250,7 @@ function sa_core_ensure_shipping_zones(): void
         ],
         'kenya' => [
             'fargo_courier'    => 'KES rate card by town/county + weight (data/fargo-rates.json)',
-            'free_shipping'    => '$0 when cart subtotal reaches the shared threshold (behind flag)',
+
             'g4s_courier'      => 'Fargo card math; pickup = base, door = base + KES 250 (behind flag)',
             'speedaf_courier'  => 'Own 2025 tariff (data/speedaf-tariff.json); pickup = base, door = base + KES 250 (behind flag)',
             'free_min'         => $free_min,
