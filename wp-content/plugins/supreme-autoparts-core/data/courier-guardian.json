@@ -1,0 +1,140 @@
+{
+ "courier": "Guardian Coach",
+ "slug": "guardian",
+ "service": "pickup_only",
+ "fee": "fargo_card",
+ "door_surcharge_kes": 0,
+ "source": {
+  "url": "https://theguardian.co.ke/",
+  "note": "Destination towns with scheduled departures ex-Nairobi on Guardian's own booking API (api/search-buses, checked for 2026-10-20; Mombasa and Homa Bay returned none that day - may be date-limited, not absent). Nairobi booking office: River Rd Opp Barclays Bank, View Plaza Ground Floor, 0718880256 (their homepage). HQ: Railways Godowns, Haile Selassie Ave, +254 726 511 628.",
+  "synced": "2026-10-17"
+ },
+ "stations": [
+  {
+   "name": "Guardian Bomet office",
+   "town": "Bomet",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Guardian Bungoma office",
+   "town": "Bungoma",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Guardian Busia office",
+   "town": "Busia",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Guardian Eldoret office",
+   "town": "Eldoret",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Guardian Kakamega office",
+   "town": "Kakamega",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Guardian Kericho office",
+   "town": "Kericho",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Guardian Kisii office",
+   "town": "Kisii",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Guardian Kisumu office",
+   "town": "Kisumu",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Guardian Kitale office",
+   "town": "Kitale",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Guardian Malaba office",
+   "town": "Malaba",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Guardian Migori office",
+   "town": "Migori",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Guardian Mumias office",
+   "town": "Mumias",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Guardian Nakuru office",
+   "town": "Nakuru",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "Guardian Siaya office",
+   "town": "Siaya",
+   "county": null,
+   "address": "",
+   "phone": "",
+   "lat": null,
+   "lng": null
+  }
+ ]
+}
