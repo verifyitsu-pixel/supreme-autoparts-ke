@@ -353,7 +353,10 @@ add_action('rest_api_init', static function (): void {
             if (!in_array($slug, ['g4s', 'speedaf'], true) || !sa_couriers_enabled()) {
                 return ['stations' => []];
             }
-            $stations = array_map(static function (array $s): array {
+            $clean = static fn(string $v): string => trim((string) preg_replace('/[\x{E000}-\x{F8FF}\x{200B}-\x{200D}]/u', '', $v));
+            $stations = array_map(static function (array $s) use ($clean): array {
+                $s['name'] = $clean($s['name']);
+                $s['address'] = $clean($s['address']);
                 return [
                     'value' => $s['name'] . ', ' . $s['town'],
                     'label' => trim($s['town'] . ' - ' . $s['name'] . ($s['address'] !== '' ? ' (' . $s['address'] . ')' : '')),
