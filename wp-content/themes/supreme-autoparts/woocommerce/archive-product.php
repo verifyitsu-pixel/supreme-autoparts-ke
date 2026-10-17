@@ -31,8 +31,13 @@ $sa_total = function_exists('wc_get_loop_prop') ? (int) wc_get_loop_prop('total'
 if ($sa_total <= 0 && isset($GLOBALS['wp_query']) && $GLOBALS['wp_query'] instanceof WP_Query) {
     $sa_total = (int) $GLOBALS['wp_query']->found_posts;
 }
+$sa_brand_filtered = false;
+if ($sa_is_cat && function_exists('sa_fx_state')) {
+    $sa_fx = sa_fx_state();
+    $sa_brand_filtered = !empty($sa_fx['brand']);
+}
 ?>
-<header class="sa-archive-header<?php echo $sa_cat_img !== '' ? ' sa-archive-header--photo' : ''; ?><?php echo $sa_is_shop ? ' sa-archive-header--shop' : ''; ?>">
+<header class="sa-archive-header<?php echo $sa_cat_img !== '' ? ' sa-archive-header--photo' : ''; ?><?php echo $sa_is_shop ? ' sa-archive-header--shop' : ''; ?><?php echo $sa_brand_filtered ? ' sa-archive-header--compact' : ''; ?>">
   <?php if ($sa_cat_img !== '') : ?>
     <div class="sa-archive-header__media" aria-hidden="true">
       <img src="<?php echo esc_url($sa_cat_img); ?>" alt="" class="sa-archive-header__img" loading="eager" decoding="async" width="800" height="450" />
