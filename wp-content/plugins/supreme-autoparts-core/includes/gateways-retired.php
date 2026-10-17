@@ -88,7 +88,10 @@ add_filter('woocommerce_available_payment_gateways', static function ($gateways)
     return $ordered;
 }, 99);
 
-/* Clear labels while the Whop switch is on; unchanged while it is off. */
+/* Clear labels while the Whop switch is on; unchanged while it is off.
+   Priority 30 so these win over the geo-content label filter. Non-KE zones get a
+   distinct neutral label for the mobile-money gateway so the two options never
+   read the same; KE keeps the familiar mobile-money label. */
 add_filter('woocommerce_gateway_title', static function ($title, $gateway_id) {
     if (!sa_whop_checkout_visible()) {
         return $title;
@@ -97,10 +100,11 @@ add_filter('woocommerce_gateway_title', static function ($title, $gateway_id) {
         return 'Card (Visa, Mastercard)';
     }
     if ('pesapal' === $gateway_id) {
-        return 'M-Pesa / Airtel Money';
+        $ke = function_exists('sa_gc_zone') && sa_gc_zone() === 'KE';
+        return $ke ? 'M-Pesa / Airtel Money' : 'Card / M-Pesa / Airtel Money';
     }
     return $title;
-}, 10, 2);
+}, 30, 2);
 
 /* Pesapal's plugin overrides checkout/thankyou.php for all orders; take it back for the theme. */
 add_filter('woocommerce_locate_template', static function ($template, $template_name) {
