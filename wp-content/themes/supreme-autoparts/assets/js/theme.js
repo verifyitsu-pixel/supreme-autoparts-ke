@@ -265,9 +265,9 @@
 
   function saEnquireReadConfig(form) {
     var node = form.querySelector('[data-sa-enquire-config]');
-    if (!node) return { whatsapp: '19174375121', phone: '+19174375121', email: 'calvin@supremeautoparts.co.ke', subject: 'Part enquiry — Supreme Autoparts' };
+    if (!node) return { whatsapp: 'supremeautopart', phone: '+19174375121', email: 'calvin@supremeautoparts.co.ke', subject: 'Part enquiry — Supreme Autoparts' };
     try { return JSON.parse(node.textContent || '{}'); } catch (e) {
-      return { whatsapp: '19174375121', phone: '+19174375121', email: 'calvin@supremeautoparts.co.ke', subject: 'Part enquiry — Supreme Autoparts' };
+      return { whatsapp: 'supremeautopart', phone: '+19174375121', email: 'calvin@supremeautoparts.co.ke', subject: 'Part enquiry — Supreme Autoparts' };
     }
   }
 
