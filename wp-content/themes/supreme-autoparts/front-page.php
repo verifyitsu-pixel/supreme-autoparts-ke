@@ -241,7 +241,7 @@ if (function_exists('sa_brand_logo_map')) {
 if ($sa_ed_brands !== []) : ?>
 <section class="sa-ed-sec sa-ed-brands" aria-labelledby="sa-ed-brands-h">
   <div class="sa-container">
-    <div class="sa-ed-head"><h2 id="sa-ed-brands-h"><?php esc_html_e('Shop by brand', 'supreme-autoparts'); ?></h2><a href="<?php echo esc_url($sa_shop_url); ?>"><?php esc_html_e('View all parts', 'supreme-autoparts'); ?> &rarr;</a></div>
+    <div class="sa-ed-head"><h2 id="sa-ed-brands-h"><?php esc_html_e('Shop by brand', 'supreme-autoparts'); ?></h2><a href="<?php echo esc_url(home_url('/product-category/brands/')); ?>"><?php esc_html_e('View all brands', 'supreme-autoparts'); ?> &rarr;</a></div>
     <div class="sa-ed-brandgrid">
       <?php foreach ($sa_ed_brands as $b) : ?>
         <a class="sa-ed-brand" href="<?php echo esc_url($b['url']); ?>">
