@@ -37,6 +37,7 @@ if (!defined('DISALLOW_FILE_EDIT')) define('DISALLOW_FILE_EDIT', true);
 if (!defined('DISALLOW_FILE_MODS')) define('DISALLOW_FILE_MODS', false);
 // WP-Cron stays off the web request path: a WP-CLI loop in this entrypoint runs due events every minute.
 if (!defined('DISABLE_WP_CRON')) define('DISABLE_WP_CRON', true);
+if (!defined('WP_CACHE')) define('WP_CACHE', true);
 if (!defined('SA_AGENT_INTAKE_TOKEN') && getenv('SA_AGENT_INTAKE_TOKEN')) define('SA_AGENT_INTAKE_TOKEN', getenv('SA_AGENT_INTAKE_TOKEN'));
 if (!defined('FORCE_SSL_ADMIN') && str_starts_with((string) (getenv('WP_HOME') ?: ''), 'https://')) {
   define('FORCE_SSL_ADMIN', true);
