@@ -101,6 +101,24 @@ if (!$sa_is_ke) {
           <span class="sa-ed-cat__n"><?php echo esc_html($label); ?></span>
         </a>
       <?php endforeach; ?>
+      <?php
+      // Show every other department (root category with sub-categories) after the curated
+      // six, so all categories are visible here without opening All categories.
+      if (function_exists('sa_cats_data')) :
+          $sa_ed_logo = SA_THEME_URI . '/assets/logo-light.png';
+          foreach ((sa_cats_data()['dept'] ?? []) as $sa_ed_dc) :
+              if (empty($sa_ed_dc['s']) || isset($sa_ed_cats[$sa_ed_dc['s']]) || (int) ($sa_ed_dc['c'] ?? 0) < 1) {
+                  continue;
+              }
+              $sa_ed_dimg = (string) ($sa_ed_dc['img'] ?? '');
+              ?>
+        <a class="sa-ed-cat" href="<?php echo esc_url((string) $sa_ed_dc['u']); ?>">
+          <span class="sa-ed-im"><img src="<?php echo esc_url($sa_ed_dimg !== '' ? $sa_ed_dimg : $sa_ed_logo); ?>" alt="" width="640" height="640" loading="lazy" decoding="async"<?php echo $sa_ed_dimg !== '' ? '' : ' class="is-fallback"'; ?> onerror="this.onerror=null;this.src='<?php echo esc_url($sa_ed_logo); ?>';this.classList.add('is-fallback')"></span>
+          <span class="sa-ed-cat__n"><?php echo esc_html((string) $sa_ed_dc['n']); ?></span>
+        </a>
+      <?php
+          endforeach;
+      endif; ?>
     </div>
   </div>
 </section>
