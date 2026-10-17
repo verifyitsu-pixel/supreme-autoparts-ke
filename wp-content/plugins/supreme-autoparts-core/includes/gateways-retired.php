@@ -132,3 +132,22 @@ add_action('wp_head', static function () {
     }
     echo '<style>.payment_box.payment_method_whop{display:none!important}</style>';
 });
+
+/* Preselection follows row order. On a full checkout page load the first
+   gateway row for the visitor's zone becomes the selected one (KE: the
+   mobile-money row, elsewhere: the card row). AJAX refreshes are skipped so a
+   customer's own pick is never overridden mid-checkout. If the picked gateway
+   is not available for the viewer, WooCommerce falls back to the first row. */
+add_action('template_redirect', static function () {
+    if (wp_doing_ajax() || isset($_GET['wc-ajax'])) {
+        return;
+    }
+    if (!function_exists('is_checkout') || !is_checkout() || is_wc_endpoint_url()) {
+        return;
+    }
+    if (!function_exists('WC') || !WC()->session) {
+        return;
+    }
+    $ke = function_exists('sa_gc_zone') && sa_gc_zone() === 'KE';
+    WC()->session->set('chosen_payment_method', $ke ? 'pesapal' : 'whop');
+});
