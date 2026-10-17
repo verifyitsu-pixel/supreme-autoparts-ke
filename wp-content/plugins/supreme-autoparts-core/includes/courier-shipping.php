@@ -129,13 +129,13 @@ function sa_courier_km(array $a, array $b): float
  *
  * @return array<int, array{name:string,town:string,county:string,address:string,same_town:bool,same_county:bool,km:float|null}>
  */
-function sa_courier_stations(string $slug, string $state, string $city): array
+function sa_courier_stations(string $slug, string $state, string $city, ?array $anchor_override = null): array
 {
     $norm = static fn(string $s): string => function_exists('sa_fargo_norm') ? sa_fargo_norm($s) : strtolower(trim($s));
     $county = function_exists('sa_fargo_county_name') ? sa_fargo_county_name($state) : '';
     $cn = $norm($county);
     $tn = $norm($city);
-    $anchor = sa_courier_anchor($state, $city);
+    $anchor = $anchor_override ?? sa_courier_anchor($state, $city);
     $out = [];
     foreach ((array) (sa_courier_data($slug)['stations'] ?? []) as $s) {
         if (!is_array($s)) {
@@ -353,6 +353,9 @@ add_action('rest_api_init', static function (): void {
             if (!in_array($slug, ['g4s', 'speedaf'], true) || !sa_couriers_enabled()) {
                 return ['stations' => []];
             }
+            $la = $r->get_param('lat');
+            $lo = $r->get_param('lng');
+            $ov = (is_numeric($la) && is_numeric($lo) && abs((float) $la) <= 90 && abs((float) $lo) <= 180) ? [(float) $la, (float) $lo] : null;
             $clean = static fn(string $v): string => trim((string) preg_replace('/[\x{E000}-\x{F8FF}\x{200B}-\x{200D}]/u', '', $v));
             $stations = array_map(static function (array $s) use ($clean): array {
                 $s['name'] = $clean($s['name']);
@@ -364,7 +367,7 @@ add_action('rest_api_init', static function (): void {
                     'same_county' => $s['same_county'],
                     'km' => $s['km'] !== null ? round($s['km'], 1) : null,
                 ];
-            }, sa_courier_stations($slug, (string) $r->get_param('state'), (string) $r->get_param('city')));
+            }, sa_courier_stations($slug, (string) $r->get_param('state'), (string) $r->get_param('city'), $ov));
             return ['stations' => $stations];
         },
     ]);
@@ -444,6 +447,7 @@ function refresh(){
   var c=courierOf(chosenRate());
   if(!c){w.style.display='none';return;}
   var u=REST+'?courier='+c+'&state='+encodeURIComponent(val('billing_state'))+'&city='+encodeURIComponent(val('billing_city'));
+  if(val('sa_addr_lat')&&val('sa_addr_lng')){u+='&lat='+encodeURIComponent(val('sa_addr_lat'))+'&lng='+encodeURIComponent(val('sa_addr_lng'));}
   fetch(u,{credentials:'same-origin'}).then(function(r){return r.json();}).then(function(d){
     var sel=document.getElementById('sa_pickup_station');if(!sel)return;
     var list=(d&&d.stations)||[];
