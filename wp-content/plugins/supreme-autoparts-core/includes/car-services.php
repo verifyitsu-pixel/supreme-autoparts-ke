@@ -1222,7 +1222,7 @@ add_action('wp_footer', static function (): void {
         $u = get_term_link($sl, 'product_cat');
         echo '<a href="' . esc_url(is_wp_error($u) ? $shop : $u) . '">' . esc_html($lb) . '</a>';
     }
-    echo '<a href="' . esc_url(home_url('/motorcycle-parts-riding-gear-in-kenya/')) . '">' . esc_html('Motorcycle') . '</a>';
+    echo '<a href="' . esc_url(home_url('/product-category/motorcycle/')) . '">' . esc_html('Motorcycle') . '</a>';
     echo '</div></nav><nav class="sa-side__sec"><h4>Account</h4>'
         . $link($ep('orders'), 'box', 'Orders')
         . $link($acct, 'user', 'Account')
