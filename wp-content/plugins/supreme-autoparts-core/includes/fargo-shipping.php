@@ -244,7 +244,8 @@ function sa_fargo_no_branch_notice(): void
     }
     $county = sa_fargo_county_name($state) ?: $state;
     echo '<tr class="sa-fargo-nobranch"><td colspan="2" style="font-size:.85rem;color:#6b6b6b;line-height:1.4">'
-        . esc_html(sprintf('Fargo Courier has no branch in %s. Choose Store pickup, or enter the nearest town with a Fargo branch (e.g. Garissa or Isiolo) in Town / City. Need help? WhatsApp +1 917 437 5121.', $county))
+        . esc_html(sprintf('Fargo Courier has no branch in %s. Choose Store pickup, or enter the nearest town with a Fargo branch (e.g. Garissa or Isiolo) in Town / City.', $county))
+        . ' Need help? <a href="' . esc_url(function_exists('sa_whatsapp_url') ? sa_whatsapp_url() : 'https://wa.me/supremeautopart') . '">Chat on WhatsApp</a>.'
         . '</td></tr>';
 }
 add_action('woocommerce_review_order_after_shipping', 'sa_fargo_no_branch_notice');
