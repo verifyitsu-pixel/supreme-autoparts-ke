@@ -62,8 +62,6 @@ function sa_ol_couriers(): array
 {
     return [
         'fargo' => ['label' => 'Fargo Courier', 'url' => 'FARGO'],
-        'g4s' => ['label' => 'G4S Courier', 'url' => 'TRACK'],
-        'speedaf' => ['label' => 'Speedaf Courier', 'url' => 'TRACK'],
         'ups'   => ['label' => 'UPS', 'url' => 'https://www.ups.com/track?loc=en_US&tracknum=%s'],
         'other' => ['label' => 'Other courier', 'url' => ''],
     ];
@@ -76,10 +74,6 @@ function sa_ol_tracking_url(WC_Order $o): string
     $tpl = sa_ol_couriers()[$c]['url'] ?? '';
     if ($tpl === 'FARGO') {
         return $n !== '' ? add_query_arg('waybill', rawurlencode($n), home_url('/track-order/')) : '';
-    }
-    if ($tpl === 'TRACK') {
-        // G4S/Speedaf: tracked on our own /track-order/ page, never redirected out.
-        return $n !== '' ? add_query_arg(['courier' => $c, 'waybill' => rawurlencode($n)], home_url('/track-order/')) : '';
     }
     return ($tpl !== '' && $n !== '') ? sprintf($tpl, rawurlencode($n)) : '';
 }
@@ -358,7 +352,7 @@ function sa_ol_email_content(WC_Order $o, string $stage, string $note = ''): arr
     $c = (string) $o->get_meta('_sa_courier');
     $trk_no = (string) $o->get_meta('_sa_tracking_no');
     $trk = sa_ol_tracking_url($o);
-    $trkh = $trk_no !== '' ? '<p><strong>Courier:</strong> ' . esc_html(sa_ol_couriers()[$c]['label'] ?? 'Courier') . '<br><strong>Tracking number:</strong> ' . esc_html($trk_no) . ($trk ? '<br><a href="' . esc_url($trk) . '" style="color:#0a0a0a">Track your parcel</a>' : '') . '</p>' : '';
+    $trkh = $trk_no !== '' ? '<p><strong>Courier:</strong> ' . esc_html(sa_ol_couriers()[$c]['label'] ?? 'Courier') . '<br><strong>Tracking number:</strong> ' . esc_html($trk_no) . ($trk ? '<br><a href="' . esc_url($trk) . '" style="color:#0a0a0a">Track your parcel on the courier site</a>' : '') . '</p>' : '';
     $view = sa_ol_view_url($o);
     // When a structured information request is open, list each document with why we need it and how to send it.
     $hr_items = '';
@@ -622,7 +616,7 @@ add_action('template_redirect', static function (): void {
     get_header();
     echo '<main class="sa-container" style="max-width:640px;margin:32px auto;padding:0 16px">';
     if (!$o) {
-        echo '<h1>Link not valid</h1><p>This link has expired or is incorrect. Please use the link in your latest email, or contact us on WhatsApp.</p>';
+        echo '<h1>Link not valid</h1><p>This link has expired or is incorrect. Please use the link in your latest email, or <a href="https://wa.me/supremeautopart">chat with us on WhatsApp</a>.</p>';
     } else {
         echo '<h1 style="font-size:1.6rem">Order #' . esc_html($o->get_order_number()) . ': send us more info</h1>';
         $req = '';
