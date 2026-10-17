@@ -33,7 +33,29 @@
 
   /* ---- 2) Payment waits: arc-ring variant + friendly label on the sitewide overlay ---- */
   var ARC_CLASS = 'sa-loader--arc';
-  var PAYMENT_MSG = 'Please wait - taking you to secure payment. Do not close this page.';
+  var PAYMENT_STAGES = [
+    'Validating your order…',
+    'Taking you to secure payment…',
+    'Confirming — do not close this page.'
+  ];
+  var stageTimer = null;
+  function startStages() {
+    stopStages();
+    var i = 0;
+    if (window.saLoader && window.saLoader.setLabel) {
+      window.saLoader.setLabel(PAYMENT_STAGES[0]);
+    }
+    stageTimer = window.setInterval(function () {
+      i += 1;
+      if (i >= PAYMENT_STAGES.length) { stopStages(); return; }
+      if (window.saLoader && window.saLoader.setLabel) {
+        window.saLoader.setLabel(PAYMENT_STAGES[i]);
+      }
+    }, 2800);
+  }
+  function stopStages() {
+    if (stageTimer !== null) { window.clearInterval(stageTimer); stageTimer = null; }
+  }
   function setArc(on) {
     var ov = document.getElementById('sa-loader');
     if (ov) ov.classList.toggle(ARC_CLASS, !!on);
@@ -43,9 +65,7 @@
       window.saLoader.show('payment', { failsafeMs: 90000 });
     }
     setArc(true);
-    if (window.saLoader && window.saLoader.setLabel) {
-      window.saLoader.setLabel(PAYMENT_MSG);
-    }
+    startStages();
   }
   function bindPayment() {
     if (!window.jQuery) return;
@@ -66,7 +86,7 @@
     var ov = document.getElementById('sa-loader');
     if (ov && window.MutationObserver) {
       new MutationObserver(function () {
-        if (!ov.classList.contains('is-visible')) setArc(false);
+        if (!ov.classList.contains('is-visible')) { setArc(false); stopStages(); }
       }).observe(ov, { attributes: true, attributeFilter: ['class'] });
     }
   }
