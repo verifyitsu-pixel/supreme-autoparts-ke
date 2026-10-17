@@ -10,12 +10,14 @@
     loading: 'Loading…',
     processing: 'Processing…',
     payment: 'Processing payment…',
+    searching: 'Searching parts…',
   };
 
   var i18n = (window.saTheme && window.saTheme.i18n) || {};
   if (i18n.loading) LABELS.loading = i18n.loading;
   if (i18n.processing) LABELS.processing = i18n.processing;
   if (i18n.processingPayment) LABELS.payment = i18n.processingPayment;
+  if (i18n.searching) LABELS.searching = i18n.searching;
 
   var overlay = null;
   var labelEl = null;
@@ -213,6 +215,7 @@
     ) {
       return 'payment';
     }
+    if (form.querySelector && form.querySelector('input[name="s"]')) return 'searching';
     if (/lost.?password|reset.?password/i.test(id + action)) return 'processing';
     if (/login|register|woocommerce-form-login|woocommerce-form-register/i.test(id)) return 'processing';
     if (/add.?to.?cart|cart/i.test(id) && form.method && form.method.toLowerCase() === 'post') return 'processing';
