@@ -174,7 +174,7 @@ add_action('init', static function (): void {
  * Force page seed when sa_pages_seed_ver bumps (creates missing policy pages on deploy).
  */
 add_action('init', static function (): void {
-    if (get_option('sa_pages_seed_ver') === '14') {
+    if (get_option('sa_pages_seed_ver') === '15') {
         return;
     }
     if (!function_exists('sa_core_seed_pages')) {
@@ -625,6 +625,5 @@ add_action('init', static function (): void {
     }
     sa_core_repair_inflated_usd_prices(['limit' => 5000, 'dry_run' => false]);
 }, 35);
-
 
 
