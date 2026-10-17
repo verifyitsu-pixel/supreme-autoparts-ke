@@ -39,6 +39,7 @@ if (!defined('DISALLOW_FILE_MODS')) define('DISALLOW_FILE_MODS', false);
 if (!defined('DISABLE_WP_CRON')) define('DISABLE_WP_CRON', true);
 if (!defined('WP_CACHE')) define('WP_CACHE', true);
 if (!defined('SA_AGENT_INTAKE_TOKEN') && getenv('SA_AGENT_INTAKE_TOKEN')) define('SA_AGENT_INTAKE_TOKEN', getenv('SA_AGENT_INTAKE_TOKEN'));
+if (!defined('SA_JOTFORM_API_KEY') && getenv('SA_JOTFORM_API_KEY')) define('SA_JOTFORM_API_KEY', getenv('SA_JOTFORM_API_KEY'));
 if (!defined('FORCE_SSL_ADMIN') && str_starts_with((string) (getenv('WP_HOME') ?: ''), 'https://')) {
   define('FORCE_SSL_ADMIN', true);
 }
