@@ -54,6 +54,23 @@ add_action('init', static function (): void {
     update_option('sa_free_shipping_threshold_migrated_usd99', 1);
 }, 5);
 
+/**
+ * Threshold policy change: free shipping now starts at $199 (was $99).
+ */
+add_action('init', static function (): void {
+    if (get_option('sa_free_shipping_threshold_migrated_usd199')) {
+        return;
+    }
+    $env = getenv('SUPREME_FREE_SHIPPING_THRESHOLD');
+    if ($env !== false && $env !== '') {
+        // Explicit env wins; mark migrated so we do not fight deploys.
+        update_option('sa_free_shipping_threshold_migrated_usd199', 1);
+        return;
+    }
+    update_option('sa_free_shipping_threshold', '199');
+    update_option('sa_free_shipping_threshold_migrated_usd199', 1);
+}, 5);
+
 /** Remove any accidental Supreme Mods branding from titles. */
 add_filter('document_title_parts', static function (array $parts): array {
     foreach ($parts as $k => $v) {
