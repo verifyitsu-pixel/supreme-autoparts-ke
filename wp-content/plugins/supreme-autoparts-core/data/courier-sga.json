@@ -6,18 +6,107 @@
  "door_surcharge_kes": 250,
  "source": {
   "url": "https://www.sgasecurity.com/our-contacts/our-contacts",
-  "note": "SGA's own site publishes NO branch booklet - only HQ contacts (Tulip House, Mombasa Road, Nairobi, +254 111 024000). sgacourier.com is a TLS-misconfigured alias of the security site. No stations imported; needs Rock to supply SGA's branch list.",
-  "synced": "2026-10-17"
+  "note": "SGA's own site publishes only HQ contacts (no branch booklet). Branches below come from Google Maps listings (SGA Security branch offices; SGA Courier is Security Group Africa's courier arm, parcels handled at branch offices). 8 Kenya offices pinned 2026-10-17. No Maps listing found for Kisumu or Nakuru.",
+  "synced": "2026-10-17",
+  "maps_note": "All stations maps_verified=true via Google Maps."
  },
  "stations": [
   {
-   "name": "SGA Courier Nairobi HQ",
+   "name": "SGA Courier Nairobi HQ (Tulip House)",
    "town": "Nairobi",
-   "county": null,
+   "county": "Nairobi",
    "address": "Tulip House, Ground Floor, Mombasa Road, Nairobi",
    "phone": "+254 111 024000",
-   "lat": null,
-   "lng": null
+   "lat": -1.31978,
+   "lng": 36.842599,
+   "maps_verified": true,
+   "maps_name": "Security Group Africa-Nairobi",
+   "source": "sgasecurity.com contacts + Google Maps pin"
+  },
+  {
+   "name": "SGA Security Regional Headquarters",
+   "town": "Nairobi",
+   "county": "Nairobi",
+   "address": "Regional HQ, Nairobi",
+   "phone": "",
+   "lat": -1.330214,
+   "lng": 36.863087,
+   "maps_verified": true,
+   "maps_name": "SGA SECURITY REGIONAL HEADQUARTERS",
+   "source": "Google Maps listing"
+  },
+  {
+   "name": "SGA Security Mombasa Branch",
+   "town": "Mombasa",
+   "county": "Mombasa",
+   "address": "Mombasa",
+   "phone": "",
+   "lat": -4.0446,
+   "lng": 39.7,
+   "maps_verified": true,
+   "maps_name": "SGA SECURITY MOMBASA BRANCH",
+   "source": "Google Maps listing"
+  },
+  {
+   "name": "SGA Security Eldoret Branch",
+   "town": "Eldoret",
+   "county": "Uasin Gishu",
+   "address": "Eldoret",
+   "phone": "",
+   "lat": 0.52019,
+   "lng": 35.25717,
+   "maps_verified": true,
+   "maps_name": "SGA SECURITY ELDORET BRANCH",
+   "source": "Google Maps listing"
+  },
+  {
+   "name": "SGA Security Thika Branch",
+   "town": "Thika",
+   "county": "Kiambu",
+   "address": "X3WG+H56 Monalisa House, Thika",
+   "phone": "",
+   "lat": -1.003582,
+   "lng": 37.075379,
+   "maps_verified": true,
+   "maps_name": "SGA SECURITY THIKA BRANCH",
+   "source": "Google Maps listing"
+  },
+  {
+   "name": "SGA Security Naivasha Branch",
+   "town": "Naivasha",
+   "county": "Nakuru",
+   "address": "Naivasha",
+   "phone": "",
+   "lat": -0.710738,
+   "lng": 36.42916,
+   "maps_verified": true,
+   "maps_name": "SGA SECURITY NAIVASHA BRANCH",
+   "source": "Google Maps listing"
+  },
+  {
+   "name": "SGA Security Kericho Branch",
+   "town": "Kericho",
+   "county": "Kericho",
+   "address": "Kericho",
+   "phone": "",
+   "lat": -0.333811,
+   "lng": 35.32751,
+   "maps_verified": true,
+   "maps_name": "SGA SECURITY KERICHO BRANCH",
+   "source": "Google Maps listing"
+  },
+  {
+   "name": "SGA Security Kisii Branch",
+   "town": "Kisii",
+   "county": "Kisii",
+   "address": "Kisii",
+   "phone": "",
+   "lat": -0.675051,
+   "lng": 34.770177,
+   "maps_verified": true,
+   "maps_name": "SGA SECURITY KISII BRANCH",
+   "source": "Google Maps listing"
   }
- ]
+ ],
+ "updated_at": "2026-10-17T07:19:21.565417Z"
 }
