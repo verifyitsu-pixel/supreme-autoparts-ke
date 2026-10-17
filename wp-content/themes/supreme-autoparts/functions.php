@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_THEME_VERSION', '1.4.102');
+define('SA_THEME_VERSION', '1.4.103');
 define('SA_THEME_DIR', get_template_directory());
 define('SA_THEME_URI', get_template_directory_uri());
 
@@ -88,6 +88,7 @@ add_filter('woocommerce_page_title', static function ($title) {
 
 require_once SA_THEME_DIR . '/inc/setup.php';
 require_once SA_THEME_DIR . '/inc/assets.php';
+require_once SA_THEME_DIR . '/inc/pwa.php';
 require_once SA_THEME_DIR . '/inc/image-performance.php';
 require_once SA_THEME_DIR . '/inc/megamenu.php';
 require_once SA_THEME_DIR . '/inc/woocommerce.php';
