@@ -111,8 +111,8 @@ if (!$sa_is_ke) {
           <span class="sa-ed-cat__n"><?php echo esc_html($label); ?></span>
         </a>
       <?php endforeach; ?>
-        <a class="sa-ed-cat" href="<?php echo esc_url(home_url('/motorcycle-parts-riding-gear-in-kenya/')); ?>">
-          <span class="sa-ed-im"><img src="https://cdn.shopify.com/s/files/1/0643/0779/0001/files/9ccadc7f3924b4fd8f37e9d5d3da7e7b.jpg?v=1711627219" alt="" width="640" height="640" loading="lazy" decoding="async"></span>
+        <a class="sa-ed-cat" href="<?php echo esc_url(home_url('/product-category/motorcycle/')); ?>">
+          <span class="sa-ed-im"><img src="https://cdn.shopify.com/s/files/1/0643/0779/0001/files/7bf6d9d41be75c3fe7f40340288c3159L_c0a8eb61-8294-4f37-b779-e64895ab802c.png?v=1785440386&width=400" alt="" width="640" height="640" loading="lazy" decoding="async"></span>
           <span class="sa-ed-cat__n"><?php esc_html_e('Motorcycle & Bike', 'supreme-autoparts'); ?></span>
         </a>
       <?php
