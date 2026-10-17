@@ -17,6 +17,9 @@ if (!defined('ABSPATH')) {
  *   - A courier only shows where it has an office in/near the customer's county.
  *   - Station ranking: customer's own town first, then own county, then nearest (Jumia model).
  *   - Pickup at a station = base rate; door delivery = base + KES 250 on these NEW methods.
+ *   - Checkout auto-suggests stations by actual distance from the customer's address
+ *     (own town, then own county, then nearest by lat/lng) and preselects the closest
+ *     (Rock 2026-10-17 10:54); door delivery is the alternative.
  *   - Speedaf prices from its own 2025 tariff (data/speedaf-tariff.json, origin Nairobi Region).
  *     G4S prices from the Fargo rate card math (no G4S tariff supplied).
  */
@@ -445,6 +448,7 @@ function refresh(){
     var cur=sel.value;
     sel.innerHTML='<option value="">Choose the pickup station</option>'+list.map(function(s){return '<option value="'+String(s.value).replace(/"/g,'&quot;')+'">'+s.label+(s.km!=null?' ('+s.km+' km)':'')+'</option>';}).join('');
     if(cur){sel.value=cur;}
+    if(!sel.value&&sel.options.length>1){sel.selectedIndex=1;}
     w.style.display='';
   }).catch(function(){w.style.display='none';});
 }
