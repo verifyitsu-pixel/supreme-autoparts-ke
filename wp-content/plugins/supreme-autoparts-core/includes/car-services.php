@@ -1186,7 +1186,7 @@ add_action('wp_footer', static function (): void {
     $acct = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : home_url('/my-account/');
     $ep = static fn(string $e): string => function_exists('wc_get_account_endpoint_url') ? wc_get_account_endpoint_url($e) : $acct;
     $shop = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
-    $wa = 'https://wa.me/19174375121';
+    $wa = 'https://wa.me/supremeautopart';
     $user = wp_get_current_user();
     $cats = function_exists('sa_megamenu_tree') ? sa_megamenu_tree() : [];
     $link = static fn(string $u, string $i, string $l, string $sub = '', string $extra = ''): string =>
@@ -1428,7 +1428,7 @@ add_action('woocommerce_single_product_summary', static function (): void {
         $msg = 'Hi, I need fitment help for ' . $product->get_name() . ($sku !== '' ? ' (part # ' . $sku . ')' : '') . '. My vehicle is: ';
         echo '<div class="sa-svc-fit">' . sa_svc_icon('service') . '<div><strong>Not sure it fits?</strong><span>'
             . 'Send us your year, make, model and VIN and we will check the part number for you before you order. Fitting is done by your own mechanic or shop.</span></div>'
-            . '<a class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--primary" href="' . esc_url('https://wa.me/19174375121?text=' . rawurlencode($msg)) . '" rel="noopener">Ask about fitment</a></div>';
+            . '<a class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--primary" href="' . esc_url('https://wa.me/supremeautopart?text=' . rawurlencode($msg)) . '" rel="noopener">Ask about fitment</a></div>';
         return;
     }
     $svc = sa_svc_for_product((int) $product->get_id());
@@ -1816,7 +1816,7 @@ function sa_svc_terms(): array
         ['Uncollected vehicles', 'Please collect your vehicle on the day we tell you it is ready. If a vehicle is not collected, storage arrangements and any charges are confirmed with you on your job card.'],
         ['Warranties', 'Parts are covered by their manufacturer’s warranty, where one applies. Any workmanship warranty, including its length and what it covers, is confirmed on your job card. No other warranty or guarantee is implied by these terms.'],
         ['Your data and privacy', 'We use your name, contact details, vehicle details and booking history to manage your appointment, send confirmations and reminders, and keep service records. Booking events may be added to our internal calendar. We do not sell your data. See our Privacy Policy for your rights.'],
-        ['Changes and contact', 'We may update these terms; the version shown when you book applies to that booking. Questions: WhatsApp +1 917 437 5121, +254 714 498 451, or calvin@supremeautoparts.co.ke.'],
+        ['Changes and contact', 'We may update these terms; the version shown when you book applies to that booking. Questions: use the Chat on WhatsApp button on our site, call +1 917 437 5121 (US) or +254 714 498 451 (Kenya), or email calvin@supremeautoparts.co.ke.'],
     ];
 }
 
@@ -1853,4 +1853,3 @@ function sa_svc_admin_cr_box(int $id, array $b): string
         . '<input name="cr_note" placeholder="Note to customer (optional)" style="width:200px"><button class="button button-primary" name="cr_decision" value="approve">Approve & mark refunded</button><button class="button" name="cr_decision" value="decline">Decline</button></form>'
         . '<small>Approving marks the fee refunded. Send the actual refund via M-Pesa, bank, or the Woo order refund.</small></div>';
 }
-
