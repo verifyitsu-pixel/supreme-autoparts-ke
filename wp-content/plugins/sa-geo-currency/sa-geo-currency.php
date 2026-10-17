@@ -276,3 +276,35 @@ function sa_geo_map_url(?string $cc = null): string
 {
     return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode(sa_geo_business($cc)['map_q']);
 }
+
+/* Rock 2026-10-17: customer-facing WhatsApp entry points use the business username
+   link (wa.me/<username>, per WhatsApp official FAQ faq.whatsapp.com/1561101675623754)
+   and show a "Chat on WhatsApp" button - the number/username is never displayed.
+   tel: call links keep the numbers. Glyph extracted from WhatsApp-served wa.me page. */
+if (!function_exists('sa_whatsapp_username')) {
+    function sa_whatsapp_username(): string {
+        return 'supremeautopart';
+    }
+}
+if (!function_exists('sa_whatsapp_url')) {
+    function sa_whatsapp_url(string $prefill = ''): string {
+        $u = 'https://wa.me/' . sa_whatsapp_username();
+        return $prefill === '' ? $u : $u . '?text=' . rawurlencode($prefill);
+    }
+}
+if (!function_exists('sa_whatsapp_icon')) {
+    function sa_whatsapp_icon(): string {
+        return '<svg class="sa-wa-ic" viewBox="0 0 1024 1024" fill="none" aria-hidden="true" focusable="false"><rect width="1024" height="1024" rx="265" fill="#25D366"></rect><path d="M522 141C320.419 141 157 304.419 157 506C157 572.322 174.689 634.507 205.606 688.101L157 871L346.617 826.173C398.664 854.744 458.429 871 522 871C723.581 871 887 707.581 887 506C887 304.419 723.581 141 522 141ZM522 805.624C460.998 805.624 404.254 787.388 356.919 756.079L244.891 784.61L276.314 677.536C242.322 628.944 222.376 569.801 222.376 506C222.376 340.52 356.52 206.376 522 206.376C687.48 206.376 821.624 340.52 821.624 506C821.624 671.48 687.48 805.624 522 805.624Z" fill="#fff"></path><path d="M607.527 554.187L695.836 595.825C699.892 597.737 702.488 601.847 702.123 606.315C701.163 617.934 696.506 641.226 675.626 662.099C616.692 721.033 510.876 654.36 506.577 651.778C480.554 637.799 455.815 619.09 432.374 595.642C408.933 572.201 390.217 547.462 376.238 521.439C373.656 517.14 306.983 411.317 365.917 352.39C386.796 331.51 410.082 326.853 421.701 325.893C426.169 325.528 430.279 328.124 432.192 332.18L473.829 420.489C475.802 424.667 474.937 429.635 471.666 432.899L440.627 463.938C433.915 470.65 431.942 481.1 436.565 489.393C447.887 509.705 463.115 529.259 480.764 547.252C498.757 564.894 518.318 580.129 538.623 591.451C546.917 596.075 557.366 594.108 564.078 587.389L595.117 556.35C598.381 553.086 603.35 552.221 607.527 554.187Z" fill="#fff"></path></svg>';
+    }
+}
+
+if (!function_exists('sa_instagram_url')) {
+    function sa_instagram_url(): string {
+        return 'https://www.instagram.com/standarddriveworks/';
+    }
+}
+if (!function_exists('sa_instagram_icon')) {
+    function sa_instagram_icon(): string {
+        return '<svg class="sa-ig-ic" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.8 0 184.8 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"/></svg>';
+    }
+}
