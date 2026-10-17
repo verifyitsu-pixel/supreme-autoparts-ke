@@ -124,3 +124,11 @@ add_filter('woocommerce_gateway_icon', static function ($icon, $gateway_id) {
     }
     return $icon;
 }, 30, 2);
+
+/* The Whop gateway renders no inline fields at checkout; hide its empty box. */
+add_action('wp_head', static function () {
+    if (!function_exists('is_checkout') || !is_checkout()) {
+        return;
+    }
+    echo '<style>.payment_box.payment_method_whop{display:none!important}</style>';
+});
