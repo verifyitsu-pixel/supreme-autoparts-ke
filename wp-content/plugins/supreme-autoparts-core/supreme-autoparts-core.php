@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Supreme Autoparts Core
  * Description: Branding defaults, category seed, static pages, invoices, admin dashboard, and Shopify JSON import helpers for Supreme Autoparts.
- * Version: 1.3.98
+ * Version: 1.4.0
  * Author: Supreme Autoparts
  * Text Domain: supreme-autoparts-core
  * Requires at least: 6.4
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SA_CORE_VERSION', '1.3.99');
+define('SA_CORE_VERSION', '1.4.0');
 define('SA_CORE_FILE', __FILE__);
 define('SA_CORE_DIR', plugin_dir_path(__FILE__));
 define('SA_CORE_URL', plugin_dir_url(__FILE__));
@@ -85,6 +85,7 @@ require_once SA_CORE_DIR . 'includes/courier-tracking.php';
 require_once SA_CORE_DIR . 'includes/address-autocomplete.php';
 require_once SA_CORE_DIR . 'includes/garage/garage.php';
 require_once SA_CORE_DIR . 'includes/site-forms.php';
+require_once SA_CORE_DIR . 'includes/careers.php';
 require_once SA_CORE_DIR . 'includes/returns.php';
 require_once SA_CORE_DIR . 'includes/guest-pay.php';
 require_once SA_CORE_DIR . 'includes/otp-only-auth.php';
@@ -178,7 +179,7 @@ add_action('init', static function (): void {
  * Force page seed when sa_pages_seed_ver bumps (creates missing policy pages on deploy).
  */
 add_action('init', static function (): void {
-    if (get_option('sa_pages_seed_ver') === '15') {
+    if (get_option('sa_pages_seed_ver') === '16') {
         return;
     }
     if (!function_exists('sa_core_seed_pages')) {
