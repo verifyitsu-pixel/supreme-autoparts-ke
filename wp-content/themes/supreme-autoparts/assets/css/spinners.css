@@ -121,3 +121,69 @@
 .sa-foot__social a{display:inline-flex;align-items:center;color:inherit;text-decoration:none}
 .sa-ig-ic{width:18px;height:18px}
 .sa-foot__social .sa-wa-ic{width:18px;height:18px;margin-right:0}
+
+/* ---- Sitewide: replace the WooCommerce default "loader.svg" wheel (Rock 2026-10-18).
+   Woo's grey ring shows on cart qty/coupon/checkout ajax updates (blockUI) and on
+   loop add-to-cart buttons; both now use the branded ring instead. ---- */
+.woocommerce .blockUI.blockOverlay::before,
+.blockUI.blockOverlay::before,
+.blockUI.blockElement::before {
+  animation: sa-spin-rot 0.8s linear infinite !important;
+  background: none !important;
+  border-radius: 50%;
+  border: 3px solid rgba(10, 10, 10, 0.16);
+  border-top-color: #0a0a0a;
+  width: 30px !important;
+  height: 30px !important;
+  margin-left: -15px !important;
+  margin-top: -15px !important;
+  font-size: 1em;
+  line-height: 1;
+  text-align: initial;
+}
+
+/* Loop / PDP add-to-cart loading icon */
+.woocommerce a.button.loading::after,
+.woocommerce button.button.loading::after,
+.woocommerce a.add_to_cart_button.loading::after {
+  content: "" !important;
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-left: 0.53em;
+  vertical-align: -2px;
+  border-radius: 50%;
+  border: 2px solid rgba(10, 10, 10, 0.2);
+  border-top-color: #0a0a0a;
+  background: none !important;
+  animation: sa-spin-rot 0.8s linear infinite !important;
+  position: static;
+  font-family: inherit;
+}
+
+/* Woo Blocks spinner (checkout blocks / mini-cart drawer, if rendered) */
+.wc-block-components-spinner,
+.wc-block-components-spinner::after {
+  border-color: rgba(10, 10, 10, 0.16) !important;
+  border-top-color: #0a0a0a !important;
+}
+
+/* ---- Staged image loading: shimmer behind product images until they paint ---- */
+@keyframes sa-skel-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+img.sa-product-card__img,
+.woocommerce-product-gallery__image img {
+  background: linear-gradient(90deg, #f1efe9 25%, #e6e3da 50%, #f1efe9 75%);
+  background-size: 200% 100%;
+  animation: sa-skel-shimmer 1.4s ease-in-out infinite;
+  min-height: 60px;
+}
+@media (prefers-reduced-motion: reduce) {
+  img.sa-product-card__img,
+  .woocommerce-product-gallery__image img {
+    animation: none;
+    background: #f1efe9;
+  }
+}
