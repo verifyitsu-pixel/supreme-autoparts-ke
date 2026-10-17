@@ -678,7 +678,7 @@ function sa_seo_builtin_faqs(): array
             ],
             [
                 'q' => 'Do you ship within the United States?',
-                'a' => 'Yes. We ship across the continental United States — free shipping on qualifying orders $99+, Standard from $8, Priority $15. International delivery is also available. Support: WhatsApp ' . $wa . ' or email ' . $email . '.',
+                'a' => 'Yes. We ship across the continental United States — free shipping on qualifying orders $199+, Standard from $8, Priority $15. International delivery is also available. Support: WhatsApp ' . $wa . ' or email ' . $email . '.',
             ],
             [
                 'q' => 'What if I cannot find my part?',
@@ -748,7 +748,7 @@ function sa_seo_builtin_faqs(): array
         'free-shipping' => [
             [
                 'q' => 'What is the free shipping threshold?',
-                'a' => 'Complimentary shipping may apply when your order meets the USD threshold shown in the site banner (often around $99 equivalent). Exclusions can apply for oversized or supplier-direct items.',
+                'a' => 'Complimentary shipping may apply when your order meets the USD threshold shown in the site banner (often around $199 equivalent). Exclusions can apply for oversized or supplier-direct items.',
             ],
         ],
     ];
