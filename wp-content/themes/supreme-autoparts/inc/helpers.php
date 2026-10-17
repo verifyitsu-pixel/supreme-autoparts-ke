@@ -622,3 +622,83 @@ function sa_render_category_brand_picker(WP_Term $term): void
     </section>
     <?php
 }
+
+/**
+ * Top-level product categories for the AliExpress-style search scope dropdown.
+ * Live terms with the Brands root excluded, cached 6h; curated departments as fallback.
+ *
+ * @return array<int, array{id:int,slug:string,name:string}>
+ */
+function sa_search_scope_categories(): array
+{
+    $hit = get_transient('sa_search_scope_cats_v1');
+    if (is_array($hit)) {
+        return $hit;
+    }
+    $out = [];
+    if (taxonomy_exists('product_cat')) {
+        $terms = get_terms([
+            'taxonomy'   => 'product_cat',
+            'parent'     => 0,
+            'hide_empty' => true,
+            'orderby'    => 'name',
+            'order'      => 'ASC',
+        ]);
+        if (!is_wp_error($terms)) {
+            foreach ($terms as $t) {
+                if ($t->slug === 'brands') {
+                    continue;
+                }
+                $out[] = ['id' => (int) $t->term_id, 'slug' => (string) $t->slug, 'name' => (string) $t->name];
+            }
+        }
+    }
+    if ($out === [] && function_exists('sa_product_types')) {
+        foreach (sa_product_types() as $d) {
+            $t = get_term_by('slug', $d['slug'], 'product_cat');
+            $out[] = ['id' => $t ? (int) $t->term_id : 0, 'slug' => (string) $d['slug'], 'name' => (string) $d['title']];
+        }
+    }
+    set_transient('sa_search_scope_cats_v1', $out, 6 * HOUR_IN_SECONDS);
+    return $out;
+}
+
+/**
+ * Search scope the visitor is in: explicit sa_cat choice wins; on a category,
+ * subcategory or brand archive the scope is that term. "all" (or nothing) = unscoped.
+ */
+function sa_search_scope_current_term(): ?WP_Term
+{
+    if (isset($_GET['sa_cat'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $v = sanitize_title((string) wp_unslash((string) $_GET['sa_cat'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if ($v === '' || $v === 'all') {
+            return null;
+        }
+        $t = taxonomy_exists('product_cat') ? get_term_by('slug', $v, 'product_cat') : false;
+        return $t instanceof WP_Term ? $t : null;
+    }
+    if (function_exists('is_product_category') && is_product_category()) {
+        $o = get_queried_object();
+        return $o instanceof WP_Term ? $o : null;
+    }
+    return null;
+}
+
+/** Category scope <select> rendered inside the search bars (All + current scope + top-level categories). */
+function sa_search_scope_select(string $id): void
+{
+    $cur = sa_search_scope_current_term();
+    echo '<select class="sa-search__cat" id="' . esc_attr($id) . '" name="sa_cat" aria-label="' . esc_attr__('Search scope', 'supreme-autoparts') . '">';
+    echo '<option value="all">' . esc_html__('Search all', 'supreme-autoparts') . '</option>';
+    if ($cur instanceof WP_Term) {
+        $top = array_column(sa_search_scope_categories(), 'slug');
+        if (!in_array($cur->slug, $top, true)) {
+            echo '<option value="' . esc_attr($cur->slug) . '" selected>' . esc_html($cur->name) . '</option>';
+        }
+    }
+    foreach (sa_search_scope_categories() as $c) {
+        $sel = ($cur instanceof WP_Term && $cur->slug === $c['slug']) ? ' selected' : '';
+        echo '<option value="' . esc_attr($c['slug']) . '"' . $sel . '>' . esc_html($c['name']) . '</option>';
+    }
+    echo '</select>';
+}
