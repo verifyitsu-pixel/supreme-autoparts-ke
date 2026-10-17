@@ -1,0 +1,1337 @@
+{
+ "courier": "G4S Kenya",
+ "slug": "g4s",
+ "service": "pickup_and_door",
+ "fee": "fargo_card",
+ "door_surcharge_kes": 250,
+ "source": {
+  "url": "https://g4s-portal.logixplatform.com/office-loaction.html",
+  "note": "G4S Kenya's own courier portal office directory (147 offices with street addresses and phone).",
+  "synced": "2026-10-17"
+ },
+ "stations": [
+  {
+   "name": "G4S ABC Place",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Total petrol Station ABC,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Afya Center",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Oillibya petrol station Opp Afya Center,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Airport -JKIA",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Outside Cargo Center JKIA,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Athiriver",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Chaster arcade-Opp Athiriver Mining,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Awendo",
+   "town": "Awendo",
+   "county": null,
+   "address": "NBK Building Kisii -Isebania,Awendo",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Awoli House Kisumu",
+   "town": "Kisumu",
+   "county": null,
+   "address": "Behind BBK,Kisumu",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Bomet",
+   "town": "Bomet",
+   "county": null,
+   "address": "Kisii Rd KFA Building,Bomet",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Bondo",
+   "town": "Bondo",
+   "county": null,
+   "address": "Bondo-Usenge road opp Equity Bank,Bondo",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Bungoma",
+   "town": "Bungoma",
+   "county": null,
+   "address": "Bungoma -Mumias Rd Opp Coast Bus,Bungoma",
+   "phone": "0732171000 / 0733349230",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Buruburu",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Buruburu Shoping centre -Next to Tuskys,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Busia",
+   "town": "Busia",
+   "county": null,
+   "address": "Kampala street opp Equity Bank,Busia",
+   "phone": "0732171000 / 0733349237",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Butere",
+   "town": "Butere",
+   "county": null,
+   "address": "Butere Corner near Airtel Booster,Butere",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S China",
+   "town": "Nairobi",
+   "county": null,
+   "address": "China,Nairobi",
+   "phone": "254",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Chuka",
+   "town": "Chuka",
+   "county": null,
+   "address": "Next to Gulf Energy,Chuka",
+   "phone": "0732171000 / 0736888148",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Corporate",
+   "town": "Nairobi",
+   "county": null,
+   "address": "North Airport Road Opp Taj Mall,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Dagoreti",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Total petrol Station Opposite meteorological department of kenya,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Diani",
+   "town": "Diani",
+   "county": null,
+   "address": "Barclays Shopping Center along beach road,Diani",
+   "phone": "0732171000 / 0731349247",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Eldama Ravine",
+   "town": "Eldama Ravine",
+   "county": null,
+   "address": "Eldoret rd Opp Chemtany Chemist,Eldama Ravine",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Eldoret",
+   "town": "Eldoret",
+   "county": null,
+   "address": "Main Offices Next to Pauls Bakery,Eldoret",
+   "phone": "0732171000 / 0732349268",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Eldoret Service centre 1",
+   "town": "Eldoret",
+   "county": null,
+   "address": "Utalii Street next to KVDA plaza,Eldoret",
+   "phone": "0732171000 / 0",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Eldoret Service Centre 2",
+   "town": "Eldoret",
+   "county": null,
+   "address": "Ronald Ngala St. next to Barngetuny plaza,Eldoret",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Eldoret Service Centre 3",
+   "town": "Eldoret",
+   "county": null,
+   "address": "Nandi Street Opp. Moiben Connections,Eldoret",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Emali",
+   "town": "Emali",
+   "county": null,
+   "address": "Opposite Posta bulding,Emali",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Embu",
+   "town": "Embu",
+   "county": null,
+   "address": "Helie Selassie Avenue Kimjoy Building,Embu",
+   "phone": "0732171000 / 0733349271",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Enterprise Road",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Enterprise Road at Likoni Junction Total Petrol Station,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S G4S Community",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Community Area Opp Ministry of Public Works,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Garissa",
+   "town": "Garissa",
+   "county": null,
+   "address": "Maendeleo plaza ground floor,Garissa",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Gatundu",
+   "town": "Gatundu",
+   "county": null,
+   "address": "Landmark house Building,Gatundu",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Gigiri",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Kobil Petrol Station Next to Java,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Gilgil",
+   "town": "Gilgil",
+   "county": null,
+   "address": "\"Addis building, Stage road\",Gilgil",
+   "phone": "0732171000 / 0734888564",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Hilton Acade",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Hillton Hotel Acade,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S HOLA",
+   "town": "Malindi",
+   "county": null,
+   "address": "HOLA,Malindi",
+   "phone": "0732171000 / 0703011000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Homabay",
+   "town": "Homabay",
+   "county": null,
+   "address": "\"Bank Road, Sonyacco Plaza Coop Bank Building\",Homabay",
+   "phone": "0732171000 / 0733349279",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Hurligurm",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Hurligurm at Kenol Petrol Station,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Isiolo",
+   "town": "Isiolo",
+   "county": null,
+   "address": "Marsabit rd Moti Pearl hotel BLDG,Isiolo",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S ITEN",
+   "town": "Iten",
+   "county": null,
+   "address": "Next to Co-op bank,Iten",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kabranet",
+   "town": "Kabarnet",
+   "county": null,
+   "address": "Stadium View Bldg Elijah Chelagat Street.,Kabarnet",
+   "phone": "0732171000 / 0736888264",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kajiado",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Simba Center Opp KCB,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kakamega",
+   "town": "Kakamega",
+   "county": null,
+   "address": "Kotecha Plaza opp. Kakamega Primary.,Kakamega",
+   "phone": "0732171000 / 0734349280",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kamakis",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Shell petro station near KFC Kamakis,Nairobi",
+   "phone": "0703011000 / 0703011000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kangema",
+   "town": "Kagema",
+   "county": null,
+   "address": "near co op bank,Kagema",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kapenguria",
+   "town": "Kapenguria",
+   "county": null,
+   "address": "Makutano main street next to Toror chemist,Kapenguria",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kapsabet",
+   "town": "Kapsabet",
+   "county": null,
+   "address": "Main street -Lessos Building,Kapsabet",
+   "phone": "0732171000 / 0739349303",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kapsowar",
+   "town": "Kapsowar",
+   "county": null,
+   "address": "Next to Equity Bank,Kapsowar",
+   "phone": "0732171000 / 1",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Karatina",
+   "town": "Karatina",
+   "county": null,
+   "address": "Off Commercial street Karatina ,Karatina",
+   "phone": "0732171000 / 0705166657",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Karen",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Shell Petrol Station Opp Karen Police Station,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kehancha",
+   "town": "Kehancha",
+   "county": null,
+   "address": "Opp Co-op ATM,Kehancha",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kericho",
+   "town": "Kericho",
+   "county": null,
+   "address": "Nakuru -Kericho Highway A jiwa Shamji Building,Kericho",
+   "phone": "0732171000 / 0732349314",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kericho Service Conter",
+   "town": "Kericho",
+   "county": null,
+   "address": "Tempo Rd Next Family Bank,Kericho",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Keroka",
+   "town": "Keroka",
+   "county": null,
+   "address": "Along Kisii-Nairobi Highway off Masimba junction,Keroka",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kerugoya",
+   "town": "Kerugoya",
+   "county": null,
+   "address": "Kutus-Kagumo road -Bingwa sacco Bld-opposite KCB,Kerugoya",
+   "phone": "0732171000 / 0733349329",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kiambu",
+   "town": "Nairobi",
+   "county": null,
+   "address": "\"Diana House,First Floor Next to Fred Pharmacy\",Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kibwezi",
+   "town": "Kibwezi",
+   "county": null,
+   "address": "Market street-Kibwezi town,Kibwezi",
+   "phone": "0732171000 / 0736888350",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kilgoris",
+   "town": "Kilgoris",
+   "county": null,
+   "address": "Next to Equity Bank,Opp. KWFT,Kilgoris",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kilifi",
+   "town": "Kilifi",
+   "county": null,
+   "address": "Malindi Road Few meters from Tuskys Supermaket,Kilifi",
+   "phone": "0732171000 / 0731349335",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kimilili",
+   "town": "Kimilili",
+   "county": null,
+   "address": "Kamusinga Plaza Near main stage,Kimilili",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kirinyaga Road",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Kirinyaga Road Shell Petrol Station,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kisii",
+   "town": "Kisii",
+   "county": null,
+   "address": "\"Sansora Complex, Sansora road off hosp.road\",Kisii",
+   "phone": "0732171000 / 0731349347",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kisumu",
+   "town": "Kisumu",
+   "county": null,
+   "address": "Nakumatt Megacity,Kisumu",
+   "phone": "0732171000 / 0732349374",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kitale",
+   "town": "Kitale",
+   "county": null,
+   "address": "\"Lulu hse,Moi avenue opp law courts\",Kitale",
+   "phone": "0732171000 / 0732349374",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kitengela",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Kobil Petrol Station,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kitui",
+   "town": "Kitui",
+   "county": null,
+   "address": "Mulinge Bulding Munguti Road,Kitui",
+   "phone": "0732171000 / 0733425785",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Koinange street",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Private packing Opp Chai house,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Kwale",
+   "town": "Kwale",
+   "county": null,
+   "address": "Next to Golden Guest House,Kwale",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Lamu",
+   "town": "Lamu",
+   "county": null,
+   "address": "Request services At KCB or DTB ,Lamu",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Limuru",
+   "town": "Limuru",
+   "county": null,
+   "address": "Opp Manga Hotel Next to Town primary,Limuru",
+   "phone": "0732171000 / 0733425848",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Limuru Road",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Limuru Road Total Petrol Station next to Aga khan primary school,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Litein",
+   "town": "Litein",
+   "county": null,
+   "address": "Main Street -Tegutwo Plaza,Litein",
+   "phone": "0732171000 / 0736888213",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Lodwar",
+   "town": "Lodwar",
+   "county": null,
+   "address": "lokiriama bld next to tumaini medical clinic,Lodwar",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Loitoktok",
+   "town": "Loitoktok",
+   "county": null,
+   "address": "Ledada House Loitoktok illasit Rd,Loitoktok",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Luanda",
+   "town": "Luanda",
+   "county": null,
+   "address": "Kisumu-Busia Road,Luanda",
+   "phone": "0732171000 / 0736888410",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Machakos",
+   "town": "Machakos",
+   "county": null,
+   "address": "Kinyali Bulding Mbolu Malu Road ground floor.,Machakos",
+   "phone": "0732171000 / 0732425952",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Makuyu-Kenol",
+   "town": "Makuyu",
+   "county": null,
+   "address": "Golan House,Makuyu",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Malaba",
+   "town": "Bungoma",
+   "county": null,
+   "address": "Tassia Building Next Tassia Supermarket Opp OilLibya,Bungoma",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Malava",
+   "town": "Malava",
+   "county": null,
+   "address": "Along Kakamega-Webuye Rd, next to K.W.F.T.,Malava",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Malindi",
+   "town": "Malindi",
+   "county": null,
+   "address": "\"Lamu road, Malindi Complex. between Nakumatt and Malindi Casino\",Malindi",
+   "phone": "0732171000 / 0734478800",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Mandera",
+   "town": "Mandera",
+   "county": null,
+   "address": "Mandera Town 0703011000,Mandera",
+   "phone": "0703011000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Maralal",
+   "town": "Maralal",
+   "county": null,
+   "address": "Opp Mararal Safaris Booking office near Huduma Centre,Maralal",
+   "phone": "0703011000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Mariakani",
+   "town": "Mariakani",
+   "county": null,
+   "address": "Opposite Police Station Marikani,Mariakani",
+   "phone": "0732171000 / 0734888742",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Marigat",
+   "town": "Marigat",
+   "county": null,
+   "address": "Outside Uchumi Bldg Opp. KCB,Marigat",
+   "phone": "0732171000 / 0",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Marsabit",
+   "town": "Marsabit",
+   "county": null,
+   "address": "Dachacha House Next to Equity,Marsabit",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Matuu",
+   "town": "Matuu",
+   "county": null,
+   "address": "Labonde house,Matuu",
+   "phone": "0732171000 / 0736888332",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Maua",
+   "town": "Maua",
+   "county": null,
+   "address": "Opp Barclays Maua Robins BLDG,Maua",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Mbale",
+   "town": "Mbale",
+   "county": null,
+   "address": "Mbale-Kakamega Road,Mbale",
+   "phone": "0732171000 / 0736888385",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Mbita",
+   "town": "Homabay",
+   "county": null,
+   "address": "Homa Bay \u2013 Mbita Road Opposite Police Station,Homabay",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Meru",
+   "town": "Meru",
+   "county": null,
+   "address": "Kenyatta Highway Mohammed moti BLDG opp Meru Police station,Meru",
+   "phone": "0732171000 / 0733478701",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Migori",
+   "town": "Migori",
+   "county": null,
+   "address": "Nyasare Road Near Post office ,Migori",
+   "phone": "0732171000 / 0733478704",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Moi Avenue-Nairobi",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Moi Avenue Private packing next to Equity Bank,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Moi Unversity",
+   "town": "Eldoret",
+   "county": null,
+   "address": "Moi Unversity Adminstration Block,Eldoret",
+   "phone": "0732171000 / 0",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Moisbridge",
+   "town": "Mois Bridge",
+   "county": null,
+   "address": "chera travellers building opp KCB,Mois Bridge",
+   "phone": "0732171000 / 0736888376",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Molo",
+   "town": "Molo",
+   "county": null,
+   "address": "Molo Kericho rd Opp faulu kenya,Molo",
+   "phone": "0732171000 / 0736888319",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Mombasa",
+   "town": "Mombasa",
+   "county": null,
+   "address": "Off Nyerere Rd next to Nakumatt Likoni,Mombasa",
+   "phone": "0732171000 / 0733478706",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Mombasa Cinemax",
+   "town": "Mombasa",
+   "county": null,
+   "address": "Cinemax Complex,Mombasa",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Mombasa Service Centre 1",
+   "town": "Mombasa",
+   "county": null,
+   "address": "NSSF Bldg Nkuruma rd,Mombasa",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Moyale",
+   "town": "Moyale",
+   "county": null,
+   "address": "Moyale Town Cell No 0703011000,Moyale",
+   "phone": "0703011000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Mtito andei",
+   "town": "Mtito Andei",
+   "county": null,
+   "address": "Next to Total petrol station,Mtito Andei",
+   "phone": "0732171000 / 0736888345",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Mtwapa",
+   "town": "Mtwapa",
+   "county": null,
+   "address": "Mtwapamall opposite Mtwapa weighbridge,Mtwapa",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Mumias",
+   "town": "Mumias",
+   "county": null,
+   "address": "Lumino Road behind Barclays Bank,Mumias",
+   "phone": "0732171000 / 0731478808",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Muranga",
+   "town": "Muranga",
+   "county": null,
+   "address": "Ngeka Centre,Muranga",
+   "phone": "0732171000 / 0732478709",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Mwea",
+   "town": "Mwea",
+   "county": null,
+   "address": "Mwea-Embu road Next to co-operative bank Mwea,Mwea",
+   "phone": "0732171000 / 0736888054",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Mwingi",
+   "town": "Mwingi",
+   "county": null,
+   "address": "Nunguni chemist Nzaluni Road,Mwingi",
+   "phone": "0732171000 / 0733478786",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Nairobi",
+   "town": "Nairobi",
+   "county": null,
+   "address": "North Airport Road Opp Taj Mall,Nairobi",
+   "phone": "0732171000 / 0733234307",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Nairobi Safari Club",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Nairobi Safari Club Packing,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Naivasha",
+   "town": "Naivasha",
+   "county": null,
+   "address": "Gitia Building opp Nakuru Main Stage Mbaria Kaniu Road.,Naivasha",
+   "phone": "0732171000 / 0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Nakuru",
+   "town": "Nakuru",
+   "county": null,
+   "address": "\"Tapoo plaza, opp Westside mall\",Nakuru",
+   "phone": "0732171000 / 8920656961",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Nakuru CBD",
+   "town": "Nakuru",
+   "county": null,
+   "address": "Moses Mudavadi road Opp IEBC,Nakuru",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Nakuru Service Centre 1",
+   "town": "Nakuru",
+   "county": null,
+   "address": "Kenyatta Avenue, Opp Gilanis Supermarket,Nakuru",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Nakuru Service Centre 2",
+   "town": "Nakuru",
+   "county": null,
+   "address": "Kenyatta Avenue , Outside CK Patel Building,Nakuru",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Namanga",
+   "town": "Namanga",
+   "county": null,
+   "address": "Near Equity Bank,Namanga",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S NandiHills",
+   "town": "NandiHills",
+   "county": null,
+   "address": "Alpha\u00a0Tai\u00a0Building along HenryKosgei\u00a0street,NandiHills",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Nanyuki",
+   "town": "Nanyuki",
+   "county": null,
+   "address": "Kimathi St Kioo Building,Nanyuki",
+   "phone": "0732171000 / 8920656961",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Narok",
+   "town": "Narok",
+   "county": null,
+   "address": "Batian House Kisii-Nairobi Road,Narok",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Ngara",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Mawa Court Opp Mburungar,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Ngong",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Ngong Centre Opp Naivas Supermarket,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Njambini",
+   "town": "Njambini",
+   "county": null,
+   "address": "opp Tulaga Service station,Njambini",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Nkubu",
+   "town": "Nkubu",
+   "county": null,
+   "address": "off Nkubu Embu rd Central plaza,Nkubu",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Nyahururu",
+   "town": "Nyahururu",
+   "county": null,
+   "address": "Kenyatta Avenue,Nyahururu",
+   "phone": "0732171000 / 8920656961",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Nyali",
+   "town": "Nyali",
+   "county": null,
+   "address": "Behind Kenol petrol station Nyali,Nyali",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Nyamira",
+   "town": "Nyamira",
+   "county": null,
+   "address": "Next to Family Bank,Nyamira",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Nyeri",
+   "town": "Nyeri",
+   "county": null,
+   "address": "Kimathi way kona hauthi building opp:GPO ,Nyeri",
+   "phone": "0732171000 / 8920656961",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Obote",
+   "town": "Kisumu",
+   "county": null,
+   "address": "Obote Road,Kisumu",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Ogembo",
+   "town": "Ogembo",
+   "county": null,
+   "address": "Next to Ogembo law Courts,opp. Wakenya Pamoja Sacco,Ogembo",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Olkalou",
+   "town": "Olkalou",
+   "county": null,
+   "address": "Next to Equity Bank,Olkalou",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Othaya",
+   "town": "Othaya",
+   "county": null,
+   "address": "Bank service vehicle,Othaya",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Oyugis",
+   "town": "Oyugis",
+   "county": null,
+   "address": "\"Along Kisii-Kisumu Highway, opp. Posta\",Oyugis",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Rongai",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Kobil Petrol Station,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Rongo",
+   "town": "Rongo",
+   "county": null,
+   "address": "Behind Municipal Mkt, off Rongo-Homabay road,Rongo",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Ruiru",
+   "town": "Ruiru",
+   "county": null,
+   "address": "Oillibya petrol station,Ruiru",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Sotik",
+   "town": "Sotik",
+   "county": null,
+   "address": "Off Kisii - Kericho Highway Nyati House,Sotik",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Standard Street",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Standard Street Opp CBA Bank,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Taita Taveta",
+   "town": "Taveta",
+   "county": null,
+   "address": "Next to Taveta Challa Hotel,Taveta",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Tala",
+   "town": "Tala",
+   "county": null,
+   "address": "Near KCB,Tala",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Thika",
+   "town": "Thika",
+   "county": null,
+   "address": "Wande house,Thika",
+   "phone": "0732171000 / 8920656961",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Thika Road",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Next to Natives club,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S TIMAU",
+   "town": "Nanyuki",
+   "county": null,
+   "address": "TIMAU,Nanyuki",
+   "phone": "733171000 / 0703011000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Tivoli",
+   "town": "Kisumu",
+   "county": null,
+   "address": "Opposite Tivoli Centre,Kisumu",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Turbo",
+   "town": "Eldoret",
+   "county": null,
+   "address": "Outside KWFT - Turbo,Eldoret",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Ugunja",
+   "town": "Ugunja",
+   "county": null,
+   "address": "Luanda-Busia road,Ugunja",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Voi",
+   "town": "Voi",
+   "county": null,
+   "address": "Maghonyi plaza-Bazaar street,Voi",
+   "phone": "0732171000 / 8920656961",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Wajir",
+   "town": "Wajir",
+   "county": null,
+   "address": ",Wajir",
+   "phone": "0732171000 / 0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Watamu",
+   "town": "Watamu",
+   "county": null,
+   "address": "\"Karlmas Building, opp Watamu S/Market; next to Kobil P/Station\u00a0\",Watamu",
+   "phone": "0732171000 / 8920656961",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Webuye",
+   "town": "Webuye",
+   "county": null,
+   "address": "Moi Avenue Opp KPLC Office,Webuye",
+   "phone": "0732171000 / 8920656961",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Westlands",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Near the Mall At Oilibya Petrol station,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Willson Airport",
+   "town": "Nairobi",
+   "county": null,
+   "address": "Opp Shell petrol Station,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Witu Road",
+   "town": "Nairobi",
+   "county": null,
+   "address": "G4S Head office off Witu Road off Lusaka Road,Nairobi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Wote",
+   "town": "Wote",
+   "county": null,
+   "address": "Near Co-operative Bank,Wote",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  },
+  {
+   "name": "G4S Wundanyi",
+   "town": "Wundanyi",
+   "county": null,
+   "address": "Next to BBK-Wundanyi town,Wundanyi",
+   "phone": "0732171000",
+   "lat": null,
+   "lng": null
+  }
+ ]
+}
