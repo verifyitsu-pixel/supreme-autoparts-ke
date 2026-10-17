@@ -1,0 +1,345 @@
+{
+ "courier": "Speedaf Kenya",
+ "tariff_name": "Speedaf Logistics Tariff 2025",
+ "source": "Tariff image supplied by merchant Rock (2026-10-17) - official Speedaf Logistics Tariff 2025",
+ "currency": "KES",
+ "weight_model": "base price covers 0-5kg; extra_kg charged per additional KG",
+ "regions": [
+  "Nairobi Region",
+  "Eastern Region",
+  "Western Region A",
+  "Western Region B",
+  "MT. Kenya Region",
+  "Coastal Region A",
+  "Coastal Region B"
+ ],
+ "rates": {
+  "Nairobi Region": {
+   "Nairobi Region": {
+    "base_0_5kg": 220,
+    "extra_kg": 30
+   },
+   "Eastern Region": {
+    "base_0_5kg": 240,
+    "extra_kg": 40
+   },
+   "Western Region A": {
+    "base_0_5kg": 300,
+    "extra_kg": 40
+   },
+   "Western Region B": {
+    "base_0_5kg": 350,
+    "extra_kg": 40
+   },
+   "MT. Kenya Region": {
+    "base_0_5kg": 300,
+    "extra_kg": 40
+   },
+   "Coastal Region A": {
+    "base_0_5kg": 350,
+    "extra_kg": 45
+   },
+   "Coastal Region B": {
+    "base_0_5kg": 400,
+    "extra_kg": 45
+   }
+  },
+  "Eastern Region": {
+   "Nairobi Region": {
+    "base_0_5kg": 220,
+    "extra_kg": 30
+   },
+   "Eastern Region": {
+    "base_0_5kg": 220,
+    "extra_kg": 30
+   },
+   "Western Region A": {
+    "base_0_5kg": 400,
+    "extra_kg": 50
+   },
+   "Western Region B": {
+    "base_0_5kg": 450,
+    "extra_kg": 60
+   },
+   "MT. Kenya Region": {
+    "base_0_5kg": 400,
+    "extra_kg": 50
+   },
+   "Coastal Region A": {
+    "base_0_5kg": 450,
+    "extra_kg": 50
+   },
+   "Coastal Region B": {
+    "base_0_5kg": 500,
+    "extra_kg": 60
+   }
+  },
+  "Western Region A": {
+   "Nairobi Region": {
+    "base_0_5kg": 220,
+    "extra_kg": 30
+   },
+   "Eastern Region": {
+    "base_0_5kg": 400,
+    "extra_kg": 50
+   },
+   "Western Region A": {
+    "base_0_5kg": 220,
+    "extra_kg": 30
+   },
+   "Western Region B": {
+    "base_0_5kg": 260,
+    "extra_kg": 30
+   },
+   "MT. Kenya Region": {
+    "base_0_5kg": 420,
+    "extra_kg": 50
+   },
+   "Coastal Region A": {
+    "base_0_5kg": 500,
+    "extra_kg": 50
+   },
+   "Coastal Region B": {
+    "base_0_5kg": 550,
+    "extra_kg": 60
+   }
+  },
+  "Western Region B": {
+   "Nairobi Region": {
+    "base_0_5kg": 220,
+    "extra_kg": 30
+   },
+   "Eastern Region": {
+    "base_0_5kg": 450,
+    "extra_kg": 60
+   },
+   "Western Region A": {
+    "base_0_5kg": 260,
+    "extra_kg": 30
+   },
+   "Western Region B": {
+    "base_0_5kg": 220,
+    "extra_kg": 30
+   },
+   "MT. Kenya Region": {
+    "base_0_5kg": 480,
+    "extra_kg": 60
+   },
+   "Coastal Region A": {
+    "base_0_5kg": 550,
+    "extra_kg": 60
+   },
+   "Coastal Region B": {
+    "base_0_5kg": 600,
+    "extra_kg": 60
+   }
+  },
+  "MT. Kenya Region": {
+   "Nairobi Region": {
+    "base_0_5kg": 220,
+    "extra_kg": 30
+   },
+   "Eastern Region": {
+    "base_0_5kg": 400,
+    "extra_kg": 50
+   },
+   "Western Region A": {
+    "base_0_5kg": 420,
+    "extra_kg": 50
+   },
+   "Western Region B": {
+    "base_0_5kg": 480,
+    "extra_kg": 60
+   },
+   "MT. Kenya Region": {
+    "base_0_5kg": 220,
+    "extra_kg": 30
+   },
+   "Coastal Region A": {
+    "base_0_5kg": 450,
+    "extra_kg": 50
+   },
+   "Coastal Region B": {
+    "base_0_5kg": 500,
+    "extra_kg": 60
+   }
+  },
+  "Coastal Region A": {
+   "Nairobi Region": {
+    "base_0_5kg": 220,
+    "extra_kg": 30
+   },
+   "Eastern Region": {
+    "base_0_5kg": 450,
+    "extra_kg": 50
+   },
+   "Western Region A": {
+    "base_0_5kg": 500,
+    "extra_kg": 50
+   },
+   "Western Region B": {
+    "base_0_5kg": 550,
+    "extra_kg": 60
+   },
+   "MT. Kenya Region": {
+    "base_0_5kg": 500,
+    "extra_kg": 50
+   },
+   "Coastal Region A": {
+    "base_0_5kg": 220,
+    "extra_kg": 30
+   },
+   "Coastal Region B": {
+    "base_0_5kg": 260,
+    "extra_kg": 30
+   }
+  },
+  "Coastal Region B": {
+   "Nairobi Region": {
+    "base_0_5kg": 220,
+    "extra_kg": 30
+   },
+   "Eastern Region": {
+    "base_0_5kg": 500,
+    "extra_kg": 60
+   },
+   "Western Region A": {
+    "base_0_5kg": 550,
+    "extra_kg": 60
+   },
+   "Western Region B": {
+    "base_0_5kg": 600,
+    "extra_kg": 60
+   },
+   "MT. Kenya Region": {
+    "base_0_5kg": 500,
+    "extra_kg": 60
+   },
+   "Coastal Region A": {
+    "base_0_5kg": 260,
+    "extra_kg": 30
+   },
+   "Coastal Region B": {
+    "base_0_5kg": 220,
+    "extra_kg": 30
+   }
+  }
+ },
+ "region_towns": {
+  "Nairobi Region": [
+   "Athi River",
+   "Juja",
+   "Kiambu",
+   "Kikuyu",
+   "Kitengela",
+   "Nairobi",
+   "Ngong",
+   "Ongata rongai",
+   "Ruiru"
+  ],
+  "Eastern Region": [
+   "Emali",
+   "Isinya",
+   "Kajiado",
+   "Kibwezi",
+   "Kitui",
+   "Machakos",
+   "Makindu",
+   "Matuu",
+   "Mwingi"
+  ],
+  "Western Region A": [
+   "Ahero",
+   "Awasi",
+   "Awendo",
+   "Bahati",
+   "Bomet",
+   "Gilgil",
+   "Kericho",
+   "Keroka",
+   "Kisii",
+   "Kisumu",
+   "Kabarak",
+   "Kijabe",
+   "Limuru",
+   "Lanet",
+   "Nyamira",
+   "Oyugis",
+   "Rongo",
+   "Subukia",
+   "Salgaa",
+   "Sigalagala",
+   "Soy",
+   "Rongai (Salgaa)",
+   "Naivasha",
+   "Nakuru",
+   "Narok",
+   "Nyahururu",
+   "Eldoret",
+   "Molo",
+   "Njoro",
+   "Olkalau"
+  ],
+  "Western Region B": [
+   "Busia",
+   "Bungoma",
+   "Burnt Forest",
+   "Chewele",
+   "Eldama Ravine",
+   "Iten",
+   "Kabarnet",
+   "Kapsabet",
+   "Kitale",
+   "Malaba",
+   "Moi's Bridge",
+   "Mumias",
+   "Nambale",
+   "Nzoia",
+   "Talek",
+   "Turbo",
+   "Webuye",
+   "Bondo",
+   "Homabay",
+   "Luanda",
+   "Maseno",
+   "Mbale",
+   "Migori",
+   "Siaya",
+   "Ugunja",
+   "Yala",
+   "Malava",
+   "Kakamega"
+  ],
+  "MT. Kenya Region": [
+   "Chuka",
+   "Embu",
+   "Kenol",
+   "Karatina",
+   "Kerugoya",
+   "Meru",
+   "Murang'a",
+   "Mwea",
+   "Nanyuki",
+   "Nkubu",
+   "Nyeri",
+   "Sabasaba",
+   "Thika"
+  ],
+  "Coastal Region A": [
+   "Mariakani",
+   "Mombasa",
+   "Sultan hamud",
+   "Voi",
+   "Mtito Andei"
+  ],
+  "Coastal Region B": [
+   "Diani",
+   "Kilifi",
+   "Malindi",
+   "Mtwapa",
+   "Watamu"
+  ]
+ },
+ "note": "Region-to-region door delivery rates. Towns under each region are Speedaf's own coverage grouping. Per Rock (2026-10-17): Speedaf uses THIS tariff instead of the Fargo rate card; Fargo card remains the fallback for couriers without their own tariff.",
+ "updated_at": "2026-10-17T07:24:06.742655Z"
+}
