@@ -225,14 +225,14 @@ function sa_seo_context(): array
 
     // Meta is the same for every visitor (crawlers and link previews fetch from datacentres
     // with no real geo), so it is written Kenya-first and neutral, never US-only.
-    $default_desc = 'Car parts for Japanese, American, British and European cars. Search by part number or vehicle. Delivery across Kenya, store pickup in Nairobi, and international shipping.';
+    $default_desc = 'Car and motorcycle parts for Japanese, American, British and European vehicles. Search by part number or vehicle. Delivery across Kenya, store pickup in Nairobi, and international shipping.';
 
     $title = $site;
     $desc  = $default_desc;
 
     if (is_front_page() || is_home()) {
         $title = $site . ' | Car Parts, Servicing & Roadside Help in Kenya';
-        $desc  = 'Car parts for Japanese, American, British and European cars, searchable by part number or vehicle. Delivery to all 47 counties, a garage in Nairobi, and roadside help.';
+        $desc  = 'Car and motorcycle parts, riding gear and accessories for Japanese, American, British and European vehicles, searchable by part number or vehicle. Delivery to all 47 counties, a garage in Nairobi, and roadside help.';
     } elseif (function_exists('is_product') && is_product()) {
         $product = function_exists('wc_get_product') ? wc_get_product(get_the_ID()) : null;
         $name    = get_the_title();
@@ -530,7 +530,7 @@ function sa_seo_print_json_ld(array $ctx, array $brand, string $url): void
         '@id'             => $website_id,
         'url'             => $brand['url'],
         'name'            => $brand['name'],
-        'description'     => 'Performance auto parts & accessories — US and Kenya.',
+        'description'     => 'Performance car and motorcycle parts & accessories — US and Kenya.',
         'publisher'       => ['@id' => $org_id],
         'inLanguage'      => 'en',
         'potentialAction' => [
