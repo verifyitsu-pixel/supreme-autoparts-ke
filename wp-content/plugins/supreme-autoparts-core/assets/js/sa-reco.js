@@ -76,7 +76,7 @@
   if (ctx === 'home' && (dnt || !(pz && (pz.mk || pz.p.length || Object.keys(pz.c).length)))) return;
   var anchor = function () {
     if (ctx === 'home') { var h = document.getElementById('sa-ed-pop'); var s = h && h.closest('section'); return s ? { el: s, where: 'afterend' } : null; }
-    if (ctx === 'shop') { var l = document.querySelector('.sa-market__results ul.products'); return l ? { el: l, where: 'beforebegin' } : null; }
+    if (ctx === 'shop') { var l = document.querySelector('.sa-market__results ul.products'); return l ? { el: l, where: 'afterend' } : null; } // below the category's own products, never above
     if (ctx === 'product') { var r = document.querySelector('.related.products, .up-sells') || document.querySelector('.woocommerce-tabs') || document.querySelector('div.product'); return r ? { el: r, where: r.matches('div.product') ? 'beforeend' : 'beforebegin' } : null; }
     if (ctx === 'cart') { var c = document.querySelector('.cart-collaterals') || document.querySelector('.woocommerce-cart-form'); return c ? { el: c, where: 'afterend' } : null; }
   };
