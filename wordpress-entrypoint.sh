@@ -90,7 +90,7 @@ sync_custom_content() {
   if [[ -d /usr/src/wordpress/wp-content/plugins/sa-geo-currency ]]; then
     swap_dir /usr/src/wordpress/wp-content/plugins/sa-geo-currency /var/www/html/wp-content/plugins/sa-geo-currency
   fi
-  for gw in pesapal-woocommerce transactworld-payment-integration woocommerce-paypal-payments jotform-ai-chatbot supreme-agent-intake forminator; do
+  for gw in pesapal-woocommerce transactworld-payment-integration woocommerce-paypal-payments jotform-ai-chatbot supreme-agent-intake forminator matomo; do
     if [[ -d /usr/src/wordpress/wp-content/plugins/$gw ]]; then
       swap_dir "/usr/src/wordpress/wp-content/plugins/$gw" "/var/www/html/wp-content/plugins/$gw"
       chown -R www-data:www-data "/var/www/html/wp-content/plugins/$gw" 2>/dev/null || true
@@ -108,6 +108,12 @@ sync_custom_content() {
   fi
   if [[ -f /usr/src/wordpress/wp-content/mu-plugins/supreme-meta-pixel.php ]]; then
     cp -f /usr/src/wordpress/wp-content/mu-plugins/supreme-meta-pixel.php /var/www/html/wp-content/mu-plugins/ || true
+  fi
+  if [[ -f /usr/src/wordpress/wp-content/mu-plugins/sa-analytics.php ]]; then
+    cp -f /usr/src/wordpress/wp-content/mu-plugins/sa-analytics.php /var/www/html/wp-content/mu-plugins/ || true
+  fi
+  if [[ -f /usr/src/wordpress/wp-content/mu-plugins/sa-page-cache-purge.php ]]; then
+    cp -f /usr/src/wordpress/wp-content/mu-plugins/sa-page-cache-purge.php /var/www/html/wp-content/mu-plugins/ || true
   fi
   [[ -f /usr/src/wordpress/healthz.php ]] && cp -f /usr/src/wordpress/healthz.php /var/www/html/healthz.php
   if [[ -d /usr/src/supreme-data ]]; then
@@ -276,6 +282,19 @@ bootstrap_wordpress() {
   wp_as plugin activate transactworld-payment-integration || true
   wp_as plugin activate supreme-agent-intake || true
   wp_as plugin activate forminator || true
+  wp_as plugin activate matomo || true
+  # Matomo self-hosted analytics: install tables (idempotent), then enable default tracking
+  # + AI bot tracking (same calls the Get Started button makes - no wp-admin click needed).
+  wp_as matomo install 2>&1 | tail -1 || true
+  wp_as eval '
+if (class_exists("WpMatomo\\Settings")) {
+  $s = new \WpMatomo\Settings();
+  $s->apply_tracking_related_changes(["track_mode" => "default", "track_ai_bots" => true, "show_get_started_page" => false]);
+  echo "[supreme] matomo: track_mode=" . $s->get_global_option("track_mode") . " ai_bots=" . (int) $s->get_global_option("track_ai_bots") . "\n";
+} else {
+  echo "[supreme] matomo: Settings class missing\n";
+}
+' 2>&1 | head -3 || true
   # PayPal Payments stays OFF: the plugin was never onboarded (no connected PayPal
   # merchant account), so on product pages its SDK boot fails at
   # /?wc-ajax=ppc-sdk-v6-client-token with HTTP 500 and loads paypal.com scripts
