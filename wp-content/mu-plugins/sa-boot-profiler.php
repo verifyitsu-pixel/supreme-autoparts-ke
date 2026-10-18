@@ -13,6 +13,11 @@ if (!isset($_GET['sa_prof'])) {
     return;
 }
 
+// Capture per-query timing for profiled requests only.
+if (!defined('SAVEQUERIES')) {
+    define('SAVEQUERIES', true);
+}
+
 $GLOBALS['sa_prof_t0'] = isset($_SERVER['REQUEST_TIME_FLOAT']) ? (float) $_SERVER['REQUEST_TIME_FLOAT'] : microtime(true);
 $GLOBALS['sa_prof_marks'] = ['mu_begin' => microtime(true)];
 $GLOBALS['sa_prof_qmarks'] = [];
@@ -109,5 +114,43 @@ add_action('shutdown', static function (): void {
         if ($top !== []) {
             header('X-SA-Init: ' . implode(' ', $top), true);
         }
+    }
+
+    // Slow-query report as a trailing HTML comment (profiled requests bypass the
+    // page cache, so this is never stored or served to other visitors).
+    if (isset($wpdb->queries) && is_array($wpdb->queries)) {
+        $groups = [];
+        $total_ms = 0.0;
+        foreach ($wpdb->queries as $q) {
+            $sql = (string) $q[0];
+            $ms = ((float) $q[1]) * 1000;
+            $caller = isset($q[2]) ? (string) $q[2] : '';
+            $total_ms += $ms;
+            $pattern = preg_replace("/'[^']*'/", '?', $sql);
+            $pattern = preg_replace('/\d+/', 'N', (string) $pattern);
+            $pattern = preg_replace('/\s+/', ' ', (string) $pattern);
+            $pattern = substr((string) $pattern, 0, 110);
+            $caller_parts = explode(',', $caller);
+            $caller_key = '';
+            foreach ($caller_parts as $cp) {
+                $cp = trim($cp);
+                if ($cp !== '' && stripos($cp, 'wpdb') === false && stripos($cp, 'WP_Hook') === false && stripos($cp, 'do_action') === false && stripos($cp, 'apply_filters') === false) {
+                    $caller_key = $cp;
+                    break;
+                }
+            }
+            $key = $pattern . ' @ ' . $caller_key;
+            if (!isset($groups[$key])) {
+                $groups[$key] = ['n' => 0, 'ms' => 0.0];
+            }
+            $groups[$key]['n']++;
+            $groups[$key]['ms'] += $ms;
+        }
+        uasort($groups, static fn ($a, $b) => $b['ms'] <=> $a['ms']);
+        $lines = ['SA-PROF queries: total=' . count($wpdb->queries) . ' time=' . (int) round($total_ms) . 'ms'];
+        foreach (array_slice($groups, 0, 15, true) as $key => $g) {
+            $lines[] = (int) round($g['ms']) . 'ms x' . $g['n'] . ' :: ' . $key;
+        }
+        echo "\n<!--\n" . implode("\n", $lines) . "\n-->\n";
     }
 }, 0);
