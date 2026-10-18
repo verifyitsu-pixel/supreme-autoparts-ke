@@ -18,8 +18,50 @@ if (!defined('ABSPATH')) {
 function sa_gpf_register(): void
 {
     add_feed('google', 'sa_gpf_render');
+    add_feed('google-kes', 'sa_gpf_render');
 }
 add_action('init', 'sa_gpf_register', 20);
+
+/**
+ * Currency for the current feed render: /feed/google is USD (stored prices),
+ * /feed/google-kes converts to whole-shilling KES with the same rounding the
+ * storefront shows Kenyan visitors (SA_GEO_Display::snap), so feed and landing
+ * page agree for the Kenya target.
+ */
+function sa_gpf_currency(): string
+{
+    return get_query_var('feed') === 'google-kes' ? 'KES' : 'USD';
+}
+
+/**
+ * USD amount -> display-matching KES. Returns null when no rate is available.
+ */
+function sa_gpf_kes(float $usd): ?float
+{
+    if ($usd <= 0 || !class_exists('SA_FX_Rates')) {
+        return null;
+    }
+    $rate = SA_FX_Rates::rate_for('KES');
+    if ($rate === null || $rate <= 0) {
+        return null;
+    }
+    $converted = $usd * $rate;
+    if (class_exists('SA_GEO_Display') && method_exists('SA_GEO_Display', 'snap')) {
+        return SA_GEO_Display::snap($converted, $usd, 'KES');
+    }
+    return (float) round($converted);
+}
+
+function sa_gpf_format_price(float $usd): string
+{
+    if (sa_gpf_currency() === 'KES') {
+        $kes = sa_gpf_kes($usd);
+        if ($kes !== null) {
+            return number_format($kes, 0, '.', '') . ' KES';
+        }
+    }
+    return number_format($usd, 2, '.', '') . ' USD';
+}
 
 /**
  * Enrich Woo's existing Product node. Do not print a second Product schema.
@@ -82,7 +124,21 @@ function sa_gpf_render(bool $for_comments = false): void
         header('Cache-Control: public, max-age=1800');
         echo sa_gpf_head();
         for ($i = 0; $i < $n; $i++) {
-            echo (string) get_option('sa_gpf_chunk_r_' . $i, '');
+            $chunk = (string) get_option('sa_gpf_chunk_r_' . $i, '');
+            if (sa_gpf_currency() === 'KES') {
+                $chunk = (string) preg_replace_callback(
+                    '#<g:price>([0-9]+(?:\.[0-9]+)?) USD</g:price>#',
+                    static function (array $m): string {
+                        $kes = sa_gpf_kes((float) $m[1]);
+                        if ($kes === null) {
+                            return $m[0];
+                        }
+                        return '<g:price>' . number_format($kes, 0, '.', '') . ' KES</g:price>';
+                    },
+                    $chunk
+                );
+            }
+            echo $chunk;
         }
         echo "</channel>\n</rss>\n";
         exit;
@@ -266,7 +322,7 @@ function sa_gpf_price_usd(WC_Product $product): ?string
     if ($amount < 0) {
         return null;
     }
-    return number_format($amount, 2, '.', '') . ' USD';
+    return sa_gpf_format_price($amount);
 }
 
 function sa_gpf_description(WC_Product $product, string $title): string
