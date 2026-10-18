@@ -2,7 +2,7 @@
 /**
  * SA page cache purge: clears the advanced-cache.php drop-in's file cache on
  * content changes (products, posts, reviews, theme/plugin updates) and from
- * the admin bar. Cache TTL is 15 minutes; this makes edits visible at once.
+ * the admin bar. Cache TTL is 30 minutes; this makes edits visible at once.
  */
 if (!defined('ABSPATH')) {
     exit;
@@ -31,6 +31,9 @@ function sa_page_cache_purge(bool $force = false): int {
         }
     }
     touch($marker);
+    if (function_exists('do_action')) {
+        do_action('sa_page_cache_full_purge', $cleared);
+    }
     return $cleared;
 }
 

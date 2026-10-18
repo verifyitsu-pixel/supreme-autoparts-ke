@@ -86,6 +86,18 @@ COPY data /usr/src/supreme-data
 COPY scripts /usr/src/supreme-scripts
 COPY healthz.php /usr/src/wordpress/healthz.php
 COPY wordpress-entrypoint.sh /usr/local/bin/wordpress-entrypoint.sh
+# OPcache: the base wordpress image ships the extension but never enables it.
+# Biggest cold-render lever: PHP otherwise re-compiles WP+Woo (~10k files) on every request.
+RUN docker-php-ext-install opcache \
+    && { \
+        echo 'opcache.enable=1'; \
+        echo 'opcache.memory_consumption=256'; \
+        echo 'opcache.interned_strings_buffer=16'; \
+        echo 'opcache.max_accelerated_files=60000'; \
+        echo 'opcache.revalidate_freq=2'; \
+        echo 'opcache.validate_timestamps=1'; \
+    } > /usr/local/etc/php/conf.d/zz-sa-opcache.ini
+
 RUN printf "upload_max_filesize=32M\npost_max_size=48M\nmax_input_vars=5000\n" > /usr/local/etc/php/conf.d/zz-sa-uploads.ini
 
 RUN chmod +x /usr/local/bin/wordpress-entrypoint.sh \

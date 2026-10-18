@@ -483,7 +483,7 @@ final class SA_Geo_Detector
         $cc = '';
         foreach ($providers as $url) {
             $res = wp_remote_get($url, [
-                'timeout' => 2.0,
+                'timeout' => 1.2,
                 'headers' => ['User-Agent' => 'SupremeAutoparts-GeoCurrency/1.1', 'Accept' => 'application/json, text/plain'],
             ]);
             if (is_wp_error($res) || (int) wp_remote_retrieve_response_code($res) !== 200) {

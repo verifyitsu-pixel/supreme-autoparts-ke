@@ -5,7 +5,7 @@
  * Key = resolved country (same header precedence as the sa-geo detector:
  * CF-IPCountry, then X-Country-Code, then the sa_geo_cc sticky cookie) +
  * host + path + normalized query. Storage: wp-content/cache/sa-page/.
- * 15 minute TTL. Purged by mu-plugins/sa-page-cache-purge.php.
+ * 30 minute TTL. Purged by mu-plugins/sa-page-cache-purge.php.
  *
  * Never cached: cart/checkout/account/admin/wp-json paths, any request with
  * Woo/session/login cookies, mutating query params, non-GET/HEAD, any
@@ -14,6 +14,10 @@
 if (!defined('WP_CACHE') || !WP_CACHE) {
     return;
 }
+
+// A bounced visitor must not kill the render: finish it so the page is still
+// cached for the next visitor (cold renders are the expensive ones).
+ignore_user_abort(true);
 
 $sa_pc_method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
 if ($sa_pc_method !== 'GET' && $sa_pc_method !== 'HEAD') {
@@ -68,7 +72,7 @@ $sa_pc_host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? 'unknown'));
 $sa_pc_dir  = (defined('SA_PAGE_CACHE_DIR') ? SA_PAGE_CACHE_DIR : WP_CONTENT_DIR . '/cache') . '/sa-page';
 $sa_pc_key  = $sa_pc_host . '|' . $sa_pc_cc . '|' . $sa_pc_path . '|' . http_build_query($sa_pc_query);
 $sa_pc_file = $sa_pc_dir . '/' . md5($sa_pc_key) . '.html';
-$sa_pc_ttl  = defined('SA_PAGE_CACHE_TTL') ? SA_PAGE_CACHE_TTL : 900;
+$sa_pc_ttl  = defined('SA_PAGE_CACHE_TTL') ? SA_PAGE_CACHE_TTL : 1800;
 
 // The XX bucket (no geo header, no sticky cookie) is never served: a cached page
 // is country-specific, and only PHP can resolve the country for these visitors.
