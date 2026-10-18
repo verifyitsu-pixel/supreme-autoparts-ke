@@ -107,9 +107,14 @@ add_shortcode('sa_careers', static function (): string {
         echo '<div class="sa-svc-alert" role="alert">You have sent several applications in a short time. Please wait a few minutes and try again.</div>';
     }
 
-    // Jotform application form (CV upload lives there); native form below is the automatic fallback.
-    echo '<div class="sa-careers__jf" id="sa-jotform-wrap"><script src="https://form.jotform.com/jsform/262897629019169"></script></div>';
-    echo '<div id="sa-careers-native" hidden>';
+    // Forminator application form (CV upload + entries in wp-admin > Forminator); native form below is the automatic fallback.
+    $sa_ff = function_exists('sa_ff_render') ? sa_ff_render('careers') : '';
+    if ($sa_ff !== '') {
+        echo '<div class="sa-ff" id="sa-forminator-wrap">' . $sa_ff . '</div>'; // phpcs:ignore
+        echo '<div id="sa-careers-native" hidden>';
+    } else {
+        echo '<div id="sa-careers-native">';
+    }
     echo '<form class="sa-svc-form sa-sf-form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
     echo '<input type="hidden" name="action" value="sa_careers_apply">';
     wp_nonce_field('sa_careers_apply', 'sa_careers_nonce');
@@ -131,10 +136,13 @@ add_shortcode('sa_careers', static function (): string {
     echo '<p class="sa-sf-note">No account needed. We only use your details to review your application.</p>';
     echo '</form>';
     echo '</div>'; // #sa-careers-native
-    echo '<script>' . <<<'SAJFJS'
-(function(){var w=document.getElementById('sa-jotform-wrap');if(!w)return;function showNative(){var n=document.getElementById('sa-careers-native');if(n)n.hidden=false;w.style.display='none';}window.addEventListener('load',function(){setTimeout(function(){var f=w.querySelector('iframe');if(!f||f.offsetHeight<80)showNative();},6000);});})();
-SAJFJS
-        . '</script>';
+    if ($sa_ff !== '') {
+        // Pre-select the role from ?role=<slug> (option values are the role slugs).
+        echo '<script>' . <<<'SAFFJS'
+(function(){var r=new URLSearchParams(location.search).get('role');if(!r)return;var iv=setInterval(function(){var s=document.querySelector('#sa-forminator-wrap select[name^="forminator_field_select-"]');if(!s)return;clearInterval(iv);s.value=r;if(s.value===r){s.dispatchEvent(new Event('change',{bubbles:true}));if(window.jQuery){window.jQuery(s).trigger('change');}}},300);setTimeout(function(){clearInterval(iv);},8000);})();
+SAFFJS
+            . '</script>';
+    }
     echo '</div>'; // .sa-careers__form
 
     echo '<script>' . <<<'SAJS'
@@ -149,6 +157,9 @@ SAJS
 add_action('wp_head', static function (): void {
     if (!is_page('careers')) {
         return;
+    }
+    if (function_exists('sa_ff_css')) {
+        echo sa_ff_css(); // phpcs:ignore
     }
     echo '<style id="sa-careers-css">.sa-careers__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin:22px 0 30px}.sa-careers__card{display:flex;flex-direction:column;gap:8px;padding:20px;border:1px solid #e4e3de;border-radius:14px;background:#fff}.sa-careers__card h2{font-size:19px;margin:0;color:#111111}.sa-careers__blurb{color:#555;margin:0;font-size:14px}.sa-careers__card ul{margin:4px 0 0;padding-left:18px;color:#333;font-size:14px;display:grid;gap:5px}.sa-careers__meta{font-size:12px;color:#6b7280;margin:auto 0 0;padding-top:8px}.sa-careers__apply{display:inline-block;background:#F5A623;color:#111111;border-radius:10px;padding:10px 14px;font-weight:600;font-size:14px;text-decoration:none;align-self:flex-start;margin-top:6px}.sa-careers__apply:hover{filter:brightness(.95);color:#111111;text-decoration:none}.sa-careers__form{max-width:760px;border-top:1px solid #e4e3de;padding-top:26px}.sa-careers__form h2{font-size:22px;margin:0 0 14px}.sa-careers .sa-svc-form label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:#333333}</style>';
 });
