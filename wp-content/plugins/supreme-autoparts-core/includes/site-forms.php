@@ -168,17 +168,17 @@ function sa_sf_render(string $type): string
         $pre = [];
         if ($type === 'contact') {
             if ($ff_topic !== '') {
-                $pre['topic-1'] = $ff_topic;
+                $pre['select-1'] = $ff_topic;
             }
             if ($order !== '') {
-                $pre['order-1'] = $order;
+                $pre['text-1'] = $order;
             }
         }
         if (in_array($type, ['part', 'fitment'], true)) {
             if ($pname !== '') {
-                $pre['part-1'] = $pname;
+                $pre['text-1'] = $pname;
             }
-            foreach (['make' => 'make-1', 'model' => 'model-1', 'year' => 'year-1', 'reg' => 'reg-1'] as $vk => $fid) {
+            foreach (['make' => 'text-2', 'model' => 'text-3', 'year' => 'text-4', 'reg' => 'text-7'] as $vk => $fid) {
                 $vv = (string) ($v0[$vk] ?? '');
                 if ($vv !== '') {
                     $pre[$fid] = $vv;
