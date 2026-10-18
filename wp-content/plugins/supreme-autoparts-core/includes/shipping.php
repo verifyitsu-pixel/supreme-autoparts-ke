@@ -87,7 +87,7 @@ add_filter('woocommerce_package_rates', static function ($rates, $package) {
  * Nairobi delivery is free (user request 2026-10-18). Zone = Nairobi County (WC state KE30,
  * "Nairobi City County"), which holds the shop (Njiru) and the Fargo "Nairobi" branch.
  * Kiambu, Ruiru, Thika, Athi River, Kitengela and other counties are NOT in it.
- * When the destination is in the zone, free delivery is the ONLY rate: pickup, Fargo and
+ * When the destination is in the zone, only free delivery and free store pickup are offered; Fargo and
  * the other couriers are removed. Kill switch: env SA_NAIROBI_FREE_OFF=1.
  */
 function sa_ship_is_nairobi_city(array $dest): bool
@@ -112,9 +112,17 @@ add_filter('woocommerce_package_rates', static function ($rates, $package) {
     if (!class_exists('WC_Shipping_Rate')) {
         return $rates;
     }
-    return [
+    $out = [
         'sa_nairobi_free' => new WC_Shipping_Rate('sa_nairobi_free', 'Free delivery, Nairobi', 0, [], 'sa_nairobi_free'),
     ];
+    foreach ($rates as $id => $rate) {
+        if (is_object($rate) && method_exists($rate, 'get_method_id') && $rate->get_method_id() === 'local_pickup') {
+            $rate->set_cost(0);
+            $rate->set_taxes([]);
+            $out[$id] = $rate;
+        }
+    }
+    return $out;
 }, 60, 2);
 
 /**
