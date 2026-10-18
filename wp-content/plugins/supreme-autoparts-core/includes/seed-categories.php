@@ -221,7 +221,7 @@ function sa_core_category_description_map(): array
         'interior' => 'Floor mats, seat covers, cargo liners, organizers, gauges, steering wheels and trim pieces that handle daily use. Good interior protection pays for itself in Kenya\'s dust and mud seasons. Search by part number or vehicle, or ask us to confirm fitment. Delivery countrywide, pickup in Nairobi, and international shipping.',
         'lighting' => 'Headlights, tail lights, fog lights, bulbs, LED upgrades and off-road light bars. Better lighting is one of the cheapest safety upgrades for night driving and rural roads. Match your bulb code or vehicle, or send us a photo of your current unit and we identify the right replacement. Delivery across Kenya, Nairobi pickup, and international shipping.',
         'suspension' => 'Shocks, struts, coilovers, lift and leveling kits, control arms, bushings and sway bars. From restoring a tired daily driver to setting up for rough roads and overlanding, suspension choices depend on load and terrain, so tell us how you use the vehicle and we help you choose. Delivery to all 47 counties, Nairobi pickup, and international shipping.',
-        'tires' => 'Tires for highway, all-terrain and mud use, from commuter sizes to 4x4 fitments. Your size is printed on the sidewall (for example 265/70R16) - search it directly, or send us a photo and your vehicle details and we match options. Fitting advice included. Delivery across Kenya, pickup in Nairobi, and international shipping.',
+        'tires' => 'Tires for highway, all-terrain and mud use, from daily-driver sizes to 4x4 fitments. Your size is printed on the sidewall (for example 265/70R16) - search it directly, or send us a photo and your vehicle details and we match options. Fitting advice included. Delivery across Kenya, pickup in Nairobi, and international shipping.',
         'wheels' => 'Steel and alloy wheels in the bolt patterns, offsets and diameters Kenyan and US vehicles actually run. Getting offset and load rating right matters more than looks, so send your vehicle and current wheel size and we confirm fitment before you order. Delivery countrywide, store pickup in Nairobi, and international shipping.',
         'american' => 'Parts for American vehicles: Ford, Chevrolet, GMC, Jeep, Dodge, RAM and more. Trucks and muscle cars included - search by part number or vehicle, or send your VIN and we confirm the exact variant. Delivery across Kenya, pickup in Nairobi, and fast US domestic shipping.',
         'european' => 'Parts for European vehicles: Volkswagen, BMW, Mercedes-Benz, Audi, Land Rover and others. European models often have several part variants per year, so send your VIN for a guaranteed match. Delivery to all 47 Kenyan counties, Nairobi pickup, and international shipping.',
@@ -233,7 +233,7 @@ add_action('init', static function (): void {
     if (!taxonomy_exists('product_cat')) {
         return;
     }
-    $ver = '1';
+    $ver = '2';
     if (get_option('sa_cat_desc_ver', '') === $ver) {
         return;
     }
