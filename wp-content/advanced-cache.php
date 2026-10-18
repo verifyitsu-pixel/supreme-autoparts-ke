@@ -44,7 +44,7 @@ foreach (array_keys($_COOKIE) as $sa_pc_ck) {
 
 $sa_pc_query = [];
 parse_str((string) parse_url($sa_pc_uri, PHP_URL_QUERY), $sa_pc_query);
-foreach (['add-to-cart', 'sa_buy_now', 'remove_item', 'undo_item', 'add_payment_method', 'v', 'sa_prof'] as $sa_pc_mut) {
+foreach (['add-to-cart', 'sa_buy_now', 'remove_item', 'undo_item', 'add_payment_method', 'v'] as $sa_pc_mut) {
     if (isset($sa_pc_query[$sa_pc_mut])) {
         return;
     }
