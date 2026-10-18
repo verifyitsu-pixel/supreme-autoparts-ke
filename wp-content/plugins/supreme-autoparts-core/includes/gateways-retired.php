@@ -58,6 +58,18 @@ if (!function_exists('sa_whop_checkout_visible')) {
     }
 }
 
+/* True when the current cart is above the Whop per-checkout cap (USD). */
+if (!function_exists('sa_whop_over_cap')) {
+    function sa_whop_over_cap(): bool {
+        if (!function_exists('WC') || !WC()->cart) {
+            return false;
+        }
+        $env = getenv('SA_WHOP_MAX_USD');
+        $cap = (float) (($env !== false && $env !== '') ? $env : 2500);
+        return (float) WC()->cart->get_total('edit') > $cap;
+    }
+}
+
 /* Checkout gateway availability + order. TransactWorld is always removed;
    Whop only appears while sa_whop_checkout_visible() is true. */
 add_filter('woocommerce_available_payment_gateways', static function ($gateways) {
@@ -96,18 +108,17 @@ add_filter('woocommerce_available_payment_gateways', static function ($gateways)
         $africa = array_map('strtoupper', array_map('strval', (array) ($continents['AF']['countries'] ?? [])));
     }
     $is_africa = $country !== '' && in_array(strtoupper($country), $africa, true);
-    // 2026-10-18 (user answer relayed via the main agent): card (Whop) only offers bank
-    // wire above its per-checkout cap, so for customers in every region a cart above the
-    // cap goes to Pesapal only. Cap is USD, env SA_WHOP_MAX_USD overrides (default 2500).
-    if (function_exists('WC') && WC()->cart) {
-        $cap = (float) (getenv('SA_WHOP_MAX_USD') !== false && getenv('SA_WHOP_MAX_USD') !== '' ? getenv('SA_WHOP_MAX_USD') : 2500);
-        if ((float) WC()->cart->get_total('edit') > $cap) {
-            unset($gateways['whop']);
-            if (WC()->session) {
-                WC()->session->set('chosen_payment_method', 'pesapal');
-            }
-            return $gateways;
+    // 2026-10-18: above the Whop per-checkout cap (USD, env SA_WHOP_MAX_USD, default 2500)
+    // card is not offered in any region: customers get Bank wire (Whop's only method at
+    // that size) and Pesapal.
+    if (sa_whop_over_cap()) {
+        if (WC()->session && (string) WC()->session->get('chosen_payment_method') === '') {
+            WC()->session->set('chosen_payment_method', 'whop');
         }
+        return [
+            'whop'    => $gateways['whop'],
+            'pesapal' => $gateways['pesapal'],
+        ] + $gateways;
     }
     if ($country !== '' && !$is_africa && $africa !== []) {
         unset($gateways['pesapal']);
@@ -141,7 +152,7 @@ add_filter('woocommerce_gateway_title', static function ($title, $gateway_id) {
         return $title;
     }
     if ('whop' === $gateway_id) {
-        return 'Card (Visa, Mastercard)';
+        return sa_whop_over_cap() ? 'Bank wire' : 'Card (Visa, Mastercard)';
     }
     if ('pesapal' === $gateway_id) {
         $ke = function_exists('sa_gc_zone') && sa_gc_zone() === 'KE';
