@@ -9,7 +9,7 @@ declare(strict_types=1);
  */
 
 add_action('init', static function (): void {
-    if (get_option('sa_moto_cat_seed_ver') === '1') {
+    if (get_option('sa_moto_cat_seed_ver') === '2') {
         return;
     }
     if (!function_exists('wc_get_products')) {
@@ -61,5 +61,13 @@ add_action('init', static function (): void {
         wp_set_object_terms((int) $pid, [$tid], 'product_cat', true);
     }
     clean_term_cache($tid);
-    update_option('sa_moto_cat_seed_ver', '1');
+    // wp_set_object_terms fires no product-save hooks, so refresh each product's
+    // facet-index row directly (targeted, live table) - otherwise the category's
+    // brand picker and filters wait for the weekly full rebuild.
+    if (function_exists('sa_fx_reindex_product')) {
+        foreach (array_unique($ids) as $pid) {
+            sa_fx_reindex_product((int) $pid);
+        }
+    }
+    update_option('sa_moto_cat_seed_ver', '2');
 }, 30);
