@@ -1020,7 +1020,10 @@ add_action('init', static function (): void {
 
 // --- SEO: drop product-tag archives from core sitemaps (reversible) ---
 add_filter('wp_sitemaps_taxonomies', function (array $taxonomies): array {
-    return array_values(array_filter($taxonomies, function ($t) {
+    // Keys must stay the taxonomy names: the core taxonomies sitemap provider
+    // builds index URLs from array keys, and array_values() here produced
+    // broken wp-sitemap-taxonomies-<n>-1.xml entries that 404.
+    return array_filter($taxonomies, function ($t) {
         return $t->name !== 'product_tag';
-    }));
+    });
 });
