@@ -112,6 +112,12 @@ sync_custom_content() {
   if [[ -f /usr/src/wordpress/wp-content/mu-plugins/sa-analytics.php ]]; then
     cp -f /usr/src/wordpress/wp-content/mu-plugins/sa-analytics.php /var/www/html/wp-content/mu-plugins/ || true
   fi
+  if [[ -f /usr/src/wordpress/wp-content/mu-plugins/sa-matomo-deep.php ]]; then
+    cp -f /usr/src/wordpress/wp-content/mu-plugins/sa-matomo-deep.php /var/www/html/wp-content/mu-plugins/ || true
+  fi
+  if [[ -f /usr/src/wordpress/wp-content/mu-plugins/sa-customer-analytics.php ]]; then
+    cp -f /usr/src/wordpress/wp-content/mu-plugins/sa-customer-analytics.php /var/www/html/wp-content/mu-plugins/ || true
+  fi
   if [[ -f /usr/src/wordpress/wp-content/mu-plugins/sa-page-cache-purge.php ]]; then
     cp -f /usr/src/wordpress/wp-content/mu-plugins/sa-page-cache-purge.php /var/www/html/wp-content/mu-plugins/ || true
   fi
