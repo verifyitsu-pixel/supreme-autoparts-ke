@@ -85,6 +85,8 @@ COPY wp-content/mu-plugins /usr/src/wordpress/wp-content/mu-plugins
 COPY data /usr/src/supreme-data
 COPY scripts /usr/src/supreme-scripts
 COPY healthz.php /usr/src/wordpress/healthz.php
+COPY llms.txt /usr/src/wordpress/llms.txt
+COPY 602ba228c9d1427d2c329ca9d9c82c4a.txt /usr/src/wordpress/602ba228c9d1427d2c329ca9d9c82c4a.txt
 COPY wordpress-entrypoint.sh /usr/local/bin/wordpress-entrypoint.sh
 # OPcache: the base wordpress image ships the extension but never enables it.
 # Biggest cold-render lever: PHP otherwise re-compiles WP+Woo (~10k files) on every request.
