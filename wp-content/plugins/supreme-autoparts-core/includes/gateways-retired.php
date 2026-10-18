@@ -112,13 +112,12 @@ add_filter('woocommerce_available_payment_gateways', static function ($gateways)
     // card is not offered in any region: customers get Bank wire (Whop's only method at
     // that size) and Pesapal.
     if (sa_whop_over_cap()) {
-        if (WC()->session && (string) WC()->session->get('chosen_payment_method') === '') {
-            WC()->session->set('chosen_payment_method', 'whop');
+        // User wording (2026-10-18): over the cap, send customers straight to Pesapal.
+        unset($gateways['whop']);
+        if (WC()->session) {
+            WC()->session->set('chosen_payment_method', 'pesapal');
         }
-        return [
-            'whop'    => $gateways['whop'],
-            'pesapal' => $gateways['pesapal'],
-        ] + $gateways;
+        return $gateways;
     }
     if ($country !== '' && !$is_africa && $africa !== []) {
         unset($gateways['pesapal']);
