@@ -49,6 +49,7 @@ require_once SA_CORE_DIR . 'includes/product-fallbacks.php';
 require_once SA_CORE_DIR . 'includes/catalog-gaps.php';
 require_once SA_CORE_DIR . 'includes/customer-accounts.php';
 require_once SA_CORE_DIR . 'includes/guest-account-otp.php';
+require_once SA_CORE_DIR . 'includes/google-login.php';
 require_once SA_CORE_DIR . 'includes/order-emails.php';
 require_once SA_CORE_DIR . 'includes/receipt-design.php';
 require_once SA_CORE_DIR . 'includes/invoices.php';

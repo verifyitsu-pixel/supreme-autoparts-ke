@@ -23,10 +23,18 @@ if ($sa_otp_email === '' && !empty($_POST['sa_otp_email'])) { // phpcs:ignore
   <div class="sa-account-auth__grid<?php echo ('yes' === get_option('woocommerce_enable_myaccount_registration')) ? ' sa-account-auth__grid--2' : ''; ?>">
 
     <section class="sa-account-auth__panel sa-account-auth__login">
+      <?php if (!empty($_GET['sa_google_error'])) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+        <div class="woocommerce-error" role="alert"><?php esc_html_e('Google sign-in did not work. Please try again or use the emailed login code below.', 'supreme-autoparts'); ?></div>
+      <?php endif; ?>
+
       <header class="sa-account-panel__head">
         <h2><?php esc_html_e('Log in', 'supreme-autoparts'); ?></h2>
         <p class="sa-account-panel__lead"><?php esc_html_e('Enter the email you used at checkout and we will email you a 6-digit login code. No password needed.', 'supreme-autoparts'); ?></p>
       </header>
+
+        <?php if (function_exists('sa_google_login_button')) : ?>
+          <?php sa_google_login_button(); ?>
+        <?php endif; ?>
 
       <div class="sa-otp-block" data-sa-otp>
         <h3 class="sa-otp-block__title"><?php esc_html_e('Email me a login code', 'supreme-autoparts'); ?></h3>

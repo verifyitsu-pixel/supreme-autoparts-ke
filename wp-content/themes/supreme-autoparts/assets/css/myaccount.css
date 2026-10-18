@@ -1719,3 +1719,30 @@ body.woocommerce-account .sa-my-account {
     max-width: 100%;
   }
 }
+
+/* Sign in with Google block */
+.sa-google-block__btn {
+  display: flex;
+  justify-content: center;
+  margin: 0.25rem 0 0.75rem;
+}
+.sa-google-block__err {
+  margin: 0.5rem 0 0;
+  color: var(--sa-text-muted, #6b6b6b);
+  font-size: 0.85rem;
+}
+.sa-google-block__or {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.9rem 0 0;
+  color: var(--sa-text-muted, #6b6b6b);
+  font-size: 0.85rem;
+}
+.sa-google-block__or::before,
+.sa-google-block__or::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--sa-border, #e4e4e4);
+}
+
