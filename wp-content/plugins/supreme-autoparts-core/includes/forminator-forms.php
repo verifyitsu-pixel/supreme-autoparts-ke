@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 defined('ABSPATH') || exit;
 
-const SA_FF_SEED_VER = '1';
+const SA_FF_SEED_VER = '2';
 const SA_FF_NOTIFY   = 'calvin@supremeautoparts.co.ke';
 
 /* One wrapper row per field (stacked, full-width). */
@@ -73,6 +73,7 @@ function sa_ff_defs(): array
             ],
             'notifications' => [
                 ['slug' => 'notification-9001-0001', 'label' => 'Calvin', 'email-recipients' => 'default', 'recipients' => SA_FF_NOTIFY, 'email-subject' => 'New careers application: {name-1}', 'email-editor' => 'New application via the careers form:<br/><br/>{all_fields}<br/><br/>Sent from {site_url}.', 'email-attachment' => 'true', 'type' => 'default'],
+                ['slug' => 'notification-9001-0002', 'label' => 'Applicant copy', 'email-recipients' => 'default', 'recipients' => '{email-1}', 'email-subject' => 'Your Supreme Autoparts application: {select-1}', 'email-editor' => '<p>Hi {name-1},</p><p>Thank you for applying for <strong>{select-1}</strong> at Supreme Autoparts. We have received your application and CV, and we will be in touch.</p><p>Supreme Autoparts, Midax Plaza, Kangundo Rd, Njiru, Nairobi</p>', 'email-attachment' => 'false', 'type' => 'default'],
             ],
         ],
         'booking' => [
@@ -111,6 +112,7 @@ function sa_ff_defs(): array
             ],
             'notifications' => [
                 ['slug' => 'notification-9002-0001', 'label' => 'Calvin', 'email-recipients' => 'default', 'recipients' => SA_FF_NOTIFY, 'email-subject' => 'New booking request: {name-1}', 'email-editor' => 'New booking request via the website:<br/><br/>{all_fields}<br/><br/>Sent from {site_url}.', 'email-attachment' => 'true', 'type' => 'default'],
+                ['slug' => 'notification-9002-0002', 'label' => 'Customer copy', 'email-recipients' => 'default', 'recipients' => '{email-1}', 'email-subject' => 'We received your booking request', 'email-editor' => '<p>Hi {name-1},</p><p>Thank you - we have your booking request for <strong>{select-1}</strong>. We will confirm your slot by phone or email.</p><p>Supreme Autoparts, Midax Plaza, Kangundo Rd, Njiru, Nairobi</p>', 'email-attachment' => 'false', 'type' => 'default'],
             ],
         ],
         'roadside' => [
