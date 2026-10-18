@@ -186,6 +186,17 @@ add_filter('forminator_builder_data_settings_before_saving', static function (ar
 /* Version-gated, idempotent seed. Runs on init only when Forminator is loaded; retries
  * on later requests until it succeeds, so a deploy where the plugin activates late is fine. */
 add_action('init', static function (): void {
+    if (!class_exists('Forminator_API')) {
+        // Self-heal: plugin files are baked into the image. If the entrypoint's
+        // activation did not stick (activation state lives in the DB, not git),
+        // activate from code here so git stays the source of truth.
+        if (!function_exists('is_plugin_active')) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+        if (file_exists(WP_PLUGIN_DIR . '/forminator/forminator.php') && !is_plugin_active('forminator/forminator.php')) {
+            activate_plugin('forminator/forminator.php');
+        }
+    }
     if (get_option('sa_forminator_seed_ver') === SA_FF_SEED_VER || !class_exists('Forminator_API')) {
         return;
     }
@@ -266,6 +277,15 @@ add_action('template_redirect', static function (): void {
     $html = sa_ff_render($form);
     if ($html === '') {
         echo '<p>Form is not ready yet (Forminator inactive or seed pending).</p>';
+        if (isset($_GET['debug'])) {
+            echo '<pre style="font-size:12px;background:#f4f4f1;padding:10px;border-radius:8px;white-space:pre-wrap">';
+            echo 'forminator_files=' . (file_exists(WP_PLUGIN_DIR . '/forminator/forminator.php') ? 'yes' : 'no') . "\n";
+            echo 'forminator_active=' . (class_exists('Forminator_API') ? 'yes' : 'no') . "\n";
+            echo 'shortcode=' . (shortcode_exists('forminator_form') ? 'yes' : 'no') . "\n";
+            echo 'ids=' . esc_html((string) wp_json_encode(get_option('sa_forminator_forms'))) . "\n";
+            echo 'seed_ver=' . esc_html((string) get_option('sa_forminator_seed_ver')) . "\n";
+            echo '</pre>';
+        }
     } else {
         echo '<div class="sa-ff">' . $html . '</div>'; // phpcs:ignore
     }
