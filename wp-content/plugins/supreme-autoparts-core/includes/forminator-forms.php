@@ -1,6 +1,7 @@
 <?php
 /**
- * Forminator site forms as code: careers application, booking request, roadside request.
+ * Forminator site forms as code: careers application, contact, request-a-part, fitment check,
+ * booking request, roadside request.
  * Form definitions live HERE (git = source of truth). A version-gated, idempotent seed
  * creates/updates the Forminator DB forms on deploy via the Forminator API — wp-admin
  * is never touched by hand. Form IDs are stored in the sa_forminator_forms option.
@@ -12,7 +13,7 @@ declare(strict_types=1);
 
 defined('ABSPATH') || exit;
 
-const SA_FF_SEED_VER = '2';
+const SA_FF_SEED_VER = '3';
 const SA_FF_NOTIFY   = 'calvin@supremeautoparts.co.ke';
 
 /* One wrapper row per field (stacked, full-width). */
@@ -74,6 +75,76 @@ function sa_ff_defs(): array
             'notifications' => [
                 ['slug' => 'notification-9001-0001', 'label' => 'Calvin', 'email-recipients' => 'default', 'recipients' => SA_FF_NOTIFY, 'email-subject' => 'New careers application: {name-1}', 'email-editor' => 'New application via the careers form:<br/><br/>{all_fields}<br/><br/>Sent from {site_url}.', 'email-attachment' => 'true', 'type' => 'default'],
                 ['slug' => 'notification-9001-0002', 'label' => 'Applicant copy', 'email-recipients' => 'default', 'recipients' => '{email-1}', 'email-subject' => 'Your Supreme Autoparts application: {select-1}', 'email-editor' => '<p>Hi {name-1},</p><p>Thank you for applying for <strong>{select-1}</strong> at Supreme Autoparts. We have received your application and CV, and we will be in touch.</p><p>Supreme Autoparts, Midax Plaza, Kangundo Rd, Njiru, Nairobi</p>', 'email-attachment' => 'false', 'type' => 'default'],
+            ],
+        ],
+        'contact' => [
+            'name' => 'Contact Us',
+            'wrappers' => [
+                sa_ff_wrap('k1', sa_ff_field('name-1', 'text', ['field_label' => 'Your name', 'required' => 'true', 'placeholder' => 'Your full name', 'required_message' => 'Please tell us your name.'])),
+                sa_ff_wrap('k2', sa_ff_field('email-1', 'email', ['field_label' => 'Email', 'required' => 'true', 'placeholder' => 'you@email.com', 'required_message' => 'Please give your email address.'])),
+                sa_ff_wrap('k3', sa_ff_field('phone-1', 'phone', ['field_label' => 'Phone (optional)', 'placeholder' => 'e.g. 0712 345 678', 'validation' => 'none'])),
+                sa_ff_wrap('k4', sa_ff_field('topic-1', 'select', [
+                    'field_label' => 'Topic', 'required' => 'true', 'placeholder' => 'Choose…', 'required_message' => 'Please pick a topic.',
+                    'options' => sa_ff_options(['order' => 'An order', 'part' => 'A part', 'booking' => 'A service booking', 'roadside' => 'Roadside help', 'other' => 'Something else']),
+                ])),
+                sa_ff_wrap('k5', sa_ff_field('order-1', 'text', ['field_label' => 'Order or booking number (optional)', 'placeholder' => 'e.g. 26488'])),
+                sa_ff_wrap('k6', sa_ff_field('message-1', 'textarea', ['field_label' => 'Message', 'required' => 'true', 'rows' => '5', 'required_message' => 'Please write your message.'])),
+            ],
+            'settings' => [
+                'thankyou-message' => 'Thank you - we have your message. A copy is in your inbox and we will reply soon.',
+                'submitData' => ['custom-submit-text' => 'Send message'],
+            ],
+            'notifications' => [
+                ['slug' => 'notification-9004-0001', 'label' => 'Calvin', 'email-recipients' => 'default', 'recipients' => SA_FF_NOTIFY, 'email-subject' => 'Website contact: {name-1}', 'email-editor' => 'New message via the contact form:<br/><br/>{all_fields}<br/><br/>Sent from {site_url}.', 'email-attachment' => 'true', 'type' => 'default'],
+                ['slug' => 'notification-9004-0002', 'label' => 'Customer copy', 'email-recipients' => 'default', 'recipients' => '{email-1}', 'email-subject' => 'We received your message', 'email-editor' => '<p>Hi {name-1},</p><p>Thanks for contacting Supreme Autoparts. We received your message and will reply soon by email or phone.</p><p>Supreme Autoparts, Midax Plaza, Kangundo Rd, Njiru, Nairobi</p>', 'email-attachment' => 'false', 'type' => 'default'],
+            ],
+        ],
+        'part' => [
+            'name' => 'Request a Part or Quote',
+            'wrappers' => [
+                sa_ff_wrap('p1', sa_ff_field('name-1', 'text', ['field_label' => 'Your name', 'required' => 'true', 'placeholder' => 'Your full name', 'required_message' => 'Please tell us your name.'])),
+                sa_ff_wrap('p2', sa_ff_field('email-1', 'email', ['field_label' => 'Email', 'required' => 'true', 'placeholder' => 'you@email.com', 'required_message' => 'Please give your email address.'])),
+                sa_ff_wrap('p3', sa_ff_field('phone-1', 'phone', ['field_label' => 'Phone (optional)', 'placeholder' => 'e.g. 0712 345 678', 'validation' => 'none'])),
+                sa_ff_wrap('p4', sa_ff_field('part-1', 'text', ['field_label' => 'Part name or part number', 'required' => 'true', 'placeholder' => 'e.g. Front brake pads, 04465-0K290', 'required_message' => 'Please name the part.'])),
+                sa_ff_wrap('p5', sa_ff_field('make-1', 'text', ['field_label' => 'Make', 'required' => 'true', 'placeholder' => 'e.g. Toyota', 'required_message' => 'Please give the vehicle make.'])),
+                sa_ff_wrap('p6', sa_ff_field('model-1', 'text', ['field_label' => 'Model', 'required' => 'true', 'placeholder' => 'e.g. Premio', 'required_message' => 'Please give the vehicle model.'])),
+                sa_ff_wrap('p7', sa_ff_field('year-1', 'text', ['field_label' => 'Year (optional)', 'placeholder' => 'e.g. 2012'])),
+                sa_ff_wrap('p8', sa_ff_field('engine-1', 'text', ['field_label' => 'Engine (optional)', 'placeholder' => 'e.g. 1NZ-FE 1.5L'])),
+                sa_ff_wrap('p9', sa_ff_field('vin-1', 'text', ['field_label' => 'Chassis / VIN (optional)', 'placeholder' => 'Best for an exact match'])),
+                sa_ff_wrap('p10', sa_ff_field('reg-1', 'text', ['field_label' => 'Reg. plate (optional)'])),
+                sa_ff_wrap('p11', sa_ff_field('message-1', 'textarea', ['field_label' => 'Anything else? (optional)', 'rows' => '4', 'placeholder' => 'Quantity, delivery town, anything else'])),
+            ],
+            'settings' => [
+                'thankyou-message' => 'Thank you - we have your part request. We will find it and send you a price before you pay anything.',
+                'submitData' => ['custom-submit-text' => 'Send request'],
+            ],
+            'notifications' => [
+                ['slug' => 'notification-9005-0001', 'label' => 'Calvin', 'email-recipients' => 'default', 'recipients' => SA_FF_NOTIFY, 'email-subject' => 'Part request: {part-1} ({name-1})', 'email-editor' => 'New part / quote request via the website:<br/><br/>{all_fields}<br/><br/>Sent from {site_url}.', 'email-attachment' => 'true', 'type' => 'default'],
+                ['slug' => 'notification-9005-0002', 'label' => 'Customer copy', 'email-recipients' => 'default', 'recipients' => '{email-1}', 'email-subject' => 'We received your part request', 'email-editor' => '<p>Hi {name-1},</p><p>Thank you - we have your request for <strong>{part-1}</strong> ({make-1} {model-1}). We will find it and send you a price before you pay anything.</p><p>Supreme Autoparts, Midax Plaza, Kangundo Rd, Njiru, Nairobi</p>', 'email-attachment' => 'false', 'type' => 'default'],
+            ],
+        ],
+        'fitment' => [
+            'name' => 'Fitment Check',
+            'wrappers' => [
+                sa_ff_wrap('f1', sa_ff_field('name-1', 'text', ['field_label' => 'Your name', 'required' => 'true', 'placeholder' => 'Your full name', 'required_message' => 'Please tell us your name.'])),
+                sa_ff_wrap('f2', sa_ff_field('email-1', 'email', ['field_label' => 'Email', 'required' => 'true', 'placeholder' => 'you@email.com', 'required_message' => 'Please give your email address.'])),
+                sa_ff_wrap('f3', sa_ff_field('phone-1', 'phone', ['field_label' => 'Phone (optional)', 'placeholder' => 'e.g. 0712 345 678', 'validation' => 'none'])),
+                sa_ff_wrap('f4', sa_ff_field('part-1', 'text', ['field_label' => 'Part you want to check', 'required' => 'true', 'placeholder' => 'e.g. Front brake pads, 04465-0K290', 'required_message' => 'Please name the part.'])),
+                sa_ff_wrap('f5', sa_ff_field('make-1', 'text', ['field_label' => 'Make', 'required' => 'true', 'placeholder' => 'e.g. Toyota', 'required_message' => 'Please give the vehicle make.'])),
+                sa_ff_wrap('f6', sa_ff_field('model-1', 'text', ['field_label' => 'Model', 'required' => 'true', 'placeholder' => 'e.g. Premio', 'required_message' => 'Please give the vehicle model.'])),
+                sa_ff_wrap('f7', sa_ff_field('year-1', 'text', ['field_label' => 'Year (optional)', 'placeholder' => 'e.g. 2012'])),
+                sa_ff_wrap('f8', sa_ff_field('engine-1', 'text', ['field_label' => 'Engine (optional)', 'placeholder' => 'e.g. 1NZ-FE 1.5L'])),
+                sa_ff_wrap('f9', sa_ff_field('vin-1', 'text', ['field_label' => 'Chassis / VIN (optional)', 'placeholder' => 'Best for an exact match'])),
+                sa_ff_wrap('f10', sa_ff_field('reg-1', 'text', ['field_label' => 'Reg. plate (optional)'])),
+                sa_ff_wrap('f11', sa_ff_field('message-1', 'textarea', ['field_label' => 'Anything else? (optional)', 'rows' => '4'])),
+            ],
+            'settings' => [
+                'thankyou-message' => 'Thank you - we have your vehicle details. We will check fitment and reply before you order.',
+                'submitData' => ['custom-submit-text' => 'Check fitment'],
+            ],
+            'notifications' => [
+                ['slug' => 'notification-9006-0001', 'label' => 'Calvin', 'email-recipients' => 'default', 'recipients' => SA_FF_NOTIFY, 'email-subject' => 'Fitment check: {part-1} ({make-1} {model-1})', 'email-editor' => 'New fitment check via the website:<br/><br/>{all_fields}<br/><br/>Sent from {site_url}.', 'email-attachment' => 'true', 'type' => 'default'],
+                ['slug' => 'notification-9006-0002', 'label' => 'Customer copy', 'email-recipients' => 'default', 'recipients' => '{email-1}', 'email-subject' => 'We received your fitment check', 'email-editor' => '<p>Hi {name-1},</p><p>Thank you - we have your fitment check for <strong>{part-1}</strong> ({make-1} {model-1}). We will confirm whether it fits before you order.</p><p>Supreme Autoparts, Midax Plaza, Kangundo Rd, Njiru, Nairobi</p>', 'email-attachment' => 'false', 'type' => 'default'],
             ],
         ],
         'booking' => [
