@@ -493,7 +493,7 @@ function sa_category_brand_picker(WP_Term $term): array
     if (!function_exists('sa_fx_table') || !function_exists('sa_fx_ready') || !sa_fx_ready()) {
         return [];
     }
-    $cache_key = 'sa_bpick_v2_' . (int) $term->term_id;
+    $cache_key = 'sa_bpick_v3_' . (int) $term->term_id;
     $hit = get_transient($cache_key);
     if (is_array($hit)) {
         return $hit;
