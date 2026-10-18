@@ -1,0 +1,43 @@
+# Supreme Autoparts - full site map for AI agents
+
+Auto parts store, Nairobi, Kenya. Delivery across Kenya (all 47 counties), shop pickup in Njiru, international shipping. M-Pesa and card payments. WhatsApp fitment help.
+
+## Main pages
+
+- [Home](https://www.supremeautoparts.co.ke/)
+- [Shop](https://www.supremeautoparts.co.ke/shop/)
+- [Car parts in Kenya guide](https://www.supremeautoparts.co.ke/auto-parts-kenya/)
+- [Motorcycle parts and riding gear in Kenya](https://www.supremeautoparts.co.ke/motorcycle-parts-riding-gear-in-kenya/)
+- [About](https://www.supremeautoparts.co.ke/about-us/)
+- [Contact](https://www.supremeautoparts.co.ke/contact/)
+- [How to order](https://www.supremeautoparts.co.ke/how-to-order/)
+- [Shipping policy](https://www.supremeautoparts.co.ke/shipping-policy/)
+- [Returns](https://www.supremeautoparts.co.ke/returns/)
+- [Price match](https://www.supremeautoparts.co.ke/price-match/)
+- [Free shipping](https://www.supremeautoparts.co.ke/free-shipping/)
+- [Fitment guide](https://www.supremeautoparts.co.ke/fitment-guide/)
+- [Guides](https://www.supremeautoparts.co.ke/guides/)
+- [Careers](https://www.supremeautoparts.co.ke/careers/)
+- [Track order](https://www.supremeautoparts.co.ke/track-order/)
+
+## Product categories
+
+- [All parts](https://www.supremeautoparts.co.ke/shop)
+- [Brakes](https://www.supremeautoparts.co.ke/product-category/brakes/)
+- [Suspension](https://www.supremeautoparts.co.ke/product-category/suspension/)
+- [Engine](https://www.supremeautoparts.co.ke/product-category/engine/)
+- [Exhaust](https://www.supremeautoparts.co.ke/product-category/exhaust/)
+- [Drivetrain](https://www.supremeautoparts.co.ke/product-category/drivetrain/)
+- [Lighting](https://www.supremeautoparts.co.ke/product-category/lighting/)
+- [Wheels](https://www.supremeautoparts.co.ke/product-category/wheels/)
+- [Tires](https://www.supremeautoparts.co.ke/product-category/tires/)
+- [Motorcycle parts and riding gear](https://www.supremeautoparts.co.ke/product-category/motorcycle/)
+- [Helmets and accessories](https://www.supremeautoparts.co.ke/product-category/helmets-and-accessories/)
+- [Motorcycle boots](https://www.supremeautoparts.co.ke/product-category/motorcycle-boots/)
+- [Sprockets](https://www.supremeautoparts.co.ke/product-category/sprockets/)
+
+## Feeds and metadata
+
+- XML sitemap: https://www.supremeautoparts.co.ke/wp-sitemap.xml
+- Contact: calvin@supremeautoparts.co.ke, +254702432492
+- Address: Ground Floor, Midax Plaza, Kangundo Road, Njiru, Nairobi, Kenya
