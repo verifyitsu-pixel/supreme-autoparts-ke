@@ -49,6 +49,11 @@ function sa_gpf_enrich_product_schema($markup, $product)
         $markup['mpn'] = $sku;
     }
 
+    $gtin = sa_gpf_gtin($product);
+    if ($gtin !== '') {
+        $markup['gtin'] = $gtin;
+    }
+
     return $markup;
 }
 add_filter('woocommerce_structured_data_product', 'sa_gpf_enrich_product_schema', 20, 2);
