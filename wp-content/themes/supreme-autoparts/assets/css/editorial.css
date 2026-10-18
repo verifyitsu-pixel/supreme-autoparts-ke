@@ -328,3 +328,22 @@ html,body{overscroll-behavior-x:none}
 .sa-ed-hero__moto a{display:inline-flex;align-items:center;justify-content:center;height:48px;border-radius:8px;border:1.5px solid var(--ed-ink);color:var(--ed-ink);font-weight:600;font-size:15px;padding:0 28px;text-decoration:none}
 .sa-ed-hero__moto a:hover{background:var(--ed-ink);color:#fff}
 @media(max-width:1100px){.sa-ed-hero__moto a{display:flex}}
+/* Mobile menu: no default/hover underline; keep visible pointer, keyboard and pressed states. */
+@media (max-width: 960px) {
+  .sa-nav__link,
+  .sa-nav__item:hover > .sa-nav__link,
+  .sa-nav__link:focus,
+  .sa-nav__link:focus-visible,
+  .sa-nav__link:active,
+  .sa-nav__link.sa-nav__link--service:hover {
+    text-decoration: none !important;
+    text-underline-offset: initial;
+  }
+  .sa-nav__link:hover { background: var(--sa-bg-alt, #f3f7fa); }
+  .sa-nav__link:focus-visible {
+    outline: 2px solid var(--sa-focus, #1267e9);
+    outline-offset: -2px;
+    border-radius: 4px;
+  }
+  .sa-nav__link:active { background: var(--sa-border, #dae3ea); }
+}
