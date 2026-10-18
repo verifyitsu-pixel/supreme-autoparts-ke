@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-const SA_MATOMO_DEEP_VERSION = '1.0.0';
+const SA_MATOMO_DEEP_VERSION = '1.1.0';
 
 /**
  * Microsoft Clarity project IDs per host (heatmaps + session recordings, free).
@@ -28,10 +28,10 @@ const SA_MATOMO_DEEP_VERSION = '1.0.0';
 function sa_matomo_deep_clarity_id(): string
 {
     $map = [
-        'www.supremeautoparts.co.ke' => '',
-        'supremeautoparts.co.ke'     => '',
-        'maxoutnutrition.com'        => '',
-        'www.maxoutnutrition.com'    => '',
+        'www.supremeautoparts.co.ke' => 'yzuhlpytbt',
+        'supremeautoparts.co.ke'     => 'yzuhlpytbt',
+        'maxoutnutrition.com'        => 'yzuiu7vwwj',
+        'www.maxoutnutrition.com'    => 'yzuiu7vwwj',
     ];
     $host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
     return $map[$host] ?? '';
@@ -222,6 +222,7 @@ add_action('wp_footer', static function (): void {
 
   /* ---- Consent (UK/EU banner, everyone else auto-grants cookie consent) ---- */
   var consentDone=false;
+  if(window.SA_CONSENT_GRANTED&&CFG.clarityId&&window.clarity){try{window.clarity("consent");}catch(e){}}
   function grantCookies(){
     if(consentDone||window.SA_CONSENT_GRANTED)return;consentDone=true;
     _paq.push(["rememberCookieConsentGiven"]);
@@ -357,8 +358,10 @@ add_action('wp_head', static function (): void {
     if ($id === '' || !sa_matomo_deep_should_print()) {
         return;
     }
+    // Official Clarity snippet: creates the window.clarity queue stub before the
+    // library loads, so early consent calls are not lost.
     printf(
-        '<script async src="https://www.clarity.ms/tag/%s"></script>' . "\n",
+        '<script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","%s");</script>' . "\n",
         esc_attr($id)
     );
 }, 3);
