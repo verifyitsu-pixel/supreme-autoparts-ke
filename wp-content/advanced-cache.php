@@ -70,7 +70,11 @@ $sa_pc_key  = $sa_pc_host . '|' . $sa_pc_cc . '|' . $sa_pc_path . '|' . http_bui
 $sa_pc_file = $sa_pc_dir . '/' . md5($sa_pc_key) . '.html';
 $sa_pc_ttl  = defined('SA_PAGE_CACHE_TTL') ? SA_PAGE_CACHE_TTL : 900;
 
-if (is_file($sa_pc_file) && filemtime($sa_pc_file) + $sa_pc_ttl > time()) {
+// The XX bucket (no geo header, no sticky cookie) is never served: a cached page
+// is country-specific, and only PHP can resolve the country for these visitors.
+// The request still flows to the store callback below, which files the render
+// under the country the detector sets in the sa_geo_cc cookie.
+if ($sa_pc_cc !== 'XX' && is_file($sa_pc_file) && filemtime($sa_pc_file) + $sa_pc_ttl > time()) {
     $sa_pc_body = file_get_contents($sa_pc_file);
     if ($sa_pc_body !== false && $sa_pc_body !== '') {
         header('Content-Type: text/html; charset=UTF-8');
@@ -85,11 +89,23 @@ if (is_file($sa_pc_file) && filemtime($sa_pc_file) + $sa_pc_ttl > time()) {
     }
 }
 
-ob_start(static function (string $sa_pc_html) use ($sa_pc_file, $sa_pc_dir): string {
+$sa_pc_qs = http_build_query($sa_pc_query);
+ob_start(static function (string $sa_pc_html) use ($sa_pc_file, $sa_pc_dir, $sa_pc_cc, $sa_pc_host, $sa_pc_path, $sa_pc_qs): string {
     $sa_pc_store = http_response_code() === 200;
+    $sa_pc_set_cc = '';
     if ($sa_pc_store) {
         foreach (headers_list() as $sa_pc_h) {
             if (stripos($sa_pc_h, 'Set-Cookie:') === 0) {
+                // The geo stickiness pair is safe: the cache is keyed by the same
+                // country the cookie carries, and it is HttpOnly (never read by JS).
+                // Any other cookie marks the response personalized - do not store.
+                if (preg_match('/^Set-Cookie:\s*sa_geo_cc=([A-Za-z]{2})[^a-zA-Z0-9]/i', $sa_pc_h, $sa_pc_m)) {
+                    $sa_pc_set_cc = strtoupper($sa_pc_m[1]);
+                    continue;
+                }
+                if (stripos($sa_pc_h, 'Set-Cookie: sa_geo_ip=') === 0) {
+                    continue;
+                }
                 $sa_pc_store = false;
                 break;
             }
@@ -103,11 +119,22 @@ ob_start(static function (string $sa_pc_html) use ($sa_pc_file, $sa_pc_dir): str
             }
         }
     }
+    if ($sa_pc_store && $sa_pc_set_cc === '' && $sa_pc_cc === 'XX') {
+        // Unknown country and no cookie set this render: the file would sit in
+        // the never-served XX bucket, so skip writing it.
+        $sa_pc_store = false;
+    }
     if ($sa_pc_store && strlen($sa_pc_html) > 512) {
+        $sa_pc_target = $sa_pc_file;
+        if ($sa_pc_set_cc !== '' && $sa_pc_set_cc !== $sa_pc_cc) {
+            // First visit (no geo header/cookie): PHP resolved the country by IP
+            // and set the cookie - file this render under that country's bucket.
+            $sa_pc_target = $sa_pc_dir . '/' . md5($sa_pc_host . '|' . $sa_pc_set_cc . '|' . $sa_pc_path . '|' . $sa_pc_qs) . '.html';
+        }
         if (!is_dir($sa_pc_dir)) {
             mkdir($sa_pc_dir, 0755, true);
         }
-        file_put_contents($sa_pc_file, $sa_pc_html, LOCK_EX);
+        file_put_contents($sa_pc_target, $sa_pc_html, LOCK_EX);
     }
     header('X-SA-Cache: ' . ($sa_pc_store ? 'MISS stored' : 'MISS bypassed'));
     return $sa_pc_html;
