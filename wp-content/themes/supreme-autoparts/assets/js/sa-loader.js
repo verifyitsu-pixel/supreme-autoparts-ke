@@ -198,6 +198,8 @@
     // Search that only filters via GET hash/local — still navigates; allow loader.
     // Enquire / contact channel buttons are not form submits.
     if (form.closest('[data-sa-enquire]')) return true;
+    // Forminator forms submit via AJAX and show their own inline result — never overlay them.
+    if (form.closest('.forminator-ui')) return true;
     // Quantity forms that AJAX-update cart without full reload are handled via WC events.
     if (form.classList.contains('woocommerce-cart-form') && form.querySelector('[name="update_cart"]')) {
       // Only skip if submitter is update_cart (handled below via submitter check).
