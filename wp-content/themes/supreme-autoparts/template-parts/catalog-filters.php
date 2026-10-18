@@ -26,13 +26,33 @@ $cur     = function_exists('get_woocommerce_currency_symbol') ? html_entity_deco
 $free_min = sa_fx_free_ship_min();
 $orderby = isset($_GET['orderby']) ? sanitize_key(wp_unslash((string) $_GET['orderby'])) : ''; // phpcs:ignore
 
-// Vehicle lists.
-$makes  = sa_fx_counts('make', 'vehicle', 120);
+// Vehicle lists. Scoped to the current category/search when those parts have
+// fitment rows; otherwise the catalog-wide list, so Shop by vehicle works on
+// every page (brand archives, subcategories the index has not caught up with
+// during import). Option counts are shown only when they are scoped.
+$makes = sa_fx_counts('make', 'vehicle', 120);
+$veh_scoped = $makes !== [];
+if (!$veh_scoped) {
+    $makes = sa_fx_counts_all('make', 120);
+}
 usort($makes, static fn ($a, $b) => strcasecmp($a['label'], $b['label']));
-$models = $st['make'] !== '' ? sa_fx_counts('model', 'model', 300, $st['make'] . '/') : [];
+$models = [];
+if ($st['make'] !== '') {
+    $models = $veh_scoped
+        ? sa_fx_counts('model', 'model', 300, $st['make'] . '/')
+        : sa_fx_counts_all('model', 300, $st['make'] . '/');
+}
 usort($models, static fn ($a, $b) => strnatcasecmp($a['label'], $b['label']));
-$years  = $st['model'] !== '' ? sa_fx_counts('ymm', 'year', 120, $st['make'] . '/' . $st['model'] . '/') : [];
+$years = [];
+if ($st['model'] !== '') {
+    $years = $veh_scoped
+        ? sa_fx_counts('ymm', 'year', 120, $st['make'] . '/' . $st['model'] . '/')
+        : sa_fx_counts_all('ymm', 120, $st['make'] . '/' . $st['model'] . '/');
+}
 usort($years, static fn ($a, $b) => (int) $b['label'] <=> (int) $a['label']);
+$veh_n = static function (array $o) use ($veh_scoped): string {
+    return $veh_scoped ? ' (' . number_format_i18n($o['count']) . ')' : '';
+};
 
 // Categories: children of the current category (or top level on shop).
 $current = (function_exists('is_product_category') && is_product_category()) ? get_queried_object() : null;
@@ -126,17 +146,15 @@ $n_active = count($chips);
         </div>
       <?php endif; ?>
 
+      <?php if ($makes !== [] || $st['make'] !== '') : ?>
       <section class="sa-pf__group sa-pf__group--vehicle">
         <h3 class="sa-pf__title"><?php esc_html_e('Shop by vehicle', 'supreme-autoparts'); ?></h3>
-        <?php if ($makes === [] && $st['make'] === '') : ?>
-          <p class="sa-pf__hint"><?php esc_html_e('No vehicle fitment listed for these parts.', 'supreme-autoparts'); ?></p>
-        <?php else : ?>
         <label class="sa-pf__field">
           <span><?php esc_html_e('Make', 'supreme-autoparts'); ?></span>
           <select name="sa_make" data-sa-pf-vehicle="make">
             <option value=""><?php esc_html_e('Select make', 'supreme-autoparts'); ?></option>
             <?php foreach ($makes as $m) : ?>
-              <option value="<?php echo esc_attr($m['value']); ?>" <?php selected($st['make'], $m['value']); ?>><?php echo esc_html($m['label'] . ' (' . number_format_i18n($m['count']) . ')'); ?></option>
+              <option value="<?php echo esc_attr($m['value']); ?>" <?php selected($st['make'], $m['value']); ?>><?php echo esc_html($m['label'] . $veh_n($m)); ?></option>
             <?php endforeach; ?>
           </select>
         </label>
@@ -145,7 +163,7 @@ $n_active = count($chips);
           <select name="sa_model" data-sa-pf-vehicle="model" <?php disabled($st['make'] === '' || $models === []); ?>>
             <option value=""><?php echo esc_html($st['make'] === '' ? __('Select make first', 'supreme-autoparts') : __('All models', 'supreme-autoparts')); ?></option>
             <?php foreach ($models as $m) : $slug = substr($m['value'], strlen($st['make']) + 1); ?>
-              <option value="<?php echo esc_attr($slug); ?>" <?php selected($st['model'], $slug); ?>><?php echo esc_html($m['label'] . ' (' . number_format_i18n($m['count']) . ')'); ?></option>
+              <option value="<?php echo esc_attr($slug); ?>" <?php selected($st['model'], $slug); ?>><?php echo esc_html($m['label'] . $veh_n($m)); ?></option>
             <?php endforeach; ?>
           </select>
         </label>
@@ -155,13 +173,13 @@ $n_active = count($chips);
           <select name="sa_year" data-sa-pf-vehicle="year">
             <option value=""><?php esc_html_e('All years', 'supreme-autoparts'); ?></option>
             <?php foreach ($years as $y) : ?>
-              <option value="<?php echo esc_attr($y['label']); ?>" <?php selected($st['year'], $y['label']); ?>><?php echo esc_html($y['label'] . ' (' . number_format_i18n($y['count']) . ')'); ?></option>
+              <option value="<?php echo esc_attr($y['label']); ?>" <?php selected($st['year'], $y['label']); ?>><?php echo esc_html($y['label'] . $veh_n($y)); ?></option>
             <?php endforeach; ?>
           </select>
         </label>
         <?php endif; ?>
-        <?php endif; ?>
       </section>
+      <?php endif; ?>
 
       <section class="sa-pf__group">
         <h3 class="sa-pf__title"><?php esc_html_e('Part number', 'supreme-autoparts'); ?></h3>

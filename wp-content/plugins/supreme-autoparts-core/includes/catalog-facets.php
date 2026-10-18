@@ -705,6 +705,36 @@ function sa_fx_counts(string $facet, string $skip = '', int $limit = 300, string
     });
 }
 
+/**
+ * Catalog-wide vehicle option counts, ignoring the current category/search
+ * scope. Keeps Shop by vehicle selectable on pages whose own parts have no
+ * fitment rows yet (brand archives, subcategories the index has not caught
+ * up with during import).
+ *
+ * @return list<array{value:string,label:string,count:int}>
+ */
+function sa_fx_counts_all(string $facet, int $limit = 300, string $value_prefix = ''): array
+{
+    if (!sa_fx_ready()) {
+        return [];
+    }
+    return sa_fx_cache('all|' . $facet . '|' . $value_prefix, static function () use ($facet, $limit, $value_prefix): array {
+        global $wpdb;
+        $t = sa_fx_table();
+        $pre = $value_prefix !== '' ? $wpdb->prepare(' AND i.value LIKE %s', $wpdb->esc_like($value_prefix) . '%') : '';
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT i.value, MAX(i.label) label, COUNT(*) c FROM {$t} i WHERE i.facet = %s{$pre} GROUP BY i.value ORDER BY c DESC LIMIT %d",
+            $facet,
+            $limit
+        ));
+        $out = [];
+        foreach ((array) $rows as $r) {
+            $out[] = ['value' => (string) $r->value, 'label' => (string) $r->label, 'count' => (int) $r->c];
+        }
+        return $out;
+    });
+}
+
 /** @return array{min:float,max:float,total:int,freeship:int,instock:int} */
 function sa_fx_stats(): array
 {
