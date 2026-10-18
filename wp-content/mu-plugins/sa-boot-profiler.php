@@ -23,7 +23,16 @@ function sa_prof_name($fn): string {
         return $fn;
     }
     if ($fn instanceof Closure) {
-        return '{closure}';
+        try {
+            $r = new ReflectionFunction($fn);
+            $file = (string) $r->getFileName();
+            // Keep the distinguishing tail of the path.
+            $parts = explode('/', str_replace('\\', '/', $file));
+            $tail = implode('/', array_slice($parts, -3));
+            return '{closure:' . $tail . ':' . (string) $r->getStartLine() . '}';
+        } catch (Throwable $e) {
+            return '{closure}';
+        }
     }
     if (is_array($fn)) {
         $c = is_object($fn[0]) ? get_class($fn[0]) : (string) $fn[0];
