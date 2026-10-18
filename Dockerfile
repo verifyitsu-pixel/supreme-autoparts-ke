@@ -52,6 +52,16 @@ RUN curl -fsSL -o /tmp/forminator.zip \
     && test -f /usr/src/wordpress/wp-content/plugins/forminator/forminator.php \
     && chown -R www-data:www-data /usr/src/wordpress/wp-content/plugins/forminator
 
+
+# Matomo Analytics for WordPress (self-hosted analytics - data stays in the site's own DB)
+ARG MATOMO_VERSION=5.13.1
+RUN curl -fsSL -o /tmp/matomo.zip \
+        "https://downloads.wordpress.org/plugin/matomo.${MATOMO_VERSION}.zip" \
+    && unzip -q /tmp/matomo.zip -d /usr/src/wordpress/wp-content/plugins \
+    && rm -f /tmp/matomo.zip \
+    && test -f /usr/src/wordpress/wp-content/plugins/matomo/matomo.php \
+    && chown -R www-data:www-data /usr/src/wordpress/wp-content/plugins/matomo
+
 # dompdf (PDF receipts / invoices attached to customer emails). Release zip bundles its deps + DejaVu fonts.
 ARG DOMPDF_VERSION=3.1.6
 RUN mkdir -p /usr/src/sa-lib \
