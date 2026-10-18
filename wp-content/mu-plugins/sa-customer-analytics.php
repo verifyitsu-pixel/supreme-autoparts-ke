@@ -151,6 +151,7 @@ function sa_cust_index(): array
         $orders = wc_get_orders([
             'limit'   => 200,
             'page'    => $page,
+            'type'    => 'shop_order',
             'status'  => array_keys(wc_get_order_statuses()),
             'orderby' => 'ID',
             'order'   => 'ASC',
@@ -160,6 +161,7 @@ function sa_cust_index(): array
             break;
         }
         foreach ($orders as $o) {
+            if (!($o instanceof WC_Order)) { continue; }
             $email = strtolower(trim((string) $o->get_billing_email()));
             if ($email === '') {
                 $email = 'guest-order-' . $o->get_id();
@@ -426,6 +428,7 @@ function sa_cust_render_detail(array $index, string $who): void
     $orders = wc_get_orders([
         'billing_email' => $who,
         'limit'         => 50,
+        'type'          => 'shop_order',
         'orderby'       => 'date',
         'order'         => 'DESC',
         'status'        => array_keys(wc_get_order_statuses()),
