@@ -235,10 +235,11 @@ function sa_ol_view_url(WC_Order $o): string
 
 /* The emailed "Track order" link (sa_ol_view_url) uses GET params, but Woo's tracking shortcode
  * requires its form nonce before it renders the result. Inject a fresh nonce on the track-order
- * page so the link opens the timeline directly; order id + billing email remain the access check.
- * nocache_headers so a cached copy can never serve a stale timeline. */
+ * route so the link opens the timeline directly; order id + billing email remain the access check.
+ * /track-order/ is a rewrite (sa_svc_view=track, see car-services.php), not a WP page, so match
+ * the query var rather than is_page(). nocache_headers so no cache can serve a stale timeline. */
 add_action('wp', static function (): void {
-    if (!is_page('track-order') || !isset($_GET['orderid'], $_GET['order_email'])) {
+    if ((string) get_query_var('sa_svc_view') !== 'track' || !isset($_GET['orderid'], $_GET['order_email'])) {
         return;
     }
     nocache_headers();
