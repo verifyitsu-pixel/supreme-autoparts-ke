@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-const SA_MATOMO_DEEP_VERSION = '1.1.0';
+const SA_MATOMO_DEEP_VERSION = '1.1.1';
 
 /**
  * Microsoft Clarity project IDs per host (heatmaps + session recordings, free).
@@ -267,7 +267,7 @@ add_action('wp_footer', static function (): void {
     else if(CFG.geoUrl){
       var x=new XMLHttpRequest();
       x.open("GET",CFG.geoUrl+(CFG.geoUrl.indexOf("?")>-1?"&":"?")+"_="+Date.now(),true);
-      x.onreadystatechange=function(){if(x.readyState===4&&x.status===200){try{applyConsent(JSON.parse(x.responseText).country||"");}catch(e){}}};
+      x.onreadystatechange=function(){if(x.readyState===4&&x.status===200){try{var rc=(JSON.parse(x.responseText).country||"").toUpperCase();if(/^[A-Z]{2}$/.test(rc)){sc("sa_geo_cc",rc,30);}applyConsent(rc);}catch(e){}}};
       x.send(null);
     }
   }catch(e){}
