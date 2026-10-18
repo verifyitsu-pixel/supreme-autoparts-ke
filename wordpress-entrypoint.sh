@@ -71,6 +71,11 @@ sync_custom_content() {
   mkdir -p /var/www/html/wp-content/uploads
   chown -R www-data:www-data /var/www/html/wp-content/uploads 2>/dev/null || true
   chmod -R u+rwX,g+rwX /var/www/html/wp-content/uploads 2>/dev/null || true
+  # Matomo needs its tracker cache tree writable (device detector, translations, system check);
+  # a root-owned dir on the retained volume breaks Matomo with "cache/tracker could not be created".
+  mkdir -p /var/www/html/wp-content/cache/matomo/cache/tracker
+  chown -R www-data:www-data /var/www/html/wp-content/cache/matomo 2>/dev/null || true
+  chmod -R u+rwX,g+rwX /var/www/html/wp-content/cache/matomo 2>/dev/null || true
   # WooCommerce baked into image — always restore onto runtime volume first.
   if [[ -d /usr/src/wordpress/wp-content/plugins/woocommerce ]]; then
     swap_dir /usr/src/wordpress/wp-content/plugins/woocommerce /var/www/html/wp-content/plugins/woocommerce
