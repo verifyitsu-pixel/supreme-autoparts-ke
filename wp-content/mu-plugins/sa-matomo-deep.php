@@ -77,6 +77,12 @@ add_action('init', static function (): void {
     }
 
     update_option('sa_matomo_deep_version', SA_MATOMO_DEEP_VERSION);
+
+    // New tracking code must reach visitors at once, not after the 30-minute
+    // page-cache TTL: purge the SA page cache on every mu-plugin version bump.
+    if (function_exists('sa_page_cache_purge')) {
+        sa_page_cache_purge(true);
+    }
 }, 20);
 
 add_action('sa_matomo_deep_provision', static function (): void {
