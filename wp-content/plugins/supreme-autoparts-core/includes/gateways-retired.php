@@ -96,14 +96,10 @@ add_filter('woocommerce_available_payment_gateways', static function ($gateways)
         $africa = array_map('strtoupper', array_map('strval', (array) ($continents['AF']['countries'] ?? [])));
     }
     $is_africa = $country !== '' && in_array(strtoupper($country), $africa, true);
-    if ($country !== '' && !$is_africa && $africa !== []) {
-        unset($gateways['pesapal']);
-        return $gateways;
-    }
-    // 2026-10-18 (user answer relayed via the main agent): card (Whop) only offers
-    // bank wire above its per-checkout cap, so African customers with a cart above the cap
-    // are sent to Pesapal only. Cap is USD, env SA_WHOP_MAX_USD overrides (default 2500).
-    if ($is_africa && function_exists('WC') && WC()->cart) {
+    // 2026-10-18 (user answer relayed via the main agent): card (Whop) only offers bank
+    // wire above its per-checkout cap, so for customers in every region a cart above the
+    // cap goes to Pesapal only. Cap is USD, env SA_WHOP_MAX_USD overrides (default 2500).
+    if (function_exists('WC') && WC()->cart) {
         $cap = (float) (getenv('SA_WHOP_MAX_USD') !== false && getenv('SA_WHOP_MAX_USD') !== '' ? getenv('SA_WHOP_MAX_USD') : 2500);
         if ((float) WC()->cart->get_total('edit') > $cap) {
             unset($gateways['whop']);
@@ -112,6 +108,10 @@ add_filter('woocommerce_available_payment_gateways', static function ($gateways)
             }
             return $gateways;
         }
+    }
+    if ($country !== '' && !$is_africa && $africa !== []) {
+        unset($gateways['pesapal']);
+        return $gateways;
     }
     // Rock 2026-10-18: card (Whop) first and preselected for everyone, Pesapal second where offered.
     $first  = 'whop';
