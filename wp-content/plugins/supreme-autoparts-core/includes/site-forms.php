@@ -94,6 +94,18 @@ function sa_sf_render(string $type): string
         }
         return '<label>' . esc_html($label) . ($req ? ' *' : '') . '<select name="' . esc_attr($n) . '"' . ($req ? ' required' : '') . '>' . $o . '</select></label>';
     };
+    // Forminator version of this form (contact / part / fitment); the native form below is the automatic fallback.
+    $ff_html = function_exists('sa_ff_render') ? sa_ff_render($type) : '';
+    $ff_topic = '';
+    if ($type === 'contact') {
+        $tq0 = sanitize_text_field((string) ($_GET['topic'] ?? ''));
+        $map0 = ['An order' => 'order', 'A part' => 'part', 'A service booking' => 'booking', 'Roadside help' => 'roadside', 'Something else' => 'other'];
+        $ff_topic = $map0[$tq0] ?? (in_array($tq0, $map0, true) ? $tq0 : '');
+        if ($order !== '') {
+            $ff_topic = 'order';
+        }
+    }
+
     ob_start();
     echo '<div class="sa-sf" id="sa-form">';
     if ($state === 'sent') {
@@ -105,6 +117,13 @@ function sa_sf_render(string $type): string
         echo '<div class="sa-svc-alert" role="alert">Something was missing or the email looks wrong. We kept what you typed, please check and try again.</div>';
     } elseif ($state === 'slow') {
         echo '<div class="sa-svc-alert" role="alert">You have sent several messages in a short time. Please wait a few minutes and try again.</div>';
+    }
+    if ($ff_html !== '') {
+        echo function_exists('sa_ff_css') ? sa_ff_css() : ''; // phpcs:ignore
+        echo '<div class="sa-ff" id="sa-forminator-wrap">' . $ff_html . '</div>'; // phpcs:ignore
+        echo '<div id="sa-sf-native" hidden>';
+    } else {
+        echo '<div id="sa-sf-native">';
     }
     echo '<form class="sa-svc-form sa-sf-form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
     echo '<input type="hidden" name="action" value="sa_site_form"><input type="hidden" name="sa_type" value="' . esc_attr($type) . '">';
@@ -144,7 +163,35 @@ function sa_sf_render(string $type): string
     echo '<label>' . esc_html($ml[$type]) . (in_array($type, ['contact', 'return'], true) ? ' *' : '') . '<textarea name="message" rows="5"' . (in_array($type, ['contact', 'return'], true) ? ' required' : '') . '></textarea></label>';
     echo '<button type="submit" class="sa-svc-btn sa-svc-btn--primary">Send</button>';
     echo '<p class="sa-sf-note">No account needed. We only use your details to answer this request.</p>';
-    echo '</form></div>';
+    echo '</form></div>'; // form + #sa-sf-native
+    if ($ff_html !== '') {
+        $pre = [];
+        if ($type === 'contact') {
+            if ($ff_topic !== '') {
+                $pre['topic-1'] = $ff_topic;
+            }
+            if ($order !== '') {
+                $pre['order-1'] = $order;
+            }
+        }
+        if (in_array($type, ['part', 'fitment'], true)) {
+            if ($pname !== '') {
+                $pre['part-1'] = $pname;
+            }
+            foreach (['make' => 'make-1', 'model' => 'model-1', 'year' => 'year-1', 'reg' => 'reg-1'] as $vk => $fid) {
+                $vv = (string) ($v0[$vk] ?? '');
+                if ($vv !== '') {
+                    $pre[$fid] = $vv;
+                }
+            }
+        }
+        if ($pre) {
+            echo '<script>var SA_FF_PRE=' . wp_json_encode($pre) . ';' . <<<'SAFFJS'
+(function(){var iv=setInterval(function(){var wrap=document.getElementById('sa-forminator-wrap');if(!wrap)return;var done=true;for(var k in SA_FF_PRE){var el=wrap.querySelector('[name="'+k+'"]');if(!el){done=false;continue;}if(el.tagName==='SELECT'){el.value=SA_FF_PRE[k];if(el.value===SA_FF_PRE[k]){el.dispatchEvent(new Event('change',{bubbles:true}));if(window.jQuery){window.jQuery(el).trigger('change');}}}else if(el.value===''){el.value=SA_FF_PRE[k];el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));}}if(done){clearInterval(iv);}},300);setTimeout(function(){clearInterval(iv);},8000);})();
+SAFFJS
+                . '</script>';
+        }
+    }
     echo '<script>'.<<<'SAJS'
 (function(){var f=document.querySelector('form.sa-sf-form');if(!f)return;var k='sa_fd:'+location.pathname;f.addEventListener('submit',function(){try{var o={};Array.prototype.forEach.call(f.elements,function(e){if(!e.name||e.type==='hidden'||e.type==='password'||e.type==='file'||e.name==='website'||e.name==='sa_hp')return;if(e.type==='checkbox'||e.type==='radio'){if(e.checked)(o[e.name]=o[e.name]||[]).push(e.value);}else o[e.name]=[e.value];});sessionStorage.setItem(k,JSON.stringify(o));}catch(x){}});window.addEventListener('load',function(){try{var d=sessionStorage.getItem(k);if(!d||!/[?&](sa_err=|sa_form=(error|phone|slow))/.test(location.search))return;sessionStorage.removeItem(k);d=JSON.parse(d);Array.prototype.forEach.call(f.elements,function(e){var v=d[e.name];if(!v||e.type==='hidden'||e.type==='file')return;if(e.type==='checkbox'||e.type==='radio'){if(v.indexOf(e.value)>-1&&!e.checked){e.checked=true;e.dispatchEvent(new Event('change',{bubbles:true}));}}else if(e.value===''){e.value=v[0];e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));}});}catch(x){}});})();
 SAJS
@@ -152,6 +199,7 @@ SAJS
     if (count($veh) > 1) {
         echo '<script>document.querySelectorAll("[data-sa-sf-veh]").forEach(function(s){s.addEventListener("change",function(){var o=s.options[s.selectedIndex],f=s.form;["make","model","year","reg"].forEach(function(k){if(f[k])f[k].value=o.dataset[k]||"";});});});</script>';
     }
+    echo '</div>'; // .sa-sf (Forminator wrap + native fallback)
     return (string) ob_get_clean();
 }
 
