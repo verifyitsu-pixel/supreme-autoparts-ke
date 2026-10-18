@@ -191,6 +191,26 @@ function sa_top_brands(): array
 
 function sa_term_link(string $taxonomy, string $slug): string
 {
+    // Resolve the whole taxonomy once per request: the megamenu alone asks for
+    // ~100 slugs, and get_term_by + get_term_link cost 1-2 queries each.
+    // get_terms primes the term cache, so the ancestor walks inside
+    // get_term_link below add no further queries.
+    static $sa_term_link_maps = [];
+    if (!isset($sa_term_link_maps[$taxonomy])) {
+        $sa_term_link_maps[$taxonomy] = [];
+        $sa_all_terms = get_terms(['taxonomy' => $taxonomy, 'hide_empty' => false]);
+        if (!is_wp_error($sa_all_terms)) {
+            foreach ($sa_all_terms as $sa_t) {
+                $sa_l = get_term_link($sa_t);
+                if (!is_wp_error($sa_l)) {
+                    $sa_term_link_maps[$taxonomy][$sa_t->slug] = (string) $sa_l;
+                }
+            }
+        }
+    }
+    if (isset($sa_term_link_maps[$taxonomy][$slug])) {
+        return $sa_term_link_maps[$taxonomy][$slug];
+    }
     $term = get_term_by('slug', $slug, $taxonomy);
     if ($term && !is_wp_error($term)) {
         $link = get_term_link($term);

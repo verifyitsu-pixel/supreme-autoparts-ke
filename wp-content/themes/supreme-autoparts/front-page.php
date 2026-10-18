@@ -149,6 +149,16 @@ $sa_ed_slugs = [
     'corsa-air-intake-maxflow-5-oiled-closed-box-18-20-ford-mustang-gt-5-0l-v8',
 ];
 $sa_ed_products = [];
+$sa_ed_pop_ids = get_transient('sa_home_popular_ids_v1');
+if (is_array($sa_ed_pop_ids) && $sa_ed_pop_ids !== []) {
+    foreach ($sa_ed_pop_ids as $sa_ed_pid) {
+        $pr = wc_get_product((int) $sa_ed_pid);
+        if ($pr && $pr->is_visible() && str_starts_with((string) $pr->get_meta('_sa_shopify_image_src', true), 'https://cdn.shopify.com/')) {
+            $sa_ed_products[$pr->get_id()] = $pr;
+        }
+    }
+}
+if ($sa_ed_products === []) :
 foreach ($sa_ed_slugs as $sl) {
     $pp = get_page_by_path($sl, OBJECT, 'product');
     $pr = $pp ? wc_get_product($pp->ID) : null;
@@ -166,6 +176,10 @@ if (count($sa_ed_products) < 8 && function_exists('sa_get_homepage_latest_produc
         }
     }
 }
+if ($sa_ed_products) {
+    set_transient('sa_home_popular_ids_v1', array_map('intval', array_keys($sa_ed_products)), 10 * MINUTE_IN_SECONDS);
+}
+endif;
 if ($sa_ed_products) : ?>
 <section class="sa-ed-sec" aria-labelledby="sa-ed-pop">
   <div class="sa-container">
