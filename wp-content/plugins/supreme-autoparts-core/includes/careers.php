@@ -139,7 +139,7 @@ add_shortcode('sa_careers', static function (): string {
     if ($sa_ff !== '') {
         // Pre-select the role from ?role=<slug> (option values are the role slugs).
         echo '<script>' . <<<'SAFFJS'
-(function(){var r=new URLSearchParams(location.search).get('role');if(!r)return;var iv=setInterval(function(){var s=document.querySelector('#sa-forminator-wrap select[name^="forminator_field_select-"]');if(!s)return;clearInterval(iv);s.value=r;if(s.value===r){s.dispatchEvent(new Event('change',{bubbles:true}));if(window.jQuery){window.jQuery(s).trigger('change');}}},300);setTimeout(function(){clearInterval(iv);},8000);})();
+(function(){var r=new URLSearchParams(location.search).get('role');if(!r)return;var iv=setInterval(function(){var s=document.querySelector('#sa-forminator-wrap select[name="select-1"]');if(!s)return;clearInterval(iv);s.value=r;if(s.value===r){s.dispatchEvent(new Event('change',{bubbles:true}));if(window.jQuery){window.jQuery(s).trigger('change');}}},300);setTimeout(function(){clearInterval(iv);},8000);})();
 SAFFJS
             . '</script>';
     }
