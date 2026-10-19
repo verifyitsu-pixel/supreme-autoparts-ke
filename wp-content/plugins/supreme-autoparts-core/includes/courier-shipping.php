@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
  * G4S + Speedaf courier shipping for Kenya (Rock 2026-10-17: checkout build = Fargo, G4S, Speedaf only).
  *
  * Everything here is inert unless sa_couriers_enabled() is true:
- *   - option sa_couriers_enabled = 'yes' (master switch, off by default), or
+ *   - option sa_couriers_enabled = 'yes' (master switch, ON by default since 2026-10-19), or
  *   - SUPREME_COURIERS_ENABLED env = '1', or
  *   - ?sa_couriers=1 in the URL (preview for screenshots/review before go-live).
  *
@@ -30,8 +30,11 @@ const SA_COURIER_MAX_STATIONS = 15;
 
 function sa_couriers_enabled(): bool
 {
-    if (get_option('sa_couriers_enabled', 'no') === 'yes') {
-        return true;
+    // Live for Kenya since 2026-10-19 (user approval). Kill switch: option sa_couriers_enabled = 'no'
+    // or env SUPREME_COURIERS_DISABLED=1. Weights come from product data on every calculation.
+    $opt = get_option('sa_couriers_enabled', 'yes');
+    if ($opt === 'yes') {
+        return getenv('SUPREME_COURIERS_DISABLED') !== '1';
     }
     $env = getenv('SUPREME_COURIERS_ENABLED');
     if ($env === '1' || $env === 'yes') {
