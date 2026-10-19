@@ -41,6 +41,7 @@ $sa_chev       = '<svg class="sa-foot__chev" viewBox="0 0 24 24" width="18" heig
         <p class="sa-foot__email">
           <a href="mailto:calvin@supremeautoparts.co.ke">calvin@supremeautoparts.co.ke</a>
         </p>
+        <?php if (function_exists('sm_footer_subscribe_form')) { sm_footer_subscribe_form(); } ?>
       </div>
 
       <details class="sa-foot__acc">

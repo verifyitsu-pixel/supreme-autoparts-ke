@@ -1,0 +1,17 @@
+.sm-wrap h1 { margin-bottom: 12px; }
+.sm-statusbar { margin: 0 0 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sm-pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.sm-on { background: #e6f6e8; color: #1a7f37; }
+.sm-off { background: #f0f0f1; color: #50575e; }
+.sm-warn { background: #fcf0d9; color: #996800; }
+.sm-note { color: #996800; font-size: 12px; }
+.sm-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin: 0 0 20px; }
+.sm-card { background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 14px 16px; }
+.sm-card-label { font-size: 12px; color: #646970; margin-bottom: 4px; }
+.sm-card-big { font-size: 26px; font-weight: 700; line-height: 1.2; }
+.sm-card-small { font-size: 12px; color: #646970; margin-top: 4px; }
+.sm-flow { background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 16px 18px; margin: 0 0 18px; }
+.sm-flow-head { display: flex; align-items: center; gap: 8px; }
+.sm-flow-head h2 { margin: 0; }
+.sm-steps input[type="number"] { padding: 2px 6px; }
+.sm-form .form-table th { width: 200px; }
