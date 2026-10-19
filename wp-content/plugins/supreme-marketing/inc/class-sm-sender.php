@@ -243,7 +243,7 @@ final class SM_Sender
             '/href="(https?:\/\/[^"]+)"/i',
             static function ($m) use ($send_id, $wpdb) {
                 $url = html_entity_decode($m[1], ENT_QUOTES, 'UTF-8');
-                if (strpos($url, '/mm/unsubscribe/') !== false || strpos($url, '/mm/preferences/') !== false || strpos($url, '/mm/confirm/') !== false) {
+                if (strpos($url, '/sm/unsubscribe/') !== false || strpos($url, '/sm/preferences/') !== false || strpos($url, '/sm/confirm/') !== false) {
                     return $m[0]; // consent links stay direct
                 }
                 $wpdb->insert(SM_DB::table('links'), [
@@ -256,12 +256,12 @@ final class SM_Sender
                     return $m[0];
                 }
                 $sig = sm_token($lid . '|' . $send_id, 'click');
-                return 'href="' . esc_url(home_url('/mm/c/' . $lid . '/' . $send_id . '/' . $sig . '/')) . '"';
+                return 'href="' . esc_url(home_url('/sm/c/' . $lid . '/' . $send_id . '/' . $sig . '/')) . '"';
             },
             $html
         );
         $sig = sm_token((string) $send_id, 'open');
-        $pixel = '<img src="' . esc_url(home_url('/mm/o/' . $send_id . '/' . $sig . '.gif')) . '" width="1" height="1" alt="" style="display:block;width:1px;height:1px;border:0;" />';
+        $pixel = '<img src="' . esc_url(home_url('/sm/o/' . $send_id . '/' . $sig . '.gif')) . '" width="1" height="1" alt="" style="display:block;width:1px;height:1px;border:0;" />';
         return str_replace('</body>', $pixel . '</body>', (string) $tracked);
     }
 
