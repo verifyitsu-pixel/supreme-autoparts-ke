@@ -73,7 +73,7 @@ sync_custom_content() {
   chmod -R u+rwX,g+rwX /var/www/html/wp-content/uploads 2>/dev/null || true
   # Matomo needs its tracker cache tree writable (device detector, translations, system check);
   # a root-owned dir on the retained volume breaks Matomo with "cache/tracker could not be created".
-  mkdir -p /var/www/html/wp-content/cache/matomo/cache/tracker
+  mkdir -p /var/www/html/wp-content/cache/matomo/cache/tracker /var/www/html/wp-content/cache/matomo/assets /var/www/html/wp-content/cache/matomo/logs /var/www/html/wp-content/cache/matomo/tcpdf /var/www/html/wp-content/cache/matomo/templates_c /var/www/html/wp-content/cache/matomo/tmp
   chown -R www-data:www-data /var/www/html/wp-content/cache/matomo 2>/dev/null || true
   chmod -R u+rwX,g+rwX /var/www/html/wp-content/cache/matomo 2>/dev/null || true
   # WooCommerce baked into image — always restore onto runtime volume first.
@@ -99,6 +99,7 @@ sync_custom_content() {
     if [[ -d /usr/src/wordpress/wp-content/plugins/$gw ]]; then
       swap_dir "/usr/src/wordpress/wp-content/plugins/$gw" "/var/www/html/wp-content/plugins/$gw"
       chown -R www-data:www-data "/var/www/html/wp-content/plugins/$gw" 2>/dev/null || true
+      chmod -R u+rwX,g+rwX "/var/www/html/wp-content/plugins/$gw" 2>/dev/null || true
     fi
   done
   [[ -f /usr/src/wordpress/wp-content/mu-plugins/supreme-gateways-env.php ]] && cp -f /usr/src/wordpress/wp-content/mu-plugins/supreme-gateways-env.php /var/www/html/wp-content/mu-plugins/ || true
