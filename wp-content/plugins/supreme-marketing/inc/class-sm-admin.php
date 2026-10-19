@@ -457,7 +457,7 @@ final class SM_Admin
             . wp_nonce_field('sm_admin_add_subscriber', '_wpnonce', true, false)
             . '<input type="hidden" name="sm_admin_action" value="add_subscriber">'
             . '<input type="email" name="email" placeholder="name@example.com" required> '
-            . '<button type="submit" class="button">Add (sends confirmation email)</button></form>';
+            . '<button type="submit" class="button">Add (starts the welcome series)</button></form>';
 
         echo '<table class="widefat striped"><thead><tr><th>Email</th><th>Name</th><th>Status</th><th>Source</th><th>Region</th><th>Orders</th><th>Spent</th><th>Last order</th><th>Since</th></tr></thead><tbody>';
         foreach ((array) $rows as $r) {
