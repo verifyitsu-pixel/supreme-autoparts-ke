@@ -1237,3 +1237,83 @@ body.woocommerce-order-pay ul.order_details::before,body.woocommerce-order-pay u
 .sa-getapp.is-android .sa-getapp__row--ios{opacity:.55}
 .sa-getapp.is-ios .sa-getapp__row--ios,
 .sa-getapp.is-android .sa-getapp__row--android{border-left:3px solid #fcb900;padding-left:10px}
+
+
+/* —— Mobile checkout polish (2026-10-19): one clean stepper, no overlapping chat, less nesting —— */
+@media (max-width: 960px) {
+  body.woocommerce-checkout .embedded-agent-container,
+  body.woocommerce-cart .embedded-agent-container {
+    display: none !important;
+  }
+}
+
+@media (max-width: 600px) {
+  body.woocommerce-checkout .sa-page__content {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .sa-checkout-page .sa-checkout-hero {
+    padding: 1rem 1rem .9rem;
+    border-radius: 12px;
+  }
+
+  .sa-checkout-page .sa-checkout-hero__title {
+    font-size: 1.35rem;
+    margin-bottom: .2rem;
+  }
+
+  .sa-checkout-page .sa-checkout-hero__lead {
+    font-size: .88rem;
+    margin-bottom: .85rem;
+  }
+
+  .sa-checkout-page .sa-checkout-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    align-items: start;
+  }
+
+  .sa-checkout-page .sa-checkout-steps__item {
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: .35rem;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    font-size: .68rem;
+    letter-spacing: .05em;
+    white-space: nowrap;
+  }
+
+  .sa-checkout-page .sa-checkout-steps__item:not(:last-child)::after {
+    left: calc(50% + 1.1rem);
+    right: calc(-50% + 1.1rem);
+    top: .7rem;
+    width: auto;
+    height: 2px;
+    background: var(--sa-border);
+    transform: none;
+  }
+
+  .sa-checkout-page .sa-checkout-steps__item.is-done:not(:last-child)::after {
+    background: var(--sa-accent);
+  }
+
+  .sa-checkout-page .sa-checkout-steps__item span {
+    width: 1.4rem;
+    height: 1.4rem;
+    background: #fff;
+    position: relative;
+    z-index: 1;
+  }
+
+  .sa-checkout-page .sa-checkout-steps__item.is-active span {
+    background: var(--sa-accent);
+  }
+
+  .sa-checkout-page .sa-checkout-steps__item.is-done span {
+    background: #fdf1d8;
+  }
+}
