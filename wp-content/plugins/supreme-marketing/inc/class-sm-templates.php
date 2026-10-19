@@ -141,10 +141,25 @@ final class SM_Templates
     {
         $rows = '';
         foreach ($items as $it) {
+            $img = trim((string) ($it['image'] ?? ''));
+            $url = trim((string) ($it['url'] ?? ''));
+            $name_html = esc_html((string) $it['name']) . ' <span style="color:' . self::MUTED . ';">&times; ' . (int) $it['qty'] . '</span>';
+            if ($url !== '') {
+                $name_html = '<a href="' . esc_url($url) . '" style="color:' . self::INK . ';text-decoration:none;">' . $name_html . '</a>';
+            }
+            $img_html = '';
+            if ($img !== '') {
+                $img_html = '<td width="64" style="padding:8px 10px 8px 0;border-bottom:1px solid ' . self::LINE . ';">'
+                    . ($url !== '' ? '<a href="' . esc_url($url) . '">' : '')
+                    . '<img src="' . esc_url($img) . '" width="56" height="56" alt="" style="display:block;width:56px;height:56px;object-fit:cover;border-radius:8px;background:#F4F4F5;">'
+                    . ($url !== '' ? '</a>' : '')
+                    . '</td>';
+            }
             $rows .= '<tr>'
+                . $img_html
                 . '<td style="padding:8px 0;border-bottom:1px solid ' . self::LINE . ';font-family:' . self::FONT . ';font-size:14px;color:' . self::INK . ';">'
-                . esc_html($it['name']) . ' <span style="color:' . self::MUTED . ';">&times; ' . (int) $it['qty'] . '</span></td>'
-                . '<td align="right" style="padding:8px 0;border-bottom:1px solid ' . self::LINE . ';font-family:' . self::FONT . ';font-size:14px;color:' . self::INK . ';">' . esc_html($it['price']) . '</td>'
+                . $name_html . '</td>'
+                . '<td align="right" style="padding:8px 0;border-bottom:1px solid ' . self::LINE . ';font-family:' . self::FONT . ';font-size:14px;color:' . self::INK . ';white-space:nowrap;">' . esc_html((string) $it['price']) . '</td>'
                 . '</tr>';
         }
         $rows .= '<tr><td style="padding:10px 0;font-family:' . self::FONT . ';font-size:15px;font-weight:700;color:' . self::INK . ';">Cart total</td>'
@@ -509,7 +524,8 @@ final class SM_Templates
                     'blocks'    => [
                         ['h' => 'Almost there'],
                         ['p' => 'You started checkout on supremeautoparts.co.ke and stopped before payment. Everything you entered is saved - picking up where you left off takes under a minute.'],
-                        ['button' => ['Finish checkout', home_url('/checkout/')]],
+                        $cart ? ['cart' => [$cart['items'], $cart['total']]] : ['p' => 'Your selected parts are saved at checkout.'],
+                        ['button' => ['Finish checkout', (string) ($ctx['cart_url'] ?? home_url('/checkout/'))]],
                         ['p' => $ke
                             ? 'Payment trouble or a question about delivery or pickup? Reply and we will sort it out.'
                             : 'Payment trouble or a question about shipping? Reply and we will sort it out.'],
@@ -523,7 +539,8 @@ final class SM_Templates
                     'blocks'    => [
                         ['h' => 'We can help'],
                         ['p' => 'Your checkout is still open. If something got in the way - a payment step, a delivery question, a fitment doubt - tell us and we will fix it with you.'],
-                        ['button' => ['Return to checkout', home_url('/checkout/')]],
+                        $cart ? ['cart' => [$cart['items'], $cart['total']]] : ['p' => 'Your selected parts are saved at checkout.'],
+                        ['button' => ['Return to checkout', (string) ($ctx['cart_url'] ?? home_url('/checkout/'))]],
                         ['p' => 'You can also reply to this email and a real person will answer.'],
                     ],
                 ];
@@ -769,10 +786,10 @@ final class SM_Templates
             'car'             => 'Mazda CX-5',
             'cart'            => [
                 'items' => [
-                    ['name' => $products[0]['name'] ?? 'Brake Pad Set', 'qty' => 1, 'price' => '$45.00'],
-                    ['name' => $products[1]['name'] ?? 'Oil Filter', 'qty' => 2, 'price' => '$24.00'],
+                    ['name' => $products[0]['name'] ?? 'Brake Pad Set', 'qty' => 1, 'price' => $products[0]['price'] ?? '$45.00', 'image' => $products[0]['image'] ?? '', 'url' => $products[0]['url'] ?? home_url('/shop/')],
+                    ['name' => $products[1]['name'] ?? 'Oil Filter', 'qty' => 2, 'price' => $products[1]['price'] ?? '$24.00', 'image' => $products[1]['image'] ?? '', 'url' => $products[1]['url'] ?? home_url('/shop/')],
                 ],
-                'total' => '$69.00',
+                'total' => '$753.00',
             ],
             'order'           => ['number' => '#1042', 'url' => home_url('/my-account/')],
             'category'        => ['name' => 'Brakes', 'url' => home_url('/product-category/brakes/')],

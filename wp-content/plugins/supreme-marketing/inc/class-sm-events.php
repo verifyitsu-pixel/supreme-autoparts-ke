@@ -17,6 +17,8 @@ final class SM_Events
         add_action('woocommerce_order_status_processing', [self::class, 'on_order_paid']);
         add_action('woocommerce_order_status_completed', [self::class, 'on_order_paid']);
         add_action('woocommerce_order_status_on-hold', [self::class, 'on_order_paid']);
+        add_action('woocommerce_order_status_pending', [self::class, 'on_payment_abandoned']);
+        add_action('woocommerce_order_status_failed', [self::class, 'on_payment_abandoned']);
         add_action('woocommerce_cart_updated', [self::class, 'on_cart_updated']);
         add_action('template_redirect', [self::class, 'on_product_view']);
         add_action('wp_ajax_sm_capture_email', [self::class, 'ajax_capture_email']);
@@ -95,6 +97,55 @@ final class SM_Events
             'region'     => $order->get_billing_country(),
         ]);
         SM_Queue::cancel_abandonment_for_email($email);
+    }
+
+    /** Order created but payment never completed (pending) or failed: payment-abandonment nudge. */
+    public static function on_payment_abandoned(int $order_id): void
+    {
+        if (!function_exists('wc_get_order')) {
+            return;
+        }
+        $order = wc_get_order($order_id);
+        if (!$order) {
+            return;
+        }
+        $email = strtolower((string) $order->get_billing_email());
+        if (!is_email($email)) {
+            return;
+        }
+        $sub = SM_Subscribers::ensure($email, [
+            'first_name' => $order->get_billing_first_name(),
+            'last_name'  => $order->get_billing_last_name(),
+            'region'     => $order->get_billing_country(),
+            'source'     => 'checkout_payment',
+        ]);
+        if (!$sub || !SM_Subscribers::is_contactable($sub)) {
+            return;
+        }
+        $items = [];
+        foreach ($order->get_items() as $item) {
+            $p = $item->get_product();
+            $qty = (int) $item->get_quantity();
+            $items[] = [
+                'name'  => $item->get_name(),
+                'qty'   => $qty,
+                'price' => html_entity_decode(wp_strip_all_tags(wc_price((float) $item->get_total())), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                'image' => $p instanceof WC_Product ? sm_product_image($p) : '',
+                'url'   => $p instanceof WC_Product ? get_permalink($p->get_id()) : wc_get_cart_url(),
+            ];
+            if (count($items) >= 5) {
+                break;
+            }
+        }
+        $ctx = [
+            'cart'           => [
+                'items' => $items,
+                'total' => html_entity_decode(wp_strip_all_tags(wc_price((float) $order->get_total())), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+            ],
+            'cart_url'       => $order->get_checkout_payment_url(),
+            'no_order_since' => sm_now(),
+        ];
+        SM_Flows::start($sub, 'abandoned_checkout', 'payab|' . $order_id, $ctx);
     }
 
     /** Order paid/fulfilled: stats, post-purchase series, reorder reminders. */
@@ -218,6 +269,8 @@ final class SM_Events
                     'name'  => $p->get_name(),
                     'qty'   => (int) ($ci['quantity'] ?? 1),
                     'price' => html_entity_decode(wp_strip_all_tags(wc_price((float) $p->get_price() * (int) ($ci['quantity'] ?? 1))), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                    'image' => sm_product_image($p),
+                    'url'   => get_permalink($p->get_id()),
                 ];
                 if (count($items) >= 5) {
                     break;
@@ -326,6 +379,8 @@ final class SM_Events
             ));
             if (!$bumped) {
                 SM_Flows::start($sub, 'abandoned_checkout', 'day|' . gmdate('Y-m-d'), [
+                    'cart'           => self::cart_snapshot(),
+                    'cart_url'       => function_exists('wc_get_cart_url') ? wc_get_cart_url() : home_url('/cart/'),
                     'no_order_since' => sm_now(),
                 ]);
             }
