@@ -184,13 +184,6 @@ final class SM_DB
             KEY created_at (created_at)
         ) $charset;";
 
-        $sql[] = 'CREATE TABLE ' . self::table('order_norms') . " (
-            email_norm VARCHAR(190) NOT NULL,
-            order_id BIGINT UNSIGNED NOT NULL,
-            created_at DATETIME NOT NULL,
-            PRIMARY KEY (email_norm)
-        ) $charset;";
-
         foreach ($sql as $statement) {
             dbDelta($statement);
         }
