@@ -102,6 +102,9 @@ sync_custom_content() {
       chmod -R u+rwX,g+rwX "/var/www/html/wp-content/plugins/$gw" 2>/dev/null || true
     fi
   done
+  if [[ -f /usr/src/wordpress/wp-content/mu-plugins/supreme-checkout-performance.php ]]; then
+    cp -f /usr/src/wordpress/wp-content/mu-plugins/supreme-checkout-performance.php /var/www/html/wp-content/mu-plugins/ || true
+  fi
   [[ -f /usr/src/wordpress/wp-content/mu-plugins/supreme-gateways-env.php ]] && cp -f /usr/src/wordpress/wp-content/mu-plugins/supreme-gateways-env.php /var/www/html/wp-content/mu-plugins/ || true
   if [[ -f /usr/src/wordpress/wp-content/mu-plugins/supreme-loader.php ]]; then
     cp -f /usr/src/wordpress/wp-content/mu-plugins/supreme-loader.php /var/www/html/wp-content/mu-plugins/ || true
