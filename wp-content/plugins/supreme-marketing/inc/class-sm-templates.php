@@ -789,7 +789,7 @@ final class SM_Templates
                     ['name' => $products[0]['name'] ?? 'Brake Pad Set', 'qty' => 1, 'price' => $products[0]['price'] ?? '$45.00', 'image' => $products[0]['image'] ?? '', 'url' => $products[0]['url'] ?? home_url('/shop/')],
                     ['name' => $products[1]['name'] ?? 'Oil Filter', 'qty' => 2, 'price' => $products[1]['price'] ?? '$24.00', 'image' => $products[1]['image'] ?? '', 'url' => $products[1]['url'] ?? home_url('/shop/')],
                 ],
-                'total' => '$753.00',
+                'total' => sm_money(753.0, $zone),
             ],
             'order'           => ['number' => '#1042', 'url' => home_url('/my-account/')],
             'category'        => ['name' => 'Brakes', 'url' => home_url('/product-category/brakes/')],
