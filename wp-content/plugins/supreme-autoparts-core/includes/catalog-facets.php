@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-const SA_FX_VER = '4';
+const SA_FX_VER = '5';
 const SA_FX_BATCH = 600;
 
 function sa_fx_table(bool $build = false): string
