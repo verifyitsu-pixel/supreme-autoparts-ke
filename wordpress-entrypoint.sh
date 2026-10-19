@@ -298,6 +298,7 @@ bootstrap_wordpress() {
   wp_as plugin activate supreme-agent-intake || true
   wp_as plugin activate forminator || true
   wp_as plugin activate matomo || true
+  wp_as plugin activate supreme-marketing || true
   # Matomo self-hosted analytics: install tables (idempotent), then enable default tracking
   # + AI bot tracking (same calls the Get Started button makes - no wp-admin click needed).
   wp_as matomo install 2>&1 | tail -1 || true
