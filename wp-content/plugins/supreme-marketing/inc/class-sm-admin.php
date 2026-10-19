@@ -677,9 +677,11 @@ final class SM_Admin
         $big = $wpdb->get_results("SELECT option_name, LENGTH(option_value) AS size_bytes, autoload FROM {$wpdb->options} ORDER BY LENGTH(option_value) DESC LIMIT 30");
         $total_options = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->options}");
         $total_bytes   = (int) $wpdb->get_var("SELECT SUM(LENGTH(option_value)) FROM {$wpdb->options}");
-        $names  = $wpdb->get_col("SELECT option_name FROM {$wpdb->options}");
+        // Only autoloaded options are loaded on real requests, and loading all 90k+ option
+        // names here OOM'd this page on a bloated table - so scan autoloaded rows, capped.
+        $names  = $wpdb->get_col("SELECT option_name FROM {$wpdb->options} WHERE autoload IN ('yes','on','true','auto','auto-on') ORDER BY LENGTH(option_value) DESC LIMIT 2000");
         $broken = array();
-        foreach ($names as $name) {
+        foreach ((array) $names as $name) {
             try { get_option($name); } catch (\Throwable $t) { $broken[] = array('name' => $name, 'error' => get_class($t) . ': ' . $t->getMessage()); }
         }
         $auto_bytes = (int) $wpdb->get_var("SELECT SUM(LENGTH(option_value)) FROM {$wpdb->options} WHERE autoload IN ('yes','on','true','auto','auto-on')");
@@ -698,7 +700,7 @@ final class SM_Admin
             echo '<tr><td>' . esc_html($row->option_name) . '</td><td>' . esc_html(size_format((int) $row->size_bytes)) . '</td><td>' . esc_html($row->autoload) . '</td></tr>';
         }
         echo '</tbody></table>';
-        echo '<h2 style="margin-top:24px">Options that throw when loaded</h2>';
+        echo '<h2 style="margin-top:24px">Autoloaded options that throw when loaded</h2>';
         if (empty($broken)) {
             echo '<p>None - every option loads cleanly.</p>';
         } else {

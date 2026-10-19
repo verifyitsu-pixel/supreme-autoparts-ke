@@ -203,7 +203,19 @@ final class SM_Public
                 setcookie('sm_email', strtolower((string) $send['email']), time() + 180 * DAY_IN_SECONDS, COOKIEPATH ?: '/', COOKIE_DOMAIN, is_ssl(), true);
             }
         }
-        wp_safe_redirect((string) $link['url'], 302);
+        // Destination was written by our own sender into the links table. wp_safe_redirect
+        // refuses off-site hosts (wa.me, maps) and silently falls back to /wp-admin/, so only
+        // same-host URLs go through it; external ones use a plain redirect.
+        $dest = (string) $link['url'];
+        $dest_host = (string) parse_url($dest, PHP_URL_HOST);
+        $home_host = (string) parse_url(home_url(), PHP_URL_HOST);
+        if ($dest_host !== '' && $home_host !== '' && strcasecmp($dest_host, $home_host) === 0) {
+            wp_safe_redirect($dest, 302);
+        } elseif (preg_match('#^https?://#i', $dest)) {
+            wp_redirect($dest, 302); // phpcs:ignore WordPress.Security.SafeRedirect -- trusted sender-written destination
+        } else {
+            wp_safe_redirect(home_url('/'));
+        }
         exit;
     }
 }

@@ -134,6 +134,7 @@ final class SM_Queue
         global $wpdb;
         SM_Segments::refresh_all_stats();
         self::service_reminder_scan();
+        self::transient_gc();
         if (!SM_Flows::enabled('winback')) {
             return;
         }
@@ -158,6 +159,37 @@ final class SM_Queue
             } elseif ($age >= $w1 * DAY_IN_SECONDS) {
                 // Step 1, once per lapse episode.
                 SM_Flows::start($sub, 'winback', 'lapse|' . gmdate('Y-m-d', $last), [], ['winback_1']);
+            }
+        }
+    }
+
+    /**
+     * WordPress never garbage-collects expired transients. On this store that let
+     * wp_options grow to ~240MB (27k+ dead sa_fx currency rows), which OOM'd options.php.
+     * Daily sweep of expired transient value + timeout rows; cron-only, never on page load.
+     */
+    public static function transient_gc(): void
+    {
+        global $wpdb;
+        try {
+            $now = time();
+            // Delete expired timeout rows first, collecting their transient names.
+            $expired = $wpdb->get_col($wpdb->prepare(
+                "SELECT option_name FROM $wpdb->options
+                  WHERE option_name LIKE '\_transient\_timeout\_%'
+                    AND CAST(option_value AS UNSIGNED) > 0
+                    AND CAST(option_value AS UNSIGNED) < %d
+                  LIMIT 20000",
+                $now
+            ));
+            foreach ((array) $expired as $tname) {
+                $base = substr((string) $tname, strlen('_transient_timeout_'));
+                $wpdb->query($wpdb->prepare("DELETE FROM $wpdb->options WHERE option_name = %s", $tname));
+                $wpdb->query($wpdb->prepare("DELETE FROM $wpdb->options WHERE option_name = %s", '_transient_' . $base));
+            }
+        } catch (\Throwable $e) {
+            if (function_exists('sa_core_audit_log')) {
+                sa_core_audit_log('marketing.transient_gc_failed', ['error' => $e->getMessage()], 'warning');
             }
         }
     }

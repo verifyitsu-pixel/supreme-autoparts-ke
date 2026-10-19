@@ -223,7 +223,12 @@ final class SM_Templates
             . '<a href="' . esc_url($unsub) . '" style="' . $link . '">Unsubscribe</a> &middot; '
             . '<a href="' . esc_url($prefs) . '" style="' . $link . '">Email preferences</a>'
             . '</p></td></tr>'
-            . '</table></td></tr></table></body></html>';
+            . '</table></td></tr></table>'
+            // Opt out of the store mail wrappers: our layout already carries the brand header
+            // and a zone-correct footer. These marker strings are what sa-brevo-mail /
+            // supreme-autoparts-core check before prepending their header / appending their footer.
+            . '<!--sa-email-brand-header--><!--sa-email-footer--><!--/sa-email-footer-->'
+            . '</body></html>';
     }
 
     public static function layout_text(string $text, array $ctx): string
