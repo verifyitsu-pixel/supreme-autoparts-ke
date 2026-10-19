@@ -111,7 +111,7 @@ RUN chmod +x /usr/local/bin/wordpress-entrypoint.sh \
         /usr/src/wordpress/wp-content/plugins/supreme-autoparts-core \
         /usr/src/wordpress/wp-content/plugins/whop-payments \
         /usr/src/wordpress/wp-content/plugins/sa-brevo-mail \
-        /usr/src/wordpress/wp-content/plugins/sa-geo-currency
+        /usr/src/wordpress/wp-content/plugins/sa-geo-currency \
         /usr/src/wordpress/wp-content/plugins/supreme-marketing
 
 # Apache: allow .htaccess for permalinks
