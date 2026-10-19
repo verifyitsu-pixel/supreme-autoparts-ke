@@ -38,6 +38,7 @@ final class SM_Admin
         add_submenu_page('sm-dashboard', 'Queue', 'Queue', self::CAP, 'sm-queue', [self::class, 'page_queue']);
         add_submenu_page('sm-dashboard', 'Welcome 20', 'Welcome 20', self::CAP, 'sm-welcome', [self::class, 'page_welcome']);
         add_submenu_page('sm-dashboard', 'Settings', 'Settings', self::CAP, 'sm-settings', [self::class, 'page_settings']);
+        add_submenu_page('sm-dashboard', 'System check', 'System check', self::CAP, 'sm-debug', [self::class, 'page_debug']);
     }
 
     public static function assets(string $hook): void
@@ -665,5 +666,48 @@ final class SM_Admin
         // Output the raw email HTML (no wp-admin chrome) so it can be viewed/screenshotted exactly as sent.
         echo $rendered['html']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- own template output
         exit;
+    }
+
+    public static function page_debug() {
+        if (!current_user_can(self::CAP)) { wp_die('denied'); }
+        global $wpdb;
+        $memory_limit = ini_get('memory_limit');
+        $php_version  = phpversion();
+        $wp_version   = get_bloginfo('version');
+        $big = $wpdb->get_results("SELECT option_name, LENGTH(option_value) AS size_bytes, autoload FROM {$wpdb->options} ORDER BY LENGTH(option_value) DESC LIMIT 30");
+        $total_options = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->options}");
+        $total_bytes   = (int) $wpdb->get_var("SELECT SUM(LENGTH(option_value)) FROM {$wpdb->options}");
+        $names  = $wpdb->get_col("SELECT option_name FROM {$wpdb->options}");
+        $broken = array();
+        foreach ($names as $name) {
+            try { get_option($name); } catch (\Throwable $t) { $broken[] = array('name' => $name, 'error' => get_class($t) . ': ' . $t->getMessage()); }
+        }
+        $auto_bytes = (int) $wpdb->get_var("SELECT SUM(LENGTH(option_value)) FROM {$wpdb->options} WHERE autoload IN ('yes','on','true','auto','auto-on')");
+        $auto_count = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->options} WHERE autoload IN ('yes','on','true','auto','auto-on')");
+        echo '<div class="wrap"><h1>Marketing system check</h1>';
+        echo '<table class="widefat striped" style="max-width:760px;margin-bottom:24px"><tbody>';
+        echo '<tr><td>PHP</td><td>' . esc_html($php_version) . '</td></tr>';
+        echo '<tr><td>WordPress</td><td>' . esc_html($wp_version) . '</td></tr>';
+        echo '<tr><td>PHP memory_limit</td><td>' . esc_html($memory_limit) . '</td></tr>';
+        echo '<tr><td>Peak memory this request</td><td>' . esc_html(size_format(memory_get_peak_usage(true))) . '</td></tr>';
+        echo '<tr><td>Total options</td><td>' . esc_html(number_format($total_options)) . ' (' . esc_html(size_format($total_bytes)) . ')</td></tr>';
+        echo '<tr><td>Autoloaded options</td><td>' . esc_html(number_format($auto_count)) . ' (' . esc_html(size_format($auto_bytes)) . ')</td></tr>';
+        echo '</tbody></table>';
+        echo '<h2>Largest options</h2><table class="widefat striped" style="max-width:760px"><thead><tr><th>Option</th><th>Size</th><th>Autoload</th></tr></thead><tbody>';
+        foreach ($big as $row) {
+            echo '<tr><td>' . esc_html($row->option_name) . '</td><td>' . esc_html(size_format((int) $row->size_bytes)) . '</td><td>' . esc_html($row->autoload) . '</td></tr>';
+        }
+        echo '</tbody></table>';
+        echo '<h2 style="margin-top:24px">Options that throw when loaded</h2>';
+        if (empty($broken)) {
+            echo '<p>None - every option loads cleanly.</p>';
+        } else {
+            echo '<table class="widefat striped" style="max-width:900px"><thead><tr><th>Option</th><th>Error</th></tr></thead><tbody>';
+            foreach ($broken as $b) {
+                echo '<tr><td>' . esc_html($b['name']) . '</td><td>' . esc_html($b['error']) . '</td></tr>';
+            }
+            echo '</tbody></table>';
+        }
+        echo '</div>';
     }
 }
