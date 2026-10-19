@@ -32,7 +32,6 @@ final class SM_Welcome
     public static function init(): void
     {
         add_action('init', [self::class, 'ensure_device_cookie'], 5);
-        add_action('init', [self::class, 'backfill_order_norms'], 30);
         add_action('woocommerce_new_order', [self::class, 'record_order_norm'], 20);
         add_action('user_register', [self::class, 'on_register'], 20);
         add_action('wp_login', [self::class, 'on_login'], 20, 2);

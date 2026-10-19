@@ -97,6 +97,7 @@ final class SM_Queue
     /** Process due queue rows (called by WP-Cron every 5 minutes). */
     public static function process(): void
     {
+        SM_Welcome::backfill_order_norms(); // small batch per cron run; never fatals (guarded internally)
         if (!sm_master_on()) {
             return; // owner switch off: everything waits, nothing is lost
         }
