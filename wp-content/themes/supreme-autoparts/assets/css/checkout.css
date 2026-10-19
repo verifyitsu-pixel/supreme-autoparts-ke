@@ -1311,3 +1311,7 @@ body.woocommerce-order-pay ul.order_details::before,body.woocommerce-order-pay u
     margin-bottom: .85rem;
   }
 }
+
+.sa-checkout-page .sa-checkout-hero__lead {
+  text-wrap: balance;
+}
