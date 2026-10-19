@@ -134,7 +134,7 @@ final class SM_Admin
             case 'add_subscriber':
                 $email = strtolower(trim(sanitize_email((string) ($_POST['email'] ?? ''))));
                 if (is_email($email)) {
-                    SM_Consent::begin_double_optin($email, 'admin_add');
+                    SM_Consent::subscribe_now($email, 'admin_add');
                 }
                 break;
             case 'send_repermission':

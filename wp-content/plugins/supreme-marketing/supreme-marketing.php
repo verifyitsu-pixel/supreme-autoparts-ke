@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Supreme Marketing
- * Description: In-house email marketing for Supreme Autoparts: double opt-in subscribers, automated flows (welcome, abandoned cart/checkout, browse abandonment, post-purchase, reorder, service reminders, win-back, restock), campaigns (newsletter, product and category adverts, offers with promo codes, cross-sell), segmentation, recommendations, personal first-order welcome discounts with abuse protection, approval gating and test mode. Nothing sends to customers until the owner enables the master switch.
+ * Description: In-house email marketing for Supreme Autoparts: subscribers (site signup = opt-in), automated flows (welcome, abandoned cart/checkout, browse abandonment, post-purchase, reorder, service reminders, win-back, restock), campaigns (newsletter, product and category adverts, offers with promo codes, cross-sell), segmentation, recommendations, personal first-order welcome discounts with abuse protection, approval gating and test mode. Nothing sends to customers until the owner enables the master switch.
  * Version: 1.0.0
  * Author: Supreme Autoparts
  * Text Domain: supreme-marketing

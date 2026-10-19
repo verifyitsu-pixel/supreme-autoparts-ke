@@ -22,7 +22,7 @@ final class SM_Flows
             'welcome' => [
                 'label'    => 'Welcome series',
                 'audience' => 'marketing',
-                'trigger'  => 'Someone confirms their subscription (double opt-in) or opts in at checkout.',
+                'trigger'  => 'Someone joins the email list on the site or opts in at checkout.',
                 'steps'    => [
                     ['key' => 'welcome_1', 'delay' => 0,       'note' => 'Immediately: welcome, what we do, first-order offer'],
                     ['key' => 'welcome_2', 'delay' => 1 * $d,  'note' => 'Day 1: finding the right part (part numbers, brands, fitment)'],

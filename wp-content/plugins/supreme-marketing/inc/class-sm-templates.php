@@ -368,26 +368,28 @@ final class SM_Templates
             case 'welcome_1':
                 $blocks = [
                     ['h' => 'Welcome to Supreme Autoparts'],
-                    ['p' => 'Thanks for joining. We stock genuine and aftermarket parts for cars, trucks, SUVs and motorcycles - engine, suspension, brakes, exhaust, performance and more - and we check fitment before you buy.'],
-                    ['p' => 'What you can expect from us:'],
-                    ['bullets' => [
-                        'Genuine and quality aftermarket parts, verified against the catalog',
-                        $shipping_line,
-                        'Fitment help: send your year, make, model or VIN and we confirm the part fits',
-                        'About one email a week: new arrivals, restocks and offers',
-                    ]],
+                    ['p' => 'You drive, we keep you driving. Genuine and quality aftermarket parts for cars, trucks, SUVs and motorcycles - engine, suspension, brakes, exhaust, performance and more - every one checked against the catalog before it ships.'],
                 ];
                 if ($welcome_code !== '') {
                     $blocks[] = ['coupon' => [$welcome_code, '20% off your first order', ($welcome_expires !== '' ? 'Valid until ' . $welcome_expires . '. ' : '') . 'One use. Applies automatically at checkout when you are signed in.']];
                 } else {
-                    $blocks[] = ['p' => 'New here? Create an account or sign in with Google at checkout and you will get 20% off your first order.'];
+                    $blocks[] = ['p' => 'Your first order comes with 20% off: create an account or sign in with Google at checkout and your personal code is issued on the spot.'];
+                }
+                $blocks[] = ['bullets' => [
+                    'Not sure a part fits? Send your year, make, model or VIN and we confirm fitment before you pay',
+                    $shipping_line,
+                    'Track every order on our site, from confirmed to delivered',
+                ]];
+                if ($products) {
+                    $blocks[] = ['p' => 'Moving fast right now:'];
+                    $blocks[] = ['products' => $products];
                 }
                 $blocks[] = ['button' => ['Shop parts', $shop]];
                 return [
                     'subject'   => $welcome_code !== ''
-                        ? 'Welcome to Supreme Autoparts - your 20% first-order code is inside'
-                        : 'Welcome to Supreme Autoparts',
-                    'preheader' => 'Parts for your car, truck, SUV or motorcycle, with fitment checked.',
+                        ? 'Your 20% first-order code is inside - welcome to Supreme Autoparts'
+                        : 'Welcome to Supreme Autoparts - 20% off your first order',
+                    'preheader' => 'Genuine and aftermarket parts, fitment checked before you buy.',
                     'blocks'    => $blocks,
                 ];
 

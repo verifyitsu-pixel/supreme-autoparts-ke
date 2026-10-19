@@ -1,7 +1,7 @@
 <?php
 /**
- * Consent capture: footer/newsletter form (double opt-in), checkout opt-in checkbox,
- * and account registration. Marketing consent always requires an explicit action.
+ * Consent capture: footer/newsletter form (signup on the site is the opt-in), checkout
+ * opt-in checkbox, and account registration. Marketing consent requires an explicit action.
  */
 declare(strict_types=1);
 
@@ -29,8 +29,8 @@ final class SM_Consent
     {
         $joined = isset($_GET['sm_joined']) ? sanitize_key((string) $_GET['sm_joined']) : '';
         $note = '';
-        if ($joined === 'confirm') {
-            $note = '<p><small>Almost done - check your inbox and click the confirmation link.</small></p>';
+        if ($joined === 'done') {
+            $note = '<p><small>You\'re in - your welcome email is on its way.</small></p>';
         } elseif ($joined === 'invalid') {
             $note = '<p><small>That email address does not look right. Try again?</small></p>';
         }
@@ -41,7 +41,7 @@ final class SM_Consent
             . '<input type="hidden" name="action" value="sm_subscribe">'
             . '<label>Email address<input type="email" name="sm_email" required autocomplete="email"></label>'
             . '<button class="sm-newsletter-button" type="submit">Join the list</button>'
-            . '<p><small>New parts, restocks and offers, about once a week. Unsubscribe anytime.</small></p>'
+            . '<p><small>New parts, restocks and offers. Unsubscribe anytime.</small></p>'
             . $note
             . '</form>';
     }
@@ -58,33 +58,27 @@ final class SM_Consent
             wp_safe_redirect(add_query_arg('sm_joined', 'invalid', $back));
             exit;
         }
-        self::begin_double_optin($email, 'newsletter_form');
+        self::subscribe_now($email, 'newsletter_form');
         $back = remove_query_arg('sm_joined', $back);
-        wp_safe_redirect(add_query_arg('sm_joined', 'confirm', $back));
+        wp_safe_redirect(add_query_arg('sm_joined', 'done', $back));
         exit;
     }
 
-    /** Create/refresh the subscriber as unconfirmed and queue the confirmation email. */
-    public static function begin_double_optin(string $email, string $source): void
+    /** Signup on the site is the opt-in: activate immediately and start the welcome series. */
+    public static function subscribe_now(string $email, string $source): void
     {
         $sub = SM_Subscribers::ensure($email, ['source' => $source]);
         if (!$sub) {
             return;
         }
         if ($sub['status'] === 'active') {
-            return; // already confirmed; nothing to do
+            return; // already on the list; nothing to do
         }
-        SM_Subscribers::mark_unconfirmed($email);
-        SM_Queue::add([
-            'subscriber_id' => (int) $sub['id'],
-            'email'         => $email,
-            'flow'          => 'consent',
-            'step'          => 'confirm_optin',
-            'template'      => 'confirm_optin',
-            'payload'       => ['email' => $email, 'first_name' => $sub['first_name'] ?? ''],
-            'send_at'       => sm_now(),
-            'dedupe_key'    => 'confirm|' . $email . '|' . gmdate('Y-m-d'),
-        ]);
+        SM_Subscribers::activate($email, $source);
+        $fresh = SM_Subscribers::get_by_email($email);
+        if ($fresh) {
+            SM_Flows::start($fresh, 'welcome', 'once', []);
+        }
     }
 
     /** Unchecked-by-default marketing opt-in at checkout (GDPR/PECR-safe). */
@@ -131,12 +125,12 @@ function sm_footer_subscribe_form(): void
         . 'style="flex:1;min-width:0;padding:.6rem .8rem;border-radius:8px;border:1px solid rgba(244,244,245,.25);background:rgba(244,244,245,.08);color:#F4F4F5;font-size:.9rem;">'
         . '<button type="submit" style="padding:.6rem 1rem;border-radius:8px;border:0;background:#F5A623;color:#111;font-weight:700;font-size:.9rem;cursor:pointer;">Join</button>'
         . '</form>';
-    if ($joined === 'confirm') {
-        echo '<p style="margin:.5rem 0 0;font-size:.8rem;color:#F5A623;">Almost done - check your inbox and click the confirmation link.</p>';
+    if ($joined === 'done') {
+        echo '<p style="margin:.5rem 0 0;font-size:.8rem;color:#F5A623;">You\'re in - your welcome email is on its way.</p>';
     } elseif ($joined === 'invalid') {
         echo '<p style="margin:.5rem 0 0;font-size:.8rem;color:#F5A623;">That email address does not look right. Try again?</p>';
     } else {
-        echo '<p style="margin:.5rem 0 0;font-size:.78rem;color:rgba(244,244,245,.55);">About one email a week. Unsubscribe anytime.</p>';
+        echo '<p style="margin:.5rem 0 0;font-size:.78rem;color:rgba(244,244,245,.55);">New parts, restocks and offers. Unsubscribe anytime.</p>';
     }
     echo '</div>';
 }
