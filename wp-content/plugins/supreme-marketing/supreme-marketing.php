@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 define('SUPM_VERSION', '1.0.0');
-define('SUPM_DB_VERSION', '1.0.0');
+define('SUPM_DB_VERSION', '1.1.0');
 define('SUPM_FILE', __FILE__);
 define('SUPM_DIR', plugin_dir_path(__FILE__));
 define('SUPM_URL', plugin_dir_url(__FILE__));

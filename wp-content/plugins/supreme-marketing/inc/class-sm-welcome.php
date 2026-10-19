@@ -32,6 +32,8 @@ final class SM_Welcome
     public static function init(): void
     {
         add_action('init', [self::class, 'ensure_device_cookie'], 5);
+        add_action('init', [self::class, 'backfill_order_norms'], 30);
+        add_action('woocommerce_new_order', [self::class, 'record_order_norm'], 20);
         add_action('user_register', [self::class, 'on_register'], 20);
         add_action('wp_login', [self::class, 'on_login'], 20, 2);
         add_action('woocommerce_cart_loaded_from_session', [self::class, 'auto_apply'], 35);
@@ -194,6 +196,11 @@ final class SM_Welcome
         if (!self::has_zero_orders($user_id, $email)) {
             return null; // normal returning customer, not abuse - no log
         }
+        // Same mailbox under a plus/dot variant with past orders: block and log.
+        if (self::norm_has_orders($norm)) {
+            self::log_block('email_variant_repeat', 'Email alias of an address that has already ordered tried to claim the first-order code', $email);
+            return null;
+        }
         // Disposable inbox.
         if (self::is_disposable_domain($email)) {
             self::log_block('disposable_email', 'Signup from a disposable email domain, no welcome code', $email);
@@ -263,6 +270,71 @@ final class SM_Welcome
         ]);
         update_user_meta($user_id, '_sm_welcome20_code', $code);
         return $code;
+    }
+
+
+    /** True when the normalized mailbox already appears on a past order. */
+    public static function norm_has_orders(string $norm): bool
+    {
+        if ($norm === '') {
+            return false;
+        }
+        global $wpdb;
+        $t = SM_DB::table('order_norms');
+        return (bool) $wpdb->get_var($wpdb->prepare("SELECT order_id FROM $t WHERE email_norm = %s LIMIT 1", $norm));
+    }
+
+    /** Record the normalized billing email of every new order. Refund rows have no billing email - skip them. */
+    public static function record_order_norm($order_id): void
+    {
+        try {
+            if (!function_exists('wc_get_order')) {
+                return;
+            }
+            $order = wc_get_order($order_id);
+            if (!$order instanceof \WC_Order || $order instanceof \WC_Order_Refund) {
+                return;
+            }
+            $norm = self::norm_email((string) $order->get_billing_email());
+            if ($norm === '' || !str_contains($norm, '@')) {
+                return;
+            }
+            global $wpdb;
+            $wpdb->query($wpdb->prepare(
+                "INSERT IGNORE INTO " . SM_DB::table('order_norms') . " (email_norm, order_id, created_at) VALUES (%s, %d, %s)",
+                $norm, (int) $order_id, sm_now()
+            ));
+        } catch (\Throwable $t) {
+            if (function_exists('error_log')) {
+                error_log('supreme-marketing record_order_norm: ' . $t->getMessage());
+            }
+        }
+    }
+
+    /** One-time backfill of order email norms, 200 orders per request. Never allowed to break a page load. */
+    public static function backfill_order_norms(): void
+    {
+        try {
+            if (get_option('sm_norm_backfill_done') === 'yes' || !function_exists('wc_get_orders')) {
+                return;
+            }
+            $page = (int) get_option('sm_norm_backfill_page', 1);
+            $ids = wc_get_orders(['limit' => 200, 'paged' => $page, 'type' => 'shop_order', 'return' => 'ids', 'status' => ['wc-processing', 'wc-completed', 'wc-on-hold', 'wc-pending']]);
+            foreach ($ids as $oid) {
+                self::record_order_norm($oid);
+            }
+            if (count($ids) < 200) {
+                update_option('sm_norm_backfill_done', 'yes', false);
+                delete_option('sm_norm_backfill_page');
+            } else {
+                update_option('sm_norm_backfill_page', $page + 1, false);
+            }
+        } catch (\Throwable $t) {
+            update_option('sm_norm_backfill_done', 'yes', false); // stop retrying a failing backfill
+            if (function_exists('error_log')) {
+                error_log('supreme-marketing backfill_order_norms aborted: ' . $t->getMessage());
+            }
+        }
     }
 
     /** Active (unexpired, unredeemed) welcome code for an email. */
