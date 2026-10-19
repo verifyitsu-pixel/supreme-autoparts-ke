@@ -95,7 +95,7 @@ sync_custom_content() {
   if [[ -d /usr/src/wordpress/wp-content/plugins/sa-geo-currency ]]; then
     swap_dir /usr/src/wordpress/wp-content/plugins/sa-geo-currency /var/www/html/wp-content/plugins/sa-geo-currency
   fi
-  for gw in pesapal-woocommerce transactworld-payment-integration woocommerce-paypal-payments jotform-ai-chatbot supreme-agent-intake forminator matomo; do
+  for gw in pesapal-woocommerce transactworld-payment-integration woocommerce-paypal-payments jotform-ai-chatbot supreme-agent-intake forminator matomo supreme-marketing; do
     if [[ -d /usr/src/wordpress/wp-content/plugins/$gw ]]; then
       swap_dir "/usr/src/wordpress/wp-content/plugins/$gw" "/var/www/html/wp-content/plugins/$gw"
       chown -R www-data:www-data "/var/www/html/wp-content/plugins/$gw" 2>/dev/null || true

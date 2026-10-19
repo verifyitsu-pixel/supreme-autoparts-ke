@@ -80,6 +80,7 @@ COPY wp-content/plugins/sa-geo-currency /usr/src/wordpress/wp-content/plugins/sa
 COPY wp-content/plugins/pesapal-woocommerce /usr/src/wordpress/wp-content/plugins/pesapal-woocommerce
 COPY wp-content/plugins/transactworld-payment-integration /usr/src/wordpress/wp-content/plugins/transactworld-payment-integration
 COPY wp-content/plugins/supreme-agent-intake /usr/src/wordpress/wp-content/plugins/supreme-agent-intake
+COPY wp-content/plugins/supreme-marketing /usr/src/wordpress/wp-content/plugins/supreme-marketing
 COPY wp-content/advanced-cache.php /usr/src/wordpress/wp-content/advanced-cache.php
 COPY wp-content/mu-plugins /usr/src/wordpress/wp-content/mu-plugins
 COPY data /usr/src/supreme-data
@@ -111,6 +112,7 @@ RUN chmod +x /usr/local/bin/wordpress-entrypoint.sh \
         /usr/src/wordpress/wp-content/plugins/whop-payments \
         /usr/src/wordpress/wp-content/plugins/sa-brevo-mail \
         /usr/src/wordpress/wp-content/plugins/sa-geo-currency
+        /usr/src/wordpress/wp-content/plugins/supreme-marketing
 
 # Apache: allow .htaccess for permalinks
 RUN a2enmod rewrite headers expires
