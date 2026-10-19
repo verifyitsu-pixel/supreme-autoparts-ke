@@ -30,9 +30,9 @@ const SA_COURIER_MAX_STATIONS = 15;
 
 function sa_couriers_enabled(): bool
 {
-    // Live for Kenya since 2026-10-19 (user approval). Kill switch: option sa_couriers_enabled = 'no'
+    // Live for Kenya since 2026-10-19 (user approval). Kill switch: option sa_couriers_live = 'no'
     // or env SUPREME_COURIERS_DISABLED=1. Weights come from product data on every calculation.
-    $opt = get_option('sa_couriers_enabled', 'yes');
+    $opt = get_option('sa_couriers_live', 'yes');
     if ($opt === 'yes') {
         return getenv('SUPREME_COURIERS_DISABLED') !== '1';
     }
