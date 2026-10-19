@@ -76,6 +76,7 @@ require_once SA_CORE_DIR . 'includes/fulfilment.php';
 require_once SA_CORE_DIR . 'includes/payment-recovery.php';
 require_once SA_CORE_DIR . 'includes/email-footer.php';
 require_once SA_CORE_DIR . 'includes/order-lifecycle.php';
+require_once SA_CORE_DIR . 'includes/google-customer-reviews.php';
 require_once SA_CORE_DIR . 'includes/hold-copy.php';
 
 require_once SA_CORE_DIR . 'includes/hold-requests.php';
