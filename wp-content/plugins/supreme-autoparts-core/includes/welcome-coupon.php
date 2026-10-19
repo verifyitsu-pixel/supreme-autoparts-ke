@@ -11,6 +11,14 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Replaced by the Supreme Marketing plugin's Welcome 20 (personal one-use 20%
+// first-order codes with abuse protection). Stay dormant while it is active so
+// the old WELCOME30 auto-apply and callouts stop firing at checkout. This file
+// loads before supreme-marketing, so detect the replacement via active_plugins.
+if (in_array('supreme-marketing/supreme-marketing.php', (array) get_option('active_plugins', []), true)) {
+    return;
+}
+
 const SA_WELCOME_COUPON_CODE = 'WELCOME30';
 const SA_WELCOME_COUPON_VER  = '1';
 
