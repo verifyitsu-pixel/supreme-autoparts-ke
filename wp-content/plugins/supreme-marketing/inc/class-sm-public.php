@@ -20,11 +20,11 @@ final class SM_Public
 
     public static function rewrites(): void
     {
-        add_rewrite_rule('^mm/unsubscribe/([^/]+)/([^/]+)/?$', 'index.php?sm_action=unsubscribe&sm_e=$matches[1]&sm_t=$matches[2]', 'top');
-        add_rewrite_rule('^mm/preferences/([^/]+)/([^/]+)/?$', 'index.php?sm_action=preferences&sm_e=$matches[1]&sm_t=$matches[2]', 'top');
-        add_rewrite_rule('^mm/confirm/([^/]+)/([^/]+)/?$', 'index.php?sm_action=confirm&sm_e=$matches[1]&sm_t=$matches[2]', 'top');
-        add_rewrite_rule('^mm/o/([0-9]+)/([^/.]+)\.gif$', 'index.php?sm_action=open&sm_sid=$matches[1]&sm_t=$matches[2]', 'top');
-        add_rewrite_rule('^mm/c/([0-9]+)/([0-9]+)/([^/]+)/?$', 'index.php?sm_action=click&sm_lid=$matches[1]&sm_sid=$matches[2]&sm_t=$matches[3]', 'top');
+        add_rewrite_rule('^sm/unsubscribe/([^/]+)/([^/]+)/?$', 'index.php?sm_action=unsubscribe&sm_e=$matches[1]&sm_t=$matches[2]', 'top');
+        add_rewrite_rule('^sm/preferences/([^/]+)/([^/]+)/?$', 'index.php?sm_action=preferences&sm_e=$matches[1]&sm_t=$matches[2]', 'top');
+        add_rewrite_rule('^sm/confirm/([^/]+)/([^/]+)/?$', 'index.php?sm_action=confirm&sm_e=$matches[1]&sm_t=$matches[2]', 'top');
+        add_rewrite_rule('^sm/o/([0-9]+)/([^/.]+)\.gif$', 'index.php?sm_action=open&sm_sid=$matches[1]&sm_t=$matches[2]', 'top');
+        add_rewrite_rule('^sm/c/([0-9]+)/([0-9]+)/([^/]+)/?$', 'index.php?sm_action=click&sm_lid=$matches[1]&sm_sid=$matches[2]&sm_t=$matches[3]', 'top');
     }
 
     public static function query_vars(array $vars): array
