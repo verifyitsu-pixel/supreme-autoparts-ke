@@ -44,11 +44,19 @@ add_filter('option_woocommerce_transactworld_settings', static function ($settin
 
 /* Whop checkout visibility: switch on + shop admin, unless the public flag is set. */
 if (!function_exists('sa_whop_checkout_visible')) {
-    /* Card checkout (Whop) is OFF at checkout (user instruction 2026-10-20 20:30,
-       gateway disabled only: account, keys, webhook and existing orders untouched).
-       Turn it back on by setting env SA_WHOP_CHECKOUT_ON=1 on Railway. */
+    /* Card checkout (Whop) is hidden by default (user instruction 2026-10-20 20:30;
+       gateway only: account, keys, webhook and existing orders untouched).
+       Same kill switch as before, default flipped: SA_WHOP_CHECKOUT_OFF=0 turns it
+       back on for everyone; otherwise only the admin test mode (SA_WHOP_CHECKOUT=1,
+       shop admins) can see it. */
     function sa_whop_checkout_visible(): bool {
-        return getenv('SA_WHOP_CHECKOUT_ON') === '1';
+        if (getenv('SA_WHOP_CHECKOUT_OFF') === '0') {
+            return true;
+        }
+        if (getenv('SA_WHOP_CHECKOUT') !== '1') {
+            return false;
+        }
+        return function_exists('current_user_can') && current_user_can('manage_woocommerce');
     }
 }
 
