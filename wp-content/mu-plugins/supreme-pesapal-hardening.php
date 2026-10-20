@@ -91,6 +91,19 @@ function sa_pesapal_define_classes() {
             }
             $obj = json_decode(wp_remote_retrieve_body($res));
             if (!is_object($obj)) {
+                // Metadata-only diagnostics: never log the body, headers with secrets, or the request.
+                $body = (string) wp_remote_retrieve_body($res);
+                $path = (string) wp_parse_url($url, PHP_URL_PATH);
+                error_log(sprintf(
+                    '[supreme] Pesapal non-JSON reply: path=%s http=%s content_type=%s server=%s cf_mitigated=%s body_bytes=%d cloudflare_challenge=%s',
+                    $path,
+                    (string) wp_remote_retrieve_response_code($res),
+                    substr((string) wp_remote_retrieve_header($res, 'content-type'), 0, 60),
+                    substr((string) wp_remote_retrieve_header($res, 'server'), 0, 40),
+                    substr((string) wp_remote_retrieve_header($res, 'cf-mitigated'), 0, 20),
+                    strlen($body),
+                    (stripos($body, 'Just a moment') !== false || stripos($body, '_cf_chl_opt') !== false) ? 'yes' : 'no'
+                ));
                 return (object) array('status' => '500', 'error' => (object) array(
                     'error_type' => 'bad_response', 'code' => 'bad_response', 'message' => 'Unexpected response from Pesapal.'));
             }
