@@ -44,8 +44,8 @@ add_filter('option_woocommerce_transactworld_settings', static function ($settin
 
 /* Whop checkout visibility: switch on + shop admin, unless the public flag is set. */
 if (!function_exists('sa_whop_checkout_visible')) {
-    /* Card checkout (Whop) is hidden by default (user instruction 2026-10-20 20:30;
-       gateway only: account, keys, webhook and existing orders untouched).
+    /* Card checkout (Whop) is hidden by default (gateway visibility only:
+       account, keys, webhook and existing orders untouched).
        Same kill switch as before, default flipped: SA_WHOP_CHECKOUT_OFF=0 turns it
        back on for everyone; otherwise only the admin test mode (SA_WHOP_CHECKOUT=1,
        shop admins) can see it. */
