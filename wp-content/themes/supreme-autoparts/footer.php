@@ -23,7 +23,7 @@ $sa_chev       = '<svg class="sa-foot__chev" viewBox="0 0 24 24" width="18" heig
       <a href="<?php echo esc_url(sa_page_url('terms')); ?>"><?php esc_html_e('Terms', 'supreme-autoparts'); ?></a>
       <a href="<?php echo esc_url($sa_wa); ?>" target="_blank" rel="noopener"><?php esc_html_e('Help on WhatsApp', 'supreme-autoparts'); ?></a>
     </nav>
-    <span class="sa-foot__copy">&copy; <?php echo esc_html(gmdate('Y')); ?> Supreme Autoparts</span>
+    <span class="sa-foot__copy">Supreme Autoparts is a trading name of Standard Driveworks.<br />&copy; <?php echo esc_html(gmdate('Y')); ?> Supreme Autoparts</span>
   </div>
 </footer>
 <?php else : ?>
@@ -127,7 +127,7 @@ $sa_chev       = '<svg class="sa-foot__chev" viewBox="0 0 24 24" width="18" heig
     </div>
 
     <div class="sa-foot__bottom">
-      <span class="sa-foot__copy">&copy; <?php echo esc_html(gmdate('Y')); ?> Supreme Autoparts · supremeautoparts.co.ke</span>
+      <span class="sa-foot__copy">Supreme Autoparts is a trading name of Standard Driveworks.<br />&copy; <?php echo esc_html(gmdate('Y')); ?> Supreme Autoparts · supremeautoparts.co.ke</span>
       <nav class="sa-foot__social" aria-label="<?php esc_attr_e('Social', 'supreme-autoparts'); ?>">
         <a href="<?php echo esc_url(function_exists('sa_instagram_url') ? sa_instagram_url() : 'https://www.instagram.com/standarddriveworks/'); ?>" target="_blank" rel="noopener" aria-label="<?php esc_attr_e('Supreme Autoparts on Instagram', 'supreme-autoparts'); ?>"><?php echo function_exists('sa_instagram_icon') ? sa_instagram_icon() : 'Instagram'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
         <a href="<?php echo esc_url($sa_wa); ?>" target="_blank" rel="noopener" aria-label="<?php esc_attr_e('Chat on WhatsApp', 'supreme-autoparts'); ?>"><?php echo function_exists('sa_whatsapp_icon') ? sa_whatsapp_icon() : 'WhatsApp'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>

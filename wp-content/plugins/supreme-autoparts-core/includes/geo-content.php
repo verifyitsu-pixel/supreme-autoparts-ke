@@ -51,7 +51,7 @@ function sa_gc_shipping_html(): string
 function sa_gc_about_html(): string
 {
     $z = sa_gc_zone();
-    $intro = '<p><strong>Supreme Autoparts</strong> sells parts for Japanese, American, British and European cars, trucks and SUVs. You can search by part number, brand or vehicle, and we check fitment if you send us your car details.</p>';
+    $intro = '<p>Supreme Autoparts is a trading name of Standard Driveworks.</p><p><strong>Supreme Autoparts</strong> sells parts for Japanese, American, British and European cars, trucks and SUVs. You can search by part number, brand or vehicle, and we check fitment if you send us your car details.</p>';
     if ($z === 'KE') {
         return $intro . '<p>We are based at Ground Floor, Midax Plaza, Kangundo Rd, Njiru, Nairobi. We deliver to every county with Fargo Courier, offer store pickup, service cars at our garage and run Roadside Rescue across Nairobi.</p>'
             . '<p>Call or <a href="https://wa.me/supremeautopart">chat on WhatsApp</a> · <a href="mailto:calvin@supremeautoparts.co.ke">calvin@supremeautoparts.co.ke</a></p>';
@@ -78,6 +78,9 @@ add_filter('the_content', static function (string $html): string {
     }
     if ($slug === 'about-us') {
         return sa_gc_about_html();
+    }
+    if ($slug === 'terms' && !str_contains($html, 'Supreme Autoparts is a trading name of Standard Driveworks.')) {
+        return '<p>Supreme Autoparts is a trading name of Standard Driveworks.</p>' . $html;
     }
     return $html;
 }, 5);

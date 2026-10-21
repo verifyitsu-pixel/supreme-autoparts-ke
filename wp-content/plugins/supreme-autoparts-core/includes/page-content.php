@@ -19,6 +19,7 @@ function sa_core_page_definitions(): array
         'about-us' => [
             'title'   => 'About Us',
             'content' => <<<HTML
+<p>Supreme Autoparts is a trading name of Standard Driveworks.</p>
 <p>Welcome to <strong>Supreme Autoparts</strong> — aftermarket and performance parts built for US drivers and builders. We cover <strong>Japanese, American, and British</strong> cars and trucks, plus <strong>electric vehicles</strong> and <strong>motorcycles</strong>. We ship across the continental United States, with international delivery available.</p>
 <p>Whether you drive a JDM daily, a US truck, a UK import, an EV, or a bike, we aim to help you find the right part. If something is not listed online, contact us — odds are we can source it.</p>
 <p>Thanks for reading. We look forward to getting quality parts to you soon.</p>
@@ -124,6 +125,7 @@ HTML,
         'terms' => [
             'title'   => 'Terms of Service',
             'content' => <<<HTML
+<p>Supreme Autoparts is a trading name of Standard Driveworks.</p>
 <p><strong>TERMS AND CONDITIONS</strong></p>
 <p>Please read these terms carefully before using {$site}. By accessing or using this site, you agree to these terms and other applicable law. If you do not agree, do not use this site.</p>
 <h2>Copyright</h2>
