@@ -88,7 +88,6 @@ final class SM_Sender
                 self::mark($row['id'], 'failed', 'no_test_recipients');
                 return;
             }
-            $subject = '[TEST for ' . $email . '] ' . $subject;
         }
 
         // Create the send record first so tracking URLs can reference it.
