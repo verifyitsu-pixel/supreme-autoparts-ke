@@ -307,22 +307,9 @@ add_action('rest_api_init', static function (): void {
     ]);
 });
 
-/* Kenya visitors: preselect Nairobi county when none chosen, so Fargo + pickup show immediately at checkout. */
-add_filter('default_checkout_billing_state', static function ($v) {
-    if ($v === '' && function_exists('WC') && WC()->customer && strtoupper((string) WC()->customer->get_billing_country()) === 'KE') {
-        return 'KE30';
-    }
-    return $v;
-});
-add_action('woocommerce_before_calculate_totals', static function (): void {
-    if (!function_exists('WC') || !WC()->customer) {
-        return;
-    }
-    $c = WC()->customer;
-    if (strtoupper((string) $c->get_shipping_country()) === 'KE' && (string) $c->get_shipping_state() === '') {
-        $c->set_shipping_state('KE30');
-        if ((string) $c->get_billing_state() === '') {
-            $c->set_billing_state('KE30');
-        }
-    }
-}, 5);
+/* Kenya visitors must CHOOSE a county; none is preselected (fix 2026-10-25).
+ * The old preselect wrote KE30 (Nairobi) into the session whenever a KE shopper had no county,
+ * which silently qualified upcountry visitors for the Nairobi-only free delivery override.
+ * With no county chosen, Fargo shows its "choose your county for the exact fee" placeholder and
+ * Nairobi free delivery only appears once the customer actually selects Nairobi (KE30). */
+
