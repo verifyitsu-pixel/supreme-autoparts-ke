@@ -57,6 +57,24 @@ function sa_ship_is_us(): bool
  * - Free shipping only ever for US destinations.
  * - Kenya: exactly Store pickup + Fargo Courier.
  */
+/**
+ * County must be chosen, not assumed (fix 2026-10-25).
+ * WC fills an unset state from the customer default location; this site's default is the shop
+ * base (Nairobi, KE30) because shipping.php sets woocommerce_default_customer_address to
+ * 'geolocation_ajax' (server-side fallback = base). That made sa_ship_is_nairobi_city() see
+ * "Nairobi" for ANY Kenya shopper who had not picked a county, offering free "Nairobi"
+ * delivery to upcountry addresses. Blank the state of a Kenyan default location so an
+ * unchosen county stays empty: couriers then show "choose your county for the exact fee"
+ * and Nairobi free delivery only applies once the customer actually selects Nairobi (KE30).
+ * US geolocation and all county courier prices are unaffected.
+ */
+add_filter('woocommerce_customer_default_location_array', static function ($location) {
+    if (is_array($location) && strtoupper((string) ($location['country'] ?? '')) === 'KE') {
+        $location['state'] = '';
+    }
+    return $location;
+}, 20);
+
 add_filter('woocommerce_package_rates', static function ($rates, $package) {
     $cc = strtoupper((string) ($package['destination']['country'] ?? ''));
     $sa_couriers_on = function_exists('sa_couriers_enabled') && sa_couriers_enabled();
