@@ -496,6 +496,11 @@ function sm_product_caption(WC_Product $p): string
     if ($caption === '') {
         $feat = sm_name_features($name);
         $use  = sm_category_usecase($cat);
+        if ($use === '') {
+            // No usable category: ground the use context in the product's
+            // own attributes (its name), e.g. "tube" -> intake builds.
+            $use = sm_category_usecase($name);
+        }
         $lead = trim($brand . ($feat !== '' ? ' ' . $feat : ($cat !== '' ? ' ' . $cat : '')));
         if ($lead !== '' && $use !== '') {
             $caption = ucfirst($lead) . ' - ' . $use;
