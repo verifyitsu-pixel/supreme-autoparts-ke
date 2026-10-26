@@ -42,7 +42,7 @@ add_action('admin_init', function () {
         sm_grid_unlock($relock);
 
         // 2) Queue email A reserves its selected products.
-        sm_reserve_products(-9001, $email, [111, 222]);
+        sm_reserve_products(999999901, $email, [111, 222]);
         $reserved = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE email = %s AND state = 'reserved'", $email));
         $check('reservation writes reserved rows', $reserved === 2, "reserved=$reserved");
 
@@ -51,17 +51,17 @@ add_action('admin_init', function () {
         $check('concurrent build sees reserved picks as taken', in_array(111, $seen, true) && in_array(222, $seen, true), implode(',', $seen));
 
         // 4) Queue email B reserves a different product.
-        sm_reserve_products(-9002, $email, [333]);
+        sm_reserve_products(999999902, $email, [333]);
         $seen = sm_recent_sent_product_ids($email);
         $check('second reservation adds to exclusion set', in_array(333, $seen, true), implode(',', $seen));
 
         // 5) Provider-accepted send finalizes A: reserved -> sent with send_id.
-        sm_finalize_queue_products(-9001, -9001);
-        $sent = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE email = %s AND state = 'sent' AND send_id = -9001", $email));
+        sm_finalize_queue_products(999999901, 999999901);
+        $sent = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE email = %s AND state = 'sent' AND send_id = 999999901", $email));
         $check('finalize flips reserved to sent with send_id', $sent === 2, "sent=$sent");
 
         // 6) Failed/cancelled send releases B's reservation - never marks history.
-        sm_release_queue_products(-9002);
+        sm_release_queue_products(999999902);
         $left = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE email = %s AND product_id = 333", $email));
         $check('failed send releases reservation', $left === 0, "left=$left");
         $seen = sm_recent_sent_product_ids($email);
