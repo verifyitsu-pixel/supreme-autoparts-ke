@@ -303,7 +303,7 @@ final class SM_Admin
         $delays = get_option('sm_flow_delays', []);
         echo '<p>Each flow runs automatically when its trigger fires. Enabled flows queue emails; the master switch (dashboard) controls actual sending. Click a step to preview the exact email (add <code>&amp;sm_zone=ke</code> to the preview URL for the Kenya version).</p>';
         foreach (SM_Flows::definitions() as $key => $def) {
-            $on = (($flags[$key] ?? 'yes') === 'yes');
+            $on = SM_Flows::enabled($key); // single source of truth: rotation ships disabled until the owner picks a cadence
             echo '<div class="sm-flow">';
             echo '<div class="sm-flow-head"><h2>' . esc_html($def['label']) . '</h2>';
             echo '<span class="sm-pill ' . ($on ? 'sm-on' : 'sm-off') . '">' . ($on ? 'Enabled' : 'Disabled') . '</span>';
