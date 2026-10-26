@@ -297,6 +297,8 @@ final class SM_Admin
             wp_die('nope');
         }
         self::header('Automated flows');
+        $selftest = wp_nonce_url(admin_url('admin.php?page=sm-flows&sm_selftest=1'), 'sm_selftest');
+        echo '<p><a href="' . esc_url($selftest) . '">Run no-mail self-test</a> (verifies the cross-email non-repeat machinery; sends nothing, cleans up after itself).</p>';
         $flags = get_option('sm_flows_enabled', []);
         $delays = get_option('sm_flow_delays', []);
         echo '<p>Each flow runs automatically when its trigger fires. Enabled flows queue emails; the master switch (dashboard) controls actual sending. Click a step to preview the exact email (add <code>&amp;sm_zone=ke</code> to the preview URL for the Kenya version).</p>';
