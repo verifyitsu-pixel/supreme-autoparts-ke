@@ -163,36 +163,17 @@ add_action('admin_init', function () {
         $check('AI wire parse: choices/stop, response fallback, truncation rejected', $wire_ok && $wire_len && $wire_fb && $wire_nn);
     }
 
-    // Live provider proof (only once credentials are installed): one real
-    // bounded call through the adapter; every returned field must satisfy
-    // the same caps/claim filter, and the neuron counter reports usage.
-    if (function_exists('sm_ai_ready') && function_exists('sm_ai_rotation_plan')) {
+    // Live provider roundtrip in an isolated test namespace: one raw
+    // bounded sm_ai_call probe (no plan path, no production cache keys -
+    // test traffic must never pollute the recipient copy cache).
+    if (function_exists('sm_ai_ready') && function_exists('sm_ai_call')) {
         if (sm_ai_ready()) {
-            $nb    = get_option('sm_ai_neurons', []);
+            $nb     = get_option('sm_ai_neurons', []);
             $before = is_array($nb) ? (int) ($nb['neurons'] ?? 0) : 0;
-            $themes_ai = sm_rotation_themes();
-            $keys_ai   = array_keys($themes_ai);
-            $chosen_ai = (string) ($keys_ai[0] ?? '');
-            $pool      = function_exists('wc_get_products') ? wc_get_products(['status' => 'publish', 'limit' => 4]) : [];
-            $plan_ai   = ($chosen_ai !== '' && $pool) ? sm_ai_rotation_plan($themes_ai, $keys_ai, $chosen_ai, $pool) : null;
+            $j      = sm_ai_call('TEST-ONLY probe. Reply with JSON {"ok": true} and nothing else.', ['probe' => 'self-test'], 60);
             $nb2    = get_option('sm_ai_neurons', []);
             $after  = is_array($nb2) ? (int) ($nb2['neurons'] ?? 0) : 0;
-            $ai_ok  = is_array($plan_ai) && $plan_ai !== [];
-            if (is_array($plan_ai)) {
-                foreach (['subject' => 70, 'headline' => 50, 'intro' => 200] as $f => $max) {
-                    if (isset($plan_ai[$f])) {
-                        $ai_ok = $ai_ok && mb_strlen((string) $plan_ai[$f]) <= $max && sm_ai_claim_free((string) $plan_ai[$f]);
-                    }
-                }
-                if (isset($plan_ai['theme_key'])) {
-                    $ai_ok = $ai_ok && in_array($plan_ai['theme_key'], $keys_ai, true);
-                }
-            }
-            $check(
-                'AI live provider: plan fields valid (may be cache-served)',
-                $ai_ok,
-                'neurons ' . $before . '->' . $after . ' fields=' . implode(',', array_keys((array) $plan_ai))
-            );
+            $check('AI live provider roundtrip (isolated test namespace)', is_array($j) && !empty($j['ok']) && $after > $before, 'neurons ' . $before . '->' . $after);
         } else {
             $check('AI adapter fail-closed while no credential installed', true);
         }
