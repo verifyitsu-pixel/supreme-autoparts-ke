@@ -377,15 +377,27 @@ function sa_sf_suggest(): void
     if (mb_strlen($q) < 2) {
         wp_send_json_success([]);
     }
-    $ck = 'sa_sugg_' . md5(strtolower($q));
+    $scope = sanitize_text_field(wp_unslash((string) ($_GET['sa_cat'] ?? '')));
+    if ($scope === 'all') {
+        $scope = '';
+    }
+    $ck = 'sa_sugg_' . md5(strtolower($q) . '|' . $scope);
     $out = get_transient($ck);
     if (!is_array($out)) {
-        $ids = (new WP_Query(['post_type' => 'product', 'post_status' => 'publish', 's' => $q, 'posts_per_page' => 6, 'fields' => 'ids', 'no_found_rows' => true]))->posts;
+        $args = ['post_type' => 'product', 'post_status' => 'publish', 's' => $q, 'posts_per_page' => 6, 'fields' => 'ids', 'no_found_rows' => true];
+        if ($scope !== '') {
+            $args['tax_query'] = [['taxonomy' => 'product_cat', 'field' => 'slug', 'terms' => $scope]];
+        }
+        $ids = (new WP_Query($args))->posts;
         // Typo-tolerant predictive layer: top up from the local catalog
         // token index when literal search finds too little. Suggestions stay
-        // real published products only - no invented compatibility.
+        // real published products only - no invented compatibility. A category
+        // scope (sa_cat) constrains fuzzy candidates exactly like literal ones.
         if (count($ids) < 6 && sa_sf_fuzzy_enabled() && function_exists('sa_sf_fuzzy_product_ids')) {
-            foreach (sa_sf_fuzzy_product_ids($q, 6) as $fid) {
+            foreach (sa_sf_fuzzy_product_ids($q, 12) as $fid) {
+                if ($scope !== '' && !has_term($scope, 'product_cat', $fid)) {
+                    continue;
+                }
                 if (!in_array($fid, $ids, true)) {
                     $ids[] = $fid;
                 }
@@ -415,10 +427,9 @@ function sa_sf_suggest(): void
  * part numbers. Returns up to $limit published product ids, best first.
  */
 /**
- * Fuzzy search kill switch. The typo-tolerant layer is OFF on production
- * pending repair of a live fatal in the fuzzy path (owner + main decision
- * 2026-10-26). Literal WP search behavior is unchanged. Flip to true only
- * after the repaired path is live-verified.
+ * Fuzzy search kill switch. Repaired path (strict-types numeric-token fix,
+ * compact cron-built index, scoped suggestions) enabled 2026-10-26 after live
+ * verification; the filter allows an instant off-switch without a deploy.
  */
 function sa_sf_fuzzy_enabled(): bool
 {
@@ -624,7 +635,10 @@ add_filter('posts_results', static function (array $posts, WP_Query $query): arr
     if ($posts !== [] || is_admin() || !$query->is_search()) {
         return $posts;
     }
-    if ($query->get('post_type') !== 'product' && $query->get('post_type') !== ['product']) {
+    $pt = $query->get('post_type');
+    $product_search = $pt === 'product' || $pt === 'any' || $pt === '' || $pt === null
+        || (is_array($pt) && in_array('product', $pt, true));
+    if (!$product_search) { // the site's real search URL has no post_type ('any')
         return $posts;
     }
     $q = trim((string) $query->get('s'));
@@ -635,7 +649,16 @@ add_filter('posts_results', static function (array $posts, WP_Query $query): arr
     if ($ids === []) {
         return $posts;
     }
-    return (new WP_Query(['post_type' => 'product', 'post_status' => 'publish', 'post__in' => $ids, 'orderby' => 'post__in', 'posts_per_page' => 24, 'no_found_rows' => true]))->posts;
+    $args = ['post_type' => 'product', 'post_status' => 'publish', 'post__in' => $ids, 'orderby' => 'post__in', 'posts_per_page' => 24, 'no_found_rows' => true];
+    $tq = $query->get('tax_query'); // keep the shopper's category/brand scope
+    if (is_array($tq) && $tq !== []) {
+        $args['tax_query'] = $tq;
+    }
+    $mq = $query->get('meta_query'); // and active price filters
+    if (is_array($mq) && $mq !== []) {
+        $args['meta_query'] = $mq;
+    }
+    return (new WP_Query($args))->posts;
 }, 10, 2);
 
 /* One-line roadside mention in customer order emails. Roadside rescue is a Nairobi service, so it only shows on African orders,
