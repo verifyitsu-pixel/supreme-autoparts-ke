@@ -381,6 +381,19 @@ function sa_sf_suggest(): void
     $out = get_transient($ck);
     if (!is_array($out)) {
         $ids = (new WP_Query(['post_type' => 'product', 'post_status' => 'publish', 's' => $q, 'posts_per_page' => 6, 'fields' => 'ids', 'no_found_rows' => true]))->posts;
+        // Typo-tolerant predictive layer: top up from the local catalog
+        // token index when literal search finds too little. Suggestions stay
+        // real published products only - no invented compatibility.
+        if (count($ids) < 6 && function_exists('sa_sf_fuzzy_product_ids')) {
+            foreach (sa_sf_fuzzy_product_ids($q, 6) as $fid) {
+                if (!in_array($fid, $ids, true)) {
+                    $ids[] = $fid;
+                }
+                if (count($ids) >= 6) {
+                    break;
+                }
+            }
+        }
         $out = [];
         foreach ($ids as $id) {
             $p = wc_get_product($id);
@@ -394,8 +407,180 @@ function sa_sf_suggest(): void
     }
     wp_send_json_success($out);
 }
+
+/**
+ * Local typo-tolerant product matcher. No external calls: exact and prefix
+ * token matches first (predictive completion), then phonetic (metaphone)
+ * and small-edit-distance matches for misspellings, plus SKU matching for
+ * part numbers. Returns up to $limit published product ids, best first.
+ */
+function sa_sf_fuzzy_product_ids(string $q, int $limit = 6): array
+{
+    $qt = sa_sf_search_tokens($q);
+    if ($qt === []) {
+        return [];
+    }
+    $idx = sa_sf_search_index();
+    if ($idx === []) {
+        return [];
+    }
+    $sku_q = strtoupper(preg_replace('/[^A-Za-z0-9-]/', '', $q));
+    $scores = [];
+    foreach ($idx as $id => $row) {
+        $sku_hit = 0;
+        if ($sku_q !== '' && $row['s'] !== '') {
+            if ($row['s'] === $sku_q) {
+                $sku_hit = 12;
+            } elseif (strlen($sku_q) >= 3 && strncmp($row['s'], $sku_q, strlen($sku_q)) === 0) {
+                $sku_hit = 8;
+            }
+        }
+        if ($sku_hit >= 12) {
+            $scores[$id] = 100; // exact part number always wins outright
+            continue;
+        }
+        $score = 0;
+        $matched_all = true;
+        foreach ($qt as $token) {
+            $best = 0;
+            $len = mb_strlen($token);
+            foreach ($row['t'] as $i => $ct) {
+                if ($ct === $token) {
+                    $best = max($best, 10);
+                    continue;
+                }
+                if ($len >= 2 && strncmp($ct, $token, $len) === 0) {
+                    $best = max($best, 6); // prefix: predictive completion
+                    continue;
+                }
+                if ($len >= 4) {
+                    $mp = $row['m'][$i] ?? '';
+                    if ($mp !== '' && $mp === metaphone($token)) {
+                        $best = max($best, 4);
+                        continue;
+                    }
+                    $maxd = $len >= 7 ? 2 : 1;
+                    if (abs(strlen($ct) - $len) <= $maxd && levenshtein($ct, $token) <= $maxd) {
+                        $best = max($best, 3);
+                    }
+                }
+            }
+            if ($best === 0) {
+                $matched_all = false;
+                break;
+            }
+            $score += $best;
+        }
+        if (!$matched_all) {
+            continue;
+        }
+        $scores[$id] = $score + $sku_hit;
+    }
+    if ($scores === [] && count($qt) > 1) {
+        // No product matched every token: fall back to the strongest
+        // single-token matches ("did you mean" behavior for messy typing).
+        foreach ($idx as $id => $row) {
+            $best = 0;
+            foreach ($qt as $token) {
+                $len = mb_strlen($token);
+                if ($len < 4) {
+                    continue;
+                }
+                foreach ($row['t'] as $i => $ct) {
+                    if (($row['m'][$i] ?? '') !== '' && $row['m'][$i] === metaphone($token)) {
+                        $best = max($best, 4);
+                    } elseif (abs(strlen($ct) - $len) <= 2 && levenshtein($ct, $token) <= ($len >= 7 ? 2 : 1)) {
+                        $best = max($best, 3);
+                    }
+                }
+            }
+            if ($best > 0) {
+                $scores[$id] = $best;
+            }
+        }
+    }
+    arsort($scores);
+    return array_slice(array_map('intval', array_keys($scores)), 0, $limit);
+}
+
+/** Lowercase alphanumeric tokens from a query or product name. */
+function sa_sf_search_tokens(string $s): array
+{
+    $s = strtolower($s);
+    $parts = preg_split('/[^a-z0-9]+/', $s) ?: [];
+    $out = [];
+    foreach ($parts as $t) {
+        if ($t !== '' && mb_strlen($t) >= 2) {
+            $out[$t] = true;
+        }
+    }
+    return array_keys($out);
+}
+
+/**
+ * Cached catalog index: id => tokens, per-token metaphone keys, SKU.
+ * Rebuilt hourly; published products only. Skipped silently on huge or
+ * empty catalogs rather than slowing the suggestions endpoint.
+ */
+function sa_sf_search_index(): array
+{
+    $idx = get_transient('sa_search_index_v1');
+    if (is_array($idx) && $idx !== []) {
+        return $idx;
+    }
+    global $wpdb;
+    $idx = [];
+    $page = 0;
+    do {
+        $rows = $wpdb->get_results(
+            "SELECT p.ID, p.post_title,
+                    (SELECT meta_value FROM {$wpdb->postmeta} WHERE post_id = p.ID AND meta_key = '_sku' LIMIT 1) AS sku
+             FROM {$wpdb->posts} p
+             WHERE p.post_type = 'product' AND p.post_status = 'publish'
+             ORDER BY p.ID LIMIT " . ($page * 500) . ', 500'
+        );
+        foreach ((array) $rows as $r) {
+            $toks = sa_sf_search_tokens((string) $r->post_title);
+            if ($toks === []) {
+                continue;
+            }
+            $mph = [];
+            foreach ($toks as $t) {
+                $mph[] = metaphone($t);
+            }
+            $idx[(int) $r->ID] = ['t' => $toks, 'm' => $mph, 's' => strtoupper((string) $r->sku)];
+        }
+        $page++;
+    } while (is_array($rows) && count($rows) === 500 && $page < 60);
+    if ($idx !== []) {
+        set_transient('sa_search_index_v1', $idx, HOUR_IN_SECONDS);
+    }
+    return is_array($idx) ? $idx : [];
+}
 add_action('wp_ajax_sa_suggest', 'sa_sf_suggest');
 add_action('wp_ajax_nopriv_sa_suggest', 'sa_sf_suggest');
+
+/* Full search-results path: when a submitted product search finds nothing
+   literal (typo, misspelling), rerun as the local fuzzy match instead of
+   showing an empty page. Suggestions and results stay real catalog products
+   only; no fitment or compatibility is implied. */
+add_filter('posts_results', static function (array $posts, WP_Query $query): array {
+    if ($posts !== [] || is_admin() || !$query->is_main_query() || !$query->is_search()) {
+        return $posts;
+    }
+    if ($query->get('post_type') !== 'product' && $query->get('post_type') !== ['product']) {
+        return $posts;
+    }
+    $q = trim((string) $query->get('s'));
+    if (mb_strlen($q) < 3 || !function_exists('sa_sf_fuzzy_product_ids')) {
+        return $posts;
+    }
+    $ids = sa_sf_fuzzy_product_ids($q, 24);
+    if ($ids === []) {
+        return $posts;
+    }
+    return (new WP_Query(['post_type' => 'product', 'post_status' => 'publish', 'post__in' => $ids, 'orderby' => 'post__in', 'posts_per_page' => 24, 'no_found_rows' => true]))->posts;
+}, 10, 2);
 
 /* One-line roadside mention in customer order emails. Roadside rescue is a Nairobi service, so it only shows on African orders,
  * and it sits after the billing/shipping block so the order details stay together. */
