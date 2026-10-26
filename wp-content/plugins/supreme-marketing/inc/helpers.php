@@ -22,7 +22,7 @@ function sm_defaults(): array
         'from_email'           => '',     // '' = use the store's configured from address
         'reorder_days'         => 90,     // default days a consumable part lasts before a reorder reminder
         'winback_1_days'       => 60,
-        'rotation_min_days'     => 7, // PROPOSED default; the owner has not picked a rotation cadence yet (2026-10-26)
+        'rotation_min_days'     => 1, // owner picked daily 2026-10-26 (iMessage phonemsg-01M5W5GT5AF63J5AVTABJRZ0T5): at most one rotation email per customer per day, spaced from other marketing mail
         'winback_2_days'       => 90,
         'browse_cap_days'      => 7,      // max one browse-abandonment email per this many days
         'send_batch'           => 50,     // max emails per 5-minute queue run
@@ -1104,6 +1104,25 @@ function sm_rotation_covered_product_ids(string $email, string $cycle_started_at
         strtolower(trim($email)),
         $cycle_started_at
     )));
+}
+
+/**
+ * Pure spacing check (unit-tested): is a rotation email due for a
+ * recipient whose last marketing email (any flow) was $last_sent_at?
+ * Daily means at most one per day - and never stacked on another
+ * marketing email sent within the same window.
+ */
+function sm_rotation_due(?string $last_sent_at, int $min_days, ?int $now = null): bool
+{
+    if ($last_sent_at === null || trim($last_sent_at) === '') {
+        return true; // never emailed: due
+    }
+    $ts = strtotime($last_sent_at);
+    if (!$ts) {
+        return true;
+    }
+    $now = $now ?? sm_ts();
+    return $now - $ts >= max(1, $min_days) * DAY_IN_SECONDS;
 }
 
 /** Request-scoped handoff of the rotation theme to the send builder. */

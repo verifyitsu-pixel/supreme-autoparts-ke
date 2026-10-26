@@ -34,9 +34,9 @@ final class SM_Flows
             'rotation' => [
                 'label'    => 'Catalog rotation (ongoing)',
                 'audience' => 'marketing',
-                'trigger'  => 'After the welcome series: one themed email per week walking every category and brand in the catalog, then the loop restarts (owner instruction 2026-10-26).',
+                'trigger'  => 'After the welcome series: a themed email walking every category and brand in the catalog, then the loop restarts. At most one per customer per day (owner pick 2026-10-26), spaced from other marketing mail.',
                 'steps'    => [
-                    ['key' => 'rotation_1', 'delay' => 0, 'note' => 'Weekly: the next uncovered theme; covers all categories and brands, then restarts'],
+                    ['key' => 'rotation_1', 'delay' => 0, 'note' => 'Daily max: the next uncovered theme; covers all products, categories and brands, then restarts'],
                 ],
             ],
             'abandoned_cart' => [

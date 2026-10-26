@@ -123,6 +123,21 @@ add_action('admin_init', function () {
         $check('cleanup removes all sentinel rows', $left === 0 && $left_sends === 0, "products=$left sends=$left_sends");
     }
 
+    // Daily spacing guard (owner pick: an email daily): due exactly when
+    // the last marketing email is at least rotation_min_days old.
+    $now = time();
+    $due_never   = sm_rotation_due(null, 1, $now);
+    $due_1h      = sm_rotation_due(gmdate('Y-m-d H:i:s', $now - 3600), 1, $now);
+    $due_25h     = sm_rotation_due(gmdate('Y-m-d H:i:s', $now - 90000), 1, $now);
+    $due_2d_min7 = sm_rotation_due(gmdate('Y-m-d H:i:s', $now - 2 * 86400), 7, $now);
+    $due_8d_min7 = sm_rotation_due(gmdate('Y-m-d H:i:s', $now - 8 * 86400), 7, $now);
+    $check(
+        'rotation: daily spacing guard (due at >=1 day, not before)',
+        $due_never && !$due_1h && $due_25h && !$due_2d_min7 && $due_8d_min7
+            && (int) sm_setting('rotation_min_days') === 1,
+        'min_days=' . (int) sm_setting('rotation_min_days')
+    );
+
     // Pure cycle walk + live universe + state table (read-only).
     $adv1 = sm_rotation_cycle_advance([1, 2, 3], [1]);
     $adv2 = sm_rotation_cycle_advance([1, 2, 3], [1, 2, 3]);

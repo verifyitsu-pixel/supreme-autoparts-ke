@@ -169,10 +169,10 @@ final class SM_Queue
      * Catalog rotation: after the welcome series, opted-in subscribers get
      * the next themed email, spaced from their last marketing email of any
      * flow so rotation never stacks on browse-abandonment, winback or
-     * reorder mail (owner instruction 2026-10-26: the series never ends).
-     * The spacing itself (rotation_min_days, default 7) is a PROPOSED
-     * default - the owner has not picked a rotation cadence yet, and the
-     * flow ships disabled until they do.
+     * reorder mail (owner instruction 2026-10-26: the series never ends;
+     * cadence: daily, the owner's own pick, message
+     * phonemsg-01M5W5GT5AF63J5AVTABJRZ0T5). The flow itself stays disabled
+     * until the remaining go-live gates clear.
      */
     private static function rotation_scan(): void
     {
@@ -201,16 +201,17 @@ final class SM_Queue
             if (!$welcomed && ($created === 0 || sm_ts() - $created < 8 * DAY_IN_SECONDS)) {
                 continue;
             }
-            // Spaced from the last marketing email across all flows.
+            // Spaced from the last marketing email across all flows
+            // (owner picked daily 2026-10-26: at most one per day).
             $min_days = max(1, (int) sm_setting('rotation_min_days'));
             $last = $wpdb->get_var($wpdb->prepare(
                 "SELECT MAX(sent_at) FROM $s WHERE email = %s AND template IN ($marketing_tpls)",
                 $email
             ));
-            if ($last && sm_ts() - strtotime((string) $last) < $min_days * DAY_IN_SECONDS) {
+            if (!sm_rotation_due($last !== null ? (string) $last : null, $min_days)) {
                 continue;
             }
-            SM_Flows::start($sub, 'rotation', 'week|' . gmdate('o-W'));
+            SM_Flows::start($sub, 'rotation', 'day|' . gmdate('Y-m-d')); // one rotation email per customer per day, never two
         }
     }
 

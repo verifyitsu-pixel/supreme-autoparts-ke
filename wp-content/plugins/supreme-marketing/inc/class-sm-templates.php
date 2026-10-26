@@ -678,7 +678,7 @@ final class SM_Templates
                 $ai        = is_array($ctx['rotation_ai'] ?? null) ? $ctx['rotation_ai'] : [];
                 $headline  = trim((string) ($ai['headline'] ?? ''));
                 if ($headline === '') {
-                    $headline = $rot_label !== '' ? 'This week: ' . $rot_label : 'The catalog, one shelf at a time';
+                    $headline = $rot_label !== '' ? 'The ' . $rot_label . ' shelf' : 'The catalog, one shelf at a time';
                 }
                 $intro = trim((string) ($ai['intro'] ?? ''));
                 if ($intro === '') {
@@ -699,7 +699,7 @@ final class SM_Templates
                 $blocks[] = ['button' => [($rot_label !== '' ? 'Shop ' . $rot_label : 'Browse the catalog'), $shop]];
                 $subject = trim((string) ($ai['subject'] ?? ''));
                 if ($subject === '') {
-                    $subject = $rot_label !== '' ? $rot_label . ' - this week at Supreme Autoparts' : 'This week at Supreme Autoparts';
+                    $subject = $rot_label !== '' ? $rot_label . ' - in stock at Supreme Autoparts' : 'In stock at Supreme Autoparts';
                 }
                 return [
                     'subject'   => $subject,

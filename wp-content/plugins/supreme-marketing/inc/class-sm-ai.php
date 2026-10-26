@@ -143,7 +143,7 @@ function sm_ai_rotation_plan(array $themes, array $available_keys, string $chose
         'timeout' => 4,
         'headers' => ['Authorization' => 'Bearer ' . sm_ai_token(), 'Content-Type' => 'application/json'],
         'body'    => wp_json_encode([
-            'task'             => 'weekly rotation email plan: pick the next theme_key from available_themes for one coherent email, then subject (<=70 chars), headline (<=50 chars), intro (<=200 chars). Facts only: the parts are in stock and priced as listed. No sales claims, no offers, no superlatives.',
+            'task'             => 'ongoing rotation email plan (one email per customer per day): pick the next theme_key from available_themes for one coherent email, then subject (<=70 chars), headline (<=50 chars), intro (<=200 chars). Facts only: the parts are in stock and priced as listed. No sales claims, no offers, no superlatives.',
             'available_themes' => $avail,
             'products'         => $facts,
         ]),
