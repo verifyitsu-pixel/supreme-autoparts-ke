@@ -373,11 +373,68 @@ function sm_caption_clip(string $text, int $max = 140): string
 }
 
 /**
- * Short truthful caption for email product grids: one concise hook that says
- * what THIS part does or what sets it apart (spec, material, function,
- * fitment), pulled from the product's own description. Brand-boilerplate and
- * claim-bearing sentences are rejected, title-restating text is skipped, and
- * duplicate captions within one grid fall back to a factual line.
+ * Category-level use context for grid captions. Factual use descriptions of
+ * the category, never product performance promises.
+ */
+function sm_category_usecase(string $cat): string
+{
+    $c = strtolower($cat);
+    $map = [
+        'intake'      => 'for custom cold-air intake builds',
+        'tube'        => 'for custom cold-air intake builds',
+        'coupler'     => 'for intake and intercooler plumbing',
+        'hose'        => 'for intake and intercooler plumbing',
+        'exhaust'     => 'for exhaust work and custom routing',
+        'muffler'     => 'for exhaust work and custom routing',
+        'filter'      => 'a service replacement filter',
+        'brake'       => 'for brake service',
+        'suspension'  => 'for suspension work',
+        'shock'       => 'for suspension work',
+        'engine'      => 'for engine service',
+        'ignition'    => 'for ignition service',
+        'spark'       => 'for ignition service',
+        'lighting'    => 'an electrical replacement',
+        'electrical'  => 'an electrical replacement',
+        'tyre'        => 'a replacement tyre',
+        'tire'        => 'a replacement tyre',
+        'motorcycle'  => 'for motorcycle upkeep',
+        'wiper'       => 'a service replacement',
+        'oil'         => 'for routine service',
+        'coolant'     => 'for cooling-system service',
+        'radiator'    => 'for cooling-system service',
+        'sensor'      => 'a direct replacement sensor',
+    ];
+    foreach ($map as $k => $v) {
+        if (strpos($c, $k) !== false) {
+            return $v;
+        }
+    }
+    return '';
+}
+
+/**
+ * Distinguishing features parsed from the product name itself (material,
+ * finish, options like a MAFS mount) - the details that tell two similar
+ * listings apart. Name-derived, so always factual.
+ */
+function sm_name_features(string $name): string
+{
+    $f = [];
+    if (preg_match('/\b(aluminum|aluminium|stainless|mild steel|steel|chrome|silicone|rubber|polished|powdercoated|black|red|blue)\b/i', $name, $m)) {
+        $f[] = strtolower($m[1]);
+    }
+    if (preg_match('/\bw\/\s?([A-Za-z0-9 ]+?)(?:\s*[-\x{2013}\x{2014}]|$)/u', $name, $m)) {
+        $f[] = 'with ' . trim($m[1]);
+    }
+    return implode(' ', array_slice($f, 0, 2));
+}
+
+/**
+ * Short truthful caption for email product grids: a concise hook that says
+ * what sets THIS part apart - distinguishing features from the name plus
+ * category use context. Supplier sentences are used only when they carry
+ * real function content without claims, boilerplate or spec repetition.
+ * Duplicate captions within one grid fall back to a factual line.
  * Never invents claims.
  */
 function sm_product_caption(WC_Product $p): string
@@ -386,47 +443,48 @@ function sm_product_caption(WC_Product $p): string
     if (!is_array($sm_used_captions)) {
         $sm_used_captions = [];
     }
-    $name = trim((string) $p->get_name());
-    $desc = trim(html_entity_decode(wp_strip_all_tags((string) $p->get_short_description()), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-    $desc = (string) preg_replace('/\s+/u', ' ', $desc);
-
-    $claimy = '/(\b\d+\s?(?:hp|bhp|whp)\b|horsepower|torque\s+gain|boosts?\s+(?:power|performance)|\d+\s?%\s+(?:more|better|gain|increase)|guarantee|#1|number one|best[- ]selling|most popular|miracle)/i';
-    // Specificity signals: numbers/specs, materials, function verbs, fitment.
-    $specific = '/(\d|aluminum|aluminium|steel|stainless|silicone|rubber|chrome|carbon|fits?\s|designed for|replaces?|seals?|protects?|filters?|mounts?|adapts?|connects?|reduces?\s+(?:heat|noise|vibration)|include)/i';
-    // Generic brand copy repeated across a whole product family.
-    $boilerplate = '/(design your very own|wide (?:range|selection)|high[- ]quality (?:parts|products)|we offer|our products are|shop (?:now|today)|order yours)/i';
-
-    $name_tokens = array_filter(preg_split('/[^a-z0-9]+/i', strtolower($name)), function ($w) {
-        return strlen($w) > 1;
-    });
+    $name  = trim((string) $p->get_name());
+    $brand = '';
+    if (taxonomy_exists('pa_brand')) {
+        $brands = wc_get_product_terms($p->get_id(), 'pa_brand', ['fields' => 'names']);
+        $brand  = trim((string) ($brands[0] ?? ''));
+    }
+    if ($brand === '') {
+        $parts = preg_split('/\s+/', $name);
+        $brand = (string) ($parts[0] ?? '');
+    }
+    // Most specific category that is not just the brand name repeated.
+    $cats = array_filter(array_map('trim', (array) wp_get_post_terms($p->get_id(), 'product_cat', ['fields' => 'names'])));
+    $cat  = '';
+    foreach (array_reverse(array_values($cats)) as $c) {
+        if (strcasecmp($c, $brand) !== 0) {
+            $cat = $c;
+            break;
+        }
+    }
 
     $caption = '';
+
+    // 1) A supplier sentence only when it adds real function content.
+    $desc = trim(html_entity_decode(wp_strip_all_tags((string) $p->get_short_description()), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+    $desc = (string) preg_replace('/\s+/u', ' ', $desc);
     if ($desc !== '' && strcasecmp($desc, $name) !== 0) {
-        $sentences = preg_split('/(?<=[.!?])\s+/u', $desc) ?: [];
-        foreach ($sentences as $s) {
+        $claimy      = '/(\b\d+\s?(?:hp|bhp|whp)\b|horsepower|torque\s+gain|boosts?\s+(?:power|performance)|\d+\s?%\s+(?:more|better|gain|increase)|guarantee|#1|number one|best[- ]selling|most popular|miracle)/i';
+        $boilerplate = '/(design your very own|wide (?:range|selection)|high[- ]quality|we offer|our products are|shop (?:now|today)|order yours|manufactured using|made from|made of)/i';
+        $function    = '/(designed for|fits?\s|replaces?|seals?|protects?|filters?|mounts?|adapts?|connects?|includes?|allows?)/i';
+        $name_nums   = preg_split('/[^0-9]+/', $name, -1, PREG_SPLIT_NO_EMPTY);
+        foreach ((array) preg_split('/(?<=[.!?])\s+/u', $desc) as $s) {
             $s = trim($s);
             $len = mb_strlen($s);
-            if ($len < 20 || $len > 160) {
+            if ($len < 25 || $len > 120 || !preg_match($function, $s)) {
                 continue;
             }
             if (preg_match($claimy, $s) || preg_match($boilerplate, $s)) {
                 continue;
             }
-            if (!preg_match($specific, $s)) {
-                continue; // nothing product-specific in this sentence
-            }
-            // Skip sentences that mostly restate the product title (specs
-            // already visible in the name add no information).
-            $s_tokens = array_unique(array_filter(preg_split('/[^a-z0-9]+/i', strtolower($s)), function ($w) {
-                return strlen($w) > 1;
-            }));
-            $overlap = 0;
-            foreach ($s_tokens as $w) {
-                if (in_array($w, $name_tokens, true)) {
-                    $overlap++;
-                }
-            }
-            if ($s_tokens && ($overlap / count($s_tokens)) > 0.7) {
+            // Reject spec repetition: 2+ of the name's own numbers restated.
+            $s_nums = preg_split('/[^0-9]+/', $s, -1, PREG_SPLIT_NO_EMPTY);
+            if (count(array_intersect($s_nums, $name_nums)) >= 2) {
                 continue;
             }
             $caption = $s;
@@ -434,30 +492,33 @@ function sm_product_caption(WC_Product $p): string
         }
     }
 
-    if ($caption !== '') {
-        $caption = sm_caption_clip($caption, 110);
-        $key = md5(strtolower($caption));
-        if (isset($sm_used_captions[$key])) {
-            $caption = ''; // same caption already shown for another product in this grid
-        } else {
-            $sm_used_captions[$key] = true;
+    // 2) Name-derived feature hook + category use context.
+    if ($caption === '') {
+        $feat = sm_name_features($name);
+        $use  = sm_category_usecase($cat);
+        $lead = trim($brand . ($feat !== '' ? ' ' . $feat : ($cat !== '' ? ' ' . $cat : '')));
+        if ($lead !== '' && $use !== '') {
+            $caption = ucfirst($lead) . ' - ' . $use;
+        } elseif ($feat !== '') {
+            $caption = ucfirst(trim($brand . ' ' . $feat));
         }
     }
 
+    // 3) Factual fallback.
     if ($caption === '') {
-        $brand = '';
-        if (taxonomy_exists('pa_brand')) {
-            $brands = wc_get_product_terms($p->get_id(), 'pa_brand', ['fields' => 'names']);
-            $brand  = trim((string) ($brands[0] ?? ''));
-        }
-        if ($brand === '') {
-            $parts = preg_split('/\s+/', $name);
-            $brand = (string) ($parts[0] ?? '');
-        }
-        $cats = wp_get_post_terms($p->get_id(), 'product_cat', ['fields' => 'names']);
-        $cat  = trim((string) (end($cats) ?: '')); // most specific term last in hierarchy order
-        $cat  = $cat !== '' ? $cat : trim((string) ($cats[0] ?? ''));
-        $caption = sm_caption_clip(trim($brand . ($cat !== '' ? ' - ' . $cat : '')), 110);
+        $caption = trim($brand . ($cat !== '' ? ' - ' . $cat : ''));
+    }
+
+    $caption = sm_caption_clip($caption, 110);
+    $key = md5(strtolower($caption));
+    if ($caption !== '' && isset($sm_used_captions[$key])) {
+        // Same caption already shown for another product in this grid.
+        $alt = trim($brand . ($cat !== '' ? ' ' . $cat : ''));
+        $caption = ($alt !== '' && !isset($sm_used_captions[md5(strtolower($alt))])) ? $alt : '';
+        $key = md5(strtolower($caption));
+    }
+    if ($caption !== '') {
+        $sm_used_captions[$key] = true;
     }
     return $caption;
 }
