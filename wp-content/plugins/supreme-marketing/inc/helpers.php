@@ -493,6 +493,7 @@ function sm_product_caption(WC_Product $p): string
     if ($desc !== '' && strcasecmp($desc, $name) !== 0) {
         $claimy      = '/(\b\d+\s?(?:hp|bhp|whp)\b|horsepower|torque\s+gain|boosts?\s+(?:power|performance)|\d+\s?%\s+(?:more|better|gain|increase)|guarantee|#1|number one|best[- ]selling|most popular|miracle)/i';
         $boilerplate = '/(design your very own|wide (?:range|selection)|high[- ]quality|we offer|our products are|shop (?:now|today)|order yours|manufactured using|made from|made of)/i';
+        $catalog_open = '/^(each|this|these|the)\s/i';
         $function    = '/(designed for|fits?\s|replaces?|seals?|protects?|filters?|mounts?|adapts?|connects?|includes?|allows?)/i';
         $name_nums   = preg_split('/[^0-9]+/', $name, -1, PREG_SPLIT_NO_EMPTY);
         foreach ((array) preg_split('/(?<=[.!?])\s+/u', $desc) as $s) {
@@ -501,7 +502,7 @@ function sm_product_caption(WC_Product $p): string
             if ($len < 25 || $len > 120 || !preg_match($function, $s)) {
                 continue;
             }
-            if (preg_match($claimy, $s) || preg_match($boilerplate, $s)) {
+            if (preg_match($claimy, $s) || preg_match($boilerplate, $s) || preg_match($catalog_open, $s)) {
                 continue;
             }
             // Reject spec repetition: 2+ of the name's own numbers restated.
