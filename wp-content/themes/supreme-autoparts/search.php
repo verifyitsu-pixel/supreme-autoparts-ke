@@ -45,7 +45,12 @@ $q = get_search_query();
     </header>
 
     <?php if ($sa_fuzzy > 0) : ?>
+      <?php $intent_label = (string) $GLOBALS['wp_query']->get('sa_intent_label'); ?>
+      <?php if ($intent_label !== '') : ?>
+      <p class="sa-search-close">Equivalent part name: <?php echo esc_html($intent_label); ?>. Showing up to 24 catalog matches with your search details kept. Check each product's fitment before ordering.</p>
+      <?php else : ?>
       <p class="sa-search-close">No exact wording match. Showing up to 24 close catalog matches. Check each product's fitment before ordering.</p>
+      <?php endif; ?>
     <?php endif; ?>
     <div class="sa-market"<?php if ($sa_fuzzy > 0) : ?> style="grid-template-columns:minmax(0,1fr)"<?php endif; ?>>
     <?php if ($sa_fuzzy === 0) { get_template_part('template-parts/catalog', 'filters'); } ?>

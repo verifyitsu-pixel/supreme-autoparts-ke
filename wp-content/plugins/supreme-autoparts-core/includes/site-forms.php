@@ -370,6 +370,8 @@ add_action('wp_head', static function (): void {
     echo '<style id="sa-sf-css">.sa-sf-narrow{max-width:760px;padding-top:24px;padding-bottom:40px}.sa-sf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}.sa-sf-hp{position:absolute!important;left:-9999px;width:1px;height:1px;overflow:hidden}.sa-sf-ok{background:#ecfdf3;border:1px solid #a7f3c4;color:#065f46;border-radius:12px;padding:14px 16px;margin:12px 0}.sa-sf-note{font-size:13px;color:#6b7280;margin:0}.sa-sf-embed{margin-top:28px;max-width:760px}.sa-sf-embed .sa-svc-form label,.sa-sf .sa-svc-form label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:#333333}.sa-xlinks{display:flex;flex-direction:column;gap:6px;margin:12px 0 4px}.sa-xlink{font-size:14px;font-weight:600;color:#0a0a0a;text-decoration:none}.sa-xlink:hover{text-decoration:underline}.sa-xlink--strong{display:inline-block;background:#F5A623;color:#111111;border-radius:10px;padding:10px 14px;align-self:flex-start}.sa-next{margin:28px auto}.sa-next h2{font-size:20px;margin:0 0 12px}.sa-next__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}.sa-next__card{display:flex;flex-direction:column;gap:4px;padding:16px;border:1px solid #e4e3de;border-radius:14px;background:#fff;color:#111111;text-decoration:none!important;transition:border-color .15s,transform .15s}.sa-next__card:hover{border-color:#0a0a0a;transform:translateY(-2px)}.sa-next__card span{color:#555;font-size:14px}</style>';
 });
 
+require_once __DIR__ . '/search-intent.php';
+
 /* Hero search suggestions with real (CDN) product images. */
 function sa_sf_suggest(): void
 {
@@ -381,7 +383,8 @@ function sa_sf_suggest(): void
     if ($scope === 'all') {
         $scope = '';
     }
-    $ck = 'sa_sugg_v3_' . md5(strtolower($q) . '|' . $scope);
+    $facet_key = function_exists('sa_fx_state') ? serialize(sa_fx_state()) : '';
+    $ck = 'sa_sugg_v4_' . md5(strtolower($q) . '|' . $scope . '|' . $facet_key);
     $out = get_transient($ck);
     if (!is_array($out)) {
         $args = ['post_type' => 'product', 'post_status' => 'publish', 's' => $q, 'posts_per_page' => 6, 'fields' => 'ids', 'no_found_rows' => true];
@@ -393,7 +396,15 @@ function sa_sf_suggest(): void
         // token index when literal search finds too little. Suggestions stay
         // real published products only - no invented compatibility. A category
         // scope (sa_cat) constrains fuzzy candidates exactly like literal ones.
-        if (count($ids) < 6 && sa_sf_fuzzy_enabled() && function_exists('sa_sf_fuzzy_product_ids')) {
+        $intent = sa_sf_intent_plan($q);
+        if (count($ids) < 6 && $intent !== null) {
+            $intent_tax = $scope !== '' ? [['taxonomy' => 'product_cat', 'field' => 'slug', 'terms' => $scope]] : [];
+            foreach (sa_sf_intent_product_ids($intent, 12, $intent_tax) as $fid) {
+                if (!in_array($fid, $ids, true)) { $ids[] = $fid; }
+                if (count($ids) >= 6) { break; }
+            }
+        }
+        if ($intent === null && count($ids) < 6 && sa_sf_fuzzy_enabled() && function_exists('sa_sf_fuzzy_product_ids')) {
             foreach (sa_sf_fuzzy_product_ids($q, 12) as $fid) {
                 if ($scope !== '' && !has_term($scope, 'product_cat', $fid)) {
                     continue;
@@ -649,11 +660,17 @@ add_filter('posts_results', static function (array $posts, WP_Query $query): arr
     if (mb_strlen($q) < 3 || !sa_sf_fuzzy_enabled() || !function_exists('sa_sf_fuzzy_product_ids')) {
         return $posts;
     }
-    $ids = sa_sf_fuzzy_product_ids($q, 24);
+    $intent = sa_sf_intent_plan($q);
+    $tq = $query->get('tax_query');
+    $mq = $query->get('meta_query');
+    $ids = $intent !== null
+        ? sa_sf_intent_product_ids($intent, 24, is_array($tq) ? $tq : [], is_array($mq) ? $mq : [])
+        : sa_sf_fuzzy_product_ids($q, 24);
     if ($ids === []) {
         return $posts;
     }
     $args = ['post_type' => 'product', 'post_status' => 'publish', 'post__in' => $ids, 'orderby' => 'post__in', 'posts_per_page' => 24, 'no_found_rows' => true];
+    if ($intent !== null) { $args['sa_intent_candidates'] = 1; }
     $tq = $query->get('tax_query'); // keep the shopper's category/brand scope
     if (is_array($tq) && $tq !== []) {
         $args['tax_query'] = $tq;
@@ -668,6 +685,7 @@ add_filter('posts_results', static function (array $posts, WP_Query $query): arr
     }));
     if ($matched !== []) {
         $query->set('sa_fuzzy_matches', count($matched));
+        if ($intent !== null && empty($intent['blocked'])) { $query->set('sa_intent_label', $intent['label']); }
         $query->found_posts = count($matched);
         $query->max_num_pages = 1; // bounded close-match shortlist, not literal pagination
     }

@@ -355,7 +355,7 @@ function sa_core_catalog_sku_expr_for_join(string $join): string
 }
 
 add_action('pre_get_posts', static function ($query): void {
-    if (!sa_core_is_catalog_product_query($query)) {
+    if ($query->get('sa_intent_candidates') || !sa_core_is_catalog_product_query($query)) {
         return;
     }
     $f = sa_core_catalog_filters_from_request();
