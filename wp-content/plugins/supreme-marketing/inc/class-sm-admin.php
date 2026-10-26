@@ -423,6 +423,11 @@ final class SM_Admin
             wp_die('nope');
         }
         self::header('Supreme Marketing');
+        if (isset($_GET['sm_drill'])) {
+            self::render_sends_drill(sanitize_key((string) $_GET['sm_drill']));
+            echo '</div>';
+            return;
+        }
         $subs = SM_Subscribers::counts();
         $q = SM_Queue::stats();
         $w = SM_Welcome::stats();
@@ -432,13 +437,13 @@ final class SM_Admin
         $unsub = (int) ($subs['unsubscribed'] ?? 0) + (int) ($subs['bounced'] ?? 0) + (int) ($subs['complained'] ?? 0);
 
         echo '<div class="sm-cards">';
-        self::card('Opted-in subscribers', (string) $active, 'receive marketing emails');
-        self::card('Customers (not opted in)', (string) $transactional, 'order emails only');
-        self::card('Awaiting confirmation', (string) $unconfirmed, 'double opt-in pending');
-        self::card('Unsubscribed', (string) $unsub, 'never emailed');
-        self::card('Queued (waiting)', (string) $q['pending'], 'sends when master is ON');
-        self::card('Sent (7 days)', (string) $q['sent_7d'], $q['opens_7d'] . ' opens / ' . $q['clicks_7d'] . ' clicks');
-        self::card('Welcome 20 codes', (string) $w['active'] . ' active', $w['redeemed'] . ' redeemed / ' . $w['blocked'] . ' abuse blocks');
+        self::card('Opted-in subscribers', (string) $active, 'receive marketing emails', admin_url('admin.php?page=sm-subscribers&status=active'));
+        self::card('Customers (not opted in)', (string) $transactional, 'order emails only', admin_url('admin.php?page=sm-subscribers&status=transactional_only'));
+        self::card('Awaiting confirmation', (string) $unconfirmed, 'double opt-in pending', admin_url('admin.php?page=sm-subscribers&status=unconfirmed'));
+        self::card('Unsubscribed', (string) $unsub, 'never emailed', admin_url('admin.php?page=sm-subscribers&status=unsubscribed'));
+        self::card('Queued (waiting)', (string) $q['pending'], 'sends when master is ON', admin_url('admin.php?page=sm-queue'));
+        self::card('Sent (7 days)', (string) $q['sent_7d'], $q['opens_7d'] . ' opens / ' . $q['clicks_7d'] . ' clicks', admin_url('admin.php?page=sm-dashboard&sm_drill=sent7'));
+        self::card('Welcome 20 codes', (string) $w['active'] . ' active', $w['redeemed'] . ' redeemed / ' . $w['blocked'] . ' abuse blocks', admin_url('admin.php?page=sm-welcome'));
         echo '</div>';
 
         echo '<h2>Controls</h2><p>';
@@ -460,11 +465,78 @@ final class SM_Admin
         echo '</div>';
     }
 
-    private static function card(string $label, string $big, string $small): void
+    private static function card(string $label, string $big, string $small, string $url = ''): void
     {
+        $big_html = esc_html($big);
+        if ($url !== '') {
+            $big_html = '<a href="' . esc_url($url) . '">' . $big_html . '</a>';
+        }
         echo '<div class="sm-card"><div class="sm-card-label">' . esc_html($label) . '</div>'
-            . '<div class="sm-card-big">' . esc_html($big) . '</div>'
+            . '<div class="sm-card-big">' . $big_html . '</div>'
             . '<div class="sm-card-small">' . esc_html($small) . '</div></div>';
+    }
+
+    /* ---------------------------------------------------------------- */
+    /* Sends drill-down (exact records behind dashboard counts)          */
+    /* ---------------------------------------------------------------- */
+
+    private static function render_sends_drill(string $drill): void
+    {
+        global $wpdb;
+        $s = SM_DB::table('sends');
+        $subs = SM_DB::table('subscribers');
+        $filters = [
+            'sent7'   => ['Sent (7 days)', ''],
+            'opens7'  => ['Opened (7 days)', 'AND sd.opened_at IS NOT NULL'],
+            'clicks7' => ['Clicked (7 days)', 'AND sd.clicked_at IS NOT NULL'],
+            'failed7' => ['Failed (7 days)', "AND sd.status = 'failed'"],
+        ];
+        if (!isset($filters[$drill])) {
+            echo '<p>Unknown view. <a href="' . esc_url(admin_url('admin.php?page=sm-dashboard')) . '">Back to dashboard</a></p>';
+            return;
+        }
+        [$label, $extra] = $filters[$drill];
+        echo '<h2>' . esc_html($label) . '</h2>';
+        echo '<p>View: ';
+        foreach ($filters as $k => $f) {
+            $u = admin_url('admin.php?page=sm-dashboard&sm_drill=' . $k);
+            echo '<a href="' . esc_url($u) . '" class="button button-small' . ($drill === $k ? ' button-primary' : '') . '">' . esc_html($f[0]) . '</a> ';
+        }
+        echo '</p>';
+        echo '<p class="description">Exact records behind the dashboard count. "Sent" means handed to our mail service - it is not proof of inbox delivery. '
+            . 'Opens and clicks are tracked by the pixel and links in each email. "Subscriber now" is the person&#8217;s current list status: bounced or complained means later mail failed.</p>';
+        $per = 50;
+        $paged = max(1, (int) ($_GET['drill_page'] ?? 1));
+        $where = "WHERE sd.sent_at >= DATE_SUB(%s, INTERVAL 7 DAY) $extra";
+        $total = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $s sd $where", sm_now()));
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT sd.*, sub.status AS sub_status FROM $s sd LEFT JOIN $subs sub ON sub.id = sd.subscriber_id $where ORDER BY sd.sent_at DESC LIMIT %d OFFSET %d",
+            sm_now(), $per, ($paged - 1) * $per
+        ), ARRAY_A);
+        $pages = max(1, (int) ceil($total / $per));
+        echo '<p>' . (int) $total . ' records (page ' . $paged . ' of ' . $pages . ')</p>';
+        echo '<div style="overflow-x:auto;max-width:100%;"><table class="widefat striped" style="min-width:760px;"><thead><tr>'
+            . '<th>When</th><th>Email</th><th>Template</th><th>Subject</th><th>Status</th><th>Opens</th><th>Clicks</th><th>Subscriber now</th></tr></thead><tbody>';
+        foreach ((array) $rows as $r) {
+            echo '<tr><td>' . esc_html((string) $r['sent_at']) . '</td>'
+                . '<td>' . esc_html((string) $r['email']) . '</td>'
+                . '<td>' . esc_html((string) $r['template']) . (!empty($r['test_send']) ? ' (test)' : '') . '</td>'
+                . '<td>' . esc_html((string) $r['subject']) . '</td>'
+                . '<td>' . esc_html((string) $r['status']) . '</td>'
+                . '<td>' . ((int) $r['open_count'] > 0 ? (int) $r['open_count'] . ' (first ' . esc_html((string) $r['opened_at']) . ')' : '0') . '</td>'
+                . '<td>' . (int) $r['click_count'] . '</td>'
+                . '<td>' . esc_html((string) ($r['sub_status'] ?? '')) . '</td></tr>';
+        }
+        echo '</tbody></table></div>';
+        if ($pages > 1) {
+            echo '<p>';
+            for ($i = 1; $i <= $pages; $i++) {
+                $u = admin_url('admin.php?page=sm-dashboard&sm_drill=' . $drill . '&drill_page=' . $i);
+                echo $i === $paged ? '<strong>' . (int) $i . '</strong> ' : '<a href="' . esc_url($u) . '">' . (int) $i . '</a> ';
+            }
+            echo '</p>';
+        }
+        echo '<p><a href="' . esc_url(admin_url('admin.php?page=sm-dashboard')) . '">&larr; Back to dashboard</a></p>';
     }
 
     /* ---------------------------------------------------------------- */
