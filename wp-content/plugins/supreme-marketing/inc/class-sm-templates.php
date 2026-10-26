@@ -801,6 +801,7 @@ final class SM_Templates
         $products = [];
         if (function_exists('wc_get_products')) {
             $items = sm_marketing_eligible(SM_Recommend::best_sellers(60)); // owner-banned items never featured
+            $items = sm_marketing_pool_backfill($items, 4, 60); // deep performance pool
             $items = sm_diverse_products($items, 4);
 sm_reset_caption_dedup();
                             foreach ($items as $p) {

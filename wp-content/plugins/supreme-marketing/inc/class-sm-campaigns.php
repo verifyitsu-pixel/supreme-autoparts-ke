@@ -149,6 +149,7 @@ final class SM_Campaigns
     {
         $count = (int) sm_setting('recommend_count');
         $products = sm_marketing_eligible($products); // owner-banned items never featured
+        $products = sm_marketing_pool_backfill($products, $count, $count + 60); // deep performance pool
         // Full-history exclusion, no silent repeats: short fresh pool shrinks
         // the grid, empty pool means no grid at all.
         $recent = sm_recent_sent_product_ids($email);

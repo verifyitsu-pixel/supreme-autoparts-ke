@@ -253,6 +253,7 @@ final class SM_Sender
             $products = SM_Recommend::best_sellers($fetch);
         }
         $products = sm_marketing_eligible($products); // owner-banned items never featured
+        $products = sm_marketing_pool_backfill($products, $count, $fetch); // deep performance pool
         // Cross-email non-repeat: only products never featured in (or already
         // reserved for) mail this recipient received. Selection and
         // reservation run under a per-recipient lock so a concurrent email

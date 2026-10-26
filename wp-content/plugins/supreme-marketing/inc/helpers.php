@@ -433,6 +433,84 @@ function sm_is_performance_product(WC_Product $p): bool
     return false;
 }
 
+/** Category IDs/slugs matching the performance whitelist (resolved once). */
+function sm_performance_category_slugs(): array
+{
+    static $slugs = null;
+    if ($slugs !== null) {
+        return $slugs;
+    }
+    $slugs = [];
+    $terms = get_terms(['taxonomy' => 'product_cat', 'hide_empty' => true]);
+    foreach ((array) $terms as $t) {
+        if (!($t instanceof WP_Term)) {
+            continue;
+        }
+        $name = strtolower(html_entity_decode($t->name));
+        foreach (sm_marketing_performance_terms() as $term) {
+            if (strpos($name, $term) !== false) {
+                $slugs[] = $t->slug;
+                break;
+            }
+        }
+    }
+    return $slugs;
+}
+
+/**
+ * Category-bounded performance candidates (in stock, by popularity). The
+ * algorithm's own top-N can be dominated by one hardware family; this
+ * queries the performance categories directly so the eligible pool stays
+ * deep. Same popularity ordering basis, presentation layer only.
+ */
+function sm_performance_candidates(int $count): array
+{
+    if (!function_exists('wc_get_products')) {
+        return [];
+    }
+    $slugs = sm_performance_category_slugs();
+    if (!$slugs) {
+        return [];
+    }
+    return (array) wc_get_products([
+        'status'       => 'publish',
+        'stock_status' => 'instock',
+        'limit'        => $count,
+        'orderby'      => 'popularity',
+        'order'        => 'DESC',
+        'category'     => $slugs,
+    ]);
+}
+
+/**
+ * Backfill an eligible pool from the performance categories when the
+ * algorithm's own fetch comes up short. Dedupes by product ID.
+ */
+function sm_marketing_pool_backfill(array $products, int $min, int $fetch): array
+{
+    if (count($products) >= $min) {
+        return $products;
+    }
+    $have = [];
+    foreach ($products as $p) {
+        if ($p instanceof WC_Product) {
+            $have[(int) $p->get_id()] = true;
+        }
+    }
+    foreach (sm_performance_candidates($fetch) as $c) {
+        $id = (int) $c->get_id();
+        if (isset($have[$id])) {
+            continue;
+        }
+        $products[] = $c;
+        $have[$id] = true;
+        if (count($products) >= $fetch) {
+            break;
+        }
+    }
+    return $products;
+}
+
 /** Marketing-eligible candidates: not owner-banned, performance parts only. */
 function sm_marketing_eligible(array $products): array
 {
