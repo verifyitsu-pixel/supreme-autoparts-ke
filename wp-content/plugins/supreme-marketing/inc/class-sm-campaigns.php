@@ -148,18 +148,13 @@ final class SM_Campaigns
     private static function fresh_grid(array $products, string $email): array
     {
         $count = (int) sm_setting('recommend_count');
+        // Full-history exclusion, no silent repeats: short fresh pool shrinks
+        // the grid, empty pool means no grid at all.
         $recent = sm_recent_sent_product_ids($email);
         if ($recent) {
-            $fresh = [];
-            $seen_before = [];
-            foreach ($products as $p) {
-                if ($p instanceof WC_Product && in_array((int) $p->get_id(), $recent, true)) {
-                    $seen_before[] = $p;
-                } else {
-                    $fresh[] = $p;
-                }
-            }
-            $products = count($fresh) >= $count ? $fresh : array_merge($fresh, $seen_before);
+            $products = array_values(array_filter($products, function ($p) use ($recent) {
+                return !($p instanceof WC_Product) || !in_array((int) $p->get_id(), $recent, true);
+            }));
         }
         return sm_diverse_products($products, $count);
     }

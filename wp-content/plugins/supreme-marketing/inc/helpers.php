@@ -266,7 +266,7 @@ function sm_product_image(WC_Product $p): string
  * (last $days days). Powers cross-email non-repeat selection: every new
  * email shows different products where the catalog allows.
  */
-function sm_recent_sent_product_ids(string $email, int $days = 45): array
+function sm_recent_sent_product_ids(string $email): array
 {
     global $wpdb;
     $email = strtolower(trim($email));
@@ -274,10 +274,10 @@ function sm_recent_sent_product_ids(string $email, int $days = 45): array
         return [];
     }
     $table = SM_DB::table('send_products');
-    $cutoff = gmdate('Y-m-d H:i:s', sm_ts() - ($days * DAY_IN_SECONDS));
+    // Full history, no time window: every new email features different products.
     $rows = $wpdb->get_col($wpdb->prepare(
-        "SELECT DISTINCT product_id FROM $table WHERE email = %s AND sent_at > %s",
-        $email, $cutoff
+        "SELECT DISTINCT product_id FROM $table WHERE email = %s",
+        $email
     ));
     return array_map('intval', (array) $rows);
 }
