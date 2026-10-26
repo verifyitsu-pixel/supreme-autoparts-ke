@@ -12,6 +12,9 @@ get_header();
 $sa_total = isset($GLOBALS['wp_query']) && $GLOBALS['wp_query'] instanceof WP_Query
     ? (int) $GLOBALS['wp_query']->found_posts
     : 0;
+$sa_fuzzy = isset($GLOBALS['wp_query']) && $GLOBALS['wp_query'] instanceof WP_Query
+    ? (int) $GLOBALS['wp_query']->get('sa_fuzzy_matches') : 0;
+if ($sa_fuzzy > 0) { $sa_total = $sa_fuzzy; }
 $q = get_search_query();
 ?>
 <main id="primary" class="sa-main sa-page sa-search-results woocommerce">
@@ -41,8 +44,11 @@ $q = get_search_query();
       <?php endif; ?>
     </header>
 
-    <div class="sa-market">
-    <?php get_template_part('template-parts/catalog', 'filters'); ?>
+    <?php if ($sa_fuzzy > 0) : ?>
+      <p class="sa-search-close">No exact wording match. Showing up to 24 close catalog matches. Check each product's fitment before ordering.</p>
+    <?php endif; ?>
+    <div class="sa-market"<?php if ($sa_fuzzy > 0) : ?> style="grid-template-columns:minmax(0,1fr)"<?php endif; ?>>
+    <?php if ($sa_fuzzy === 0) { get_template_part('template-parts/catalog', 'filters'); } ?>
     <div class="sa-market__results">
 
     <?php if (have_posts()) : ?>

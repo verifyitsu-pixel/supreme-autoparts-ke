@@ -662,7 +662,13 @@ add_filter('posts_results', static function (array $posts, WP_Query $query): arr
     if (is_array($mq) && $mq !== []) {
         $args['meta_query'] = $mq;
     }
-    return (new WP_Query($args))->posts;
+    $matched = (new WP_Query($args))->posts;
+    if ($matched !== []) {
+        $query->set('sa_fuzzy_matches', count($matched));
+        $query->found_posts = count($matched);
+        $query->max_num_pages = 1; // bounded close-match shortlist, not literal pagination
+    }
+    return $matched;
 }, 10, 2);
 
 /* One-line roadside mention in customer order emails. Roadside rescue is a Nairobi service, so it only shows on African orders,
