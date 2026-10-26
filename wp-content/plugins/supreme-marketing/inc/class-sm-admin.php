@@ -137,6 +137,50 @@ final class SM_Admin
                     SM_Consent::subscribe_now($email, 'admin_add');
                 }
                 break;
+            case 'manage_consent':
+                $bulk_do = sanitize_key((string) ($_POST['bulk_do'] ?? 'record'));
+                $admin_id = get_current_user_id();
+                $emails = [];
+                foreach ((array) ($_POST['ids'] ?? []) as $cid) {
+                    $crow = SM_Subscribers::get((int) $cid);
+                    if ($crow) {
+                        $emails[(string) $crow['email']] = (int) $crow['id'];
+                    }
+                }
+                if ($bulk_do === 'revoke') {
+                    $n = 0;
+                    foreach ($emails as $cemail => $cid2) {
+                        if (SM_Subscribers::admin_revoke_consent($cid2, $admin_id)) {
+                            $n++;
+                        }
+                    }
+                    $back = add_query_arg('sm_notice', 'revoked_' . $n, $back);
+                    break;
+                }
+                if (empty($_POST['attest'])) {
+                    $back = add_query_arg('sm_notice', 'need_attest', $back);
+                    break;
+                }
+                $single = strtolower(trim(sanitize_email((string) ($_POST['email'] ?? ''))));
+                if ($single !== '') {
+                    $emails[$single] = 0;
+                }
+                $source_detail = sanitize_text_field((string) ($_POST['consent_detail'] ?? ''));
+                $source_where = sanitize_key((string) ($_POST['consent_where'] ?? 'other'));
+                $detail = $source_where . ($source_detail !== '' ? ': ' . $source_detail : '');
+                $date = sanitize_text_field((string) ($_POST['consent_date'] ?? ''));
+                $ok = 0;
+                $skipped = 0;
+                foreach ($emails as $cemail => $cid2) {
+                    $r = SM_Subscribers::record_external_consent($cemail, $detail, $date, $admin_id);
+                    if ($r === 'ok') {
+                        $ok++;
+                    } else {
+                        $skipped++;
+                    }
+                }
+                $back = add_query_arg('sm_notice', 'consent_' . $ok . '_' . $skipped, $back);
+                break;
             case 'send_repermission':
                 global $wpdb;
                 $rows = $wpdb->get_results(
@@ -217,6 +261,19 @@ final class SM_Admin
                 echo '<div class="notice notice-success"><p>Campaign approved: ' . esc_html(substr($n, 9)) . ' emails queued (they send only when the master switch is ON).</p></div>';
             } elseif (str_starts_with($n, 'repermission_')) {
                 echo '<div class="notice notice-success"><p>' . esc_html(substr($n, 13)) . ' re-permission emails queued.</p></div>';
+            } elseif ($n === 'need_attest') {
+                echo '<div class="notice notice-error"><p>Nothing changed: tick the confirmation that each customer personally gave consent first.</p></div>';
+            } elseif (str_starts_with($n, 'revoked_')) {
+                echo '<div class="notice notice-success"><p>Marketing emails turned off for ' . esc_html(substr($n, 8)) . ' subscriber(s). No email was sent.</p></div>';
+            } elseif (str_starts_with($n, 'consent_')) {
+                $parts = explode('_', $n);
+                $cok = (int) ($parts[1] ?? 0);
+                $cskip = (int) ($parts[2] ?? 0);
+                $cmsg = 'Consent recorded for ' . $cok . ' subscriber' . ($cok === 1 ? '' : 's') . ' - now opted in to marketing. No confirmation link or email was sent to them.';
+                if ($cskip > 0) {
+                    $cmsg .= ' ' . $cskip . ' skipped (invalid address, or suppressed after a bounce/complaint).';
+                }
+                echo '<div class="notice notice-success"><p>' . esc_html($cmsg) . '</p></div>';
             } elseif ($n === 'offer_no_amount') {
                 echo '<div class="notice notice-error"><p>This offer has no discount amount. Edit the draft and set a percent or fixed amount first.</p></div>';
             } else {
@@ -457,25 +514,81 @@ final class SM_Admin
         }
         echo '</p>';
 
+        $today = gmdate('Y-m-d');
+        echo '<div style="background:#fff;border:1px solid #c3c4c7;padding:12px 14px;margin-bottom:14px;max-width:860px;">'
+            . '<h2 style="margin-top:0;">Record consent given outside the website</h2>'
+            . '<p style="margin-bottom:8px;">For customers who told you directly (in person, phone, WhatsApp, social) that they want marketing emails. This opts them in right away - <strong>no confirmation link and no email is sent to them</strong>. Bounced or complained addresses stay suppressed.</p>'
+            . '<form method="post">'
+            . wp_nonce_field('sm_admin_manage_consent', '_wpnonce', true, false)
+            . '<input type="hidden" name="sm_admin_action" value="manage_consent">'
+            . '<p><input type="email" name="email" placeholder="customer@example.com" required style="min-width:240px;"> '
+            . '<select name="consent_where">'
+            . '<option value="in_person">In person</option>'
+            . '<option value="phone">Phone call</option>'
+            . '<option value="whatsapp">WhatsApp</option>'
+            . '<option value="social">Social media</option>'
+            . '<option value="other" selected>Other</option>'
+            . '</select> '
+            . '<input type="text" name="consent_detail" placeholder="Note (e.g. asked at pickup)" style="min-width:180px;"> '
+            . '<label>Consent date <input type="date" name="consent_date" value="' . esc_attr($today) . '" max="' . esc_attr($today) . '"></label></p>'
+            . '<p><label><input type="checkbox" name="attest" value="1" required> <strong>I confirm this customer personally asked to receive marketing emails.</strong></label> '
+            . '<button type="submit" class="button button-primary">Record consent</button></p>'
+            . '</form></div>';
         echo '<form method="post" style="margin-bottom:14px;">'
             . wp_nonce_field('sm_admin_add_subscriber', '_wpnonce', true, false)
             . '<input type="hidden" name="sm_admin_action" value="add_subscriber">'
             . '<input type="email" name="email" placeholder="name@example.com" required> '
             . '<button type="submit" class="button">Add (starts the welcome series)</button></form>';
 
-        echo '<table class="widefat striped"><thead><tr><th>Email</th><th>Name</th><th>Status</th><th>Source</th><th>Region</th><th>Orders</th><th>Spent</th><th>Last order</th><th>Since</th></tr></thead><tbody>';
+        echo '<form method="post">'
+            . wp_nonce_field('sm_admin_manage_consent', '_wpnonce', true, false)
+            . '<input type="hidden" name="sm_admin_action" value="manage_consent">'
+            . '<p style="margin:10px 0;">With selected: '
+            . '<select name="consent_where">'
+            . '<option value="in_person">In person</option>'
+            . '<option value="phone">Phone call</option>'
+            . '<option value="whatsapp">WhatsApp</option>'
+            . '<option value="social">Social media</option>'
+            . '<option value="other" selected>Other</option>'
+            . '</select> '
+            . '<label>Consent date <input type="date" name="consent_date" value="' . esc_attr($today) . '" max="' . esc_attr($today) . '"></label> '
+            . '<label><input type="checkbox" name="attest" value="1"> Each selected customer personally gave consent</label> '
+            . '<button type="submit" name="bulk_do" value="record" class="button">Record consent for selected</button> '
+            . '<button type="submit" name="bulk_do" value="revoke" class="button">Turn off marketing for selected</button></p>';
+        echo '<table class="widefat striped"><thead><tr><th></th><th>Email</th><th>Name</th><th>Status</th><th>Source</th><th>Consent</th><th>Region</th><th>Orders</th><th>Spent</th><th>Last order</th><th>Since</th></tr></thead><tbody>';
         foreach ((array) $rows as $r) {
-            echo '<tr><td>' . esc_html($r['email']) . '</td>'
+            echo '<tr><td><input type="checkbox" name="ids[]" value="' . (int) $r['id'] . '"></td><td>' . esc_html($r['email']) . '</td>'
                 . '<td>' . esc_html(trim($r['first_name'] . ' ' . $r['last_name'])) . '</td>'
                 . '<td><span class="sm-pill ' . ($r['status'] === 'active' ? 'sm-on' : 'sm-off') . '">' . esc_html($r['status']) . '</span></td>'
                 . '<td>' . esc_html($r['source']) . '</td>'
+                . '<td>' . esc_html(trim((string) ($r['consent_source'] ?? '') . ' ' . (!empty($r['consented_at']) ? gmdate('Y-m-d', strtotime((string) $r['consented_at'])) : ''))) . '</td>'
                 . '<td>' . esc_html($r['region']) . '</td>'
                 . '<td>' . (int) $r['orders_count'] . '</td>'
                 . '<td>$' . number_format((float) $r['total_spent'], 2) . '</td>'
                 . '<td>' . esc_html((string) $r['last_order_at']) . '</td>'
                 . '<td>' . esc_html((string) $r['created_at']) . '</td></tr>';
         }
-        echo '</tbody></table>';
+        echo '</tbody></table></form>';
+        $ev = $wpdb->get_results(
+            "SELECT * FROM " . SM_DB::table('events') . " WHERE type IN ('consent_recorded','consent_revoked_admin') ORDER BY id DESC LIMIT 15",
+            ARRAY_A
+        );
+        if ($ev) {
+            echo '<h2>Recent consent changes</h2><table class="widefat striped" style="max-width:860px;"><thead><tr><th>When</th><th>Email</th><th>Change</th><th>Detail</th></tr></thead><tbody>';
+            foreach ((array) $ev as $e) {
+                $pl = json_decode((string) ($e['payload'] ?? ''), true);
+                $pl = is_array($pl) ? $pl : [];
+                if ($e['type'] === 'consent_recorded') {
+                    $what = 'Opted in (owner-recorded)';
+                    $det = sprintf('%s, consent dated %s, by admin #%d, was %s', (string) ($pl['source_detail'] ?? '-'), (string) ($pl['consent_date'] ?? '-'), (int) ($pl['admin_id'] ?? 0), (string) ($pl['prior_status'] ?? '?'));
+                } else {
+                    $what = 'Marketing turned off';
+                    $det = sprintf('by admin #%d, was %s', (int) ($pl['admin_id'] ?? 0), (string) ($pl['prior_status'] ?? '?'));
+                }
+                echo '<tr><td>' . esc_html((string) $e['created_at']) . '</td><td>' . esc_html((string) $e['email']) . '</td><td>' . esc_html($what) . '</td><td>' . esc_html($det) . '</td></tr>';
+            }
+            echo '</tbody></table>';
+        }
         $pages = max(1, (int) ceil($total / $per));
         if ($pages > 1) {
             echo '<p>Page ' . $paged . ' of ' . $pages . ' ';

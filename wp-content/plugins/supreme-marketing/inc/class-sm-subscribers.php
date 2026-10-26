@@ -216,4 +216,90 @@ final class SM_Subscribers
         }
         return $out;
     }
+
+    /**
+     * Record marketing consent the owner received OUTSIDE the website
+     * (in person, phone, WhatsApp, ...). Directly marks the subscriber active:
+     * sends no confirmation link and starts no flow. Never overrides
+     * bounce/complaint suppressions. Every call is audit-logged to the events table.
+     *
+     * @return string 'ok' | 'invalid' | 'suppressed'
+     */
+    public static function record_external_consent(string $email, string $source_detail, string $consent_date, int $admin_id): string
+    {
+        global $wpdb;
+        $email = strtolower(trim($email));
+        if (!is_email($email)) {
+            return 'invalid';
+        }
+        $ts = strtotime($consent_date);
+        $today = gmdate('Y-m-d');
+        $date = ($ts && gmdate('Y-m-d', $ts) <= $today) ? gmdate('Y-m-d', $ts) : $today;
+        $detail = substr(trim($source_detail), 0, 50);
+        if ($detail === '') {
+            $detail = 'external';
+        }
+        $sub = self::get_by_email($email);
+        if ($sub && in_array($sub['status'], ['bounced', 'complained'], true)) {
+            return 'suppressed';
+        }
+        if (!$sub) {
+            $sub = self::ensure($email, ['source' => 'owner_recorded']);
+            if (!$sub) {
+                return 'invalid';
+            }
+        }
+        $prior = (string) ($sub['status'] ?? '');
+        if ($prior !== 'active') {
+            $wpdb->update(SM_DB::table('subscribers'), [
+                'status'         => 'active',
+                'consented_at'   => $date . ' 00:00:00',
+                'consent_source' => 'owner: ' . $detail,
+                'consent_ip'     => '',
+                'paused_until'   => null,
+                'updated_at'     => sm_now(),
+            ], ['id' => (int) $sub['id']]);
+        } else {
+            $wpdb->update(SM_DB::table('subscribers'), [
+                'consented_at'   => $date . ' 00:00:00',
+                'consent_source' => 'owner: ' . $detail,
+                'updated_at'     => sm_now(),
+            ], ['id' => (int) $sub['id']]);
+        }
+        $wpdb->insert(SM_DB::table('events'), [
+            'email'         => $email,
+            'subscriber_id' => (int) $sub['id'],
+            'type'          => 'consent_recorded',
+            'payload'       => wp_json_encode([
+                'source_detail' => $detail,
+                'consent_date'  => $date,
+                'admin_id'      => $admin_id,
+                'prior_status'  => $prior,
+            ]),
+            'created_at'    => sm_now(),
+        ]);
+        return 'ok';
+    }
+
+    /** Admin revokes marketing consent from the dashboard; audit-logged. */
+    public static function admin_revoke_consent(int $id, int $admin_id): bool
+    {
+        global $wpdb;
+        $sub = self::get($id);
+        if (!$sub) {
+            return false;
+        }
+        self::unsubscribe((string) $sub['email'], 'unsubscribed');
+        $wpdb->insert(SM_DB::table('events'), [
+            'email'         => (string) $sub['email'],
+            'subscriber_id' => (int) $sub['id'],
+            'type'          => 'consent_revoked_admin',
+            'payload'       => wp_json_encode([
+                'admin_id'     => $admin_id,
+                'prior_status' => (string) $sub['status'],
+            ]),
+            'created_at'    => sm_now(),
+        ]);
+        return true;
+    }
 }
