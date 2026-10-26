@@ -636,6 +636,13 @@ function sm_category_function(string $cat): string
 {
     $c = strtolower($cat);
     $map = [
+        // Accessories and service kits first: a hose/hardware kit FOR a
+        // cold air kit is not an intake - caption its actual replacement
+        // function, never the host part's (owner review 2026-10-26).
+        'hoses and hardware' => 'to replace the intake kit\'s worn hoses and hardware',
+        'replacement hose'   => 'to replace worn hoses on the kit',
+        'hardware kit'       => 'to replace the original hardware for a secure fit',
+        'rebuild kit'        => 'to refresh the original assembly with new wear parts',
         'alignment'   => 'to set alignment angles after suspension work',
         'air helper'  => 'adds load support when hauling or towing',
         'air spring'  => 'adds load support when hauling or towing',
@@ -658,6 +665,7 @@ function sm_category_function(string $cat): string
         'radiator'    => 'for your cooling system',
         'ignition'    => 'for your ignition system',
         'tuner'       => 'for tuning your setup',
+        'replacement'        => 'to replace the worn original part',
     ];
     foreach ($map as $k => $v) {
         if (strpos($c, $k) !== false) {
@@ -800,7 +808,10 @@ function sm_product_caption(WC_Product $p): string
             // own attributes (its name), e.g. "tube" -> intake builds.
             $use = sm_category_usecase($name);
         }
-        $lead = trim($brand . ($feat !== '' ? ' ' . $feat : ($cat !== '' ? ' ' . $cat : '')));
+        $accessory = (bool) preg_match('/replacement|hardware\\s+kit|rebuild\\s+kit/i', $name);
+        $lead = $accessory
+            ? trim($brand . ($feat !== '' ? ' ' . $feat : ''))
+            : trim($brand . ($feat !== '' ? ' ' . $feat : ($cat !== '' ? ' ' . $cat : '')));
         if ($lead !== '' && $use !== '') {
             $caption = ucfirst($lead) . ' - ' . $use;
         } elseif ($feat !== '') {
@@ -820,12 +831,17 @@ function sm_product_caption(WC_Product $p): string
         // differentiate with the name's own distinguishing tail.
         $tail = '';
         $clean = trim((string) preg_replace('/\s*\([^)]*\)\s*/u', ' ', $name)); // drop (part numbers)
-        if (preg_match('/[-\x{2013}]\s*([^-\x{2013}]{2,24})\s*$/u', $clean, $m)) {
-            $tail = trim($m[1]);
-        } else {
-            $words = preg_split('/\s+/', $clean);
-            $tail  = implode(' ', array_slice((array) $words, -2));
+        $words = (array) preg_split('/\s+/', $clean);
+        // Drop trailing SKU tokens ("1736", "W217602061") and a trailing
+        // brand repeat - the distinguishing detail is the fitment up
+        // front, never the part number (owner review 2026-10-26).
+        while ($words && (preg_match('/^[A-Za-z]*\d{3,}[A-Za-z]*$/', (string) end($words)) || ($brand !== '' && strcasecmp((string) end($words), $brand) === 0))) {
+            array_pop($words);
         }
+        if ($words && $brand !== '' && strcasecmp((string) $words[0], $brand) === 0) {
+            array_shift($words);
+        }
+        $tail = implode(' ', array_slice($words, 0, 3));
         $lead = trim($brand . ($tail !== '' ? ' ' . $tail : ''));
         $use2 = sm_theme_phrase(sm_product_theme($p));
         $alt  = $lead . ($use2 !== '' ? ' - ' . $use2 : '');

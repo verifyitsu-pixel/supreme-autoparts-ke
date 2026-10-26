@@ -682,7 +682,9 @@ final class SM_Templates
                 }
                 $intro = trim((string) ($ai['intro'] ?? ''));
                 if ($intro === '') {
-                    $intro = 'All in stock, priced as listed. This series walks the whole catalog - every category and brand - then starts over.';
+                    $intro = $rot_label !== ''
+                        ? 'A look at the ' . $rot_label . ' side of the catalog - all in stock, priced as listed.'
+                        : 'All in stock, priced as listed.';
                 }
                 $blocks = [
                     ['h' => $headline],
