@@ -581,6 +581,70 @@ function sm_category_usecase(string $cat): string
 }
 
 /**
+ * Performance theme of a product from its NON-brand-led category. Powers
+ * coherent email storytelling: the grid's themes shape the headline, intro
+ * and captions so the email reads as one relevant story, not a catalog dump.
+ */
+function sm_product_theme(WC_Product $p): string
+{
+    static $map = [
+        'intake'     => ['intake', 'air filter'],
+        'exhaust'    => ['exhaust', 'muffler', 'header', 'downpipe', 'manifold', 'cat-back', 'axle-back'],
+        'boost'      => ['turbo', 'supercharg', 'intercooler', 'wastegate', 'blow-off', 'boost'],
+        'suspension' => ['suspension', 'coilover', 'shock', 'strut', 'sway', 'control arm'],
+        'braking'    => ['brake', 'rotor', 'caliper'],
+        'drivetrain' => ['clutch', 'drivetrain', 'differential'],
+        'ignition'   => ['ignition', 'spark'],
+        'tuning'     => ['tuner', 'programmer'],
+        'cooling'    => ['cooling', 'radiator'],
+        'engine bay' => ['engine', 'alternator', 'pulley', 'camshaft', 'throttle'],
+    ];
+    $brand = '';
+    if (taxonomy_exists('pa_brand')) {
+        $brands = wc_get_product_terms($p->get_id(), 'pa_brand', ['fields' => 'names']);
+        $brand  = trim((string) ($brands[0] ?? ''));
+    }
+    if ($brand === '') {
+        $parts = preg_split('/\s+/', trim((string) $p->get_name()));
+        $brand = (string) ($parts[0] ?? '');
+    }
+    $cats = (array) wp_get_post_terms($p->get_id(), 'product_cat', ['fields' => 'names']);
+    foreach ($cats as $c) {
+        $raw = html_entity_decode((string) $c);
+        if ($brand !== '' && stripos($raw, $brand) !== false) {
+            continue; // brand-led category, not the part's function
+        }
+        $c = strtolower($raw);
+        foreach ($map as $theme => $terms) {
+            foreach ($terms as $term) {
+                if (strpos($c, $term) !== false) {
+                    return $theme;
+                }
+            }
+        }
+    }
+    return '';
+}
+
+/** Factual "what it is for" phrase per theme. No performance promises. */
+function sm_theme_phrase(string $theme): string
+{
+    $phrases = [
+        'intake'     => 'for your intake build',
+        'exhaust'    => 'for your exhaust build',
+        'boost'      => 'for your boosted setup',
+        'suspension' => 'for your suspension setup',
+        'braking'    => 'for your brake setup',
+        'drivetrain' => 'for your drivetrain',
+        'ignition'   => 'for your ignition system',
+        'tuning'     => 'for tuning your setup',
+        'cooling'    => 'for your cooling system',
+        'engine bay' => 'for your engine bay',
+    ];
+    return $phrases[$theme] ?? '';
+}
+
+/**
  * Distinguishing features parsed from the product name itself (material,
  * finish, options like a MAFS mount) - the details that tell two similar
  * listings apart. Name-derived, so always factual.
@@ -654,6 +718,11 @@ function sm_product_caption(WC_Product $p): string
             if (preg_match($claimy, $s) || preg_match($boilerplate, $s) || preg_match($catalog_open, $s)) {
                 continue;
             }
+            // Problem statements ("outer tie rods can wear out...") are not
+            // hooks; the function sentence is what earns the click.
+            if (preg_match('/(wear out|over time|can cause|leads? to|factory (?:parts?|components?)|stock (?:parts?|components?))/i', $s)) {
+                continue;
+            }
             // Reject spec repetition: 2+ of the name's own numbers restated.
             $s_nums = preg_split('/[^0-9]+/', $s, -1, PREG_SPLIT_NO_EMPTY);
             if (count(array_intersect($s_nums, $name_nums)) >= 2) {
@@ -664,10 +733,13 @@ function sm_product_caption(WC_Product $p): string
         }
     }
 
-    // 2) Name-derived feature hook + category use context.
+    // 2) Name-derived feature hook + function context (theme first).
     if ($caption === '') {
         $feat = sm_name_features($name);
-        $use  = sm_category_usecase($cat);
+        $use  = sm_theme_phrase(sm_product_theme($p));
+        if ($use === '') {
+            $use = sm_category_usecase($cat);
+        }
         if ($use === '') {
             // No usable category: ground the use context in the product's
             // own attributes (its name), e.g. "tube" -> intake builds.
@@ -769,5 +841,6 @@ function sm_product_payload(WC_Product $p, string $zone = 'US'): array
         'price'   => sm_product_price($p, $zone),
         'image'   => sm_product_image($p),
         'caption' => sm_product_caption($p),
+        'theme'   => sm_product_theme($p),
     ];
 }
