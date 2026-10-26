@@ -512,7 +512,9 @@ function sm_marketing_pool_backfill(array $products, int $min, int $fetch): arra
             $have[(int) $p->get_id()] = true;
         }
     }
-    foreach (sm_performance_candidates($fetch) as $c) {
+    // Candidates come from category-bounded queries whose slugs can be
+    // brand-led ("BMR Suspension"), so re-check full eligibility per item.
+    foreach (sm_marketing_eligible(sm_performance_candidates($fetch)) as $c) {
         $id = (int) $c->get_id();
         if (isset($have[$id])) {
             continue;
