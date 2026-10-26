@@ -422,7 +422,7 @@ function sa_sf_suggest(): void
  */
 function sa_sf_fuzzy_enabled(): bool
 {
-    return (bool) apply_filters('sa_fuzzy_search_enabled', false);
+    return (bool) apply_filters('sa_fuzzy_search_enabled', true);
 }
 
 function sa_sf_fuzzy_product_ids(string $q, int $limit = 6): array
