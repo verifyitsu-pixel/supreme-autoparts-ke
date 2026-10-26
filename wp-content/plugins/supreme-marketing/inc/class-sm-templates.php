@@ -122,9 +122,14 @@ final class SM_Templates
             if (!empty($p['image'])) {
                 $img = '<a href="' . esc_url($p['url']) . '"><img src="' . esc_url($p['image']) . '" width="150" alt="" style="display:block;width:150px;height:150px;object-fit:contain;border:1px solid ' . self::LINE . ';border-radius:6px;margin:0 auto 8px auto;" /></a>';
             }
+            $caption = trim((string) ($p['caption'] ?? ''));
+            $cap_html = $caption !== ''
+                ? '<span style="display:block;font-family:' . self::FONT . ';font-size:12.5px;line-height:1.45;color:' . self::MUTED . ';margin:0 0 6px 0;">' . esc_html($caption) . '</span>'
+                : '';
             $cells[] = '<td style="padding:8px;vertical-align:top;width:50%;">'
                 . $img
                 . '<a href="' . esc_url($p['url']) . '" style="display:block;font-family:' . self::FONT . ';font-size:14px;font-weight:600;color:' . self::INK . ';text-decoration:none;line-height:1.35;margin:0 0 4px 0;">' . esc_html($p['name']) . '</a>'
+                . $cap_html
                 . '<span style="display:block;font-family:' . self::FONT . ';font-size:14px;color:' . self::MUTED . ';margin:0 0 8px 0;">' . esc_html($p['price']) . '</span>'
                 . '<a href="' . esc_url($p['url']) . '" style="display:inline-block;padding:8px 14px;background:' . self::AMBER . ';color:' . self::INK . ';font-family:' . self::FONT . ';font-size:13px;font-weight:600;text-decoration:none;border-radius:5px;">View product</a>'
                 . '</td>';
@@ -445,21 +450,27 @@ final class SM_Templates
                 ];
 
             case 'welcome_4':
+                $blocks = [
+                    ['h' => 'The quick tour'],
+                    ['p' => 'The store is organized by category and brand - Tyres, Engine, Suspension, Brakes, Motorcycle and more - with a brand picker inside every category.'],
+                    ['bullets' => [
+                        'Save up to three vehicles in My Garage and see "Fits your car" badges',
+                        'Prices show in your local currency automatically',
+                        $shipping_line,
+                        'Track every order on our site, from confirmed to delivered',
+                    ]],
+                ];
+                if ($products) {
+                    $blocks[] = ['p' => 'Our best sellers, in stock and ready to ship:'];
+                    $blocks[] = ['products' => $products];
+                } else {
+                    $blocks[] = ['p' => 'Take a look at the current best sellers in the store.'];
+                }
+                $blocks[] = ['button' => ['Open the store', $shop]];
                 return [
                     'subject'   => 'The quick tour: categories, My Garage, tracking',
                     'preheader' => 'How the store is organized and how orders arrive.',
-                    'blocks'    => [
-                        ['h' => 'The quick tour'],
-                        ['p' => 'The store is organized by category and brand - Tyres, Engine, Suspension, Brakes, Motorcycle and more - with a brand picker inside every category.'],
-                        ['bullets' => [
-                            'Save up to three vehicles in My Garage and see "Fits your car" badges',
-                            'Prices show in your local currency automatically',
-                            $shipping_line,
-                            'Track every order on our site, from confirmed to delivered',
-                        ]],
-                        $products ? ['products' => $products] : ['p' => 'Take a look at the current best sellers in the store.'],
-                        ['button' => ['Open the store', $shop]],
-                    ],
+                    'blocks'    => $blocks,
                 ];
 
             case 'welcome_5':
@@ -472,7 +483,12 @@ final class SM_Templates
                 } else {
                     $blocks[] = ['p' => 'Remember: sign up or sign in with Google at checkout and your first order gets 20% off.'];
                 }
-                $blocks[] = $products ? ['products' => $products] : ['p' => 'Start with the best sellers - they are popular for a reason.'];
+                if ($products) {
+                    $blocks[] = ['p' => 'Our current best sellers - each one in stock and ready to ship:'];
+                    $blocks[] = ['products' => $products];
+                } else {
+                    $blocks[] = ['p' => 'Start with the best sellers - they are popular for a reason.'];
+                }
                 $blocks[] = ['button' => ['Go to the store', $shop]];
                 $blocks[] = ['p' => 'This is the last email in your welcome series. From here you will hear from us about once a week.'];
                 return [
@@ -612,15 +628,21 @@ final class SM_Templates
 
             case 'reorder_1':
                 $pname = (string) ($ctx['product_name'] ?? 'your part');
+                $blocks = [
+                    ['h' => 'Due for a replacement?'],
+                    ['p' => 'Based on when you ordered ' . $pname . ', it may be nearing the end of its service life. Replacing wear parts on time is cheaper than the damage a worn one causes.'],
+                ];
+                if ($products) {
+                    $blocks[] = ['p' => 'In stock and ready to ship for the next replacement:'];
+                    $blocks[] = ['products' => $products];
+                } else {
+                    $blocks[] = ['p' => 'Your previous items are ready to order again from your account.'];
+                }
+                $blocks[] = ['button' => ['Order again', (string) ($ctx['reorder_url'] ?? $account)]];
                 return [
                     'subject'   => 'Time to replace ' . $pname . '?',
                     'preheader' => 'Based on when you last ordered, it may be due for a fresh one.',
-                    'blocks'    => [
-                        ['h' => 'Due for a replacement?'],
-                        ['p' => 'Based on when you ordered ' . $pname . ', it may be nearing the end of its service life. Replacing wear parts on time is cheaper than the damage a worn one causes.'],
-                        $products ? ['products' => $products] : ['p' => 'Your previous items are ready to order again from your account.'],
-                        ['button' => ['Order again', (string) ($ctx['reorder_url'] ?? $account)]],
-                    ],
+                    'blocks'    => $blocks,
                 ];
 
             case 'service_1':
@@ -641,28 +663,40 @@ final class SM_Templates
                 ];
 
             case 'winback_1':
+                $blocks = [
+                    ['h' => 'Still there?'],
+                    ['p' => 'It has been a while since your last order. Since then we have added new parts and restocked popular ones - same fitment checks, same delivery.'],
+                ];
+                if ($products) {
+                    $blocks[] = ['p' => 'Recommended from your past orders:'];
+                    $blocks[] = ['products' => $products];
+                } else {
+                    $blocks[] = ['p' => 'See what is new in the store.'];
+                }
+                $blocks[] = ['button' => ['See what is new', $shop]];
                 return [
                     'subject'   => 'We have not seen you in a while',
                     'preheader' => 'New parts and restocks since your last visit.',
-                    'blocks'    => [
-                        ['h' => 'Still there?'],
-                        ['p' => 'It has been a while since your last order. Since then we have added new parts and restocked popular ones - same fitment checks, same delivery.'],
-                        $products ? ['products' => $products] : ['p' => 'See what is new in the store.'],
-                        ['button' => ['See what is new', $shop]],
-                    ],
+                    'blocks'    => $blocks,
                 ];
 
             case 'winback_2':
+                $blocks = [
+                    ['h' => 'A fair question'],
+                    ['p' => 'You have not ordered in a while, and we do not want to fill an inbox that is not interested. If you still want new-arrival and restock emails, one click keeps them coming.'],
+                    ['button' => ['Keep me on the list', sm_prefs_url((string) ($ctx['email'] ?? ''))]],
+                    ['p' => 'If we do not hear from you, we will scale these back. You can unsubscribe anytime with the link below.'],
+                ];
+                if ($products) {
+                    $blocks[] = ['p' => 'Recommended from your past orders - in stock and ready to ship:'];
+                    $blocks[] = ['products' => $products];
+                } else {
+                    $blocks[] = ['p' => 'Meanwhile, the best sellers are one click away.'];
+                }
                 return [
                     'subject'   => 'Should we keep sending these?',
                     'preheader' => 'One click to stay on the list - or do nothing and we will slow down.',
-                    'blocks'    => [
-                        ['h' => 'A fair question'],
-                        ['p' => 'You have not ordered in a while, and we do not want to fill an inbox that is not interested. If you still want new-arrival and restock emails, one click keeps them coming.'],
-                        ['button' => ['Keep me on the list', sm_prefs_url((string) ($ctx['email'] ?? ''))]],
-                        ['p' => 'If we do not hear from you, we will scale these back. You can unsubscribe anytime with the link below.'],
-                        $products ? ['products' => $products] : ['p' => 'Meanwhile, the best sellers are one click away.'],
-                    ],
+                    'blocks'    => $blocks,
                 ];
 
             case 'restock_1':
@@ -766,7 +800,8 @@ final class SM_Templates
         $zone = isset($_GET['sm_zone']) && sanitize_key((string) $_GET['sm_zone']) === 'ke' ? 'KE' : 'US';
         $products = [];
         if (function_exists('wc_get_products')) {
-            $items = wc_get_products(['status' => 'publish', 'limit' => 4, 'orderby' => 'popularity', 'order' => 'DESC']);
+            $items = SM_Recommend::best_sellers(12);
+            $items = sm_diverse_products($items, 4);
             foreach ($items as $p) {
                 $products[] = sm_product_payload($p, $zone);
             }

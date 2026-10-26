@@ -182,7 +182,7 @@ final class SM_Campaigns
             $zone = sm_subscriber_zone($sub);
             $products = [];
             if ($personalize) {
-                $products = SM_Sender::payload_for(SM_Recommend::for_subscriber($sub, (int) sm_setting('recommend_count')), $zone);
+                $products = SM_Sender::payload_for(sm_diverse_products(SM_Recommend::for_subscriber($sub, (int) sm_setting('recommend_count') + 8), (int) sm_setting('recommend_count')), $zone);
             } elseif ($c['type'] === 'category') {
                 $products = SM_Sender::payload_for(self::category_products($cat_slug, (int) sm_setting('recommend_count')), $zone);
             } else {
@@ -196,7 +196,7 @@ final class SM_Campaigns
                     $products = SM_Sender::payload_for(self::category_products($cat_slug, (int) sm_setting('recommend_count')), $zone);
                 }
                 if (!$products) {
-                    $products = SM_Sender::payload_for(SM_Recommend::best_sellers((int) sm_setting('recommend_count')), $zone);
+                    $products = SM_Sender::payload_for(sm_diverse_products(SM_Recommend::best_sellers((int) sm_setting('recommend_count') + 8), (int) sm_setting('recommend_count')), $zone);
                 }
             }
             if (($personalize || $c['type'] === 'category') && !$products) {

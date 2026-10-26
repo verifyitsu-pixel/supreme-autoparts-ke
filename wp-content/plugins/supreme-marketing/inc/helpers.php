@@ -261,14 +261,108 @@ function sm_product_image(WC_Product $p): string
     return '';
 }
 
+/** Word-safe clip for email captions. */
+function sm_caption_clip(string $text, int $max = 140): string
+{
+    $text = trim((string) preg_replace('/\s+/u', ' ', $text));
+    if (mb_strlen($text) <= $max) {
+        return $text;
+    }
+    $cut = mb_substr($text, 0, $max - 1);
+    $sp  = mb_strrpos($cut, ' ');
+    if ($sp !== false && $sp > (int) ($max * 0.6)) {
+        $cut = mb_substr($cut, 0, $sp);
+    }
+    return rtrim($cut, " \t\n\r\0\x0B,.;:-") . '...';
+}
+
+/**
+ * Short truthful caption for email product grids. Prefers the product's own
+ * short description (first clean sentence, supplier-written product copy);
+ * falls back to a factual brand - category line. Never invents claims.
+ */
+function sm_product_caption(WC_Product $p): string
+{
+    $name = trim((string) $p->get_name());
+    $desc = trim(html_entity_decode(wp_strip_all_tags((string) $p->get_short_description()), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+    $desc = (string) preg_replace('/\s+/u', ' ', $desc);
+    // Supplier copy can carry unsupported performance/popularity claims - those never reach the email.
+    $claimy = (bool) preg_match('/(\b\d+\s?(?:hp|bhp|whp)\b|horsepower|torque\s+gain|boosts?\s+(?:power|performance)|\d+\s?%\s+(?:more|better|gain|increase)|guarantee|#1|number one|best[- ]selling|most popular|miracle)/i', $desc);
+    if (!$claimy && $desc !== '' && strcasecmp($desc, $name) !== 0 && mb_strlen($desc) >= 25) {
+        if (preg_match('/^(.{25,140}?[.!?])(?:\s|$)/u', $desc, $m)) {
+            $cap = $m[1];
+            if (!preg_match('/(\b\d+\s?(?:hp|bhp|whp)\b|horsepower|torque\s+gain|boosts?\s+(?:power|performance)|\d+\s?%\s+(?:more|better|gain|increase)|guarantee|#1|number one|best[- ]selling|most popular|miracle)/i', $cap)) {
+                return sm_caption_clip($cap);
+            }
+        } else {
+            return sm_caption_clip($desc);
+        }
+    }
+    $brand = '';
+    if (taxonomy_exists('pa_brand')) {
+        $brands = wc_get_product_terms($p->get_id(), 'pa_brand', ['fields' => 'names']);
+        $brand  = trim((string) ($brands[0] ?? ''));
+    }
+    if ($brand === '') {
+        $parts = preg_split('/\s+/', $name);
+        $brand = (string) ($parts[0] ?? '');
+    }
+    $cats = wp_get_post_terms($p->get_id(), 'product_cat', ['fields' => 'names']);
+    $cat  = trim((string) ($cats[0] ?? ''));
+    $line = $brand . ($cat !== '' ? ' - ' . $cat : '');
+    return sm_caption_clip($line);
+}
+
+/**
+ * Presentation-layer variety for product grids: keeps the recommendation
+ * order exactly as scored, but avoids a grid that is all one category.
+ * Never re-scores or re-ranks.
+ */
+function sm_diverse_products(array $products, int $count, int $max_per_cat = 2): array
+{
+    $clean = [];
+    foreach ($products as $p) {
+        if ($p instanceof WC_Product) {
+            $clean[] = $p;
+        }
+    }
+    if (count($clean) <= 1) {
+        return $clean;
+    }
+    $picked   = [];
+    $deferred = [];
+    $seen     = [];
+    foreach ($clean as $p) {
+        $cats = wp_get_post_terms($p->get_id(), 'product_cat', ['fields' => 'ids']);
+        $cat  = (int) ($cats[0] ?? 0);
+        if (($seen[$cat] ?? 0) >= $max_per_cat) {
+            $deferred[] = $p;
+            continue;
+        }
+        $seen[$cat] = ($seen[$cat] ?? 0) + 1;
+        $picked[]   = $p;
+        if (count($picked) >= $count) {
+            return $picked;
+        }
+    }
+    foreach ($deferred as $p) {
+        $picked[] = $p;
+        if (count($picked) >= $count) {
+            break;
+        }
+    }
+    return $picked;
+}
+
 /** Normalized product payload used by template product blocks. */
 function sm_product_payload(WC_Product $p, string $zone = 'US'): array
 {
     return [
-        'id'    => $p->get_id(),
-        'name'  => $p->get_name(),
-        'url'   => get_permalink($p->get_id()),
-        'price' => sm_product_price($p, $zone),
-        'image' => sm_product_image($p),
+        'id'      => $p->get_id(),
+        'name'    => $p->get_name(),
+        'url'     => get_permalink($p->get_id()),
+        'price'   => sm_product_price($p, $zone),
+        'image'   => sm_product_image($p),
+        'caption' => sm_product_caption($p),
     ];
 }

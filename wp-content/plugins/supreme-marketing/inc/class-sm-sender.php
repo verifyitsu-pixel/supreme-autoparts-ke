@@ -222,15 +222,18 @@ final class SM_Sender
     private static function fresh_products(string $template, ?array $sub): array
     {
         $zone = sm_subscriber_zone($sub);
+        $count = (int) sm_setting('recommend_count');
+        $fetch = $count + 8; // over-fetch so the variety pass has room to work
         $products = [];
         if ($sub && in_array($template, ['winback_1', 'winback_2'], true)) {
-            $products = SM_Recommend::for_subscriber($sub, (int) sm_setting('recommend_count'));
+            $products = SM_Recommend::for_subscriber($sub, $fetch);
         } elseif ($sub && in_array($template, ['welcome_4', 'welcome_5'], true)) {
-            $products = SM_Recommend::best_sellers((int) sm_setting('recommend_count'));
+            $products = SM_Recommend::best_sellers($fetch);
         }
         if (!$products) {
-            $products = SM_Recommend::best_sellers((int) sm_setting('recommend_count'));
+            $products = SM_Recommend::best_sellers($fetch);
         }
+        $products = sm_diverse_products($products, $count);
         return self::payload_for($products, $zone);
     }
 
