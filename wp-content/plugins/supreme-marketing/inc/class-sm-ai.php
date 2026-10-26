@@ -2,9 +2,9 @@
 /**
  * AI composition adapter - PREPARED, fail-closed, no credential required.
  *
- * When the user-approved free provider is connected (options sm_ai_endpoint
- * + sm_ai_token, set via the vault-backed settings once the provider agent
- * finishes), captions MAY be composed from CATALOG-ONLY facts (name, brand,
+ * When the user-approved free provider is connected (wp-config constants SM_AI_ENDPOINT/SM_AI_TOKEN,
+ * environment, or options set programmatically - never an admin UI field,
+ * never git, never chat - once the provider agent finishes), captions MAY be composed from CATALOG-ONLY facts (name, brand,
  * category, price - never recipient, order or behavior data). Every AI
  * output passes the same claim/boilerplate filters as the rule-based copy,
  * is cached per product for 24h, and ANY failure (no credential, network
@@ -16,11 +16,33 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+/**
+ * Credential sources, in order: wp-config constants, environment, then the
+ * option set programmatically by the provider agent. The token is never
+ * shown in an admin settings field, never committed to git, never in chat.
+ */
+function sm_ai_endpoint(): string
+{
+    if (defined('SM_AI_ENDPOINT') && (string) SM_AI_ENDPOINT !== '') {
+        return (string) SM_AI_ENDPOINT;
+    }
+    $env = getenv('SM_AI_ENDPOINT');
+    return ($env !== false && (string) $env !== '') ? (string) $env : (string) get_option('sm_ai_endpoint', '');
+}
+
+function sm_ai_token(): string
+{
+    if (defined('SM_AI_TOKEN') && (string) SM_AI_TOKEN !== '') {
+        return (string) SM_AI_TOKEN;
+    }
+    $env = getenv('SM_AI_TOKEN');
+    return ($env !== false && (string) $env !== '') ? (string) $env : (string) get_option('sm_ai_token', '');
+}
+
 /** True only when a provider credential is configured. */
 function sm_ai_ready(): bool
 {
-    return (string) get_option('sm_ai_endpoint', '') !== ''
-        && (string) get_option('sm_ai_token', '') !== '';
+    return sm_ai_endpoint() !== '' && sm_ai_token() !== '';
 }
 
 /**
@@ -42,9 +64,9 @@ function sm_ai_caption(WC_Product $p): string
         'category' => implode(', ', (array) wp_get_post_terms($p->get_id(), 'product_cat', ['fields' => 'names'])),
         'price'    => $p->get_price(),
     ];
-    $resp = wp_remote_post((string) get_option('sm_ai_endpoint'), [
+    $resp = wp_remote_post(sm_ai_endpoint(), [
         'timeout' => 4,
-        'headers' => ['Authorization' => 'Bearer ' . (string) get_option('sm_ai_token'), 'Content-Type' => 'application/json'],
+        'headers' => ['Authorization' => 'Bearer ' . sm_ai_token(), 'Content-Type' => 'application/json'],
         'body'    => wp_json_encode([
             'task'  => 'one-line factual product caption, max 12 words, what the part is for, no claims, no prices',
             'facts' => $facts,

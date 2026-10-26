@@ -364,7 +364,7 @@ final class SM_Templates
                     'preheader' => 'New parts, restocks and offers - only if you want them.',
                     'blocks'    => [
                         ['h' => 'Stay in the loop, your call'],
-                        ['p' => 'You have ordered from Supreme Autoparts before. We are setting up store emails: new arrivals, restock notices, offers and service reminders, about once a week.'],
+                        ['p' => 'You have ordered from Supreme Autoparts before. We are setting up store emails: new arrivals, restock notices, offers and service reminders.'],
                         ['p' => 'We will only send them if you say yes. Click below to opt in - if you do nothing, you will not receive marketing emails from us. Your order and account emails are not affected.'],
                         ['button' => ['Yes, keep me posted', sm_confirm_url((string) ($ctx['email'] ?? ''))]],
                     ],
@@ -501,7 +501,7 @@ final class SM_Templates
                     $blocks[] = ['p' => 'Start with the in-stock picks - the catalog is ready when you are.'];
                 }
                 $blocks[] = ['button' => [($theme_line !== '' ? 'Shop ' . $theme_line . ' parts' : 'Go to the store'), $shop]];
-                $blocks[] = ['p' => 'This is the last email in your welcome series. From here you will hear from us about once a week.'];
+                $blocks[] = ['p' => 'This is the last email in your welcome series. From here you will hear from us when there is something worth sharing.'];
                 return [
                     'subject'   => ($theme_line !== '' ? 'Your 20% first-order code, plus ' . $theme_line . ' picks' : 'Your first order, when you are ready'),
                     'preheader' => 'Everything is set - the parts are waiting.',
