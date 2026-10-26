@@ -259,28 +259,17 @@ final class SM_Sender
         if (!$products) {
             $products = SM_Recommend::best_sellers($fetch);
         }
-        // Cross-email non-repeat: prefer products not featured in mail this
-        // recipient already got; on exhaustion fall back to the full scored
-        // list. Score order is preserved inside each segment - the
-        // recommendation algorithm itself is untouched.
+        // Cross-email non-repeat: only products never featured in mail this
+        // recipient already received. Never silently repeats: when the fresh
+        // pool runs short the grid shrinks, and when it is empty the template
+        // renders its no-grid fallback copy instead.
         $email = $sub ? (string) ($sub['email'] ?? '') : '';
         if ($email !== '') {
             $recent = sm_recent_sent_product_ids($email);
             if ($recent) {
-                $fresh = [];
-                $seen_before = [];
-                foreach ($products as $p) {
-                    if (in_array((int) $p->get_id(), $recent, true)) {
-                        $seen_before[] = $p;
-                    } else {
-                        $fresh[] = $p;
-                    }
-                }
-                if (count($fresh) >= $count) {
-                    $products = $fresh;
-                } else {
-                    $products = array_merge($fresh, $seen_before);
-                }
+                $products = array_values(array_filter($products, function ($p) use ($recent) {
+                    return !in_array((int) $p->get_id(), $recent, true);
+                }));
             }
         }
         $products = sm_diverse_products($products, $count);
