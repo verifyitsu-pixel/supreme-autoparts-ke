@@ -433,7 +433,7 @@ function sa_sf_suggest(): void
  */
 function sa_sf_fuzzy_enabled(): bool
 {
-    return (bool) apply_filters('sa_fuzzy_search_enabled', true);
+    return (bool) apply_filters('sa_fuzzy_search_enabled', false); // OFF 19:31 EAT: results-page fill 500s on single-word searches (/?s=filter); re-enable only after fill-path fix + isolated battery
 }
 
 function sa_sf_fuzzy_product_ids(string $q, int $limit = 6): array
