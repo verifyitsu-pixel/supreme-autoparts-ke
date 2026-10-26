@@ -623,10 +623,13 @@ function sm_product_caption(WC_Product $p): string
     $cats = array_filter(array_map('trim', (array) wp_get_post_terms($p->get_id(), 'product_cat', ['fields' => 'names'])));
     $cat  = '';
     foreach (array_reverse(array_values($cats)) as $c) {
-        if (strcasecmp($c, $brand) !== 0) {
-            $cat = $c;
-            break;
+        // Skip brand-led categories ("BMR Suspension" on a bracket is the
+        // brand, not the part's function).
+        if ($brand !== '' && stripos($c, $brand) !== false) {
+            continue;
         }
+        $cat = $c;
+        break;
     }
 
     $caption = '';
