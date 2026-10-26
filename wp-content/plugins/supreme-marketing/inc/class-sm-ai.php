@@ -173,8 +173,11 @@ function sm_ai_call(string $task, array $facts, int $max_tokens = 300): ?array
     // The provider's own free-plan hard cap remains the real stop.
     $reserve = 300;
     sm_ai_budget_add($reserve);
+    // Provider latency from the store's region measures above 4s on cold
+    // calls (observed cURL 28 at 4002ms); builds run in cron context, so a
+    // 10s ceiling is safe and avoids burning the reserve on timeouts.
     $resp = wp_remote_post(sm_ai_endpoint(), [
-        'timeout' => 4,
+        'timeout' => 10,
         'headers' => ['Authorization' => 'Bearer ' . sm_ai_token(), 'Content-Type' => 'application/json'],
         'body'    => wp_json_encode([
             'messages'             => [
