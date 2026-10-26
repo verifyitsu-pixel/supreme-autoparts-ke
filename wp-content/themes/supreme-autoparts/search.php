@@ -32,7 +32,7 @@ $q = get_search_query();
           ?>
         </p>
       <?php endif; ?>
-      <?php if ($sa_total > 0) : ?>
+      <?php if ($sa_total > 0 && $sa_fuzzy === 0) : ?>
         <p class="sa-archive-header__count">
           <?php
           printf(
