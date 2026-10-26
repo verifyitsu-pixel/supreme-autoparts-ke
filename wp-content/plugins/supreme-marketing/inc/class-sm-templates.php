@@ -461,7 +461,7 @@ final class SM_Templates
                     ]],
                 ];
                 if ($products) {
-                    $blocks[] = ['p' => 'Our best sellers, in stock and ready to ship:'];
+                    $blocks[] = ['p' => 'Our best sellers - all in stock:'];
                     $blocks[] = ['products' => $products];
                 } else {
                     $blocks[] = ['p' => 'Take a look at the current best sellers in the store.'];
@@ -484,7 +484,7 @@ final class SM_Templates
                     $blocks[] = ['p' => 'Remember: sign up or sign in with Google at checkout and your first order gets 20% off.'];
                 }
                 if ($products) {
-                    $blocks[] = ['p' => 'Our current best sellers - each one in stock and ready to ship:'];
+                    $blocks[] = ['p' => 'Our current best sellers - all in stock:'];
                     $blocks[] = ['products' => $products];
                 } else {
                     $blocks[] = ['p' => 'Start with the best sellers - they are popular for a reason.'];
@@ -633,7 +633,7 @@ final class SM_Templates
                     ['p' => 'Based on when you ordered ' . $pname . ', it may be nearing the end of its service life. Replacing wear parts on time is cheaper than the damage a worn one causes.'],
                 ];
                 if ($products) {
-                    $blocks[] = ['p' => 'In stock and ready to ship for the next replacement:'];
+                    $blocks[] = ['p' => 'In stock for the next replacement:'];
                     $blocks[] = ['products' => $products];
                 } else {
                     $blocks[] = ['p' => 'Your previous items are ready to order again from your account.'];
@@ -668,7 +668,7 @@ final class SM_Templates
                     ['p' => 'It has been a while since your last order. Since then we have added new parts and restocked popular ones - same fitment checks, same delivery.'],
                 ];
                 if ($products) {
-                    $blocks[] = ['p' => 'Recommended from your past orders:'];
+                    $blocks[] = ['p' => SM_Recommend::purchased_product_ids((string) ($ctx['email'] ?? '')) ? 'Recommended from your past orders:' : 'Fresh picks from the shop:'];
                     $blocks[] = ['products' => $products];
                 } else {
                     $blocks[] = ['p' => 'See what is new in the store.'];
@@ -688,7 +688,7 @@ final class SM_Templates
                     ['p' => 'If we do not hear from you, we will scale these back. You can unsubscribe anytime with the link below.'],
                 ];
                 if ($products) {
-                    $blocks[] = ['p' => 'Recommended from your past orders - in stock and ready to ship:'];
+                    $blocks[] = ['p' => SM_Recommend::purchased_product_ids((string) ($ctx['email'] ?? '')) ? 'Recommended from your past orders - all in stock:' : 'Fresh picks from the shop - all in stock:'];
                     $blocks[] = ['products' => $products];
                 } else {
                     $blocks[] = ['p' => 'Meanwhile, the best sellers are one click away.'];

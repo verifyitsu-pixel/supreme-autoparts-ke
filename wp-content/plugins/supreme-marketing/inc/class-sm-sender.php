@@ -57,9 +57,19 @@ final class SM_Sender
             'first_name' => (string) ($sub['first_name'] ?? ($payload['first_name'] ?? '')),
         ], $payload);
         unset($ctx['_refresh_products']);
+        $fresh_product_ids = (array) ($ctx['_fresh_product_ids'] ?? []);
+        unset($ctx['_fresh_product_ids']);
 
         if (!empty($payload['_refresh_products']) || empty($ctx['products'])) {
             $ctx['products'] = self::fresh_products($row['template'], $sub);
+            $fresh_ids = [];
+            foreach ((array) $ctx['products'] as $pl) {
+                $pid = (int) (is_array($pl) ? ($pl['id'] ?? 0) : 0);
+                if ($pid > 0) {
+                    $fresh_ids[] = $pid;
+                }
+            }
+            $ctx['_fresh_product_ids'] = $fresh_ids;
         }
 
         // Region variant + personal welcome code resolved at send time.
@@ -131,6 +141,22 @@ final class SM_Sender
 
         if ($ok) {
             $wpdb->update($s, ['status' => 'sent'], ['id' => $send_id]);
+            // Cross-email non-repeat history: only delivered sends count.
+            // Flows record freshly selected showcase products; campaigns record
+            // the per-recipient grid built at launch. Cart/browse payloads are
+            // personal items, not featured picks, so they stay out of history.
+            $hist_ids = $fresh_product_ids;
+            if (!$hist_ids && $row['campaign_id'] !== null && !empty($ctx['products']) && $is_marketing) {
+                foreach ((array) $ctx['products'] as $pl) {
+                    $pid = (int) (is_array($pl) ? ($pl['id'] ?? 0) : 0);
+                    if ($pid > 0) {
+                        $hist_ids[] = $pid;
+                    }
+                }
+            }
+            if ($hist_ids) {
+                sm_record_send_products($send_id, $email, $hist_ids);
+            }
             self::mark($row['id'], 'sent', '', sm_now());
             do_action('sm_sent', $row, $send_id);
         } else {
@@ -223,7 +249,7 @@ final class SM_Sender
     {
         $zone = sm_subscriber_zone($sub);
         $count = (int) sm_setting('recommend_count');
-        $fetch = $count + 8; // over-fetch so the variety pass has room to work
+        $fetch = $count + 24; // over-fetch: variety pass + cross-email non-repeat need room
         $products = [];
         if ($sub && in_array($template, ['winback_1', 'winback_2'], true)) {
             $products = SM_Recommend::for_subscriber($sub, $fetch);
@@ -232,6 +258,30 @@ final class SM_Sender
         }
         if (!$products) {
             $products = SM_Recommend::best_sellers($fetch);
+        }
+        // Cross-email non-repeat: prefer products not featured in mail this
+        // recipient already got; on exhaustion fall back to the full scored
+        // list. Score order is preserved inside each segment - the
+        // recommendation algorithm itself is untouched.
+        $email = $sub ? (string) ($sub['email'] ?? '') : '';
+        if ($email !== '') {
+            $recent = sm_recent_sent_product_ids($email);
+            if ($recent) {
+                $fresh = [];
+                $seen_before = [];
+                foreach ($products as $p) {
+                    if (in_array((int) $p->get_id(), $recent, true)) {
+                        $seen_before[] = $p;
+                    } else {
+                        $fresh[] = $p;
+                    }
+                }
+                if (count($fresh) >= $count) {
+                    $products = $fresh;
+                } else {
+                    $products = array_merge($fresh, $seen_before);
+                }
+            }
         }
         $products = sm_diverse_products($products, $count);
         return self::payload_for($products, $zone);

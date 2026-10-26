@@ -139,6 +139,31 @@ final class SM_Campaigns
         ]);
     }
 
+    /**
+     * Campaign grid selection: category-variety pass over the algorithm's
+     * scored list, skipping products this recipient was already emailed in
+     * the last 45 days; on catalog exhaustion the full scored list fills in.
+     * Score order is preserved inside each segment - algorithm untouched.
+     */
+    private static function fresh_grid(array $products, string $email): array
+    {
+        $count = (int) sm_setting('recommend_count');
+        $recent = sm_recent_sent_product_ids($email);
+        if ($recent) {
+            $fresh = [];
+            $seen_before = [];
+            foreach ($products as $p) {
+                if ($p instanceof WC_Product && in_array((int) $p->get_id(), $recent, true)) {
+                    $seen_before[] = $p;
+                } else {
+                    $fresh[] = $p;
+                }
+            }
+            $products = count($fresh) >= $count ? $fresh : array_merge($fresh, $seen_before);
+        }
+        return sm_diverse_products($products, $count);
+    }
+
     /** Approve and enqueue to the segment. Returns the number of queued emails. */
     public static function approve_and_enqueue(int $id, int $user_id): int
     {
@@ -182,7 +207,7 @@ final class SM_Campaigns
             $zone = sm_subscriber_zone($sub);
             $products = [];
             if ($personalize) {
-                $products = SM_Sender::payload_for(sm_diverse_products(SM_Recommend::for_subscriber($sub, (int) sm_setting('recommend_count') + 8), (int) sm_setting('recommend_count')), $zone);
+                $products = SM_Sender::payload_for(self::fresh_grid(SM_Recommend::for_subscriber($sub, (int) sm_setting('recommend_count') + 24), (string) ($sub['email'] ?? '')), $zone);
             } elseif ($c['type'] === 'category') {
                 $products = SM_Sender::payload_for(self::category_products($cat_slug, (int) sm_setting('recommend_count')), $zone);
             } else {
@@ -196,7 +221,7 @@ final class SM_Campaigns
                     $products = SM_Sender::payload_for(self::category_products($cat_slug, (int) sm_setting('recommend_count')), $zone);
                 }
                 if (!$products) {
-                    $products = SM_Sender::payload_for(sm_diverse_products(SM_Recommend::best_sellers((int) sm_setting('recommend_count') + 8), (int) sm_setting('recommend_count')), $zone);
+                    $products = SM_Sender::payload_for(self::fresh_grid(SM_Recommend::best_sellers((int) sm_setting('recommend_count') + 24), (string) ($sub['email'] ?? '')), $zone);
                 }
             }
             if (($personalize || $c['type'] === 'category') && !$products) {

@@ -261,6 +261,46 @@ function sm_product_image(WC_Product $p): string
     return '';
 }
 
+/**
+ * Product IDs featured in marketing emails already sent to this address
+ * (last $days days). Powers cross-email non-repeat selection: every new
+ * email shows different products where the catalog allows.
+ */
+function sm_recent_sent_product_ids(string $email, int $days = 45): array
+{
+    global $wpdb;
+    $email = strtolower(trim($email));
+    if ($email === '') {
+        return [];
+    }
+    $table = SM_DB::table('send_products');
+    $cutoff = gmdate('Y-m-d H:i:s', sm_ts() - ($days * DAY_IN_SECONDS));
+    $rows = $wpdb->get_col($wpdb->prepare(
+        "SELECT DISTINCT product_id FROM $table WHERE email = %s AND sent_at > %s",
+        $email, $cutoff
+    ));
+    return array_map('intval', (array) $rows);
+}
+
+/**
+ * Record which products a delivered send featured. Called only after the
+ * send is confirmed; failed or cancelled sends never mark history.
+ * INSERT IGNORE + unique key makes concurrent duplicate writes harmless.
+ */
+function sm_record_send_products(int $send_id, string $email, array $product_ids): void
+{
+    global $wpdb;
+    $table = SM_DB::table('send_products');
+    $email = strtolower(trim($email));
+    $now = sm_now();
+    foreach (array_unique(array_filter(array_map('intval', $product_ids))) as $pid) {
+        $wpdb->query($wpdb->prepare(
+            "INSERT IGNORE INTO $table (send_id, email, product_id, sent_at) VALUES (%d, %s, %d, %s)",
+            $send_id, $email, $pid, $now
+        ));
+    }
+}
+
 /** Word-safe clip for email captions. */
 function sm_caption_clip(string $text, int $max = 140): string
 {

@@ -98,6 +98,17 @@ final class SM_DB
             KEY sent_at (sent_at)
         ) $charset;";
 
+        $sql[] = 'CREATE TABLE ' . self::table('send_products') . " (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            send_id BIGINT UNSIGNED NOT NULL,
+            email VARCHAR(190) NOT NULL,
+            product_id BIGINT UNSIGNED NOT NULL,
+            sent_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY send_product (send_id, product_id),
+            KEY email_sent (email, sent_at)
+        ) $charset;";
+
         $sql[] = 'CREATE TABLE ' . self::table('campaigns') . " (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             name VARCHAR(190) NOT NULL,
