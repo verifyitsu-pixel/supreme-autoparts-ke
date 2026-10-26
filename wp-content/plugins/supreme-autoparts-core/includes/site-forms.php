@@ -439,10 +439,12 @@ function sa_sf_fuzzy_product_ids(string $q, int $limit = 6): array
     $scores = [];
     foreach ($idx as $id => $row) {
         $sku_hit = 0;
-        if ($sku_q !== '' && $row['s'] !== '') {
-            if ($row['s'] === $sku_q) {
+        $parts = explode('|', (string) $row, 3);
+        $sku = $parts[2] ?? '';
+        if ($sku_q !== '' && $sku !== '') {
+            if ($sku === $sku_q) {
                 $sku_hit = 12;
-            } elseif (strlen($sku_q) >= 3 && strncmp($row['s'], $sku_q, strlen($sku_q)) === 0) {
+            } elseif (strlen($sku_q) >= 3 && strncmp($sku, $sku_q, strlen($sku_q)) === 0) {
                 $sku_hit = 8;
             }
         }
@@ -452,10 +454,12 @@ function sa_sf_fuzzy_product_ids(string $q, int $limit = 6): array
         }
         $score = 0;
         $matched_all = true;
+        $row_toks = explode(' ', $parts[0]);
+        $row_mph = ($parts[1] ?? '') === '' ? [] : explode(' ', $parts[1]);
         foreach ($qt as $token) {
             $best = 0;
             $len = mb_strlen($token);
-            foreach ($row['t'] as $i => $ct) {
+            foreach ($row_toks as $i => $ct) {
                 if ($ct === $token) {
                     $best = max($best, 10);
                     continue;
@@ -465,7 +469,7 @@ function sa_sf_fuzzy_product_ids(string $q, int $limit = 6): array
                     continue;
                 }
                 if ($len >= 4) {
-                    $mp = $row['m'][$i] ?? '';
+                    $mp = $row_mph[$i] ?? '';
                     if ($mp !== '' && $mp === metaphone($token)) {
                         $best = max($best, 4);
                         continue;
@@ -492,13 +496,16 @@ function sa_sf_fuzzy_product_ids(string $q, int $limit = 6): array
         // single-token matches ("did you mean" behavior for messy typing).
         foreach ($idx as $id => $row) {
             $best = 0;
+            $rparts = explode('|', (string) $row, 3);
+            $row_toks = explode(' ', $rparts[0]);
+            $row_mph = ($rparts[1] ?? '') === '' ? [] : explode(' ', $rparts[1]);
             foreach ($qt as $token) {
                 $len = mb_strlen($token);
                 if ($len < 4) {
                     continue;
                 }
-                foreach ($row['t'] as $i => $ct) {
-                    if (($row['m'][$i] ?? '') !== '' && $row['m'][$i] === metaphone($token)) {
+                foreach ($row_toks as $i => $ct) {
+                    if (($row_mph[$i] ?? '') !== '' && $row_mph[$i] === metaphone($token)) {
                         $best = max($best, 4);
                     } elseif (strlen($ct) <= 255 && strlen($token) <= 255 && abs(strlen($ct) - $len) <= 2 && levenshtein($ct, $token) <= ($len >= 7 ? 2 : 1)) {
                         $best = max($best, 3);
@@ -525,20 +532,39 @@ function sa_sf_search_tokens(string $s): array
             $out[$t] = true;
         }
     }
-    return array_keys($out);
+    // array keys of pure-number strings become ints; cast back or strict-typed
+    // string params (strlen/metaphone/strncmp) fatally TypeError on catalog
+    // titles containing years/part numbers ("2024", "350", ...).
+    return array_map('strval', array_keys($out));
 }
 
 /**
- * Cached catalog index: id => tokens, per-token metaphone keys, SKU.
- * Rebuilt hourly; published products only. Skipped silently on huge or
- * empty catalogs rather than slowing the suggestions endpoint.
+ * Cached catalog index: id => [tokens (space-joined), metaphones (space-joined), SKU].
+ * Compact rows keep the whole 48k-product catalog small in memory and in the
+ * options table (gz+base64, ~2MB). Built ONLY by WP-Cron (sa_search_index_warm,
+ * hourly): the suggestions path never builds in-request, so a cold index just
+ * means literal-only suggestions, never a slow or memory-heavy request.
+ * (Measured 2026-10-26 on the live 48,343-product public feed: full build
+ * 0.2s CPU, ~28MB index overhead, 7MB serialized before compression.)
  */
 function sa_sf_search_index(): array
 {
-    $idx = get_transient('sa_search_index_v1');
-    if (is_array($idx) && $idx !== []) {
-        return $idx;
+    $raw = get_transient('sa_search_index_v2');
+    if (!is_string($raw) || $raw === '') {
+        return []; // cold: literal search only, no in-request build
     }
+    $ser = @gzuncompress(base64_decode($raw, true) ?: '');
+    if (!is_string($ser) || $ser === '') {
+        return [];
+    }
+    $idx = @unserialize($ser, ['allowed_classes' => false]);
+    unset($ser);
+    return is_array($idx) ? $idx : [];
+}
+
+/** Cron entry point: rebuild the search index and store it compressed. */
+function sa_sf_search_index_build(): void
+{
     global $wpdb;
     $idx = [];
     $page = 0;
@@ -562,39 +588,27 @@ function sa_sf_search_index(): array
             foreach ($toks as $t) {
                 $mph[] = metaphone($t);
             }
-            $idx[(int) $r->ID] = ['t' => $toks, 'm' => $mph, 's' => strtoupper((string) $r->sku)];
+            $sku = strtoupper(preg_replace('/[^A-Za-z0-9-]/', '', (string) $r->sku));
+            // one packed string per product: 48k small arrays would cost ~60MB
+            // of PHP memory per request; one string per row costs ~8MB.
+            $idx[(int) $r->ID] = implode(' ', $toks) . '|' . implode(' ', $mph) . '|' . $sku;
         }
         $page++;
-    } while (is_array($rows) && count($rows) === 500 && $page < 60);
-    if ($idx !== []) {
-        set_transient('sa_search_index_v1', $idx, HOUR_IN_SECONDS);
+    } while (is_array($rows) && count($rows) === 500 && $page < 200);
+    if ($idx === []) {
+        return;
     }
-    return is_array($idx) ? $idx : [];
+    $packed = base64_encode(gzcompress(serialize($idx), 6));
+    if (strlen($packed) < 8000000) { // stay far under MySQL max_allowed_packet
+        set_transient('sa_search_index_v2', $packed, 2 * HOUR_IN_SECONDS);
+    }
 }
-add_action('wp_ajax_sa_suggest', 'sa_sf_suggest');
-add_action('wp_ajax_nopriv_sa_suggest', 'sa_sf_suggest');
-
-/* Full search-results path: when a submitted product search finds nothing
-   literal (typo, misspelling), rerun as the local fuzzy match instead of
-   showing an empty page. Suggestions and results stay real catalog products
-   only; no fitment or compatibility is implied. */
-add_filter('posts_results', static function (array $posts, WP_Query $query): array {
-    if ($posts !== [] || is_admin() || !$query->is_main_query() || !$query->is_search()) {
-        return $posts;
+add_action('sa_search_index_warm', 'sa_sf_search_index_build');
+add_action('init', static function (): void {
+    if (!wp_next_scheduled('sa_search_index_warm')) {
+        wp_schedule_event(time() + 300, 'hourly', 'sa_search_index_warm');
     }
-    if ($query->get('post_type') !== 'product' && $query->get('post_type') !== ['product']) {
-        return $posts;
-    }
-    $q = trim((string) $query->get('s'));
-    if (mb_strlen($q) < 3 || !sa_sf_fuzzy_enabled() || !function_exists('sa_sf_fuzzy_product_ids')) {
-        return $posts;
-    }
-    $ids = sa_sf_fuzzy_product_ids($q, 24);
-    if ($ids === []) {
-        return $posts;
-    }
-    return (new WP_Query(['post_type' => 'product', 'post_status' => 'publish', 'post__in' => $ids, 'orderby' => 'post__in', 'posts_per_page' => 24, 'no_found_rows' => true]))->posts;
-}, 10, 2);
+});
 
 /* One-line roadside mention in customer order emails. Roadside rescue is a Nairobi service, so it only shows on African orders,
  * and it sits after the billing/shipping block so the order details stay together. */
