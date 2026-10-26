@@ -647,6 +647,73 @@ final class SM_Admin
     }
 
     /* ---------------------------------------------------------------- */
+    /**
+     * Live rotation proof (admin-only, no-mail): the real sm_rotation_pick
+     * against the live catalog for a sentinel recipient, rendered exactly
+     * as the sender would. Writes nothing customer-facing: queue_id 0 skips
+     * reservations, and the sentinel email has no queue/rotation state.
+     * The only writes are the adapter's own AI caches (plan/caption
+     * transients, neuron counter) - the same caches a real build uses.
+     */
+    private static function live_rotation_proof(): ?array
+    {
+        if (!function_exists('sm_rotation_pick') || !function_exists('sm_product_payload')) {
+            return null;
+        }
+        $sentinel = 'liveproof@example.com';
+        $zone     = 'US';
+        $nb       = function_exists('sm_ai_ready') && sm_ai_ready() ? get_option('sm_ai_neurons', []) : [];
+        $before   = is_array($nb) ? (int) ($nb['neurons'] ?? 0) : 0;
+
+        $count = (int) sm_setting('recommend_count');
+        $pick  = sm_rotation_pick($sentinel, $count, 0); // queue_id 0: no reservation writes
+        if (empty($pick['products'])) {
+            return null;
+        }
+        $products = SM_Sender::payload_for($pick['products'], $zone);
+
+        $ai = is_array($pick['ai'] ?? null) ? $pick['ai'] : [];
+        $ctx = [
+            'email'                => $sentinel,
+            'first_name'           => 'Test',
+            'zone'                 => $zone,
+            'rotation_theme_label' => (string) ($pick['theme_label'] ?? ''),
+            'rotation_ai'          => $ai,
+            'products'             => $products,
+        ];
+        $rendered = SM_Templates::render('rotation_1', $ctx);
+        if (!is_array($rendered)) {
+            return null;
+        }
+        $nb2    = function_exists('sm_ai_ready') && sm_ai_ready() ? get_option('sm_ai_neurons', []) : [];
+        $after  = is_array($nb2) ? (int) ($nb2['neurons'] ?? 0) : 0;
+
+        $caps = [];
+        foreach ($products as $row) {
+            $pid  = (int) ($row['id'] ?? 0);
+            $caps[] = [
+                'id'             => $pid,
+                'name'           => (string) ($row['name'] ?? ''),
+                'caption'        => (string) ($row['caption'] ?? ''),
+                'caption_source' => ($pid > 0 && function_exists('sm_ai_ready') && sm_ai_ready() && is_string(get_transient('sm_ai_cap_' . $pid))) ? 'ai' : 'rule',
+            ];
+        }
+        $meta = [
+            'proof'        => 'live-build-no-mail',
+            'sentinel'     => $sentinel,
+            'theme_key'    => (string) ($pick['theme_key'] ?? ''),
+            'theme_label'  => (string) ($pick['theme_label'] ?? ''),
+            'subject'      => (string) ($rendered['subject'] ?? ''),
+            'subject_source' => isset($ai['subject']) ? 'ai' : 'fallback',
+            'headline_source' => isset($ai['headline']) ? 'ai' : 'fallback',
+            'intro_source'    => isset($ai['intro']) ? 'ai' : 'fallback',
+            'ai_fields'    => array_keys($ai),
+            'neurons'      => ['before' => $before, 'after' => $after],
+            'products'     => $caps,
+        ];
+        return ['html' => (string) $rendered['html'], 'meta' => $meta];
+    }
+
     /* Template preview                                                  */
     /* ---------------------------------------------------------------- */
 
@@ -661,6 +728,21 @@ final class SM_Admin
         }
         if (!isset($_GET['sm_nonce']) || !wp_verify_nonce(sanitize_text_field((string) $_GET['sm_nonce']), 'sm_preview_' . $key)) {
             return;
+        }
+        // Private no-mail live proof for the catalog rotation: run the REAL
+        // pick against the live catalog for a sentinel recipient and render
+        // with the exact context the sender would use. queue_id 0 means no
+        // reservation rows; a sentinel email means no customer state, no
+        // queue, no send. Proof metadata rides in an HTML comment.
+        if ($key === 'rotation_1' && !empty($_GET['sm_live'])) {
+            $proof = self::live_rotation_proof();
+            if ($proof !== null) {
+                echo '<!-- sm_live_proof ' . esc_html((string) wp_json_encode($proof['meta'])) . ' -->';
+                echo $proof['html']; // phpcs:ignore -- own template output
+                exit;
+            }
+            echo '<div class="notice notice-error"><p>Live proof unavailable (no pick).</p></div>';
+            exit;
         }
         $rendered = SM_Templates::render($key, SM_Templates::sample_context($key));
         if ($rendered === null) {
