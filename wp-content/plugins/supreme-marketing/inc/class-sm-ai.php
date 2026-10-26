@@ -88,7 +88,7 @@ function sm_ai_budget_add(int $n): void
     if (!is_array($d) || ($d['date'] ?? '') !== $today) {
         $d = ['date' => $today, 'neurons' => 0];
     }
-    $d['neurons'] = (int) $d['neurons'] + max(0, $n);
+    $d['neurons'] = max(0, (int) $d['neurons'] + $n);
     update_option('sm_ai_neurons', $d, false);
 }
 
@@ -149,6 +149,13 @@ function sm_ai_call(string $task, array $facts, int $max_tokens = 300): ?array
     if (!sm_ai_ready() || !sm_ai_budget_ok()) {
         return null;
     }
+    // Soft self-throttle, not a guarantee: reserve a conservative estimate
+    // BEFORE the call so concurrent builds cannot both pass the check at
+    // the bound, then correct to the reported usage afterwards. Failed
+    // calls keep the reserve (the provider may have billed work anyway).
+    // The provider's own free-plan hard cap remains the real stop.
+    $reserve = 300;
+    sm_ai_budget_add($reserve);
     $resp = wp_remote_post(sm_ai_endpoint(), [
         'timeout' => 4,
         'headers' => ['Authorization' => 'Bearer ' . sm_ai_token(), 'Content-Type' => 'application/json'],
@@ -174,7 +181,7 @@ function sm_ai_call(string $task, array $facts, int $max_tokens = 300): ?array
         return null;
     }
     $body = json_decode((string) wp_remote_retrieve_body($resp), true);
-    sm_ai_budget_add(sm_ai_neurons_used($body));
+    sm_ai_budget_add(sm_ai_neurons_used($body) - $reserve);
     return sm_ai_extract_json($body);
 }
 
