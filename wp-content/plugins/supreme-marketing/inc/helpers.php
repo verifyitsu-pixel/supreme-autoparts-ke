@@ -866,14 +866,48 @@ function sm_reset_caption_dedup(): void
  * order exactly as scored, but avoids a grid that is all one category.
  * Never re-scores or re-ranks.
  */
+/** Product identity for email grids: variations share their parent; simple
+ * catalog variants share a normalized name after explicit size/finish and
+ * exact SKU removal. Never changes recommendation scores or catalog data. */
+function sm_grid_product_identity(WC_Product $p): string
+{
+    $parent = (int) $p->get_parent_id();
+    if ($parent > 0) {
+        return 'parent:' . $parent;
+    }
+    if ($p->is_type('variable')) {
+        return 'parent:' . (int) $p->get_id();
+    }
+    $name = html_entity_decode(strtolower($p->get_name()), ENT_QUOTES, 'UTF-8');
+    $sku = trim(strtolower((string) $p->get_sku()));
+    if ($sku !== '') {
+        $name = (string) preg_replace('/(?<![a-z0-9])' . preg_quote($sku, '/') . '(?![a-z0-9])/i', ' ', $name);
+    }
+    $name = (string) preg_replace('/\b(?:size|colour|color|finish)\s*:\s*[^,;()]+/i', ' ', $name);
+    $name = (string) preg_replace('/\b\d+(?:\.\d+)?\s*(?:mm|cm|inch|inches|oz|ml|litres?|liters?)\b/i', ' ', $name);
+    $name = (string) preg_replace('/\b(?:black|white|red|blue|silver|polished|chrome|matte|gloss|small|medium|large|xl|xxl)\b/i', ' ', $name);
+    $name = trim((string) preg_replace('/[^a-z0-9]+/', ' ', $name));
+    return $name !== '' ? 'name:' . $name : 'id:' . (int) $p->get_id();
+}
+
+/** Stable, first-choice-wins dedupe shared by every product grid path. */
+function sm_grid_distinct_products(array $products): array
+{
+    $seen = [];
+    $out = [];
+    foreach ($products as $p) {
+        if (!($p instanceof WC_Product)) { continue; }
+        $key = sm_grid_product_identity($p);
+        if (isset($seen[$key])) { continue; }
+        $seen[$key] = true;
+        $out[] = $p;
+    }
+    return $out;
+}
+
 function sm_diverse_products(array $products, int $count, int $max_per_cat = 2): array
 {
-    $clean = [];
-    foreach ($products as $p) {
-        if ($p instanceof WC_Product) {
-            $clean[] = $p;
-        }
-    }
+    $clean = sm_grid_distinct_products($products);
     if (count($clean) <= 1) {
         return $clean;
     }
@@ -1315,6 +1349,7 @@ function sm_rotation_pick(string $email, int $count, int $queue_id = 0): array
                     }, $scored);
                 }
             }
+            $pool_k = sm_grid_distinct_products($pool_k);
             $products = [];
             $ids      = function_exists('sm_ai_rotation_select')
                 ? sm_ai_rotation_select($pool_k, $count)
