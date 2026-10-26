@@ -27,7 +27,7 @@ add_action('admin_init', function () {
     };
 
     $exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
-    $check('send_products table exists (db 1.3.0)', $exists === $table, (string) $exists);
+    $check('send_products table exists (db 1.4.0 schema)', $exists === $table, (string) $exists);
     if ($exists !== $table) {
         wp_send_json(['results' => $results], 500);
     }
@@ -69,20 +69,61 @@ add_action('admin_init', function () {
 
         // 7) Sent history survives (non-repeat across future emails).
         $check('sent products stay in history', in_array(111, $seen, true) && in_array(222, $seen, true), implode(',', $seen));
+
+        // 8) Rotation: a real pick through the scheduler path on the live
+        // catalog returns a themed grid and reserves exactly its products.
+        $pick = sm_rotation_pick($email, 4, 999999903);
+        $picked_ids = array_map(function ($p) {
+            return (int) $p->get_id();
+        }, (array) $pick['products']);
+        $check(
+            'rotation pick returns a themed grid from the live catalog',
+            $pick['theme_label'] !== '' && count($picked_ids) >= 1,
+            ($pick['theme_label'] !== '' ? $pick['theme_label'] : 'no-theme') . ' / ' . count($picked_ids) . ' products'
+        );
+        $rot_reserved = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE email = %s AND state = 'reserved' AND queue_id = 999999903", $email));
+        $check('rotation pick reserves its products', $rot_reserved === count($picked_ids) && $rot_reserved > 0, "reserved=$rot_reserved");
+
+        // 9) A failed/cancelled rotation send releases its reservation; the
+        // products stay uncovered and pickable for the next cycle email.
+        sm_release_queue_products(999999903);
+        $in = implode(',', array_map('intval', $picked_ids ?: [0]));
+        $left_rot = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE email = %s AND product_id IN ($in)", $email));
+        $check('failed rotation send releases its reservation', $left_rot === 0, "left=$left_rot");
+
+        // 10) Sent rotation history drives product-level cycle coverage.
+        $wpdb->insert(SM_DB::table('sends'), ['queue_id' => null, 'email' => $email, 'template' => 'rotation_1', 'subject' => 'selftest', 'test_send' => 1, 'status' => 'sent', 'sent_at' => sm_now()]);
+        $send_id = (int) $wpdb->insert_id;
+        if ($picked_ids) {
+            $wpdb->insert($table, ['send_id' => $send_id, 'queue_id' => null, 'email' => $email, 'product_id' => $picked_ids[0], 'state' => 'sent', 'sent_at' => sm_now()]);
+        }
+        $covered = sm_rotation_covered_product_ids($email, gmdate('Y-m-d H:i:s', time() - 3600));
+        $check('sent rotation product enters cycle coverage', $picked_ids !== [] && in_array($picked_ids[0], $covered, true), implode(',', $covered));
+        $adv = sm_rotation_cycle_advance($picked_ids, $covered);
+        $adv_ok = count($picked_ids) === 1
+            ? ($adv['restart'] && $adv['uncovered'] === $picked_ids)
+            : (!$adv['restart'] && $adv['uncovered'] === array_slice($picked_ids, 1));
+        $check('covered products leave the cycle; full coverage restarts it', $adv_ok);
+
+        // 11) A singleton shelf still renders a clean email.
+        $one = SM_Templates::render('rotation_1', [
+            'email' => $email, 'first_name' => 'Test', 'zone' => 'US',
+            'rotation_theme_label' => 'Test Shelf',
+            'products' => [['id' => 1, 'name' => 'Solo Part', 'url' => home_url('/shop/'), 'price' => '$10.00', 'image' => '', 'caption' => 'for the job', 'theme' => 'braking']],
+        ]);
+        $one_html = is_array($one) ? (string) ($one['html'] ?? '') : '';
+        $check('rotation_1 renders a 1-product grid cleanly', strpos($one_html, 'Solo Part') !== false && strpos($one_html, 'Test Shelf') !== false);
     } finally {
-        // Cleanup: every row this test created, any state.
+        // Cleanup: every row this test created, any state, every table.
         $wpdb->query($wpdb->prepare("DELETE FROM $table WHERE email = %s", $email));
+        $wpdb->query($wpdb->prepare("DELETE FROM " . SM_DB::table('sends') . " WHERE email = %s", $email));
+        $wpdb->query($wpdb->prepare("DELETE FROM " . SM_DB::table('rotation_state') . " WHERE email = %s", $email));
         $left = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE email = %s", $email));
-        $check('cleanup removes all sentinel rows', $left === 0, "left=$left");
+        $left_sends = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM " . SM_DB::table('sends') . " WHERE email = %s", $email));
+        $check('cleanup removes all sentinel rows', $left === 0 && $left_sends === 0, "products=$left sends=$left_sends");
     }
 
-    $pass = !in_array(false, array_column($results, 'pass'), true);
-    // 12) Rotation: product-level cycle coverage - partial coverage leaves
-    // the rest uncovered, full coverage restarts the loop with the whole
-    // pool eligible again, stale IDs are tolerated, singletons stay
-    // pickable (no minimum grid threshold in the walk). Plus the live
-    // state table and theme universe exist.
-    global $wpdb;
+    // Pure cycle walk + live universe + state table (read-only).
     $adv1 = sm_rotation_cycle_advance([1, 2, 3], [1]);
     $adv2 = sm_rotation_cycle_advance([1, 2, 3], [1, 2, 3]);
     $adv3 = sm_rotation_cycle_advance([1, 2, 3], [1, 2, 3, 99]);
@@ -100,5 +141,6 @@ add_action('admin_init', function () {
         count((array) $univ) . ' themes in the live universe'
     );
 
+    $pass = !in_array(false, array_column($results, 'pass'), true);
     wp_send_json(['overall' => $pass ? 'PASS' : 'FAIL', 'results' => $results], $pass ? 200 : 500);
 });

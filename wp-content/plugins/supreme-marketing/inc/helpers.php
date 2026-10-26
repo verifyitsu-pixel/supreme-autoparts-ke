@@ -981,7 +981,11 @@ function sm_rotation_themes(): array
         if (!($p instanceof WC_Product)) {
             continue;
         }
-        foreach (sm_rotation_product_theme_keys($p) as $k) {
+        $pkeys = sm_rotation_product_theme_keys($p);
+        if ($pkeys === []) {
+            $pkeys = ['cat:__other__'];
+        }
+        foreach ($pkeys as $k) {
             $counts[$k] = ($counts[$k] ?? 0) + 1;
         }
         foreach ((array) wp_get_post_terms($p->get_id(), 'product_cat') as $t) {
@@ -993,7 +997,7 @@ function sm_rotation_themes(): array
     $out = [];
     foreach ($counts as $k => $n) {
         $out[$k] = [
-            'label' => str_starts_with($k, 'cat:') ? ($cat_names[substr($k, 4)] ?? substr($k, 4)) : substr($k, 6),
+            'label' => $k === 'cat:__other__' ? 'More parts' : (str_starts_with($k, 'cat:') ? ($cat_names[substr($k, 4)] ?? substr($k, 4)) : substr($k, 6)),
             'count' => $n,
         ];
     }
@@ -1007,6 +1011,9 @@ function sm_rotation_themes(): array
 /** Display label for a theme key, even when the cached universe missed it. */
 function sm_rotation_theme_label(string $key, array $themes): string
 {
+    if ($key === 'cat:__other__') {
+        return 'More parts';
+    }
     if (isset($themes[$key]['label'])) {
         return (string) $themes[$key]['label'];
     }
@@ -1131,7 +1138,11 @@ function sm_rotation_pick(string $email, int $count, int $queue_id = 0): array
         if (!isset($open_ids[(int) $p->get_id()])) {
             continue;
         }
-        foreach (sm_rotation_product_theme_keys($p) as $k) {
+        $pkeys = sm_rotation_product_theme_keys($p);
+        if ($pkeys === []) {
+            $pkeys = ['cat:__other__']; // no category/brand mapping: still coverable
+        }
+        foreach ($pkeys as $k) {
             $by_theme[$k][] = $p;
         }
     }
