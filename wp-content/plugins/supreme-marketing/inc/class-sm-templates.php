@@ -800,7 +800,7 @@ final class SM_Templates
         $zone = isset($_GET['sm_zone']) && sanitize_key((string) $_GET['sm_zone']) === 'ke' ? 'KE' : 'US';
         $products = [];
         if (function_exists('wc_get_products')) {
-            $items = SM_Recommend::best_sellers(12);
+            $items = sm_without_marketing_excluded(SM_Recommend::best_sellers(12)); // owner-banned items never featured
             $items = sm_diverse_products($items, 4);
 sm_reset_caption_dedup();
                             foreach ($items as $p) {

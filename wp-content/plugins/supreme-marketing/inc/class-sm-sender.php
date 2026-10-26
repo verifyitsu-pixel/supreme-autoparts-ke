@@ -252,6 +252,7 @@ final class SM_Sender
         if (!$products) {
             $products = SM_Recommend::best_sellers($fetch);
         }
+        $products = sm_without_marketing_excluded($products); // owner-banned items never featured
         // Cross-email non-repeat: only products never featured in (or already
         // reserved for) mail this recipient received. Selection and
         // reservation run under a per-recipient lock so a concurrent email

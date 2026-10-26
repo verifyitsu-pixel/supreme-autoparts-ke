@@ -148,6 +148,7 @@ final class SM_Campaigns
     private static function fresh_grid(array $products, string $email): array
     {
         $count = (int) sm_setting('recommend_count');
+        $products = sm_without_marketing_excluded($products); // owner-banned items never featured
         // Full-history exclusion, no silent repeats: short fresh pool shrinks
         // the grid, empty pool means no grid at all.
         $recent = sm_recent_sent_product_ids($email);

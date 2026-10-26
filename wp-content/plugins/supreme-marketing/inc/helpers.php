@@ -373,6 +373,28 @@ function sm_caption_clip(string $text, int $max = 140): string
 }
 
 /**
+ * Products the owner banned from marketing emails (user instruction
+ * 2026-10-26: the pictured Spectre universal tubes and elbows must never
+ * be featured). Marketing-only exclusion: catalog, prices and storefront
+ * pages are untouched. Exact product IDs grounded from the live catalog.
+ */
+function sm_marketing_excluded_ids(): array
+{
+    return [76288, 76287, 76285, 76284, 76282, 76281, 76280, 76250, 76249,
+            76248, 76246, 76245, 76244, 76242, 76241, 76240, 76238, 76237,
+            76236, 76235];
+}
+
+/** Drop marketing-banned products from a candidate list. */
+function sm_without_marketing_excluded(array $products): array
+{
+    $banned = array_flip(sm_marketing_excluded_ids());
+    return array_values(array_filter($products, function ($p) use ($banned) {
+        return !($p instanceof WC_Product) || !isset($banned[(int) $p->get_id()]);
+    }));
+}
+
+/**
  * Category-level use context for grid captions. Factual use descriptions of
  * the category, never product performance promises.
  */
