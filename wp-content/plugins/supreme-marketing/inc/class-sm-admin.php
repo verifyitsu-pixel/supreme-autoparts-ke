@@ -773,7 +773,7 @@ final class SM_Admin
             ARRAY_A
         );
         if ($ev) {
-            echo '<h2>Recent consent changes</h2><table class="widefat striped" style="max-width:860px;"><thead><tr><th>When</th><th>Email</th><th>Change</th><th>Detail</th></tr></thead><tbody>';
+            echo '<h2>Recent consent changes</h2><div style="overflow-x:auto;max-width:100%;"><table class="widefat striped" style="max-width:860px;"><thead><tr><th>When</th><th>Email</th><th>Change</th><th>Detail</th></tr></thead><tbody>';
             foreach ((array) $ev as $e) {
                 $pl = json_decode((string) ($e['payload'] ?? ''), true);
                 $pl = is_array($pl) ? $pl : [];
@@ -786,7 +786,7 @@ final class SM_Admin
                 }
                 echo '<tr><td>' . esc_html((string) $e['created_at']) . '</td><td>' . esc_html((string) $e['email']) . '</td><td>' . esc_html($what) . '</td><td>' . esc_html($det) . '</td></tr>';
             }
-            echo '</tbody></table>';
+            echo '</tbody></table></div>';
         }
         $pages = max(1, (int) ceil($total / $per));
         if ($pages > 1) {
