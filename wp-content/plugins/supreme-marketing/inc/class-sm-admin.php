@@ -139,7 +139,76 @@ final class SM_Admin
                 break;
             case 'manage_consent':
                 $bulk_do = sanitize_key((string) ($_POST['bulk_do'] ?? 'record'));
+                $scope = sanitize_key((string) ($_POST['scope'] ?? 'selected'));
                 $admin_id = get_current_user_id();
+                $status_filter = sanitize_key((string) ($_POST['status_filter'] ?? ''));
+
+                /* ---- ALL-matching scope: review first, apply only on confirm ---- */
+                if ($scope === 'all') {
+                    if (empty($_POST['confirm_apply'])) {
+                        if ($bulk_do !== 'revoke' && empty($_POST['attest'])) {
+                            $back = add_query_arg('sm_notice', 'need_attest', $back);
+                            break;
+                        }
+                        $params = [
+                            'bulk_do'       => $bulk_do,
+                            'status_filter' => $status_filter,
+                            'detail'        => sanitize_key((string) ($_POST['consent_where'] ?? 'other')) . (($d = sanitize_text_field((string) ($_POST['consent_detail'] ?? ''))) !== '' ? ': ' . $d : ''),
+                            'date'          => sanitize_text_field((string) ($_POST['consent_date'] ?? '')),
+                            'admin_id'      => $admin_id,
+                        ];
+                        $rkey = wp_generate_password(12, false, false);
+                        set_transient('sm_consent_review_' . $rkey, $params, 10 * MINUTE_IN_SECONDS);
+                        wp_safe_redirect(admin_url('admin.php?page=sm-subscribers&sm_review=' . $rkey));
+                        exit;
+                    }
+                    $rkey = sanitize_key((string) ($_POST['review_key'] ?? ''));
+                    $params = get_transient('sm_consent_review_' . $rkey);
+                    if (!is_array($params)) {
+                        $back = add_query_arg('sm_notice', 'review_expired', $back);
+                        break;
+                    }
+                    delete_transient('sm_consent_review_' . $rkey);
+                    global $wpdb;
+                    $t = SM_DB::table('subscribers');
+                    $sf = sanitize_key((string) ($params['status_filter'] ?? ''));
+                    $where = $sf !== '' ? $wpdb->prepare('WHERE status = %s', $sf) : '';
+                    $rows = $wpdb->get_results("SELECT id, email, status FROM $t $where LIMIT 10000", ARRAY_A);
+                    @set_time_limit(180);
+                    if (($params['bulk_do'] ?? '') === 'revoke') {
+                        $n = 0;
+                        $skipped = 0;
+                        foreach ((array) $rows as $row) {
+                            if (in_array($row['status'], ['unsubscribed', 'bounced', 'complained'], true)) {
+                                $skipped++;
+                                continue;
+                            }
+                            if (SM_Subscribers::admin_revoke_consent((int) $row['id'], $admin_id)) {
+                                $n++;
+                            }
+                        }
+                        $back = add_query_arg('sm_notice', 'revoked_' . $n . '_' . $skipped, $back);
+                        break;
+                    }
+                    if (empty($_POST['attest'])) {
+                        $back = add_query_arg('sm_notice', 'need_attest', $back);
+                        break;
+                    }
+                    $ok = 0;
+                    $skipped = 0;
+                    foreach ((array) $rows as $row) {
+                        $r = SM_Subscribers::record_external_consent((string) $row['email'], (string) $params['detail'], (string) $params['date'], $admin_id);
+                        if ($r === 'ok') {
+                            $ok++;
+                        } else {
+                            $skipped++;
+                        }
+                    }
+                    $back = add_query_arg('sm_notice', 'consent_' . $ok . '_' . $skipped, $back);
+                    break;
+                }
+
+                /* ---- Selected-rows / single-email scope ---- */
                 $emails = [];
                 foreach ((array) ($_POST['ids'] ?? []) as $cid) {
                     $crow = SM_Subscribers::get((int) $cid);
@@ -154,7 +223,7 @@ final class SM_Admin
                             $n++;
                         }
                     }
-                    $back = add_query_arg('sm_notice', 'revoked_' . $n, $back);
+                    $back = add_query_arg('sm_notice', 'revoked_' . $n . '_0', $back);
                     break;
                 }
                 if (empty($_POST['attest'])) {
@@ -264,7 +333,16 @@ final class SM_Admin
             } elseif ($n === 'need_attest') {
                 echo '<div class="notice notice-error"><p>Nothing changed: tick the confirmation that each customer personally gave consent first.</p></div>';
             } elseif (str_starts_with($n, 'revoked_')) {
-                echo '<div class="notice notice-success"><p>Marketing emails turned off for ' . esc_html(substr($n, 8)) . ' subscriber(s). No email was sent.</p></div>';
+                $rparts = explode('_', $n);
+                $rok = (int) ($rparts[1] ?? 0);
+                $rskip = (int) ($rparts[2] ?? 0);
+                $rmsg = 'Marketing emails turned off for ' . $rok . ' subscriber(s). No email was sent.';
+                if ($rskip > 0) {
+                    $rmsg .= ' ' . $rskip . ' already off or suppressed.';
+                }
+                echo '<div class="notice notice-success"><p>' . esc_html($rmsg) . '</p></div>';
+            } elseif ($n === 'review_expired') {
+                echo '<div class="notice notice-error"><p>That bulk review expired. Start it again - nothing was changed.</p></div>';
             } elseif (str_starts_with($n, 'consent_')) {
                 $parts = explode('_', $n);
                 $cok = (int) ($parts[1] ?? 0);
@@ -488,6 +566,44 @@ final class SM_Admin
         }
         self::header('Subscribers');
         global $wpdb;
+        $review_key = sanitize_key((string) ($_GET['sm_review'] ?? ''));
+        if ($review_key !== '') {
+            $params = get_transient('sm_consent_review_' . $review_key);
+            if (is_array($params)) {
+                $t2 = SM_DB::table('subscribers');
+                $sf2 = sanitize_key((string) ($params['status_filter'] ?? ''));
+                $where2 = $sf2 !== '' ? $wpdb->prepare('WHERE status = %s', $sf2) : '';
+                $bd = $wpdb->get_results("SELECT status, COUNT(*) AS n FROM $t2 $where2 GROUP BY status", ARRAY_A);
+                $sample = $wpdb->get_results("SELECT email FROM $t2 $where2 ORDER BY id DESC LIMIT 8", ARRAY_A);
+                $tot = 0;
+                $bits = [];
+                foreach ((array) $bd as $b) {
+                    $tot += (int) $b['n'];
+                    $bits[] = $b['status'] . ': ' . (int) $b['n'];
+                }
+                $is_revoke = (($params['bulk_do'] ?? '') === 'revoke');
+                $flabel = $sf2 !== '' ? $sf2 : 'all statuses';
+                echo '<div style="background:#fff;border:2px solid #d63638;padding:12px 14px;margin-bottom:14px;max-width:860px;">'
+                    . '<h2 style="margin-top:0;">Review the exact audience before anything changes</h2>'
+                    . '<p>Action: <strong>' . ($is_revoke ? 'Turn OFF marketing' : 'Record external consent (opt in)') . '</strong> for <strong>' . (int) $tot . ' subscribers</strong> matching filter <strong>' . esc_html($flabel) . '</strong>.</p>'
+                    . '<p>Breakdown: ' . esc_html(implode(', ', $bits)) . '. Bounced/complained are always skipped; already-unsubscribed are skipped when turning off.'
+                    . (!$is_revoke ? ' Previously unsubscribed customers in this set will be treated as having given you FRESH consent - only continue if that is true.' : '')
+                    . '</p>'
+                    . '<p>Sample: ' . esc_html(implode(', ', array_map(static function ($s) { return (string) $s['email']; }, (array) $sample))) . ($tot > 8 ? ', ...' : '') . '</p>'
+                    . '<form method="post">'
+                    . wp_nonce_field('sm_admin_manage_consent', '_wpnonce', true, false)
+                    . '<input type="hidden" name="sm_admin_action" value="manage_consent">'
+                    . '<input type="hidden" name="scope" value="all">'
+                    . '<input type="hidden" name="confirm_apply" value="1">'
+                    . '<input type="hidden" name="review_key" value="' . esc_attr($review_key) . '">'
+                    . ($is_revoke ? '' : '<p><label><input type="checkbox" name="attest" value="1" required> <strong>I confirm every customer in this set personally gave me consent, including fresh consent from any who had unsubscribed.</strong></label></p>')
+                    . '<p><button type="submit" class="button button-primary">Confirm: apply to all ' . (int) $tot . '</button> '
+                    . '<a class="button" href="' . esc_url(admin_url('admin.php?page=sm-subscribers')) . '">Cancel</a></p>'
+                    . '</form></div>';
+            } else {
+                echo '<div class="notice notice-error"><p>That bulk review expired. Start it again.</p></div>';
+            }
+        }
         $t = SM_DB::table('subscribers');
         $status = sanitize_key((string) ($_GET['status'] ?? ''));
         $paged = max(1, (int) ($_GET['paged'] ?? 1));
@@ -543,6 +659,10 @@ final class SM_Admin
         echo '<form method="post">'
             . wp_nonce_field('sm_admin_manage_consent', '_wpnonce', true, false)
             . '<input type="hidden" name="sm_admin_action" value="manage_consent">'
+            . '<input type="hidden" name="status_filter" value="' . esc_attr($status) . '">'
+            . '<p style="margin:10px 0;">Apply to: '
+            . '<label><input type="radio" name="scope" value="selected" checked> selected rows</label> '
+            . '<label><input type="radio" name="scope" value="all"> <strong>ALL ' . (int) $total . ' matching this filter</strong> (asks you to review the exact audience first)</label></p>'
             . '<p style="margin:10px 0;">With selected: '
             . '<select name="consent_where">'
             . '<option value="in_person">In person</option>'
