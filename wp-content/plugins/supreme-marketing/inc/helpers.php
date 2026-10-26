@@ -761,8 +761,18 @@ function sm_product_caption(WC_Product $p): string
     $caption = sm_caption_clip($caption, 110);
     $key = md5(strtolower($caption));
     if ($caption !== '' && isset($sm_used_captions[$key])) {
-        // Same caption already shown for another product in this grid.
-        $alt = trim($brand . ($cat !== '' ? ' ' . $cat : ''));
+        // Same caption already shown for another product in this grid:
+        // differentiate with the name's own distinguishing tail.
+        $tail = '';
+        if (preg_match('/[-\x{2013}]\s*([^-\x{2013}]{2,24})\s*$/u', $name, $m)) {
+            $tail = trim($m[1]);
+        } else {
+            $words = preg_split('/\s+/', $name);
+            $tail  = implode(' ', array_slice((array) $words, -2));
+        }
+        $lead = trim($brand . ($tail !== '' ? ' ' . $tail : ''));
+        $use2 = sm_theme_phrase(sm_product_theme($p));
+        $alt  = $lead . ($use2 !== '' ? ' - ' . $use2 : '');
         $caption = ($alt !== '' && !isset($sm_used_captions[md5(strtolower($alt))])) ? $alt : '';
         $key = md5(strtolower($caption));
     }
