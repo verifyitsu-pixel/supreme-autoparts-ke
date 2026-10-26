@@ -888,10 +888,21 @@ function sm_grid_product_identity(WC_Product $p): string
     if ($sku !== '') {
         $name = (string) preg_replace('/(?<![a-z0-9])' . preg_quote($sku, '/') . '(?![a-z0-9])/i', ' ', $name);
     }
-    // Named product lines with trailing vehicle fitment are one product,
-    // not a different card for every vehicle/year or front/rear variant.
-    $name = (string) preg_replace('/\b(kit|system)\s+(?:rear|front)\b.*/i', '$1', $name);
-    $name = (string) preg_replace('/\b(kit|filter|bracket|system|spring|shock|strut|rotor|caliper|pads?)\s+(?:(?:front|rear)\s+)?(?:for\s+)?(?:19|20)?\d{2}(?:[-+]|\s).*/i', '$1', $name);
+    // Require a recognisable named line before stripping fitment. Generic
+    // "Wilwood kit front XRS6R" must retain XRS6R; "Uni Filter" is not a
+    // specific product line. Do not merge every kit/filter of one brand.
+    if (preg_match('/^(firestone ride-rite air helper spring kit)\b/i', $name, $line)) {
+        $name = $line[1];
+    } else {
+        $name = (string) preg_replace_callback(
+            '/^(.*?)\b(kit|filter|bracket|system|spring|shock|strut|rotor|caliper|pads?)\s+(?:(?:front|rear)\s+)?(?:for\s+)?(?:19|20)?\d{2}(?:[-+]|\s).*/i',
+            function ($m) {
+                $prefix = trim($m[1] . $m[2]);
+                return count(preg_split('/\s+/', $prefix)) >= 4 ? $prefix : $m[0];
+            },
+            $name
+        );
+    }
     $name = (string) preg_replace('/\b(?:size|colour|color|finish)\s*:\s*[^,;()]+/i', ' ', $name);
     $name = (string) preg_replace('/\b\d+(?:\.\d+)?\s*(?:mm|cm|inch|inches|oz|ml|litres?|liters?)\b/i', ' ', $name);
     $name = (string) preg_replace('/\b(?:black|white|red|blue|silver|polished|chrome|matte|gloss|small|medium|large|xl|xxl)\b/i', ' ', $name);

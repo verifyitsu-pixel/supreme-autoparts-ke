@@ -238,7 +238,7 @@ final class SM_Sender
     {
         sm_reset_caption_dedup(); // per-grid caption uniqueness
         $out = [];
-        foreach ($products as $p) {
+        foreach (sm_grid_distinct_products($products) as $p) {
             if ($p instanceof WC_Product) {
                 $out[] = sm_product_payload($p, $zone);
             }

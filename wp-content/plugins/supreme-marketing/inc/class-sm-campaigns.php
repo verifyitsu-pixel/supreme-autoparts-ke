@@ -129,14 +129,14 @@ final class SM_Campaigns
         if ($slug === '' || !function_exists('wc_get_products')) {
             return [];
         }
-        return (array) wc_get_products([
+        return sm_diverse_products((array) wc_get_products([
             'status'       => 'publish',
             'stock_status' => 'instock',
             'category'     => [$slug],
-            'limit'        => $count,
+            'limit'        => $count + 60,
             'orderby'      => 'popularity',
             'order'        => 'DESC',
-        ]);
+        ]), $count);
     }
 
     /**
@@ -212,12 +212,14 @@ final class SM_Campaigns
             } elseif ($c['type'] === 'category') {
                 $products = SM_Sender::payload_for(self::category_products($cat_slug, (int) sm_setting('recommend_count')), $zone);
             } else {
+                $manual = [];
                 foreach ($product_ids as $pid) {
                     $p = wc_get_product($pid);
                     if ($p) {
-                        $products[] = sm_product_payload($p, $zone);
+                        $manual[] = $p;
                     }
                 }
+                $products = SM_Sender::payload_for(sm_grid_distinct_products($manual), $zone);
                 if (!$products && $cat_slug !== '') {
                     $products = SM_Sender::payload_for(self::category_products($cat_slug, (int) sm_setting('recommend_count')), $zone);
                 }
