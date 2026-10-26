@@ -395,6 +395,57 @@ function sm_without_marketing_excluded(array $products): array
 }
 
 /**
+ * Marketing eligibility (owner instruction 2026-10-26, message
+ * phonemsg-01M5VY3S6C3R26ASJJF3C8VTN1 + standing "focus on performance"):
+ * marketing emails feature actual performance parts. A product is eligible
+ * when any of its category names matches a performance-part type (grounded
+ * in the live catalog's category structure: Cold Air Intakes, Brake Kits
+ * Performance, Coilovers, Exhaust, Intercoolers, etc.). Fabrication raw
+ * stock (aluminum tubing bins), wear/service items and brand-only
+ * categories do not qualify on their own. The recommendation algorithm's
+ * scoring is untouched - this only narrows the pool it scores over.
+ */
+function sm_marketing_performance_terms(): array
+{
+    return [
+        'intake', 'air filter', 'exhaust', 'muffler', 'header', 'manifold',
+        'cat-back', 'axle-back', 'downpipe', 'mid-pipe', 'x-pipe', 'h-pipe',
+        'turbo', 'supercharg', 'intercooler', 'wastegate', 'blow-off',
+        'boost', 'suspension', 'coilover', 'shock', 'strut', 'sway',
+        'control arm', 'brake', 'rotor', 'caliper', 'clutch', 'drivetrain',
+        'differential', 'ignition', 'tuner', 'programmer', 'throttle',
+        'camshaft', 'pulley', 'nitrous',
+    ];
+}
+
+/** True when the product belongs to a performance-part category. */
+function sm_is_performance_product(WC_Product $p): bool
+{
+    $cats = (array) wp_get_post_terms($p->get_id(), 'product_cat', ['fields' => 'names']);
+    foreach ($cats as $c) {
+        $c = strtolower(html_entity_decode((string) $c));
+        foreach (sm_marketing_performance_terms() as $term) {
+            if (strpos($c, $term) !== false) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/** Marketing-eligible candidates: not owner-banned, performance parts only. */
+function sm_marketing_eligible(array $products): array
+{
+    $banned = array_flip(sm_marketing_excluded_ids());
+    return array_values(array_filter($products, function ($p) use ($banned) {
+        if (!($p instanceof WC_Product) || isset($banned[(int) $p->get_id()])) {
+            return false;
+        }
+        return sm_is_performance_product($p);
+    }));
+}
+
+/**
  * Category-level use context for grid captions. Factual use descriptions of
  * the category, never product performance promises.
  */

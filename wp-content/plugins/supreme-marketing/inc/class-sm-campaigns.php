@@ -148,7 +148,7 @@ final class SM_Campaigns
     private static function fresh_grid(array $products, string $email): array
     {
         $count = (int) sm_setting('recommend_count');
-        $products = sm_without_marketing_excluded($products); // owner-banned items never featured
+        $products = sm_marketing_eligible($products); // owner-banned items never featured
         // Full-history exclusion, no silent repeats: short fresh pool shrinks
         // the grid, empty pool means no grid at all.
         $recent = sm_recent_sent_product_ids($email);
@@ -207,7 +207,7 @@ final class SM_Campaigns
             $zone = sm_subscriber_zone($sub);
             $products = [];
             if ($personalize) {
-                $products = SM_Sender::payload_for(self::fresh_grid(SM_Recommend::for_subscriber($sub, (int) sm_setting('recommend_count') + 24), (string) ($sub['email'] ?? '')), $zone);
+                $products = SM_Sender::payload_for(self::fresh_grid(SM_Recommend::for_subscriber($sub, (int) sm_setting('recommend_count') + 60), (string) ($sub['email'] ?? '')), $zone);
             } elseif ($c['type'] === 'category') {
                 $products = SM_Sender::payload_for(self::category_products($cat_slug, (int) sm_setting('recommend_count')), $zone);
             } else {
@@ -221,7 +221,7 @@ final class SM_Campaigns
                     $products = SM_Sender::payload_for(self::category_products($cat_slug, (int) sm_setting('recommend_count')), $zone);
                 }
                 if (!$products) {
-                    $products = SM_Sender::payload_for(self::fresh_grid(SM_Recommend::best_sellers((int) sm_setting('recommend_count') + 24), (string) ($sub['email'] ?? '')), $zone);
+                    $products = SM_Sender::payload_for(self::fresh_grid(SM_Recommend::best_sellers((int) sm_setting('recommend_count') + 60), (string) ($sub['email'] ?? '')), $zone);
                 }
             }
             if (($personalize || $c['type'] === 'category') && !$products) {

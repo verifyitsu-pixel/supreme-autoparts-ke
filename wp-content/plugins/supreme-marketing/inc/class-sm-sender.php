@@ -242,7 +242,7 @@ final class SM_Sender
     {
         $zone = sm_subscriber_zone($sub);
         $count = (int) sm_setting('recommend_count');
-        $fetch = $count + 24; // over-fetch: variety pass + cross-email non-repeat need room
+        $fetch = $count + 60; // over-fetch: eligibility filter + variety pass + cross-email non-repeat need room
         $products = [];
         if ($sub && in_array($template, ['winback_1', 'winback_2'], true)) {
             $products = SM_Recommend::for_subscriber($sub, $fetch);
@@ -252,7 +252,7 @@ final class SM_Sender
         if (!$products) {
             $products = SM_Recommend::best_sellers($fetch);
         }
-        $products = sm_without_marketing_excluded($products); // owner-banned items never featured
+        $products = sm_marketing_eligible($products); // owner-banned items never featured
         // Cross-email non-repeat: only products never featured in (or already
         // reserved for) mail this recipient received. Selection and
         // reservation run under a per-recipient lock so a concurrent email

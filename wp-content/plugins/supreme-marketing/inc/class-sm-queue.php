@@ -235,7 +235,7 @@ final class SM_Queue
             SM_Flows::start($sub, 'service_reminder', 'booking|' . $bid, [
                 'car'      => $car,
                 'booking'  => (string) get_post_meta($bid, '_sa_bk_ref', true),
-                'products' => SM_Sender::payload_for(sm_without_marketing_excluded(SM_Recommend::best_sellers(2)), 'KE'),
+                'products' => SM_Sender::payload_for(array_slice(sm_marketing_eligible(SM_Recommend::best_sellers(40)), 0, 2), 'KE'),
             ]);
         }
     }
