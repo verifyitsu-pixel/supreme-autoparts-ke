@@ -38,7 +38,7 @@ if (!defined('SM_AI_DAILY_NEURON_BUDGET')) {
     // (10,000 neurons/day, no overage billing). The adapter stops calling
     // for the day at 2,000 so the account keeps headroom even if usage
     // accounting drifts; a 429 trips the budget immediately.
-    define('SM_AI_DAILY_NEURON_BUDGET', 2000);
+    define('SM_AI_DAILY_NEURON_BUDGET', 5000);
 }
 
 /**
@@ -174,10 +174,11 @@ function sm_ai_call(string $task, array $facts, int $max_tokens = 300): ?array
     $reserve = 300;
     sm_ai_budget_add($reserve);
     // Provider latency from the store's region measures above 4s on cold
-    // calls (observed cURL 28 at 4002ms); builds run in cron context, so a
-    // 10s ceiling is safe and avoids burning the reserve on timeouts.
+    // calls (observed cURL 28 at 4002ms, later at 10002ms); builds run in
+    // cron context, so a 20s ceiling is safe and a completed call
+    // reconciles the reserve to actual usage instead of keeping it.
     $resp = wp_remote_post(sm_ai_endpoint(), [
-        'timeout' => 10,
+        'timeout' => 20,
         'headers' => ['Authorization' => 'Bearer ' . sm_ai_token(), 'Content-Type' => 'application/json'],
         'body'    => wp_json_encode([
             'messages'             => [
