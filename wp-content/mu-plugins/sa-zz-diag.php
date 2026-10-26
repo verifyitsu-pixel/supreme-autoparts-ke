@@ -1,5 +1,5 @@
 <?php
-/* TEMPORARY search-request memory profiler for the live OOM diagnosis.
+/* TEMPORARY search-request memory profiler for the live OOM diagnosis (v2).
  * Logs per-stage memory for front-end /?s= requests into the WC "sa-diag" log.
  * REMOVE after diagnosis. No behavior change: read-only logging. */
 if (!function_exists('sa_diag_on')) {
@@ -8,7 +8,13 @@ if (!function_exists('sa_diag_on')) {
         if (is_admin() || (defined('REST_REQUEST') && REST_REQUEST) || (defined('DOING_AJAX') && DOING_AJAX) || (defined('DOING_CRON') && DOING_CRON)) {
             return false;
         }
-        return isset($_GET['s']) && $_GET['s'] !== ''; // phpcs:ignore
+        $s = isset($_GET['s']) ? (string) $_GET['s'] : ''; // phpcs:ignore
+        // Exclude the Matomo tracker app (its s= param is seconds) - only real site URLs.
+        $uri = (string) ($_SERVER['REQUEST_URI'] ?? '');
+        if (strpos($uri, '/wp-content/plugins/matomo/') !== false) {
+            return false;
+        }
+        return $s !== '';
     }
     function sa_diag_log(string $stage, string $extra = ''): void
     {
@@ -39,6 +45,10 @@ if (!function_exists('sa_diag_on')) {
             sa_diag_log('loop_end' . ($q->is_main_query() ? ':main' : ':secondary'));
         }
     });
+    add_action('get_footer', static function (): void { sa_diag_log('get_footer:0'); }, 0);
+    add_action('get_footer', static function (): void { sa_diag_log('get_footer:9999'); }, 9999);
+    add_action('wp_footer', static function (): void { sa_diag_log('wp_footer:0'); }, 0);
+    add_action('wp_footer', static function (): void { sa_diag_log('wp_footer:9999'); }, 9999);
     add_action('shutdown', static function (): void {
         $e = error_get_last();
         sa_diag_log('shutdown', is_array($e) ? ('last=' . substr((string) $e['message'] . ' @' . ($e['file'] ?? '') . ':' . ($e['line'] ?? ''), 0, 220)) : 'clean');
