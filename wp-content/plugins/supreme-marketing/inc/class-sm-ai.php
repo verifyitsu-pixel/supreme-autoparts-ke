@@ -103,6 +103,18 @@ function sm_ai_budget_trip(): void
     update_option('sm_ai_neurons', ['date' => gmdate('Y-m-d'), 'neurons' => SM_AI_DAILY_NEURON_BUDGET], false);
 }
 
+/** Last provider failure, for diagnostics (self-test detail, admin). */
+function sm_ai_note_failure(string $why): void
+{
+    update_option('sm_ai_last_error', ['at' => gmdate('c'), 'why' => $why], false);
+}
+
+function sm_ai_last_error(): string
+{
+    $d = get_option('sm_ai_last_error', []);
+    return is_array($d) ? (string) ($d['why'] ?? '') : '';
+}
+
 /**
  * Extract the decoded JSON object from a Workers AI chat completion.
  * Truncated or refused completions (finish_reason != "stop") are
@@ -175,19 +187,30 @@ function sm_ai_call(string $task, array $facts, int $max_tokens = 300): ?array
         ]),
     ]);
     if (is_wp_error($resp)) {
+        sm_ai_note_failure('transport:' . $resp->get_error_message());
         return null;
     }
     $code = (int) wp_remote_retrieve_response_code($resp);
     if ($code === 429) {
         sm_ai_budget_trip();
-        return null;
-    }
-    if ($code !== 200) {
+        sm_ai_note_failure('http_429');
         return null;
     }
     $body = json_decode((string) wp_remote_retrieve_body($resp), true);
-    sm_ai_budget_add(sm_ai_neurons_used($body) - $reserve);
-    return sm_ai_extract_json($body);
+    // Reconcile the reserve whenever the provider reported usage - even on
+    // a non-200 or an unusable completion, billed neurons must count.
+    if (is_array($body) && sm_ai_neurons_used($body) > 0) {
+        sm_ai_budget_add(sm_ai_neurons_used($body) - $reserve);
+    }
+    if ($code !== 200) {
+        sm_ai_note_failure('http_' . $code);
+        return null;
+    }
+    $out = sm_ai_extract_json($body);
+    if ($out === null) {
+        sm_ai_note_failure(is_array($body) ? 'unusable_completion' : 'bad_json');
+    }
+    return $out;
 }
 
 /**
@@ -244,13 +267,15 @@ function sm_ai_rotation_plan(array $themes, array $available_keys, string $chose
     if (!sm_ai_ready()) {
         return null;
     }
-    $grid_ids = [];
+    // Bind the exact input facts, not just ids: a changed name, price or
+    // stock state must invalidate copy composed from the old facts.
+    $facts_fp = [];
     foreach ($products as $p) {
         if ($p instanceof WC_Product) {
-            $grid_ids[] = (int) $p->get_id();
+            $facts_fp[] = (int) $p->get_id() . ':' . md5($p->get_name() . '|' . (string) $p->get_price() . '|' . (string) $p->get_stock_status());
         }
     }
-    $cache = 'sm_ai_plan_v' . SM_AI_PROMPT_VERSION . '_' . md5($chosen_key . '|' . implode(',', $grid_ids));
+    $cache = 'sm_ai_plan_v' . SM_AI_PROMPT_VERSION . '_' . md5($chosen_key . '|' . implode(',', $facts_fp));
     $hit   = get_transient($cache);
     if (is_array($hit)) {
         return $hit;

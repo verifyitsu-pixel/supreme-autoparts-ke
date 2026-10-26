@@ -170,10 +170,11 @@ add_action('admin_init', function () {
         if (sm_ai_ready()) {
             $nb     = get_option('sm_ai_neurons', []);
             $before = is_array($nb) ? (int) ($nb['neurons'] ?? 0) : 0;
-            $j      = sm_ai_call('TEST-ONLY probe. Reply with JSON {"ok": true} and nothing else.', ['probe' => 'self-test'], 60);
+            $j      = sm_ai_call('TEST-ONLY probe. Reply with JSON {"ok": true} and nothing else.', ['probe' => 'self-test'], 150);
             $nb2    = get_option('sm_ai_neurons', []);
             $after  = is_array($nb2) ? (int) ($nb2['neurons'] ?? 0) : 0;
-            $check('AI live provider roundtrip (isolated test namespace)', is_array($j) && !empty($j['ok']) && $after > $before, 'neurons ' . $before . '->' . $after);
+            $why    = (is_array($j) && !empty($j['ok'])) ? '' : (function_exists('sm_ai_last_error') ? sm_ai_last_error() : '?');
+            $check('AI live provider roundtrip (isolated test namespace)', is_array($j) && !empty($j['ok']) && $after > $before, 'neurons ' . $before . '->' . $after . ($why !== '' ? ' last_failure=' . $why : ''));
         } else {
             $check('AI adapter fail-closed while no credential installed', true);
         }
