@@ -131,12 +131,6 @@ final class SM_Admin
                     $wpdb->delete(SM_DB::table('campaigns'), ['id' => $id]);
                 }
                 break;
-            case 'add_subscriber':
-                $email = strtolower(trim(sanitize_email((string) ($_POST['email'] ?? ''))));
-                if (is_email($email)) {
-                    SM_Consent::subscribe_now($email, 'admin_add');
-                }
-                break;
             case 'manage_consent':
                 $bulk_do = sanitize_key((string) ($_POST['bulk_do'] ?? 'record'));
                 $scope = sanitize_key((string) ($_POST['scope'] ?? 'selected'));
@@ -740,11 +734,6 @@ final class SM_Admin
             . '<p><label><input type="checkbox" name="attest" value="1" required> <strong>I confirm this customer personally asked to receive marketing emails.</strong></label> '
             . '<button type="submit" class="button button-primary">Record consent</button></p>'
             . '</form></div>';
-        echo '<form method="post" style="margin-bottom:14px;">'
-            . wp_nonce_field('sm_admin_add_subscriber', '_wpnonce', true, false)
-            . '<input type="hidden" name="sm_admin_action" value="add_subscriber">'
-            . '<input type="email" name="email" placeholder="name@example.com" required> '
-            . '<button type="submit" class="button">Add (starts the welcome series)</button></form>';
 
         echo '<form method="post">'
             . wp_nonce_field('sm_admin_manage_consent', '_wpnonce', true, false)
@@ -765,7 +754,7 @@ final class SM_Admin
             . '<label><input type="checkbox" name="attest" value="1"> Each selected customer personally gave consent</label> '
             . '<button type="submit" name="bulk_do" value="record" class="button">Record consent for selected</button> '
             . '<button type="submit" name="bulk_do" value="revoke" class="button">Turn off marketing for selected</button></p>';
-        echo '<table class="widefat striped"><thead><tr><th></th><th>Email</th><th>Name</th><th>Status</th><th>Source</th><th>Consent</th><th>Region</th><th>Orders</th><th>Spent</th><th>Last order</th><th>Since</th></tr></thead><tbody>';
+        echo '<div style="overflow-x:auto;max-width:100%;"><table class="widefat striped" style="min-width:820px;"><thead><tr><th></th><th>Email</th><th>Name</th><th>Status</th><th>Source</th><th>Consent</th><th>Region</th><th>Orders</th><th>Spent</th><th>Last order</th><th>Since</th></tr></thead><tbody>';
         foreach ((array) $rows as $r) {
             echo '<tr><td><input type="checkbox" name="ids[]" value="' . (int) $r['id'] . '"></td><td>' . esc_html($r['email']) . '</td>'
                 . '<td>' . esc_html(trim($r['first_name'] . ' ' . $r['last_name'])) . '</td>'
@@ -778,7 +767,7 @@ final class SM_Admin
                 . '<td>' . esc_html((string) $r['last_order_at']) . '</td>'
                 . '<td>' . esc_html((string) $r['created_at']) . '</td></tr>';
         }
-        echo '</tbody></table></form>';
+        echo '</tbody></table></div></form>';
         $ev = $wpdb->get_results(
             "SELECT * FROM " . SM_DB::table('events') . " WHERE type IN ('consent_recorded','consent_revoked_admin') ORDER BY id DESC LIMIT 15",
             ARRAY_A
