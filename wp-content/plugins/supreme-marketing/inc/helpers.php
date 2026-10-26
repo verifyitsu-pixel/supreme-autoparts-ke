@@ -636,6 +636,9 @@ function sm_category_function(string $cat): string
     $c = strtolower($cat);
     $map = [
         'alignment'   => 'to set alignment angles after suspension work',
+        'air helper'  => 'adds load support when hauling or towing',
+        'air spring'  => 'adds load support when hauling or towing',
+        'air suspension' => 'adds load support when hauling or towing',
         'camber'      => 'to set camber after a lift or lowering',
         'coilover'    => 'ride-height adjustable suspension',
         'sway'        => 'for your suspension setup',
@@ -773,7 +776,12 @@ function sm_product_caption(WC_Product $p): string
     // 2) Name-derived feature hook + function context (theme first).
     if ($caption === '') {
         $feat = sm_name_features($name);
-        $use  = sm_category_function($cat);
+        // The name is the most specific source: "Alignment Cam Kit" says
+        // what the part does even when its shelf category is generic.
+        $use  = sm_category_function($name);
+        if ($use === '') {
+            $use = sm_category_function($cat);
+        }
         if ($use === '') {
             $use = sm_theme_phrase(sm_product_theme($p));
         }
@@ -804,10 +812,11 @@ function sm_product_caption(WC_Product $p): string
         // Same caption already shown for another product in this grid:
         // differentiate with the name's own distinguishing tail.
         $tail = '';
-        if (preg_match('/[-\x{2013}]\s*([^-\x{2013}]{2,24})\s*$/u', $name, $m)) {
+        $clean = trim((string) preg_replace('/\s*\([^)]*\)\s*/u', ' ', $name)); // drop (part numbers)
+        if (preg_match('/[-\x{2013}]\s*([^-\x{2013}]{2,24})\s*$/u', $clean, $m)) {
             $tail = trim($m[1]);
         } else {
-            $words = preg_split('/\s+/', $name);
+            $words = preg_split('/\s+/', $clean);
             $tail  = implode(' ', array_slice((array) $words, -2));
         }
         $lead = trim($brand . ($tail !== '' ? ' ' . $tail : ''));
