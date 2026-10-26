@@ -120,13 +120,13 @@ final class SM_Templates
         foreach (array_slice($products, 0, 4) as $p) {
             $img = '';
             if (!empty($p['image'])) {
-                $img = '<a href="' . esc_url($p['url']) . '"><img src="' . esc_url($p['image']) . '" width="150" alt="" style="display:block;width:150px;height:150px;object-fit:contain;border:1px solid ' . self::LINE . ';border-radius:6px;margin:0 auto 8px auto;" /></a>';
+                $img = '<a href="' . esc_url($p['url']) . '"><img src="' . esc_url($p['image']) . '" width="150" alt="" style="display:block;width:150px;max-width:100%;height:150px;object-fit:contain;border:1px solid ' . self::LINE . ';border-radius:6px;margin:0 auto 8px auto;" /></a>';
             }
             $caption = trim((string) ($p['caption'] ?? ''));
             $cap_html = $caption !== ''
                 ? '<span style="display:block;font-family:' . self::FONT . ';font-size:12.5px;line-height:1.45;color:' . self::MUTED . ';margin:0 0 6px 0;">' . esc_html($caption) . '</span>'
                 : '';
-            $cells[] = '<td style="padding:8px;vertical-align:top;width:50%;">'
+            $cells[] = '<td style="padding:8px;vertical-align:top;width:50%;overflow-wrap:anywhere;word-break:break-word;">'
                 . $img
                 . '<a href="' . esc_url($p['url']) . '" style="display:block;font-family:' . self::FONT . ';font-size:14px;font-weight:600;color:' . self::INK . ';text-decoration:none;line-height:1.35;margin:0 0 4px 0;">' . esc_html($p['name']) . '</a>'
                 . $cap_html
@@ -138,7 +138,7 @@ final class SM_Templates
         for ($i = 0; $i < count($cells); $i += 2) {
             $rows .= '<tr>' . $cells[$i] . ($cells[$i + 1] ?? '<td style="width:50%;"></td>') . '</tr>';
         }
-        return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 10px 0;">' . $rows . '</table>';
+        return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 10px 0;table-layout:fixed;">' . $rows . '</table>';
     }
 
     /** Cart contents list. items: name, qty, price, url, image. */

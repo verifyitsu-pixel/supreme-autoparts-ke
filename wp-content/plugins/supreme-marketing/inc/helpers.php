@@ -888,6 +888,9 @@ function sm_grid_product_identity(WC_Product $p): string
     if ($sku !== '') {
         $name = (string) preg_replace('/(?<![a-z0-9])' . preg_quote($sku, '/') . '(?![a-z0-9])/i', ' ', $name);
     }
+    // Named product lines with trailing vehicle fitment are one product,
+    // not a different card for every vehicle/year or front/rear variant.
+    $name = (string) preg_replace('/\b(kit|filter|bracket|system|spring|shock|strut|rotor|caliper|pads?)\s+(?:(?:front|rear)\s+)?(?:for\s+)?(?:19|20)?\d{2}(?:[-+]|\s).*/i', '$1', $name);
     $name = (string) preg_replace('/\b(?:size|colour|color|finish)\s*:\s*[^,;()]+/i', ' ', $name);
     $name = (string) preg_replace('/\b\d+(?:\.\d+)?\s*(?:mm|cm|inch|inches|oz|ml|litres?|liters?)\b/i', ' ', $name);
     $name = (string) preg_replace('/\b(?:black|white|red|blue|silver|polished|chrome|matte|gloss|small|medium|large|xl|xxl)\b/i', ' ', $name);
