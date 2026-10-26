@@ -421,9 +421,24 @@ function sm_marketing_performance_terms(): array
 /** True when the product belongs to a performance-part category. */
 function sm_is_performance_product(WC_Product $p): bool
 {
+    $brand = '';
+    if (taxonomy_exists('pa_brand')) {
+        $brands = wc_get_product_terms($p->get_id(), 'pa_brand', ['fields' => 'names']);
+        $brand  = trim((string) ($brands[0] ?? ''));
+    }
+    if ($brand === '') {
+        $parts = preg_split('/\s+/', trim((string) $p->get_name()));
+        $brand = (string) ($parts[0] ?? '');
+    }
     $cats = (array) wp_get_post_terms($p->get_id(), 'product_cat', ['fields' => 'names']);
     foreach ($cats as $c) {
-        $c = strtolower(html_entity_decode((string) $c));
+        $raw = html_entity_decode((string) $c);
+        // Brand-led category names ("BMR Suspension") are the brand, not a
+        // performance type - they cannot qualify a product on their own.
+        if ($brand !== '' && stripos($raw, $brand) !== false) {
+            continue;
+        }
+        $c = strtolower($raw);
         foreach (sm_marketing_performance_terms() as $term) {
             if (strpos($c, $term) !== false) {
                 return true;
