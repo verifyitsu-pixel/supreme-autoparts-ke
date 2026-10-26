@@ -460,7 +460,7 @@ function sa_sf_fuzzy_product_ids(string $q, int $limit = 6): array
                         continue;
                     }
                     $maxd = $len >= 7 ? 2 : 1;
-                    if (abs(strlen($ct) - $len) <= $maxd && levenshtein($ct, $token) <= $maxd) {
+                    if (strlen($ct) <= 255 && strlen($token) <= 255 && abs(strlen($ct) - $len) <= $maxd && levenshtein($ct, $token) <= $maxd) {
                         $best = max($best, 3);
                     }
                 }
@@ -489,7 +489,7 @@ function sa_sf_fuzzy_product_ids(string $q, int $limit = 6): array
                 foreach ($row['t'] as $i => $ct) {
                     if (($row['m'][$i] ?? '') !== '' && $row['m'][$i] === metaphone($token)) {
                         $best = max($best, 4);
-                    } elseif (abs(strlen($ct) - $len) <= 2 && levenshtein($ct, $token) <= ($len >= 7 ? 2 : 1)) {
+                    } elseif (strlen($ct) <= 255 && strlen($token) <= 255 && abs(strlen($ct) - $len) <= 2 && levenshtein($ct, $token) <= ($len >= 7 ? 2 : 1)) {
                         $best = max($best, 3);
                     }
                 }
@@ -541,6 +541,9 @@ function sa_sf_search_index(): array
         );
         foreach ((array) $rows as $r) {
             $toks = sa_sf_search_tokens((string) $r->post_title);
+            $toks = array_values(array_filter($toks, function ($t) {
+                return strlen($t) <= 60; // skip pathological blobs; part numbers match via SKU
+            }));
             if ($toks === []) {
                 continue;
             }
