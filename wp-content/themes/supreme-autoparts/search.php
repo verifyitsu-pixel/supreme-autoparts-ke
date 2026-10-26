@@ -14,7 +14,7 @@ $sa_total = isset($GLOBALS['wp_query']) && $GLOBALS['wp_query'] instanceof WP_Qu
     : 0;
 $q = get_search_query();
 ?>
-<main id="primary" class="sa-main sa-page sa-search-results">
+<main id="primary" class="sa-main sa-page sa-search-results woocommerce">
   <div class="sa-container">
     <header class="sa-archive-header sa-archive-header--shop">
       <h1><?php esc_html_e('Search', 'supreme-autoparts'); ?></h1>

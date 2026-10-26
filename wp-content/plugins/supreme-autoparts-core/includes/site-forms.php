@@ -381,7 +381,7 @@ function sa_sf_suggest(): void
     if ($scope === 'all') {
         $scope = '';
     }
-    $ck = 'sa_sugg_' . md5(strtolower($q) . '|' . $scope);
+    $ck = 'sa_sugg_v3_' . md5(strtolower($q) . '|' . $scope);
     $out = get_transient($ck);
     if (!is_array($out)) {
         $args = ['post_type' => 'product', 'post_status' => 'publish', 's' => $q, 'posts_per_page' => 6, 'fields' => 'ids', 'no_found_rows' => true];
@@ -433,7 +433,7 @@ function sa_sf_suggest(): void
  */
 function sa_sf_fuzzy_enabled(): bool
 {
-    return (bool) apply_filters('sa_fuzzy_search_enabled', false); // OFF 19:31 EAT: results-page fill 500s on single-word searches (/?s=filter); re-enable only after fill-path fix + isolated battery
+    return (bool) apply_filters('sa_fuzzy_search_enabled', true); // Local bounded matcher; Matomo footer counting remains ids-only and excluded.
 }
 
 function sa_sf_fuzzy_product_ids(string $q, int $limit = 6): array
@@ -632,7 +632,11 @@ add_filter('posts_results', static function (array $posts, WP_Query $query): arr
     // No is_main_query() requirement: the shop/search template renders products
     // through a secondary product query; is_search() is per-query (any query
     // with 's' set). is_admin() also covers admin-ajax (the suggest endpoint).
-    if ($posts !== [] || is_admin() || !$query->is_search()) {
+    // Never inject WP_Post objects into Matomo's footer ids-only count,
+    // or any ids/ids=>parent query. Full-page fallback is presentation only.
+    if ($posts !== [] || is_admin() || !$query->is_search()
+        || in_array($query->get('fields'), ['ids', 'id=>parent'], true)
+        || did_action('wp_footer')) {
         return $posts;
     }
     $pt = $query->get('post_type');
