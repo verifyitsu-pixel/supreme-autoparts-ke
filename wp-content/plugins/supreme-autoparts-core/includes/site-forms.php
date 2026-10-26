@@ -384,7 +384,7 @@ function sa_sf_suggest(): void
         // Typo-tolerant predictive layer: top up from the local catalog
         // token index when literal search finds too little. Suggestions stay
         // real published products only - no invented compatibility.
-        if (count($ids) < 6 && function_exists('sa_sf_fuzzy_product_ids')) {
+        if (count($ids) < 6 && sa_sf_fuzzy_enabled() && function_exists('sa_sf_fuzzy_product_ids')) {
             foreach (sa_sf_fuzzy_product_ids($q, 6) as $fid) {
                 if (!in_array($fid, $ids, true)) {
                     $ids[] = $fid;
@@ -414,6 +414,17 @@ function sa_sf_suggest(): void
  * and small-edit-distance matches for misspellings, plus SKU matching for
  * part numbers. Returns up to $limit published product ids, best first.
  */
+/**
+ * Fuzzy search kill switch. The typo-tolerant layer is OFF on production
+ * pending repair of a live fatal in the fuzzy path (owner + main decision
+ * 2026-10-26). Literal WP search behavior is unchanged. Flip to true only
+ * after the repaired path is live-verified.
+ */
+function sa_sf_fuzzy_enabled(): bool
+{
+    return (bool) apply_filters('sa_fuzzy_search_enabled', false);
+}
+
 function sa_sf_fuzzy_product_ids(string $q, int $limit = 6): array
 {
     $qt = sa_sf_search_tokens($q);
@@ -575,7 +586,7 @@ add_filter('posts_results', static function (array $posts, WP_Query $query): arr
         return $posts;
     }
     $q = trim((string) $query->get('s'));
-    if (mb_strlen($q) < 3 || !function_exists('sa_sf_fuzzy_product_ids')) {
+    if (mb_strlen($q) < 3 || !sa_sf_fuzzy_enabled() || !function_exists('sa_sf_fuzzy_product_ids')) {
         return $posts;
     }
     $ids = sa_sf_fuzzy_product_ids($q, 24);
