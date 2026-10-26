@@ -662,7 +662,10 @@ add_filter('posts_results', static function (array $posts, WP_Query $query): arr
     if (is_array($mq) && $mq !== []) {
         $args['meta_query'] = $mq;
     }
-    $matched = (new WP_Query($args))->posts;
+    $matched = array_values(array_filter((new WP_Query($args))->posts, static function ($post): bool {
+        $product = wc_get_product((int) $post->ID);
+        return $product && $product->is_visible();
+    }));
     if ($matched !== []) {
         $query->set('sa_fuzzy_matches', count($matched));
         $query->found_posts = count($matched);
