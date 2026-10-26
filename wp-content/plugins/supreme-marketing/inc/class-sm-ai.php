@@ -96,22 +96,21 @@ function sm_ai_caption(WC_Product $p): string
 
 /**
  * Advisory rotation plan for the ongoing catalog walk (user instruction
- * 2026-10-26: the AI should loop in and help pick the theme and write the
- * email). Catalog-only facts and theme labels leave the server - never
- * recipient identity, orders or behavior beyond theme coverage names.
+ * 2026-10-26, the user's own iMessage: the AI should loop in and help
+ * pick the theme and write the email). Only theme labels and catalog
+ * facts leave the server - never recipient identity, orders or behavior.
  *
  * The deterministic core (sm_rotation_pick) owns coverage, cadence and
- * no-repeat; this function's theme choice is accepted only when it names
- * an uncovered available theme whose shelf can fill a grid, and every
- * copy field passes sm_ai_claim_free + length caps. Cost guard: one call
- * per build, 4s timeout, result cached per theme per ISO week. ANY
- * failure returns null and the deterministic walk proceeds unchanged.
+ * no-repeat. This function may re-rank among the AVAILABLE theme keys
+ * (themes that still have uncovered products this cycle) and supply copy;
+ * every copy field passes sm_ai_claim_free + length caps. Cost guard: one
+ * call per build, 4s timeout, result cached per chosen theme per ISO
+ * week. ANY failure returns null and the deterministic walk proceeds.
  *
- * Expected provider contract: POST {task, available_themes, already_covered,
- * products:[{id,name,category,price}]} -> {theme_key?, subject?, headline?,
- * intro?} (all fields optional; unknown fields ignored).
+ * Provider contract: POST {task, available_themes, products} ->
+ * {theme_key?, subject?, headline?, intro?} (all optional).
  */
-function sm_ai_rotation_plan(array $themes, array $covered_keys, string $chosen_key, array $products): ?array
+function sm_ai_rotation_plan(array $themes, array $available_keys, string $chosen_key, array $products): ?array
 {
     if (!sm_ai_ready()) {
         return null;
@@ -122,13 +121,11 @@ function sm_ai_rotation_plan(array $themes, array $covered_keys, string $chosen_
         return $hit;
     }
     $avail = [];
-    foreach ($themes as $k => $t) {
-        if (!in_array($k, $covered_keys, true)) {
-            $avail[$k] = (string) ($t['label'] ?? $k);
-        }
+    foreach ($available_keys as $k) {
+        $avail[$k] = isset($themes[$k]['label']) ? (string) $themes[$k]['label'] : $k;
     }
     if ($avail === []) {
-        $avail[$chosen_key] = (string) ($themes[$chosen_key]['label'] ?? $chosen_key);
+        return null;
     }
     $facts = [];
     foreach (array_slice($products, 0, 8) as $p) {
@@ -148,9 +145,6 @@ function sm_ai_rotation_plan(array $themes, array $covered_keys, string $chosen_
         'body'    => wp_json_encode([
             'task'             => 'weekly rotation email plan: pick the next theme_key from available_themes for one coherent email, then subject (<=70 chars), headline (<=50 chars), intro (<=200 chars). Facts only: the parts are in stock and priced as listed. No sales claims, no offers, no superlatives.',
             'available_themes' => $avail,
-            'already_covered'  => array_values(array_map(function ($k) use ($themes) {
-                return (string) ($themes[$k]['label'] ?? $k);
-            }, $covered_keys)),
             'products'         => $facts,
         ]),
     ]);
@@ -179,3 +173,4 @@ function sm_ai_rotation_plan(array $themes, array $covered_keys, string $chosen_
     set_transient($cache, $plan, WEEK_IN_SECONDS);
     return $plan;
 }
+

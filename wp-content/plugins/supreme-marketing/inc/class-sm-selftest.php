@@ -77,17 +77,25 @@ add_action('admin_init', function () {
     }
 
     $pass = !in_array(false, array_column($results, 'pass'), true);
-    // 12) Rotation walk: deterministic theme order and loop restart, plus a
-    // live universe build from the real catalog (read-only).
-    $rk1 = sm_rotation_next_key(['cat:a', 'cat:b', 'brand:c'], []);
-    $rk2 = sm_rotation_next_key(['cat:a', 'cat:b', 'brand:c'], ['cat:a']);
-    $rk3 = sm_rotation_next_key(['cat:a', 'cat:b', 'brand:c'], ['cat:a', 'cat:b', 'brand:c']);
+    // 12) Rotation: product-level cycle coverage - partial coverage leaves
+    // the rest uncovered, full coverage restarts the loop with the whole
+    // pool eligible again, stale IDs are tolerated, singletons stay
+    // pickable (no minimum grid threshold in the walk). Plus the live
+    // state table and theme universe exist.
+    global $wpdb;
+    $adv1 = sm_rotation_cycle_advance([1, 2, 3], [1]);
+    $adv2 = sm_rotation_cycle_advance([1, 2, 3], [1, 2, 3]);
+    $adv3 = sm_rotation_cycle_advance([1, 2, 3], [1, 2, 3, 99]);
+    $adv4 = sm_rotation_cycle_advance([1, 2, 3], []);
+    $rot_table = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", SM_DB::table('rotation_state')));
     $univ = sm_rotation_themes();
     $check(
-        'rotation: theme walk order + loop restart + live universe',
-        $rk1['key'] === 'cat:a' && !$rk1['restarted']
-            && $rk2['key'] === 'cat:b' && !$rk2['restarted']
-            && $rk3['key'] === 'cat:a' && $rk3['restarted']
+        'rotation: product-level cycle walk + restart + state table',
+        $adv1['uncovered'] === [2, 3] && !$adv1['restart']
+            && $adv2['restart'] && $adv2['uncovered'] === [1, 2, 3]
+            && $adv3['restart'] && $adv3['uncovered'] === [1, 2, 3]
+            && $adv4['uncovered'] === [1, 2, 3] && !$adv4['restart']
+            && $rot_table === SM_DB::table('rotation_state')
             && is_array($univ) && $univ !== [],
         count((array) $univ) . ' themes in the live universe'
     );

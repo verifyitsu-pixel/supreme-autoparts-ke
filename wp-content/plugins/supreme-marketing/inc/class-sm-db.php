@@ -205,6 +205,14 @@ final class SM_DB
             PRIMARY KEY (email_norm)
         ) $charset;";
 
+        $sql[] = 'CREATE TABLE ' . self::table('rotation_state') . " (
+            email VARCHAR(190) NOT NULL,
+            cycle INT UNSIGNED NOT NULL DEFAULT 1,
+            cycle_started_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            PRIMARY KEY (email)
+        ) $charset;";
+
         foreach ($sql as $statement) {
             dbDelta($statement);
         }

@@ -116,9 +116,13 @@ final class SM_Flows
     {
         $flags = get_option('sm_flows_enabled', []);
         if (!is_array($flags)) {
-            return true;
+            $flags = [];
         }
-        return ($flags[$flow] ?? 'yes') === 'yes';
+        // Rotation ships disabled: the cadence is the owner's call and they
+        // have not picked one yet (2026-10-26). Every other flow keeps its
+        // existing default and saved flag - nothing current is altered.
+        $default = $flow === 'rotation' ? 'no' : 'yes';
+        return ($flags[$flow] ?? $default) === 'yes';
     }
 
     /** Delay override from the admin UI (seconds), else the definition default. */
