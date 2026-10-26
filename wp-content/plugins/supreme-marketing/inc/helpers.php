@@ -1144,6 +1144,74 @@ function sm_rotation_last_ctx(?array $set = null): array
  * No-repeat within a cycle is guaranteed by coverage; after the restart
  * the loop may feature products again, by design.
  */
+/**
+ * Engagement signals for AI grid selection, as catalog nouns only: names of
+ * products from emails this subscriber opened, product links they clicked,
+ * and items they purchased. Used to bias the next grid toward related/next
+ * products. Only ever fed to the model as product names - never the
+ * recipient identity. Rotation sends already require marketing consent.
+ */
+function sm_rotation_engagement(string $email): array
+{
+    $out = ['opened' => [], 'clicked' => [], 'purchased' => []];
+    $email = strtolower(trim($email));
+    if ($email === '') {
+        return $out;
+    }
+    global $wpdb;
+    $names = function (array $ids): array {
+        $n = [];
+        foreach ($ids as $id) {
+            $p = wc_get_product((int) $id);
+            if ($p) {
+                $n[] = $p->get_name();
+            }
+        }
+        return array_slice(array_values(array_unique($n)), 0, 8);
+    };
+    // Products inside emails they actually opened.
+    $sp = SM_DB::table('send_products');
+    $sd = SM_DB::table('sends');
+    $rows = $wpdb->get_col($wpdb->prepare(
+        "SELECT sp.product_id FROM $sp sp JOIN $sd s ON s.id = sp.send_id
+         WHERE sp.email = %s AND s.opened_at IS NOT NULL ORDER BY sp.id DESC LIMIT 40",
+        $email
+    ));
+    if ($rows) {
+        $out['opened'] = $names($rows);
+    }
+    // Product links they clicked (click redirect records the destination URL).
+    $lk = SM_DB::table('links');
+    $urls = $wpdb->get_col($wpdb->prepare(
+        "SELECT l.url FROM $lk l JOIN $sd s ON s.id = l.send_id
+         WHERE s.email = %s AND l.clicks > 0 ORDER BY l.id DESC LIMIT 20",
+        $email
+    ));
+    $clicked = [];
+    foreach ((array) $urls as $u) {
+        $pid = url_to_postid((string) $u);
+        if ($pid > 0) {
+            $clicked[] = $pid;
+        }
+    }
+    if ($clicked) {
+        $out['clicked'] = $names($clicked);
+    }
+    // Past purchases (WooCommerce orders under this email).
+    if (function_exists('wc_get_orders')) {
+        $bought = [];
+        foreach ((array) wc_get_orders(['billing_email' => $email, 'limit' => 5, 'orderby' => 'date', 'order' => 'DESC']) as $order) {
+            foreach ($order->get_items() as $item) {
+                $bought[] = $item->get_product_id();
+            }
+        }
+        if ($bought) {
+            $out['purchased'] = $names($bought);
+        }
+    }
+    return $out;
+}
+
 function sm_rotation_pick(string $email, int $count, int $queue_id = 0): array
 {
     $empty = ['theme_key' => '', 'theme_label' => '', 'ai' => null, 'products' => []];
@@ -1194,21 +1262,47 @@ function sm_rotation_pick(string $email, int $count, int $queue_id = 0): array
     }
     $lock = $email !== '' ? sm_grid_lock($email) : null;
     try {
-        $k        = $ordered[0];
-        $products = sm_diverse_products($by_theme[$k], $count); // 1..count, singletons allowed
+        $k = $ordered[0];
+        // AI chooses the grid from this theme's uncovered pool; the diverse
+        // deterministic pick fills any slots the AI did not name and is the
+        // full fallback when AI is unavailable. Copy is composed AFTER the
+        // grid is final, so subject/headline/intro always match the actual
+        // products shown (no copy/grid swap).
+        $choose = function (array $pool_k) use ($count, $email) {
+            $products = [];
+            $ids      = function_exists('sm_ai_rotation_select')
+                ? sm_ai_rotation_select($pool_k, $count, $email !== '' ? sm_rotation_engagement($email) : [])
+                : null;
+            if (is_array($ids)) {
+                $byid = [];
+                foreach ($pool_k as $p) {
+                    $byid[(int) $p->get_id()] = $p;
+                }
+                foreach ($ids as $id) {
+                    if (isset($byid[$id])) {
+                        $products[] = $byid[$id];
+                    }
+                }
+            }
+            if (count($products) < $count) {
+                $have = array_map(function ($p) {
+                    return (int) $p->get_id();
+                }, $products);
+                foreach (sm_diverse_products($pool_k, $count) as $p) {
+                    if (count($products) >= $count) {
+                        break;
+                    }
+                    if (!in_array((int) $p->get_id(), $have, true)) {
+                        $products[] = $p;
+                    }
+                }
+            }
+            return $products;
+        };
+        $products = $choose($by_theme[$k]); // 1..count, singletons allowed
         $ai = function_exists('sm_ai_rotation_plan')
             ? sm_ai_rotation_plan($themes, $ordered, $k, $products)
             : null;
-        if (is_array($ai)) {
-            $tk = (string) ($ai['theme_key'] ?? '');
-            if ($tk !== '' && $tk !== $k && in_array($tk, $ordered, true)) {
-                $alt = sm_diverse_products($by_theme[$tk], $count);
-                if ($alt) {
-                    $k        = $tk;
-                    $products = $alt;
-                }
-            }
-        }
         if ($queue_id > 0 && $email !== '') {
             sm_reserve_products($queue_id, $email, array_map(function ($p) {
                 return (int) $p->get_id();

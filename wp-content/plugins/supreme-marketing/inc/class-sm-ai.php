@@ -253,6 +253,81 @@ function sm_ai_caption(WC_Product $p): string
 }
 
 /**
+ * AI grid selection for the rotation email: choose which products from the
+ * uncovered candidate pool go into this email's grid. The deterministic
+ * walk still owns coverage, cadence, no-repeat and eligibility - this only
+ * ranks the CURRENT pool. Engagement signals are catalog nouns only
+ * (product names the subscriber opened/clicked/purchased); no recipient
+ * identity ever leaves the server. ANY failure returns null and the caller
+ * falls back to the deterministic diverse pick.
+ */
+function sm_ai_rotation_select(array $products, int $count, array $engagement = []): ?array
+{
+    if (!sm_ai_ready() || $count < 1 || !$products) {
+        return null;
+    }
+    $offered = [];
+    $facts   = [];
+    foreach (array_slice($products, 0, 60) as $p) {
+        if (!($p instanceof WC_Product)) {
+            continue;
+        }
+        $offered[] = (int) $p->get_id();
+        $facts[]   = [
+            'id'       => (int) $p->get_id(),
+            'name'     => $p->get_name(),
+            'category' => implode(', ', (array) wp_get_post_terms($p->get_id(), 'product_cat', ['fields' => 'names'])),
+            'price'    => $p->get_price(),
+        ];
+    }
+    if (count($offered) <= $count) {
+        return null; // nothing meaningful to choose; caller shows them all
+    }
+    $ctx = ['products' => $facts, 'pick' => $count];
+    $eng = [];
+    foreach (['opened', 'clicked', 'purchased'] as $k) {
+        $v = array_values(array_filter(array_map('strval', (array) ($engagement[$k] ?? []))));
+        if ($v) {
+            $eng[$k] = array_slice($v, 0, 8);
+        }
+    }
+    if ($eng) {
+        $ctx['customer_interest'] = $eng;
+    }
+    $cache = 'sm_ai_sel_v' . SM_AI_PROMPT_VERSION . '_' . md5(implode(',', $offered) . '|' . $count . '|' . md5(wp_json_encode($eng)));
+    $hit   = get_transient($cache);
+    if (is_array($hit)) {
+        return $hit;
+    }
+    $j = sm_ai_call(
+        'You choose the products for one marketing email grid for an auto parts store. Reply with JSON {"ids":[...]} only: pick exactly '
+        . $count . ' product ids from the list that make one coherent, appealing email; vary product types and price points. When customer_interest is present, prefer products related to or a natural next step from those interests, and never pick items already purchased. Choose ids ONLY from the list. No claims, no offers, no discounts.',
+        $ctx,
+        150
+    );
+    if (!is_array($j)) {
+        return null;
+    }
+    $ids  = [];
+    $seen = [];
+    foreach ((array) ($j['ids'] ?? []) as $raw) {
+        $id = (int) $raw;
+        if ($id > 0 && in_array($id, $offered, true) && !isset($seen[$id])) {
+            $seen[$id] = true;
+            $ids[]     = $id;
+        }
+        if (count($ids) >= $count) {
+            break;
+        }
+    }
+    if ($ids === []) {
+        return null;
+    }
+    set_transient($cache, $ids, HOUR_IN_SECONDS);
+    return $ids;
+}
+
+/**
  * Advisory rotation plan for the ongoing catalog walk (one email per
  * customer per day, user-picked cadence). Only theme labels and catalog
  * facts leave the server - never recipient identity, orders or behavior.
