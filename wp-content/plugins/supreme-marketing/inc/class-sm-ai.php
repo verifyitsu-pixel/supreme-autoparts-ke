@@ -42,7 +42,7 @@ function sm_ai_token(): string
 /** Shared safety floor for all AI output: no claims, no offers, no boilerplate. */
 function sm_ai_claim_free(string $text): bool
 {
-    return !preg_match('/(\b\d+\s?(?:hp|bhp|whp)\b|horsepower|torque\s+gain|\d+\s?%\s+(?:more|better|gain|increase)|guarantee|#1|best[- ]selling|most popular|miracle|free shipping|discount|sale)/i', $text);
+    return !preg_match('/(\b\d+\s?(?:hp|bhp|whp)\b|horsepower|torque\s+gain|\d+\s?%\s*(?:more|better|gain|increase)|guarantee|#1|best[- ]selling|most popular|miracle|free shipping|discount|sale)/i', $text);
 }
 
 /** True only when a provider credential is configured. */

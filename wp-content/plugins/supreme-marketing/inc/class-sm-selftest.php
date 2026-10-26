@@ -138,6 +138,20 @@ add_action('admin_init', function () {
         'min_days=' . (int) sm_setting('rotation_min_days')
     );
 
+    // AI safety floor: the claim filter is the only gate on AI-composed
+    // copy, so it must reject performance/offer/superlative wording even
+    // with odd spacing ("30%better") and pass grounded factual lines.
+    if (function_exists('sm_ai_claim_free')) {
+        $ai_ok = true;
+        foreach (['adds 15hp', '30%better mpg', '20% more flow', 'best-selling kit', 'free shipping', 'guarantee'] as $s) {
+            $ai_ok = $ai_ok && !sm_ai_claim_free($s);
+        }
+        foreach (['Drop-in panel filter for the stock airbox', 'Priced as listed, in stock now'] as $s) {
+            $ai_ok = $ai_ok && sm_ai_claim_free($s);
+        }
+        $check('AI claim filter blocks claims/offers, passes grounded lines', $ai_ok);
+    }
+
     // Pure cycle walk + live universe + state table (read-only).
     $adv1 = sm_rotation_cycle_advance([1, 2, 3], [1]);
     $adv2 = sm_rotation_cycle_advance([1, 2, 3], [1, 2, 3]);
