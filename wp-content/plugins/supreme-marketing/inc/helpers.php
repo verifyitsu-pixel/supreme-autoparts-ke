@@ -1205,9 +1205,12 @@ function sm_rotation_engagement(string $email): array
         foreach ((array) wp_get_post_terms($pid, 'product_cat', ['fields' => 'ids']) as $tid) {
             $cats[(int) $tid] = true;
         }
-        $b = function_exists('sm_rotation_product_brand') ? sm_rotation_product_brand(wc_get_product($pid)) : '';
-        if ($b !== '') {
-            $brands[$b] = true;
+        $ep = wc_get_product($pid);
+        if ($ep instanceof WC_Product) {
+            $b = function_exists('sm_rotation_product_brand') ? sm_rotation_product_brand($ep) : '';
+            if ($b !== '') {
+                $brands[$b] = true;
+            }
         }
     }
     $out['engaged_cats']   = array_map('intval', array_keys($cats));
