@@ -909,3 +909,246 @@ function sm_product_payload(WC_Product $p, string $zone = 'US'): array
         'theme'   => sm_product_theme($p),
     ];
 }
+
+/* ---------------------------------------------------------------------
+ * Catalog rotation (user instruction 2026-10-26, message
+ * phonemsg-01M5W26QDEPBD5TYWP2RNRWFT5: the email series never ends - it
+ * walks all products, categories and brands, then the loop restarts).
+ * The deterministic core below owns coverage, cadence and no-repeat.
+ * The optional AI plan (sm_ai_rotation_plan) is advisory only: its theme
+ * choice is validated against this core and its copy passes the same
+ * claim filters as rule-based copy. It fails closed to deterministic.
+ * ------------------------------------------------------------------ */
+
+/** Brand name from the pa_brand taxonomy only (name-guessing is not a theme). */
+function sm_rotation_product_brand(WC_Product $p): string
+{
+    if (taxonomy_exists('pa_brand')) {
+        $brands = wc_get_product_terms($p->get_id(), 'pa_brand', ['fields' => 'names']);
+        $b = trim((string) ($brands[0] ?? ''));
+        if ($b !== '') {
+            return $b;
+        }
+    }
+    return '';
+}
+
+/** Rotation theme keys for one product: cat:<slug> (non-brand-led) + brand:<name>. */
+function sm_rotation_product_theme_keys(WC_Product $p): array
+{
+    $brand = sm_rotation_product_brand($p);
+    $keys  = [];
+    foreach ((array) wp_get_post_terms($p->get_id(), 'product_cat') as $t) {
+        if (!($t instanceof WP_Term)) {
+            continue;
+        }
+        $name = html_entity_decode((string) $t->name);
+        if ($brand !== '' && stripos($name, $brand) !== false) {
+            continue; // brand-led category is the brand theme, not a separate shelf
+        }
+        $keys['cat:' . $t->slug] = true;
+    }
+    if ($brand !== '') {
+        $keys['brand:' . $brand] = true;
+    }
+    return array_keys($keys);
+}
+
+/**
+ * Deterministic theme universe: every category and brand with >= 2
+ * marketing-eligible in-stock products, ordered by eligible count desc
+ * then label asc. Cached for an hour; the catalog moves slowly.
+ */
+function sm_rotation_themes(): array
+{
+    $cached = get_transient('sm_rotation_themes');
+    if (is_array($cached) && $cached !== []) {
+        return $cached;
+    }
+    if (!function_exists('wc_get_products')) {
+        return [];
+    }
+    $counts    = [];
+    $cat_names = [];
+    $pool = sm_marketing_eligible(wc_get_products(['status' => 'publish', 'stock_status' => 'instock', 'limit' => 500]));
+    foreach ($pool as $p) {
+        if (!($p instanceof WC_Product)) {
+            continue;
+        }
+        foreach (sm_rotation_product_theme_keys($p) as $k) {
+            $counts[$k] = ($counts[$k] ?? 0) + 1;
+        }
+        foreach ((array) wp_get_post_terms($p->get_id(), 'product_cat') as $t) {
+            if ($t instanceof WP_Term && !isset($cat_names[$t->slug])) {
+                $cat_names[$t->slug] = html_entity_decode((string) $t->name);
+            }
+        }
+    }
+    $out = [];
+    foreach ($counts as $k => $n) {
+        if ($n < 2) {
+            continue; // a shelf needs at least two eligible parts
+        }
+        $out[$k] = [
+            'label' => str_starts_with($k, 'cat:') ? ($cat_names[substr($k, 4)] ?? substr($k, 4)) : substr($k, 6),
+            'count' => $n,
+        ];
+    }
+    uasort($out, function ($a, $b) {
+        return ($b['count'] <=> $a['count']) ?: strcasecmp((string) $a['label'], (string) $b['label']);
+    });
+    set_transient('sm_rotation_themes', $out, HOUR_IN_SECONDS);
+    return $out;
+}
+
+/** Themes already covered by this recipient's past rotation sends. */
+function sm_rotation_covered_theme_keys(string $email, array $themes): array
+{
+    global $wpdb;
+    $sp = SM_DB::table('send_products');
+    $sd = SM_DB::table('sends');
+    $ids = $wpdb->get_col($wpdb->prepare(
+        "SELECT DISTINCT sp.product_id FROM $sp sp JOIN $sd sd ON sd.id = sp.send_id WHERE sp.email = %s AND sd.template = 'rotation_1' AND sp.state = 'sent'",
+        strtolower(trim($email))
+    ));
+    $covered = [];
+    foreach ((array) $ids as $pid) {
+        $p = wc_get_product((int) $pid);
+        if (!($p instanceof WC_Product)) {
+            continue; // product left the catalog; coverage stays approximate
+        }
+        foreach (sm_rotation_product_theme_keys($p) as $k) {
+            if (isset($themes[$k])) {
+                $covered[$k] = true;
+            }
+        }
+    }
+    return array_keys($covered);
+}
+
+/**
+ * Pure walk step: first uncovered theme, or - when every theme has been
+ * covered - the first theme again with restarted=true (the loop restarts,
+ * exactly as the owner described).
+ */
+function sm_rotation_next_key(array $theme_keys, array $covered_keys): array
+{
+    $cov = array_flip($covered_keys);
+    foreach ($theme_keys as $k) {
+        if (!isset($cov[$k])) {
+            return ['key' => $k, 'restarted' => false];
+        }
+    }
+    return ['key' => (string) ($theme_keys[0] ?? ''), 'restarted' => true];
+}
+
+/** Eligible in-stock products for one theme. */
+function sm_rotation_theme_products(string $key, int $fetch): array
+{
+    if (!function_exists('wc_get_products')) {
+        return [];
+    }
+    if (str_starts_with($key, 'cat:')) {
+        $items = wc_get_products(['status' => 'publish', 'stock_status' => 'instock', 'limit' => $fetch, 'category' => [substr($key, 4)]]);
+    } else {
+        if (!taxonomy_exists('pa_brand')) {
+            return [];
+        }
+        $items = wc_get_products([
+            'status' => 'publish', 'stock_status' => 'instock', 'limit' => $fetch,
+            'tax_query' => [['taxonomy' => 'pa_brand', 'field' => 'name', 'terms' => [substr($key, 6)]]],
+        ]);
+    }
+    return sm_marketing_eligible((array) $items);
+}
+
+/** Request-scoped handoff of the rotation theme to the send builder. */
+function sm_rotation_last_ctx(?array $set = null): array
+{
+    static $held = ['theme_label' => '', 'ai' => null];
+    if ($set !== null) {
+        $held = $set;
+    }
+    return $held;
+}
+
+/**
+ * Pick the next rotation theme + grid for a recipient. Deterministic order
+ * and coverage; themes that cannot fill a fresh grid are skipped this
+ * cycle; when the whole universe is covered the loop restarts. The
+ * advisory AI plan may re-rank the theme (validated) and supply copy
+ * (claim-filtered); any doubt falls back to the deterministic walk.
+ */
+function sm_rotation_pick(string $email, int $count, int $queue_id = 0): array
+{
+    $empty  = ['theme_key' => '', 'theme_label' => '', 'ai' => null, 'products' => []];
+    $themes = sm_rotation_themes();
+    $keys   = array_keys($themes);
+    if ($keys === []) {
+        return $empty;
+    }
+    $email   = strtolower(trim($email));
+    $covered = $email !== '' ? sm_rotation_covered_theme_keys($email, $themes) : [];
+    $recent  = $email !== '' ? sm_recent_sent_product_ids($email) : [];
+    $lock    = $email !== '' ? sm_grid_lock($email) : null;
+    try {
+        $attempted = [];
+        $restarted = false;
+        $guard     = count($keys) + 1;
+        while ($guard-- > 0) {
+            $base = $restarted ? array_keys($attempted) : array_merge($covered, array_keys($attempted));
+            $next = sm_rotation_next_key($keys, $base);
+            $k    = (string) ($next['key'] ?? '');
+            if ($k === '' || isset($attempted[$k])) {
+                break;
+            }
+            if (!empty($next['restarted'])) {
+                $restarted = true;
+            }
+            $attempted[$k] = true;
+            $products = sm_rotation_theme_products($k, $count + 20);
+            if ($recent) {
+                $products = array_values(array_filter($products, function ($p) use ($recent) {
+                    return !in_array((int) $p->get_id(), $recent, true);
+                }));
+            }
+            $products = sm_diverse_products($products, $count);
+            if (count($products) < 2) {
+                continue; // shelf cannot fill a grid right now; try the next
+            }
+            $ai = function_exists('sm_ai_rotation_plan')
+                ? sm_ai_rotation_plan($themes, $covered, $k, $products)
+                : null;
+            $use_k = $k;
+            if (is_array($ai) && (string) ($ai['theme_key'] ?? '') !== '' && $ai['theme_key'] !== $k
+                && isset($themes[$ai['theme_key']]) && !in_array($ai['theme_key'], $covered, true)) {
+                $alt = sm_rotation_theme_products($ai['theme_key'], $count + 20);
+                if ($recent) {
+                    $alt = array_values(array_filter($alt, function ($p) use ($recent) {
+                        return !in_array((int) $p->get_id(), $recent, true);
+                    }));
+                }
+                $alt = sm_diverse_products($alt, $count);
+                if (count($alt) >= 2) {
+                    $use_k   = $ai['theme_key'];
+                    $products = $alt;
+                }
+            }
+            if ($queue_id > 0 && $email !== '') {
+                sm_reserve_products($queue_id, $email, array_map(function ($p) {
+                    return (int) $p->get_id();
+                }, $products));
+            }
+            return [
+                'theme_key'   => $use_k,
+                'theme_label' => (string) ($themes[$use_k]['label'] ?? ''),
+                'ai'          => $ai,
+                'products'    => $products,
+            ];
+        }
+    } finally {
+        sm_grid_unlock($lock);
+    }
+    return $empty;
+}
+

@@ -62,6 +62,15 @@ final class SM_Sender
 
         if (!empty($payload['_refresh_products']) || empty($ctx['products'])) {
             $ctx['products'] = self::fresh_products($row['template'], $sub, (int) $row['id']);
+            if ($row['template'] === 'rotation_1') {
+                $rot_ctx = sm_rotation_last_ctx();
+                if ((string) ($rot_ctx['theme_label'] ?? '') !== '') {
+                    $ctx['rotation_theme_label'] = $rot_ctx['theme_label'];
+                }
+                if (!empty($rot_ctx['ai'])) {
+                    $ctx['rotation_ai'] = $rot_ctx['ai'];
+                }
+            }
             $fresh_ids = [];
             foreach ((array) $ctx['products'] as $pl) {
                 $pid = (int) (is_array($pl) ? ($pl['id'] ?? 0) : 0);
@@ -244,6 +253,13 @@ final class SM_Sender
         $count = (int) sm_setting('recommend_count');
         $fetch = $count + 60; // over-fetch: eligibility filter + variety pass + cross-email non-repeat need room
         $products = [];
+        if ($sub && $template === 'rotation_1') {
+            // Catalog rotation: the pick owns theme walk, eligibility,
+            // no-repeat, diversity and reservation for this grid.
+            $pick = sm_rotation_pick((string) ($sub['email'] ?? ''), $count, $queue_id);
+            sm_rotation_last_ctx(['theme_label' => $pick['theme_label'], 'ai' => $pick['ai']]);
+            return self::payload_for($pick['products'], $zone);
+        }
         if ($sub && in_array($template, ['winback_1', 'winback_2'], true)) {
             $products = SM_Recommend::for_subscriber($sub, $fetch);
         } elseif ($sub && in_array($template, ['welcome_4', 'welcome_5'], true)) {

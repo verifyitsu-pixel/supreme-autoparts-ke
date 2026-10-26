@@ -31,6 +31,14 @@ final class SM_Flows
                     ['key' => 'welcome_5', 'delay' => 7 * $d,  'note' => 'Day 7: first-order path with best sellers'],
                 ],
             ],
+            'rotation' => [
+                'label'    => 'Catalog rotation (ongoing)',
+                'audience' => 'marketing',
+                'trigger'  => 'After the welcome series: one themed email per week walking every category and brand in the catalog, then the loop restarts (owner instruction 2026-10-26).',
+                'steps'    => [
+                    ['key' => 'rotation_1', 'delay' => 0, 'note' => 'Weekly: the next uncovered theme; covers all categories and brands, then restarts'],
+                ],
+            ],
             'abandoned_cart' => [
                 'label'    => 'Abandoned cart',
                 'audience' => 'service',
@@ -147,7 +155,7 @@ final class SM_Flows
             $dedupe = $flow . '|' . $step['key'] . '|' . $sub['email'] . '|' . $dedupe_scope;
             $step_ctx = array_merge($base, $ctx);
             // Later steps that show products should re-personalize at send time.
-            $step_ctx['_refresh_products'] = in_array($step['key'], ['welcome_4', 'welcome_5', 'winback_1', 'winback_2', 'browse_1'], true);
+            $step_ctx['_refresh_products'] = in_array($step['key'], ['welcome_4', 'welcome_5', 'winback_1', 'winback_2', 'browse_1', 'rotation_1'], true);
             $ok = SM_Queue::add([
                 'subscriber_id' => (int) ($sub['id'] ?? 0) ?: null,
                 'email'         => $sub['email'],

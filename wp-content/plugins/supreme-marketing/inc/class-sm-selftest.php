@@ -77,5 +77,20 @@ add_action('admin_init', function () {
     }
 
     $pass = !in_array(false, array_column($results, 'pass'), true);
+    // 12) Rotation walk: deterministic theme order and loop restart, plus a
+    // live universe build from the real catalog (read-only).
+    $rk1 = sm_rotation_next_key(['cat:a', 'cat:b', 'brand:c'], []);
+    $rk2 = sm_rotation_next_key(['cat:a', 'cat:b', 'brand:c'], ['cat:a']);
+    $rk3 = sm_rotation_next_key(['cat:a', 'cat:b', 'brand:c'], ['cat:a', 'cat:b', 'brand:c']);
+    $univ = sm_rotation_themes();
+    $check(
+        'rotation: theme walk order + loop restart + live universe',
+        $rk1['key'] === 'cat:a' && !$rk1['restarted']
+            && $rk2['key'] === 'cat:b' && !$rk2['restarted']
+            && $rk3['key'] === 'cat:a' && $rk3['restarted']
+            && is_array($univ) && $univ !== [],
+        count((array) $univ) . ' themes in the live universe'
+    );
+
     wp_send_json(['overall' => $pass ? 'PASS' : 'FAIL', 'results' => $results], $pass ? 200 : 500);
 });

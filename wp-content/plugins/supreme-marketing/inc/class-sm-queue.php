@@ -136,6 +136,7 @@ final class SM_Queue
         SM_Segments::refresh_all_stats();
         self::service_reminder_scan();
         self::transient_gc();
+        self::rotation_scan();
         if (!SM_Flows::enabled('winback')) {
             return;
         }
@@ -161,6 +162,52 @@ final class SM_Queue
                 // Step 1, once per lapse episode.
                 SM_Flows::start($sub, 'winback', 'lapse|' . gmdate('Y-m-d', $last), [], ['winback_1']);
             }
+        }
+    }
+
+    /**
+     * Catalog rotation: after the welcome series, opted-in subscribers get
+     * the next themed email at most once per week (owner instruction
+     * 2026-10-26: the series never ends). Spacing is measured against the
+     * recipient's last marketing email of any flow, so rotation never
+     * stacks on top of browse-abandonment, winback or reorder mail.
+     */
+    private static function rotation_scan(): void
+    {
+        global $wpdb;
+        if (!SM_Flows::enabled('rotation')) {
+            return;
+        }
+        $t = SM_DB::table('subscribers');
+        $s = SM_DB::table('sends');
+        $subs = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM $t WHERE status = 'active' AND (paused_until IS NULL OR paused_until <= %s) LIMIT 500",
+            sm_now()
+        ), ARRAY_A);
+        $marketing_tpls = "'welcome_1','welcome_2','welcome_3','welcome_4','welcome_5','browse_1','rotation_1','winback_1','winback_2','reorder_1','restock_1','service_1'";
+        foreach ((array) $subs as $sub) {
+            $email = (string) ($sub['email'] ?? '');
+            if ($email === '') {
+                continue;
+            }
+            // Welcome series finished (or the subscriber predates it).
+            $welcomed = (bool) $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM $s WHERE email = %s AND template = 'welcome_5' LIMIT 1",
+                $email
+            ));
+            $created = strtotime((string) ($sub['created_at'] ?? '')) ?: 0;
+            if (!$welcomed && ($created === 0 || sm_ts() - $created < 8 * DAY_IN_SECONDS)) {
+                continue;
+            }
+            // At most one marketing email per week across all flows.
+            $last = $wpdb->get_var($wpdb->prepare(
+                "SELECT MAX(sent_at) FROM $s WHERE email = %s AND template IN ($marketing_tpls)",
+                $email
+            ));
+            if ($last && sm_ts() - strtotime((string) $last) < 7 * DAY_IN_SECONDS) {
+                continue;
+            }
+            SM_Flows::start($sub, 'rotation', 'week|' . gmdate('o-W'));
         }
     }
 

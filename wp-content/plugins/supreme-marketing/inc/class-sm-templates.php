@@ -673,6 +673,38 @@ final class SM_Templates
                     ],
                 ];
 
+            case 'rotation_1':
+                $rot_label = trim((string) ($ctx['rotation_theme_label'] ?? ''));
+                $ai        = is_array($ctx['rotation_ai'] ?? null) ? $ctx['rotation_ai'] : [];
+                $headline  = trim((string) ($ai['headline'] ?? ''));
+                if ($headline === '') {
+                    $headline = $rot_label !== '' ? 'This week: ' . $rot_label : 'The catalog, one shelf at a time';
+                }
+                $intro = trim((string) ($ai['intro'] ?? ''));
+                if ($intro === '') {
+                    $intro = 'All in stock, priced as listed. This series walks the whole catalog - every category and brand - then starts over.';
+                }
+                $blocks = [
+                    ['h' => $headline],
+                    ['p' => $intro],
+                ];
+                if ($products) {
+                    $blocks[] = ['p' => ($rot_label !== '' ? 'In-stock picks from the ' . $rot_label . ' shelf:' : 'In-stock picks from the catalog:')];
+                    $blocks[] = ['products' => $products];
+                } else {
+                    $blocks[] = ['p' => 'Nothing fresh on this shelf right now - the catalog is ready when you are.'];
+                }
+                $blocks[] = ['button' => [($rot_label !== '' ? 'Shop ' . $rot_label : 'Browse the catalog'), $shop]];
+                $subject = trim((string) ($ai['subject'] ?? ''));
+                if ($subject === '') {
+                    $subject = $rot_label !== '' ? $rot_label . ' - this week at Supreme Autoparts' : 'This week at Supreme Autoparts';
+                }
+                return [
+                    'subject'   => $subject,
+                    'preheader' => 'All in stock, priced as listed.',
+                    'blocks'    => $blocks,
+                ];
+
             case 'winback_1':
                 $grid_themes = [];
                 foreach ((array) $products as $gp) {
@@ -692,7 +724,7 @@ final class SM_Templates
                 } else {
                     $blocks[] = ['p' => 'Browse the catalog whenever you are ready.'];
                 }
-                $blocks[] = ['button' => ['See what is new', $shop]];
+                $blocks[] = ['button' => ['Browse the catalog', $shop]];
                 return [
                     'subject'   => ($theme_line !== '' ? 'Back for ' . $theme_line . ' parts? We have not seen you in a while' : 'We have not seen you in a while'),
                     'preheader' => 'New parts and restocks since your last visit.',
@@ -827,6 +859,18 @@ sm_reset_caption_dedup();
                 $products[] = sm_product_payload($p, $zone);
             }
         }
+        $rot_label = '';
+        if ($key === 'rotation_1' && function_exists('sm_rotation_pick')) {
+            $rot = sm_rotation_pick('', 4); // preview: no recipient, no reservations
+            if ($rot['products']) {
+                $products = [];
+                sm_reset_caption_dedup();
+                foreach ($rot['products'] as $p) {
+                    $products[] = sm_product_payload($p, $zone);
+                }
+            }
+            $rot_label = (string) ($rot['theme_label'] ?? '');
+        }
         if (!$products) {
             $products = [
                 ['id' => 0, 'name' => 'Brake Pad Set - Toyota Corolla', 'url' => home_url('/shop/'), 'price' => '$45.00', 'image' => ''],
@@ -838,6 +882,7 @@ sm_reset_caption_dedup();
         return [
             'email'           => 'driver@example.com',
             'first_name'      => 'Brian',
+            'rotation_theme_label' => $rot_label,
             'zone'            => $zone,
             'products'        => $products,
             'product_name'    => $products[0]['name'] ?? 'Oil Filter',
