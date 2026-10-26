@@ -81,6 +81,12 @@ add_action('admin_init', function () {
             $pick['theme_label'] !== '' && count($picked_ids) >= 1,
             ($pick['theme_label'] !== '' ? $pick['theme_label'] : 'no-theme') . ' / ' . count($picked_ids) . ' products'
         );
+        $fam = array_values(array_unique(array_map('strval', (array) ($pick['families'] ?? []))));
+        $check(
+            'rotation grid obeys the four-family rule (one product per family)',
+            count($picked_ids) <= 1 || count($fam) === count($picked_ids),
+            count($picked_ids) . ' products / ' . count($fam) . ' families: ' . implode(', ', $fam)
+        );
         $rot_reserved = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE email = %s AND state = 'reserved' AND queue_id = 999999903", $email));
         $check('rotation pick reserves its products', $rot_reserved === count($picked_ids) && $rot_reserved > 0, "reserved=$rot_reserved");
 
@@ -113,6 +119,23 @@ add_action('admin_init', function () {
         ]);
         $one_html = is_array($one) ? (string) ($one['html'] ?? '') : '';
         $check('rotation_1 renders a 1-product grid cleanly', strpos($one_html, 'Solo Part') !== false && strpos($one_html, 'Test Shelf') !== false);
+
+        // 11b) A multi-family grid never describes itself as one shelf.
+        $multi = SM_Templates::render('rotation_1', [
+            'email' => $email, 'first_name' => 'Test', 'zone' => 'US',
+            'rotation_theme_label' => 'Braking',
+            'rotation_families'    => ['Braking', 'Air Intake', 'Suspension', 'Filters'],
+            'products' => [
+                ['id' => 1, 'name' => 'Pad Set', 'url' => home_url('/shop/'), 'price' => '$10.00', 'image' => '', 'caption' => '', 'theme' => 'braking'],
+                ['id' => 2, 'name' => 'Intake Kit', 'url' => home_url('/shop/'), 'price' => '$20.00', 'image' => '', 'caption' => '', 'theme' => 'air-intake'],
+            ],
+        ]);
+        $multi_html = is_array($multi) ? (string) ($multi['html'] ?? '') : '';
+        $check(
+            'multi-family grid copy never claims a single shelf',
+            $multi_html !== '' && strpos($multi_html, 'the Braking shelf') === false && strpos($multi_html, '4 product families') !== false,
+            ''
+        );
     } finally {
         // Cleanup: every row this test created, any state, every table.
         $wpdb->query($wpdb->prepare("DELETE FROM $table WHERE email = %s", $email));

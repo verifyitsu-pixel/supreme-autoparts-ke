@@ -1275,7 +1275,7 @@ function sm_rotation_pick(string $email, int $count, int $queue_id = 0): array
         // grid is final, so subject/headline/intro always match the actual
         // products shown (no copy/grid swap).
         $eng    = $email !== '' ? sm_rotation_engagement($email) : null;
-        $choose = function (array $pool_k) use ($count, $eng) {
+        $choose = function (array $pool_k, array $family_of = []) use ($count, $eng) {
             // LOCAL personalization: never re-offer what they already bought
             // (while the pool has alternatives), and pre-order the pool so
             // products sharing categories/brands with their opened/clicked/
@@ -1316,8 +1316,9 @@ function sm_rotation_pick(string $email, int $count, int $queue_id = 0): array
                 }
             }
             $products = [];
+            $seen_fam = [];
             $ids      = function_exists('sm_ai_rotation_select')
-                ? sm_ai_rotation_select($pool_k, $count)
+                ? sm_ai_rotation_select($pool_k, $count, $family_of)
                 : null;
             if (is_array($ids)) {
                 $byid = [];
@@ -1326,6 +1327,15 @@ function sm_rotation_pick(string $email, int $count, int $queue_id = 0): array
                 }
                 foreach ($ids as $id) {
                     if (isset($byid[$id])) {
+                        if ($family_of) {
+                            $f = (string) ($family_of[$id] ?? '');
+                            if ($f !== '' && isset($seen_fam[$f])) {
+                                continue; // one product per family, even if the AI names two
+                            }
+                            if ($f !== '') {
+                                $seen_fam[$f] = true;
+                            }
+                        }
                         $products[] = $byid[$id];
                     }
                 }
@@ -1334,18 +1344,78 @@ function sm_rotation_pick(string $email, int $count, int $queue_id = 0): array
                 $have = array_map(function ($p) {
                     return (int) $p->get_id();
                 }, $products);
-                foreach (sm_diverse_products($pool_k, $count) as $p) {
+                if ($family_of) {
+                    // Fill family by family first (walk order): one product
+                    // from each family the grid does not show yet.
+                    foreach ($pool_k as $p) {
+                        if (count($products) >= $count) {
+                            break;
+                        }
+                        $pid = (int) $p->get_id();
+                        if (in_array($pid, $have, true)) {
+                            continue;
+                        }
+                        $f = (string) ($family_of[$pid] ?? '');
+                        if ($f !== '' && isset($seen_fam[$f])) {
+                            continue;
+                        }
+                        if ($f !== '') {
+                            $seen_fam[$f] = true;
+                        }
+                        $have[]    = $pid;
+                        $products[] = $p;
+                    }
+                }
+                foreach ($family_of ? [] : sm_diverse_products($pool_k, $count) as $p) {
                     if (count($products) >= $count) {
                         break;
                     }
                     if (!in_array((int) $p->get_id(), $have, true)) {
+                        $have[]    = (int) $p->get_id();
                         $products[] = $p;
                     }
                 }
             }
             return $products;
         };
-        $products = $choose($by_theme[$k]); // 1..count, singletons allowed
+        // Family means the part's function, not a brand or overlapping
+        // taxonomy shelf. Four brands of intake remain ONE family.
+        $family_pools = [];
+        foreach ($pool as $p) {
+            $pid = (int) $p->get_id();
+            if (!isset($open_ids[$pid])) {
+                continue;
+            }
+            $family = sm_product_theme($p);
+            if ($family === '') {
+                $family = 'other parts';
+            }
+            $family_pools[$family][] = $p;
+        }
+        // Interleave the family pools so the AI's bounded 60-item input
+        // sees every available family, rather than only the first shelf.
+        $family_of = [];
+        $pool_multi = [];
+        for ($i = 0; $i < 500; $i++) {
+            $added = false;
+            foreach ($family_pools as $family => $items) {
+                if (isset($items[$i])) {
+                    $p = $items[$i];
+                    $family_of[(int) $p->get_id()] = $family;
+                    $pool_multi[] = $p;
+                    $added = true;
+                }
+            }
+            if (!$added) {
+                break;
+            }
+        }
+        $products = $choose($pool_multi, $family_of);
+        $families = [];
+        foreach ($products as $p) {
+            $families[] = $family_of[(int) $p->get_id()];
+        }
+        $families = array_values(array_unique($families));
         $ai = function_exists('sm_ai_rotation_plan')
             ? sm_ai_rotation_plan($themes, $ordered, $k, $products)
             : null;
@@ -1357,6 +1427,7 @@ function sm_rotation_pick(string $email, int $count, int $queue_id = 0): array
         return [
             'theme_key'   => $k,
             'theme_label' => sm_rotation_theme_label($k, $themes),
+            'families'    => $families,
             'ai'          => $ai,
             'products'    => $products,
         ];

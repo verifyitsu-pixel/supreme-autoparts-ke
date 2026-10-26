@@ -675,31 +675,41 @@ final class SM_Templates
 
             case 'rotation_1':
                 $rot_label = trim((string) ($ctx['rotation_theme_label'] ?? ''));
+                $rot_fams  = array_values(array_filter(array_map('strval', (array) ($ctx['rotation_families'] ?? []))));
+                $multi     = count($rot_fams) > 1; // grid spans several product families: never describe it as one shelf
                 $ai        = is_array($ctx['rotation_ai'] ?? null) ? $ctx['rotation_ai'] : [];
                 $headline  = trim((string) ($ai['headline'] ?? ''));
                 if ($headline === '') {
-                    $headline = $rot_label !== '' ? 'The ' . $rot_label . ' shelf' : 'The catalog, one shelf at a time';
+                    $headline = $multi
+                        ? 'A cross-section of the store'
+                        : ($rot_label !== '' ? 'The ' . $rot_label . ' shelf' : 'The catalog, one shelf at a time');
                 }
                 $intro = trim((string) ($ai['intro'] ?? ''));
                 if ($intro === '') {
-                    $intro = $rot_label !== ''
-                        ? 'A look at the ' . $rot_label . ' side of the catalog - all in stock, priced as listed.'
-                        : 'All in stock, priced as listed.';
+                    $intro = $multi
+                        ? 'A mix across ' . count($rot_fams) . ' product families - ' . implode(', ', $rot_fams) . '. All in stock, priced as listed.'
+                        : ($rot_label !== ''
+                            ? 'A look at the ' . $rot_label . ' side of the catalog - all in stock, priced as listed.'
+                            : 'All in stock, priced as listed.');
                 }
                 $blocks = [
                     ['h' => $headline],
                     ['p' => $intro],
                 ];
                 if ($products) {
-                    $blocks[] = ['p' => ($rot_label !== '' ? 'In-stock picks from the ' . $rot_label . ' shelf:' : 'In-stock picks from the catalog:')];
+                    $blocks[] = ['p' => ($multi
+                        ? 'In-stock picks across those families:'
+                        : ($rot_label !== '' ? 'In-stock picks from the ' . $rot_label . ' shelf:' : 'In-stock picks from the catalog:'))];
                     $blocks[] = ['products' => $products];
                 } else {
                     $blocks[] = ['p' => 'Nothing fresh on this shelf right now - the catalog is ready when you are.'];
                 }
-                $blocks[] = ['button' => [($rot_label !== '' ? 'Shop ' . $rot_label : 'Browse the catalog'), $shop]];
+                $blocks[] = ['button' => [($multi || $rot_label === '' ? 'Browse the catalog' : 'Shop ' . $rot_label), $shop]];
                 $subject = trim((string) ($ai['subject'] ?? ''));
                 if ($subject === '') {
-                    $subject = $rot_label !== '' ? $rot_label . ' - in stock at Supreme Autoparts' : 'In stock at Supreme Autoparts';
+                    $subject = $multi
+                        ? count($rot_fams) . ' product families - in stock at Supreme Autoparts'
+                        : ($rot_label !== '' ? $rot_label . ' - in stock at Supreme Autoparts' : 'In stock at Supreme Autoparts');
                 }
                 return [
                     'subject'   => $subject,
@@ -872,6 +882,7 @@ sm_reset_caption_dedup();
                 }
             }
             $rot_label = (string) ($rot['theme_label'] ?? '');
+            $rot_fams  = (array) ($rot['families'] ?? []);
         }
         if (!$products) {
             $products = [
@@ -885,6 +896,7 @@ sm_reset_caption_dedup();
             'email'           => 'driver@example.com',
             'first_name'      => 'Brian',
             'rotation_theme_label' => $rot_label,
+            'rotation_families' => $rot_fams ?? [],
             'zone'            => $zone,
             'products'        => $products,
             'product_name'    => $products[0]['name'] ?? 'Oil Filter',

@@ -1062,6 +1062,7 @@ final class SM_Admin
             'first_name'           => 'Test',
             'zone'                 => $zone,
             'rotation_theme_label' => (string) ($pick['theme_label'] ?? ''),
+            'rotation_families'    => (array) ($pick['families'] ?? []),
             'rotation_ai'          => $ai,
             'products'             => $products,
         ];

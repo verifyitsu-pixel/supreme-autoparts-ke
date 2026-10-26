@@ -30,7 +30,7 @@ if (!defined('ABSPATH')) {
 
 if (!defined('SM_AI_PROMPT_VERSION')) {
     // Bump when any AI instruction changes; part of every plan cache key.
-    define('SM_AI_PROMPT_VERSION', 3);
+    define('SM_AI_PROMPT_VERSION', 4); // v4: four-family grid selection
 }
 
 if (!defined('SM_AI_DAILY_NEURON_BUDGET')) {
@@ -274,13 +274,32 @@ function sm_ai_caption(WC_Product $p): string
  * identity ever leaves the server. ANY failure returns null and the caller
  * falls back to the deterministic diverse pick.
  */
-function sm_ai_rotation_select(array $products, int $count): ?array
+function sm_ai_rotation_select(array $products, int $count, array $family_of = []): ?array
 {
     if (!sm_ai_ready() || $count < 1 || !$products) {
         return null;
     }
     $offered = [];
     $facts   = [];
+    if ($family_of) {
+        $buckets = [];
+        foreach ($products as $p) {
+            if ($p instanceof WC_Product) {
+                $buckets[(string) ($family_of[(int) $p->get_id()] ?? '')][] = $p;
+            }
+        }
+        $products = [];
+        for ($i = 0; count($products) < 60; $i++) {
+            $added = false;
+            foreach ($buckets as $items) {
+                if (isset($items[$i]) && count($products) < 60) {
+                    $products[] = $items[$i];
+                    $added = true;
+                }
+            }
+            if (!$added) { break; }
+        }
+    }
     foreach (array_slice($products, 0, 60) as $p) {
         if (!($p instanceof WC_Product)) {
             continue;
@@ -292,6 +311,9 @@ function sm_ai_rotation_select(array $products, int $count): ?array
             'category' => implode(', ', (array) wp_get_post_terms($p->get_id(), 'product_cat', ['fields' => 'names'])),
             'price'    => $p->get_price(),
         ];
+        if ($family_of) {
+            $facts[count($facts) - 1]['family'] = (string) ($family_of[(int) $p->get_id()] ?? '');
+        }
     }
     if (count($offered) <= $count) {
         return null; // nothing meaningful to choose; caller shows them all
@@ -300,14 +322,15 @@ function sm_ai_rotation_select(array $products, int $count): ?array
     // the server, even unnamed. The caller pre-orders the pool by local
     // engagement affinity, so personalization rides on ordering alone.
     $ctx   = ['products' => $facts, 'pick' => $count];
-    $cache = 'sm_ai_sel_v' . SM_AI_PROMPT_VERSION . '_' . md5(implode(',', $offered) . '|' . $count);
+    $cache = 'sm_ai_sel_v' . SM_AI_PROMPT_VERSION . '_' . md5(implode(',', $offered) . '|' . $count . '|' . wp_json_encode($family_of));
     $hit   = get_transient($cache);
     if (is_array($hit)) {
         return $hit;
     }
     $j = sm_ai_call(
         'You choose the products for one marketing email grid for an auto parts store. Reply with JSON {"ids":[...]} only: pick exactly '
-        . $count . ' product ids from the list that make one coherent, appealing email; vary product types and price points. The list is pre-sorted by expected relevance - prefer earlier items when they fit one coherent email. Choose ids ONLY from the list. No claims, no offers, no discounts.',
+        . $count . ' product ids from the list that make one coherent, appealing email; vary price points. The list is pre-sorted by expected relevance - prefer earlier items when they fit one coherent email. Choose ids ONLY from the list. No claims, no offers, no discounts.'
+        . ($family_of ? ' Each product carries a family value: pick at most ONE product per family value, so the grid spans ' . $count . ' different families.' : ''),
         $ctx,
         150
     );
