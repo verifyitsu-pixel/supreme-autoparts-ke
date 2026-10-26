@@ -610,6 +610,31 @@ add_action('init', static function (): void {
     }
 });
 
+add_action('wp_ajax_sa_suggest', 'sa_sf_suggest');
+add_action('wp_ajax_nopriv_sa_suggest', 'sa_sf_suggest');
+
+/* Full search-results path: when a submitted product search finds nothing
+   literal (typo, misspelling), rerun as the local fuzzy match instead of
+   showing an empty page. Suggestions and results stay real catalog products
+   only; no fitment or compatibility is implied. */
+add_filter('posts_results', static function (array $posts, WP_Query $query): array {
+    if ($posts !== [] || is_admin() || !$query->is_main_query() || !$query->is_search()) {
+        return $posts;
+    }
+    if ($query->get('post_type') !== 'product' && $query->get('post_type') !== ['product']) {
+        return $posts;
+    }
+    $q = trim((string) $query->get('s'));
+    if (mb_strlen($q) < 3 || !sa_sf_fuzzy_enabled() || !function_exists('sa_sf_fuzzy_product_ids')) {
+        return $posts;
+    }
+    $ids = sa_sf_fuzzy_product_ids($q, 24);
+    if ($ids === []) {
+        return $posts;
+    }
+    return (new WP_Query(['post_type' => 'product', 'post_status' => 'publish', 'post__in' => $ids, 'orderby' => 'post__in', 'posts_per_page' => 24, 'no_found_rows' => true]))->posts;
+}, 10, 2);
+
 /* One-line roadside mention in customer order emails. Roadside rescue is a Nairobi service, so it only shows on African orders,
  * and it sits after the billing/shipping block so the order details stay together. */
 add_action('woocommerce_email_customer_details', static function ($order, $sent_to_admin = false, $plain_text = false): void {
