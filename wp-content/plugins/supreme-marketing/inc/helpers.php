@@ -429,14 +429,25 @@ function sm_diverse_products(array $products, int $count, int $max_per_cat = 2):
     $deferred = [];
     $seen     = [];
     foreach ($clean as $p) {
-        $cats = wp_get_post_terms($p->get_id(), 'product_cat', ['fields' => 'ids']);
-        $cat  = (int) ($cats[0] ?? 0);
-        if (($seen[$cat] ?? 0) >= $max_per_cat) {
+        // Every category term counts: products sharing ANY term (brand line,
+        // parent range, type) with $max_per_cat already-picked items defer,
+        // so a grid can never fill with one product family.
+        $cats = array_map('intval', (array) wp_get_post_terms($p->get_id(), 'product_cat', ['fields' => 'ids']));
+        $capped = false;
+        foreach ($cats as $c) {
+            if (($seen[$c] ?? 0) >= $max_per_cat) {
+                $capped = true;
+                break;
+            }
+        }
+        if ($capped) {
             $deferred[] = $p;
             continue;
         }
-        $seen[$cat] = ($seen[$cat] ?? 0) + 1;
-        $picked[]   = $p;
+        foreach ($cats as $c) {
+            $seen[$c] = ($seen[$c] ?? 0) + 1;
+        }
+        $picked[] = $p;
         if (count($picked) >= $count) {
             return $picked;
         }
