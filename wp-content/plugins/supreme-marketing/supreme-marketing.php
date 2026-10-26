@@ -38,6 +38,7 @@ require_once SUPM_DIR . 'inc/class-sm-welcome.php';
 require_once SUPM_DIR . 'inc/class-sm-public.php';
 require_once SUPM_DIR . 'inc/class-sm-admin.php';
 require_once SUPM_DIR . 'inc/class-sm-selftest.php';
+require_once SUPM_DIR . 'inc/class-sm-ai.php';
 
 register_activation_hook(__FILE__, static function (): void {
     SM_DB::install();

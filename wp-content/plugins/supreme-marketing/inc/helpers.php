@@ -773,7 +773,13 @@ function sm_product_caption(WC_Product $p): string
         }
     }
 
-    // 2) Name-derived feature hook + function context (theme first).
+    // 2) AI-composed caption when the approved provider is connected
+    // (fail-closed: returns '' until then, and never sees recipient data).
+    if (function_exists('sm_ai_caption')) {
+        $caption = sm_ai_caption($p);
+    }
+
+    // 3) Name-derived feature hook + function context (theme first).
     if ($caption === '') {
         $feat = sm_name_features($name);
         // The name is the most specific source: "Alignment Cam Kit" says

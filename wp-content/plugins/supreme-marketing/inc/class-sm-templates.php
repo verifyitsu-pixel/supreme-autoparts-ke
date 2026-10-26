@@ -495,15 +495,15 @@ final class SM_Templates
                     $blocks[] = ['p' => 'Remember: sign up or sign in with Google at checkout and your first order gets 20% off.'];
                 }
                 if ($products) {
-                    $blocks[] = ['p' => 'Our current best sellers - all in stock:'];
+                    $blocks[] = ['p' => 'In-stock picks from the catalog:'];
                     $blocks[] = ['products' => $products];
                 } else {
-                    $blocks[] = ['p' => 'Start with the best sellers - they are popular for a reason.'];
+                    $blocks[] = ['p' => 'Start with the in-stock picks - the catalog is ready when you are.'];
                 }
                 $blocks[] = ['button' => [($theme_line !== '' ? 'Shop ' . $theme_line . ' parts' : 'Go to the store'), $shop]];
                 $blocks[] = ['p' => 'This is the last email in your welcome series. From here you will hear from us about once a week.'];
                 return [
-                    'subject'   => ($theme_line !== '' ? 'Your 20% first-order code, plus ' . $theme_line . ' best sellers' : 'Your first order, when you are ready'),
+                    'subject'   => ($theme_line !== '' ? 'Your 20% first-order code, plus ' . $theme_line . ' picks' : 'Your first order, when you are ready'),
                     'preheader' => 'Everything is set - the parts are waiting.',
                     'blocks'    => $blocks,
                 ];
@@ -683,14 +683,14 @@ final class SM_Templates
                 }
                 $theme_line = implode(' and ', array_slice($grid_themes, 0, 2));
                 $blocks = [
-                    ['h' => ($theme_line !== '' ? 'Still running stock ' . $theme_line . '?' : 'Still there?')],
-                    ['p' => 'It has been a while since your last order. Since then we have added new parts and restocked popular ones - same fitment checks, same delivery.'],
+                    ['h' => ($theme_line !== '' ? 'Parts for the next job?' : 'Still there?')],
+                    ['p' => 'It has been a while since your last order. Same fitment checks, same delivery, whenever your car needs something.'],
                 ];
                 if ($products) {
                     $blocks[] = ['p' => SM_Recommend::purchased_product_ids((string) ($ctx['email'] ?? '')) ? 'Recommended from your past orders:' : ($theme_line !== '' ? 'Picked from the ' . $theme_line . ' shelf - all in stock:' : 'Fresh picks from the shop:')];
                     $blocks[] = ['products' => $products];
                 } else {
-                    $blocks[] = ['p' => 'See what is new in the store.'];
+                    $blocks[] = ['p' => 'Browse the catalog whenever you are ready.'];
                 }
                 $blocks[] = ['button' => ['See what is new', $shop]];
                 return [
