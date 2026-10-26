@@ -725,6 +725,11 @@ function sm_product_caption(WC_Product $p): string
         $sm_used_captions = [];
     }
     $name  = trim((string) $p->get_name());
+    // A package's category cannot establish its contents. Preserve its
+    // actual catalog title rather than relabel it as an intake/exhaust etc.
+    if (preg_match('/\b(?:power package|stage \d+ package)\b/i', $name)) {
+        return sm_caption_clip($name, 110);
+    }
     $brand = '';
     if (taxonomy_exists('pa_brand')) {
         $brands = wc_get_product_terms($p->get_id(), 'pa_brand', ['fields' => 'names']);
