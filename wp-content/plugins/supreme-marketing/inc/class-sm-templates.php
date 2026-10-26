@@ -802,7 +802,8 @@ final class SM_Templates
         if (function_exists('wc_get_products')) {
             $items = SM_Recommend::best_sellers(12);
             $items = sm_diverse_products($items, 4);
-            foreach ($items as $p) {
+sm_reset_caption_dedup();
+                            foreach ($items as $p) {
                 $products[] = sm_product_payload($p, $zone);
             }
         }

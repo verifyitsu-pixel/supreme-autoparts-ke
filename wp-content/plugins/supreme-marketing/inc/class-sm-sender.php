@@ -227,6 +227,7 @@ final class SM_Sender
     /** Payload array for a list of WC_Product, priced for the zone. */
     public static function payload_for(array $products, string $zone): array
     {
+        sm_reset_caption_dedup(); // per-grid caption uniqueness
         $out = [];
         foreach ($products as $p) {
             if ($p instanceof WC_Product) {
