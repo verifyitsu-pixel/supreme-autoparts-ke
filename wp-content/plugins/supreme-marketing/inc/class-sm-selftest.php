@@ -152,6 +152,17 @@ add_action('admin_init', function () {
         $check('AI claim filter blocks claims/offers, passes grounded lines', $ai_ok);
     }
 
+    // Provider wire contract (pure parse, no network): chat-completions
+    // shape with finish_reason=stop, response fallback when choices are
+    // absent, truncated completions rejected, neuron usage read.
+    if (function_exists('sm_ai_extract_json') && function_exists('sm_ai_neurons_used')) {
+        $wire_ok = sm_ai_extract_json(['result' => ['choices' => [['message' => ['content' => '{"subject":"In stock"}'], 'finish_reason' => 'stop']], 'usage' => ['neurons' => 12]]]) === ['subject' => 'In stock'];
+        $wire_len = sm_ai_extract_json(['result' => ['choices' => [['message' => ['content' => '{"subject":"In st'], 'finish_reason' => 'length']]]]) === null;
+        $wire_fb = sm_ai_extract_json(['result' => ['response' => '{"caption":"Panel filter"}']]) === ['caption' => 'Panel filter'];
+        $wire_nn = sm_ai_neurons_used(['result' => ['usage' => ['neurons' => 12]]]) === 12;
+        $check('AI wire parse: choices/stop, response fallback, truncation rejected', $wire_ok && $wire_len && $wire_fb && $wire_nn);
+    }
+
     // Pure cycle walk + live universe + state table (read-only).
     $adv1 = sm_rotation_cycle_advance([1, 2, 3], [1]);
     $adv2 = sm_rotation_cycle_advance([1, 2, 3], [1, 2, 3]);
