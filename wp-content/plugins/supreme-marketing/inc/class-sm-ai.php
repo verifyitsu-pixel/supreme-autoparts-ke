@@ -239,7 +239,7 @@ function sm_ai_rotation_plan(array $themes, array $available_keys, string $chose
     if (!sm_ai_ready()) {
         return null;
     }
-    $cache = 'sm_ai_plan_' . md5($chosen_key . '|' . gmdate('o-W'));
+    $cache = 'sm_ai_plan_v2_' . md5($chosen_key . '|' . gmdate('o-W'));
     $hit   = get_transient($cache);
     if (is_array($hit)) {
         return $hit;
@@ -264,7 +264,7 @@ function sm_ai_rotation_plan(array $themes, array $available_keys, string $chose
         ];
     }
     $j = sm_ai_call(
-        'You plan the next email in an ongoing catalog walk for an auto parts store (one email per customer per day). Reply with JSON {"theme_key","subject","headline","intro"}: pick theme_key from the available_themes keys for one coherent email; subject <=70 chars, headline <=50 chars, intro <=200 chars. Facts only: the parts are in stock and priced as listed. No sales claims, no offers, no superlatives.',
+        'You plan the next email in an ongoing catalog walk for an auto parts store (one email per customer per day). Reply with JSON {"theme_key","subject","headline","intro"}: pick theme_key from the available_themes keys for one coherent email; subject <=70 chars, headline <=50 chars, intro <=200 chars. Write about the chosen THEME shelf as a whole - never name a specific product, part number or brand in the subject, headline or intro, because the product grid below the copy varies per recipient and must never contradict it. Facts only: the parts are in stock and priced as listed. No sales claims, no offers, no superlatives.',
         ['available_themes' => $avail, 'products' => $facts],
         400
     );
