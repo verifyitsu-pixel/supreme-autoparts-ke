@@ -618,7 +618,10 @@ add_action('wp_ajax_nopriv_sa_suggest', 'sa_sf_suggest');
    showing an empty page. Suggestions and results stay real catalog products
    only; no fitment or compatibility is implied. */
 add_filter('posts_results', static function (array $posts, WP_Query $query): array {
-    if ($posts !== [] || is_admin() || !$query->is_main_query() || !$query->is_search()) {
+    // No is_main_query() requirement: the shop/search template renders products
+    // through a secondary product query; is_search() is per-query (any query
+    // with 's' set). is_admin() also covers admin-ajax (the suggest endpoint).
+    if ($posts !== [] || is_admin() || !$query->is_search()) {
         return $posts;
     }
     if ($query->get('post_type') !== 'product' && $query->get('post_type') !== ['product']) {
