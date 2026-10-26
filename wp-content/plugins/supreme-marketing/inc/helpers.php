@@ -283,11 +283,40 @@ function sm_recent_sent_product_ids(string $email): array
 }
 
 /**
- * Record which products a delivered send featured. Called only after the
- * send is confirmed; failed or cancelled sends never mark history.
- * INSERT IGNORE + unique key makes concurrent duplicate writes harmless.
+ * Cross-email non-repeat history + reservations.
+ *
+ * Lifecycle per queued email: selection runs under a per-recipient MySQL
+ * lock, chosen products are written as state='reserved' rows keyed by
+ * queue_id (closes the concurrent build/send race), the confirmed send
+ * flips them to state='sent' with the send_id, and any failure or cancel
+ * deletes the reservation so failed sends never mark history.
+ * Exclusion reads every state - a product reserved for one queued email
+ * is never picked for another email to the same recipient.
  */
-function sm_record_send_products(int $send_id, string $email, array $product_ids): void
+
+/** Per-recipient selection lock. Returns the lock name or null if not held. */
+function sm_grid_lock(string $email): ?string
+{
+    global $wpdb;
+    $email = strtolower(trim($email));
+    if ($email === '') {
+        return null;
+    }
+    $name = 'sm_grid_' . md5($email);
+    $got = $wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 5)', $name));
+    return (string) $got === '1' ? $name : null;
+}
+
+function sm_grid_unlock(?string $name): void
+{
+    global $wpdb;
+    if ($name !== null && $name !== '') {
+        $wpdb->query($wpdb->prepare('SELECT RELEASE_LOCK(%s)', $name));
+    }
+}
+
+/** Reserve selected products for a queued email (state=reserved). */
+function sm_reserve_products(int $queue_id, string $email, array $product_ids): void
 {
     global $wpdb;
     $table = SM_DB::table('send_products');
@@ -295,10 +324,37 @@ function sm_record_send_products(int $send_id, string $email, array $product_ids
     $now = sm_now();
     foreach (array_unique(array_filter(array_map('intval', $product_ids))) as $pid) {
         $wpdb->query($wpdb->prepare(
-            "INSERT IGNORE INTO $table (send_id, email, product_id, sent_at) VALUES (%d, %s, %d, %s)",
-            $send_id, $email, $pid, $now
+            "INSERT IGNORE INTO $table (send_id, queue_id, email, product_id, state, sent_at) VALUES (NULL, %d, %s, %d, 'reserved', %s)",
+            $queue_id, $email, $pid, $now
         ));
     }
+}
+
+/** Mark a queue row's reserved products as sent once the provider accepted the mail. */
+function sm_finalize_queue_products(int $queue_id, int $send_id): void
+{
+    global $wpdb;
+    $table = SM_DB::table('send_products');
+    $wpdb->query($wpdb->prepare(
+        "UPDATE $table SET state = 'sent', send_id = %d WHERE queue_id = %d AND state = 'reserved'",
+        $send_id, $queue_id
+    ));
+}
+
+/** Release reservations for a queue row that failed or was cancelled. */
+function sm_release_queue_products(int $queue_id): void
+{
+    global $wpdb;
+    $table = SM_DB::table('send_products');
+    $wpdb->query($wpdb->prepare("DELETE FROM $table WHERE queue_id = %d AND state = 'reserved'", $queue_id));
+}
+
+/** Release all pending reservations for an email (unsubscribe/cancel-all path). */
+function sm_release_email_products(string $email): void
+{
+    global $wpdb;
+    $table = SM_DB::table('send_products');
+    $wpdb->query($wpdb->prepare("DELETE FROM $table WHERE email = %s AND state = 'reserved'", strtolower(trim($email))));
 }
 
 /** Word-safe clip for email captions. */

@@ -61,7 +61,7 @@ final class SM_Sender
         unset($ctx['_fresh_product_ids']);
 
         if (!empty($payload['_refresh_products']) || empty($ctx['products'])) {
-            $ctx['products'] = self::fresh_products($row['template'], $sub);
+            $ctx['products'] = self::fresh_products($row['template'], $sub, (int) $row['id']);
             $fresh_ids = [];
             foreach ((array) $ctx['products'] as $pl) {
                 $pid = (int) (is_array($pl) ? ($pl['id'] ?? 0) : 0);
@@ -84,6 +84,7 @@ final class SM_Sender
 
         $rendered = SM_Templates::render((string) $row['template'], $ctx);
         if ($rendered === null) {
+            sm_release_queue_products((int) $row['id']);
             self::mark($row['id'], 'failed', 'unknown_template');
             return;
         }
@@ -95,6 +96,7 @@ final class SM_Sender
         if ($test) {
             $recipients = sm_test_recipients();
             if (!$recipients) {
+                sm_release_queue_products((int) $row['id']);
                 self::mark($row['id'], 'failed', 'no_test_recipients');
                 return;
             }
@@ -141,25 +143,15 @@ final class SM_Sender
 
         if ($ok) {
             $wpdb->update($s, ['status' => 'sent'], ['id' => $send_id]);
-            // Cross-email non-repeat history: only delivered sends count.
-            // Flows record freshly selected showcase products; campaigns record
-            // the per-recipient grid built at launch. Cart/browse payloads are
-            // personal items, not featured picks, so they stay out of history.
-            $hist_ids = $fresh_product_ids;
-            if (!$hist_ids && $row['campaign_id'] !== null && !empty($ctx['products']) && $is_marketing) {
-                foreach ((array) $ctx['products'] as $pl) {
-                    $pid = (int) (is_array($pl) ? ($pl['id'] ?? 0) : 0);
-                    if ($pid > 0) {
-                        $hist_ids[] = $pid;
-                    }
-                }
-            }
-            if ($hist_ids) {
-                sm_record_send_products($send_id, $email, $hist_ids);
-            }
+            // Provider accepted the mail: reserved products become permanent
+            // history for this recipient. Rows only exist for showcase grids
+            // (flow fresh picks + campaign grids) - cart/browse personal items
+            // were never reserved, so they stay out of history.
+            sm_finalize_queue_products((int) $row['id'], $send_id);
             self::mark($row['id'], 'sent', '', sm_now());
             do_action('sm_sent', $row, $send_id);
         } else {
+            sm_release_queue_products((int) $row['id']);
             $attempts = (int) $row['attempts'] + 1;
             $wpdb->update($s, ['status' => 'failed'], ['id' => $send_id]);
             if ($attempts < 3) {
@@ -245,7 +237,7 @@ final class SM_Sender
     }
 
     /** Fresh product picks for templates that re-personalize at send time. */
-    private static function fresh_products(string $template, ?array $sub): array
+    private static function fresh_products(string $template, ?array $sub, int $queue_id = 0): array
     {
         $zone = sm_subscriber_zone($sub);
         $count = (int) sm_setting('recommend_count');
@@ -259,20 +251,32 @@ final class SM_Sender
         if (!$products) {
             $products = SM_Recommend::best_sellers($fetch);
         }
-        // Cross-email non-repeat: only products never featured in mail this
-        // recipient already received. Never silently repeats: when the fresh
-        // pool runs short the grid shrinks, and when it is empty the template
-        // renders its no-grid fallback copy instead.
+        // Cross-email non-repeat: only products never featured in (or already
+        // reserved for) mail this recipient received. Selection and
+        // reservation run under a per-recipient lock so a concurrent email
+        // build cannot pick the same products. Never silently repeats: when
+        // the fresh pool runs short the grid shrinks, and when it is empty
+        // the template renders its no-grid fallback copy instead.
         $email = $sub ? (string) ($sub['email'] ?? '') : '';
-        if ($email !== '') {
-            $recent = sm_recent_sent_product_ids($email);
-            if ($recent) {
-                $products = array_values(array_filter($products, function ($p) use ($recent) {
-                    return !in_array((int) $p->get_id(), $recent, true);
-                }));
+        $lock = sm_grid_lock($email);
+        try {
+            if ($email !== '') {
+                $recent = sm_recent_sent_product_ids($email);
+                if ($recent) {
+                    $products = array_values(array_filter($products, function ($p) use ($recent) {
+                        return !in_array((int) $p->get_id(), $recent, true);
+                    }));
+                }
             }
+            $products = sm_diverse_products($products, $count);
+            if ($queue_id > 0 && $email !== '' && $products) {
+                sm_reserve_products($queue_id, $email, array_map(function ($p) {
+                    return (int) $p->get_id();
+                }, $products));
+            }
+        } finally {
+            sm_grid_unlock($lock);
         }
-        $products = sm_diverse_products($products, $count);
         return self::payload_for($products, $zone);
     }
 

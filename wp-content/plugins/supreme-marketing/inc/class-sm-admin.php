@@ -172,7 +172,9 @@ final class SM_Admin
                 break;
             case 'cancel_queue_row':
                 global $wpdb;
-                $wpdb->update(SM_DB::table('queue'), ['status' => 'cancelled', 'last_error' => 'admin_cancelled'], ['id' => (int) ($_POST['queue_id'] ?? 0), 'status' => 'pending']);
+                $qid = (int) ($_POST['queue_id'] ?? 0);
+                $wpdb->update(SM_DB::table('queue'), ['status' => 'cancelled', 'last_error' => 'admin_cancelled'], ['id' => $qid, 'status' => 'pending']);
+                sm_release_queue_products($qid);
                 break;
             case 'revoke_welcome_code':
                 global $wpdb;

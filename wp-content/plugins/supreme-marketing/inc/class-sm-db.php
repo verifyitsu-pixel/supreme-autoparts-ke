@@ -100,12 +100,15 @@ final class SM_DB
 
         $sql[] = 'CREATE TABLE ' . self::table('send_products') . " (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            send_id BIGINT UNSIGNED NOT NULL,
+            send_id BIGINT UNSIGNED NULL,
+            queue_id BIGINT UNSIGNED NULL,
             email VARCHAR(190) NOT NULL,
             product_id BIGINT UNSIGNED NOT NULL,
+            state VARCHAR(10) NOT NULL DEFAULT 'sent',
             sent_at DATETIME NOT NULL,
             PRIMARY KEY (id),
             UNIQUE KEY send_product (send_id, product_id),
+            KEY queue_id (queue_id),
             KEY email_sent (email, sent_at)
         ) $charset;";
 

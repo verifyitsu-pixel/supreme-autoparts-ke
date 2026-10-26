@@ -199,6 +199,10 @@ final class SM_Campaigns
         $personalize = $c['template'] === 'cross_sell_1';
 
         foreach ($recipients as $sub) {
+            // Serialize selection per recipient: a flow email sending at the
+            // same moment sees these reservations and never picks the same
+            // products for this person.
+            $grid_lock = sm_grid_lock((string) ($sub['email'] ?? ''));
             $zone = sm_subscriber_zone($sub);
             $products = [];
             if ($personalize) {
@@ -220,6 +224,7 @@ final class SM_Campaigns
                 }
             }
             if (($personalize || $c['type'] === 'category') && !$products) {
+                sm_grid_unlock($grid_lock);
                 continue; // nothing relevant to send this person
             }
             $ok = SM_Queue::add([
@@ -245,8 +250,23 @@ final class SM_Campaigns
                 'dedupe_key'    => 'campaign|' . $id . '|' . $sub['email'],
             ]);
             if ($ok) {
+                $qid = (int) $wpdb->get_var($wpdb->prepare(
+                    'SELECT id FROM ' . SM_DB::table('queue') . ' WHERE dedupe_key = %s',
+                    'campaign|' . $id . '|' . $sub['email']
+                ));
+                $grid_ids = [];
+                foreach ((array) $products as $pl) {
+                    $pid = (int) (is_array($pl) ? ($pl['id'] ?? 0) : 0);
+                    if ($pid > 0) {
+                        $grid_ids[] = $pid;
+                    }
+                }
+                if ($qid > 0 && $grid_ids) {
+                    sm_reserve_products($qid, (string) $sub['email'], $grid_ids);
+                }
                 $queued++;
             }
+            sm_grid_unlock($grid_lock);
         }
         $wpdb->update(SM_DB::table('campaigns'), [
             'status'     => 'sending',

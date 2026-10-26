@@ -77,6 +77,7 @@ final class SM_Queue
     public static function cancel_pending_for_email(string $email, string $reason = ''): int
     {
         global $wpdb;
+        sm_release_email_products($email);
         return (int) $wpdb->query($wpdb->prepare(
             "UPDATE " . SM_DB::table('queue') . " SET status = 'cancelled', last_error = %s WHERE email = %s AND status = 'pending'",
             $reason,
