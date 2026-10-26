@@ -1145,29 +1145,24 @@ function sm_rotation_last_ctx(?array $set = null): array
  * the loop may feature products again, by design.
  */
 /**
- * Engagement signals for AI grid selection, as catalog nouns only: names of
- * products from emails this subscriber opened, product links they clicked,
- * and items they purchased. Used to bias the next grid toward related/next
- * products. Only ever fed to the model as product names - never the
- * recipient identity. Rotation sends already require marketing consent.
+ * LOCAL engagement affinity for grid selection: ids of products from emails
+ * this subscriber opened, product links they clicked, and items they
+ * purchased, plus the categories/brands behind them. Used ONLY inside this
+ * server to exclude already-purchased items and pre-order the candidate
+ * pool by relevance - none of it is ever sent to the external AI provider.
+ * Rotation sends already require marketing consent.
  */
 function sm_rotation_engagement(string $email): array
 {
-    $out = ['opened' => [], 'clicked' => [], 'purchased' => []];
+    $out = ['opened_ids' => [], 'clicked_ids' => [], 'purchased_ids' => [], 'engaged_cats' => [], 'engaged_brands' => []];
     $email = strtolower(trim($email));
     if ($email === '') {
         return $out;
     }
     global $wpdb;
-    $names = function (array $ids): array {
-        $n = [];
-        foreach ($ids as $id) {
-            $p = wc_get_product((int) $id);
-            if ($p) {
-                $n[] = $p->get_name();
-            }
-        }
-        return array_slice(array_values(array_unique($n)), 0, 8);
+    $seen = function (array $ids): array {
+        $ids = array_map('intval', $ids);
+        return array_slice(array_values(array_unique(array_filter($ids))), 0, 20);
     };
     // Products inside emails they actually opened.
     $sp = SM_DB::table('send_products');
@@ -1177,11 +1172,9 @@ function sm_rotation_engagement(string $email): array
          WHERE sp.email = %s AND s.opened_at IS NOT NULL ORDER BY sp.id DESC LIMIT 40",
         $email
     ));
-    if ($rows) {
-        $out['opened'] = $names($rows);
-    }
+    $out['opened_ids'] = $seen((array) $rows);
     // Product links they clicked (click redirect records the destination URL).
-    $lk = SM_DB::table('links');
+    $lk   = SM_DB::table('links');
     $urls = $wpdb->get_col($wpdb->prepare(
         "SELECT l.url FROM $lk l JOIN $sd s ON s.id = l.send_id
          WHERE s.email = %s AND l.clicks > 0 ORDER BY l.id DESC LIMIT 20",
@@ -1194,9 +1187,7 @@ function sm_rotation_engagement(string $email): array
             $clicked[] = $pid;
         }
     }
-    if ($clicked) {
-        $out['clicked'] = $names($clicked);
-    }
+    $out['clicked_ids'] = $seen($clicked);
     // Past purchases (WooCommerce orders under this email).
     if (function_exists('wc_get_orders')) {
         $bought = [];
@@ -1205,10 +1196,22 @@ function sm_rotation_engagement(string $email): array
                 $bought[] = $item->get_product_id();
             }
         }
-        if ($bought) {
-            $out['purchased'] = $names($bought);
+        $out['purchased_ids'] = $seen($bought);
+    }
+    // Categories and brands behind anything they engaged with.
+    $cats = [];
+    $brands = [];
+    foreach (array_merge($out['opened_ids'], $out['clicked_ids'], $out['purchased_ids']) as $pid) {
+        foreach ((array) wp_get_post_terms($pid, 'product_cat', ['fields' => 'ids']) as $tid) {
+            $cats[(int) $tid] = true;
+        }
+        $b = function_exists('sm_rotation_product_brand') ? sm_rotation_product_brand(wc_get_product($pid)) : '';
+        if ($b !== '') {
+            $brands[$b] = true;
         }
     }
+    $out['engaged_cats']   = array_map('intval', array_keys($cats));
+    $out['engaged_brands'] = array_map('strval', array_keys($brands));
     return $out;
 }
 
@@ -1268,10 +1271,50 @@ function sm_rotation_pick(string $email, int $count, int $queue_id = 0): array
         // full fallback when AI is unavailable. Copy is composed AFTER the
         // grid is final, so subject/headline/intro always match the actual
         // products shown (no copy/grid swap).
-        $choose = function (array $pool_k) use ($count, $email) {
+        $eng    = $email !== '' ? sm_rotation_engagement($email) : null;
+        $choose = function (array $pool_k) use ($count, $eng) {
+            // LOCAL personalization: never re-offer what they already bought
+            // (while the pool has alternatives), and pre-order the pool so
+            // products sharing categories/brands with their opened/clicked/
+            // purchased items come first. Only the reordered public pool is
+            // offered to the AI - no behavior history leaves the server.
+            if (is_array($eng)) {
+                if ($eng['purchased_ids'] && count($pool_k) > 1) {
+                    $f = array_values(array_filter($pool_k, function ($p) use ($eng) {
+                        return !in_array((int) $p->get_id(), $eng['purchased_ids'], true);
+                    }));
+                    if ($f) {
+                        $pool_k = $f;
+                    }
+                }
+                if ($eng['engaged_cats'] || $eng['engaged_brands']) {
+                    $score = function ($p) use ($eng) {
+                        $sc = 0;
+                        foreach ((array) wp_get_post_terms($p->get_id(), 'product_cat', ['fields' => 'ids']) as $tid) {
+                            if (in_array((int) $tid, $eng['engaged_cats'], true)) {
+                                $sc += 2;
+                            }
+                        }
+                        $b = sm_rotation_product_brand($p);
+                        if ($b !== '' && in_array($b, $eng['engaged_brands'], true)) {
+                            $sc += 3;
+                        }
+                        return $sc;
+                    };
+                    $scored = array_map(function ($p) use ($score) {
+                        return [$score($p), $p];
+                    }, $pool_k);
+                    usort($scored, function ($a, $b) {
+                        return $b[0] <=> $a[0]; // PHP 8 stable: ties keep pool order
+                    });
+                    $pool_k = array_map(function ($r) {
+                        return $r[1];
+                    }, $scored);
+                }
+            }
             $products = [];
             $ids      = function_exists('sm_ai_rotation_select')
-                ? sm_ai_rotation_select($pool_k, $count, $email !== '' ? sm_rotation_engagement($email) : [])
+                ? sm_ai_rotation_select($pool_k, $count)
                 : null;
             if (is_array($ids)) {
                 $byid = [];

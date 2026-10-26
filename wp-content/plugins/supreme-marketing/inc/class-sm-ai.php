@@ -225,8 +225,17 @@ function sm_ai_caption(WC_Product $p): string
     if (!sm_ai_ready()) {
         return '';
     }
-    $key = 'sm_ai_cap_' . $p->get_id();
-    $hit = get_transient($key);
+    // Ground in the ACTUAL catalog facts: name, category and the product's
+    // own description (stripped, truncated). Without the description the
+    // model guesses package contents from the theme - rejected behavior.
+    $desc = $p->get_short_description();
+    if ($desc === '') {
+        $desc = $p->get_description();
+    }
+    $desc = trim((string) preg_replace('/\s+/', ' ', wp_strip_all_tags((string) $desc)));
+    $desc = mb_substr($desc, 0, 400);
+    $key  = 'sm_ai_cap2_' . $p->get_id() . '_' . md5($p->get_name() . '|' . $desc);
+    $hit  = get_transient($key);
     if (is_string($hit)) {
         return $hit;
     }
@@ -235,8 +244,11 @@ function sm_ai_caption(WC_Product $p): string
         'category' => implode(', ', (array) wp_get_post_terms($p->get_id(), 'product_cat', ['fields' => 'names'])),
         'price'    => $p->get_price(),
     ];
+    if ($desc !== '') {
+        $facts['description'] = $desc;
+    }
     $j = sm_ai_call(
-        'You write one-line factual catalog captions for an auto parts store. Reply with JSON {"caption": "..."} only: max 12 words, what the part is for, no claims, no prices, no offers.',
+        'You write one-line factual catalog captions for an auto parts store. Reply with JSON {"caption": "..."} only: max 12 words. State what the part is or what it is for using ONLY the given name, category and description; when none of them say what it does, restate the name plainly - never invent contents, fitment or function. No claims, no prices, no offers.',
         $facts,
         120
     );
@@ -261,7 +273,7 @@ function sm_ai_caption(WC_Product $p): string
  * identity ever leaves the server. ANY failure returns null and the caller
  * falls back to the deterministic diverse pick.
  */
-function sm_ai_rotation_select(array $products, int $count, array $engagement = []): ?array
+function sm_ai_rotation_select(array $products, int $count): ?array
 {
     if (!sm_ai_ready() || $count < 1 || !$products) {
         return null;
@@ -283,25 +295,18 @@ function sm_ai_rotation_select(array $products, int $count, array $engagement = 
     if (count($offered) <= $count) {
         return null; // nothing meaningful to choose; caller shows them all
     }
-    $ctx = ['products' => $facts, 'pick' => $count];
-    $eng = [];
-    foreach (['opened', 'clicked', 'purchased'] as $k) {
-        $v = array_values(array_filter(array_map('strval', (array) ($engagement[$k] ?? []))));
-        if ($v) {
-            $eng[$k] = array_slice($v, 0, 8);
-        }
-    }
-    if ($eng) {
-        $ctx['customer_interest'] = $eng;
-    }
-    $cache = 'sm_ai_sel_v' . SM_AI_PROMPT_VERSION . '_' . md5(implode(',', $offered) . '|' . $count . '|' . md5(wp_json_encode($eng)));
+    // Public candidate-pool facts only: NO customer behavior history leaves
+    // the server, even unnamed. The caller pre-orders the pool by local
+    // engagement affinity, so personalization rides on ordering alone.
+    $ctx   = ['products' => $facts, 'pick' => $count];
+    $cache = 'sm_ai_sel_v' . SM_AI_PROMPT_VERSION . '_' . md5(implode(',', $offered) . '|' . $count);
     $hit   = get_transient($cache);
     if (is_array($hit)) {
         return $hit;
     }
     $j = sm_ai_call(
         'You choose the products for one marketing email grid for an auto parts store. Reply with JSON {"ids":[...]} only: pick exactly '
-        . $count . ' product ids from the list that make one coherent, appealing email; vary product types and price points. When customer_interest is present, prefer products related to or a natural next step from those interests, and never pick items already purchased. Choose ids ONLY from the list. No claims, no offers, no discounts.',
+        . $count . ' product ids from the list that make one coherent, appealing email; vary product types and price points. The list is pre-sorted by expected relevance - prefer earlier items when they fit one coherent email. Choose ids ONLY from the list. No claims, no offers, no discounts.',
         $ctx,
         150
     );

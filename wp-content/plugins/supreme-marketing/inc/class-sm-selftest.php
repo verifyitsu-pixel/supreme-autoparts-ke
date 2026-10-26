@@ -180,6 +180,33 @@ add_action('admin_init', function () {
         }
     }
 
+    // Engagement personalization against LIVE data (capability proof, not a
+    // mock): run the gatherer for the most recent real customer and confirm
+    // the local signals actually resolve on this store's history.
+    if (function_exists('sm_rotation_engagement') && function_exists('wc_get_orders')) {
+        $eng_ok  = false;
+        $eng_det = 'no orders';
+        $recent  = wc_get_orders(['limit' => 1, 'orderby' => 'date', 'order' => 'DESC']);
+        if ($recent) {
+            $em  = (string) $recent[0]->get_billing_email();
+            $eng = sm_rotation_engagement($em);
+            $has_items = false;
+            foreach ($recent[0]->get_items() as $it) {
+                if ((int) $it->get_product_id() > 0) {
+                    $has_items = true;
+                }
+            }
+            $eng_ok  = is_array($eng)
+                && isset($eng['purchased_ids'], $eng['engaged_cats'])
+                && (!$has_items || $eng['purchased_ids'] !== []);
+            $eng_det = 'purchased=' . count((array) ($eng['purchased_ids'] ?? []))
+                . ' opened=' . count((array) ($eng['opened_ids'] ?? []))
+                . ' clicked=' . count((array) ($eng['clicked_ids'] ?? []))
+                . ' cats=' . count((array) ($eng['engaged_cats'] ?? []));
+        }
+        $check('engagement personalization resolves on live store history (local-only)', $eng_ok, $eng_det);
+    }
+
     // Pure cycle walk + live universe + state table (read-only).
     $adv1 = sm_rotation_cycle_advance([1, 2, 3], [1]);
     $adv2 = sm_rotation_cycle_advance([1, 2, 3], [1, 2, 3]);
