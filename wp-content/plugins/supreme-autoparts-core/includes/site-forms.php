@@ -384,7 +384,7 @@ function sa_sf_suggest(): void
         $scope = '';
     }
     $facet_key = function_exists('sa_fx_state') ? serialize(sa_fx_state()) : '';
-    $ck = 'sa_sugg_v4_' . md5(strtolower($q) . '|' . $scope . '|' . $facet_key);
+    $ck = 'sa_sugg_v5_' . md5(strtolower($q) . '|' . $scope . '|' . $facet_key);
     $out = get_transient($ck);
     if (!is_array($out)) {
         $args = ['post_type' => 'product', 'post_status' => 'publish', 's' => $q, 'posts_per_page' => 6, 'fields' => 'ids', 'no_found_rows' => true];
@@ -397,7 +397,8 @@ function sa_sf_suggest(): void
         // real published products only - no invented compatibility. A category
         // scope (sa_cat) constrains fuzzy candidates exactly like literal ones.
         $intent = sa_sf_intent_plan($q);
-        if (count($ids) < 6 && $intent !== null) {
+        if ($intent !== null && empty($intent['blocked'])) {
+            $ids = []; // Native WP broad-word matches can be unrelated to the named part.
             $intent_tax = $scope !== '' ? [['taxonomy' => 'product_cat', 'field' => 'slug', 'terms' => $scope]] : [];
             foreach (sa_sf_intent_product_ids($intent, 12, $intent_tax) as $fid) {
                 if (!in_array($fid, $ids, true)) { $ids[] = $fid; }
@@ -645,7 +646,7 @@ add_filter('posts_results', static function (array $posts, WP_Query $query): arr
     // with 's' set). is_admin() also covers admin-ajax (the suggest endpoint).
     // Never inject WP_Post objects into Matomo's footer ids-only count,
     // or any ids/ids=>parent query. Full-page fallback is presentation only.
-    if ($posts !== [] || is_admin() || !$query->is_search()
+    if (is_admin() || !$query->is_search()
         || in_array($query->get('fields'), ['ids', 'id=>parent'], true)
         || did_action('wp_footer')) {
         return $posts;
@@ -661,13 +662,14 @@ add_filter('posts_results', static function (array $posts, WP_Query $query): arr
         return $posts;
     }
     $intent = sa_sf_intent_plan($q);
+    if ($posts !== [] && ($intent === null || !empty($intent['blocked']))) { return $posts; }
     $tq = $query->get('tax_query');
     $mq = $query->get('meta_query');
     $ids = $intent !== null
         ? sa_sf_intent_product_ids($intent, 24, is_array($tq) ? $tq : [], is_array($mq) ? $mq : [])
         : sa_sf_fuzzy_product_ids($q, 24);
     if ($ids === []) {
-        return $posts;
+        return $intent !== null && empty($intent['blocked']) ? [] : $posts;
     }
     $args = ['post_type' => 'product', 'post_status' => 'publish', 'post__in' => $ids, 'orderby' => 'post__in', 'posts_per_page' => 24, 'no_found_rows' => true];
     if ($intent !== null) { $args['sa_intent_candidates'] = 1; }
