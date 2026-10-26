@@ -626,6 +626,43 @@ function sm_product_theme(WC_Product $p): string
     return '';
 }
 
+/**
+ * What the part DOES, from its specific category (more precise than the
+ * theme phrase). Statements of function and application only - no invented
+ * gains, no unverified claims.
+ */
+function sm_category_function(string $cat): string
+{
+    $c = strtolower($cat);
+    $map = [
+        'alignment'   => 'to set alignment angles after suspension work',
+        'camber'      => 'to set camber after a lift or lowering',
+        'coilover'    => 'ride-height adjustable suspension',
+        'sway'        => 'for your suspension setup',
+        'control arm' => 'for your suspension setup',
+        'brake kit'   => 'a matched brake upgrade kit',
+        'brake pads'  => 'replacement pads for your brake setup',
+        'brake rotor' => 'replacement rotors for your brake setup',
+        'cold air'    => 'feeds the engine cooler outside air',
+        'intake'      => 'for your intake build',
+        'exhaust'     => 'for your exhaust build',
+        'muffler'     => 'for your exhaust build',
+        'header'      => 'for your exhaust build',
+        'intercooler' => 'cools boost charge air',
+        'turbo'       => 'for your boosted setup',
+        'clutch'      => 'for your drivetrain',
+        'radiator'    => 'for your cooling system',
+        'ignition'    => 'for your ignition system',
+        'tuner'       => 'for tuning your setup',
+    ];
+    foreach ($map as $k => $v) {
+        if (strpos($c, $k) !== false) {
+            return $v;
+        }
+    }
+    return '';
+}
+
 /** Factual "what it is for" phrase per theme. No performance promises. */
 function sm_theme_phrase(string $theme): string
 {
@@ -736,7 +773,10 @@ function sm_product_caption(WC_Product $p): string
     // 2) Name-derived feature hook + function context (theme first).
     if ($caption === '') {
         $feat = sm_name_features($name);
-        $use  = sm_theme_phrase(sm_product_theme($p));
+        $use  = sm_category_function($cat);
+        if ($use === '') {
+            $use = sm_theme_phrase(sm_product_theme($p));
+        }
         if ($use === '') {
             $use = sm_category_usecase($cat);
         }
