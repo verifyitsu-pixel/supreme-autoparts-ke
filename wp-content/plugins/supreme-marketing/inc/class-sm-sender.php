@@ -70,9 +70,6 @@ final class SM_Sender
                 if (!empty($rot_ctx['ai'])) {
                     $ctx['rotation_ai'] = $rot_ctx['ai'];
                 }
-                if (!empty($rot_ctx['families'])) {
-                    $ctx['rotation_families'] = (array) $rot_ctx['families'];
-                }
             }
             $fresh_ids = [];
             foreach ((array) $ctx['products'] as $pl) {
@@ -260,7 +257,7 @@ final class SM_Sender
             // Catalog rotation: the pick owns theme walk, eligibility,
             // no-repeat, diversity and reservation for this grid.
             $pick = sm_rotation_pick((string) ($sub['email'] ?? ''), $count, $queue_id);
-            sm_rotation_last_ctx(['theme_label' => $pick['theme_label'], 'families' => (array) ($pick['families'] ?? []), 'ai' => $pick['ai']]);
+            sm_rotation_last_ctx(['theme_label' => $pick['theme_label'], 'ai' => $pick['ai']]);
             return self::payload_for($pick['products'], $zone);
         }
         if ($sub && in_array($template, ['winback_1', 'winback_2'], true)) {
