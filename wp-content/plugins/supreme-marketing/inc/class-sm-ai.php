@@ -270,12 +270,13 @@ function sm_ai_rotation_plan(array $themes, array $available_keys, string $chose
     if (!sm_ai_ready()) {
         return null;
     }
-    // Bind the exact input facts, not just ids: a changed name, price or
-    // stock state must invalidate copy composed from the old facts.
+    // Bind the exact input facts, not just ids: every fact fed to the
+    // model (name, category, price) plus stock state must invalidate copy
+    // composed from the old facts. Descriptions are never sent to the model.
     $facts_fp = [];
     foreach ($products as $p) {
         if ($p instanceof WC_Product) {
-            $facts_fp[] = (int) $p->get_id() . ':' . md5($p->get_name() . '|' . (string) $p->get_price() . '|' . (string) $p->get_stock_status());
+            $facts_fp[] = (int) $p->get_id() . ':' . md5($p->get_name() . '|' . (string) $p->get_price() . '|' . (string) $p->get_stock_status() . '|' . implode(',', (array) wp_get_post_terms($p->get_id(), 'product_cat', ['fields' => 'names'])));
         }
     }
     $cache = 'sm_ai_plan_v' . SM_AI_PROMPT_VERSION . '_' . md5($chosen_key . '|' . implode(',', $facts_fp));
