@@ -1,7 +1,8 @@
 <?php
-/* TEMPORARY search-request memory profiler for the live OOM diagnosis (v3).
- * Logs per-stage memory + the wp_footer callback registry for front-end /?s=
- * requests into the WC "sa-diag" log. REMOVE after diagnosis. Read-only. */
+/* TEMPORARY search-request memory profiler for the live OOM diagnosis (v4).
+ * v4: wraps every wp_footer callback at priorities 2-30 with before/after
+ * memory logs to name the exact hog; dumps filter registries for core
+ * sub-hooks a plugin could piggyback on. REMOVE after diagnosis. Read-only. */
 if (!function_exists('sa_diag_on')) {
     function sa_diag_on(): bool
     {
@@ -66,6 +67,59 @@ if (!function_exists('sa_diag_on')) {
         }
         sa_diag_log('wp_footer:0', 'cbs=' . implode(',', $names));
     }, 0);
+    /* v4: dump filter registries for core sub-hooks a plugin could piggyback on. */
+    add_action('wp_footer', static function (): void {
+        global $wp_filter;
+        foreach ((array) $wp_filter as $hook => $obj) {
+            if (!is_string($hook) || !preg_match('/speculation|script_module|duotone/i', $hook)) {
+                continue;
+            }
+            if (!$obj instanceof WP_Hook) {
+                continue;
+            }
+            $names = [];
+            foreach ($obj->callbacks as $pri => $cbs) {
+                foreach ($cbs as $cb) {
+                    $names[] = $pri . ':' . sa_diag_cb_name($cb['function'] ?? null);
+                }
+            }
+            if ($names) {
+                sa_diag_log('subhook', $hook . ' = ' . implode(',', $names));
+            }
+        }
+    }, 1);
+    /* v4: wrap every wp_footer callback at priorities 2-30 with before/after memory. */
+    add_action('wp_footer', static function (): void {
+        global $wp_filter;
+        if (!isset($wp_filter['wp_footer']) || !$wp_filter['wp_footer'] instanceof WP_Hook) {
+            return;
+        }
+        $hook = $wp_filter['wp_footer'];
+        foreach ($hook->callbacks as $pri => &$cbs) {
+            if ((int) $pri < 2 || (int) $pri > 30) {
+                continue;
+            }
+            foreach ($cbs as $id => &$cb) {
+                $orig = $cb['function'] ?? null;
+                $name = sa_diag_cb_name($orig);
+                if (strpos($name, 'sa-zz-diag') !== false || !is_callable($orig)) {
+                    continue;
+                }
+                $cb['function'] = static function () use ($orig, $name, $pri) {
+                    sa_diag_log('cb:before', $pri . ':' . $name);
+                    try {
+                        call_user_func($orig);
+                    } catch (Throwable $t) {
+                        sa_diag_log('cb:threw', $pri . ':' . $name . ' ' . substr($t->getMessage(), 0, 120));
+                        throw $t;
+                    }
+                    sa_diag_log('cb:after', $pri . ':' . $name);
+                };
+            }
+        }
+        unset($cb, $cbs);
+        sa_diag_log('wrap:armed');
+    }, 2);
     foreach ([6, 11, 19, 21, 25, 31, 41, 50, 99, 500, 9999] as $sa_diag_pri) {
         add_action('wp_footer', static function () use ($sa_diag_pri): void { sa_diag_log('wp_footer:' . $sa_diag_pri); }, $sa_diag_pri);
     }
