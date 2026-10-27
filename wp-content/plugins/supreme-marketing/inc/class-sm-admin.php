@@ -703,14 +703,11 @@ final class SM_Admin
             "SELECT COUNT(*) FROM " . SM_DB::table('subscribers') . " WHERE status = 'active' AND (paused_until IS NULL OR paused_until <= %s)",
             sm_now()
         ));
-        echo '<section class="sm-flow" aria-labelledby="sm-bulk-title"><h2 id="sm-bulk-title">Email your customers</h2>'
-            . '<p><strong>All ' . $eligible . ' consenting customers</strong> selected. No page-by-page selection needed. Paused, unsubscribed, bounced and complained addresses are excluded.</p>'
-            . '<form method="get"><input type="hidden" name="page" value="sm-subscribers">'
-            . '<label for="sm-audience-action">What would you like to do? </label>'
-            . '<select id="sm-audience-action" name="audience_action"><option value="email">Create a marketing email</option><option value="drip">Manage the ongoing catalog drip</option></select> '
-            . '<button class="button button-primary" type="submit">Continue with all consenting customers</button></form>'
-            . '<p class="description">The catalog drip uses this consenting audience automatically when enabled, after welcome and cadence checks. Continue opens the email editor or drip controls. It does not send mail, start a drip or change consent.</p>'
-            . '<p><a href="#sm-consent-controls">Add consent received outside the website or turn marketing off</a></p></section>';
+        echo '<section class="sm-flow" aria-labelledby="sm-bulk-title"><h2 id="sm-bulk-title">Product emails to all consenting customers</h2>'
+            . '<p><strong>' . $eligible . ' customers</strong> are eligible for the ongoing catalog drip. ' . (SM_Flows::enabled('rotation') ? 'The drip is ON: it uses this entire audience automatically, after welcome and daily spacing checks.' : 'The drip is OFF. Open drip controls to turn it on.') . '</p>'
+            . '<p><a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=sm-flows#sm-flow-rotation')) . '">Manage product drip</a></p>'
+            . '<p class="description">No one-by-one enrollment. Paused, unsubscribed, bounced and complained addresses stay excluded.</p>'
+            . '<details><summary>Other marketing tools</summary><p><a href="' . esc_url(admin_url('admin.php?page=sm-campaigns')) . '">Create a separate campaign</a> | <a href="#sm-consent-controls">Record consent received outside the website</a></p></details></section>';
 
         $review_key = sanitize_key((string) ($_GET['sm_review'] ?? ''));
         if ($review_key !== '') {
