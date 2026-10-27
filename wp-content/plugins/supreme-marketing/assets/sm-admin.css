@@ -15,3 +15,17 @@
 .sm-flow-head h2 { margin: 0; }
 .sm-steps input[type="number"] { padding: 2px 6px; }
 .sm-form .form-table th { width: 200px; }
+
+.sm-campaign-table details select, .sm-campaign-table details textarea { max-width: 100%; width: 100%; box-sizing: border-box; }
+.sm-campaign-table details { min-width: 240px; }
+@media (max-width: 782px) {
+  .sm-campaign-table, .sm-campaign-table tbody, .sm-campaign-table tr, .sm-campaign-table td { display: block; width: 100%; box-sizing: border-box; }
+  .sm-campaign-table thead { display: none; }
+  .sm-campaign-table tr { border: 1px solid #c3c4c7; margin-bottom: 14px; padding: 10px; }
+  .sm-campaign-table td { padding: 5px 0; }
+  .sm-campaign-table details { min-width: 0; margin-top: 12px; }
+  .sm-campaign-table td:nth-child(2)::before { content: 'Type: '; font-weight: 600; }
+  .sm-campaign-table td:nth-child(3)::before { content: 'Audience: '; font-weight: 600; }
+  .sm-campaign-table td:nth-child(5)::before { content: 'Status: '; font-weight: 600; }
+  .sm-campaign-table details button { max-width: 100%; white-space: normal; height: auto; margin-bottom: 8px; }
+}

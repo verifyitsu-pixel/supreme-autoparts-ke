@@ -666,7 +666,7 @@ final class SM_Admin
             echo '<p>No campaigns yet.</p></div>';
             return;
         }
-        echo '<table class="widefat striped"><thead><tr><th>Name</th><th>Type</th><th>Segment</th><th>Code</th><th>Status</th><th>Stats</th><th>Actions</th></tr></thead><tbody>';
+        echo '<table class="widefat striped sm-campaign-table"><thead><tr><th>Name</th><th>Type</th><th>Segment</th><th>Code</th><th>Status</th><th>Stats</th><th>Actions</th></tr></thead><tbody>';
         foreach ($campaigns as $c) {
             SM_Campaigns::maybe_complete((int) $c['id']);
             $stats = json_decode((string) ($c['stats'] ?? ''), true);
