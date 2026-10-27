@@ -313,6 +313,15 @@ final class SA_Geo_Detector
         // Request-local only: do not overwrite country cookies or shipping region.
         $market = $_GET['sa_market'] ?? '';
         if (is_string($market) && $market === 'ke') {
+            // Preserve the listing currency throughout this browsing/checkout session.
+            // Do not alter order currency, FX prices, shipping country or country cookies.
+            if (!headers_sent()) {
+                setcookie('sa_merchant_usd', '1', ['expires' => 0, 'path' => '/', 'secure' => is_ssl(), 'httponly' => true, 'samesite' => 'Lax']);
+            }
+            $_COOKIE['sa_merchant_usd'] = '1';
+            return 'USD';
+        }
+        if (isset($_COOKIE['sa_merchant_usd']) && $_COOKIE['sa_merchant_usd'] === '1') {
             return 'USD';
         }
         return self::resolve()['currency'];

@@ -32,6 +32,11 @@ foreach (['/cart', '/checkout', '/my-account', '/wp-admin', '/wp-login.php', '/w
     }
 }
 
+// A Merchant USD browsing session must never receive country-only cached KES HTML.
+if (isset($_COOKIE['sa_merchant_usd']) && $_COOKIE['sa_merchant_usd'] === '1') {
+    return;
+}
+
 foreach (array_keys($_COOKIE) as $sa_pc_ck) {
     if (str_starts_with($sa_pc_ck, 'woocommerce_cart_hash')
         || str_starts_with($sa_pc_ck, 'woocommerce_items_in_cart')

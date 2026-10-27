@@ -17,7 +17,7 @@ function check($v,$name){if(!$v){throw new Exception($name);}echo "PASS $name\n"
 $_SERVER['HTTP_CF_IPCOUNTRY']='KE';
 $rp=new ReflectionProperty('SA_Geo_Detector','resolved');$rp->setAccessible(true);$rp->setValue(null,['country'=>'KE','currency'=>'KES']);
 $_GET['sa_market']='ke';check(SA_Geo_Detector::display_currency()==='USD','Kenyan visitor pinned to USD on Merchant landing');
-unset($_GET['sa_market']);$rp->setValue(null,['country'=>'US','currency'=>'USD']);
+unset($_GET['sa_market']);unset($_COOKIE['sa_merchant_usd']);$rp->setValue(null,['country'=>'US','currency'=>'USD']);
 $_SERVER['HTTP_CF_IPCOUNTRY']='US';check(SA_Geo_Detector::display_currency()==='USD','ordinary US currency unchanged');
 $_GET['sa_market']='ke';check(SA_Geo_Detector::display_currency()==='USD','Kenya landing USD matches payment despite visitor IP');check(SA_Geo_Detector::country_code()==='US','market does not forge country or shipping region');
 $in='<item><g:link>https://www.supremeautoparts.co.ke/product/test/?a=1&amp;b=2</g:link><g:price>83.95 USD</g:price></item>';
@@ -26,5 +26,6 @@ $offer=['@type'=>'Offer','price'=>'83.95','priceCurrency'=>'USD','url'=>'https:/
 $m=['offers'=>[$offer]];$got=sa_gpf_enrich_product_schema($m,new WC_Product);
 check($got['offers']===$m['offers'],'Kenya schema stays stored USD like payment');
 check(sa_gpf_format_price(83.95)==='83.95 USD','Kenya feed price USD matches checkout');
-unset($_GET['sa_market']);$us=sa_gpf_enrich_product_schema($m,new WC_Product);check($us['offers']===$m['offers'],'ordinary US schema unchanged');
+unset($_GET['sa_market']);check(SA_Geo_Detector::display_currency()==='USD','USD persists to checkout without query');
+unset($_GET['sa_market']);unset($_COOKIE['sa_merchant_usd']);$us=sa_gpf_enrich_product_schema($m,new WC_Product);check($us['offers']===$m['offers'],'ordinary US schema unchanged');
 $_GET['sa_market']=['ke'];check(SA_Geo_Detector::display_currency()==='USD','invalid array parameter ignored safely');
