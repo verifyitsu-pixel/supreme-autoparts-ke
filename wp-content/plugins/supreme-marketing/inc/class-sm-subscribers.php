@@ -281,6 +281,23 @@ final class SM_Subscribers
         return 'ok';
     }
 
+    /** Proven gateway-imported people only. Local test accounts sharing customer_import
+     * and missing-email placeholders are not evidence of original-store customers.
+     */
+    public static function imported_consent_candidates(): array
+    {
+        global $wpdb;
+        $t = SM_DB::table('subscribers');
+        $e = SM_DB::table('events');
+        $rows = $wpdb->get_results("SELECT s.id, s.email FROM $t s WHERE s.source = 'customer_import' AND s.status = 'transactional_only' AND EXISTS (SELECT 1 FROM {$wpdb->usermeta} m WHERE m.user_id = s.user_id AND m.meta_key = '_sa_imported_gateway_customer' AND m.meta_value = '1') AND NOT EXISTS (SELECT 1 FROM $e e WHERE e.email = s.email AND e.type IN ('consent_revoked_admin','unsubscribe','unsubscribed','complaint','complained','bounce','bounced')) ORDER BY s.id ASC", ARRAY_A);
+        return array_values(array_filter((array) $rows, static function ($row) {
+            $email = strtolower((string) ($row['email'] ?? ''));
+            $domain = substr(strrchr($email, '@') ?: '', 1);
+            return is_email($email) && !in_array($domain, ['example.com', 'example.org', 'example.net', 'example.invalid'], true)
+                && !str_ends_with($domain, '.invalid') && !str_starts_with($email, 'imported+');
+        }));
+    }
+
     /** Restore import-lost consent only on the owner's attestation of prior agreement.
      * The original opt-in date is unknown. consented_at records this restoration,
      * while the audit event preserves that distinction and the confirmation reference.
@@ -294,7 +311,7 @@ final class SM_Subscribers
         }
         $t = SM_DB::table('subscribers');
         $e = SM_DB::table('events');
-        $rows = $wpdb->get_results("SELECT s.id, s.email FROM $t s WHERE s.source = 'customer_import' AND s.status = 'transactional_only' AND NOT EXISTS (SELECT 1 FROM $e e WHERE e.email = s.email AND e.type IN ('consent_revoked_admin','unsubscribe','unsubscribed','complaint','complained','bounce','bounced')) ORDER BY s.id ASC", ARRAY_A);
+        $rows = self::imported_consent_candidates();
         $n = 0;
         foreach ((array) $rows as $row) {
             $updated = $wpdb->update($t, [

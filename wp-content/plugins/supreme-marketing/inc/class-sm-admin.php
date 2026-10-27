@@ -815,8 +815,9 @@ final class SM_Admin
         }
         echo '</p>';
 
+        $restore_count = count(SM_Subscribers::imported_consent_candidates());
         echo '<details><summary style="cursor:pointer;font-weight:600;margin:16px 0;">Restore prior-store consent lost during import</summary>'
-            . '<p>Only imported customer records still marked transactional-only are eligible. Later withdrawals, unsubscribes, bounces and complaints stay excluded. Existing automations can use the restored audience.</p>'
+            . '<p><strong>' . $restore_count . ' verified gateway-imported customers</strong> are eligible. Local test accounts, missing-email placeholders and records without original import provenance are excluded. Only imported customer records still marked transactional-only are eligible. Later withdrawals, unsubscribes, bounces and complaints stay excluded. Existing automations can use the restored audience.</p>'
             . '<form method="post">' . wp_nonce_field('sm_admin_restore_imported_consent', '_wpnonce', true, false)
             . '<input type="hidden" name="sm_admin_action" value="restore_imported_consent">'
             . '<p><label>Confirmation reference <input name="confirmation_reference" required class="regular-text" placeholder="Reference to your confirmation of prior consent"></label></p>'
