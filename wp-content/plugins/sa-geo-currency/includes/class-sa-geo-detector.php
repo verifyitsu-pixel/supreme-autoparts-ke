@@ -307,18 +307,24 @@ final class SA_Geo_Detector
         return self::$resolved;
     }
 
+    /** Persist listing display currency before template output starts. */
+    public static function remember_merchant_currency(): void
+    {
+        $market = $_GET['sa_market'] ?? '';
+        if (!is_string($market) || $market !== 'ke') {
+            return;
+        }
+        if (!headers_sent()) {
+            setcookie('sa_merchant_usd', '1', ['expires' => 0, 'path' => '/', 'secure' => is_ssl(), 'httponly' => true, 'samesite' => 'Lax']);
+        }
+        $_COOKIE['sa_merchant_usd'] = '1';
+    }
+
     public static function display_currency(): string
     {
-        // A Kenya Merchant landing uses the same USD as the feed and payment.
-        // Request-local only: do not overwrite country cookies or shipping region.
+        // Currency only: never overwrite customer country or shipping region.
         $market = $_GET['sa_market'] ?? '';
         if (is_string($market) && $market === 'ke') {
-            // Preserve the listing currency throughout this browsing/checkout session.
-            // Do not alter order currency, FX prices, shipping country or country cookies.
-            if (!headers_sent()) {
-                setcookie('sa_merchant_usd', '1', ['expires' => 0, 'path' => '/', 'secure' => is_ssl(), 'httponly' => true, 'samesite' => 'Lax']);
-            }
-            $_COOKIE['sa_merchant_usd'] = '1';
             return 'USD';
         }
         if (isset($_COOKIE['sa_merchant_usd']) && $_COOKIE['sa_merchant_usd'] === '1') {

@@ -25,6 +25,8 @@ require_once SA_GEO_CURRENCY_DIR . 'includes/class-sa-geo-detector.php';
 require_once SA_GEO_CURRENCY_DIR . 'includes/class-sa-fx-rates.php';
 require_once SA_GEO_CURRENCY_DIR . 'includes/class-sa-geo-display.php';
 
+add_action('init', [SA_Geo_Detector::class, 'remember_merchant_currency'], 1);
+
 /**
  * Feature flag: SA_GEO_CURRENCY=1 enables adaptive display.
  */

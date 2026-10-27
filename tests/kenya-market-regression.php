@@ -26,6 +26,6 @@ $offer=['@type'=>'Offer','price'=>'83.95','priceCurrency'=>'USD','url'=>'https:/
 $m=['offers'=>[$offer]];$got=sa_gpf_enrich_product_schema($m,new WC_Product);
 check($got['offers']===$m['offers'],'Kenya schema stays stored USD like payment');
 check(sa_gpf_format_price(83.95)==='83.95 USD','Kenya feed price USD matches checkout');
-unset($_GET['sa_market']);check(SA_Geo_Detector::display_currency()==='USD','USD persists to checkout without query');
+SA_Geo_Detector::remember_merchant_currency();unset($_GET['sa_market']);$rp->setValue(null,['country'=>'KE','currency'=>'KES']);check(SA_Geo_Detector::display_currency()==='USD','USD persists to checkout without query');
 unset($_GET['sa_market']);unset($_COOKIE['sa_merchant_usd']);$us=sa_gpf_enrich_product_schema($m,new WC_Product);check($us['offers']===$m['offers'],'ordinary US schema unchanged');
-$_GET['sa_market']=['ke'];check(SA_Geo_Detector::display_currency()==='USD','invalid array parameter ignored safely');
+$_GET['sa_market']=['ke'];check(SA_Geo_Detector::display_currency()==='KES','invalid array parameter ignored safely');
