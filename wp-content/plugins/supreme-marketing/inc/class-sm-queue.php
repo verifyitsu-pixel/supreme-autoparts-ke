@@ -198,7 +198,13 @@ final class SM_Queue
                 $email
             ));
             $created = strtotime((string) ($sub['created_at'] ?? '')) ?: 0;
-            if (!$welcomed && ($created === 0 || sm_ts() - $created < 8 * DAY_IN_SECONDS)) {
+            $restored_prior = ($sub['source'] ?? '') === 'customer_import'
+                && ($sub['consent_source'] ?? '') === 'owner_attested_prior_store';
+            $pending_welcome = $restored_prior ? (bool) $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM " . SM_DB::table('queue') . " WHERE email = %s AND flow = 'welcome' AND status = 'pending' LIMIT 1",
+                $email
+            )) : false;
+            if ($pending_welcome || (!$welcomed && !$restored_prior && ($created === 0 || sm_ts() - $created < 8 * DAY_IN_SECONDS))) {
                 continue;
             }
             // Spaced from the last marketing email across all flows
