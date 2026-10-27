@@ -309,11 +309,11 @@ final class SA_Geo_Detector
 
     public static function display_currency(): string
     {
-        // A Kenya Merchant landing must not change currency with crawler IP.
+        // A Kenya Merchant landing uses the same USD as the feed and payment.
         // Request-local only: do not overwrite country cookies or shipping region.
         $market = $_GET['sa_market'] ?? '';
         if (is_string($market) && $market === 'ke') {
-            return 'KES';
+            return 'USD';
         }
         return self::resolve()['currency'];
     }

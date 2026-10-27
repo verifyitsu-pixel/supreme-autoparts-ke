@@ -22,15 +22,15 @@ function sa_gpf_register(): void
 }
 add_action('init', 'sa_gpf_register', 20);
 
-/**
- * Currency for the current feed render: /feed/google is USD (stored prices),
- * /feed/google-kes converts to whole-shilling KES with the same rounding the
- * storefront shows Kenyan visitors (SA_GEO_Display::snap), so feed and landing
- * page agree for the Kenya target.
- */
+/** Both regional feeds use the store/payment USD currency. Google estimates KES. */
 function sa_gpf_currency(): string
 {
-    return get_query_var('feed') === 'google-kes' ? 'KES' : 'USD';
+    return 'USD';
+}
+
+function sa_gpf_is_kenya_feed(): bool
+{
+    return get_query_var('feed') === 'google-kes';
 }
 
 /**
@@ -55,7 +55,7 @@ function sa_gpf_kes(float $usd): ?float
 /** Pin only Kenya feed links, including prebuilt USD chunks. */
 function sa_gpf_market_links(string $chunk): string
 {
-    if (sa_gpf_currency() !== 'KES') { return $chunk; }
+    if (!sa_gpf_is_kenya_feed()) { return $chunk; }
     return (string) preg_replace_callback(
         '#<g:link>(.*?)</g:link>#s',
         static function (array $m): string {
@@ -99,49 +99,6 @@ function sa_gpf_enrich_product_schema($markup, $product)
     }
 
     $markup['itemCondition'] = 'https://schema.org/NewCondition';
-
-    // Match the deterministic Kenya feed landing, not the crawler's IP currency.
-    // Base prices, order currency and ordinary/US URLs remain unchanged.
-    if (isset($_GET['sa_market']) && $_GET['sa_market'] === 'ke'
-        && class_exists('SA_Geo_Display') && SA_Geo_Display::should_convert()
-        && isset($markup['offers']) && is_array($markup['offers'])) {
-        $convert_offer = static function (array $offer): array {
-            foreach (['price', 'lowPrice', 'highPrice'] as $key) {
-                if (isset($offer[$key]) && is_numeric($offer[$key])) {
-                    $kes = sa_gpf_kes((float) $offer[$key]);
-                    if ($kes !== null) {
-                        $offer[$key] = number_format($kes, 0, '.', '');
-                    }
-                }
-            }
-            $offer['priceCurrency'] = 'KES';
-            if (isset($offer['url'])) {
-                $offer['url'] = add_query_arg('sa_market', 'ke', $offer['url']);
-            }
-            if (isset($offer['priceSpecification']) && is_array($offer['priceSpecification'])) {
-                $specs = $offer['priceSpecification'];
-                $single = isset($specs['@type']);
-                foreach ($single ? [$specs] : $specs as $key => $spec) {
-                    if (!is_array($spec)) { continue; }
-                    if (isset($spec['price']) && is_numeric($spec['price'])) {
-                        $kes = sa_gpf_kes((float) $spec['price']);
-                        if ($kes !== null) { $spec['price'] = number_format($kes, 0, '.', ''); }
-                    }
-                    $spec['priceCurrency'] = 'KES';
-                    if ($single) { $offer['priceSpecification'] = $spec; }
-                    else { $offer['priceSpecification'][$key] = $spec; }
-                }
-            }
-            return $offer;
-        };
-        if (isset($markup['offers']['@type'])) {
-            $markup['offers'] = $convert_offer($markup['offers']);
-        } else {
-            foreach ($markup['offers'] as $key => $offer) {
-                if (is_array($offer)) { $markup['offers'][$key] = $convert_offer($offer); }
-            }
-        }
-    }
 
     $sku = trim((string) $product->get_sku());
     if ($sku !== '') {
@@ -316,7 +273,7 @@ function sa_gpf_render_item(int $product_id): void
     echo '<g:id>' . sa_gpf_xml($id) . "</g:id>\n";
     echo '<g:title>' . sa_gpf_xml($title) . "</g:title>\n";
     echo '<g:description>' . sa_gpf_xml($description) . "</g:description>\n";
-    if (sa_gpf_currency() === 'KES') {
+    if (sa_gpf_is_kenya_feed()) {
         $link = add_query_arg('sa_market', 'ke', $link);
     }
     echo '<g:link>' . sa_gpf_xml($link) . "</g:link>\n";
