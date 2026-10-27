@@ -240,7 +240,18 @@ final class SM_Campaigns
         }
         foreach ($recipients as $sub) {
             if (!self::audience_allows($id, (string) $sub['email'])) { continue; }
-            if ($additions && $wpdb->get_var($wpdb->prepare("SELECT id FROM " . SM_DB::table('queue') . " WHERE campaign_id = %d AND email = %s LIMIT 1", $id, $sub['email']))) { continue; }
+            if ($additions) {
+                $existing = $wpdb->get_row($wpdb->prepare("SELECT id,status,last_error FROM " . SM_DB::table('queue') . " WHERE campaign_id = %d AND email = %s LIMIT 1", $id, $sub['email']), ARRAY_A);
+                if ($existing) {
+                    // An explicitly removed, never-sent recipient can be added back.
+                    // Sent, failed, suppressed or other cancelled mail is never replayed.
+                    if ($existing['status'] === 'cancelled' && $existing['last_error'] === 'removed_from_campaign') {
+                        $updated = $wpdb->update(SM_DB::table('queue'), ['status' => 'pending', 'last_error' => '', 'send_at' => $send_at], ['id' => (int) $existing['id'], 'status' => 'cancelled', 'last_error' => 'removed_from_campaign']);
+                        $queued += $updated === 1 ? 1 : 0;
+                    }
+                    continue;
+                }
+            }
 
             // Serialize selection per recipient: a flow email sending at the
             // same moment sees these reservations and never picks the same
