@@ -81,6 +81,9 @@
     if (ctx === 'cart') { var c = document.querySelector('.cart-collaterals') || document.querySelector('.woocommerce-cart-form'); return c ? { el: c, where: 'afterend' } : null; }
   };
   var q = '?ctx=' + ctx + (C.id ? '&pid=' + C.id : '') + (ctx === 'cart' && C.cart ? '&cart=' + C.cart.join(',') : '');
+  // Keep prices in the same currency as a pinned Kenya Merchant landing.
+  // This changes rendering context only, never recommendation selection/scoring.
+  if (new URLSearchParams(location.search).get('sa_market') === 'ke') q += '&sa_market=ke';
   var run = function () {
     var a = anchor(); if (!a) return;
     fetch(C.api + 'recs' + q, { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
