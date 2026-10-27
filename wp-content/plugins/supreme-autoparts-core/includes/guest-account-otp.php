@@ -98,7 +98,7 @@ function sa_core_link_guest_order_to_account($order): void
     }
 
     // Skip privileged accounts — never attach shop orders to admins via guest email match alone.
-    if (user_can($user, 'manage_options') || user_can($user, 'manage_woocommerce')) {
+    if (!sa_security_customer_user($user)) {
         return;
     }
 
@@ -235,7 +235,7 @@ function sa_core_otp_can_send(string $email)
         // Same generic message — do not reveal whether email exists.
         return true; // allow "send" to no-op success for enumeration safety
     }
-    if (user_can($user, 'manage_options') || user_can($user, 'manage_woocommerce')) {
+    if (!sa_security_customer_user($user)) {
         return new WP_Error(
             'sa_otp_staff',
             __('Staff accounts must use password login.', 'supreme-autoparts-core')
@@ -336,6 +336,10 @@ function sa_core_otp_verify_and_login(string $email, string $code)
         return new WP_Error('sa_otp_expired', __('That code has expired. Request a new login code.', 'supreme-autoparts-core'));
     }
 
+    if (!sa_security_otp_allowed($email, $payload)) {
+        return new WP_Error('sa_otp_rate', __('Too many code attempts. Please wait 10 minutes and try again.', 'supreme-autoparts-core'));
+    }
+
     $attempts = (int) ($payload['attempts'] ?? 0);
     if ($attempts >= SA_OTP_MAX_ATTEMPTS) {
         delete_transient($key);
@@ -355,6 +359,9 @@ function sa_core_otp_verify_and_login(string $email, string $code)
         );
     }
 
+    if (!sa_security_consume_otp($email, $payload)) {
+        return new WP_Error('sa_otp_used', 'That code has already been used. Request a new login code.');
+    }
     delete_transient($key);
     $code = '';
 
@@ -362,7 +369,7 @@ function sa_core_otp_verify_and_login(string $email, string $code)
     if (!$user instanceof WP_User) {
         return new WP_Error('sa_otp_user', __('Account not found. Contact calvin@supremeautoparts.co.ke.', 'supreme-autoparts-core'));
     }
-    if (user_can($user, 'manage_options') || user_can($user, 'manage_woocommerce')) {
+    if (!sa_security_customer_user($user)) {
         return new WP_Error('sa_otp_staff', __('Staff accounts must use password login.', 'supreme-autoparts-core'));
     }
 

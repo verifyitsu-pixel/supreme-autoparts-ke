@@ -145,10 +145,7 @@ function sa_google_verify_id_token(string $credential)
 /** Per-IP throttle so the endpoint cannot be hammered (30 attempts/hour). */
 function sa_google_login_throttled(): bool
 {
-    $ip = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash((string) $_SERVER['REMOTE_ADDR'])) : 'unknown';
-    if (isset($_SERVER['HTTP_CF_CONNECTING_IP'])) {
-        $ip = sanitize_text_field(wp_unslash((string) $_SERVER['HTTP_CF_CONNECTING_IP']));
-    }
+    $ip = sa_security_network();
     $key = 'sa_gli_' . md5($ip);
     $n = (int) get_transient($key);
     if ($n >= 30) {
@@ -217,6 +214,10 @@ add_action('wp_loaded', static function (): void {
         if (!$user) {
             $fail('create');
         }
+    }
+    // Customer login must never bypass the separate staff authentication path.
+    if (!sa_security_customer_user($user)) {
+        $fail('staff');
     }
     if (function_exists('sa_core_wc_mark_email_verified')) {
         sa_core_wc_mark_email_verified((int) $user->ID);

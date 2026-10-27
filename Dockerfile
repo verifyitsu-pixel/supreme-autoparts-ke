@@ -115,7 +115,10 @@ RUN chmod +x /usr/local/bin/wordpress-entrypoint.sh \
         /usr/src/wordpress/wp-content/plugins/supreme-marketing
 
 # Apache: allow .htaccess for permalinks
-RUN a2enmod rewrite headers expires
+COPY apache-security.conf /etc/apache2/conf-available/store-security.conf
+RUN a2enmod rewrite headers expires \
+    && a2enconf store-security \
+    && apache2ctl configtest
 
 ENTRYPOINT ["wordpress-entrypoint.sh"]
 CMD ["apache2-foreground"]

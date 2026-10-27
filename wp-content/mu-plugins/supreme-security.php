@@ -104,38 +104,3 @@ add_filter('oembed_response_data', static function ($data) {
     }
     return $data;
 }, 10, 1);
-
-/**
- * Soft login rate-limit by IP after repeated failures (complements audit log).
- */
-add_filter('authenticate', static function ($user, $username, $password) {
-    unset($username, $password);
-    if ($user instanceof WP_User) {
-        return $user;
-    }
-    $ip = (string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? '');
-    $ip = preg_replace('/[^0-9a-fA-F:.]/', '', $ip) ?: '0.0.0.0';
-    $key = 'sa_login_fail_' . md5($ip);
-    $fails = (int) get_transient($key);
-    if ($fails >= 10) {
-        return new WP_Error(
-            'sa_login_rate',
-            __('Too many failed sign-in attempts from this network. Please wait 15 minutes and try again.', 'supreme-autoparts')
-        );
-    }
-    return $user;
-}, 30, 3);
-
-add_action('wp_login_failed', static function () {
-    $ip = (string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? '');
-    $ip = preg_replace('/[^0-9a-fA-F:.]/', '', $ip) ?: '0.0.0.0';
-    $key = 'sa_login_fail_' . md5($ip);
-    $fails = (int) get_transient($key);
-    set_transient($key, $fails + 1, 15 * MINUTE_IN_SECONDS);
-}, 5);
-
-add_action('wp_login', static function () {
-    $ip = (string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? '');
-    $ip = preg_replace('/[^0-9a-fA-F:.]/', '', $ip) ?: '0.0.0.0';
-    delete_transient('sa_login_fail_' . md5($ip));
-}, 5);
