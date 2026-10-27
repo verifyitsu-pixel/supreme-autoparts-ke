@@ -119,6 +119,7 @@ add_filter('woocommerce_structured_data_product', 'sa_gpf_enrich_product_schema'
  */
 function sa_gpf_render(bool $for_comments = false): void
 {
+    global $wpdb;
     if ($for_comments || !function_exists('wc_get_product')) {
         status_header(404);
         header('Content-Type: text/plain; charset=UTF-8');
@@ -138,7 +139,12 @@ function sa_gpf_render(bool $for_comments = false): void
         header('Cache-Control: public, max-age=1800');
         echo sa_gpf_head();
         for ($i = 0; $i < $n; $i++) {
-            $chunk = (string) get_option('sa_gpf_chunk_r_' . $i, '');
+            // get_option retains every large feed chunk in the request's object cache.
+            // Read only the current chunk so a full catalog cannot exhaust PHP memory.
+            $chunk = (string) $wpdb->get_var($wpdb->prepare(
+                "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s LIMIT 1",
+                'sa_gpf_chunk_r_' . $i
+            ));
             if (sa_gpf_currency() === 'KES') {
                 $chunk = (string) preg_replace_callback(
                     '#<g:price>([0-9]+(?:\.[0-9]+)?) USD</g:price>#',
