@@ -31,6 +31,40 @@ final class SM_Campaigns
         // admin actions live in SM_Admin
     }
 
+    public static function audience_rules(int $id): array
+    {
+        $r = get_option('sm_campaign_audience_' . $id, []);
+        return is_array($r) ? $r : [];
+    }
+
+    public static function audience_allows(int $id, string $email): bool
+    {
+        $r = self::audience_rules($id);
+        $email = strtolower(trim($email));
+        return !in_array($email, (array) ($r['exclude'] ?? []), true)
+            && (($r['mode'] ?? 'segment') !== 'selected' || in_array($email, (array) ($r['include'] ?? []), true));
+    }
+
+    /** Save audience without changing global consent. Removed pending rows are cancelled.
+     * New recipients join only when the owner explicitly uses Queue additions.
+     */
+    public static function save_audience(int $id, string $mode, string $include, string $exclude): void
+    {
+        global $wpdb;
+        if (!self::get($id)) { return; }
+        $parse = static function ($text) {
+            return array_values(array_unique(array_filter(array_map('strtolower', preg_split('/[\s,;]+/', trim($text)) ?: []), 'is_email')));
+        };
+        update_option('sm_campaign_audience_' . $id, ['mode' => $mode === 'selected' ? 'selected' : 'segment', 'include' => $parse($include), 'exclude' => $parse($exclude)], false);
+        $rows = $wpdb->get_results($wpdb->prepare("SELECT id,email FROM " . SM_DB::table('queue') . " WHERE campaign_id = %d AND status = 'pending'", $id), ARRAY_A);
+        foreach ((array) $rows as $row) {
+            if (!self::audience_allows($id, (string) $row['email'])) {
+                $wpdb->update(SM_DB::table('queue'), ['status' => 'cancelled', 'last_error' => 'removed_from_campaign'], ['id' => (int) $row['id'], 'status' => 'pending']);
+                sm_release_queue_products((int) $row['id']);
+            }
+        }
+    }
+
     public static function create(array $data): int
     {
         global $wpdb;
@@ -162,11 +196,11 @@ final class SM_Campaigns
     }
 
     /** Approve and enqueue to the segment. Returns the number of queued emails. */
-    public static function approve_and_enqueue(int $id, int $user_id): int
+    public static function approve_and_enqueue(int $id, int $user_id, bool $additions = false): int
     {
         global $wpdb;
         $c = self::get($id);
-        if (!$c || in_array($c['status'], ['sending', 'done'], true)) {
+        if (!$c || (!$additions && in_array($c['status'], ['sending', 'done'], true))) {
             return 0;
         }
         $coupon = self::ensure_coupon($c);
@@ -200,7 +234,14 @@ final class SM_Campaigns
         $product_ids = array_filter(array_map('intval', (array) json_decode((string) ($c['product_ids'] ?? '[]'), true)));
         $personalize = $c['template'] === 'cross_sell_1';
 
+        $rules = self::audience_rules($id);
+        if (($rules['mode'] ?? '') === 'selected') {
+            $recipients = array_values(array_filter(array_map([SM_Subscribers::class, 'get_by_email'], (array) ($rules['include'] ?? [])), [SM_Subscribers::class, 'is_marketable']));
+        }
         foreach ($recipients as $sub) {
+            if (!self::audience_allows($id, (string) $sub['email'])) { continue; }
+            if ($additions && $wpdb->get_var($wpdb->prepare("SELECT id FROM " . SM_DB::table('queue') . " WHERE campaign_id = %d AND email = %s LIMIT 1", $id, $sub['email']))) { continue; }
+
             // Serialize selection per recipient: a flow email sending at the
             // same moment sees these reservations and never picks the same
             // products for this person.

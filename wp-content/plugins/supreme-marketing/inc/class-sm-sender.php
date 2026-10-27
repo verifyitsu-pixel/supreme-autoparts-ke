@@ -36,6 +36,11 @@ final class SM_Sender
         $sub = SM_Subscribers::get_by_email($email);
         $is_marketing = in_array($row['template'], SM_Templates::marketing_templates(), true);
 
+        if (!empty($row['campaign_id']) && !SM_Campaigns::audience_allows((int) $row['campaign_id'], $email)) {
+            self::mark($row['id'], 'cancelled', 'removed_from_campaign');
+            return;
+        }
+
         // Audience gate.
         if ($is_marketing && !SM_Subscribers::is_marketable($sub)) {
             self::mark($row['id'], 'cancelled', 'not_opted_in');

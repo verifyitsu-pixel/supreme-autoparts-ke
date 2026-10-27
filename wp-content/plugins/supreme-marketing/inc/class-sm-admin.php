@@ -105,6 +105,13 @@ final class SM_Admin
                     }
                 }
                 break;
+            case 'save_campaign_audience':
+                $cid = (int) ($_POST['campaign_id'] ?? 0);
+                SM_Campaigns::save_audience($cid, sanitize_key((string) ($_POST['audience_mode'] ?? 'segment')), (string) ($_POST['include_emails'] ?? ''), (string) ($_POST['exclude_emails'] ?? ''));
+                if (!empty($_POST['queue_additions'])) {
+                    SM_Campaigns::approve_and_enqueue($cid, get_current_user_id(), true);
+                }
+                break;
             case 'create_campaign':
                 $type = sanitize_key((string) ($_POST['type'] ?? 'newsletter'));
                 SM_Campaigns::create([
@@ -683,6 +690,17 @@ final class SM_Admin
                     . '<input type="hidden" name="campaign_id" value="' . (int) $c['id'] . '">'
                     . '<button type="submit" class="button button-small">Delete</button></form>';
             }
+            $rules = SM_Campaigns::audience_rules((int) $c['id']);
+            echo '<details><summary>Manage campaign customers</summary><form method="post">'
+                . wp_nonce_field('sm_admin_save_campaign_audience', '_wpnonce', true, false)
+                . '<input type="hidden" name="sm_admin_action" value="save_campaign_audience"><input type="hidden" name="campaign_id" value="' . (int) $c['id'] . '">'
+                . '<p><label>Audience <select name="audience_mode"><option value="segment">Everyone in the chosen audience</option><option value="selected"' . (($rules['mode'] ?? '') === 'selected' ? ' selected' : '') . '>Only the customers listed below</option></select></label></p>'
+                . '<p><label>Include customers (one or many emails)<br><textarea name="include_emails" rows="3">' . esc_html(implode("\n", (array) ($rules['include'] ?? []))) . '</textarea></label></p>'
+                . '<p><label>Remove / exclude customers (one or many emails)<br><textarea name="exclude_emails" rows="3">' . esc_html(implode("\n", (array) ($rules['exclude'] ?? []))) . '</textarea></label></p>'
+                . '<p>Only customers with current marketing consent can receive it. Exclusions cancel pending emails in this campaign, not their global consent. Already-sent mail cannot be recalled.</p>'
+                . '<button class="button" type="submit">Save audience / remove pending recipients</button> '
+                . '<button class="button" name="queue_additions" value="1" type="submit">Save and queue new recipients</button>'
+                . '<p>Queue new recipients schedules this campaign for eligible additions; existing recipients are not sent it twice.</p></form></details>';
             echo '</td></tr>';
         }
         echo '</tbody></table></div>';
