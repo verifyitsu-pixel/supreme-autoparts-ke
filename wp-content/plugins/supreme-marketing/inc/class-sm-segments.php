@@ -14,7 +14,7 @@ final class SM_Segments
     public static function definitions(): array
     {
         $defs = [
-            'all_active'      => 'All opted-in subscribers',
+            'all_active'      => 'All consenting customers',
             'buyers'          => 'Opted-in customers (1+ orders)',
             'non_buyers'      => 'Opted-in, never ordered',
             'vip'             => 'VIP (3+ orders or $500+ spent)',
@@ -88,8 +88,12 @@ final class SM_Segments
                 return [];
         }
 
-        $args[] = $limit;
-        $sql = "SELECT * $base $where ORDER BY id ASC LIMIT %d";
+        // Zero is an explicit all-audience request, not a hidden first-2,000 cap.
+        $sql = "SELECT * $base $where ORDER BY id ASC";
+        if ($limit > 0) {
+            $sql .= ' LIMIT %d';
+            $args[] = $limit;
+        }
         return (array) $wpdb->get_results($wpdb->prepare($sql, ...$args), ARRAY_A);
     }
 

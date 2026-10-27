@@ -281,6 +281,43 @@ final class SM_Subscribers
         return 'ok';
     }
 
+    /** Restore import-lost consent only on the owner's attestation of prior agreement.
+     * The original opt-in date is unknown. consented_at records this restoration,
+     * while the audit event preserves that distinction and the confirmation reference.
+     * Does not enqueue or send mail. Later withdrawals always win.
+     */
+    public static function restore_imported_consent(string $reference, int $admin_id): int
+    {
+        global $wpdb;
+        if (trim($reference) === '') {
+            return 0;
+        }
+        $t = SM_DB::table('subscribers');
+        $e = SM_DB::table('events');
+        $rows = $wpdb->get_results("SELECT s.id, s.email FROM $t s WHERE s.source = 'customer_import' AND s.status = 'transactional_only' AND NOT EXISTS (SELECT 1 FROM $e e WHERE e.email = s.email AND e.type IN ('consent_revoked_admin','unsubscribe','unsubscribed','complaint','complained','bounce','bounced')) ORDER BY s.id ASC", ARRAY_A);
+        $n = 0;
+        foreach ((array) $rows as $row) {
+            $updated = $wpdb->update($t, [
+                'status' => 'active', 'consented_at' => sm_now(),
+                'consent_source' => 'owner_attested_prior_store', 'updated_at' => sm_now(),
+            ], ['id' => (int) $row['id'], 'source' => 'customer_import', 'status' => 'transactional_only']);
+            if ($updated !== 1) {
+                continue;
+            }
+            $wpdb->insert($e, [
+                'email' => $row['email'], 'subscriber_id' => (int) $row['id'],
+                'type' => 'consent_restored_import', 'created_at' => sm_now(),
+                'payload' => wp_json_encode([
+                    'confirmation_reference' => $reference, 'admin_id' => $admin_id,
+                    'prior_status' => 'transactional_only', 'original_optin_at' => null,
+                    'basis' => 'Owner confirms prior store marketing agreement was lost in import; timestamp is restoration receipt, not original agreement.',
+                ]),
+            ]);
+            $n++;
+        }
+        return $n;
+    }
+
     /** Admin revokes marketing consent from the dashboard; audit-logged. */
     public static function admin_revoke_consent(int $id, int $admin_id): bool
     {

@@ -183,7 +183,7 @@ final class SM_Queue
         $t = SM_DB::table('subscribers');
         $s = SM_DB::table('sends');
         $subs = $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM $t WHERE status = 'active' AND (paused_until IS NULL OR paused_until <= %s) LIMIT 500",
+            "SELECT * FROM $t WHERE status = 'active' AND (paused_until IS NULL OR paused_until <= %s) ORDER BY id ASC",
             sm_now()
         ), ARRAY_A);
         $marketing_tpls = "'welcome_1','welcome_2','welcome_3','welcome_4','welcome_5','browse_1','rotation_1','winback_1','winback_2','reorder_1','restock_1','service_1'";

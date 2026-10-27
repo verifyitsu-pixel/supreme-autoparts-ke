@@ -55,6 +55,12 @@ final class SM_Admin
 
     public static function handle_posts(): void
     {
+        // Navigation only: selecting an audience never changes consent or queues mail.
+        $next = sanitize_key((string) ($_GET['audience_action'] ?? ''));
+        if (current_user_can(self::CAP) && ($_GET['page'] ?? '') === 'sm-subscribers' && ($next === 'email' || $next === 'drip')) {
+            wp_safe_redirect(admin_url($next === 'email' ? 'admin.php?page=sm-campaigns&audience=all_active' : 'admin.php?page=sm-flows#sm-flow-rotation'));
+            exit;
+        }
         if (!isset($_POST['sm_admin_action']) || !current_user_can(self::CAP)) {
             return;
         }
@@ -129,6 +135,12 @@ final class SM_Admin
                 if ($c && $c['status'] === 'draft') {
                     global $wpdb;
                     $wpdb->delete(SM_DB::table('campaigns'), ['id' => $id]);
+                }
+                break;
+            case 'restore_imported_consent':
+                if (!empty($_POST['attest_prior'])) {
+                    $n = SM_Subscribers::restore_imported_consent(sanitize_text_field((string) ($_POST['confirmation_reference'] ?? '')), get_current_user_id());
+                    $back = add_query_arg('sm_notice', 'restored_' . $n, $back);
                 }
                 break;
             case 'manage_consent':
@@ -365,6 +377,8 @@ final class SM_Admin
                 echo '<div class="notice notice-success"><p>Campaign approved: ' . esc_html(substr($n, 9)) . ' emails queued (they send only when the master switch is ON).</p></div>';
             } elseif (str_starts_with($n, 'repermission_')) {
                 echo '<div class="notice notice-success"><p>' . esc_html(substr($n, 13)) . ' re-permission emails queued.</p></div>';
+            } elseif (str_starts_with($n, 'restored_')) {
+                echo '<div class="notice notice-success"><p>Prior marketing consent restored for ' . (int) substr($n, 9) . ' imported customers. Later withdrawals and suppressions were excluded. No email was queued by this action.</p></div>';
             } elseif ($n === 'need_attest') {
                 echo '<div class="notice notice-error"><p>Nothing changed: tick the confirmation that each customer personally gave consent first.</p></div>';
             } elseif (str_starts_with($n, 'revoked_')) {
@@ -556,7 +570,7 @@ final class SM_Admin
         echo '<p>Each flow runs automatically when its trigger fires. Enabled flows queue emails; the master switch (dashboard) controls actual sending. Click a step to preview the exact email (add <code>&amp;sm_zone=ke</code> to the preview URL for the Kenya version).</p>';
         foreach (SM_Flows::definitions() as $key => $def) {
             $on = SM_Flows::enabled($key); // single source of truth: rotation ships disabled until the owner picks a cadence
-            echo '<div class="sm-flow">';
+            echo '<div class="sm-flow" id="sm-flow-' . esc_attr($key) . '">';
             echo '<div class="sm-flow-head"><h2>' . esc_html($def['label']) . '</h2>';
             echo '<span class="sm-pill ' . ($on ? 'sm-on' : 'sm-off') . '">' . ($on ? 'Enabled' : 'Disabled') . '</span>';
             echo '<form method="post" style="display:inline-block;margin-left:8px;">'
@@ -603,6 +617,8 @@ final class SM_Admin
         }
 
         echo '<h2>New campaign</h2>';
+        echo '<p>Audience: <strong>all consenting customers</strong> by default. Choose a smaller audience below if needed. Saving a draft sends nothing; preview it before using the send control.</p>';
+
         echo '<form method="post" class="sm-form">'
             . wp_nonce_field('sm_admin_create_campaign', '_wpnonce', true, false)
             . '<input type="hidden" name="sm_admin_action" value="create_campaign">'
@@ -616,7 +632,7 @@ final class SM_Admin
             . '<tr><th>Subject</th><td><input type="text" name="subject" class="large-text" required></td></tr>'
             . '<tr><th>Heading</th><td><input type="text" name="heading" class="large-text"></td></tr>'
             . '<tr><th>Intro text</th><td><textarea name="intro" rows="3" class="large-text"></textarea></td></tr>'
-            . '<tr><th>Segment</th><td><select name="segment_key">';
+            . '<tr><th>Audience</th><td><select name="segment_key">';
         foreach ($segments as $k => $label) {
             echo '<option value="' . esc_attr($k) . '">' . esc_html($label) . '</option>';
         }
@@ -683,6 +699,19 @@ final class SM_Admin
         }
         self::header('Subscribers');
         global $wpdb;
+        $eligible = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM " . SM_DB::table('subscribers') . " WHERE status = 'active' AND (paused_until IS NULL OR paused_until <= %s)",
+            sm_now()
+        ));
+        echo '<section class="sm-flow" aria-labelledby="sm-bulk-title"><h2 id="sm-bulk-title">Email your customers</h2>'
+            . '<p><strong>All ' . $eligible . ' consenting customers</strong> selected. No page-by-page selection needed. Paused, unsubscribed, bounced and complained addresses are excluded.</p>'
+            . '<form method="get"><input type="hidden" name="page" value="sm-subscribers">'
+            . '<label for="sm-audience-action">What would you like to do? </label>'
+            . '<select id="sm-audience-action" name="audience_action"><option value="email">Create a marketing email</option><option value="drip">Manage the ongoing catalog drip</option></select> '
+            . '<button class="button button-primary" type="submit">Continue with all consenting customers</button></form>'
+            . '<p class="description">The catalog drip uses this consenting audience automatically when enabled, after welcome and cadence checks. Continue opens the email editor or drip controls. It does not send mail, start a drip or change consent.</p>'
+            . '<p><a href="#sm-consent-controls">Add consent received outside the website or turn marketing off</a></p></section>';
+
         $review_key = sanitize_key((string) ($_GET['sm_review'] ?? ''));
         if ($review_key !== '') {
             $params = get_transient('sm_consent_review_' . $review_key);
@@ -786,8 +815,16 @@ final class SM_Admin
         }
         echo '</p>';
 
+        echo '<details><summary style="cursor:pointer;font-weight:600;margin:16px 0;">Restore prior-store consent lost during import</summary>'
+            . '<p>Only imported customer records still marked transactional-only are eligible. Later withdrawals, unsubscribes, bounces and complaints stay excluded. Existing automations can use the restored audience.</p>'
+            . '<form method="post">' . wp_nonce_field('sm_admin_restore_imported_consent', '_wpnonce', true, false)
+            . '<input type="hidden" name="sm_admin_action" value="restore_imported_consent">'
+            . '<p><label>Confirmation reference <input name="confirmation_reference" required class="regular-text" placeholder="Reference to your confirmation of prior consent"></label></p>'
+            . '<p><label><input type="checkbox" name="attest_prior" value="1" required> These imported customers agreed to marketing in the original store; the import lost their status.</label></p>'
+            . '<button class="button" type="submit">Restore imported customers with prior consent</button></form></details>';
+
         $today = gmdate('Y-m-d');
-        echo '<div style="background:#fff;border:1px solid #c3c4c7;padding:12px 14px;margin-bottom:14px;max-width:860px;">'
+        echo '<details id="sm-consent-controls"><summary style="cursor:pointer;font-weight:600;margin:16px 0;">Record consent received outside the website</summary><div style="background:#fff;border:1px solid #c3c4c7;padding:12px 14px;margin-bottom:14px;max-width:860px;">'
             . '<h2 style="margin-top:0;">Record consent given outside the website</h2>'
             . '<p style="margin-bottom:8px;">For customers who told you directly (in person, phone, WhatsApp, social) that they want marketing emails. This opts them in right away - <strong>no confirmation link and no email is sent to them</strong>. Bounced or complained addresses stay suppressed.</p>'
             . '<form method="post">'
@@ -805,7 +842,7 @@ final class SM_Admin
             . '<label>Consent date <input type="date" name="consent_date" value="' . esc_attr($today) . '" max="' . esc_attr($today) . '"></label></p>'
             . '<p><label><input type="checkbox" name="attest" value="1" required> <strong>I confirm this customer personally asked to receive marketing emails.</strong></label> '
             . '<button type="submit" class="button button-primary">Record consent</button></p>'
-            . '</form></div>';
+            . '</form></div></details>';
 
         echo '<form method="post">'
             . wp_nonce_field('sm_admin_manage_consent', '_wpnonce', true, false)

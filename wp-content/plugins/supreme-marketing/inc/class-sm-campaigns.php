@@ -196,7 +196,7 @@ final class SM_Campaigns
         }
 
         $queued = 0;
-        $recipients = SM_Segments::resolve((string) $c['segment_key']);
+        $recipients = SM_Segments::resolve((string) $c['segment_key'], $c['segment_key'] === 'all_active' ? 0 : 2000);
         $product_ids = array_filter(array_map('intval', (array) json_decode((string) ($c['product_ids'] ?? '[]'), true)));
         $personalize = $c['template'] === 'cross_sell_1';
 
