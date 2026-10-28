@@ -1,7 +1,8 @@
 <?php
 /**
  * Checkout gateways + cart recovery.
- * - Whop hidden from checkout (code + saved methods untouched). Re-enable with env SA_WHOP_CHECKOUT=1.
+ * - Whop hidden from checkout (code + saved methods untouched). Re-enable with env
+ *   SA_WHOP_CHECKOUT=1 (shop admins) or SA_WHOP_CHECKOUT_OFF=0 (everyone).
  * - Failed / cancelled / abandoned payments never lose cart items.
  * - My Account → Unpaid orders (Complete payment · Return items to cart · Cancel).
  */
@@ -15,7 +16,7 @@ add_filter('woocommerce_available_payment_gateways', static function ($gateways)
     if (is_admin() && !wp_doing_ajax()) {
         return $gateways;
     }
-    if (getenv('SA_WHOP_CHECKOUT') !== '1' && is_array($gateways)) {
+    if (getenv('SA_WHOP_CHECKOUT') !== '1' && getenv('SA_WHOP_CHECKOUT_OFF') !== '0' && is_array($gateways)) {
         unset($gateways['whop']);
     }
     return $gateways;
