@@ -97,19 +97,10 @@ add_filter('woocommerce_available_payment_gateways', static function ($gateways)
     if ($country === '' && class_exists('WC_Geolocation')) {
         $country = (string) (WC_Geolocation::geolocate_ip()['country'] ?? '');
     }
-    // Rock 2026-10-17 (12:58 clarification): African customers get Pesapal + card
-    // (Whop); customers outside Africa get card only. Africa membership comes from
-    // WooCommerce's own continent table (WC_Countries::get_continents()['AF']) so it
-    // matches exactly the countries the checkout dropdown offers. Applies only while
-    // the Whop switch is on - before that, production keeps Pesapal for everyone so
-    // no checkout is ever left empty. If the continent table is unreadable, keep both
-    // gateways (conservative: never strip a working option on a guess).
-    $africa = [];
-    if (function_exists('WC') && WC()->countries && method_exists(WC()->countries, 'get_continents')) {
-        $continents = (array) WC()->countries->get_continents();
-        $africa = array_map('strtoupper', array_map('strval', (array) ($continents['AF']['countries'] ?? [])));
-    }
-    $is_africa = $country !== '' && in_array(strtoupper($country), $africa, true);
+    // Rock 2026-10-28: Whop alongside Pesapal in every region - both are
+    // offered wherever each is available; the outside-Africa Pesapal removal
+    // (2026-10-17 rule) is superseded. While the Whop switch is off, production
+    // keeps Pesapal for everyone so no checkout is ever left empty.
     // 2026-10-18: above the Whop per-checkout cap (USD, env SA_WHOP_MAX_USD, default 2500)
     // card is not offered in any region: customers get Bank wire (Whop's only method at
     // that size) and Pesapal.
@@ -119,10 +110,6 @@ add_filter('woocommerce_available_payment_gateways', static function ($gateways)
         if (WC()->session) {
             WC()->session->set('chosen_payment_method', 'pesapal');
         }
-        return $gateways;
-    }
-    if ($country !== '' && !$is_africa && $africa !== []) {
-        unset($gateways['pesapal']);
         return $gateways;
     }
     // Rock 2026-10-18: card (Whop) first and preselected for everyone, Pesapal second where offered.
@@ -153,11 +140,13 @@ add_filter('woocommerce_gateway_title', static function ($title, $gateway_id) {
         return $title;
     }
     if ('whop' === $gateway_id) {
-        return sa_whop_over_cap() ? 'Bank wire' : 'Card (Visa, Mastercard)';
+        // 2026-10-28 user label; methods verified live on the business's Whop
+        // hosted checkout (card fields, Apple Pay + Google Pay buttons, Bank Wire).
+        return sa_whop_over_cap() ? 'Bank wire' : 'Card, Apple Pay, Google Pay and bank transfer - powered by Whop';
     }
     if ('pesapal' === $gateway_id) {
-        $ke = function_exists('sa_gc_zone') && sa_gc_zone() === 'KE';
-        return $ke ? 'M-Pesa / Airtel Money' : 'Card / M-Pesa / Airtel Money';
+        // 2026-10-28 user label; Pesapal offers cards + M-Pesa + Airtel in all regions.
+        return 'Card, M-Pesa & Airtel - powered by Pesapal';
     }
     return $title;
 }, 30, 2);
