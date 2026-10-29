@@ -99,10 +99,12 @@
     if (dots) dots.style.display = '';
     var ms = (opts && opts.failsafeMs) || 45000;
     failsafeTimer = window.setTimeout(function () {
-      if (!visible || navPending) return;
+      if (!visible) return;
       if (onFailsafe) {
+        // Page still alive when the failsafe elapses = the expected navigation
+        // never happened; navPending must not suppress the payment recovery UI.
         onFailsafe();
-      } else {
+      } else if (!navPending) {
         hide(true);
       }
     }, ms);
