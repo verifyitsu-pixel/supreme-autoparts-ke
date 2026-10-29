@@ -64,6 +64,13 @@
     /* The payment handoff never finished within the 90s failsafe (slow network,
        stalled session write, payment page that never opened). Order/payment state
        is UNKNOWN here - never claim otherwise; guide a manual, informed retry. */
+    /* Whop embed path: if its iframe really mounted, the payment page DID open -
+       the copy below would be false. Just clear the overlay instead. */
+    var embed = document.getElementById('sa-whop-pm-embed');
+    if (embed && embed.querySelector('iframe')) {
+      if (window.saLoader && window.saLoader.hide) window.saLoader.hide(true);
+      return;
+    }
     stopStages();
     setArc(false);
     var ov = document.getElementById('sa-loader');
