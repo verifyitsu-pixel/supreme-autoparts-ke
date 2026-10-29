@@ -60,9 +60,35 @@
     var ov = document.getElementById('sa-loader');
     if (ov) ov.classList.toggle(ARC_CLASS, !!on);
   }
+  function paymentStalled() {
+    /* The payment handoff never finished within the 90s failsafe (slow network,
+       stalled session write, payment page that never opened). Order/payment state
+       is UNKNOWN here - never claim otherwise; guide a manual, informed retry. */
+    stopStages();
+    setArc(false);
+    var ov = document.getElementById('sa-loader');
+    if (!ov) return;
+    var dots = ov.querySelector('.sa-loader__dots');
+    if (dots) dots.style.display = 'none';
+    var label = ov.querySelector('[data-sa-loader-label]');
+    if (!label) return;
+    label.innerHTML =
+      '<strong style="display:block;margin-bottom:8px;">This is taking longer than usual</strong>' +
+      '<span style="display:block;margin-bottom:14px;">The secure payment page did not open as expected, so your order may not have been placed. If you already entered card or M-Pesa/Airtel details on a payment page, check for a confirmation email before paying again. Otherwise check your connection, then tap Try again.</span>' +
+      '<button type="button" class="sa-btn" data-sa-pay-retry style="margin-right:10px;padding:10px 18px;">Try again</button>' +
+      '<a data-sa-pay-help href="https://wa.me/supremeautopart?text=Hi%2C%20my%20checkout%20payment%20page%20did%20not%20open" target="_blank" rel="noopener">Get help on WhatsApp</a>';
+    var btn = label.querySelector('[data-sa-pay-retry]');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        if (window.saLoader && window.saLoader.hide) window.saLoader.hide(true);
+        var po = document.getElementById('place_order');
+        if (po) po.focus();
+      });
+    }
+  }
   function paymentWait() {
     if (window.saLoader && window.saLoader.show) {
-      window.saLoader.show('payment', { failsafeMs: 90000 });
+      window.saLoader.show('payment', { failsafeMs: 90000, onFailsafe: paymentStalled });
     }
     setArc(true);
     startStages();
