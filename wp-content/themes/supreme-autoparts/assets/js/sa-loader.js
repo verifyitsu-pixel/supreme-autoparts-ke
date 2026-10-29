@@ -23,6 +23,7 @@
   var labelEl = null;
   var hideTimer = null;
   var failsafeTimer = null;
+  var onFailsafe = null;
   var visible = false;
   var navPending = false;
 
@@ -93,9 +94,17 @@
     document.documentElement.setAttribute('aria-busy', 'true');
     visible = true;
     clearTimers();
+    onFailsafe = (opts && typeof opts.onFailsafe === 'function') ? opts.onFailsafe : null;
+    var dots = overlay.querySelector('.sa-loader__dots');
+    if (dots) dots.style.display = '';
     var ms = (opts && opts.failsafeMs) || 45000;
     failsafeTimer = window.setTimeout(function () {
-      if (visible && !navPending) hide(true);
+      if (!visible || navPending) return;
+      if (onFailsafe) {
+        onFailsafe();
+      } else {
+        hide(true);
+      }
     }, ms);
   }
 
