@@ -2,6 +2,11 @@
 /** Owner-approved Nov3 full Matomo removal, including residuals after vendor uninstall. */
 if (!defined('ABSPATH') || !defined('WP_CLI') || !WP_CLI) { exit; }
 global $wpdb;
+// Deactivate even when the plugin files are already absent, preserving every
+// other active plugin and fixing a stale reference left by generic uninstall.
+$active = (array) get_option('active_plugins', []);
+$without_matomo = array_values(array_filter($active, static fn($plugin) => $plugin !== 'matomo/matomo.php'));
+if ($active !== $without_matomo) { update_option('active_plugins', $without_matomo); }
 $prefix = $wpdb->prefix . 'matomo_';
 $tables = $wpdb->get_col($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($prefix) . '%'));
 foreach ($tables as $table) {
