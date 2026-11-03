@@ -44,12 +44,14 @@
     var mins = +s.getAttribute('data-dur') + addonMins();
     var rows = [['Service', lab.querySelector('strong').textContent], ['Estimate', price]];
     qa('[name="addons[]"]:checked').forEach(function (c) { var sp = c.parentNode.querySelector('span'); rows.push(['Add-on', sp.firstChild.textContent.trim() + ' · ' + sp.querySelector('em').textContent]); });
-    rows.push(['Duration', '≈ ' + fmt(mins) + ' (estimate)']);
+    var assessment = ['ecu-programming','vehicle-coding','software-updates'].indexOf(s.value) >= 0;
+    rows.push([assessment ? 'Assessment visit' : 'Estimated duration', assessment ? '60 minutes, work timing quoted afterward' : '≈ ' + fmt(mins)]);
     var veh = [val('year'), q('[name=make]').value, q('[name=model]').value].join(' ').trim(); if (veh) rows.unshift(['Vehicle', veh]);
     if (l) rows.push(['Where', l.parentNode.querySelector('strong').textContent]);
     if (md) rows.push(['Handover', md.value === 'pickup' ? 'Pickup (fee confirmed on booking)' : 'Drop-off']);
     if (dateIn.value) rows.push(['When', dateIn.value + (t ? ' · ' + t.value : '')]);
-    rows.push(['Pay', 'At service, after you approve the quote']);
+    rows.push(['Booking fee', assessment ? 'KES 2,500, credited to your bill' : 'Shown before payment, credited to your bill']);
+    rows.push(['Remaining service bill', 'Quoted before work; paid at service']);
     summary.innerHTML = '<dl>' + rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + r[1].replace(/</g, '&lt;') + '</dd>'; }).join('') + '</dl>';
   }
   function loadSlots() {
