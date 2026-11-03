@@ -217,6 +217,32 @@ function sa_seo_clip(string $text, int $max = 160): string
     return rtrim($cut, '.,;: ') . '…';
 }
 
+/** Use the same stored photo as the gallery when an old upload is missing. */
+function sa_seo_product_image_fallback($product): string
+{
+    if (!$product instanceof WC_Product
+        || !function_exists('sa_core_product_has_real_local_image')
+        || sa_core_product_has_real_local_image($product)
+        || !function_exists('sa_core_get_stored_shopify_image_urls')) {
+        return '';
+    }
+    $urls = sa_core_get_stored_shopify_image_urls($product->get_id());
+    return $urls !== [] ? (string) $urls[0] : '';
+}
+
+function sa_seo_product_schema_image($markup, $product)
+{
+    if (!is_array($markup)) {
+        return $markup;
+    }
+    $image = sa_seo_product_image_fallback($product);
+    if ($image !== '') {
+        $markup['image'] = $image;
+    }
+    return $markup;
+}
+add_filter('woocommerce_structured_data_product', 'sa_seo_product_schema_image', 30, 2);
+
 /**
  * Resolve title + description + image for the current view.
  *
@@ -266,6 +292,10 @@ function sa_seo_context(): array
                 if ($cdn !== '' && preg_match('#^https?://#i', $cdn)) {
                     $img = set_url_scheme($cdn, 'https');
                 }
+            }
+            $fallback_image = sa_seo_product_image_fallback($product);
+            if ($fallback_image !== '') {
+                $img = $fallback_image;
             }
             $override_t = (string) get_post_meta($product->get_id(), SA_SEO_TITLE_META, true);
             $override_d = (string) get_post_meta($product->get_id(), SA_SEO_DESC_META, true);
