@@ -303,6 +303,7 @@ bootstrap_wordpress() {
       echo "[supreme] ERROR: Matomo full uninstall failed; files retained for retry" >&2
     fi
   fi
+  wp_as eval-file /usr/src/supreme-scripts/remove-matomo.php || echo "[supreme] ERROR: Matomo residual cleanup failed" >&2
   for matomo_option in sa_matomo_deep_version sa_matomo_deep_dims; do
     wp_as option delete "$matomo_option" || true
   done
