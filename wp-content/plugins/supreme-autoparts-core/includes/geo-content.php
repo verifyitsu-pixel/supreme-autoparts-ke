@@ -178,3 +178,48 @@ add_filter('get_post_metadata', static function ($value, $object_id, $meta_key, 
     }
     return $value;
 }, 99, 4);
+
+/** A shared service summary across detail, booking and service-fee payment. */
+function sa_gc_journey_summary(string $slug): string {
+    $svc = sa_svc_catalog()[$slug] ?? null;
+    if (!$svc) { return ''; }
+    $assessment = !empty($svc['assessment']);
+    $fee = $assessment ? 2500 : (float) sa_svc_setting('fee_kes');
+    return '<section class="sa-journey-summary"><p class="sa-ed-kicker">Your service, at a glance</p><h2>' . esc_html($svc['name']) . '</h2><dl><div><dt>Service price</dt><dd>' . esc_html(sa_svc_price_label($svc, sa_svc_region())) . '</dd></div><div><dt>' . ($assessment ? 'Assessment booking fee' : 'Booking fee') . '</dt><dd>KES ' . number_format($fee) . '</dd></div><div><dt>Applied to your final bill</dt><dd>Yes</dd></div></dl><p>' . ($assessment ? 'This books a 60-minute assessment in Nairobi, not the programming, coding or update work itself. Work, final price and timing are quoted after assessment.' : 'The booking fee confirms your appointment. The final service quote is confirmed before work starts.') . '</p></section>';
+}
+add_action('template_redirect', static function (): void {
+    if (get_query_var('sa_svc_view') !== 'detail') { return; }
+    $slug = (string) get_query_var('sa_svc'); $svc = sa_svc_catalog()[$slug] ?? null;
+    if (!$svc) { return; }
+    global $wp_query; $wp_query->is_404 = false; $wp_query->is_page = true; status_header(200);
+    add_filter('pre_get_document_title', static fn () => $svc['name'] . ' | Supreme Autoparts', 99);
+    get_header();
+    echo '<main class="sa-journey sa-container"><nav class="sa-svc-crumbs"><a href="' . esc_url(home_url('/pricing/')) . '">Service pricing</a> / ' . esc_html($svc['name']) . '</nav><div class="sa-journey-grid"><article><p class="sa-ed-kicker">Supreme Autoparts · Nairobi garage</p><h1>' . esc_html($svc['name']) . '</h1><p class="sa-journey-lead">' . esc_html($svc['summary']) . '</p><div class="sa-journey-mobile-summary">' . sa_gc_journey_summary($slug) . '<a class="sa-card-button sa-journey-book" href="' . esc_url(sa_svc_book_url($slug)) . '">' . (!empty($svc['assessment']) ? 'Book an assessment' : 'Book this service') . '</a></div><section class="sa-journey-panel"><h2>What is included</h2><ul>';
+    foreach ($svc['includes'] as $item) { echo '<li>' . esc_html($item) . '</li>'; }
+    echo '</ul></section><section class="sa-journey-panel"><h2>How it works</h2><ol class="sa-journey-steps"><li><strong>Tell us about your vehicle</strong><p>Choose the service and provide your vehicle details.</p></li><li><strong>Choose your visit</strong><p>Select the location, date and available time in the booking form.</p></li><li><strong>Review and pay the booking fee</strong><p>Review your details and booking terms before checkout. The fee is credited toward your final service bill.</p></li><li><strong>' . (!empty($svc['assessment']) ? 'Assessment, then your quote' : 'Approve your service quote') . '</strong><p>' . (!empty($svc['assessment']) ? 'Bring your vehicle to our Nairobi garage for the 60-minute assessment. We confirm compatibility, work, final price and timing before proceeding.' : 'We confirm the work and final price before starting. You pay the remaining service bill at the service.') . '</p></li></ol></section></article><aside>' . sa_gc_journey_summary($slug) . '<a class="sa-card-button sa-journey-book" href="' . esc_url(sa_svc_book_url($slug)) . '">' . (!empty($svc['assessment']) ? 'Book an assessment' : 'Book this service') . '</a><p class="sa-journey-fine">Final work and price confirmed before work starts. <a href="' . esc_url(home_url('/booking-terms/')) . '">Booking terms</a></p>' . sa_svc_address_html(true) . '</aside></div></main>';
+    get_footer(); exit;
+}, 5);
+add_action('template_redirect', static function (): void {
+    if (get_query_var('sa_svc_view') !== 'book') { return; }
+    $slug = sanitize_key((string) ($_GET['service'] ?? ''));
+    ob_start(static function (string $html) use ($slug): string {
+        $summary = sa_gc_journey_summary($slug);
+        $html = str_replace('<ul class="sa-svc-trust">', $summary . '<ul class="sa-svc-trust">', $html);
+        return $html;
+    });
+}, 2);
+add_filter('body_class', static function (array $classes): array {
+    $oid = absint(get_query_var('order-pay')); $order = $oid ? wc_get_order($oid) : null;
+    if ($order && $order->get_meta('_sa_booking_fee_for')) { $classes[] = 'sa-service-payment'; }
+    return $classes;
+});
+add_action('before_woocommerce_pay', static function (): void {
+    $oid = absint(get_query_var('order-pay')); $order = $oid ? wc_get_order($oid) : null;
+    if (!$order || !($bid = (int) $order->get_meta('_sa_booking_fee_for'))) { return; }
+    // The payment page's normal order-key validation owns access to this output.
+    $key = (string) ($_GET['key'] ?? '');
+    if ($key === '' || !hash_equals((string) $order->get_order_key(), $key)) { return; }
+    $slug = (string) get_post_meta($bid, '_sa_bk_service', true);
+    echo sa_gc_journey_summary($slug);
+    echo '<p class="sa-journey-fine">The order total below is the booking fee payable now, not the full service price. Your final work and remaining bill are quoted separately. <a href="' . esc_url(home_url('/booking-terms/')) . '">Booking terms</a></p>';
+}, 8);
