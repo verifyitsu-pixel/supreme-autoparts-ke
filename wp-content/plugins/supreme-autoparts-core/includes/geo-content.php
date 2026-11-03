@@ -111,7 +111,7 @@ add_action('template_redirect', static function (): void {
     if ($wp_query) { $wp_query->is_404 = false; }
     status_header(200);
     get_header();
-    echo '<main class="sa-container sa-pricing"><p class="sa-ed-kicker">Supreme Autoparts · Nairobi</p><h1>Vehicle software & maintenance pricing</h1><p>ECU programming, vehicle coding, software updates, electronic diagnostics and garage maintenance. Send your year, make, model and the work you need for a vehicle-specific quote.</p><h2 id="automotive-software">Software & electronic diagnostics</h2><div class="sa-pricing-scroll"><table><thead><tr><th>Service</th><th>Price (USD)</th></tr></thead><tbody>';
+    echo '<main class="sa-container sa-pricing"><p class="sa-ed-kicker">Supreme Autoparts · Nairobi</p><h1>Vehicle software & maintenance pricing</h1><p>ECU programming, vehicle coding, software updates, electronic diagnostics and garage maintenance. Send your year, make, model and the work you need for a vehicle-specific quote.</p><h2 id="automotive-software">Software & electronic diagnostics</h2><p>ECU programming, coding and updates start with a paid 60-minute assessment at our Nairobi garage: KES 2,500, credited toward your final service bill. Work and final price are quoted after assessment.</p><div class="sa-pricing-scroll"><table><thead><tr><th>Service</th><th>Price (USD)</th></tr></thead><tbody>';
     $software = [
         ['ECU programming', 'From US$150', 'ecu-programming'],
         ['Vehicle coding', 'Vehicle-specific quote', 'vehicle-coding'],
@@ -138,3 +138,32 @@ add_action('template_redirect', static function (): void {
     get_footer();
     exit;
 }, 0);
+
+/* Preserve each booking's fee through payment, including software assessment fees. */
+function sa_software_fee_settings($settings) {
+    $settings = is_array($settings) ? $settings : [];
+    $service = sanitize_key((string) ($_POST['service'] ?? $_GET['service'] ?? get_query_var('sa_svc') ?? ''));
+    $booking = (int) ($_GET['b'] ?? 0);
+    if ($booking && get_post_type($booking) === 'sa_booking') {
+        $stored = (string) get_post_meta($booking, '_sa_bk_key', true);
+        if ($stored !== '' && hash_equals($stored, (string) ($_GET['k'] ?? ''))) {
+            $fee = (int) get_post_meta($booking, '_sa_bk_fee_kes', true);
+            if ($fee > 0) { $settings['fee_kes'] = $fee; return $settings; }
+        }
+    }
+    if (!empty(sa_svc_catalog()[$service]['assessment'])) { $settings['fee_kes'] = 2500; }
+    return $settings;
+}
+add_filter('option_sa_svc_settings', 'sa_software_fee_settings');
+add_filter('default_option_sa_svc_settings', 'sa_software_fee_settings');
+add_action('template_redirect', static function (): void {
+    if (get_query_var('sa_svc_view') !== 'terms') { return; }
+    ob_start(static function (string $html): string {
+        return str_replace('Booking fee</h2>', 'Software assessments</h2><p>ECU programming, vehicle coding and software updates start with a paid 60-minute assessment at our Nairobi garage. The assessment fee is KES 2,500, credited toward your final service bill. Work, final price and timing are quoted after assessment.</p><h2>Booking fee</h2>', $html);
+    });
+}, 1);
+
+add_action('wp_footer', static function (): void {
+    if (get_query_var('sa_svc_view') !== 'book') { return; }
+    echo '<script>(function(){var f=document.querySelector("[data-sa-svc-form]");if(!f)return;var names=["ecu-programming","vehicle-coding","software-updates"],sel=f.querySelector("[name=service]:checked"),assessment=sel&&names.indexOf(sel.value)>=0;f.querySelectorAll("[name=service]").forEach(function(e){var hide=assessment?e!==sel:names.indexOf(e.value)>=0;if(hide){e.disabled=true;e.closest("label").hidden=true;}});f.querySelectorAll("[name=\"addons[]\"]").forEach(function(e){if(names.indexOf(e.value)>=0){e.disabled=true;e.checked=false;e.closest("label").hidden=true;}});})();</script>';
+}, 100);
