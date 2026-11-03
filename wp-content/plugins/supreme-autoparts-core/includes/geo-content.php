@@ -89,6 +89,9 @@ add_filter('the_content', static function (string $html): string {
 add_filter('the_content', static function (string $html): string {
     if (is_admin() || !is_main_query() || !in_the_loop() || !is_page()) { return $html; }
     $slug = (string) get_post_field('post_name', get_the_ID());
+    if ($slug === 'contact') {
+        $html = '<h2>Automotive software services in Nairobi</h2><p>Ask us about ECU programming, vehicle coding, software updates and electronic diagnostics for your car. <a href="/pricing/#automotive-software">View service pricing and US reference estimates</a>.</p>' . $html;
+    }
     if ($slug === 'terms') {
         $html .= '<h2>Automotive software and garage services</h2><p>Our vehicle services include ECU programming, vehicle coding, software updates, electronic diagnostics and maintenance at our garage in Nairobi, Kenya. These are services carried out on vehicles, not a subscription or downloadable software product. We confirm vehicle compatibility, the scope of work and a quote before starting.</p><p>The Kenya/US store-view switch changes browsing information. It does not change your delivery address, shipping eligibility or payment currency. External prices on our <a href="/pricing/">service pricing guide</a> are attributed reference estimates, not a binding Supreme quote.</p>';
     }
@@ -108,7 +111,7 @@ add_action('template_redirect', static function (): void {
     if ($wp_query) { $wp_query->is_404 = false; }
     status_header(200);
     get_header();
-    echo '<main class="sa-container sa-pricing"><p class="sa-ed-kicker">Supreme Autoparts · Nairobi</p><h1>Vehicle software & maintenance pricing</h1><p>ECU programming, vehicle coding, software updates, electronic diagnostics and garage maintenance. Send your year, make, model and the work you need for a vehicle-specific quote.</p><div class="sa-pricing-note"><strong>Before you compare prices</strong><p>The US figures below are third-party market references in USD, not Supreme charges or Kenya prices. They are not currency-converted quotes. Parts, labour, taxes and scope vary; the linked source states what its estimate includes. Supreme confirms the price before work starts.</p></div><h2>Software & electronic diagnostics</h2><div class="sa-pricing-scroll"><table><thead><tr><th>Service</th><th>Supreme quote</th><th>US reference</th></tr></thead><tbody>';
+    echo '<main class="sa-container sa-pricing"><p class="sa-ed-kicker">Supreme Autoparts · Nairobi</p><h1>Vehicle software & maintenance pricing</h1><p>ECU programming, vehicle coding, software updates, electronic diagnostics and garage maintenance. Send your year, make, model and the work you need for a vehicle-specific quote.</p><div class="sa-pricing-note"><strong>Before you compare prices</strong><p>The US figures below are third-party market references in USD, not Supreme charges or Kenya prices. They are not currency-converted quotes. Parts, labour, taxes and scope vary; the linked source states what its estimate includes. Supreme confirms the price before work starts.</p></div><h2 id="automotive-software">Software & electronic diagnostics</h2><div class="sa-pricing-scroll"><table><thead><tr><th>Service</th><th>Supreme quote</th><th>US reference</th></tr></thead><tbody>';
     $software = [
         ['ECU programming', 'Vehicle-specific quote', 'From US$150, Boston ECU Lab', 'https://bostoneculab.com/massachusetts/ecu-module-programming/'],
         ['Vehicle coding', 'Vehicle-specific quote', 'Scope and module-specific; no comparable fixed rate verified', ''],
