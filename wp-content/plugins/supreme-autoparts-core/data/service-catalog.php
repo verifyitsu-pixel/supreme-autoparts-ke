@@ -6,7 +6,7 @@
  */
 if (!defined('ABSPATH')) { exit; }
 
-return [
+$catalog = [
     'ecu-programming' => [
         'name' => 'ECU programming', 'icon' => 'diag', 'group' => 'Automotive Software', 'duration' => 60,
         'summary' => 'Book a 60-minute assessment at our Nairobi garage. We check compatibility and quote the work, final price and timing before proceeding.',
@@ -106,3 +106,32 @@ return [
         'parts' => 'air filter',
     ],
 ];
+
+/* Service work prices use the detected customer country, never the browsing-view
+ * cookie or the garage/location region. Base amounts remain in this catalog. */
+$cc = class_exists('SA_Geo_Detector') ? strtoupper(SA_Geo_Detector::country_code()) : 'US';
+$africa = function_exists('WC') && WC()->countries
+    ? WC()->countries->get_continent_code_for_country($cc) === 'AF'
+    : $cc === 'KE';
+foreach ($catalog as &$service) {
+    $label = (string) ($service['price_label'] ?? '');
+    if ($label !== '' && str_contains($label, 'US$')) {
+        if ($africa) {
+            $converted = class_exists('SA_FX_Rates') ? SA_FX_Rates::rate_for('KES') : null;
+            $label = $converted !== null
+                ? preg_replace_callback('/[0-9]+(?:\.[0-9]+)?/', static fn ($m) => number_format((float) $m[0] * $converted, 0), str_replace('US$', 'KES ', $label))
+                : 'Vehicle-specific quote';
+        }
+    } elseif ($label === '') {
+        if ($africa && !empty($service['kes']['options'])) {
+            $label = 'From KES ' . number_format((float) min(array_column($service['kes']['options'], 'price')));
+        } elseif (!$africa && !empty($service['usd'])) {
+            $label = 'US$' . number_format((float) $service['usd']['min']) . '–' . number_format((float) $service['usd']['max']);
+        } else {
+            $label = 'Vehicle-specific quote';
+        }
+    }
+    $service['price_label'] = $label;
+}
+unset($service);
+return $catalog;
