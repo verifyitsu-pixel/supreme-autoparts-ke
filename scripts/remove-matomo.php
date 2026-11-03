@@ -17,7 +17,7 @@ $options = $wpdb->get_col('SELECT option_name FROM ' . $wpdb->options);
 foreach ($options as $name) {
     if (str_starts_with($name, 'matomo-') || str_starts_with($name, 'matomo_') || str_starts_with($name, 'matomo_global-') || str_starts_with($name, '_transient_matomo_') || str_starts_with($name, '_transient_timeout_matomo_') || in_array($name, ['sa_matomo_deep_version', 'sa_matomo_deep_dims'], true)) { delete_option($name); }
 }
-foreach (['view','write','admin','superuser'] as $role) { remove_role('matomo_' . $role); }
+foreach (['view','write','admin','superuser'] as $role) { remove_role('matomo_' . $role . '_role'); }
 require_once ABSPATH . 'wp-admin/includes/file.php';
 WP_Filesystem();
 global $wp_filesystem;
