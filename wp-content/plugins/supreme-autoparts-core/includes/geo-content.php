@@ -105,6 +105,7 @@ add_filter('the_content', static function (string $html): string {
 }, 35);
 
 function sa_gc_service_card(string $slug, string $name, string $price, string $summary, bool $assessment): void {
+    $price = sa_svc_price_label(sa_svc_catalog()[$slug], sa_svc_region());
     $detail = sa_svc_url($slug) . '?region=ke';
     $book = home_url('/book-service/?service=' . rawurlencode($slug) . '&region=ke');
     echo '<article class="sa-service-card"><h3><a href="' . esc_url($detail) . '">' . esc_html($name) . '</a></h3><p class="sa-card-price">' . esc_html($price) . '</p><p class="sa-card-summary">' . esc_html($summary) . '</p><p class="sa-card-fee">' . ($assessment ? '60-minute assessment · KES 2,500' : 'Booking fee · KES ' . number_format((float) (get_option('sa_svc_settings', [])['fee_kes'] ?? 1000))) . ' credited to your bill</p><div class="sa-card-actions"><a class="sa-card-button" href="' . esc_url($book) . '">' . ($assessment ? 'Book assessment' : 'Book service') . '</a><a class="sa-card-details" href="' . esc_url($detail) . '">View details →</a></div></article>';
