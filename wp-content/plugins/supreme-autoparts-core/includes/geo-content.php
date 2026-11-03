@@ -90,10 +90,10 @@ add_filter('the_content', static function (string $html): string {
     if (is_admin() || !is_main_query() || !in_the_loop() || !is_page()) { return $html; }
     $slug = (string) get_post_field('post_name', get_the_ID());
     if ($slug === 'contact') {
-        $html = '<h2>Automotive software services in Nairobi</h2><p>Ask us about ECU programming, vehicle coding, software updates and electronic diagnostics for your car. <a href="/pricing/#automotive-software">View service pricing and US reference estimates</a>.</p>' . $html;
+        $html = '<h2>Automotive software services in Nairobi</h2><p>Ask us about ECU programming, vehicle coding, software updates and electronic diagnostics for your car. <a href="/pricing/#automotive-software">View service pricing</a>.</p>' . $html;
     }
     if ($slug === 'terms') {
-        $html .= '<h2>Automotive software and garage services</h2><p>Our vehicle services include ECU programming, vehicle coding, software updates, electronic diagnostics and maintenance at our garage in Nairobi, Kenya. These are services carried out on vehicles, not a subscription or downloadable software product. We confirm vehicle compatibility, the scope of work and a quote before starting.</p><p>The Kenya/US store-view switch changes browsing information. It does not change your delivery address, shipping eligibility or payment currency. External prices on our <a href="/pricing/">service pricing guide</a> are attributed reference estimates, not a binding Supreme quote.</p>';
+        $html .= '<h2>Automotive software and garage services</h2><p>Our vehicle services include ECU programming, vehicle coding, software updates, electronic diagnostics and maintenance at our garage in Nairobi, Kenya. These are services carried out on vehicles, not a subscription or downloadable software product. We confirm vehicle compatibility, the scope of work and a quote before starting.</p><p>The Kenya/US store-view switch changes browsing information. It does not change your delivery address, shipping eligibility or payment currency. See our <a href="/pricing/">service pricing</a>. We confirm the scope and final price before work starts.</p>';
     }
     if ($slug === 'refund-policy') {
         $html .= '<h2>Vehicle software and maintenance enquiries</h2><p>The product-return information above concerns physical goods. For a vehicle-software or maintenance booking, contact us with your booking number and the issue. See our <a href="/booking-terms/">Booking Terms</a> for the existing service-booking conditions. This addition does not introduce a new service fee or refund restriction.</p>';
@@ -111,33 +111,30 @@ add_action('template_redirect', static function (): void {
     if ($wp_query) { $wp_query->is_404 = false; }
     status_header(200);
     get_header();
-    echo '<main class="sa-container sa-pricing"><p class="sa-ed-kicker">Supreme Autoparts · Nairobi</p><h1>Vehicle software & maintenance pricing</h1><p>ECU programming, vehicle coding, software updates, electronic diagnostics and garage maintenance. Send your year, make, model and the work you need for a vehicle-specific quote.</p><div class="sa-pricing-note"><strong>Before you compare prices</strong><p>The US figures below are third-party market references in USD, not Supreme charges or Kenya prices. They are not currency-converted quotes. Parts, labour, taxes and scope vary; the linked source states what its estimate includes. Supreme confirms the price before work starts.</p></div><h2 id="automotive-software">Software & electronic diagnostics</h2><div class="sa-pricing-scroll"><table><thead><tr><th>Service</th><th>Supreme quote</th><th>US reference</th></tr></thead><tbody>';
+    echo '<main class="sa-container sa-pricing"><p class="sa-ed-kicker">Supreme Autoparts · Nairobi</p><h1>Vehicle software & maintenance pricing</h1><p>ECU programming, vehicle coding, software updates, electronic diagnostics and garage maintenance. Send your year, make, model and the work you need for a vehicle-specific quote.</p><h2 id="automotive-software">Software & electronic diagnostics</h2><div class="sa-pricing-scroll"><table><thead><tr><th>Service</th><th>Price (USD)</th></tr></thead><tbody>';
     $software = [
-        ['ECU programming', 'Vehicle-specific quote', 'From US$150, Boston ECU Lab', 'https://bostoneculab.com/massachusetts/ecu-module-programming/'],
-        ['Vehicle coding', 'Vehicle-specific quote', 'Scope and module-specific; no comparable fixed rate verified', ''],
-        ['Software updates', 'Vehicle-specific quote', 'GM reprogramming from US$250, OEMDTC; brand-specific reference', 'https://oemdtc.com/j2534-reprogramming/'],
-        ['Electronic diagnostics', 'Vehicle-specific quote', 'US$125–183 check-engine diagnosis, RepairPal', 'https://repairpal.com/estimator/check-engine-light-diagnosis-testing-cost'],
+        ['ECU programming', 'From US$150'],
+        ['Vehicle coding', 'Vehicle-specific quote'],
+        ['Software updates', 'From US$250 for GM reprogramming'],
+        ['Electronic diagnostics', 'US$125–183'],
     ];
     foreach ($software as $row) {
-        echo '<tr><th scope="row">' . esc_html($row[0]) . '</th><td>' . esc_html($row[1]) . '</td><td>' . ($row[3] ? '<a href="' . esc_url($row[3]) . '" rel="noopener" target="_blank">' . esc_html($row[2]) . '</a>' : esc_html($row[2])) . '</td></tr>';
+        echo '<tr><th scope="row">' . esc_html($row[0]) . '</th><td>' . esc_html($row[1]) . '</td></tr>';
     }
-    echo '</tbody></table></div><h2>Maintenance & mechanical services</h2><div class="sa-pricing-scroll"><table><thead><tr><th>Service</th><th>Supreme quote</th><th>US reference estimate</th></tr></thead><tbody>';
-    $refs = [
-        'oil-change' => ['US$160–188', 'https://repairpal.com/estimator/oil-change-cost'],
-        'brake-pads' => ['US$335–394', 'https://repairpal.com/estimator/brake-pad-replacement-cost'],
-        'wheel-alignment' => ['US$186–273', 'https://repairpal.com/estimator/wheel-alignment-cost'],
-        'tyre-rotation' => ['US$49–72', 'https://repairpal.com/estimator/tire-rotation-cost'],
-        'ac-service' => ['US$285–369', 'https://repairpal.com/estimator/ac-recharge-cost'],
-        'battery' => ['US$456–493', 'https://repairpal.com/estimator/battery-replacement-cost'],
+    echo '</tbody></table></div><h2>Maintenance & mechanical services</h2><div class="sa-pricing-scroll"><table><thead><tr><th>Service</th><th>Price (USD)</th></tr></thead><tbody>';
+    $prices = [
+        'oil-change' => 'US$160–188',
+        'brake-pads' => 'US$335–394',
+        'wheel-alignment' => 'US$186–273',
+        'tyre-rotation' => 'US$49–72',
+        'ac-service' => 'US$285–369',
+        'battery' => 'US$456–493',
     ];
     foreach (sa_svc_catalog() as $slug => $svc) {
         if ($slug === 'diagnostics') { continue; }
-        echo '<tr><th scope="row">' . esc_html($svc['name']) . '</th><td>Vehicle-specific quote</td><td>';
-        if (isset($refs[$slug])) { echo '<a href="' . esc_url($refs[$slug][1]) . '" rel="noopener" target="_blank">' . esc_html($refs[$slug][0]) . ' · RepairPal</a>'; }
-        else { echo 'Quote after vehicle assessment; no comparable fixed reference verified'; }
-        echo '</td></tr>';
+        echo '<tr><th scope="row">' . esc_html($svc['name']) . '</th><td>' . esc_html($prices[$slug] ?? 'Vehicle-specific quote') . '</td></tr>';
     }
-    echo '</tbody></table></div><p class="sa-svc-fine">Sources checked 3 November 2026. RepairPal estimates were last updated 3 September 2026 and exclude taxes, fees and related repairs. A US reference does not mean we provide a mobile or remote service in the US. Our software services are for cars at our Nairobi garage, subject to vehicle compatibility.</p><h2>Get your exact quote</h2><p>Tell us your vehicle and the problem or work required. We confirm the service scope and price before work starts.</p><a class="sa-software-link" href="' . esc_url(home_url('/contact/')) . '">Contact Supreme for a quote →</a><p><a href="' . esc_url(home_url('/services/')) . '">Browse services</a> · <a href="' . esc_url(home_url('/terms/')) . '">Terms</a> · <a href="' . esc_url(home_url('/privacy-policy/')) . '">Privacy</a> · <a href="' . esc_url(home_url('/refund-policy/')) . '">Refunds</a></p></main>';
+    echo '</tbody></table></div><h2>Get your exact quote</h2><p>Tell us your vehicle and the problem or work required. We confirm the service scope and price before work starts.</p><a class="sa-software-link" href="' . esc_url(home_url('/contact/')) . '">Contact Supreme for a quote →</a><p><a href="' . esc_url(home_url('/services/')) . '">Browse services</a> · <a href="' . esc_url(home_url('/terms/')) . '">Terms</a> · <a href="' . esc_url(home_url('/privacy-policy/')) . '">Privacy</a> · <a href="' . esc_url(home_url('/refund-policy/')) . '">Refunds</a></p></main>';
     get_footer();
     exit;
 }, 0);
