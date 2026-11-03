@@ -159,6 +159,7 @@ add_filter('default_option_sa_svc_settings', 'sa_software_fee_settings');
 add_action('template_redirect', static function (): void {
     if (get_query_var('sa_svc_view') !== 'terms') { return; }
     ob_start(static function (string $html): string {
+        $html = str_replace('14 October 2026', '3 November 2026', $html);
         $html = str_replace('A booking fee of KES ', 'For other service bookings, a booking fee of KES ', $html);
         return str_replace('Booking fee</h2>', 'Software assessments</h2><p>ECU programming, vehicle coding and software updates start with a paid 60-minute assessment at our Nairobi garage. The assessment fee is KES 2,500, credited toward your final service bill. Work, final price and timing are quoted after assessment.</p><h2>Booking fee</h2>', $html);
     });
