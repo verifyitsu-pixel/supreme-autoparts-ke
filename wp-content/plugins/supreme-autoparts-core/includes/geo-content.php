@@ -237,3 +237,8 @@ function sa_gc_assessment_request_guard(): void {
 }
 add_action('admin_post_sa_book_service', 'sa_gc_assessment_request_guard', 1);
 add_action('admin_post_nopriv_sa_book_service', 'sa_gc_assessment_request_guard', 1);
+
+add_filter('script_loader_src', static function ($src, $handle) {
+    if ($handle === 'sa-services') { return add_query_arg('ver', (string) filemtime(SA_CORE_DIR . 'assets/services.js'), $src); }
+    return $src;
+}, 20, 2);
