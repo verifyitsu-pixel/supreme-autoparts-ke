@@ -118,6 +118,7 @@ sync_custom_content() {
     cp -f /usr/src/wordpress/wp-content/mu-plugins/sa-analytics.php /var/www/html/wp-content/mu-plugins/ || true
   fi
   cp -f /usr/src/wordpress/wp-content/mu-plugins/sa-privacy-clarity.php /var/www/html/wp-content/mu-plugins/
+  cp -f /usr/src/wordpress/wp-content/mu-plugins/sa-google-analytics.php /var/www/html/wp-content/mu-plugins/
   if [[ -f /usr/src/wordpress/wp-content/mu-plugins/sa-customer-analytics.php ]]; then
     cp -f /usr/src/wordpress/wp-content/mu-plugins/sa-customer-analytics.php /var/www/html/wp-content/mu-plugins/ || true
   fi
