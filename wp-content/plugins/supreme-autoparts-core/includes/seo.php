@@ -150,6 +150,12 @@ function sa_seo_should_noindex(): bool
  */
 function sa_seo_canonical_url(): string
 {
+    // Each archive page contains different products. Do not collapse page 2+
+    // into page 1; use WordPress's permalink-aware pagination URL.
+    if (!is_singular() && (int) get_query_var('paged') > 1) {
+        return remove_query_arg(['sa_view', 'region', 'orderby', 'min_price', 'max_price'],
+            (string) get_pagenum_link((int) get_query_var('paged'), false));
+    }
     if (function_exists('is_singular') && is_singular()) {
         $url = get_permalink();
         return is_string($url) ? $url : home_url('/');
