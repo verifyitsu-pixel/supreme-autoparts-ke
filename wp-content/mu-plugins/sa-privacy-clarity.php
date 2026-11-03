@@ -34,9 +34,10 @@ add_action('wp_footer', static function (): void {
   if(window.SA_CONSENT_GRANTED&&CFG.clarityId&&window.clarity){try{window.clarity("consent");}catch(e){}}
   function grantCookies(){
     if(consentDone||window.SA_CONSENT_GRANTED)return;consentDone=true;
+    window.SA_ANALYTICS_CONSENT=true;window.dispatchEvent(new Event("sa:analytics-consent-granted"));
     if(CFG.clarityId&&window.clarity){try{window.clarity("consent");}catch(e){}}
   }
-  function denyCookies(){ if(window.clarity){try{window.clarity("consent",false);}catch(e){}} }
+  function denyCookies(){ window.SA_ANALYTICS_CONSENT=false;window.dispatchEvent(new Event("sa:analytics-consent-denied"));if(window.clarity){try{window.clarity("consent",false);}catch(e){}} }
   function hideBanner(){var b=document.getElementById("sa-consent");if(b){b.parentNode.removeChild(b);}}
   function showBanner(){
     if(document.getElementById("sa-consent"))return;
