@@ -303,6 +303,12 @@ function sa_seo_context(): array
                     );
                 }
             }
+            // Search Console shows demand for 4x4 brake pads. Describe the
+            // existing category precisely, without promising universal fitment.
+            if ($term->slug === 'brake-pads') {
+                $title = 'Brake Pads for Cars, 4x4s & Trucks | ' . $site;
+                $desc = 'Compare brake pads by part number, vehicle and axle. Check fitment before ordering for your car, 4x4 or truck. Kenya delivery and US shipping.';
+            }
             if (function_exists('sa_category_image_url')) {
                 $cat_img = sa_category_image_url($term->slug);
                 if ($cat_img !== '') {
