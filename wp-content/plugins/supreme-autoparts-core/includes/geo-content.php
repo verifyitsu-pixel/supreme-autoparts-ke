@@ -169,3 +169,12 @@ add_action('wp_footer', static function (): void {
     if (get_query_var('sa_svc_view') !== 'book') { return; }
     echo '<script>(function(){var f=document.querySelector("[data-sa-svc-form]");if(!f)return;var names=["ecu-programming","vehicle-coding","software-updates"],sel=f.querySelector("[name=service]:checked"),assessment=sel&&names.indexOf(sel.value)>=0;f.querySelectorAll("[name=service]").forEach(function(e){var hide=assessment?e!==sel:names.indexOf(e.value)>=0;if(hide){e.disabled=true;e.closest("label").hidden=true;}});f.querySelectorAll("input[type=checkbox][data-dur]").forEach(function(e){if(names.indexOf(e.value)>=0){e.disabled=true;e.checked=false;e.closest("label").hidden=true;}});})();</script>';
 }, 100);
+
+/* Keep policy search previews consistent with the live 15-day product-return text. */
+add_filter('get_post_metadata', static function ($value, $object_id, $meta_key, $single) {
+    if ($meta_key === '_sa_seo_description' && get_post_field('post_name', (int) $object_id) === 'refund-policy') {
+        $description = 'Unused products may be returned within 15 days through My Account > Returns. See the policy for conditions and vehicle-service booking terms.';
+        return $single ? $description : [$description];
+    }
+    return $value;
+}, 99, 4);
