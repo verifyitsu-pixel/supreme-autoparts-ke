@@ -33,7 +33,8 @@ add_action('wp_enqueue_scripts', static function (): void {
     wp_add_inline_style('supreme-autoparts-main', <<<'CSS'
 
 /* The store view changes copy, not shipping destination or checkout currency. */
-@media(min-width:1000px) and (max-width:1450px){.sa-header__bar .sa-logo{max-width:230px;flex:0 0 230px}.sa-header__bar .sa-logo__img{width:100%;height:auto}.sa-header__bar>.sa-search{min-width:0;flex:1}.sa-header__bar>.sa-search input{min-width:0;width:100%}.sa-header__actions{flex-shrink:0}.sa-header__actions>a[href$="/pricing/"]{display:none}}
+@media(min-width:1000px) and (max-width:1450px){.sa-header__bar .sa-logo{max-width:230px;flex:0 0 230px}.sa-header__bar .sa-logo__img{width:100%!important;max-width:100%!important;height:auto;object-fit:contain}.sa-header__bar>.sa-search{min-width:0;flex:1}.sa-header__bar>.sa-search input{min-width:0;width:100%}.sa-header__actions{flex-shrink:0}.sa-header__actions>a[href$="/pricing/"]{display:none}}
+@media(min-width:601px) and (max-width:999px){.sa-header__actions .sa-hide-sm{display:none}.sa-header__bar .sa-logo{min-width:0;max-width:240px}.sa-header__bar .sa-logo__img{max-width:100%!important;width:100%!important;height:auto}}
 .sa-view-switch{background:#fff;border-bottom:1px solid #e6e6e6;color:#555;font-size:12px;line-height:1.3}
 .sa-view-switch__in{display:flex;justify-content:flex-end;align-items:center;gap:5px;padding-top:5px;padding-bottom:5px}
 .sa-view-switch span{margin-right:5px}
