@@ -70,7 +70,7 @@ if (!$sa_is_ke) {
 </section>
 <section class="sa-software-feature sa-container" aria-labelledby="sa-software-title">
   <div><p class="sa-ed-kicker">Automotive software services · Nairobi</p><h2 id="sa-software-title">More than a fault-code scan.</h2><p>ECU programming, vehicle coding, software updates and electronic diagnostics for cars at our Nairobi garage. We confirm compatibility and the work needed for your vehicle before starting.</p></div>
-  <a class="sa-software-link" href="<?php echo esc_url(home_url('/services/#automotive-software')); ?>">Explore software services <span aria-hidden="true">→</span></a>
+  <a class="sa-software-link" href="<?php echo esc_url(home_url('/pricing/#automotive-software')); ?>">Explore software services <span aria-hidden="true">→</span></a>
   <a class="sa-software-link" href="<?php echo esc_url(home_url('/pricing/')); ?>">Service pricing <span aria-hidden="true">→</span></a>
 </section>
 
