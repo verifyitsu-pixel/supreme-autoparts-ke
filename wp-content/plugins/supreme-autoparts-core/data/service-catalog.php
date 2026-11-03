@@ -131,6 +131,10 @@ foreach ($catalog as &$service) {
             $label = 'Vehicle-specific quote';
         }
     }
+    // Old location-specific option prices must not override the adopted price.
+    if (!$africa || str_contains((string) ($service['price_label'] ?? ''), 'US$')) {
+        $service['kes'] = null;
+    }
     $service['price_label'] = $label;
 }
 unset($service);
