@@ -96,7 +96,7 @@ add_filter('the_content', static function (string $html): string {
         $html .= '<h2>Automotive software and garage services</h2><p>Our vehicle services include ECU programming, vehicle coding, software updates, electronic diagnostics and maintenance at our garage in Nairobi, Kenya. These are services carried out on vehicles, not a subscription or downloadable software product. We confirm vehicle compatibility, the scope of work and a quote before starting.</p><p>The Kenya/US store-view switch changes browsing information. It does not change your delivery address, shipping eligibility or payment currency. See our <a href="/pricing/">service pricing</a>. We confirm the scope and final price before work starts.</p>';
     }
     if ($slug === 'refund-policy') {
-        $html .= '<h2>Vehicle software and maintenance enquiries</h2><p>The product-return information above concerns physical goods. For a vehicle-software or maintenance booking, contact us with your booking number and the issue. See our <a href="/booking-terms/">Booking Terms</a> for the existing service-booking conditions. This addition does not introduce a new service fee or refund restriction.</p>';
+        $html .= '<h2>Vehicle software and maintenance enquiries</h2><p>The product-return information above concerns physical goods. For a vehicle-software or maintenance booking, contact us with your booking number and the issue. See our <a href="/booking-terms/">Booking Terms</a> for the existing service-booking conditions.</p>';
     }
     if ($slug === 'privacy-policy') {
         $html .= '<h2>Store view and service enquiries</h2><p>The Kenya/US store-view preference is remembered in a cookie for 30 days. It changes browsing copy, not your delivery address or payment currency. Service enquiries and bookings use the contact and vehicle information you choose to provide so we can respond about compatibility, diagnostics or maintenance.</p>';
@@ -159,6 +159,7 @@ add_filter('default_option_sa_svc_settings', 'sa_software_fee_settings');
 add_action('template_redirect', static function (): void {
     if (get_query_var('sa_svc_view') !== 'terms') { return; }
     ob_start(static function (string $html): string {
+        $html = str_replace('A booking fee of KES ', 'For other service bookings, a booking fee of KES ', $html);
         return str_replace('Booking fee</h2>', 'Software assessments</h2><p>ECU programming, vehicle coding and software updates start with a paid 60-minute assessment at our Nairobi garage. The assessment fee is KES 2,500, credited toward your final service bill. Work, final price and timing are quoted after assessment.</p><h2>Booking fee</h2>', $html);
     });
 }, 1);
