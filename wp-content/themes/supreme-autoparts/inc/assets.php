@@ -30,6 +30,28 @@ add_action('wp_enqueue_scripts', static function (): void {
         ['supreme-autoparts'],
         SA_THEME_VERSION
     );
+    wp_add_inline_style('supreme-autoparts-main', <<<'CSS'
+
+/* The store view changes copy, not shipping destination or checkout currency. */
+.sa-view-switch{background:#fff;border-bottom:1px solid #e6e6e6;color:#555;font-size:12px;line-height:1.3}
+.sa-view-switch__in{display:flex;justify-content:flex-end;align-items:center;gap:5px;padding-top:5px;padding-bottom:5px}
+.sa-view-switch span{margin-right:5px}
+.sa-view-switch a{display:inline-block;padding:5px 12px;border:1px solid #ddd;border-radius:4px;color:#333;text-decoration:none!important;min-height:30px;box-sizing:border-box}
+.sa-view-switch a[aria-current]{background:#171717;border-color:#171717;color:#fff}
+.sa-view-switch a:focus-visible{outline:2px solid #e9a315;outline-offset:2px}
+@media(max-width:600px){.sa-view-switch__in{justify-content:center}.sa-view-switch a{padding:8px 18px;min-height:34px}}
+
+.sa-software-feature{display:flex;align-items:center;justify-content:space-between;gap:36px;margin-top:32px;margin-bottom:40px;padding-top:28px;padding-bottom:28px;border-top:2px solid #e9a315;border-bottom:1px solid #ddd}
+.sa-software-feature h2{font-size:clamp(24px,3vw,36px);line-height:1.15;margin:8px 0 14px;color:#171717}
+.sa-software-feature p{max-width:800px;line-height:1.65;color:#555;margin:8px 0}
+.sa-software-link{flex-shrink:0;color:#171717;font-weight:600;text-decoration:none!important;border-bottom:1px solid #171717;padding:12px 0}
+.sa-software-feature ul{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 24px;padding-left:20px}
+@media(max-width:700px){.sa-software-feature{display:block;margin-top:24px;margin-bottom:28px;padding-top:22px;padding-bottom:22px}.sa-software-link{display:inline-block;margin-top:8px}.sa-software-feature ul{grid-template-columns:1fr}}
+
+.sa-pricing{padding-top:40px;padding-bottom:55px;max-width:1100px}.sa-pricing h1{font-size:clamp(30px,4vw,48px);line-height:1.12}.sa-pricing p{line-height:1.7}.sa-pricing h2{margin-top:36px}.sa-pricing-note{padding:20px 24px;background:#f6f6f6;border-left:3px solid #e9a315;margin:24px 0}.sa-pricing-scroll{overflow-x:auto}.sa-pricing table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}.sa-pricing th,.sa-pricing td{padding:15px 12px;border-bottom:1px solid #ddd;vertical-align:top;min-width:140px}.sa-pricing thead{background:#f4f4f4}.sa-pricing td a{color:#3b3b3b;text-decoration:none;border-bottom:1px solid #aaa}@media(max-width:600px){.sa-pricing{padding-top:24px}.sa-pricing th,.sa-pricing td{padding:12px 8px;min-width:120px}}
+
+CSS
+    );
     wp_enqueue_style(
         'supreme-autoparts-loader',
         SA_THEME_URI . '/assets/css/sa-loader.css',

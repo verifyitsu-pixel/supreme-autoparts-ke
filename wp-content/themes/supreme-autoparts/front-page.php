@@ -21,9 +21,9 @@ $sa_ed_services = [
     ['icon' => 'service', 'url' => home_url('/book-service/'), 'title' => __('Book a service', 'supreme-autoparts'), 'text' => __('Drop off at our garage, off Kangundo Road', 'supreme-autoparts')],
     ['icon' => 'roadside', 'url' => home_url('/roadside/'), 'title' => __('Roadside rescue', 'supreme-autoparts'), 'text' => __('Towing, jump-starts and flat tyres when you need them', 'supreme-autoparts')],
 ];
-$sa_is_ke = (!function_exists('sa_geo_is_kenya') || sa_geo_is_kenya());
+$sa_is_ke = (!function_exists('sa_storefront_is_kenya') || sa_storefront_is_kenya());
 if (!$sa_is_ke) {
-    $sa_is_us = function_exists('sa_geo_country') && sa_geo_country() === 'US';
+    $sa_is_us = function_exists('sa_storefront_country') && sa_storefront_country() === 'US';
     $sa_ed_services[0]['text'] = $sa_is_us ? __('Shipped across the US', 'supreme-autoparts') : __('Shipped worldwide', 'supreme-autoparts');
     $sa_ed_services[1]['text'] = __('We pass your request to our support team, who point you to a service centre', 'supreme-autoparts');
     $sa_ed_services[2] = ['icon' => 'service', 'url' => 'https://wa.me/supremeautopart', 'title' => __('Fitment help', 'supreme-autoparts'), 'text' => __('Send your year, make, model or VIN and we check the part number', 'supreme-autoparts')];
@@ -37,7 +37,7 @@ if (!$sa_is_ke) {
     <div class="sa-ed-hero__copy">
       <p class="sa-ed-kicker"><?php esc_html_e('Supreme Autoparts', 'supreme-autoparts'); ?></p>
       <h1 id="sa-hero-title"><?php $sa_is_ke ? esc_html_e('Car parts, servicing and roadside help.', 'supreme-autoparts') : esc_html_e('Car parts, checked to fit your car.', 'supreme-autoparts'); ?></h1>
-      <p class="sa-ed-lead"><?php if (!$sa_is_ke) : (function_exists('sa_geo_country') && sa_geo_country() === 'US') ? esc_html_e('Parts for Japanese, American, British and European cars, plus sport, cruiser and dirt bike parts, shipped across the US. Search by part number, or ask us to check fitment.', 'supreme-autoparts') : esc_html_e('Parts for Japanese, American, British and European cars, plus sport, cruiser and dirt bike parts, shipped worldwide. Search by part number, or ask us to check fitment.', 'supreme-autoparts'); else : ?><?php esc_html_e('We send parts for Japanese, American, British and European cars, plus sport, cruiser and dirt bike parts, to every county, fix cars at our garage, and come out when you break down.', 'supreme-autoparts'); ?><?php endif; ?></p>
+      <p class="sa-ed-lead"><?php if (!$sa_is_ke) : (function_exists('sa_storefront_country') && sa_storefront_country() === 'US') ? esc_html_e('Parts for Japanese, American, British and European cars, plus sport, cruiser and dirt bike parts, shipped across the US. Search by part number, or ask us to check fitment.', 'supreme-autoparts') : esc_html_e('Parts for Japanese, American, British and European cars, plus sport, cruiser and dirt bike parts, shipped worldwide. Search by part number, or ask us to check fitment.', 'supreme-autoparts'); else : ?><?php esc_html_e('We send parts for Japanese, American, British and European cars, plus sport, cruiser and dirt bike parts, to every county, fix cars at our garage, and come out when you break down.', 'supreme-autoparts'); ?><?php endif; ?></p>
       <form class="sa-ed-search" role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>" data-sa-hx-search>
         <label class="screen-reader-text" for="sa-hero-search"><?php esc_html_e('Search products', 'supreme-autoparts'); ?></label>
         <?php if (function_exists('sa_search_scope_select')) { sa_search_scope_select('sa-search-cat-hero'); } ?>
@@ -68,6 +68,12 @@ if (!$sa_is_ke) {
     </nav>
   </div>
 </section>
+<section class="sa-software-feature sa-container" aria-labelledby="sa-software-title">
+  <div><p class="sa-ed-kicker">Automotive software services · Nairobi</p><h2 id="sa-software-title">More than a fault-code scan.</h2><p>ECU programming, vehicle coding, software updates and electronic diagnostics for cars at our Nairobi garage. We confirm compatibility and the work needed for your vehicle before starting.</p></div>
+  <a class="sa-software-link" href="<?php echo esc_url(home_url('/pricing/#automotive-software')); ?>">Explore software services <span aria-hidden="true">→</span></a>
+  <a class="sa-software-link" href="<?php echo esc_url(home_url('/pricing/')); ?>">Service pricing <span aria-hidden="true">→</span></a>
+</section>
+
 
 <?php if ($sa_is_ke) : ?>
 <section class="sa-ed-sec sa-ed-rs" aria-labelledby="sa-ed-rs">
@@ -293,7 +299,7 @@ if ($sa_ed_brands !== []) : ?>
       <div><h3><?php esc_html_e('Free shipping', 'supreme-autoparts'); ?></h3><p><?php printf(esc_html__('Free on qualifying orders %s and up, confirmed at checkout.', 'supreme-autoparts'), esc_html(sa_free_shipping_threshold())); ?></p></div>
       <div><h3><?php esc_html_e('Top-notch support', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('Talk to a real person on chat, WhatsApp or the phone.', 'supreme-autoparts'); ?></p></div>
       <?php else : ?>
-      <?php $sa_us = function_exists('sa_geo_country') && sa_geo_country() === 'US'; ?>
+      <?php $sa_us = function_exists('sa_storefront_country') && sa_storefront_country() === 'US'; ?>
       <div><h3><?php $sa_us ? esc_html_e('Shipping across the US', 'supreme-autoparts') : esc_html_e('International shipping', 'supreme-autoparts'); ?></h3><p><?php $sa_us ? printf(esc_html__('Standard and priority options at checkout, free on orders %s and up.', 'supreme-autoparts'), esc_html(sa_free_shipping_threshold())) : esc_html_e('Shipping to your country is priced at checkout before you pay.', 'supreme-autoparts'); ?></p></div>
       <div><h3><?php esc_html_e('Fitment check', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('Send your year, make, model or VIN on WhatsApp and we confirm the part number.', 'supreme-autoparts'); ?></p></div>
       <div><h3><?php esc_html_e('Pay by card', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('Secure card checkout. No account needed.', 'supreme-autoparts'); ?></p></div>

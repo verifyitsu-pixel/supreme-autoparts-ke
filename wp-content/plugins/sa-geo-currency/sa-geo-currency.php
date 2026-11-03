@@ -187,11 +187,47 @@ function sa_geo_is_kenya(): bool
     return sa_geo_country() === 'KE';
 }
 
+/** Storefront copy only. Never use this preference for currency, delivery or order data. */
+function sa_storefront_country(): string
+{
+    $view = $_GET['sa_view'] ?? ($_COOKIE['sa_storefront_view'] ?? 'ke');
+    return is_string($view) && $view === 'us' ? 'US' : 'KE';
+}
+
+function sa_storefront_is_kenya(): bool
+{
+    return sa_storefront_country() === 'KE';
+}
+
+add_action('init', static function (): void {
+    $view = $_GET['sa_view'] ?? null;
+    if (is_string($view) && in_array($view, ['ke', 'us'], true)) {
+        if (!headers_sent()) {
+            setcookie('sa_storefront_view', $view, ['expires' => time() + 30 * DAY_IN_SECONDS, 'path' => '/', 'secure' => is_ssl(), 'httponly' => true, 'samesite' => 'Lax']);
+        }
+        $_COOKIE['sa_storefront_view'] = $view;
+    }
+    // A selected view must not be served as another visitor's cached HTML.
+    if (isset($_COOKIE['sa_storefront_view']) || isset($_GET['sa_view'])) {
+        if (!defined('DONOTCACHEPAGE')) { define('DONOTCACHEPAGE', true); }
+    }
+}, 1);
+
+function sa_storefront_switch(): void
+{
+    $view = sa_storefront_country();
+    echo '<nav class="sa-view-switch" aria-label="Storefront view"><div class="sa-container sa-view-switch__in"><span>Store view</span>';
+    foreach (['KE' => 'Kenya', 'US' => 'US'] as $cc => $label) {
+        echo '<a href="' . esc_url(add_query_arg('sa_view', strtolower($cc))) . '"' . ($view === $cc ? ' aria-current="true"' : '') . '>' . esc_html($label) . '</a>';
+    }
+    echo '</div></nav>';
+}
+
 /** Cache-key fragment so any cached HTML containing prices/zone copy never crosses zones. */
 function sa_geo_zone_key(): string
 {
     $cur = class_exists('SA_Geo_Detector') ? SA_Geo_Detector::display_currency() : 'USD';
-    return sa_geo_country() . '|' . $cur;
+    return sa_geo_country() . '|' . $cur . '|view:' . sa_storefront_country();
 }
 
 /**

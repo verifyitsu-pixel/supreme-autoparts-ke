@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
 function sa_enquire_contact(): array
 {
     if (function_exists('sa_geo_business')) {
-        $b = sa_geo_business();
+        $b = sa_geo_business(function_exists('sa_storefront_country') ? sa_storefront_country() : 'KE');
         return ['phone' => $b['phone'], 'phone_display' => $b['phone_display'], 'whatsapp' => $b['whatsapp'], 'email' => $b['email']];
     }
     return [
