@@ -3,7 +3,7 @@
  * Plugin Name: SA Customer Analytics (per-customer deep insights)
  * Description: Customer-level analytics in wp-admin (Analytics > Customers): per-customer orders,
  *              lifetime value, repeat rate, first-touch source, products/categories, cart activity,
- *              location and device, plus visits & pages viewed (from the site's own Matomo tables for
+ *              location and device, plus raw page hits (from the server event log for
  *              logged-in customers and the server-side event log matched by IP hash for guests).
  *              Admin-only. No card data, no passwords. All data from this site's own database.
  * Version: 1.0.0
@@ -219,79 +219,6 @@ function sa_cust_index(): array
     return $index;
 }
 
-function sa_cust_matomo_cols(string $table): array
-{
-    global $wpdb;
-    static $cache = [];
-    if (isset($cache[$table])) {
-        return $cache[$table];
-    }
-    if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) !== $table) {
-        return $cache[$table] = [];
-    }
-    $cols = [];
-    foreach ((array) $wpdb->get_col("SHOW COLUMNS FROM {$table}", 0) as $c) {
-        $cols[$c] = true;
-    }
-    return $cache[$table] = $cols;
-}
-
-/** Visits + pages for a customer from Matomo raw tables (by user_id and/or IP hash via our event log). */
-function sa_cust_visits(int $user_id, array $ips): array
-{
-    global $wpdb;
-    $out = ['visits' => [], 'pages' => [], 'note' => ''];
-    $p    = $wpdb->prefix . 'matomo_';
-    $vcol = sa_cust_matomo_cols($p . 'log_visit');
-    if (!$vcol) {
-        $out['note'] = 'Matomo tables not found yet.';
-        return $out;
-    }
-    $has_uid = isset($vcol['user_id']);
-    $sel = ['idvisit', 'visit_last_action_time'];
-    foreach (['visit_total_actions','visit_total_time','config_browser_name','config_os','config_device_brand','config_device_model','config_device_type','config_resolution','location_country','location_city','referer_type','referer_name','referer_url'] as $c) {
-        if (isset($vcol[$c])) { $sel[] = $c; }
-    }
-    $where = [];
-    $args  = [];
-    if ($user_id > 0 && $has_uid) {
-        $where[] = 'user_id = %s';
-        $args[]  = (string) $user_id;
-    }
-    // Match guest visits by truncated IP (Matomo stores anonymised IP in location_ip).
-    foreach ($ips as $ip) {
-        $packed = @inet_pton($ip);
-        if ($packed === false) { continue; }
-        if (isset($vcol['location_ip'])) {
-            // Matomo anonymises the last byte(s); compare the first 3 bytes of IPv4 / first 6 of IPv6.
-            $len    = strlen($packed);
-            $keep   = $len === 4 ? 3 : 6;
-            $where[] = 'SUBSTRING(location_ip,1,' . $keep . ') = %s';
-            $args[]  = substr($packed, 0, $keep);
-        }
-    }
-    if (!$where) {
-        $out['note'] = $has_uid ? 'No user id or IP to match.' : 'Matomo user_id column not present yet (enable user id tracking).';
-        return $out;
-    }
-    $sql = 'SELECT ' . implode(',', $sel) . " FROM {$p}log_visit WHERE (" . implode(' OR ', $where) . ') ORDER BY visit_last_action_time DESC LIMIT 60';
-    $out['visits'] = (array) $wpdb->get_results($wpdb->prepare($sql, $args), ARRAY_A);
-
-    $lcol = sa_cust_matomo_cols($p . 'log_link_visit_action');
-    $acol = sa_cust_matomo_cols($p . 'log_action');
-    if ($lcol && $acol && $out['visits']) {
-        $ids = array_map(static fn($v) => (int) $v['idvisit'], $out['visits']);
-        $in  = implode(',', array_fill(0, count($ids), '%d'));
-        $out['pages'] = (array) $wpdb->get_results($wpdb->prepare(
-            "SELECT l.idvisit, a.name AS url, COUNT(*) AS views FROM {$p}log_link_visit_action l
-             JOIN {$p}log_action a ON a.idaction = l.idaction_url
-             WHERE l.idvisit IN ($in) GROUP BY l.idvisit, a.name ORDER BY views DESC LIMIT 200",
-            $ids
-        ), ARRAY_A);
-    }
-    return $out;
-}
-
 /** Page hits from our own server-side log, matched by IP hash (works for guests). */
 function sa_cust_event_hits(array $ips): array
 {
@@ -467,42 +394,6 @@ function sa_cust_render_detail(array $index, string $who): void
         echo '</tbody></table></div>';
     }
     echo '</div>';
-
-    // Visits & pages (Matomo raw tables + own event log by IP)
-    $visits = sa_cust_visits($uid, array_keys($ips));
-    echo '<h3>Visits' . ($visits['note'] !== '' ? ' <small style="color:#a00">(' . esc_html($visits['note']) . ')</small>' : '') . '</h3>';
-    if ($visits['visits']) {
-        echo '<table class="widefat striped"><thead><tr><th>Last action (UTC)</th><th>Pages</th><th>Time</th><th>Browser</th><th>OS</th><th>Device</th><th>Screen</th><th>Location</th><th>Source</th></tr></thead><tbody>';
-        $rt = [1 => 'Direct', 2 => 'Search engine', 3 => 'Website', 4 => 'Campaign'];
-        foreach ($visits['visits'] as $v) {
-            $dev = trim(($v['config_device_brand'] ?? '') . ' ' . ($v['config_device_model'] ?? ''));
-            echo '<tr><td>' . esc_html((string) $v['visit_last_action_time']) . '</td>'
-                . '<td>' . esc_html((string) ($v['visit_total_actions'] ?? '-')) . '</td>'
-                . '<td>' . esc_html(isset($v['visit_total_time']) ? gmdate('i\ms\s', (int) $v['visit_total_time']) : '-') . '</td>'
-                . '<td>' . esc_html((string) ($v['config_browser_name'] ?? '-')) . '</td>'
-                . '<td>' . esc_html((string) ($v['config_os'] ?? '-')) . '</td>'
-                . '<td>' . esc_html($dev !== '' ? $dev : '-') . '</td>'
-                . '<td>' . esc_html((string) ($v['config_resolution'] ?? '-')) . '</td>'
-                . '<td>' . esc_html(trim(($v['location_city'] ?? '') . ' ' . ($v['location_country'] ?? '')) ?: '-') . '</td>'
-                . '<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">' . esc_html(trim(($rt[(int) ($v['referer_type'] ?? 0)] ?? '') . ' ' . ($v['referer_name'] ?? '')) ?: '-') . '</td></tr>';
-        }
-        echo '</tbody></table>';
-
-        if ($visits['pages']) {
-            echo '<h3>Pages viewed</h3><table class="widefat striped"><thead><tr><th>Page</th><th style="width:80px">Views</th></tr></thead><tbody>';
-            $byUrl = [];
-            foreach ($visits['pages'] as $p) {
-                $byUrl[$p['url']] = ($byUrl[$p['url']] ?? 0) + (int) $p['views'];
-            }
-            arsort($byUrl);
-            foreach (array_slice($byUrl, 0, 30, true) as $url => $views) {
-                echo '<tr><td style="word-break:break-all">' . esc_html((string) $url) . '</td><td>' . (int) $views . '</td></tr>';
-            }
-            echo '</tbody></table>';
-        }
-    } else {
-        echo '<p>No Matomo visits matched yet (visits appear once tracking has recorded this customer).</p>';
-    }
 
     $hits = sa_cust_event_hits(array_keys($ips));
     if ($hits) {

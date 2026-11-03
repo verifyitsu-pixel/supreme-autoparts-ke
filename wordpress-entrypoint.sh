@@ -71,11 +71,7 @@ sync_custom_content() {
   mkdir -p /var/www/html/wp-content/uploads
   chown -R www-data:www-data /var/www/html/wp-content/uploads 2>/dev/null || true
   chmod -R u+rwX,g+rwX /var/www/html/wp-content/uploads 2>/dev/null || true
-  # Matomo needs its tracker cache tree writable (device detector, translations, system check);
-  # a root-owned dir on the retained volume breaks Matomo with "cache/tracker could not be created".
-  mkdir -p /var/www/html/wp-content/cache/matomo/cache/tracker /var/www/html/wp-content/cache/matomo/assets /var/www/html/wp-content/cache/matomo/logs /var/www/html/wp-content/cache/matomo/tcpdf /var/www/html/wp-content/cache/matomo/templates_c /var/www/html/wp-content/cache/matomo/tmp
-  chown -R www-data:www-data /var/www/html/wp-content/cache/matomo 2>/dev/null || true
-  chmod -R u+rwX,g+rwX /var/www/html/wp-content/cache/matomo 2>/dev/null || true
+  rm -f /var/www/html/wp-content/mu-plugins/sa-matomo-deep.php /var/www/html/wp-content/mu-plugins/sa-matomo-sync-guard.php /var/www/html/wp-content/mu-plugins/sa-matomo-search-count-fix.php
   # WooCommerce baked into image — always restore onto runtime volume first.
   if [[ -d /usr/src/wordpress/wp-content/plugins/woocommerce ]]; then
     swap_dir /usr/src/wordpress/wp-content/plugins/woocommerce /var/www/html/wp-content/plugins/woocommerce
@@ -95,7 +91,7 @@ sync_custom_content() {
   if [[ -d /usr/src/wordpress/wp-content/plugins/sa-geo-currency ]]; then
     swap_dir /usr/src/wordpress/wp-content/plugins/sa-geo-currency /var/www/html/wp-content/plugins/sa-geo-currency
   fi
-  for gw in pesapal-woocommerce transactworld-payment-integration woocommerce-paypal-payments jotform-ai-chatbot supreme-agent-intake forminator matomo supreme-marketing; do
+  for gw in pesapal-woocommerce transactworld-payment-integration woocommerce-paypal-payments jotform-ai-chatbot supreme-agent-intake forminator supreme-marketing; do
     if [[ -d /usr/src/wordpress/wp-content/plugins/$gw ]]; then
       swap_dir "/usr/src/wordpress/wp-content/plugins/$gw" "/var/www/html/wp-content/plugins/$gw"
       chown -R www-data:www-data "/var/www/html/wp-content/plugins/$gw" 2>/dev/null || true
@@ -121,14 +117,9 @@ sync_custom_content() {
   if [[ -f /usr/src/wordpress/wp-content/mu-plugins/sa-analytics.php ]]; then
     cp -f /usr/src/wordpress/wp-content/mu-plugins/sa-analytics.php /var/www/html/wp-content/mu-plugins/ || true
   fi
-  if [[ -f /usr/src/wordpress/wp-content/mu-plugins/sa-matomo-deep.php ]]; then
-    cp -f /usr/src/wordpress/wp-content/mu-plugins/sa-matomo-deep.php /var/www/html/wp-content/mu-plugins/ || true
-  fi
+  cp -f /usr/src/wordpress/wp-content/mu-plugins/sa-privacy-clarity.php /var/www/html/wp-content/mu-plugins/
   if [[ -f /usr/src/wordpress/wp-content/mu-plugins/sa-customer-analytics.php ]]; then
     cp -f /usr/src/wordpress/wp-content/mu-plugins/sa-customer-analytics.php /var/www/html/wp-content/mu-plugins/ || true
-  fi
-  if [[ -f /usr/src/wordpress/wp-content/mu-plugins/sa-matomo-sync-guard.php ]]; then
-    cp -f /usr/src/wordpress/wp-content/mu-plugins/sa-matomo-sync-guard.php /var/www/html/wp-content/mu-plugins/ || true
   fi
   if [[ -f /usr/src/wordpress/wp-content/mu-plugins/sa-page-cache-purge.php ]]; then
     cp -f /usr/src/wordpress/wp-content/mu-plugins/sa-page-cache-purge.php /var/www/html/wp-content/mu-plugins/ || true
@@ -300,20 +291,19 @@ bootstrap_wordpress() {
   wp_as plugin activate transactworld-payment-integration || true
   wp_as plugin activate supreme-agent-intake || true
   wp_as plugin activate forminator || true
-  wp_as plugin activate matomo || true
   wp_as plugin activate supreme-marketing || true
-  # Matomo self-hosted analytics: install tables (idempotent), then enable default tracking
-  # + AI bot tracking (same calls the Get Started button makes - no wp-admin click needed).
-  wp_as matomo install 2>&1 | tail -1 || true
-  wp_as eval '
-if (class_exists("WpMatomo\\Settings")) {
-  $s = new \WpMatomo\Settings();
-  $s->apply_tracking_related_changes(["track_mode" => "default", "track_ai_bots" => true, "show_get_started_page" => false]);
-  echo "[supreme] matomo: track_mode=" . $s->get_global_option("track_mode") . " ai_bots=" . (int) $s->get_global_option("track_ai_bots") . "\n";
-} else {
-  echo "[supreme] matomo: Settings class missing\n";
-}
-' 2>&1 | head -3 || true
+  # Owner Nov3: permanently remove Matomo and its stored history. The native
+  # uninstaller owns table/options/cron/role/cache cleanup. Do not delete plugin
+  # files on failure, so the next deploy can retry rather than strand its data.
+  if [[ -f /var/www/html/wp-content/plugins/matomo/matomo.php ]]; then
+    wp_as plugin uninstall matomo --deactivate --exec="define('MATOMO_REMOVE_ALL_DATA', true);" || {
+      echo "[supreme] ERROR: Matomo full uninstall failed; files retained for retry" >&2
+    }
+  fi
+  for matomo_option in sa_matomo_deep_version sa_matomo_deep_dims; do
+    wp_as option delete "$matomo_option" || true
+  done
+  wp_as cron event delete sa_matomo_deep_provision || true
   # PayPal Payments stays OFF: the plugin was never onboarded (no connected PayPal
   # merchant account), so on product pages its SDK boot fails at
   # /?wc-ajax=ppc-sdk-v6-client-token with HTTP 500 and loads paypal.com scripts
