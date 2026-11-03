@@ -104,6 +104,12 @@ add_filter('the_content', static function (string $html): string {
     return $html;
 }, 35);
 
+function sa_gc_service_card(string $slug, string $name, string $price, string $summary, bool $assessment): void {
+    $detail = sa_svc_url($slug) . '?region=ke';
+    $book = home_url('/book-service/?service=' . rawurlencode($slug) . '&region=ke');
+    echo '<article class="sa-service-card"><h3><a href="' . esc_url($detail) . '">' . esc_html($name) . '</a></h3><p class="sa-card-price">' . esc_html($price) . '</p><p class="sa-card-summary">' . esc_html($summary) . '</p><p class="sa-card-fee">' . ($assessment ? '60-minute assessment · KES 2,500' : 'Booking fee · KES ' . number_format((float) (get_option('sa_svc_settings', [])['fee_kes'] ?? 1000))) . ' credited to your bill</p><div class="sa-card-actions"><a class="sa-card-button" href="' . esc_url($book) . '">' . ($assessment ? 'Book assessment' : 'Book service') . '</a><a class="sa-card-details" href="' . esc_url($detail) . '">View details →</a></div></article>';
+}
+
 add_action('template_redirect', static function (): void {
     $path = trim((string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH), '/');
     if ($path !== 'pricing') { return; }
@@ -111,30 +117,23 @@ add_action('template_redirect', static function (): void {
     if ($wp_query) { $wp_query->is_404 = false; }
     status_header(200);
     get_header();
-    echo '<main class="sa-container sa-pricing"><p class="sa-ed-kicker">Supreme Autoparts · Nairobi</p><h1>Vehicle software & maintenance pricing</h1><p>ECU programming, vehicle coding, software updates, electronic diagnostics and garage maintenance. Send your year, make, model and the work you need for a vehicle-specific quote.</p><h2 id="automotive-software">Software & electronic diagnostics</h2><p>ECU programming, coding and updates start with a paid 60-minute assessment at our Nairobi garage: KES 2,500, credited toward your final service bill. Work and final price are quoted after assessment.</p><div class="sa-pricing-scroll"><table><thead><tr><th>Service</th><th>Price (USD)</th></tr></thead><tbody>';
+    echo '<main class="sa-container sa-pricing"><header class="sa-pricing-hero"><p class="sa-ed-kicker">Supreme Autoparts · Nairobi</p><h1>Car care.<br>Clear prices.</h1><p>Software, diagnostics and maintenance. Choose your service to see the details and book your visit.</p><nav class="sa-pricing-jump"><a href="#automotive-software">Software & diagnostics</a><a href="#maintenance">Maintenance</a></nav></header><section id="automotive-software"><div class="sa-pricing-heading"><p class="sa-ed-kicker">Vehicle software</p><h2>Software & diagnostics</h2></div><div class="sa-assessment-note"><strong>Start with an assessment</strong><span>ECU programming, coding and updates begin with a 60-minute visit at our Nairobi garage. KES 2,500, credited toward your final bill. Work and final price are quoted afterward.</span></div><div class="sa-service-cards">';
     $software = [
-        ['ECU programming', 'From US$150', 'ecu-programming'],
-        ['Vehicle coding', 'Vehicle-specific quote', 'vehicle-coding'],
-        ['Software updates', 'From US$250 for GM reprogramming', 'software-updates'],
-        ['Electronic diagnostics', 'US$125–183', 'diagnostics'],
+        ['ecu-programming', 'ECU programming', 'From US$150', 'Check compatibility and the programming your vehicle needs.'],
+        ['vehicle-coding', 'Vehicle coding', 'Vehicle-specific quote', 'Vehicle-specific coding, with scope confirmed before work.'],
+        ['software-updates', 'Software updates', 'From US$250', 'GM reprogramming. Other vehicles quoted after assessment.'],
+        ['diagnostics', 'Electronic diagnostics', 'US$125–183', 'Understand warning lights and electronic faults.'],
     ];
-    foreach ($software as $row) {
-        echo '<tr><th scope="row">' . '<a href="' . esc_url(sa_svc_url($row[2]) . '?region=ke') . '">' . esc_html($row[0]) . '</a></th><td>' . esc_html($row[1]) . '</td></tr>';
+    foreach ($software as [$slug, $name, $price, $summary]) {
+        sa_gc_service_card($slug, $name, $price, $summary, $slug !== 'diagnostics');
     }
-    echo '</tbody></table></div><h2>Maintenance & mechanical services</h2><div class="sa-pricing-scroll"><table><thead><tr><th>Service</th><th>Price (USD)</th></tr></thead><tbody>';
-    $prices = [
-        'oil-change' => 'US$160–188',
-        'brake-pads' => 'US$335–394',
-        'wheel-alignment' => 'US$186–273',
-        'tyre-rotation' => 'US$49–72',
-        'ac-service' => 'US$285–369',
-        'battery' => 'US$456–493',
-    ];
+    echo '</div></section><section id="maintenance"><div class="sa-pricing-heading"><p class="sa-ed-kicker">Keep it running</p><h2>Maintenance & mechanical</h2></div><div class="sa-service-cards">';
+    $prices = ['oil-change'=>'US$160–188','brake-pads'=>'US$335–394','wheel-alignment'=>'US$186–273','tyre-rotation'=>'US$49–72','ac-service'=>'US$285–369','battery'=>'US$456–493'];
     foreach (sa_svc_catalog() as $slug => $svc) {
         if ($slug === 'diagnostics' || !empty($svc['assessment'])) { continue; }
-        echo '<tr><th scope="row">' . '<a href="' . esc_url(sa_svc_url($slug) . '?region=ke') . '">' . esc_html($svc['name']) . '</a></th><td>' . esc_html($prices[$slug] ?? 'Vehicle-specific quote') . '</td></tr>';
+        sa_gc_service_card($slug, $svc['name'], $prices[$slug] ?? 'Vehicle-specific quote', $svc['summary'], false);
     }
-    echo '</tbody></table></div><h2>Get your exact quote</h2><p>Tell us your vehicle and the problem or work required. We confirm the service scope and price before work starts.</p><a class="sa-software-link" href="' . esc_url(home_url('/contact/')) . '">Contact Supreme for a quote →</a><p><a href="' . esc_url(home_url('/services/')) . '">Browse services</a> · <a href="' . esc_url(home_url('/terms/')) . '">Terms</a> · <a href="' . esc_url(home_url('/privacy-policy/')) . '">Privacy</a> · <a href="' . esc_url(home_url('/refund-policy/')) . '">Refunds</a></p></main>';
+    echo '</div></section><footer class="sa-pricing-footer"><h2>Not sure what you need?</h2><p>Tell us about your car and the problem. We will help you choose the right service.</p><a class="sa-card-button" href="' . esc_url(home_url('/contact/')) . '">Contact Supreme</a><p class="sa-pricing-policy-links"><a href="' . esc_url(home_url('/booking-terms/')) . '">Booking terms</a> · <a href="' . esc_url(home_url('/terms/')) . '">Terms</a> · <a href="' . esc_url(home_url('/privacy-policy/')) . '">Privacy</a> · <a href="' . esc_url(home_url('/refund-policy/')) . '">Refunds</a></p></footer></main>';
     get_footer();
     exit;
 }, 0);
