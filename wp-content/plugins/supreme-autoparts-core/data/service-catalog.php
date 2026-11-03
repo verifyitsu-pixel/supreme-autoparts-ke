@@ -7,6 +7,27 @@
 if (!defined('ABSPATH')) { exit; }
 
 return [
+    'ecu-programming' => [
+        'name' => 'ECU programming', 'icon' => 'diag', 'group' => 'Automotive Software', 'duration' => 60,
+        'summary' => 'Book a 60-minute assessment at our Nairobi garage. We check compatibility and quote the work, final price and timing before proceeding.',
+        'includes' => ['60-minute vehicle assessment', 'ECU programming requirements', 'Compatibility and scope check', 'Quote before work starts'],
+        'kes' => null, 'usd' => null, 'price_label' => 'From US$150', 'assessment' => true,
+        'parts' => '',
+    ],
+    'vehicle-coding' => [
+        'name' => 'Vehicle coding', 'icon' => 'diag', 'group' => 'Automotive Software', 'duration' => 60,
+        'summary' => 'Book a 60-minute assessment at our Nairobi garage. We check compatibility and quote the work, final price and timing before proceeding.',
+        'includes' => ['60-minute vehicle assessment', 'Vehicle coding requirements', 'Compatibility and scope check', 'Quote before work starts'],
+        'kes' => null, 'usd' => null, 'price_label' => 'Vehicle-specific quote', 'assessment' => true,
+        'parts' => '',
+    ],
+    'software-updates' => [
+        'name' => 'Software updates', 'icon' => 'diag', 'group' => 'Automotive Software', 'duration' => 60,
+        'summary' => 'Book a 60-minute assessment at our Nairobi garage. We check compatibility and quote the work, final price and timing before proceeding.',
+        'includes' => ['60-minute vehicle assessment', 'Vehicle software update requirements', 'Compatibility and scope check', 'Quote before work starts'],
+        'kes' => null, 'usd' => null, 'price_label' => 'From US$250 for GM reprogramming', 'assessment' => true,
+        'parts' => '',
+    ],
     'oil-change' => [
         'name' => 'Oil & Filter Change', 'icon' => 'oil', 'group' => 'Maintenance', 'duration' => 45,
         'summary' => 'Fresh oil of the right grade and a new filter keep your engine protected, with a leak check and service-light reset.',

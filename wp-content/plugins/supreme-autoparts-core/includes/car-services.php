@@ -18,7 +18,7 @@ const SA_SVC_GARAGE_POSTAL = 'P.O. Box 00516-00100 G.P.O Nairobi';
 
 function sa_svc_map_url(): string
 {
-    if (function_exists('sa_geo_is_kenya') && !sa_geo_is_kenya()) {
+    if (sa_svc_region() !== 'KE') {
         return sa_geo_map_url();
     }
     return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode('Midax Plaza, Kangundo Rd, Njiru, Nairobi');
@@ -26,7 +26,7 @@ function sa_svc_map_url(): string
 
 function sa_svc_address_html(bool $compact = false): string
 {
-    if (function_exists('sa_geo_is_kenya') && !sa_geo_is_kenya()) {
+    if (sa_svc_region() !== 'KE') {
         $b = sa_geo_business();
         return '<div class="sa-svc-addr' . ($compact ? ' sa-svc-addr--compact' : '') . '">' . sa_svc_icon('pin')
             . '<div><strong>Supreme Autoparts</strong><span>' . esc_html($b['street']) . '</span><span>' . esc_html($b['city'] . ', ' . $b['region'] . ' ' . $b['postal']) . '</span>'
@@ -62,6 +62,10 @@ function sa_svc_statuses(): array
 
 function sa_svc_locations(): array
 {
+    $service = sanitize_key((string) ($_POST['service'] ?? $_GET['service'] ?? get_query_var('sa_svc') ?? ''));
+    if (!empty(sa_svc_catalog()[$service]['assessment'])) {
+        return ['nairobi' => ['label' => 'Nairobi garage - Midax Plaza, Kangundo Rd, Njiru', 'region' => 'KE', 'note' => SA_SVC_GARAGE_ADDRESS]];
+    }
     return [
         'nairobi' => ['label' => 'Nairobi garage — Midax Plaza, Kangundo Rd, Njiru', 'region' => 'KE', 'note' => SA_SVC_GARAGE_ADDRESS],
         'usa' => ['label' => 'United States', 'region' => 'US', 'note' => ''],
@@ -74,6 +78,8 @@ function sa_svc_region(): string
     if (in_array($override, ['KE', 'US'], true)) {
         return $override;
     }
+    $service = sanitize_key((string) ($_POST['service'] ?? $_GET['service'] ?? get_query_var('sa_svc') ?? ''));
+    if (!empty(sa_svc_catalog()[$service]['assessment'])) { return 'KE'; }
     $cc = class_exists('SA_Geo_Detector') ? (string) SA_Geo_Detector::country_code() : '';
     return strtoupper($cc) === 'KE' ? 'KE' : 'US';
 }
@@ -81,6 +87,7 @@ function sa_svc_region(): string
 /** Human price label for a service in a region. */
 function sa_svc_price_label(array $svc, string $region): string
 {
+    if (!empty($svc['price_label'])) { return (string) $svc['price_label']; }
     if ($region === 'KE') {
         $k = $svc['kes'] ?? null;
         if (!$k) {
@@ -114,7 +121,7 @@ function sa_svc_url(string $path = ''): string
 
 function sa_svc_book_url(string $slug = ''): string
 {
-    return home_url('/book-service/' . ($slug !== '' ? '?service=' . rawurlencode($slug) : ''));
+    return home_url('/book-service/' . ($slug !== '' ? '?service=' . rawurlencode($slug) . (!empty(sa_svc_catalog()[$slug]['assessment']) || (($_GET['region'] ?? '') === 'ke') ? '&region=ke' : '') : ''));
 }
 
 /* ---------- Data model ---------- */
@@ -180,6 +187,7 @@ function sa_svc_duration_label(string $service): string
     if (!$s) {
         return '';
     }
+    if (!empty($s['assessment'])) { return '60-minute assessment'; }
     $m = (int) $s['duration'];
     $txt = $m >= 60 ? (floor($m / 60) . ' h' . ($m % 60 ? ' ' . ($m % 60) . ' min' : '')) : $m . ' min';
     return '≈ ' . $txt . (empty($s['duration_src']) ? ' (estimate)' : '');
@@ -810,6 +818,7 @@ function sa_svc_render_book(): void
     <div class="sa-container sa-svc-wiz">
       <nav class="sa-svc-crumbs"><a href="<?php echo esc_url(home_url('/')); ?>">Home</a> / <a href="<?php echo esc_url(sa_svc_url()); ?>">Services</a> / <span>Book</span></nav>
       <h1><?php echo $old ? 'Reschedule ' . esc_html($old['ref']) : 'Book a service'; ?></h1>
+      <?php if (!empty($catalog[$sel]['assessment'])) : ?><p class="sa-svc-alert">Your booking is a paid 60-minute assessment in Nairobi. The booking fee is credited to your final service bill. Programming, coding or update work and its final price are quoted after assessment.</p><?php endif; ?>
       <p class="sa-svc-lead">Five quick steps. Pay a <?php echo esc_html(sa_svc_fee_now()); ?> booking fee to confirm, which is credited to your bill. You pay the rest at the service, after approving the final quote.</p>
       <ul class="sa-svc-trust"><li><?php echo sa_svc_icon('check'); ?>Written quote before work</li><li><?php echo sa_svc_icon('check'); ?>Cancel online anytime</li><li><?php echo sa_svc_icon('check'); ?>Parts from our own shop</li><li><?php echo sa_svc_icon('pin'); ?>Our garage on Kangundo Rd</li></ul>
       <?php if ($err) : ?><div class="sa-svc-alert"><?php echo esc_html($err); ?></div><?php endif; ?>
