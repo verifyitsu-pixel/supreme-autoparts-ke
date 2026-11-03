@@ -113,13 +113,13 @@ add_action('template_redirect', static function (): void {
     get_header();
     echo '<main class="sa-container sa-pricing"><p class="sa-ed-kicker">Supreme Autoparts · Nairobi</p><h1>Vehicle software & maintenance pricing</h1><p>ECU programming, vehicle coding, software updates, electronic diagnostics and garage maintenance. Send your year, make, model and the work you need for a vehicle-specific quote.</p><h2 id="automotive-software">Software & electronic diagnostics</h2><div class="sa-pricing-scroll"><table><thead><tr><th>Service</th><th>Price (USD)</th></tr></thead><tbody>';
     $software = [
-        ['ECU programming', 'From US$150'],
-        ['Vehicle coding', 'Vehicle-specific quote'],
-        ['Software updates', 'From US$250 for GM reprogramming'],
-        ['Electronic diagnostics', 'US$125–183'],
+        ['ECU programming', 'From US$150', 'ecu-programming'],
+        ['Vehicle coding', 'Vehicle-specific quote', 'vehicle-coding'],
+        ['Software updates', 'From US$250 for GM reprogramming', 'software-updates'],
+        ['Electronic diagnostics', 'US$125–183', 'diagnostics'],
     ];
     foreach ($software as $row) {
-        echo '<tr><th scope="row">' . esc_html($row[0]) . '</th><td>' . esc_html($row[1]) . '</td></tr>';
+        echo '<tr><th scope="row">' . '<a href="' . esc_url(sa_svc_url($row[2]) . '?region=ke') . '">' . esc_html($row[0]) . '</a></th><td>' . esc_html($row[1]) . '</td></tr>';
     }
     echo '</tbody></table></div><h2>Maintenance & mechanical services</h2><div class="sa-pricing-scroll"><table><thead><tr><th>Service</th><th>Price (USD)</th></tr></thead><tbody>';
     $prices = [
@@ -131,8 +131,8 @@ add_action('template_redirect', static function (): void {
         'battery' => 'US$456–493',
     ];
     foreach (sa_svc_catalog() as $slug => $svc) {
-        if ($slug === 'diagnostics') { continue; }
-        echo '<tr><th scope="row">' . esc_html($svc['name']) . '</th><td>' . esc_html($prices[$slug] ?? 'Vehicle-specific quote') . '</td></tr>';
+        if ($slug === 'diagnostics' || !empty($svc['assessment'])) { continue; }
+        echo '<tr><th scope="row">' . '<a href="' . esc_url(sa_svc_url($slug) . '?region=ke') . '">' . esc_html($svc['name']) . '</a></th><td>' . esc_html($prices[$slug] ?? 'Vehicle-specific quote') . '</td></tr>';
     }
     echo '</tbody></table></div><h2>Get your exact quote</h2><p>Tell us your vehicle and the problem or work required. We confirm the service scope and price before work starts.</p><a class="sa-software-link" href="' . esc_url(home_url('/contact/')) . '">Contact Supreme for a quote →</a><p><a href="' . esc_url(home_url('/services/')) . '">Browse services</a> · <a href="' . esc_url(home_url('/terms/')) . '">Terms</a> · <a href="' . esc_url(home_url('/privacy-policy/')) . '">Privacy</a> · <a href="' . esc_url(home_url('/refund-policy/')) . '">Refunds</a></p></main>';
     get_footer();
