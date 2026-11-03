@@ -292,13 +292,16 @@ bootstrap_wordpress() {
   wp_as plugin activate supreme-agent-intake || true
   wp_as plugin activate forminator || true
   wp_as plugin activate supreme-marketing || true
-  # Owner Nov3: permanently remove Matomo and its stored history. The native
-  # uninstaller owns table/options/cron/role/cache cleanup. Do not delete plugin
-  # files on failure, so the next deploy can retry rather than strand its data.
+  # Owner Nov3: permanently remove Matomo and its stored history. Explicitly
+  # invoke the vendor data uninstaller before deleting files; WP-CLI's generic
+  # uninstall path did not remove this installation's stored history.
   if [[ -f /var/www/html/wp-content/plugins/matomo/matomo.php ]]; then
-    wp_as plugin uninstall matomo --deactivate --exec="define('MATOMO_REMOVE_ALL_DATA', true);" || {
+    wp_as plugin deactivate matomo || true
+    if wp_as eval 'require_once WP_PLUGIN_DIR . "/matomo/shared.php"; (new \WpMatomo\Uninstaller())->uninstall(true);'; then
+      wp_as plugin delete matomo || true
+    else
       echo "[supreme] ERROR: Matomo full uninstall failed; files retained for retry" >&2
-    }
+    fi
   fi
   for matomo_option in sa_matomo_deep_version sa_matomo_deep_dims; do
     wp_as option delete "$matomo_option" || true
