@@ -204,6 +204,9 @@ add_action('template_redirect', static function (): void {
     $slug = sanitize_key((string) ($_GET['service'] ?? ''));
     ob_start(static function (string $html) use ($slug): string {
         $summary = sa_gc_journey_summary($slug);
+        if (!empty(sa_svc_catalog()[$slug]['assessment'])) {
+            $html = preg_replace('/<div class="sa-fw" data-sa-fw>.*?<div class="sa-svc-choices">/s', '<div class="sa-svc-choices">', $html);
+        }
         $html = str_replace('<ul class="sa-svc-trust">', $summary . '<ul class="sa-svc-trust">', $html);
         return $html;
     });
@@ -223,3 +226,14 @@ add_action('before_woocommerce_pay', static function (): void {
     echo sa_gc_journey_summary($slug);
     echo '<p class="sa-journey-fine">The order total below is the booking fee payable now, not the full service price. Your final work and remaining bill are quoted separately. <a href="' . esc_url(home_url('/booking-terms/')) . '">Booking terms</a></p>';
 }, 8);
+
+/* Software assessments are not a parts-fitting booking. Keep the parts waiver
+ * available for its original fitting workflow, never for an assessment. */
+function sa_gc_assessment_request_guard(): void {
+    $service = sanitize_key((string) ($_POST['service'] ?? ''));
+    if (!empty(sa_svc_catalog()[$service]['assessment'])) {
+        unset($_POST['fw_on'], $_POST['fw_order'], $_POST['fw_key'], $_POST['fw_contact'], $_POST['fw_item']);
+    }
+}
+add_action('admin_post_sa_book_service', 'sa_gc_assessment_request_guard', 1);
+add_action('admin_post_nopriv_sa_book_service', 'sa_gc_assessment_request_guard', 1);
