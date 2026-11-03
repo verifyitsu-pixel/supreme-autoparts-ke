@@ -29,7 +29,7 @@ return [
         'parts' => '',
     ],
     'oil-change' => [
-        'name' => 'Oil & Filter Change', 'icon' => 'oil', 'group' => 'Maintenance', 'duration' => 45,
+        'price_label' => 'US$160–188', 'name' => 'Oil & Filter Change', 'icon' => 'oil', 'group' => 'Maintenance', 'duration' => 45,
         'summary' => 'Fresh oil of the right grade and a new filter keep your engine protected, with a leak check and service-light reset.',
         'includes' => ['Correct oil grade for your engine', 'New oil filter', 'Drain plug and leak check', 'Fluid top-up check', 'Service light reset'],
         'kes' => null,
@@ -37,7 +37,7 @@ return [
         'parts' => 'oil filter',
     ],
     'brake-pads' => [
-        'name' => 'Brake Pad Replacement', 'icon' => 'brake', 'group' => 'Brakes', 'duration' => 90,
+        'price_label' => 'US$335–394', 'name' => 'Brake Pad Replacement', 'icon' => 'brake', 'group' => 'Brakes', 'duration' => 90,
         'summary' => 'Confident stopping again: new pads per axle, discs, calipers and fluid checked, then a road test.',
         'includes' => ['Pads fitted in pairs (per axle)', 'Disc and caliper inspection', 'Brake fluid check', 'Road test'],
         'kes' => null,
@@ -45,7 +45,7 @@ return [
         'parts' => 'pad',
     ],
     'wheel-alignment' => [
-        'name' => '3D Wheel Alignment', 'icon' => 'align', 'group' => 'Tyres & Wheels', 'duration' => 60,
+        'price_label' => 'US$186–273', 'name' => '3D Wheel Alignment', 'icon' => 'align', 'group' => 'Tyres & Wheels', 'duration' => 60,
         'summary' => 'Computerised alignment so the car drives straight and your tyres last longer.',
         'includes' => ['Computerised 3D measurement', 'Toe adjustment', 'Caster / camber where adjustable', 'Before/after printout'],
         'kes' => ['options' => [['label' => 'Toe', 'price' => 2500], ['label' => 'Caster & camber', 'price' => 4000], ['label' => 'Caster & camber with shims', 'price' => 6000]], 'src' => 'autoxpress-services'],
@@ -61,7 +61,7 @@ return [
         'parts' => 'wheel',
     ],
     'tyre-rotation' => [
-        'name' => 'Tyre Rotation', 'icon' => 'tyre', 'group' => 'Tyres & Wheels', 'duration' => 30,
+        'price_label' => 'US$49–72', 'name' => 'Tyre Rotation', 'icon' => 'tyre', 'group' => 'Tyres & Wheels', 'duration' => 30,
         'summary' => 'Even wear and longer tyre life, with a tread and pressure check on every wheel.',
         'includes' => ['Rotation in correct pattern', 'Tread depth check', 'Pressure set', 'Wheel nuts torqued to spec'],
         'kes' => null,
@@ -69,7 +69,7 @@ return [
         'parts' => 'tire',
     ],
     'ac-service' => [
-        'name' => 'AC Gas Refill / Recharge', 'icon' => 'ac', 'group' => 'Air Conditioning', 'duration' => 60,
+        'price_label' => 'US$285–369', 'name' => 'AC Gas Refill / Recharge', 'icon' => 'ac', 'group' => 'Air Conditioning', 'duration' => 60,
         'summary' => 'Cold air again: full recover, vacuum and recharge, plus a leak and outlet-temperature check.',
         'includes' => ['Refrigerant recovery', 'Vacuum + leak test', 'Recharge with gas and oil', 'Vent temperature check'],
         'kes' => ['options' => [['label' => 'Passenger car', 'price' => 5500], ['label' => 'SUV', 'price' => 7500], ['label' => 'SUV (dual vents)', 'price' => 10000]], 'src' => 'autoxpress-services'],
@@ -77,7 +77,7 @@ return [
         'parts' => 'compressor',
     ],
     'battery' => [
-        'name' => 'Battery Test & Replacement', 'icon' => 'battery', 'group' => 'Electrical', 'duration' => 30,
+        'price_label' => 'US$456–493', 'name' => 'Battery Test & Replacement', 'icon' => 'battery', 'group' => 'Electrical', 'duration' => 30,
         'summary' => 'No more slow starts: we test the battery and charging system and fit a correctly rated battery if needed.',
         'includes' => ['Battery and alternator test', 'Correctly rated replacement', 'Terminal clean', 'Old battery recycled'],
         'kes' => null,
@@ -85,7 +85,7 @@ return [
         'parts' => 'battery',
     ],
     'diagnostics' => [
-        'name' => 'Electronic Diagnostics', 'icon' => 'diag', 'group' => 'Diagnostics', 'duration' => 60,
+        'price_label' => 'US$125–183', 'name' => 'Electronic Diagnostics', 'icon' => 'diag', 'group' => 'Diagnostics', 'duration' => 60,
         'summary' => 'Know exactly what that warning light means: full system scan and a written repair recommendation.',
         'includes' => ['Full OBD / ECU scan', 'Fault codes + live data', 'Written findings', 'Repair estimate'],
         'kes' => null, 'usd' => null,
