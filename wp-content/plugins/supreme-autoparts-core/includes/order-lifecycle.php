@@ -168,6 +168,8 @@ add_action('woocommerce_thankyou', static function ($order_id): void {
     }
 }, 4);
 
+require_once __DIR__ . '/order-email-family.php';
+
 /* ---------- Email layout (shared by order + workshop emails) ---------- */
 
 /*
@@ -385,24 +387,24 @@ function sa_ol_email_content(WC_Order $o, string $stage, string $note = ''): arr
         }
     }
     $m = [
-        'processing' => ['We are preparing order #' . $n, 'Your order is being processed', '<p>We have your order and are getting it ready. We will email you again when it ships or is ready for pickup.</p>' . sa_ol_pickup_block($o) . sa_ol_items_html($o), 'View your order', $view],
+        'processing' => ['We are preparing order #' . $n, 'Your order is being processed', '<p>We have your order and are getting it ready. We will email you again when it ships or is ready for pickup.</p>' . sa_ol_pickup_block($o), 'View your order', $view],
         'on-hold' => ['Order #' . $n . ' is on hold', 'Your order is on hold', '<p>We have paused order #' . esc_html($n) . ' while we complete a quick check. You do not need to do anything unless we contact you.</p>' . ($noteh ? '<p><strong>Reason</strong></p>' . $noteh : '') . '<p>If you have details that could help, such as photos or documents, you can send them with the button below. No login needed.</p>', 'Send details', sa_ol_info_url($o)],
         'awaiting-info' => ['Information needed for order #' . $n, 'We need information to continue your order', '<p>We cannot continue with order #' . esc_html($n) . ' until we receive the information below.</p><p><strong>What we need</strong></p>' . ($noteh ?: ($hr_items !== '' ? '' : '<p style="background:#f7f7f7;border-left:3px solid #F5A623;padding:10px 12px;margin:12px 0">Details about your order. Reply with the button below and we will confirm what is missing.</p>')) . '<p><strong>Why we need it</strong><br>' . ($hr_why !== '' ? esc_html($hr_why) : 'We use it to confirm the order is correct, for example the right part for your vehicle or your delivery or payment details, so nothing is sent or charged by mistake.') . '</p>' . $hr_items . '<p><strong>How to send it</strong><br>Use the button below to reply and attach photos or documents. No login needed. Your order stays on hold until we hear from you.</p>', 'Send the information', sa_ol_info_url($o)],
-        'staged' => ['Order #' . $n . ' is packed and ready to ship', 'Your order is staged to ship', '<p>Your order is packed and waiting for courier pickup. We will email you the tracking details as soon as it is on its way.</p>' . $noteh, 'Track order', $view],
+        'staged' => ['Order #' . $n . ' is packed and ready to ship', 'Your order is staged to ship', '<p>Your order is packed and waiting for courier pickup. We will email you the tracking details as soon as it is on its way.</p>' . $trkh . $noteh, 'Track order', $view],
         'shipped' => ['Order #' . $n . ' has shipped', 'Your order is on its way', '<p>Your order has been handed to the courier.</p>' . sa_ol_delivery_block($o) . $noteh, 'Track order', $view],
         'out-for-delivery' => ['Order #' . $n . ' is out for delivery', 'Out for delivery today', '<p>Your order is out for delivery today. Please keep your phone close so the rider can reach you.</p>' . sa_ol_delivery_block($o) . $noteh, 'Track order', $view],
         'delivered' => ['Order #' . $n . ' was delivered', 'Your order was delivered', '<p>Your order has been delivered.</p>' . $noteh, 'View your order', $view],
         'ready-pickup' => ['Order #' . $n . ' is ready for pickup', 'Ready for pickup', '<p>Your order is ready to collect at our store:</p><p><strong>' . esc_html(sa_ol_pickup_store($o)['one_line']) . '</strong></p>' . (sa_ol_pickup_code($o) !== '' ? sa_ol_pickup_block($o) : '<p>Please bring your order number (#' . esc_html($n) . ') and the phone number used at checkout.</p>') . apply_filters('sa_ol_ready_pickup_extra', '', $o) . $noteh, 'Get directions', 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode(sa_ol_pickup_store($o)['one_line'])],
-        'completed' => ['Order #' . $n . ' is complete', 'Thank you, your order is complete', '<p>Your order is complete. Thank you for shopping with Supreme Autoparts.</p>' . sa_ol_items_html($o) . $noteh, 'View your order', $view],
-        'cancelled' => ['Order #' . $n . ' was cancelled', 'Your order was cancelled', '<p>Your order #' . esc_html($n) . ' has been cancelled.</p>' . $noteh . '<p>If you paid, any refund goes back to the original payment method.</p>', 'Shop again', home_url('/shop/')],
-        'refunded' => ['Refund for order #' . $n, 'Your refund is on its way', '<p>We have refunded ' . esc_html(html_entity_decode(wp_strip_all_tags(wc_price((float) $o->get_total_refunded(), ['currency' => $o->get_currency()])), ENT_QUOTES | ENT_HTML5, 'UTF-8')) . ' for order #' . esc_html($n) . '. Depending on your bank or card it can take a few working days to show.</p>' . $noteh, 'View your order', $view],
-        'failed' => ['Payment for order #' . $n . ' did not go through', 'Your payment failed', '<p>We could not take payment for order #' . esc_html($n) . '. Nothing was charged. You can try again with the button below.</p>' . sa_ol_items_html($o), 'Pay now', $o->get_checkout_payment_url()],
+        'completed' => ['Order #' . $n . ' is complete', 'Thank you, your order is complete', '<p>Your order is complete. Thank you for shopping with Supreme Autoparts.</p>' . $noteh, 'View your order', $view],
+        'cancelled' => ['Order #' . $n . ' was cancelled', 'Your order was cancelled', '<p>Your order #' . esc_html($n) . ' has been cancelled.</p>' . $noteh . '<p>If you paid, contact us to confirm the refund status. A cancellation update is not confirmation that a refund has been processed.</p>', 'Shop again', home_url('/shop/')],
+        'refunded' => ['Refund for order #' . $n, 'Refund update for your order', '<p>Our order records show a refund of ' . esc_html(html_entity_decode(wp_strip_all_tags(wc_price((float) $o->get_total_refunded(), ['currency' => $o->get_currency()])), ENT_QUOTES | ENT_HTML5, 'UTF-8')) . ' for order #' . esc_html($n) . '. This update is not confirmation that your bank has credited the amount. Contact us if you need help checking its status.</p>' . $noteh, 'View your order', $view],
+        'failed' => ['Payment for order #' . $n . ' did not go through', 'Your payment failed', '<p>We could not take payment for order #' . esc_html($n) . '. We do not have a successful payment confirmation. If your bank shows a debit, contact us before trying again.</p>', 'Pay now', $o->get_checkout_payment_url()],
     ];
     if (!isset($m[$stage])) {
         return [];
     }
     [$subject, $heading, $body, $cta, $url] = $m[$stage];
-    return ['subject' => $subject, 'html' => sa_email_add_footer(sa_mail_layout($heading, $hi . $body . '<p style="color:#6b6b6b;font-size:13px">Order #' . esc_html($n) . '</p>', $cta, $url, $subject), (string) ($o->get_billing_country() ?: $o->get_shipping_country()))];
+    return ['subject' => $subject, 'html' => sa_ol_family_layout($o, $heading, $hi . $body, $cta, $url, $subject, $stage)];
 }
 
 function sa_ol_send(WC_Order $o, string $stage, string $note = ''): bool
