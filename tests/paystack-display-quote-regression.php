@@ -8,6 +8,7 @@ function add_action($tag,$fn,$p=10,$a=1){add_filter($tag,$fn,$p,$a);}
 function apply_filters($tag,$v,...$args){global $hooks;foreach($hooks[$tag]??[] as $fn)$v=$fn($v,...$args);return $v;}
 function do_action($tag,...$args){global $hooks;foreach($hooks[$tag]??[] as $fn)$fn(...$args);}
 function __($s,$d=''){return $s;}
+function wp_salt($s){return 'test-only-signing-key';}
 function esc_html($s){return $s;}
 function esc_url($s){return $s;}
 function esc_attr($s){return $s;}
@@ -18,14 +19,14 @@ function current_user_can($c){return true;}
 class SA_FX_Rates { public static $rates=['KES'=>129.50];
     public static function rate_for($c){return self::$rates[$c]??null;}
     public static function decimals_for($c){return 2;} }
-class Session { public $d=[]; function set($k,$v){$this->d[$k]=$v;} function get($k){return $this->d[$k]??null;} }
+class Session { public $d=[]; function get_customer_id(){return 'test-session';} function set($k,$v){$this->d[$k]=$v;} function get($k){return $this->d[$k]??null;} }
 class Cart { public $total=100.0; function get_total($m=''){return $this->total;} }
 class WCStub { public $session,$cart; function __construct(){ $this->session=new Session; $this->cart=new Cart; } }
 $GLOBALS['wc']=new WCStub;
 function WC(){return $GLOBALS['wc'];}
-class MOrder { public $currency,$total,$method,$meta=[],$saved=0;
-    function __construct($currency,$total,$method='paystack'){$this->currency=$currency;$this->total=$total;$this->method=$method;}
-    function get_currency(){return $this->currency;} function get_total(){return $this->total;}
+class MOrder { public $currency,$total,$method,$meta=[],$saved=0,$id; static $seq=0;
+    function __construct($currency,$total,$method='paystack'){$this->id=++self::$seq;$this->currency=$currency;$this->total=$total;$this->method=$method;}
+    function get_id(){return $this->id;} function get_currency(){return $this->currency;} function get_total(){return $this->total;}
     function get_payment_method(){return $this->method;}
     function get_meta($k){return $this->meta[$k]??'';} function update_meta_data($k,$v){$this->meta[$k]=$v;}
     function save(){$this->saved++;} }
@@ -38,6 +39,9 @@ function get_query_var($k){return $GLOBALS['qv'][$k]??0;}
 require __DIR__.'/../wp-content/plugins/woo-paystack/includes/class-sa-paystack-charge-quote.php';
 require __DIR__.'/../wp-content/mu-plugins/sa-paystack.php';
 
+
+function setq($q){ WC()->session->set('sa_paystack_quote',$q); $_POST['sa_paystack_quote_token']=is_array($q) ? SA_Paystack_Charge_Quote::token($q,SA_Paystack_Charge_Quote::checkout_scope()) : ''; }
+
 // Meta key contract between mu-plugin and gateway helper.
 ck(SA_PAYSTACK_DISPLAY_META_KEY===SA_Paystack_Charge_Quote::DISPLAY_META_KEY);
 
@@ -48,7 +52,7 @@ $sq=WC()->session->get('sa_paystack_quote'); ck(is_array($sq) && $sq['kes']===12
 
 // 2. No rate: honest unavailability, no session quote.
 SA_FX_Rates::$rates=[];
-WC()->session->set('sa_paystack_quote',null);
+setq(null);
 $desc=apply_filters('woocommerce_gateway_description','orig','paystack');
 ck(strpos($desc,'temporarily unavailable')!==false);
 SA_FX_Rates::$rates=['KES'=>129.50];
@@ -57,7 +61,7 @@ SA_FX_Rates::$rates=['KES'=>129.50];
 ck(apply_filters('woocommerce_gateway_description','orig','pesapal')==='orig');
 
 // 4. Order creation locks the visible quote; order stays USD with untouched totals.
-WC()->session->set('sa_paystack_quote',['usd'=>100.0,'rate'=>129.5,'kes'=>12950.0,'at'=>time()]);
+setq(['usd'=>100.0,'rate'=>129.5,'kes'=>12950.0,'at'=>time()]);
 $o=new MOrder('USD',100.0);
 do_action('woocommerce_checkout_create_order',$o,['payment_method'=>'paystack']);
 $d=$o->meta[SA_PAYSTACK_DISPLAY_META_KEY]??null;
@@ -73,12 +77,12 @@ ck(!isset($o->meta[SA_PAYSTACK_DISPLAY_META_KEY]));
 // 6. Over-2500 orders and stale/mismatched session quotes fail closed.
 foreach([['USD',2500.01],] as $c){ $o=new MOrder($c[0],$c[1]);
     try{ do_action('woocommerce_checkout_create_order',$o,['payment_method'=>'paystack']); ck(false,'2500 cap must throw'); }catch(Exception $e){} }
-WC()->cart->total=100.0; WC()->session->set('sa_paystack_quote',['usd'=>99.0,'rate'=>129.5,'kes'=>12820.5,'at'=>time()]);
+WC()->cart->total=100.0; setq(['usd'=>99.0,'rate'=>129.5,'kes'=>12820.5,'at'=>time()]);
 $o=new MOrder('USD',100.0);
 try{ do_action('woocommerce_checkout_create_order',$o,['payment_method'=>'paystack']); ck(false,'mismatched quote must throw'); }catch(Exception $e){}
 
 // 7. The locked display quote drives the gateway charge figure exactly.
-$o=new MOrder('USD',100.0); WC()->session->set('sa_paystack_quote',['usd'=>100.0,'rate'=>129.5,'kes'=>12950.0,'at'=>time()]);
+$o=new MOrder('USD',100.0); setq(['usd'=>100.0,'rate'=>129.5,'kes'=>12950.0,'at'=>time()]);
 do_action('woocommerce_checkout_create_order',$o,['payment_method'=>'paystack']);
 SA_FX_Rates::$rates=['KES'=>140.0]; // rate moved after display
 $q=SA_Paystack_Charge_Quote::lock_for_order($o,'90001_1');
@@ -132,7 +136,7 @@ $out=apply_filters('woocommerce_available_payment_gateways',$g2); ck(isset($out[
 $GLOBALS['qv']=['order-pay'=>12];
 ob_start(); do_action('woocommerce_pay_order_before_payment'); $out=ob_get_clean();
 ck($out==='');
-$desc=apply_filters('woocommerce_gateway_description','orig','paystack'); ck($desc==='orig');
+$desc=apply_filters('woocommerce_gateway_description','orig','paystack'); ck(strpos($desc,'no currency conversion applies')!==false);
 ck(!isset($GLOBALS['orders'][12]->meta[SA_PAYSTACK_DISPLAY_META_KEY]));
 
 // 12. EUR order on order-pay: honest unavailability, no quote, no USD wording.
@@ -152,6 +156,7 @@ ob_start(); do_action('woocommerce_pay_order_before_payment'); $out2=ob_get_clea
 ck($out2===$out1); // same figure, not the new rate
 $desc=apply_filters('woocommerce_gateway_description','orig','paystack');
 ck(strpos($desc,'KES 12,950.00')!==false && strpos($desc,'129.5')!==false); // description reuses the locked quote
+$_POST['sa_paystack_quote_token']=$GLOBALS['sa_paystack_rendered_token'];
 $q=SA_Paystack_Charge_Quote::lock_for_order($GLOBALS['orders'][14],'90014_1');
 ck($q!==null && $q['charge_amount']===12950.0 && $q['rate']===129.5); // charge equals the displayed figure
 SA_FX_Rates::$rates=['KES'=>129.50];
@@ -159,7 +164,9 @@ SA_FX_Rates::$rates=['KES'=>129.50];
 // 14. Order edited after display: the page re-quotes and re-displays the new figure before any charge.
 $GLOBALS['orders'][14]->total=120.0;
 ob_start(); do_action('woocommerce_pay_order_before_payment'); $out3=ob_get_clean();
-ck(strpos($out3,'KES 15,540.00')!==false); // 120 x 129.5 shown fresh
+ck(strpos($out3,'KES 15,540.00')!==false);
+apply_filters('woocommerce_gateway_description','orig','paystack'); // 120 x 129.5 shown fresh
+$_POST['sa_paystack_quote_token']=$GLOBALS['sa_paystack_rendered_token'];
 $q=SA_Paystack_Charge_Quote::lock_for_order($GLOBALS['orders'][14],'90014_2');
 ck($q!==null && $q['charge_amount']===15540.0); // only the re-displayed figure can be charged
 

@@ -30,6 +30,40 @@ final class SA_Paystack_Charge_Quote {
 		return preg_match( '/^[A-Z]{3}$/', $currency ) ? $currency : 'KES';
 	}
 
+	/** Signed customer-visible quote, bound to its checkout session or existing order. */
+	public static function token( array $quote, string $scope ): string {
+		$body = base64_encode( json_encode( array( 'quote' => $quote, 'scope' => $scope ) ) );
+		return $body . '.' . hash_hmac( 'sha256', $body, wp_salt( 'auth' ) );
+	}
+
+	public static function read_token( string $token, string $scope ): ?array {
+		$parts = explode( '.', $token );
+		if ( count( $parts ) !== 2 || ! hash_equals( hash_hmac( 'sha256', $parts[0], wp_salt( 'auth' ) ), $parts[1] ) ) return null;
+		$data = json_decode( (string) base64_decode( $parts[0], true ), true );
+		if ( ! is_array( $data ) || ( $data['scope'] ?? '' ) !== $scope || ! is_array( $data['quote'] ?? null ) ) return null;
+		$q = $data['quote'];
+		if ( (int) ( $q['at'] ?? 0 ) < time() - self::DISPLAY_TTL || (int) ( $q['at'] ?? 0 ) > time() + 5 ) return null;
+		return $q;
+	}
+
+	public static function checkout_scope(): string {
+		return 'checkout:' . ( function_exists( 'WC' ) && WC()->session ? (string) WC()->session->get_customer_id() : '' );
+	}
+
+	public static function submitted_quote( $order, bool $creating = false ): ?array {
+		$token = $_POST['sa_paystack_quote_token'] ?? '';
+		if ( ! is_string( $token ) ) return null;
+		$scope = 'order:' . $order->get_id();
+		$q = self::read_token( $token, $scope );
+		if ( ! $q && ( $creating || hash_equals( (string) $order->get_meta( '_sa_paystack_checkout_token_hash' ), hash( 'sha256', $token ) ) ) ) $q = self::read_token( $token, self::checkout_scope() );
+		if ( ! $q || strtoupper( (string) $order->get_currency() ) !== 'USD'
+			|| abs( (float) ( $q['usd'] ?? -1 ) - (float) $order->get_total() ) >= 0.005
+			|| ! is_numeric( $q['rate'] ?? null ) || ! is_finite( (float) $q['rate'] ) || (float) $q['rate'] <= 0
+			|| ! is_numeric( $q['kes'] ?? null ) || ! is_finite( (float) $q['kes'] ) || (float) $q['kes'] <= 0
+			|| self::minor( round( (float) $q['usd'] * (float) $q['rate'], 2 ) ) !== self::minor( (float) $q['kes'] ) ) return null;
+		return $q;
+	}
+
 	public static function decimals_for( string $currency ): int {
 		if ( class_exists( 'SA_FX_Rates' ) ) {
 			return SA_FX_Rates::decimals_for( $currency );
@@ -154,15 +188,10 @@ final class SA_Paystack_Charge_Quote {
 		} else {
 			// Converted charge: only ever initialize the exact figure already
 			// shown to the customer. No fresh matching display quote, no charge.
-			$display = self::display_quote_for_order( $order );
-			if ( ! is_array( $display ) ) {
-				return null;
-			}
-			$quote = self::build_quote_at_rate( $order, $txn_ref, (float) $display['rate'] );
-			if ( is_array( $quote )
-				&& self::minor( (float) $quote['charge_amount'] ) !== self::minor( (float) $display['charge_amount'] ) ) {
-				return null;
-			}
+			$submitted = self::submitted_quote( $order );
+			if ( ! $submitted ) return null;
+			$quote = self::build_quote_at_rate( $order, $txn_ref, (float) $submitted['rate'] );
+			if ( ! $quote || self::minor( (float) $quote['charge_amount'] ) !== self::minor( (float) $submitted['kes'] ) ) return null;
 		}
 		if ( ! is_array( $quote ) ) {
 			return null;

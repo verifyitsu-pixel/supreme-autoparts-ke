@@ -167,10 +167,8 @@ add_action('woocommerce_checkout_create_order', static function ($order): void {
     sa_geo_stamp_order_currency_meta($order);
 }, 5);
 
-// Also stamp when payment starts (covers admin / open-pay / API-created orders).
-add_action('woocommerce_before_pay_action', static function ($order): void {
-    sa_geo_stamp_order_currency_meta($order);
-}, 5);
+// Existing orders keep their recorded currency and totals at payment start.
+// Checkout creation above remains the only currency-stamping entry point.
 
 
 /**

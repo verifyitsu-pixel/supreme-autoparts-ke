@@ -4,12 +4,13 @@ define('ABSPATH',1);
 $AC=0; function ck($c,$m=''){ $GLOBALS['AC']++; if(!$c) throw new Exception('CHECK FAILED: '.$m); }
 function apply_filters($tag,$value){return $value;}
 function __($s,$d=''){return $s;}
+function wp_salt($s){return 'test-only-signing-key';}
 class SA_FX_Rates { public static $rates=['KES'=>129.50];
     public static function rate_for($c){return self::$rates[$c]??null;}
     public static function decimals_for($c){return 2;} }
-class QOrder { public $currency,$total,$meta=[];
-    function __construct($currency,$total){$this->currency=$currency;$this->total=$total;}
-    function get_currency(){return $this->currency;}
+class QOrder { public $currency,$total,$meta=[],$id; static $seq=0;
+    function __construct($currency,$total){$this->id=++self::$seq;$this->currency=$currency;$this->total=$total;}
+    function get_id(){return $this->id;} function get_currency(){return $this->currency;}
     function get_total(){return $this->total;}
     function get_meta($k){return $this->meta[$k]??'';}
     function update_meta_data($k,$v){$this->meta[$k]=$v;} }
@@ -18,7 +19,8 @@ use SA_Paystack_Charge_Quote as Q;
 // Lock the customer-visible display quote a page render would have shown first.
 function disp($o,$rate=129.50){ $charge=round($o->get_total()*$rate,2);
     $o->update_meta_data(Q::DISPLAY_META_KEY,['order_currency'=>$o->get_currency(),'order_total'=>(float)$o->get_total(),
-    'charge_currency'=>'KES','charge_amount'=>$charge,'rate'=>$rate,'quoted_at'=>time()]); }
+    'charge_currency'=>'KES','charge_amount'=>$charge,'rate'=>$rate,'quoted_at'=>time()]);
+    $_POST['sa_paystack_quote_token']=Q::token(['usd'=>$o->total,'rate'=>$rate,'kes'=>$charge,'at'=>time()], 'order:'.$o->id); }
 
 // 1. KES order: charge equals order figures, rate 1, no conversion quote.
 $o=new QOrder('KES',110.48); $q=Q::lock_for_order($o,'76318_1');
@@ -120,6 +122,7 @@ ck($v->get_paystack_transaction('76318_1')===false);
 // 10. Customer-visible display quote is reused at init even after the rate table moves (drift fix).
 $o=new QOrder('USD',100.00);
 $o->update_meta_data(Q::DISPLAY_META_KEY,['order_currency'=>'USD','order_total'=>100.00,'charge_currency'=>'KES','charge_amount'=>12950.00,'rate'=>129.50,'quoted_at'=>time()]);
+$d=$o->get_meta(Q::DISPLAY_META_KEY); $_POST['sa_paystack_quote_token']=Q::token(['usd'=>$d['order_total'],'rate'=>$d['rate'],'kes'=>$d['charge_amount'],'at'=>$d['quoted_at']], 'order:'.$o->id);
 SA_FX_Rates::$rates=['KES'=>200.00];
 $q=Q::lock_for_order($o,'80010_1');
 ck($q!==null && $q['rate']===129.50 && $q['charge_amount']===12950.00);
@@ -128,23 +131,27 @@ ck(Q::matches_transaction($o,'80010_1',1295000,'KES')===true);
 // 11. Fresh display quote whose stored charge disagrees with its own rate: fail closed.
 $o=new QOrder('USD',100.00);
 $o->update_meta_data(Q::DISPLAY_META_KEY,['order_currency'=>'USD','order_total'=>100.00,'charge_currency'=>'KES','charge_amount'=>12900.00,'rate'=>129.50,'quoted_at'=>time()]);
+$d=$o->get_meta(Q::DISPLAY_META_KEY); $_POST['sa_paystack_quote_token']=Q::token(['usd'=>$d['order_total'],'rate'=>$d['rate'],'kes'=>$d['charge_amount'],'at'=>$d['quoted_at']], 'order:'.$o->id);
 ck(Q::lock_for_order($o,'80011_1')===null);
 
 // 12. Stale display quote with a moved rate: stop and re-display instead of silently charging the new figure.
 $o=new QOrder('USD',100.00);
 $o->update_meta_data(Q::DISPLAY_META_KEY,['order_currency'=>'USD','order_total'=>100.00,'charge_currency'=>'KES','charge_amount'=>12950.00,'rate'=>129.50,'quoted_at'=>time()-3600]);
+$d=$o->get_meta(Q::DISPLAY_META_KEY); $_POST['sa_paystack_quote_token']=Q::token(['usd'=>$d['order_total'],'rate'=>$d['rate'],'kes'=>$d['charge_amount'],'at'=>$d['quoted_at']], 'order:'.$o->id);
 ck(Q::lock_for_order($o,'80012_1')===null);
 
 // 13. Stale display quote: fail closed even when the current rate would give the same figure.
 SA_FX_Rates::$rates=['KES'=>129.50];
 $o=new QOrder('USD',100.00);
 $o->update_meta_data(Q::DISPLAY_META_KEY,['order_currency'=>'USD','order_total'=>100.00,'charge_currency'=>'KES','charge_amount'=>12950.00,'rate'=>129.50,'quoted_at'=>time()-3600]);
+$d=$o->get_meta(Q::DISPLAY_META_KEY); $_POST['sa_paystack_quote_token']=Q::token(['usd'=>$d['order_total'],'rate'=>$d['rate'],'kes'=>$d['charge_amount'],'at'=>$d['quoted_at']], 'order:'.$o->id);
 ck(Q::lock_for_order($o,'80013_1')===null);
 
 // 14. Display quote for an older total (order edited after display): fail closed until the customer sees a new quote.
 SA_FX_Rates::$rates=['KES'=>200.00];
 $o=new QOrder('USD',120.00);
 $o->update_meta_data(Q::DISPLAY_META_KEY,['order_currency'=>'USD','order_total'=>100.00,'charge_currency'=>'KES','charge_amount'=>12950.00,'rate'=>129.50,'quoted_at'=>time()]);
+$d=$o->get_meta(Q::DISPLAY_META_KEY); $_POST['sa_paystack_quote_token']=Q::token(['usd'=>$d['order_total'],'rate'=>$d['rate'],'kes'=>$d['charge_amount'],'at'=>$d['quoted_at']], 'order:'.$o->id);
 ck(Q::lock_for_order($o,'80014_1')===null);
 ck(Q::matches_transaction($o,'80014_1',2400000,'KES')===false);   // the never-displayed figure must not verify
 SA_FX_Rates::$rates=['KES'=>129.50];
@@ -161,4 +168,25 @@ ck(Q::build_quote_at_rate($o,'80016_1',129.50)===null);
 ck(Q::lock_for_order($o,'80016_1')===null);
 ck(Q::matches_transaction($o,'80016_1',1295000,'KES')===false);
 
+
+// Signed quote identity survives another tab's meta write without charging its figure.
+$o=new QOrder('USD',100.0); disp($o,129.5); $tabA=$_POST['sa_paystack_quote_token'];
+disp($o,200.0); $tabB=$_POST['sa_paystack_quote_token'];
+$_POST['sa_paystack_quote_token']=$tabA;
+$q=Q::lock_for_order($o,'tabA'); ck($q && $q['charge_amount']===12950.0,'tab A charges its own shown figure');
+$_POST['sa_paystack_quote_token']=$tabB;
+$q=Q::lock_for_order($o,'tabB'); ck($q && $q['charge_amount']===20000.0,'tab B charges its own shown figure');
+// Edited then re-displayed by another tab must not authorize old tab's commit.
+$o->total=120.0; disp($o,200.0); $newToken=$_POST['sa_paystack_quote_token'];
+$_POST['sa_paystack_quote_token']=$tabA; ck(Q::lock_for_order($o,'oldEdited')===null);
+$_POST['sa_paystack_quote_token']=$newToken; ck(Q::lock_for_order($o,'newEdited')['charge_amount']===24000.0);
+// Missing, modified, stale, future-dated, and other-order tokens all fail closed.
+foreach(['',substr($newToken,0,-1).'!',Q::token(['usd'=>120,'rate'=>200,'kes'=>24000,'at'=>time()-3600],'order:'.$o->id),Q::token(['usd'=>120,'rate'=>200,'kes'=>24000,'at'=>time()+60],'order:'.$o->id)] as $bad){
+ $_POST['sa_paystack_quote_token']=$bad; ck(Q::lock_for_order($o,'bad')===null);
+}
+$other=new QOrder('USD',120.0); $_POST['sa_paystack_quote_token']=$newToken; ck(Q::lock_for_order($other,'other')===null);
+// Checkout token only transfers to the order created with that exact token.
+$t=Q::token(['usd'=>120,'rate'=>200,'kes'=>24000,'at'=>time()],Q::checkout_scope());
+$_POST['sa_paystack_quote_token']=$t; ck(Q::submitted_quote($o,true)!==null); ck(Q::lock_for_order($o,'noBound')===null);
+$o->update_meta_data('_sa_paystack_checkout_token_hash',hash('sha256',$t)); ck(Q::lock_for_order($o,'bound')['charge_amount']===24000.0);
 echo $AC." USD->KES locked-quote checks PASS (mock orders only, no network)\n";

@@ -52,6 +52,9 @@ function sa_paystack_order_total_usd($order): ?float {
  */
 function sa_paystack_order_pay_quote($order): ?array {
     if (!$order || strtoupper((string)$order->get_currency()) !== 'USD') return null;
+    static $request_quotes = [];
+    $request_key = $order->get_id().':'.$order->get_currency().':'.$order->get_total();
+    if (isset($request_quotes[$request_key])) return $request_quotes[$request_key];
     $locked = $order->get_meta(SA_PAYSTACK_DISPLAY_META_KEY);
     if (is_array($locked)
         && strtoupper((string)($locked['order_currency'] ?? '')) === 'USD'
@@ -59,13 +62,14 @@ function sa_paystack_order_pay_quote($order): ?array {
         && (int)($locked['quoted_at'] ?? 0) >= time() - 1800
         && (float)($locked['rate'] ?? 0) > 0
         && (float)($locked['charge_amount'] ?? 0) > 0) {
-        return ['usd'=>(float)$locked['order_total'], 'rate'=>(float)$locked['rate'], 'kes'=>(float)$locked['charge_amount'], 'at'=>(int)$locked['quoted_at']];
+        return $request_quotes[$request_key] = ['usd'=>(float)$locked['order_total'], 'rate'=>(float)$locked['rate'], 'kes'=>(float)$locked['charge_amount'], 'at'=>(int)$locked['quoted_at']];
     }
     $quote = sa_paystack_display_quote((float)$order->get_total());
     if ($quote) {
         sa_paystack_lock_display_quote($order, $quote);
         $order->save();
     }
+    if ($quote) $request_quotes[$request_key] = $quote;
     return $quote;
 }
 
@@ -89,6 +93,7 @@ add_filter('option_woocommerce_paystack_settings', static function ($s) {
 add_filter('woocommerce_available_payment_gateways', static function ($gateways) {
     if (!is_array($gateways) || !isset($gateways['paystack'])) return $gateways;
     $allowed = sa_paystack_rate() !== null;
+    if (!in_array(strtoupper((string)get_woocommerce_currency()), ['USD','KES'], true) && !(function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('order-pay'))) $allowed = false;
     if (!empty($gateways['paystack']->testmode) && !current_user_can('manage_woocommerce')) $allowed = false;
     // Preserve the standing user rule: orders above USD 2500 go to Pesapal only.
     if (function_exists('WC') && WC()->cart && (float)WC()->cart->get_total('edit') > 2500) $allowed = false;
@@ -118,7 +123,7 @@ add_filter('woocommerce_gateway_description', static function ($description, $id
         ? wc_get_order(absint(get_query_var('order-pay'))) : null;
     $currency = $order ? strtoupper((string)$order->get_currency()) : strtoupper((string)get_woocommerce_currency());
     // KES orders charge their own figures: no conversion, no USD wording.
-    if ($currency === 'KES') return $description;
+    if ($currency === 'KES') return 'Pay securely by card, M-Pesa or Airtel. This order and its payment are in Kenyan shillings; no currency conversion applies.';
     // Only USD converts to KES; anything else fails closed rather than misquoting.
     if ($currency !== 'USD') return 'This payment option is unavailable for this order\'s currency.';
     if ($order) {
@@ -129,21 +134,22 @@ add_filter('woocommerce_gateway_description', static function ($description, $id
         if ($quote && WC()->session) WC()->session->set('sa_paystack_quote', $quote);
     }
     if (!$quote) return 'This payment option is temporarily unavailable because a KES exchange rate could not be loaded.';
+    $scope = $order ? 'order:'.$order->get_id() : SA_Paystack_Charge_Quote::checkout_scope();
+    $token = SA_Paystack_Charge_Quote::token($quote, $scope);
+    $GLOBALS['sa_paystack_rendered_token'] = $token;
     return 'You will be charged <strong>'.wc_price($quote['kes'], ['currency'=>'KES','decimals'=>2]).'</strong> at 1 USD = KES '.esc_html((string)$quote['rate']).'. Your order stays in US dollars; only the payment itself is charged in Kenyan shillings.';
 }, 100, 2);
 
 // Lock the customer-visible checkout quote onto the order without rewriting its currency or totals.
 add_action('woocommerce_checkout_create_order', static function ($order,$data) {
     if (($data['payment_method'] ?? '') !== 'paystack') return;
-    if ((float)$order->get_total() > 2500) throw new Exception('Paystack is unavailable for this order. Please choose another payment method.');
+    $total_usd = sa_paystack_order_total_usd($order);
+    if ($total_usd === null || $total_usd > 2500) throw new Exception('Paystack is unavailable for this order. Please choose another payment method.');
     if ($order->get_currency() === 'KES') return; // Same-currency orders charge their own figures; no quote needed.
-    $quote = function_exists('WC') && WC()->session ? WC()->session->get('sa_paystack_quote') : null;
-    $valid = is_array($quote)
-        && ($quote['at'] ?? 0) > time()-1800
-        && abs((float)($quote['usd'] ?? -1)-(float)$order->get_total()) < 0.005
-        && (float)($quote['rate'] ?? 0) > 0
-        && (float)($quote['kes'] ?? 0) > 0;
-    if (!$valid) throw new Exception('Paystack could not confirm the exact KES charge for this order. Please review the payment options and try again.');
+    if (strtoupper((string)$order->get_currency()) !== 'USD') throw new Exception('Paystack does not support this order currency.');
+    $quote = SA_Paystack_Charge_Quote::submitted_quote($order, true);
+    if (!$quote) throw new Exception('Please review the exact Paystack charge and try again.');
+    $order->update_meta_data('_sa_paystack_checkout_token_hash', hash('sha256', $_POST['sa_paystack_quote_token']));
     sa_paystack_lock_display_quote($order, $quote);
 }, 100, 2);
 
@@ -189,3 +195,12 @@ add_action('woocommerce_pay_order_before_payment', static function (): void {
     }
     echo '<p class="woocommerce-info">This order is in US dollars. You will be charged <strong>'.wc_price($quote['kes'], ['currency'=>'KES','decimals'=>2]).'</strong> at 1 USD = KES '.esc_html((string)$quote['rate']).'.</p>';
 });
+
+// Woo sanitizes gateway descriptions and removes inputs. Render the signed quote
+// inside the actual form immediately before its submit button instead.
+function sa_paystack_render_quote_token(): void {
+    $token = $GLOBALS['sa_paystack_rendered_token'] ?? '';
+    if ($token) echo '<input type="hidden" name="sa_paystack_quote_token" value="'.esc_attr($token).'">';
+}
+add_action('woocommerce_review_order_before_submit', 'sa_paystack_render_quote_token');
+add_action('woocommerce_pay_order_before_submit', 'sa_paystack_render_quote_token');
