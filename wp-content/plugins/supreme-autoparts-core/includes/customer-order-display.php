@@ -318,6 +318,24 @@ add_action('admin_post_sa_preview_order_email', static function (): void {
     // Hard stop: nothing may be mailed from this request.
     add_filter('pre_wp_mail', static fn() => false, 9999);
 
+    // Staff-only no-send lifecycle preview uses the same live content builder and transport branding.
+    $stage = sanitize_key((string)($_GET['sa_stage'] ?? ''));
+    if ($stage !== '') {
+        if (!in_array($stage, ['processing','on-hold','awaiting-info','staged','shipped','out-for-delivery','delivered','ready-pickup','completed','cancelled','refunded','failed'], true)) {
+            wp_die(esc_html__('Unknown email stage.', 'supreme-autoparts-core'), 400);
+        }
+        // The live content builder can create a missing pickup code. Previews never do.
+        if (sa_ol_is_pickup($order) && !$order->get_meta('_sa_pickup_code')) {
+            wp_die(esc_html__('Preview unavailable until this pickup order has its existing pickup code.', 'supreme-autoparts-core'), 400);
+        }
+        $content = sa_ol_email_content($order, $stage);
+        $html = WC()->mailer()->style_inline($content['html']);
+        if (class_exists('SA_Brevo_Mailer')) { $html = SA_Brevo_Mailer::brand_html(SA_Brevo_Mailer::brand_html($html)); }
+        nocache_headers();
+        header('Content-Type: text/html; charset=utf-8');
+        echo '<!-- preview only: simulated lifecycle stage, not sent; order state unchanged -->' . $html;
+        exit;
+    }
     $mailer = WC()->mailer();
     $emails = $mailer->get_emails();
     $key = $order->has_status('completed') ? 'WC_Email_Customer_Completed_Order' : 'WC_Email_Customer_Processing_Order';
