@@ -741,7 +741,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 		if ( is_checkout_pay_page() && get_query_var( 'order-pay' ) ) {
 			$email  = $order->get_billing_email();
-			$txnref = $order_id . '_' . time();
+			$txnref = SA_Paystack_Charge_Quote::new_reference( (int) $order_id );
 
 			$charge = $this->lock_order_charge_quote( $order, $txnref );
 
@@ -951,7 +951,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 	public function process_redirect_payment_option( $order_id ) {
 
 		$order        = wc_get_order( $order_id );
-		$txnref       = $order_id . '_' . time();
+		$txnref       = SA_Paystack_Charge_Quote::new_reference( (int) $order_id );
 		$callback_url = WC()->api_request_url( 'WC_Gateway_Paystack' );
 
 		// Supreme: lock the exact charge (converting to the account settlement currency when the order is not KES) before initializing.
@@ -1057,7 +1057,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 			$order = wc_get_order( $order_id );
 
-			$txnref = $order_id . '_' . time();
+			$txnref = SA_Paystack_Charge_Quote::new_reference( (int) $order_id );
 
 			$charge = $this->lock_order_charge_quote( $order, $txnref );
 
@@ -1856,6 +1856,12 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 		if ( ! $order ) {
 			return false;
+		}
+
+		// Never send a USD order amount as though it were the settled KES charge.
+		// Converted payments require a separate reviewed manual refund workflow.
+		if ( ! class_exists( 'SA_Paystack_Charge_Quote' ) || ! SA_Paystack_Charge_Quote::can_auto_refund( $order ) ) {
+			return new WP_Error( 'paystack_converted_refund_disabled', __( 'Automatic Paystack refunds are disabled for converted or unsupported-currency orders. Review the original settled payment and refund manually through Paystack.', 'woo-paystack' ) );
 		}
 
 		$order_currency = $order->get_currency();

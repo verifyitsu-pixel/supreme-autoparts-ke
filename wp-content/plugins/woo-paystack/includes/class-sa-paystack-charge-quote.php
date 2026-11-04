@@ -64,6 +64,24 @@ final class SA_Paystack_Charge_Quote {
 		return $q;
 	}
 
+	/** Provider-safe ASCII reference: order prefix retained, 128 random bits per attempt. */
+	public static function new_reference( int $order_id ): string {
+		return $order_id . '_' . bin2hex( random_bytes( 16 ) );
+	}
+
+	/** Automatic refunds are supported only for unconverted KES payments. */
+	public static function can_auto_refund( $order ): bool {
+		$currency = strtoupper( (string) $order->get_currency() );
+		$charged = strtoupper( (string) $order->get_meta( '_sa_paystack_charge_currency' ) );
+		if ( 'KES' !== $currency || ( '' !== $charged && $charged !== $currency ) ) return false;
+		$quotes = $order->get_meta( self::META_KEY );
+		foreach ( is_array( $quotes ) ? $quotes : array() as $quote ) {
+			if ( ! is_array( $quote ) || strtoupper( (string) ( $quote['order_currency'] ?? '' ) ) !== $currency
+				|| strtoupper( (string) ( $quote['charge_currency'] ?? '' ) ) !== $currency ) return false;
+		}
+		return true;
+	}
+
 	public static function decimals_for( string $currency ): int {
 		if ( class_exists( 'SA_FX_Rates' ) ) {
 			return SA_FX_Rates::decimals_for( $currency );

@@ -189,4 +189,20 @@ $other=new QOrder('USD',120.0); $_POST['sa_paystack_quote_token']=$newToken; ck(
 $t=Q::token(['usd'=>120,'rate'=>200,'kes'=>24000,'at'=>time()],Q::checkout_scope());
 $_POST['sa_paystack_quote_token']=$t; ck(Q::submitted_quote($o,true)!==null); ck(Q::lock_for_order($o,'noBound')===null);
 $o->update_meta_data('_sa_paystack_checkout_token_hash',hash('sha256',$t)); ck(Q::lock_for_order($o,'bound')['charge_amount']===24000.0);
+
+// Concurrent attempts at an equal clock use distinct provider-safe references.
+$refs=[]; for($i=0;$i<1000;$i++){ $r=Q::new_reference(123); ck((bool)preg_match('/^123_[a-f0-9]{32}$/D',$r)); $refs[$r]=true; }
+ck(count($refs)===1000);
+$o=new QOrder('USD',100); disp($o,129.5); $r1=Q::new_reference($o->id); $q1=Q::lock_for_order($o,$r1);
+disp($o,200); $r2=Q::new_reference($o->id); $q2=Q::lock_for_order($o,$r2);
+ck($r1!==$r2 && $q1['charge_amount']===12950.0 && $q2['charge_amount']===20000.0);
+ck(Q::quote_for_reference($o,$r1)['charge_amount']===12950.0);
+ck(Q::quote_for_reference($o,$r2)['charge_amount']===20000.0);
+// Full and partial converted refunds fail closed before any provider access.
+ck(!Q::can_auto_refund($o));
+$k=new QOrder('KES',12950); ck(Q::can_auto_refund($k));
+$k->update_meta_data('_sa_paystack_charge_currency','USD'); ck(!Q::can_auto_refund($k));
+$e=new QOrder('EUR',100);ck(!Q::can_auto_refund($e));
+$refundSource=substr($source,strpos($source,'public function process_refund'));
+ck(strpos($refundSource,'can_auto_refund')<strpos($refundSource,'get_paystack_transaction'));
 echo $AC." USD->KES locked-quote checks PASS (mock orders only, no network)\n";
