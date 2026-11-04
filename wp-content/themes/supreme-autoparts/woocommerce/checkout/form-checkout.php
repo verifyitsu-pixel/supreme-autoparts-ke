@@ -81,18 +81,7 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
           <?php do_action('woocommerce_checkout_after_customer_details'); ?>
         <?php endif; ?>
 
-        <section class="sa-checkout-section sa-checkout-section--agreements" id="sa-checkout-payment" data-sa-checkout-panel="payment" aria-labelledby="sa-checkout-payment-title">
-          <header class="sa-checkout-section__head">
-            <span class="sa-checkout-section__num" aria-hidden="true">3</span>
-            <div>
-              <h2 id="sa-checkout-payment-title" class="sa-checkout-section__title"><?php esc_html_e('Review and pay', 'supreme-autoparts'); ?></h2>
-              <p class="sa-checkout-section__sub"><?php esc_html_e('Accept the policies, then continue to payment.', 'supreme-autoparts'); ?></p>
-            </div>
-          </header>
-          <div class="sa-checkout-section__body">
-            <?php woocommerce_checkout_payment(); ?>
-          </div>
-        </section>
+
       </div>
 
       <aside class="sa-checkout-layout__summary" aria-label="<?php esc_attr_e('Order summary', 'supreme-autoparts'); ?>">
@@ -107,6 +96,18 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
         </div>
         <?php do_action('woocommerce_checkout_after_order_review'); ?>
       </aside>
+        <section class="sa-checkout-section sa-checkout-section--agreements" id="sa-checkout-payment" data-sa-checkout-panel="payment" aria-labelledby="sa-checkout-payment-title">
+          <header class="sa-checkout-section__head">
+            <span class="sa-checkout-section__num" aria-hidden="true">3</span>
+            <div>
+              <h2 id="sa-checkout-payment-title" class="sa-checkout-section__title"><?php esc_html_e('Review and pay', 'supreme-autoparts'); ?></h2>
+              <p class="sa-checkout-section__sub"><?php esc_html_e('Choose a payment method, then review the policies and pay.', 'supreme-autoparts'); ?></p>
+            </div>
+          </header>
+          <div class="sa-checkout-section__body">
+            <?php woocommerce_checkout_payment(); ?>
+          </div>
+        </section>
     </div>
 
   </form>

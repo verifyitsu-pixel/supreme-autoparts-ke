@@ -197,7 +197,7 @@ final class SA_Geo_Display
             $new_args = is_array($args) ? $args : [];
             $new_args['currency'] = $display;
             if (strtoupper($display) === 'KES') {
-                $new_args['decimals'] = 0;
+                $new_args['decimals'] = (function_exists('is_checkout') && is_checkout()) ? 2 : 0;
                 $new_args['price_format'] = '%1$s&nbsp;%2$s';
             }
             $out = (string) wc_price($converted, $new_args);

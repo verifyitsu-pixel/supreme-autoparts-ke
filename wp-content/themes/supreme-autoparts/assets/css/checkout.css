@@ -1322,3 +1322,23 @@ body.woocommerce-order-pay ul.order_details::before,body.woocommerce-order-pay u
 .sa-checkout-payment .sa-payment-method-title { display:block; line-height:1.45; }
 .sa-checkout-payment .sa-payment-method-icons { display:block; margin-top:10px; }
 .sa-checkout-payment .sa-payment-method-icons img { min-height:24px; }
+
+/* Checkout sequence: details and shipment/total, then payment and policies. */
+.sa-checkout-layout__main { grid-column:1; grid-row:1; }
+.sa-checkout-layout__summary { grid-column:2; grid-row:1; }
+.sa-checkout-layout > .sa-checkout-section--agreements { grid-column:1 / -1; grid-row:2; }
+.sa-checkout-payment ul.payment_methods > li { position:relative; padding:18px 18px 18px 58px; }
+.sa-checkout-payment ul.payment_methods > li > input.input-radio { position:absolute; left:18px; top:22px; width:24px; height:24px; margin:0; accent-color:#111; cursor:pointer; }
+.sa-checkout-payment ul.payment_methods > li > label { display:block; min-height:44px; padding:2px 0; }
+.sa-checkout-payment ul.payment_methods > li:has(input:checked) { background:#fafafa; box-shadow:inset 3px 0 #111; }
+.sa-checkout-page input[type=radio], .sa-checkout-page input[type=checkbox] { width:24px!important; height:24px!important; min-width:24px; accent-color:#111; cursor:pointer; }
+.sa-checkout-page input[type=radio]:focus-visible, .sa-checkout-page input[type=checkbox]:focus-visible { outline:3px solid #555; outline-offset:4px; }
+.sa-checkout-page .sa-checkout-terms__row label, .sa-checkout-page .woocommerce-terms-and-conditions-wrapper label { min-height:44px; padding:10px 0; cursor:pointer; }
+.sa-checkout-page .sa-checkout-terms a, .sa-checkout-page .woocommerce-terms-and-conditions-wrapper a { color:inherit!important; text-decoration:none!important; font-weight:600; }
+.sa-checkout-page .sa-checkout-terms a:hover, .sa-checkout-page .woocommerce-terms-and-conditions-wrapper a:hover { color:#111!important; background:#eee; }
+.sa-checkout-page .sa-checkout-terms a:focus-visible, .sa-checkout-page .woocommerce-terms-and-conditions-wrapper a:focus-visible { outline:2px solid #111; outline-offset:3px; border-radius:2px; }
+@media(max-width:960px) {
+  .sa-checkout-layout__main { grid-column:1; grid-row:1; order:1; }
+  .sa-checkout-layout__summary { grid-column:1; grid-row:2; order:2; }
+  .sa-checkout-layout > .sa-checkout-section--agreements { grid-column:1; grid-row:3; order:3; }
+}
