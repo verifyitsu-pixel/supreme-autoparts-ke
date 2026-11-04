@@ -13,15 +13,10 @@ function sa_visible_whop_over_limit(): bool {
 function sa_visible_missing_payment_cards(): void {
     if (!function_exists('WC') || !WC() || !WC()->payment_gateways()) return;
     $available=WC()->payment_gateways()->get_available_payment_gateways();
-    $brands=['whop'=>['Whop','whop.svg','Card and supported wallets. Whop starts with USD; supported local currencies are shown in its checkout.'], 'pesapal'=>['Pesapal','pesapal.png','Card, M-Pesa and Airtel. Supported methods and currency are shown before payment.'], 'paystack'=>['Paystack','paystack.png','Card, M-Pesa and Airtel in KES on the current live integration.']];
-    $missing=array_diff_key($brands,$available);
-    if (!$missing) return;
-    echo '<section class="sa-visible-providers" aria-label="Other payment providers" style="margin:20px 0"><h3>Payment providers</h3>';
-    foreach($missing as $id=>$b) {
-        $over = $id === 'whop' && sa_visible_whop_over_limit();
-        $reason = $over ? 'Above the USD 2,500 Whop limit.' : 'Unavailable for this payment.';
-        echo '<div aria-disabled="true" class="sa-provider-visible'.($over?' sa-whop-over-limit':'').'" style="border:1px solid #ddd;border-radius:8px;padding:18px;margin:12px 0;background:'.($over?'#eee':'#fff').';'.($over?'filter:grayscale(1);color:#666;':'').'"><img src="'.esc_url(get_stylesheet_directory_uri().'/assets/images/providers/'.$b[1]).'" alt="'.esc_attr($b[0]).'" style="display:block;width:100%;max-width:280px;height:80px;object-fit:contain;object-position:left center"><p>'.esc_html($reason).'</p></div>';
-    }
+    // Restore the prior section: no extra missing-provider cards. Only the
+    // owner's expressly requested over-limit Whop card remains visible.
+    if (isset($available['whop']) || !sa_visible_whop_over_limit()) return;
+    echo '<section class="sa-visible-providers" aria-label="Whop limit"><div aria-disabled="true" class="sa-provider-visible sa-whop-over-limit" style="border:1px solid #ddd;border-radius:8px;padding:18px;margin:12px 0;background:#eee;filter:grayscale(1);color:#666"><img src="'.esc_url(get_stylesheet_directory_uri().'/assets/images/providers/whop.svg').'" alt="Whop" style="display:block;width:100%;max-width:280px;height:80px;object-fit:contain;object-position:left center"><p>Above the USD 2,500 Whop limit.</p></div>';
     echo '</section>';
 }
 // Standard checkout calls directly inside its AJAX-replaced payment fragment.
