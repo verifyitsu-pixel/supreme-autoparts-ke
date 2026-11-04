@@ -22,4 +22,6 @@ jobs:
           php -l wp-content/plugins/supreme-autoparts-core/includes/careers-payment.php
           php -l wp-content/plugins/supreme-autoparts-core/includes/forminator-forms.php
       - name: Isolated fee contract, no payment or email
-        run: php tests/careers-payment-regression.php
+        run: |
+          php tests/careers-payment-regression.php
+          php tests/careers-provider-verification-regression.php

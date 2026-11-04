@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
 function sa_fd_enqueue(): void
 {
     wp_enqueue_style('sa-file-drop', SA_CORE_URL . 'assets/file-drop.css', [], SA_CORE_VERSION);
-    wp_enqueue_script('sa-file-drop', SA_CORE_URL . 'assets/file-drop.js', [], SA_CORE_VERSION, true);
+    wp_enqueue_script('sa-file-drop', SA_CORE_URL . 'assets/file-drop.js', [], SA_CORE_VERSION . '.cv2', true);
 }
 add_action('wp_enqueue_scripts', 'sa_fd_enqueue', 30);
 add_action('admin_enqueue_scripts', static function (): void {
