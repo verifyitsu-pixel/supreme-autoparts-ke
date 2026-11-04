@@ -673,7 +673,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 	public function payment_fields() {
 
 		if ( $this->description ) {
-			echo wp_kses_post( wpautop( wptexturize( $this->description ) ) );
+			echo wp_kses_post( wpautop( wptexturize( $this->get_description() ) ) );
 		}
 
 		if ( ! is_ssl() ) {
