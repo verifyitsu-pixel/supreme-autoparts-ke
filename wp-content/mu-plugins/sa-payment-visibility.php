@@ -19,8 +19,8 @@ function sa_visible_missing_payment_cards(): void {
     echo '<section class="sa-visible-providers" aria-label="Other payment providers" style="margin:20px 0"><h3>Payment providers</h3>';
     foreach($missing as $id=>$b) {
         $over = $id === 'whop' && sa_visible_whop_over_limit();
-        $reason = $over ? 'This amount exceeds the USD 2,500 Whop limit. Whop cannot be selected. Choose another available payment method.' : 'This provider is not available for this payment in its current currency or checkout state. Use an available payment method above.';
-        echo '<div aria-disabled="true" class="sa-provider-visible'.($over?' sa-whop-over-limit':'').'" style="border:1px solid #ddd;border-radius:8px;padding:18px;margin:12px 0;background:'.($over?'#eee':'#fff').';'.($over?'filter:grayscale(1);color:#666;':'').'"><img src="'.esc_url(get_stylesheet_directory_uri().'/assets/images/providers/'.$b[1]).'" alt="'.esc_attr($b[0]).'" style="display:block;width:100%;max-width:280px;height:80px;object-fit:contain;object-position:left center"><p>'.esc_html($b[2]).'</p><p>'.esc_html($reason).'</p></div>';
+        $reason = $over ? 'Above the USD 2,500 Whop limit.' : 'Unavailable for this payment.';
+        echo '<div aria-disabled="true" class="sa-provider-visible'.($over?' sa-whop-over-limit':'').'" style="border:1px solid #ddd;border-radius:8px;padding:18px;margin:12px 0;background:'.($over?'#eee':'#fff').';'.($over?'filter:grayscale(1);color:#666;':'').'"><img src="'.esc_url(get_stylesheet_directory_uri().'/assets/images/providers/'.$b[1]).'" alt="'.esc_attr($b[0]).'" style="display:block;width:100%;max-width:280px;height:80px;object-fit:contain;object-position:left center"><p>'.esc_html($reason).'</p></div>';
     }
     echo '</section>';
 }
