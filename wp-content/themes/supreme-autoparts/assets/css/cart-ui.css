@@ -196,3 +196,6 @@ tr.sa-fargo-nobranch{display:block}tr.sa-fargo-nobranch td{display:block;width:1
 .sa-checkout-section--contact .sa-aa-wrap,.sa-checkout-section--shipping .sa-aa-wrap{display:block!important;width:100%!important;max-width:none!important}
 .sa-checkout-section--contact .sa-aa-credit,.sa-checkout-section--shipping .sa-aa-credit{display:block;clear:both;margin-top:6px}
 .sa-checkout-section--contact #billing_address_1_field .woocommerce-input-wrapper,.sa-checkout-section--shipping #shipping_address_1_field .woocommerce-input-wrapper{display:block!important;width:100%!important}
+
+/* Progression follows the complete details, summary and shipping options. */
+.sa-checkout-step-actions{width:100%;margin-top:24px;clear:both}.sa-checkout-step-actions[hidden],.sa-checkout-next[hidden]{display:none!important}
