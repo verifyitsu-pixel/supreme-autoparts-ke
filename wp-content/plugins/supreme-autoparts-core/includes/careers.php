@@ -21,12 +21,23 @@ function sa_careers_roles(): array
     return [
         'delivery-rider' => [
             'title' => 'Delivery Rider',
+            'openings' => '3 openings',
             'blurb' => 'Get parts orders to our customers across Nairobi, on time and in good order.',
             'duties' => [
                 'Deliver customer orders across Nairobi and confirm each handover',
                 'Return signed delivery notes and order paperwork to the office',
                 'Plan routes so deliveries arrive on time',
                 'Support the garage with supplier pickups and errands',
+            ],
+        ],
+        'intern' => [
+            'title' => 'Intern',
+            'blurb' => 'Learn while supporting the day-to-day work of our garage and online store.',
+            'duties' => [
+                'Help the team keep parts, orders and job records organised',
+                'Support order preparation and customer follow-ups under supervision',
+                'Assist with routine garage and store tasks assigned by the team',
+                'Follow workplace safety instructions and ask for guidance when needed',
             ],
         ],
         'mazda-specialist' => [
@@ -71,6 +82,7 @@ function sa_careers_location(): string
 /* ---------- render ---------- */
 add_shortcode('sa_careers', static function (): string {
     wp_enqueue_style('sa-services', SA_CORE_URL . 'assets/services.css', [], SA_CORE_VERSION);
+    wp_enqueue_style('sa-careers-v2',SA_CORE_URL.'assets/careers.css',['sa-services'],'2');
     $roles = sa_careers_roles();
     $state = sanitize_key((string) ($_GET['sa_careers'] ?? ''));
     $want  = sanitize_key((string) ($_GET['role'] ?? ''));
@@ -78,9 +90,12 @@ add_shortcode('sa_careers', static function (): string {
     ob_start();
     echo '<div class="sa-careers" id="sa-careers">';
 
-    echo '<div class="sa-careers__grid">';
+    echo '<section class="sa-careers__hero"><span class="sa-careers__eyebrow">SUPREME / CAREERS</span><h2>Build your next chapter with us.</h2><p>On the road, in the garage, or behind the orders. Find your place in our Nairobi team.</p><a href="#sa-careers-roles">Explore the roles <span aria-hidden="true">&#8595;</span></a></section>';
+    echo '<ol class="sa-careers__steps" aria-label="Application steps"><li><b>01</b><span><strong>Choose your role</strong><small>Check the responsibilities</small></span></li><li><b>02</b><span><strong>Save your application</strong><small>Share your details and CV</small></span></li><li><b>03</b><span><strong>Pay with Paystack</strong><small>KES 1,000, non-refundable</small></span></li></ol>';
+    echo '<div class="sa-careers__grid" id="sa-careers-roles">';
     foreach ($roles as $slug => $r) {
         echo '<article class="sa-careers__card">';
+        if (!empty($r['openings'])) echo '<span class="sa-careers__openings">'.esc_html($r['openings']).'</span>';
         echo '<h2>' . esc_html($r['title']) . '</h2>';
         echo '<p class="sa-careers__blurb">' . esc_html($r['blurb']) . '</p>';
         echo '<ul>';
@@ -95,7 +110,7 @@ add_shortcode('sa_careers', static function (): string {
     echo '</div>';
 
     echo '<div class="sa-careers__form" id="sa-careers-apply">';
-    echo '<h2>Apply now</h2>';
+    echo '<span class="sa-careers__eyebrow">YOUR NEXT STEP</span><h2>Make your move.</h2><p>Choose a role, add your details and CV, then continue to secure payment. Your application is saved before checkout.</p>';
     echo '<p class="sa-careers-fee-notice">' . esc_html(sa_careers_fee_disclosure()) . '</p>';
     if ($state === 'sent') {
         $ref = sanitize_text_field((string) ($_GET['ref'] ?? ''));

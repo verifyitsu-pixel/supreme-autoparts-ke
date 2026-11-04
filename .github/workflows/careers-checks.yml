@@ -1,0 +1,25 @@
+name: Careers checks
+on:
+  push:
+    paths:
+      - 'wp-content/plugins/supreme-autoparts-core/includes/careers*.php'
+      - 'wp-content/plugins/supreme-autoparts-core/includes/forminator-forms.php'
+      - 'wp-content/plugins/supreme-autoparts-core/assets/careers.css'
+      - 'tests/careers-payment-regression.php'
+      - '.github/workflows/careers-checks.yml'
+  pull_request:
+    paths:
+      - 'wp-content/plugins/supreme-autoparts-core/**'
+      - 'tests/careers-payment-regression.php'
+jobs:
+  syntax-and-fee-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: PHP syntax
+        run: |
+          php -l wp-content/plugins/supreme-autoparts-core/includes/careers.php
+          php -l wp-content/plugins/supreme-autoparts-core/includes/careers-payment.php
+          php -l wp-content/plugins/supreme-autoparts-core/includes/forminator-forms.php
+      - name: Isolated fee contract, no payment or email
+        run: php tests/careers-payment-regression.php

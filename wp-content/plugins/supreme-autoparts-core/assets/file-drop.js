@@ -8,10 +8,12 @@
     inp.removeAttribute('capture');
     if(!inp.getAttribute('accept')||/^image\/\*$/.test(inp.getAttribute('accept')))inp.setAttribute('accept','image/*,application/pdf,.heic,.heif');
     var max=parseInt(inp.getAttribute('data-max')||'',10)||MAXDEF;
+    var careerCV=!!inp.closest('.sa-careers') && /pdf/.test(inp.accept||'');
     var wrap=document.createElement('div');wrap.className='sa-dz';
     var btn=document.createElement('label');btn.className='sa-dz-btn';
     var id=inp.id||('sadz'+Math.random().toString(36).slice(2,8));inp.id=id;btn.htmlFor=id;
     btn.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg><span class="sa-dz-t"><strong>'+(inp.multiple?'Upload photos or files':'Upload photo or file')+'</strong><small>Take a photo, choose from your gallery, or upload a file'+(window.matchMedia&&matchMedia('(hover:hover)').matches?' (or drag it here)':'')+'. Up to '+fmt(max)+'.</small></span>';
+    if(careerCV){btn.querySelector('strong').textContent='Upload your CV';btn.querySelector('small').textContent='PDF, DOC or DOCX. Up to '+fmt(max)+'. Choose a file or drag it here.';}
     var list=document.createElement('div');list.className='sa-dz-list';list.setAttribute('aria-live','polite');
     var err=document.createElement('div');err.className='sa-dz-err';err.setAttribute('role','alert');
     inp.parentNode.insertBefore(wrap,inp);wrap.appendChild(inp);wrap.appendChild(btn);wrap.appendChild(list);wrap.appendChild(err);
@@ -30,7 +32,7 @@
         row.appendChild(th);row.appendChild(meta);row.appendChild(rm);list.appendChild(row);
       });
       wrap.classList.toggle('has',keep.length>0);
-      btn.querySelector('strong').textContent=keep.length?(inp.multiple?'Add more':'Replace photo or file'):(inp.multiple?'Upload photos or files':'Upload photo or file');
+      btn.querySelector('strong').textContent=careerCV?(keep.length?'Replace CV':'Upload your CV'):keep.length?(inp.multiple?'Add more':'Replace photo or file'):(inp.multiple?'Upload photos or files':'Upload photo or file');
     }
     function add(files){
       err.textContent='';var bad=[];
