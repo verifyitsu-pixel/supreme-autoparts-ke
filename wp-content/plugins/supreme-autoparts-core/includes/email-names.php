@@ -127,3 +127,21 @@ function sa_bk_greet_src(array $b)
     }
     return !empty($b['user']) ? (int) $b['user'] : '';
 }
+
+/** Fill missing greetings only from the single recipient's saved account first name.
+ * Purpose-specific order/form/provider greetings win. Never use a sender, reply-to,
+ * email localpart, username or a customer's name to greet an admin recipient.
+ */
+function sa_email_recipient_name_greeting(array $a): array {
+    $to=$a['to']??[];$to=is_array($to)?$to:explode(',',(string)$to);if(count($to)!==1)return $a;
+    $address=trim((string)$to[0]);if(preg_match('/<([^>]+)>/',$address,$m))$address=$m[1];
+    if(!is_email($address))return $a;$u=get_user_by('email',$address);if(!$u)return $a;
+    $name=sa_email_first_name($u);if($name==='')return $a;
+    $body=(string)($a['message']??'');$plain=wp_strip_all_tags($body);
+    if(preg_match('/\b(?:Hi|Dear|Hello)\s+[^,\n<]{1,100},/u',$plain))return $a;
+    $g='Hi '.$name.',';
+    if(preg_match('/\bHello\s*,/u',$body))$a['message']=preg_replace('/\bHello\s*,/u',esc_html($g),$body,1);
+    elseif(stripos($body,'<html')===false&&stripos($body,'sa-email-brand-header')===false)$a['message']=preg_match('/<(?:p|div|table)\b/i',$body)?'<p>'.esc_html($g).'</p>'.$body:$g."\n\n".$body;
+    return $a;
+}
+add_filter('wp_mail','sa_email_recipient_name_greeting',5);

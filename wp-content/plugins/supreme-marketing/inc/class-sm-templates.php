@@ -297,7 +297,8 @@ final class SM_Templates
         if ($def === null) {
             return null;
         }
-        $greet = 'Hi ' . sm_greet_name(['first_name' => (string) ($ctx['first_name'] ?? '')]) . ',';
+        $known_name=trim((string)($ctx['first_name']??''));
+        $greet = $known_name!=='' && sm_greet_name(['first_name'=>$known_name])!=='there' ? 'Hi ' . sm_greet_name(['first_name'=>$known_name]) . ',' : 'Hello,';
         $blocks = array_merge([['p' => $greet]], $def['blocks']);
         $rendered = self::render_blocks($blocks, $ctx);
         $ctx['subject'] = $def['subject'];
