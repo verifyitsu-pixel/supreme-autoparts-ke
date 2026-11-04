@@ -288,14 +288,14 @@ final class SA_Geo_Display
         if (self::should_convert()) {
             $extra = sprintf(
                 /* translators: 1: display currency 2: country code */
-                ' ' . esc_html__('(showing approx. %1$s for %2$s)', 'sa-geo-currency'),
+                ' ' . esc_html__('(catalog estimate in approx. %1$s for %2$s)', 'sa-geo-currency'),
                 esc_html($display),
                 esc_html($country)
             );
         }
 
         return '<p class="sa-geo-currency-note" data-sa-geo-cc="' . esc_attr($country) . '" data-sa-geo-display="' . esc_attr($display) . '">'
-            . esc_html__('Final amount shown at checkout', 'sa-geo-currency')
+            . esc_html__('Estimate only - the exact charge is shown and locked before payment at checkout', 'sa-geo-currency')
             . $extra
             . '</p>';
     }
