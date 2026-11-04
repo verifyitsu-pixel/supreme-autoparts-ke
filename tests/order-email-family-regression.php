@@ -17,7 +17,7 @@ require __DIR__.'/../wp-content/plugins/supreme-autoparts-core/includes/order-em
 require __DIR__.'/../wp-content/plugins/sa-brevo-mail/includes/class-brevo-mailer.php';
 $n=0;
 foreach(['processing','on-hold','awaiting-info','staged','shipped','out-for-delivery','delivered','ready-pickup','completed','cancelled','refunded','failed'] as $stage){
- $h=sa_ol_family_layout(new WC_Order,($stage==='cancelled'?'Your order has been cancelled.':($stage==='staged'?'Your order is staged to ship':ucwords(str_replace('-',' ',$stage)))),($stage==='cancelled'?'<p>Hello Test Customer,</p><p>We are sorry it did not work out. If you need help finding something different for your car, just reply.</p><p>Order #TEST-76318 has been cancelled.</p><p>If you paid, reply and we will help you check the refund status. This cancellation email does not confirm a refund.</p>':'<p>Hello Test Customer,</p><p>Your order update. Reply if you need a hand.</p>'),'View your order',home_url('/track-order/'),'Order update',$stage);
+ $h=sa_ol_family_layout(new WC_Order,($stage==='cancelled'?'Your order has been cancelled.':($stage==='staged'?'Your order is staged to ship':ucwords(str_replace('-',' ',$stage)))),($stage==='cancelled'?'<p>Hello Test Customer,</p><p>We are sorry it did not work out. If you need help finding something different, let us know.</p><p>Order #TEST-76318 has been cancelled.</p><p>If there is anything else we can do for you, please reply to this email.</p>':'<p>Hello Test Customer,</p><p>Your order update. Reply if you need a hand.</p>'),'View your order',home_url('/track-order/'),'Order update',$stage);
  foreach(['sa-email-brand-header','SHOP','GARAGE','HELP','YOUR ORDER','SHIPPING DETAILS','PAYMENT METHOD','Privacy policy','not a confirmed fitment match'] as $token){if($token==='not a confirmed fitment match'||($stage==='cancelled'&&in_array($token,['SHIPPING DETAILS','PAYMENT METHOD'])))continue; if(strpos($h,$token)===false)throw new Exception($stage.': missing '.$token);$n++;}
  if(substr_count($h,'sa-email-brand-header')!==1||SA_Brevo_Mailer::brand_html(SA_Brevo_Mailer::brand_html($h))!==$h)throw new Exception('Duplicate branding');$n++;
  if(strpos($h,'worldwidecyclery')!==false||strpos($h,'Nothing was charged')!==false)throw new Exception('Source leakage');$n++;
@@ -59,3 +59,6 @@ foreach(['Total paid','Total due'] as $label){
 }
 unset($GLOBALS['sa_test_receipt']);
 echo "PASS 2 real stage adapter paid/unpaid neutral totals checks; refund amount preserved.\n";
+
+foreach(['This cancellation email does not confirm a refund','your payment will be refunded'] as $unverified){if(strpos($s,$unverified)!==false)throw new Exception('Unasked cancellation refund wording');}
+echo "PASS cancellation source-led short copy, no refund promise/disclaimer.\n";
