@@ -298,6 +298,8 @@
       navPending = true;
     });
     $(document.body).on('payment_method_selected', function () {
+      // A preselected careers fee gateway is not a request or payment in progress.
+      if (document.querySelector('.sa-careers-payment #order_review')) return;
       show('processing');
     });
 
