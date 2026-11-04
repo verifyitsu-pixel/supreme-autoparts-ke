@@ -41,9 +41,6 @@ add_filter('woocommerce_available_payment_gateways',static function($gateways){
     $o=wc_get_order(absint(get_query_var('order-pay')));if(!$o || !$o->get_meta('_sa_careers_source'))return $gateways;
     return isset($gateways['paystack']) ? ['paystack'=>$gateways['paystack']] : [];
 },999);
-add_action('woocommerce_pay_order_before_payment',static function(){
-    $o=wc_get_order(absint(get_query_var('order-pay')));if($o && $o->get_meta('_sa_careers_source'))echo '<p class="sa-careers-fee-notice">'.esc_html(sa_careers_fee_disclosure()).'</p>';
-});
 add_action('woocommerce_payment_complete',static function($id){
     $o=wc_get_order($id);if(!$o || !$o->is_paid() || !$o->get_meta('_sa_careers_source') || $o->get_currency()!=='KES' || (float)$o->get_total()!==1000.0)return;
     $o->update_meta_data('_sa_careers_fee_paid_at',gmdate('c'));$o->save();
@@ -74,3 +71,9 @@ function sa_careers_fee_email_content($o,string $stage): array {
     return ['subject'=>$subject,'html'=>sa_customer_mail_layout($heading,'<p>'.sa_email_greeting($o).'</p><p>'.esc_html($body).'</p><p>Reference: '.esc_html($o->get_order_number()).'</p>', $stage==='failed'?'Continue to payment':'View payment order',$url,$subject,'','KE')];
 }
 add_filter('woocommerce_email_subject_customer_processing_order',static function($subject,$order){return $order && $order->get_meta('_sa_careers_source') ? 'Application fee payment received #'.$order->get_order_number() : $subject;},999,2);
+
+// Keep Woo order-key/nonce/payment processing intact; only the fee presentation is distinct.
+add_filter('wc_get_template',static function($template,$name,$args){
+    if($name!=='checkout/form-pay.php' || empty($args['order']) || !$args['order']->get_meta('_sa_careers_source'))return $template;
+    return SA_CORE_DIR.'templates/careers-form-pay.php';
+},30,3);

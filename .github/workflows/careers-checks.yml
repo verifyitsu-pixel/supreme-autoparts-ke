@@ -6,6 +6,7 @@ on:
       - 'wp-content/plugins/supreme-autoparts-core/includes/forminator-forms.php'
       - 'wp-content/plugins/supreme-autoparts-core/assets/careers.css'
       - 'tests/careers-payment-regression.php'
+      - 'wp-content/plugins/supreme-autoparts-core/templates/careers-form-pay.php'
       - '.github/workflows/careers-checks.yml'
   pull_request:
     paths:
@@ -20,6 +21,7 @@ jobs:
         run: |
           php -l wp-content/plugins/supreme-autoparts-core/includes/careers.php
           php -l wp-content/plugins/supreme-autoparts-core/includes/careers-payment.php
+          php -l wp-content/plugins/supreme-autoparts-core/templates/careers-form-pay.php
           php -l wp-content/plugins/supreme-autoparts-core/includes/forminator-forms.php
       - name: Isolated fee contract, no payment or email
         run: |
