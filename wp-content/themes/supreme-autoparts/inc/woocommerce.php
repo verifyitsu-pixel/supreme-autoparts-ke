@@ -313,7 +313,7 @@ function sa_theme_cart_has_free_shipping(): bool
 }
 
 /**
- * Stock line, plus free-shipping only when this item's price itself meets the threshold.
+ * Stock and business shipping reach. Fees and eligibility remain checkout rules.
  */
 function sa_theme_product_card_meta(WC_Product $product): string
 {
@@ -323,18 +323,7 @@ function sa_theme_product_card_meta(WC_Product $product): string
     $stock = $product->is_on_backorder(1)
         ? __('Available on backorder', 'supreme-autoparts')
         : __('In stock', 'supreme-autoparts');
-    $us = !function_exists('sa_ship_is_us') || sa_ship_is_us();
-    if (!$us && function_exists('sa_geo_is_kenya') && !sa_geo_is_kenya()) {
-        return $stock . ' · ' . __('Ships internationally', 'supreme-autoparts');
-    }
-    if (!$us) {
-        return $stock . ' · ' . __('Store pickup or Fargo delivery', 'supreme-autoparts');
-    }
-    $price = (float) $product->get_price();
-    if ($price > 0 && $price + 0.001 >= sa_theme_free_ship_amount()) {
-        return $stock . ' · ' . __('Free US shipping', 'supreme-autoparts');
-    }
-    return $stock . ' · ' . __('Ships across the US', 'supreme-autoparts');
+    return $stock . ' · ' . __('Ships across Kenya and the US', 'supreme-autoparts');
 }
 
 /**
