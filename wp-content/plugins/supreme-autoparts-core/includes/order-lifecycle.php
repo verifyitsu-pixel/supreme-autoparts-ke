@@ -219,6 +219,12 @@ function sa_ol_items_html(WC_Order $o): string
 {
     if (function_exists('sa_rcpt_order_data')) {
         $d = sa_rcpt_order_data($o);
+        // A lifecycle stage is not proof of payment or refund settlement.
+        // Keep this email-only summary neutral, without changing receipts/PDFs.
+        foreach ($d['totals'] as &$row) {
+            if (in_array($row[0] ?? '', ['Total paid', 'Total due'], true)) { $row[0] = 'Order total'; }
+        }
+        unset($row);
         return '<div style="margin:16px 0">' . sa_rcpt_items_html($d['items'], 'email', SA_RCPT_FONT)
             . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:8px;border-collapse:collapse">' . sa_rcpt_totals_html($d['totals'], SA_RCPT_FONT) . '</table></div>';
     }

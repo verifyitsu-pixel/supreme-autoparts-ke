@@ -8,7 +8,7 @@ function esc_attr($s){return esc_html($s);}
 function esc_url($s){return esc_html($s);}
 function wp_date($f){return '2026';}
 function sa_email_footer_business($c){return ['one_line'=>'Nairobi, Kenya','phone_display'=>'+254 714 498 451'];}
-function sa_rcpt_order_data($o){return ['date'=>'04 November 2026','bill'=>['Test Customer','Nairobi, Kenya'],'ship'=>['Test Customer','Nairobi, Kenya'],'view_url'=>home_url('/track-order/')];}
+function sa_rcpt_order_data($o){if(isset($GLOBALS['sa_test_receipt']))return $GLOBALS['sa_test_receipt'];return ['date'=>'04 November 2026','bill'=>['Test Customer','Nairobi, Kenya'],'ship'=>['Test Customer','Nairobi, Kenya'],'view_url'=>home_url('/track-order/')];}
 function sa_rcpt_lines($lines,$html=true){return implode('<br>',array_map('esc_html',$lines));}
 function sa_ol_stage_labels(){return ['staged'=>'Staged to ship','cancelled'=>'Cancelled'];}
 function sa_ol_items_html($o){return '<table role="presentation" width="100%"><tr><td style="font-size:16px;padding:16px 0">Brake pad set × 1</td><td style="text-align:right">KES 110.48</td></tr><tr><td>Total</td><td style="text-align:right">KES 110.48</td></tr></table>';}
@@ -44,3 +44,18 @@ $h=sa_customer_receipt_email($d);foreach(['Payment due','INV-TEST','KES 110.48',
 if(substr_count($h,'<!doctype html>')!==1)throw new Exception('Nested receipt document');
 if(getenv('SA_EMAIL_RENDER_DIR'))file_put_contents(getenv('SA_EMAIL_RENDER_DIR').'/invoice.html',$h);
 echo "PASS 8 email receipt adapter data/layout checks; no nested page/PDF document.\n";
+
+// Exercise the real stage item adapter with paid and unpaid source receipts.
+$source=file_get_contents(__DIR__.'/../wp-content/plugins/supreme-autoparts-core/includes/order-lifecycle.php');
+$start=strpos($source,'function sa_ol_items_html(');
+$fn=substr($source,$start,strpos($source,"\n}",$start)+2-$start);
+$fn=str_replace('function sa_ol_items_html(', 'function sa_test_real_ol_items_html(', $fn);
+eval($fn);
+if(!defined('SA_RCPT_FONT'))define('SA_RCPT_FONT','Arial');
+foreach(['Total paid','Total due'] as $label){
+ $GLOBALS['sa_test_receipt']=['items'=>[],'totals'=>[[$label,'KES 110.48',true],['Refunded','KES 20',false]]];
+ $html=sa_test_real_ol_items_html(new WC_Order);
+ if(strpos($html,'Order total')===false||strpos($html,'Total paid')!==false||strpos($html,'Total due')!==false||strpos($html,'Refunded')===false)throw new Exception('Stage totals neutrality failed: '.$label);
+}
+unset($GLOBALS['sa_test_receipt']);
+echo "PASS 2 real stage adapter paid/unpaid neutral totals checks; refund amount preserved.\n";
