@@ -99,8 +99,10 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
         <section class="sa-thankyou__next" aria-labelledby="sa-thankyou-next-title">
           <h2 id="sa-thankyou-next-title"><?php esc_html_e('What happens next', 'supreme-autoparts'); ?></h2>
           <ol class="sa-thankyou__steps">
-            <li><?php esc_html_e('We verify payment and pick your parts.', 'supreme-autoparts'); ?></li>
-            <?php if ($is_pickup) : ?>
+            <li><?php echo $paid ? esc_html__('We prepare your parts for your chosen shipping or pickup method.', 'supreme-autoparts') : esc_html__('We wait for verified payment before preparing or shipping your order.', 'supreme-autoparts'); ?></li>
+            <?php if (!$paid) : ?>
+              <li><?php esc_html_e('Your chosen shipping method and any estimate are shown below. Fulfillment starts only after payment is confirmed.', 'supreme-autoparts'); ?></li>
+            <?php elseif ($is_pickup) : ?>
               <li><?php echo $order->has_status('ready-pickup') ? esc_html__('Your order is ready. Show your pickup code at the store; it is in your email.', 'supreme-autoparts') : esc_html__('We email you a pickup code when your order is ready at the store.', 'supreme-autoparts'); ?></li>
             <?php else : ?>
               <li><?php esc_html_e('You receive packing and shipping updates by email.', 'supreme-autoparts'); ?></li>
@@ -153,8 +155,8 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
 
       <?php
       /* WC core hooks woocommerce_order_details_table onto woocommerce_thankyou (priority 10).
-         This page is confirmation only (Rock 2026-10-17): detach the core copy so no order
-         details table renders here at all - it stays available in My Account > Orders. */
+         The custom reminder above supplies the details once; detach the core copy
+         to avoid a duplicate table. */
       remove_action('woocommerce_thankyou', 'woocommerce_order_details_table', 10);
       ?>
       <?php do_action('woocommerce_thankyou_' . $order->get_payment_method(), $order->get_id()); ?>
