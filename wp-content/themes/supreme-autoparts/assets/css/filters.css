@@ -36,9 +36,9 @@
 .sa-pf__range-track input[type="range"]::-moz-range-thumb { pointer-events: auto; width: 20px; height: 20px; border-radius: 50%; background: #fff; border: 2px solid var(--sa-accent, #f26b1d); cursor: pointer; }
 .sa-pf__range-track input[type="range"]::-webkit-slider-runnable-track { background: transparent; }
 .sa-pf__range-inputs { display: flex; align-items: center; gap: .4rem; }
-.sa-pf__range-inputs label { position: relative; flex: 1; }
-.sa-pf__range-inputs label span { position: absolute; left: .55rem; top: 50%; transform: translateY(-50%); color: #777; font-size: .9rem; }
-.sa-pf__range-inputs input { padding-left: 1.5rem !important; }
+.sa-pf__range-inputs label { display: flex; align-items: center; flex: 1; min-width: 0; border: 1px solid #d5d5d5; border-radius: 6px; background: #fff; }
+.sa-pf__range-inputs label span { flex: 0 0 auto; padding-left: .55rem; color: #777; font-size: .9rem; }
+.sa-pf__range-inputs input { flex: 1; min-width: 0; width: 100%; border: 0 !important; background: transparent !important; padding-left: .35rem !important; }
 .sa-pf__foot { display: flex; gap: .6rem; align-items: center; padding: .75rem 1rem; border-top: 1px solid #eee; background: #fff; border-radius: 0 0 8px 8px; }
 .sa-pf__clear { flex: 0 0 auto; padding: .65rem .9rem; color: #333; font-weight: 600; text-decoration: underline; font-size: .92rem; }
 .sa-pf__apply { flex: 1; min-height: 46px; border: 0; border-radius: 6px; background: var(--sa-accent, #f26b1d); color: #fff; font-weight: 700; font-size: 1rem; cursor: pointer; }

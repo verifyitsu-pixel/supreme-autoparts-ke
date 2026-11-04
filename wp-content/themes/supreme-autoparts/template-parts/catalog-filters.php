@@ -23,7 +23,7 @@ $clear   = function_exists('sa_core_catalog_clear_filters_url') ? sa_core_catalo
 $stats   = sa_fx_stats();
 $chips   = sa_fx_chips();
 $cur     = function_exists('get_woocommerce_currency_symbol') ? html_entity_decode(get_woocommerce_currency_symbol(sa_catalog_display_currency()), ENT_QUOTES, 'UTF-8') : '$';
-$free_min = sa_fx_free_ship_min();
+$free_min = sa_catalog_price_from_usd(sa_fx_free_ship_min());
 $orderby = isset($_GET['orderby']) ? sanitize_key(wp_unslash((string) $_GET['orderby'])) : ''; // phpcs:ignore
 
 // Vehicle lists. Scoped to the current category/search when those parts have

@@ -26,3 +26,11 @@ add_action('pre_get_posts', static function($query): void {
         }
     }
 }, 0);
+
+// Once the main query has used stored-USD bounds, all rendered forms and URLs
+// must keep the local budget. Otherwise changing sort submits USD as KES.
+add_action('wp', static function(): void {
+    foreach (($GLOBALS['sa_catalog_local_prices'] ?? []) as $key => $value) {
+        $_GET[$key] = $value;
+    }
+}, 0);

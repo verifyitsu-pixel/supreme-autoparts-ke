@@ -152,7 +152,7 @@ add_action('wp_enqueue_scripts', static function (): void {
     if (!function_exists('is_shop') || !(is_shop() || is_product_taxonomy() || is_search())) {
         return;
     }
-    wp_enqueue_style('supreme-autoparts-filters', SA_THEME_URI . '/assets/css/filters.css', ['supreme-autoparts-polish'], SA_THEME_VERSION);
+    wp_enqueue_style('supreme-autoparts-filters', SA_THEME_URI . '/assets/css/filters.css', ['supreme-autoparts-polish'], SA_THEME_VERSION . '.kes2');
     wp_enqueue_script('supreme-autoparts-filters', SA_THEME_URI . '/assets/js/filters.js', [], SA_THEME_VERSION, true);
 }, 1000);
 

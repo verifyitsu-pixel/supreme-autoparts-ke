@@ -8,5 +8,6 @@ class Q {function is_main_query(){return true;}}
 require __DIR__.'/../wp-content/mu-plugins/sa-catalog-display-currency.php';
 assert(sa_catalog_display_currency()==='KES');assert(sa_catalog_price_from_usd(10)===1300.0);assert(sa_catalog_price_to_usd(1300)===10.0);
 $_GET=['min_price'=>'1300','max_price'=>'2600'];$GLOBALS['hooks']['pre_get_posts'](new Q);assert((float)$_GET['min_price']===10.0);assert((float)$_GET['max_price']===20.0);assert($GLOBALS['sa_catalog_local_prices']['min_price']==='1300');$GLOBALS['hooks']['pre_get_posts'](new Q);assert((float)$_GET['min_price']===10.0);
+$GLOBALS['hooks']['wp']();assert($_GET['min_price']==='1300');assert($_GET['max_price']==='2600');
 $GLOBALS['view']='US';assert(sa_catalog_display_currency()==='USD');assert(sa_catalog_price_from_usd(10)===10.0);assert(sa_catalog_price_to_usd(1300)===1300.0);
 echo "PASS KES/USD display math, local filter preservation, stored-USD query bounds, no double conversion\n";
