@@ -17,7 +17,7 @@ add_filter('option_woocommerce_paystack_settings', static function ($s) {
     $test = $s['testmode'] === 'yes';
     $prefix = $test ? 'test_' : 'live_';
     $s['enabled'] = ($s['enabled'] ?? 'no') === 'yes' && !empty($s[$prefix.'public_key']) && !empty($s[$prefix.'secret_key']) ? 'yes' : 'no';
-    $s['title'] = 'Card & M-Pesa - powered by Paystack (KES)';
+    $s['title'] = 'Card, M-Pesa & Airtel - powered by Paystack (KES)';
     $s['description'] = 'Pay securely in Kenyan shillings. Your exact KES total is shown before payment.';
     $s['payment_page'] = 'redirect';
     $s['saved_cards'] = 'no';
@@ -104,3 +104,13 @@ add_action('wp_head', static function () {
         echo '<style>.woocommerce-checkout-review-order-table tfoot tr.sa-usd-note td{white-space:normal!important;text-align:left!important;width:auto!important;overflow-wrap:anywhere;font-weight:400}</style>';
     }
 }, 100);
+
+// These brands match this account's enabled Card and Mobile Money channels.
+add_filter('woocommerce_gateway_icon', static function ($icon,$id) {
+    if ($id !== 'paystack') return $icon;
+    $html='<span class="sa-paystack-icons" aria-label="Visa, Mastercard, M-Pesa and Airtel Money">';
+    foreach (['visa'=>'Visa','mastercard'=>'Mastercard','mpesa'=>'M-Pesa','airtel'=>'Airtel Money'] as $file=>$label) {
+        $html.='<img src="'.esc_url(plugins_url('woo-paystack/assets/images/supreme/'.$file.'.svg')).'" alt="'.esc_attr($label).'" style="display:inline-block;height:24px;width:auto;max-width:72px;margin:4px 4px 0 0;vertical-align:middle">';
+    }
+    return $html.'</span>';
+},100,2);
