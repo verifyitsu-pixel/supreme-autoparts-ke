@@ -163,7 +163,7 @@ add_action('wp_enqueue_scripts', static function (): void {
 /* Header search panel (optional filters) on every page. */
 add_action('wp_enqueue_scripts', static function (): void {
     wp_enqueue_style('supreme-autoparts-search-panel', SA_THEME_URI . '/assets/css/search-panel.css', [], SA_THEME_VERSION . '.sp1');
-    wp_enqueue_script('supreme-autoparts-search-panel', SA_THEME_URI . '/assets/js/search-panel.js', [], SA_THEME_VERSION . '.sp2', true);
+    wp_enqueue_script('supreme-autoparts-search-panel', SA_THEME_URI . '/assets/js/search-panel.js', [], SA_THEME_VERSION . '.sp3', true);
     wp_localize_script('supreme-autoparts-search-panel', 'saSearchPanel', [
         'ajaxUrl' => admin_url('admin-ajax.php'),
         'view' => function_exists('sa_storefront_is_kenya') && sa_storefront_is_kenya() ? 'ke' : 'us',

@@ -62,6 +62,9 @@
   function vehicle(make, model) {
     return get({ vehicle_only: '1', sa_make: make, sa_model: model });
   }
+  function moneyHint(cur, amount) {
+    return cur + ' ' + Number(amount).toLocaleString(undefined, { maximumFractionDigits: cur === 'KES' ? 0 : 2 });
+  }
   function load() {
     if (loading) return loading;
     var mk = qs.get('sa_make') || '', md = qs.get('sa_model') || '';
@@ -77,10 +80,10 @@
       var curCat = (location.pathname.match(/product-category\/(?:.*\/)?([^\/]+)\/?$/) || [])[1] || '';
       fill(el('cat'), d.cats, 'All categories', curCat);
       fill(el('brand'), d.brands, 'All brands', (qs.get('filter_brand') || '').split(',')[0]);
-      if (d.price && d.price.max) { el('min').placeholder = 'Min ' + d.cur + d.price.min; el('max').placeholder = 'Max ' + d.cur + d.price.max; }
+      if (d.price && d.price.max) { el('min').placeholder = 'Min ' + moneyHint(d.cur, d.price.min); el('max').placeholder = 'Max ' + moneyHint(d.cur, d.price.max); }
       var fr = panel.querySelector('[data-free]');
       fr.hidden = !d.freeship;
-      if (d.freeship) fr.querySelector('span').textContent = 'Free shipping (' + d.cur + d.freeMin + '+)';
+      if (d.freeship) fr.querySelector('span').textContent = 'Free US shipping (' + moneyHint(d.cur, d.freeMin) + '+)';
     }).catch(function () { panel.querySelector('[data-load]').textContent = 'Filters unavailable — you can still search.'; });
     return loading;
   }
