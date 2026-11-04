@@ -22,6 +22,16 @@ function sa_gpf_register(): void
 }
 add_action('init', 'sa_gpf_register', 20);
 
+/** Apply current image holds to prebuilt chunks without a catalog/cache mutation. */
+function sa_gpf_apply_image_holds(string $chunk): string
+{
+    return (string) preg_replace_callback('#<item>\s*(.*?)</item>#s', static function(array $m): string {
+        // Exact Merchant SKU tags, not substring matches against unrelated descriptions.
+        if (preg_match('#<g:(?:id|mpn)>\s*(?:<!\[CDATA\[)?EBCBSD7801(?:\]\]>)?\s*</g:(?:id|mpn)>#', $m[1])) return '';
+        return $m[0];
+    }, $chunk);
+}
+
 /** Both regional feeds use the store/payment USD currency. Google estimates KES. */
 function sa_gpf_currency(): string
 {
@@ -158,7 +168,7 @@ function sa_gpf_render(bool $for_comments = false): void
                     $chunk
                 );
             }
-            $chunk = sa_gpf_market_links($chunk);
+            $chunk = sa_gpf_market_links(sa_gpf_apply_image_holds($chunk));
             echo $chunk;
         }
         echo "</channel>\n</rss>\n";

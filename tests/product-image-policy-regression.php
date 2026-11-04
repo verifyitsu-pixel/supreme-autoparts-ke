@@ -10,3 +10,5 @@ $GLOBALS['product']=$p;check($GLOBALS['filters']['woocommerce_single_product_ima
 check(!sa_core_product_image_on_hold(new WC_Product(1)));check(sa_core_get_stored_shopify_image_urls(1)===['https://cdn.shopify.com/other.jpg']);
 $s=file_get_contents(__DIR__.'/../wp-content/plugins/supreme-autoparts-core/includes/google-product-feed.php');check(strpos($s,"sa_core_product_image_on_hold(\$product)) return ''")!==false);check(strpos($s,'Merchant Center requires image_link; never substitute a placeholder')!==false);
 echo "PASS $n known-image hold email/product/gallery/feed contracts; unrelated URLs preserved.\n";
+require __DIR__.'/../wp-content/plugins/supreme-autoparts-core/includes/google-product-feed.php';
+$bad='<item><g:id>EBCBSD7801</g:id><g:image_link>bad</g:image_link></item>';$good='<item><g:id>OTHER</g:id><g:description>EBCBSD7801 mentioned only</g:description></item>';check(sa_gpf_apply_image_holds($good.$bad)===$good);check(sa_gpf_apply_image_holds('<item><g:id>ALT</g:id><g:mpn><![CDATA[EBCBSD7801]]></g:mpn></item>')==='');echo "PASS cached-feed exact-SKU removal; unrelated text preserved\n";
