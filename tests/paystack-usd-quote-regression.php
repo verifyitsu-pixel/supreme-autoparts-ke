@@ -65,8 +65,8 @@ ck(Q::matches_transaction($o,'99999_9',1295000,'KES')===false);
 // 7. Per-reference isolation and pruning to the most recent quotes.
 $o=new QOrder('USD',10.00); disp($o);
 for($i=1;$i<=7;$i++){ Q::lock_for_order($o,'80006_'.$i); }
-$kept=$o->meta[SA_Paystack_Charge_Quote::META_KEY]; ck(count($kept)===Q::MAX_KEPT);
-ck(isset($kept['80006_7']) && isset($kept['80006_3']) && !isset($kept['80006_1']) && !isset($kept['80006_2']));
+$kept=$o->meta[SA_Paystack_Charge_Quote::META_KEY]; ck(count($kept)===7);
+ck(isset($kept['80006_7']) && isset($kept['80006_3']) && isset($kept['80006_1']) && isset($kept['80006_2']));
 
 // 8. Gateway receipt capture accepts the locked quote (extracted method, same style as card-display test).
 $source=file_get_contents(__DIR__.'/../wp-content/plugins/woo-paystack/includes/class-wc-gateway-paystack.php');
@@ -190,6 +190,12 @@ $t=Q::token(['usd'=>120,'rate'=>200,'kes'=>24000,'at'=>time()],Q::checkout_scope
 $_POST['sa_paystack_quote_token']=$t; ck(Q::submitted_quote($o,true)!==null); ck(Q::lock_for_order($o,'noBound')===null);
 $o->update_meta_data('_sa_paystack_checkout_token_hash',hash('sha256',$t)); ck(Q::lock_for_order($o,'bound')['charge_amount']===24000.0);
 
+// Both legacy decimal and new random references reach the provider verifier.
+$o=new QOrder('USD',100); disp($o); $ref=Q::new_reference($o->id);Q::lock_for_order($o,$ref);$o->update_meta_data('_paystack_txn_ref',$ref);
+$GLOBALS['verify_order']=new class($o) { private $o;function __construct($o){$this->o=$o;}function get_meta($k){return $this->o->get_meta($k);}function get_payment_method(){return 'paystack';}function get_currency(){return $this->o->get_currency();}function get_total(){return $this->o->get_total();} };
+$GLOBALS['verify_body']=json_encode(['status'=>true,'data'=>['status'=>'success','reference'=>$ref,'amount'=>1295000,'currency'=>'KES','domain'=>'live']]);
+ck($v->get_paystack_transaction($ref)!==false);
+ck($v->get_paystack_transaction($ref.'/bad')===false);
 // Concurrent attempts at an equal clock use distinct provider-safe references.
 $refs=[]; for($i=0;$i<1000;$i++){ $r=Q::new_reference(123); ck((bool)preg_match('/^123_[a-f0-9]{32}$/D',$r)); $refs[$r]=true; }
 ck(count($refs)===1000);

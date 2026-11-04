@@ -1297,6 +1297,11 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 					$order_id      = (int) $order_details[0];
 					$order         = wc_get_order( $order_id );
 
+					if ( ! $this->reconcile_attempt_guard( $order, (string)$paystack_response->data->reference ) ) {
+						wp_safe_redirect( $this->get_return_url( $order ) );
+						exit;
+					}
+
 					if ( in_array( $order->get_status(), array( 'processing', 'completed', 'on-hold' ), true ) ) {
 
 						wp_safe_redirect( $this->get_return_url( $order ) );
@@ -1453,9 +1458,11 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 		$paystack_txn_ref = $order->get_meta( '_paystack_txn_ref' );
 
-		if ( $paystack_response->data->reference !== $paystack_txn_ref ) {
+		if ( $paystack_response->data->reference !== $paystack_txn_ref && !SA_Paystack_Charge_Quote::quote_for_reference( $order, $paystack_response->data->reference ) ) {
 			exit;
 		}
+
+		if ( ! $this->reconcile_attempt_guard( $order, (string)$paystack_response->data->reference ) ) return;
 
 		http_response_code( 200 );
 
@@ -1558,7 +1565,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
     public function store_receipt_payment_details( $order, $response ) {
         $d = $response->data ?? null;
         if (!$d || ($d->status ?? '') !== 'success'
-            || (string) ($d->reference ?? '') !== (string) $order->get_meta('_paystack_txn_ref')
+            || ( (string) ($d->reference ?? '') !== (string) $order->get_meta('_paystack_txn_ref') && !SA_Paystack_Charge_Quote::quote_for_reference($order, (string)($d->reference ?? '')) )
             || !class_exists('SA_Paystack_Charge_Quote')
             || !SA_Paystack_Charge_Quote::matches_transaction($order, (string) ($d->reference ?? ''), $d->amount ?? -1, (string) ($d->currency ?? ''))) {
             return;
@@ -1664,6 +1671,34 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 	}
 
+	/** Serialize settlement callbacks and flag a second paid reference once. */
+	private function reconcile_attempt_guard( $order, string $reference ): bool {
+		$key = 'sa_paystack_reconcile_' . $order->get_id();
+		if ( ! add_option( $key, time(), '', false ) ) {
+			// A parallel callback owns settlement. Ask the webhook sender to retry.
+			http_response_code( 503 );
+			return false;
+		}
+		register_shutdown_function( static function () use ( $key ) { delete_option( $key ); } );
+		// Reload state after the database-backed lock, not before it.
+		$order->get_data_store()->read( $order );
+		$paid = $order->get_transaction_id();
+		if ( $order->is_paid() || in_array( $order->get_status(), array( 'processing', 'completed', 'on-hold' ), true ) ) {
+			if ( $paid && $paid !== $reference ) {
+				$duplicates = $order->get_meta( '_sa_paystack_duplicate_paid_refs' );
+				$duplicates = is_array( $duplicates ) ? $duplicates : array();
+				if ( ! isset( $duplicates[$reference] ) ) {
+					$duplicates[$reference] = time();
+					$order->update_meta_data( '_sa_paystack_duplicate_paid_refs', $duplicates );
+					$order->add_order_note( 'MANUAL PAYMENT REVIEW: an additional verified Paystack payment was received: ' . $reference . '. Original paid reference: ' . $paid . '. Do not fulfill twice. Review the settled payments for a manual refund.' );
+					$order->save();
+				}
+			}
+			return false;
+		}
+		return true;
+	}
+
 	/**
 	 * Supreme: lock the exact server-side charge quote for this transaction reference.
 	 * Returns the minor-unit amount and currency to send to Paystack, or null when no
@@ -1677,6 +1712,13 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 		if ( ! class_exists( 'SA_Paystack_Charge_Quote' ) ) {
 			return null;
 		}
+		// Serialize initialization requests so two tabs cannot lose each other's
+		// recorded quote in a read-modify-write race. A competing request retries.
+		$key = 'sa_paystack_init_' . $order->get_id();
+		if ( ! add_option( $key, time(), '', false ) ) return null;
+		register_shutdown_function( static function () use ( $key ) { delete_option( $key ); } );
+		$order->get_data_store()->read( $order );
+
 		$quote = SA_Paystack_Charge_Quote::lock_for_order( $order, $txnref );
 		if ( ! is_array( $quote ) ) {
 			return null;
@@ -1991,7 +2033,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 	 */
 	private function get_paystack_transaction( $paystack_txn_ref ) {
         // Supreme: fail closed on every callback/webhook. A 200 response alone is not proof of payment.
-        if (!is_string($paystack_txn_ref) || !preg_match('/^[0-9]+_[0-9]+$/', $paystack_txn_ref)) return false;
+        if (!is_string($paystack_txn_ref) || !preg_match('/^[0-9]+_(?:[0-9]+|[a-f0-9]{32})$/D', $paystack_txn_ref)) return false;
         $request = wp_remote_get('https://api.paystack.co/transaction/verify/' . rawurlencode($paystack_txn_ref), [
             'headers'=>['Authorization'=>'Bearer '.$this->secret_key], 'timeout'=>30,
         ]);
@@ -2000,7 +2042,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
         $data = $response->data ?? null;
         if (empty($response->status) || !$data || ($data->status ?? '') !== 'success' || ($data->reference ?? '') !== $paystack_txn_ref) return false;
         $order = wc_get_order((int)explode('_', $paystack_txn_ref)[0]);
-        if (!$order || $order->get_payment_method() !== 'paystack' || $order->get_meta('_paystack_txn_ref') !== $paystack_txn_ref) return false;
+        if (!$order || $order->get_payment_method() !== 'paystack' || ( $order->get_meta('_paystack_txn_ref') !== $paystack_txn_ref && !SA_Paystack_Charge_Quote::quote_for_reference($order, $paystack_txn_ref) )) return false;
         // Supreme: accept only the exact locked charge quote for this reference (converted orders) or the order's own figures.
         if (!class_exists('SA_Paystack_Charge_Quote')) return false;
         if (!SA_Paystack_Charge_Quote::matches_transaction($order, $paystack_txn_ref, $data->amount ?? -1, (string)($data->currency ?? ''))) return false;

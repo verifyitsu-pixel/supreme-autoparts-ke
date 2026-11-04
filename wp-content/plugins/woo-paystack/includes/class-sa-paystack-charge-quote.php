@@ -223,9 +223,7 @@ final class SA_Paystack_Charge_Quote {
 				return ( (int) ( $a['quoted_at'] ?? 0 ) ) <=> ( (int) ( $b['quoted_at'] ?? 0 ) );
 			}
 		);
-		while ( count( $quotes ) > self::MAX_KEPT ) {
-			array_shift( $quotes );
-		}
+		// Never prune unreconciled references: provider callbacks may arrive late.
 		$order->update_meta_data( self::META_KEY, $quotes );
 		return $quote;
 	}
