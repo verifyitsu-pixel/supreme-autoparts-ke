@@ -329,7 +329,9 @@ add_action('admin_post_sa_preview_order_email', static function (): void {
             wp_die(esc_html__('Preview unavailable until this pickup order has its existing pickup code.', 'supreme-autoparts-core'), 400);
         }
         $content = sa_ol_email_content($order, $stage);
-        $html = WC()->mailer()->style_inline($content['html']);
+        $preview_emails = WC()->mailer()->get_emails();
+        $preview_email = $preview_emails['WC_Email_Customer_Processing_Order'] ?? null;
+        $html = $preview_email ? $preview_email->style_inline($content['html']) : $content['html'];
         if (class_exists('SA_Brevo_Mailer')) { $html = SA_Brevo_Mailer::brand_html(SA_Brevo_Mailer::brand_html($html)); }
         nocache_headers();
         header('Content-Type: text/html; charset=utf-8');
