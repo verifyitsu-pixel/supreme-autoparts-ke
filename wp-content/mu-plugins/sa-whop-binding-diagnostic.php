@@ -19,6 +19,20 @@ add_action('admin_menu', static function (): void {
         };
         $company = static function ($value): string { return is_string($value) && preg_match('/^biz_[A-Za-z0-9]+$/D', $value) ? $value : 'unknown'; };
         $r = ['checked_at_utc' => gmdate('c'), 'saved_company' => $company($saved['company_id'] ?? ''), 'effective_company' => $company($g->get_company_id()), 'sandbox' => $g->is_sandbox_mode(), 'read_only' => true, 'external_requests' => false];
+        $source = file_get_contents(WP_PLUGIN_DIR . '/whop-payments/includes/class-wc-gateway-whop.php');
+        $r['new_checkout_selection'] = [
+            'company' => $company($saved['company_id'] ?? ''),
+            'source' => 'saved_woocommerce',
+            'production' => true,
+            'reviewed_supreme_lane_installed' => is_string($source) && strpos($source, "new Whop_Api_Client((string) " . '$saved_profile' . "['api_key'], 'biz_Xeq4CXFxF2Hxk6', false)") !== false,
+            'legacy_getters_preserved' => $g->get_company_id() !== ($saved['company_id'] ?? ''),
+            'test_state_absent' => get_option('sa_whop_signed_product_test_v1', null) === null,
+            'test_lock_absent' => get_option('sa_whop_signed_product_test_v1_lock', null) === null,
+            'test_mu_absent' => !file_exists(WPMU_PLUGIN_DIR . '/sa-whop-signed-product-test.php'),
+            'db_probe_mu_absent' => !file_exists(WPMU_PLUGIN_DIR . '/sa-whop-db-lock-check.php'),
+            'no_real_checkout_or_payment_tested' => true,
+        ];
+        unset($source);
         foreach (['api_key' => ['WHOP_API_KEY', 'get_api_key'], 'webhook_secret' => ['WHOP_WEBHOOK_SECRET', 'get_webhook_secret'], 'company_id' => ['WHOP_COMPANY_ID', 'get_company_id']] as $key => [$variable, $getter]) {
             $s = (string) ($saved[$key] ?? ''); $e = $env($variable); $effective = (string) $g->$getter();
             $r['fields'][$key] = ['saved_present' => $s !== '', 'env_present' => $e !== '', 'effective_present' => $effective !== '', 'source' => $e !== '' ? 'environment' : 'woocommerce', 'saved_equals_effective' => hash_equals($s, $effective)];

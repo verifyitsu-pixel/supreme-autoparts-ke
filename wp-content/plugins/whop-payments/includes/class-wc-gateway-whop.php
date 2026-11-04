@@ -223,6 +223,33 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
             return ['result' => 'failure'];
         }
 
+        global $wpdb;
+        $create_lock = 'sa_whop_create_' . $order->get_id();
+        if ((int) $wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 0)', $create_lock)) !== 1) {
+            wc_add_notice(__('Payment checkout is already being prepared.', 'whop-payments'), 'error');
+            return ['result' => 'failure'];
+        }
+        try {
+        $order = wc_get_order($order_id);
+        if (!$order || $order->is_paid()) return ['result' => 'failure'];
+        // Never replace an existing hosted attempt, including legacy unbound orders.
+        $prior_checkout = (string) $order->get_meta('_whop_checkout_id');
+        if ($prior_checkout !== '') {
+            $prior_url = (string) $order->get_meta('_whop_purchase_url');
+            if (class_exists('Whop_Checkout_Embed') && Whop_Checkout_Embed::is_allowed_whop_url($prior_url) && preg_match('/^(?:ch_|chs_)[A-Za-z0-9]+$/D', $prior_checkout) && parse_url($prior_url, PHP_URL_PATH) === '/checkout/' . $prior_checkout . '/' && !parse_url($prior_url, PHP_URL_QUERY) && !parse_url($prior_url, PHP_URL_FRAGMENT)) return ['result' => 'success', 'redirect' => $prior_url];
+            wc_add_notice(__('This existing payment attempt needs review. No new checkout was created.', 'whop-payments'), 'error');
+            return ['result' => 'failure'];
+        }
+        if ($order->get_meta('_sa_whop_new_profile_started') !== '' || $order->get_meta('_whop_plan_id') !== '' || $order->get_meta('_whop_purchase_url') !== '') {
+            wc_add_notice(__('This payment attempt needs review. No duplicate checkout was created.', 'whop-payments'), 'error');
+            return ['result' => 'failure'];
+        }
+        $saved_profile = get_option('woocommerce_whop_settings', []);
+        if (!is_array($saved_profile) || ($saved_profile['company_id'] ?? '') !== 'biz_Xeq4CXFxF2Hxk6' || empty($saved_profile['api_key']) || empty($saved_profile['webhook_secret'])) {
+            wc_add_notice(__('Supreme payment configuration needs review.', 'whop-payments'), 'error');
+            return ['result' => 'failure'];
+        }
+
         // Whop always charges/settles in USD (plan currency). Store base is USD;
         // sa-geo-currency only converts display — rebase if order currency ever drifts.
         $charge = self::resolve_usd_charge($order);
@@ -243,7 +270,12 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
             ];
         }
 
-        $client = $this->client();
+        $client = new Whop_Api_Client((string) $saved_profile['api_key'], 'biz_Xeq4CXFxF2Hxk6', false);
+        // Pin before the external create, so an ambiguous network result cannot duplicate it.
+        $order->update_meta_data('_sa_whop_new_profile_started', 'supreme_saved_v1');
+        $order->update_meta_data('_sa_whop_profile_id', 'supreme_saved_v1');
+        $order->update_meta_data('_sa_whop_account_id', 'biz_Xeq4CXFxF2Hxk6');
+        $order->save();
         $return = Whop_Webhook::return_url($order);
         $order_num = (string) $order->get_order_number();
         $plan_title = Whop_Api_Client::default_order_plan_title($order_num);
@@ -267,6 +299,7 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
             'customer_name'  => trim($order->get_formatted_billing_full_name()),
             'adaptive_pricing_enabled' => true,
             'metadata'       => [
+                'sa_whop_profile'    => 'supreme_saved_v1',
                 'charged_usd'       => (string) $amount,
                 'display_currency'  => (string) $charge['display_currency'],
                 'display_total'     => (string) $charge['display_total'],
@@ -281,6 +314,25 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
             return ['result' => 'failure'];
         }
 
+        $created_id = (string) ($result['checkout_id'] ?? '');
+        $created_plan = (string) ($result['plan_id'] ?? '');
+        $created_url = (string) ($result['purchase_url'] ?? '');
+        $created_raw = is_array($result['raw'] ?? null) ? $result['raw'] : [];
+        $returned_account = ''; $account_aliases_valid = true;
+        foreach (['account_id', 'company_id'] as $field) {
+            if (!array_key_exists($field, $created_raw)) continue;
+            $alias = $created_raw[$field];
+            if (!is_string($alias) || $alias !== 'biz_Xeq4CXFxF2Hxk6' || ($returned_account !== '' && !hash_equals($returned_account, $alias))) $account_aliases_valid = false;
+            else $returned_account = $alias;
+        }
+        unset($created_raw, $alias);
+
+        if (!preg_match('/^ch_[A-Za-z0-9]+$/D', $created_id) || !preg_match('/^plan_[A-Za-z0-9]+$/D', $created_plan) || !$account_aliases_valid || $returned_account !== 'biz_Xeq4CXFxF2Hxk6' || !class_exists('Whop_Checkout_Embed') || !Whop_Checkout_Embed::is_allowed_whop_url($created_url) || parse_url($created_url, PHP_URL_HOST) !== 'whop.com' || parse_url($created_url, PHP_URL_PATH) !== '/checkout/' . $created_id . '/' || parse_url($created_url, PHP_URL_QUERY) || parse_url($created_url, PHP_URL_FRAGMENT)) {
+            wc_add_notice(__('Created checkout needs review. No payment link was published.', 'whop-payments'), 'error');
+            return ['result' => 'failure'];
+        }
+        $order->update_meta_data('_sa_whop_bound_checkout_id', $created_id);
+        $order->update_meta_data('_sa_whop_bound_plan_id', $created_plan);
         $order->set_currency('USD');
         $order->update_meta_data('_whop_checkout_id', (string) $result['checkout_id']);
         $order->update_meta_data('_whop_plan_id', (string) ($result['plan_id'] ?? ''));
@@ -331,6 +383,7 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
             'result'   => 'success',
             'redirect' => Whop_Checkout_Embed::pay_url($order),
         ];
+        } finally { $wpdb->get_var($wpdb->prepare('SELECT RELEASE_LOCK(%s)', $create_lock)); }
     }
 
     public function thankyou_page($order_id): void {

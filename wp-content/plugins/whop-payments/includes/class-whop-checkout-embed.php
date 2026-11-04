@@ -344,7 +344,7 @@ final class Whop_Checkout_Embed {
 
         wp_localize_script('sa-whop-checkout-embed', 'saWhopCheckoutEmbed', [
             'customPay'  => self::custom_pay_enabled() ? '1' : '',
-            'accountId'  => self::company_id(),
+            'accountId'  => $order->get_meta('_sa_whop_profile_id') === 'supreme_saved_v1' && $order->get_meta('_sa_whop_account_id') === 'biz_Xeq4CXFxF2Hxk6' ? 'biz_Xeq4CXFxF2Hxk6' : self::company_id(),
             'orderTotal' => html_entity_decode(wp_strip_all_tags($order->get_formatted_order_total()), ENT_QUOTES, 'UTF-8'),
             'planId'     => (string) $order->get_meta('_whop_plan_id'),
             'sessionId'  => (string) $order->get_meta('_whop_checkout_id'),

@@ -75,7 +75,20 @@ final class Whop_Webhook {
             exit;
         }
 
+        // Untrusted parsing selects only a candidate verifier. It cannot authorize effects.
+        $candidate = json_decode($raw, true);
+        $candidate_data = is_array($candidate['data'] ?? null) ? $candidate['data'] : [];
+        $candidate_meta = is_array($candidate_data['metadata'] ?? null) ? $candidate_data['metadata'] : (is_array($candidate['metadata'] ?? null) ? $candidate['metadata'] : []);
+        $candidate_order = !empty($candidate_meta['order_id']) ? wc_get_order(absint($candidate_meta['order_id'])) : false;
+        $supreme_lane = $candidate_order && $candidate_order->get_meta('_sa_whop_profile_id') === 'supreme_saved_v1';
         $secret = $gateway->get_webhook_secret();
+        if ($supreme_lane) {
+            $saved = get_option('woocommerce_whop_settings', []);
+            if (!is_array($saved) || ($saved['company_id'] ?? '') !== 'biz_Xeq4CXFxF2Hxk6' || empty($saved['webhook_secret']) || $candidate_order->get_meta('_sa_whop_account_id') !== 'biz_Xeq4CXFxF2Hxk6' || ($candidate['type'] ?? '') !== 'payment.succeeded' || ($candidate_meta['sa_whop_profile'] ?? '') !== 'supreme_saved_v1') {
+                status_header(422); echo 'profile_requires_review'; exit;
+            }
+            $secret = (string) $saved['webhook_secret'];
+        }
         $id     = $headers['webhook-id'] ?? '';
         $ts     = $headers['webhook-timestamp'] ?? '';
         $sig    = $headers['webhook-signature'] ?? '';
@@ -137,12 +150,20 @@ final class Whop_Webhook {
         $company    = (string) ($event['company_id'] ?? $event['account_id'] ?? $data['company_id'] ?? '');
         $purpose    = (string) ($metadata['purpose'] ?? '');
 
-        $expected_company = $gateway->get_company_id();
+        $expected_company = $supreme_lane ? 'biz_Xeq4CXFxF2Hxk6' : $gateway->get_company_id();
         $company = $company !== '' ? $company : (string) ($data['company']['id'] ?? $data['account_id'] ?? '');
         if ($expected_company === '' || $company === '' || !hash_equals($expected_company, $company)) {
             status_header(403);
             echo 'company_mismatch';
             exit;
+        }
+
+        if ($supreme_lane) {
+            // Reject conflicting signed account aliases, even when one equals Supreme.
+            foreach ([$event['company_id'] ?? null, $event['account_id'] ?? null, $data['company_id'] ?? null, $data['account_id'] ?? null, $data['company']['id'] ?? null] as $alias) {
+                if ($alias !== null && (!is_string($alias) || !hash_equals('biz_Xeq4CXFxF2Hxk6', $alias))) { status_header(403); echo 'company_mismatch'; exit; }
+            }
+            if ($purpose !== '' || $candidate_order->get_payment_method() !== 'whop') { status_header(422); echo 'profile_purpose_mismatch'; exit; }
         }
 
         // My Account $0.50 verify fee — no Woo order; sync saved payment method to WP user.
@@ -254,7 +275,7 @@ final class Whop_Webhook {
         }
 
         $buyer_user = (int) $order->get_user_id();
-        if ($buyer_user && class_exists('Whop_Payment_Methods')) {
+        if (!$supreme_lane && $buyer_user && class_exists('Whop_Payment_Methods')) {
             // Soft sync — reconcile Whop wallet after a successful charge.
             Whop_Payment_Methods::sync_user_payment_methods($buyer_user);
         }
@@ -271,6 +292,8 @@ final class Whop_Webhook {
      */
     public static function payment_validation_error(array $data, array $metadata, $order): string {
         if ($order->get_payment_method() !== 'whop') return 'gateway_mismatch';
+        if ($order->get_meta('_sa_whop_profile_id') === 'supreme_saved_v1' && ($order->get_meta('_sa_whop_account_id') !== 'biz_Xeq4CXFxF2Hxk6' || ($metadata['sa_whop_profile'] ?? '') !== 'supreme_saved_v1')) return 'profile_mismatch';
+        if ($order->get_meta('_sa_whop_profile_id') === 'supreme_saved_v1' && ($order->get_meta('_sa_whop_bound_checkout_id') !== $order->get_meta('_whop_checkout_id') || $order->get_meta('_sa_whop_bound_plan_id') !== $order->get_meta('_whop_plan_id'))) return 'immutable_binding_mismatch';
         if ((string) ($metadata['order_id'] ?? '') !== (string) $order->get_id()) return 'order_mismatch';
         if (!hash_equals($order->get_order_key(), (string) ($metadata['order_key'] ?? ''))) return 'order_key_mismatch';
         if (!preg_match('/^pay_[A-Za-z0-9]+$/', (string) ($data['id'] ?? ''))) return 'payment_id_missing';
