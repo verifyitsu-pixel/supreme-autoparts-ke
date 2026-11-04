@@ -151,6 +151,9 @@ $sa_chev       = '<svg class="sa-foot__chev" viewBox="0 0 24 24" width="18" heig
               ['file' => 'paypal.svg',     'label' => 'PayPal',            'w' => 40, 'h' => 26],
               ['file' => 'apple-pay.svg',  'label' => 'Apple Pay',         'w' => 40, 'h' => 26],
               ['file' => 'google-pay.svg', 'label' => 'Google Pay',        'w' => 52, 'h' => 26],
+              ['file' => 'mpesa.svg', 'label' => 'M-Pesa', 'w' => 52, 'h' => 26],
+              ['file' => 'airtel.svg', 'label' => 'Airtel Money', 'w' => 40, 'h' => 26],
+              ['file' => 'bank-transfer.svg', 'label' => 'Bank transfer', 'w' => 72, 'h' => 26],
           ];
           $sa_pay_base = trailingslashit(SA_THEME_URI) . 'assets/images/payments/';
           foreach ($sa_pay_logos as $sa_pay) :
