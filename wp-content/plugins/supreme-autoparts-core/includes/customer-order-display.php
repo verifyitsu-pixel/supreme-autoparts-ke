@@ -46,6 +46,10 @@ function sa_cod_item_thumb_html($item, int $size = 64): string
     $url = function_exists('sa_core_get_product_email_image_url')
         ? sa_core_get_product_email_image_url($product, max(64, $size * 2))
         : '';
+    if ($url === '' && $product->is_type('variation') && $product->get_parent_id()) {
+        $parent = wc_get_product($product->get_parent_id());
+        $url = $parent ? sa_core_get_product_email_image_url($parent, max(64, $size * 2)) : '';
+    }
     if ($url === '') {
         return '';
     }
@@ -177,6 +181,16 @@ add_action('woocommerce_my_account_my_orders_column_sa-order-items', static func
  * Show card brand + last4 for Whop orders (from stored webhook/import meta).
  */
 add_filter('woocommerce_order_get_payment_method_title', static function ($title, $order) {
+    if ($order instanceof WC_Order && $order->get_payment_method() === 'paystack') {
+        $last4 = (string) $order->get_meta('_sa_paystack_card_last4');
+        $brand = (string) $order->get_meta('_sa_paystack_card_brand');
+        if (preg_match('/^[0-9]{4}$/D', $last4)) {
+            $allowed = ['Visa','Mastercard','American Express','Verve','Discover','UnionPay','Card'];
+            $brand = in_array($brand, $allowed, true) ? $brand : 'Card';
+            return sprintf('%s ending in %s (Paystack)', $brand, $last4);
+        }
+        return $title;
+    }
     if (!$order instanceof WC_Order || $order->get_payment_method() !== 'whop') {
         return $title;
     }

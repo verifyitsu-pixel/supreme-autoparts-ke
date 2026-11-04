@@ -1342,3 +1342,14 @@ body.woocommerce-checkout #payment.sa-checkout-payment ul.payment_methods > li {
   .sa-checkout-layout__summary { grid-column:1; grid-row:2; order:2; }
   .sa-checkout-layout > .sa-checkout-section--agreements { grid-column:1; grid-row:3; order:3; }
 }
+
+/* Order reminder: authentic product images, uncropped and large enough to identify. */
+.sa-order-reminder__item { display:flex; align-items:center; gap:16px; min-width:0; text-align:left; }
+.sa-order-reminder__item > div { min-width:0; overflow-wrap:anywhere; }
+.sa-order-reminder__photo-wrap { display:flex; align-items:center; justify-content:center; flex:0 0 112px; width:112px; height:112px; background:#fff; border:1px solid #e5e5e5; border-radius:8px; padding:6px; }
+.sa-order-reminder__photo-wrap img { width:100%!important; height:100%!important; object-fit:contain; margin:0!important; }
+@media(max-width:600px) { .sa-order-reminder__item { flex-direction:column; align-items:flex-start; gap:10px; } .sa-order-reminder__photo-wrap { flex-basis:auto; width:88px; height:88px; } .sa-order-reminder table td,.sa-order-reminder table th { padding:10px 6px; } }
+
+.sa-experience{text-align:left}.sa-experience h2{font-size:26px}.sa-experience fieldset{border:0;padding:0;margin:24px 0}.sa-experience__stars{display:flex;gap:8px;flex-wrap:wrap}.sa-experience__stars label{position:relative;display:flex;align-items:center;justify-content:center;width:52px;height:56px;cursor:pointer;border:1px solid #777;border-radius:8px;background:#fff;color:#777}.sa-experience__stars input{position:absolute;opacity:0;inset:0;width:100%;height:100%;cursor:pointer}.sa-experience__stars span[aria-hidden]{font-size:38px;line-height:1}.sa-experience__stars label.is-selected{color:#a35e00;border-color:#a35e00;background:#fff5df}.sa-experience__stars label:focus-within{outline:3px solid #111;outline-offset:3px}.sa-experience textarea{display:block;width:100%;box-sizing:border-box;margin:10px 0;padding:12px;border:1px solid #777;border-radius:6px;font:inherit}.sa-experience__privacy{font-size:13px;color:#555}.sa-experience__result{min-height:24px}.sa-experience .sa-btn{margin-top:10px}
+
+.sa-experience button.sa-btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 20px;border:1px solid #111;border-radius:6px;background:#111;color:#fff;font-family:inherit;font-size:16px;font-weight:600;line-height:1.3;cursor:pointer}.sa-experience button.sa-btn:focus-visible{outline:3px solid #a35e00;outline-offset:3px}.sa-experience button.sa-btn:disabled{opacity:.6;cursor:wait}

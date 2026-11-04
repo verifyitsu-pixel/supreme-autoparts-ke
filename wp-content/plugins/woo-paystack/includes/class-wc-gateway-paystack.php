@@ -1139,6 +1139,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 						} else {
 
+							$this->store_receipt_payment_details( $order, $paystack_response );
 							$order->payment_complete( $paystack_ref );
 
 							/* translators: %s: Paystack transaction reference. */
@@ -1317,6 +1318,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 						} else {
 
+							$this->store_receipt_payment_details( $order, $paystack_response );
 							$order->payment_complete( $paystack_ref );
 							/* translators: %s: Paystack transaction reference. */
 							$order->add_order_note( sprintf( __( 'Payment via Paystack successful (Transaction Reference: %s)', 'woo-paystack' ), $paystack_ref ) );
@@ -1477,7 +1479,8 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 			} else {
 
-				$order->payment_complete( $paystack_ref );
+				$this->store_receipt_payment_details( $order, $paystack_response );
+							$order->payment_complete( $paystack_ref );
 
 				/* translators: %s: Paystack transaction reference. */
 				$order->add_order_note( sprintf( __( 'Payment via Paystack successful (Transaction Reference: %s)', 'woo-paystack' ), $paystack_ref ) );
@@ -1496,6 +1499,27 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 		exit;
 	}
+
+    /** Store only display-safe details from a verified successful, matching transaction. */
+    public function store_receipt_payment_details( $order, $response ) {
+        $d = $response->data ?? null;
+        if (!$d || ($d->status ?? '') !== 'success'
+            || (string) ($d->reference ?? '') !== (string) $order->get_meta('_paystack_txn_ref')
+            || strtoupper((string) ($d->currency ?? '')) !== $order->get_currency()
+            || (int) ($d->amount ?? 0) !== (int) round((float) $order->get_total() * 100)) {
+            return;
+        }
+        $auth = $d->authorization ?? null;
+        $channel = (string) ($d->channel ?? ($auth->channel ?? ''));
+        if ($channel !== 'card' || !$auth) { return; }
+        $last4 = (string) ($auth->last4 ?? '');
+        $brand = strtolower(trim((string) ($auth->brand ?? ($auth->card_type ?? ''))));
+        if (!preg_match('/^[0-9]{4}$/D', $last4)) { return; }
+        $brands = ['visa'=>'Visa','mastercard'=>'Mastercard','master card'=>'Mastercard','mastercard debit'=>'Mastercard','visa debit'=>'Visa','american express'=>'American Express','amex'=>'American Express','verve'=>'Verve','discover'=>'Discover','unionpay'=>'UnionPay'];
+        $order->update_meta_data('_sa_paystack_card_last4', $last4);
+        $order->update_meta_data('_sa_paystack_card_brand', $brands[$brand] ?? 'Card');
+        // payment_complete persists these safe fields before customer email hooks run.
+    }
 
 	/**
 	 * Save Customer Card Details.

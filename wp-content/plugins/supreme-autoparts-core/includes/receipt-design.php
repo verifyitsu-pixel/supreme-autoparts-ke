@@ -180,7 +180,11 @@ function sa_rcpt_order_data($order): array
     foreach ($order->get_items() as $item) {
         $p = is_callable([$item, 'get_product']) ? $item->get_product() : null;
         $qty = max(1, (int) $item->get_quantity());
-        $thumb = ($p instanceof WC_Product && function_exists('sa_core_get_product_email_image_url')) ? (string) sa_core_get_product_email_image_url($p, 160) : '';
+        $thumb = ($p instanceof WC_Product && function_exists('sa_core_get_product_email_image_url')) ? (string) sa_core_get_product_email_image_url($p, 320) : '';
+        if ($thumb === '' && $p instanceof WC_Product && $p->is_type('variation') && $p->get_parent_id()) {
+            $parent = wc_get_product($p->get_parent_id());
+            $thumb = $parent ? sa_core_get_product_email_image_url($parent, 320) : '';
+        }
         $meta = [];
         if ($p instanceof WC_Product && $p->get_sku() !== '') {
             $meta[] = 'Part # ' . $p->get_sku();
@@ -309,8 +313,8 @@ function sa_rcpt_items_html(array $items, string $mode, string $font, string $it
             $src = sa_rcpt_img_data($src);
         }
         $img = $src !== ''
-            ? '<img src="' . ($pdf ? esc_attr($src) : esc_url($src)) . '" width="56" height="56" alt=""' . ($mode === 'page' ? ' onerror="this.style.visibility=\'hidden\'"' : '') . ' style="display:block;width:56px;height:56px;object-fit:contain;border:1px solid ' . SA_RCPT_LINE . ';background:#ffffff">'
-            : '<div style="width:56px;height:56px;border:1px solid ' . SA_RCPT_LINE . ';background:#F7F7F7"></div>';
+            ? '<img src="' . ($pdf ? esc_attr($src) : esc_url($src)) . '" width="88" height="88" alt=""' . ($mode === 'page' ? ' onerror="this.style.visibility=\'hidden\'"' : '') . ' style="display:block;width:88px;height:88px;object-fit:contain;border:1px solid ' . SA_RCPT_LINE . ';background:#ffffff">'
+            : '<div style="width:88px;height:88px;border:1px solid ' . SA_RCPT_LINE . ';background:#F7F7F7"></div>';
         $nothumb = !empty($it['no_thumb']);
         if ($nothumb) {
             $img = '';
@@ -321,7 +325,7 @@ function sa_rcpt_items_html(array $items, string $mode, string $font, string $it
         }
         $sm = '<div class="sa-show-sm" style="display:none;mso-hide:all;max-height:0;overflow:hidden;font-size:12px;color:' . SA_RCPT_MUTED . ';margin-top:4px">' . esc_html($it['qty']) . ' × ' . wp_kses_post($it['unit']) . '</div>';
         $h .= '<tr class="sa-row">'
-            . '<td style="' . $td . ($nothumb ? 'width:0;padding:0' : 'width:68px;padding-right:12px') . '">' . $img . '</td>'
+            . '<td style="' . $td . ($nothumb ? 'width:0;padding:0' : 'width:100px;padding-right:12px') . '">' . $img . '</td>'
             . '<td style="' . $td . 'font-size:14px;line-height:1.45;color:' . SA_RCPT_INK . '"><div style="font-weight:600">' . esc_html($it['name']) . '</div>' . $meta . ($pdf ? '' : $sm) . '</td>'
             . '<td class="sa-hide-sm" style="' . $td . 'font-size:14px;text-align:right;font-variant-numeric:tabular-nums;color:#333333">' . esc_html($it['qty']) . '</td>'
             . '<td class="sa-hide-sm" style="' . $td . 'font-size:14px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#333333">' . wp_kses_post($it['unit']) . '</td>'

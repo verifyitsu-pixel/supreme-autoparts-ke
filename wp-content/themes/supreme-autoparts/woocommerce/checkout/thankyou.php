@@ -49,10 +49,10 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
       $pending  = $order->has_status(['pending', 'on-hold']);
       $eyebrow  = $paid ? __('Order confirmed', 'supreme-autoparts') : __('Order received', 'supreme-autoparts');
       $heading  = $paid
-          ? __('Thank you - payment received', 'supreme-autoparts')
+          ? __('Your next fix starts here.', 'supreme-autoparts')
           : __('Payment confirmation pending', 'supreme-autoparts');
       $lead = $paid
-          ? __('Your payment is confirmed. Your order details and chosen shipping method are below. We will keep you updated by email.', 'supreme-autoparts')
+          ? __('Payment received. Thank you for choosing Supreme Autoparts. Keep this one for the garage: your parts, payment and delivery details are all below.', 'supreme-autoparts')
           : __('If you just paid, confirmation can take a few seconds. Refresh this page if the status does not update.', 'supreme-autoparts');
       ?>
       <div class="sa-thankyou__card<?php echo $paid ? ' sa-thankyou__card--success' : ''; ?>">
@@ -117,7 +117,10 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
         <h2 id="sa-order-reminder-title"><?php esc_html_e('Your order details', 'supreme-autoparts'); ?></h2>
         <table class="shop_table"><thead><tr><th>Item</th><th>Quantity</th><th>Total</th></tr></thead><tbody>
         <?php foreach ($order->get_items() as $item) : ?>
-          <tr><td><?php echo esc_html($item->get_name()); ?><?php echo wc_display_item_meta($item, ['echo'=>false]); ?></td><td><?php echo esc_html((string) $item->get_quantity()); ?></td><td><?php echo wp_kses_post($order->get_formatted_line_subtotal($item)); ?></td></tr>
+          <?php
+          $sa_order_photo = function_exists('sa_cod_item_thumb_html') ? sa_cod_item_thumb_html($item, 112) : '';
+          ?>
+          <tr><td><div class="sa-order-reminder__item"><?php if ($sa_order_photo !== '') : ?><span class="sa-order-reminder__photo-wrap"><?php echo wp_kses_post($sa_order_photo); ?></span><?php endif; ?><div><?php echo esc_html($item->get_name()); ?><?php echo wc_display_item_meta($item, ['echo'=>false]); ?></div></div></td><td><?php echo esc_html((string) $item->get_quantity()); ?></td><td><?php echo wp_kses_post($order->get_formatted_line_subtotal($item)); ?></td></tr>
         <?php endforeach; ?>
         </tbody><tfoot>
         <?php foreach ($order->get_order_item_totals() as $total) : ?>
@@ -136,6 +139,7 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
         <?php endif; ?>
       </section>
 
+      <?php if (function_exists('sa_order_experience_form')) { echo sa_order_experience_form($order); } ?>
       <div class="sa-thankyou__card sa-thankyou__card--actions">
         <?php /* Rock 2026-10-17: one clear next action. Receipt/invoice/order details are in
                  My Account > Orders once logged in; WhatsApp is the inline link above. */ ?>

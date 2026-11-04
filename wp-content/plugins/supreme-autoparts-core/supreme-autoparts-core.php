@@ -54,6 +54,7 @@ require_once SA_CORE_DIR . 'includes/order-emails.php';
 require_once SA_CORE_DIR . 'includes/receipt-design.php';
 require_once SA_CORE_DIR . 'includes/invoices.php';
 require_once SA_CORE_DIR . 'includes/customer-order-display.php';
+require_once SA_CORE_DIR . 'includes/order-experience.php';
 require_once SA_CORE_DIR . 'includes/admin-ultra.php';
 require_once SA_CORE_DIR . 'includes/admin-dashboard.php';
 require_once SA_CORE_DIR . 'includes/admin-orders.php';
