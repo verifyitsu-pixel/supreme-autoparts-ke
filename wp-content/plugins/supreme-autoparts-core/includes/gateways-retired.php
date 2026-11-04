@@ -195,7 +195,11 @@ add_action('template_redirect', static function () {
     }
     // Remember the last payment method (cookie set when an order is placed); default card.
     $last = isset($_COOKIE['sa_last_pm']) ? sanitize_key(wp_unslash((string) $_COOKIE['sa_last_pm'])) : '';
-    WC()->session->set('chosen_payment_method', in_array($last, ['whop', 'pesapal'], true) ? $last : 'whop');
+    // Latest owner instruction: Paystack is the initial selection where available.
+    // AJAX is excluded above so an explicit customer choice survives refreshes.
+    $available = WC()->payment_gateways()->get_available_payment_gateways();
+    $default = isset($available['paystack']) ? 'paystack' : (isset($available['pesapal']) ? 'pesapal' : array_key_first($available));
+    if ($default) WC()->session->set('chosen_payment_method', $default);
 });
 
 /* Remember the payment method the customer used on their last order (1 year). */
