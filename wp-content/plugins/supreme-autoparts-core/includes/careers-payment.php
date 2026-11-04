@@ -3,7 +3,7 @@
 declare(strict_types=1);
 defined('ABSPATH') || exit;
 function sa_careers_fee_disclosure(): string {
-    return 'Application fee: KES 1,000, non-refundable. After saving your application, continue to Paystack checkout. Payment does not guarantee an interview or employment.';
+    return 'Application fee: KES 1,000. After saving your application, continue to Paystack checkout. Payment does not guarantee an interview or employment.';
 }
 function sa_careers_fee_order(string $source, int $entry_id, string $name, string $email) {
     if (!in_array($source,['forminator','native'],true) || $entry_id < 1 || !is_email($email) || !function_exists('wc_create_order')) return new WP_Error('unavailable','Your application is saved, but payment is unavailable. Please contact us before applying again.');
@@ -14,7 +14,7 @@ function sa_careers_fee_order(string $source, int $entry_id, string $name, strin
     try {
         $o=wc_create_order(['status'=>'pending','customer_id'=>0,'created_via'=>'sa_careers_fee']);
         if(is_wp_error($o))return $o;
-        $item=new WC_Order_Item_Fee();$item->set_name('Job application fee (non-refundable)');$item->set_total(1000);$item->set_tax_status('none');$o->add_item($item);
+        $item=new WC_Order_Item_Fee();$item->set_name('Job application fee');$item->set_total(1000);$item->set_tax_status('none');$o->add_item($item);
         $o->set_currency('KES');$o->set_billing_email($email);$o->set_billing_first_name($name);$o->set_billing_country('KE');$o->set_payment_method('paystack');$o->set_payment_method_title('Paystack (KES)');
         $o->update_meta_data('_sa_careers_source',$source);$o->update_meta_data('_sa_careers_entry',$entry_id);$o->update_meta_data('_sa_careers_fee_disclosure',sa_careers_fee_disclosure());$o->update_meta_data('_sa_native_currency','KES');
         $o->calculate_totals(false);$o->set_total(1000);$o->save();update_option($key,$o->get_id(),false);return $o;
@@ -32,7 +32,7 @@ function sa_careers_form_response(array $response,int $form_id): array {
     if((int)$e->form_id!==$form_id || !empty($e->is_spam) || in_array((string)($e->status??'active'),['spam','draft','abandoned'],true))return $response;
     $o=sa_careers_fee_order('forminator',(int)$e->entry_id,sanitize_text_field((string)$e->get_meta('name-1','')),sanitize_email((string)$e->get_meta('email-1','')));
     if(is_wp_error($o)){$response['success']=false;$response['message']=$o->get_error_message();unset($response['url'],$response['redirect']);return $response;}
-    $response['url']=$o->get_checkout_payment_url();$response['redirect']=true;$response['newtab']='sametab';$response['behav']='behaviour-redirect';$response['message']='Application saved. Continue to Paystack to pay the KES 1,000 non-refundable application fee.';return $response;
+    $response['url']=$o->get_checkout_payment_url();$response['redirect']=true;$response['newtab']='sametab';$response['behav']='behaviour-redirect';$response['message']='Application saved. Continue to Paystack to pay the KES 1,000 application fee.';return $response;
 }
 add_filter('forminator_form_ajax_submit_response','sa_careers_form_response',30,2);
 add_filter('forminator_form_submit_response','sa_careers_form_response',30,2);
@@ -49,7 +49,7 @@ add_action('woocommerce_payment_complete',static function($id){
 // Fixed-fee orders never use the catalogue/cart FX quote in gateway copy.
 add_filter('woocommerce_gateway_description',static function($description,$id){
     if($id!=='paystack' || !function_exists('is_wc_endpoint_url') || !is_wc_endpoint_url('order-pay'))return $description;
-    $o=wc_get_order(absint(get_query_var('order-pay')));return $o && $o->get_meta('_sa_careers_source') ? 'Pay the KES 1,000 non-refundable application fee securely with Paystack. Payment does not guarantee an interview or employment.' : $description;
+    $o=wc_get_order(absint(get_query_var('order-pay')));return $o && $o->get_meta('_sa_careers_source') ? 'Pay the KES 1,000 application fee securely with Paystack. Payment does not guarantee an interview or employment.' : $description;
 },999,2);
 
 add_action('woocommerce_admin_order_data_after_order_details',static function($o){
@@ -63,7 +63,7 @@ function sa_careers_fee_email_content($o,string $stage): array {
         'failed'=>['Application fee payment not confirmed','We do not have a successful payment confirmation. If your bank shows a debit, contact us before trying again.'],
         'cancelled'=>['Application fee payment cancelled','This application fee payment order has been cancelled.'],
         'refunded'=>['Application fee refund update','A refund is recorded on your payment order. This does not confirm that your bank has credited the money.'],
-        'completed'=>['Application fee payment received','Your KES 1,000 non-refundable application fee payment is recorded as complete. Payment does not guarantee an interview or employment.'],
+        'completed'=>['Application fee payment received','Your KES 1,000 application fee payment is recorded as complete. Payment does not guarantee an interview or employment.'],
     ];
     if(!isset($copy[$stage]))return [];
     [$heading,$body]=$copy[$stage];$subject=$heading.' #'.$o->get_order_number();

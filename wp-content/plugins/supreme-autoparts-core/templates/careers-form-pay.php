@@ -19,6 +19,8 @@ defined( 'ABSPATH' ) || exit;
 
 $totals = $order->get_order_item_totals();
 unset($totals['cart_subtotal']);
+// Present current policy without rewriting any historical order record.
+foreach($totals as &$total){$total['label']=str_ireplace(' (non-refundable)','',$total['label']);}unset($total);
 if(isset($available_gateways['paystack']))$available_gateways['paystack']->chosen=true;
 ?>
 <style>.sa-careers-payment .payment_methods{list-style:none;padding:0}.sa-careers-payment .payment_methods>li{padding:14px 0;border-bottom:1px solid #e2e7eb}.sa-careers-payment .payment_methods label{display:inline;font-weight:700}.sa-careers-payment .payment_methods img{max-height:28px;width:auto!important;max-width:130px;vertical-align:middle}.sa-careers-payment .payment_box{font-size:14px;line-height:1.6;color:#52606d}.sa-careers-payment #place_order{width:100%;padding:15px 20px;background:#ffba35!important;color:#101820!important;border:0;border-radius:8px;font-weight:800;white-space:normal}.sa-careers-payment .shop_table{width:100%;border-collapse:collapse}.sa-careers-payment .shop_table th,.sa-careers-payment .shop_table td{padding:14px 8px;border-bottom:1px solid #e2e7eb;text-align:left}@media(max-width:600px){.sa-careers-payment{padding:20px 16px!important}.sa-careers-payment .shop_table th,.sa-careers-payment .shop_table td{font-size:14px!important;padding:12px 4px!important}}</style>

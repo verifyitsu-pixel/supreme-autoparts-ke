@@ -7,7 +7,7 @@ if (!$order->get_date_paid() || !$order->is_paid()) {
 }
 // Application fees are not shipped goods. Keep the same family, with purpose-specific copy.
 if ($order->get_meta('_sa_careers_source') && function_exists('sa_customer_mail_layout')) {
-    echo sa_customer_mail_layout('Application fee payment received', '<p>'.sa_email_greeting($order).'</p><p>We have received your KES 1,000 non-refundable job application fee.</p><p>Payment reference: <strong>'.esc_html($order->get_order_number()).'</strong>.</p><p>Your application is saved. Payment does not guarantee an interview or employment.</p>', 'View payment receipt', $order->get_checkout_order_received_url(), 'Your job application fee payment receipt', '', 'KE');
+    echo sa_customer_mail_layout('Application fee payment received', '<p>'.sa_email_greeting($order).'</p><p>We have received your KES 1,000 job application fee.</p><p>Payment reference: <strong>'.esc_html($order->get_order_number()).'</strong>.</p><p>Your application is saved. Payment does not guarantee an interview or employment.</p>', 'View payment receipt', $order->get_checkout_order_received_url(), 'Your job application fee payment receipt', '', 'KE');
     return;
 }
 $d = sa_rcpt_order_data($order);
