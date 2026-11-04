@@ -30,7 +30,7 @@ function sa_careers_review_render(): void {
         foreach(sa_careers_attendance_labels()as$value=>$label)echo '<option value="'.esc_attr($value).'" '.selected($status,$value,false).'>'.esc_html($label).'</option>';
         echo '</select> <button class="button">Save record</button>';
         if(!empty($record['at']))echo '<br><small>Updated '.esc_html((string)$record['at']).' by user #'.esc_html((string)($record['by']??'')).'</small>';
-        echo '</form></td></tr>';
+        echo '</form>'; sa_careers_confirmation_control($e); echo '</td></tr>';
     }
     echo '</tbody></table><p>CV files and experience text are not displayed or exported by this board.</p></div>';
 }
@@ -43,4 +43,40 @@ add_action('admin_post_sa_careers_attendance',static function(){
     $old=(array)get_option('sa_careers_attendance_'.$id,[]);$history=(array)($old['history']??[]);if($old){unset($old['history']);$history[]=$old;}$history=array_slice($history,-20);
     update_option('sa_careers_attendance_'.$id,['status'=>$status,'by'=>get_current_user_id(),'at'=>current_time('mysql'),'history'=>$history],false);
     wp_safe_redirect(admin_url('admin.php?page=sa-careers-review&saved=1'));exit;
+});
+
+/** Prepare only the existing applicant copy, never the admin copy or CV attachment. */
+function sa_careers_confirmation_args($e): array {
+    if((int)$e->form_id!==sa_ff_id('careers')||!empty($e->is_spam))throw new RuntimeException('Application unavailable.');
+    $email=sanitize_email((string)$e->get_meta('email-1'));$name=trim((string)$e->get_meta('name-1'));
+    if(!is_email($email)||$name==='')throw new RuntimeException('Applicant name or address missing.');
+    $f=clone Forminator_API::get_form(sa_ff_id('careers'));$n=array_values(array_filter($f->notifications,static fn($v)=>($v['slug']??'')==='notification-9001-0002'));
+    if(count($n)!==1||($n[0]['recipients']??'')!=='{email-1}')throw new RuntimeException('Applicant notification unavailable.');
+    $n[0]['email-attachment']='false';$n[0]['cc-email']='';$n[0]['bcc-email']='';$f->notifications=$n;
+    Forminator_Front_Action::$prepared_data=recreate_prepared_data($f,$e);
+    Forminator_Front_Action::$module_id=(int)$e->form_id;Forminator_Front_Action::$module_object=$f;Forminator_Front_Action::$module_settings=$f->settings;
+    $captured=[];$trap=static function($pre,$args)use(&$captured){$captured[]=$args;return true;};add_filter('pre_wp_mail',$trap,PHP_INT_MAX,2);
+    try{(new Forminator_CForm_Front_Mail())->process_mail($f,$e);}finally{remove_filter('pre_wp_mail',$trap,PHP_INT_MAX);}
+    if(count($captured)!==1)throw new RuntimeException('Unexpected notification count.');$a=$captured[0];
+    $to=is_array($a['to'])?$a['to']:[$a['to']];
+    if(count($to)!==1||strtolower(trim($to[0]))!==strtolower($email)||!empty($a['attachments']))throw new RuntimeException('Recipient or attachment mismatch.');
+    $h=is_array($a['headers'])?implode("\n",$a['headers']):(string)$a['headers'];if(preg_match('/^(Cc|Bcc):/im',$h))throw new RuntimeException('Additional recipients blocked.');
+    $ref=sa_careers_application_ref('forminator',(int)$e->entry_id);
+    if(!str_contains($a['subject'],$ref)||!str_contains($a['message'],$ref)||!str_contains($a['message'],esc_html($name)))throw new RuntimeException('Personalization missing.');
+    return $a;
+}
+function sa_careers_confirmation_control($e): void {
+    $id=(int)$e->entry_id;$r=(array)get_option('sa_careers_confirmation_v1_'.$id,[]);
+    if($r){echo '<p>Updated confirmation: '.esc_html((string)($r['state']??'unknown')).' '.esc_html((string)($r['at']??'')).'</p>';return;}
+    try{$a=sa_careers_confirmation_args($e);echo '<details><summary>Preview applicant confirmation</summary><p>'.esc_html(implode(', ',(array)$a['to'])).'</p><p>'.esc_html($a['subject']).'</p><div style="max-width:500px">'.wp_kses_post($a['message']).'</div></details>';}catch(Throwable $x){echo '<p>'.esc_html($x->getMessage()).'</p>';return;}
+    echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'"><input type="hidden" name="action" value="sa_careers_confirmation"><input type="hidden" name="entry" value="'.esc_attr((string)$id).'">';wp_nonce_field('sa_careers_confirmation_'.$id);echo '<button class="button">Send updated applicant confirmation</button><p><small>Applicant only, no CV attachment. One send per application.</small></p></form>';
+}
+add_action('admin_post_sa_careers_confirmation',static function(){
+    if(!current_user_can('manage_woocommerce'))wp_die('Not permitted.');$id=absint($_POST['entry']??0);check_admin_referer('sa_careers_confirmation_'.$id);
+    $key='sa_careers_confirmation_v1_'.$id;if(get_option($key))wp_die('Confirmation already handled. Check its recorded outcome before any retry.');
+    try{$e=new Forminator_Form_Entry_Model($id);$a=sa_careers_confirmation_args($e);}catch(Throwable $x){wp_die(esc_html($x->getMessage()));}
+    $r=['state'=>'attempting','at'=>current_time('mysql'),'by'=>get_current_user_id(),'to'=>$a['to'],'subject'=>$a['subject'],'sha256'=>hash('sha256',$a['message'])];
+    if(!add_option($key,$r,'','no'))wp_die('Confirmation already being handled.');
+    $ok=wp_mail($a['to'],$a['subject'],$a['message'],$a['headers'],[]);$r['state']=$ok?'accepted by mail transport':'transport failed';update_option($key,$r,false);
+    wp_safe_redirect(admin_url('admin.php?page=sa-careers-review'));exit;
 });
