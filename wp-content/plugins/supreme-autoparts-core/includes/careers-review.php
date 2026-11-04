@@ -30,7 +30,7 @@ function sa_careers_review_render(): void {
         foreach(sa_careers_attendance_labels()as$value=>$label)echo '<option value="'.esc_attr($value).'" '.selected($status,$value,false).'>'.esc_html($label).'</option>';
         echo '</select> <button class="button">Save record</button>';
         if(!empty($record['at']))echo '<br><small>Updated '.esc_html((string)$record['at']).' by user #'.esc_html((string)($record['by']??'')).'</small>';
-        echo '</form>'; sa_careers_confirmation_control($e); echo '</td></tr>';
+        echo '</form>'; sa_careers_confirmation_control($e); sa_careers_fee_request_control($e); echo '</td></tr>';
     }
     echo '</tbody></table><p>CV files and experience text are not displayed or exported by this board.</p></div>';
 }
@@ -78,5 +78,32 @@ add_action('admin_post_sa_careers_confirmation',static function(){
     $r=['state'=>'attempting','at'=>current_time('mysql'),'by'=>get_current_user_id(),'to'=>$a['to'],'subject'=>$a['subject'],'sha256'=>hash('sha256',$a['message'])];
     if(!add_option($key,$r,'','no'))wp_die('Confirmation already being handled.');
     $previous_message_id=(string)get_option('sa_brevo_last_message_id','');$ok=wp_mail($a['to'],$a['subject'],$a['message'],$a['headers'],[]);$message_id=(string)get_option('sa_brevo_last_message_id','');if($ok&&$message_id!==$previous_message_id)$r['message_id']=$message_id;$r['state']=$ok?'accepted by mail transport':'transport failed';update_option($key,$r,false);
+    wp_safe_redirect(admin_url('admin.php?page=sa-careers-review'));exit;
+});
+
+/** Existing-application fee request, manually prepared and sent by an authorized reviewer. */
+function sa_careers_fee_request_content($e,$o): array {
+    $id=(int)$e->entry_id;$email=sanitize_email((string)$e->get_meta('email-1'));$name=trim((string)$e->get_meta('name-1'));$role=(string)$e->get_meta('select-1');
+    if((int)$e->form_id!==sa_ff_id('careers')||!empty($e->is_spam)||$name===''||!is_email($email)||!$o||$o->get_meta('_sa_careers_source')!=='forminator'||(int)$o->get_meta('_sa_careers_entry')!==$id||strtolower($o->get_billing_email())!==strtolower($email)||$o->get_currency()!=='KES'||(float)$o->get_total()!==1000.0||!$o->needs_payment())throw new RuntimeException('Application fee request needs review.');
+    $ref=sa_careers_application_ref('forminator',$id);$subject='Application fee request - '.$ref;
+    $body='<p>Hi '.esc_html($name).',</p><p>Thank you for applying for '.esc_html($role).'.</p><table role="presentation" width="100%" style="background:#f5f5f5;margin:24px 0;border:1px solid #ddd"><tr><td style="padding:16px"><small>APPLICATION REFERENCE</small><br><strong>'.esc_html($ref).'</strong></td><td style="padding:16px;text-align:right"><small>APPLICATION FEE</small><br><strong>KES 1,000</strong></td></tr></table><p>Please complete the KES 1,000 application-fee payment through your secure Paystack link below.</p><p style="font-size:14px;color:#555">This fee was introduced after your application was submitted.</p><h3 style="margin-top:26px">Refund and trial terms</h3><p>The fee is refundable if you are never invited, or when you attend an invited paid two-day work trial. The trial is paid and includes lunch. Employment depends on the trial outcome. Payment does not guarantee an invitation or employment.</p>';
+    return ['to'=>$email,'subject'=>$subject,'message'=>sa_customer_mail_layout('Complete your application-fee payment',$body,'Pay KES 1,000 securely',$o->get_checkout_payment_url(),$subject,'','KE'),'headers'=>['Content-Type: text/html; charset=UTF-8'],'attachments'=>[]];
+}
+function sa_careers_fee_request_control($e): void {
+    $id=(int)$e->entry_id;if(!in_array($id,[10,11],true))return; // Explicitly selected historical applications only.
+    $r=(array)get_option('sa_careers_fee_request_v1_'.$id,[]);if($r){echo '<p>Payment request: '.esc_html((string)$r['state']).' '.esc_html((string)$r['at']).'</p>';if(!empty($r['message_id']))echo '<p>Provider ID: '.esc_html((string)$r['message_id']).'</p>';return;}
+    $oid=(int)get_option('sa_career_fee_forminator_'.$id,0);$o=$oid?wc_get_order($oid):false;
+    if($o){try{$a=sa_careers_fee_request_content($e,$o);echo '<details><summary>Preview payment request #'.esc_html((string)$oid).'</summary><p>'.esc_html($a['to']).'</p><p>'.esc_html($a['subject']).'</p><div style="max-width:500px">'.wp_kses_post($a['message']).'</div></details>';}catch(Throwable $x){echo '<p>'.esc_html($x->getMessage()).'</p>';return;}}
+    echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'"><input type="hidden" name="action" value="sa_careers_fee_request"><input type="hidden" name="entry" value="'.esc_attr((string)$id).'"><input type="hidden" name="step" value="'.($o?'send':'prepare').'">';wp_nonce_field('sa_careers_fee_request_'.$id);echo '<button class="button">'.($o?'Send approved payment request':'Prepare application payment link').'</button></form>';
+}
+add_action('admin_post_sa_careers_fee_request',static function(){
+    if(!current_user_can('manage_woocommerce'))wp_die('Not permitted.');$id=absint($_POST['entry']??0);check_admin_referer('sa_careers_fee_request_'.$id);if(!in_array($id,[10,11],true))wp_die('Application not selected.');
+    $key='sa_careers_fee_request_v1_'.$id;if(get_option($key))wp_die('Request already handled. Check audit before any retry.');
+    $e=new Forminator_Form_Entry_Model($id);if((int)$e->form_id!==sa_ff_id('careers')||!empty($e->is_spam))wp_die('Application unavailable.');
+    if(($_POST['step']??'')==='prepare'){$o=sa_careers_fee_order('forminator',$id,(string)$e->get_meta('name-1'),(string)$e->get_meta('email-1'));if(is_wp_error($o))wp_die(esc_html($o->get_error_message()));wp_safe_redirect(admin_url('admin.php?page=sa-careers-review'));exit;}
+    if(($_POST['step']??'')!=='send')wp_die('Invalid step.');
+    $o=wc_get_order((int)get_option('sa_career_fee_forminator_'.$id,0));try{$a=sa_careers_fee_request_content($e,$o);}catch(Throwable $x){wp_die(esc_html($x->getMessage()));}
+    $r=['state'=>'attempting','at'=>current_time('mysql'),'by'=>get_current_user_id(),'to'=>$a['to'],'order'=>$o->get_id(),'subject'=>$a['subject'],'sha256'=>hash('sha256',$a['message'])];if(!add_option($key,$r,'','no'))wp_die('Request already being handled.');
+    $prev=(string)get_option('sa_brevo_last_message_id','');$ok=wp_mail($a['to'],$a['subject'],$a['message'],$a['headers'],[]);$mid=(string)get_option('sa_brevo_last_message_id','');if($ok&&$mid!==$prev)$r['message_id']=$mid;$r['state']=$ok?'accepted by mail transport':'transport failed';update_option($key,$r,false);
     wp_safe_redirect(admin_url('admin.php?page=sa-careers-review'));exit;
 });
