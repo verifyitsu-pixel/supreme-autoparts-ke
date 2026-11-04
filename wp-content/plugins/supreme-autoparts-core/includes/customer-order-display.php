@@ -340,7 +340,7 @@ add_action('admin_post_sa_preview_order_email', static function (): void {
     }
     $mailer = WC()->mailer();
     $emails = $mailer->get_emails();
-    $key = $order->has_status('completed') ? 'WC_Email_Customer_Completed_Order' : 'WC_Email_Customer_Processing_Order';
+    $key = 'WC_Email_Customer_Processing_Order'; // Preview the first paid confirmation, regardless of fulfillment status.
     $email = $emails[$key] ?? null;
     if (!$email) {
         wp_die(esc_html__('Email template unavailable.', 'supreme-autoparts-core'));

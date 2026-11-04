@@ -451,6 +451,12 @@ add_action('woocommerce_order_status_changed', static function ($oid, $from, $to
     if ($to === 'processing') {
         return;
     }
+    if ($to === 'completed' && function_exists('sa_core_paid_confirmation_sent') && !sa_core_paid_confirmation_sent($order)) {
+        // First successful order email is the approved confirmation, not a
+        // fulfillment update. Do not emit a completion claim before it.
+        if (function_exists('sa_core_ensure_customer_order_email')) sa_core_ensure_customer_order_email($order);
+        return;
+    }
     if ($to === 'failed' && $from !== 'pending' && $from !== 'on-hold') {
         return;
     }
