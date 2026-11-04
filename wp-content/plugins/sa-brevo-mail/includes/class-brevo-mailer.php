@@ -69,7 +69,9 @@ class SA_Brevo_Mailer
         } else {
             // Always keep a raw text part so password characters round-trip identically.
             $payload['textContent'] = $message;
-            $payload['htmlContent'] = self::ensure_branded_html(self::plain_text_to_branded_html($message));
+            // Presentation only: retain exact textContent and transport fields.
+            $converted=self::plain_text_to_branded_html($message);
+            $payload['htmlContent'] = function_exists('sa_customer_mail_layout') ? sa_customer_mail_layout((string)$subject,$converted) : self::ensure_branded_html($converted);
         }
 
         $cc = self::parse_header_addresses($headers, 'cc');

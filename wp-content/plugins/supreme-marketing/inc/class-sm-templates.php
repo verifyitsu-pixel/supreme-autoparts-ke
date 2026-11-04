@@ -86,8 +86,8 @@ final class SM_Templates
 
     public static function b_button(string $label, string $url): string
     {
-        return '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:18px 0 18px 0;"><tr><td style="background:' . self::INK . ';border-radius:6px;">'
-            . '<a href="' . esc_url($url) . '" style="display:inline-block;padding:13px 28px;font-family:' . self::FONT . ';font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:6px;">'
+        return '<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:24px auto;"><tr><td style="background:' . self::AMBER . ';border-radius:0;">'
+            . '<a href="' . esc_url($url) . '" style="display:inline-block;padding:13px 28px;font-family:' . self::FONT . ';font-size:15px;font-weight:600;color:#111111;text-decoration:none;border-radius:0;">'
             . esc_html($label) . '</a></td></tr></table>';
     }
 
@@ -120,7 +120,7 @@ final class SM_Templates
         foreach (array_slice($products, 0, 4) as $p) {
             $img = '';
             if (!empty($p['image'])) {
-                $img = '<a href="' . esc_url($p['url']) . '"><img src="' . esc_url($p['image']) . '" width="150" alt="" style="display:block;width:150px;max-width:100%;height:150px;object-fit:contain;border:1px solid ' . self::LINE . ';border-radius:6px;margin:0 auto 8px auto;" /></a>';
+                $img = '<a href="' . esc_url($p['url']) . '"><img src="' . esc_url($p['image']) . '" width="150" alt="" style="display:block;width:150px;max-width:100%;height:150px;object-fit:contain;border:0;margin:0 auto 8px auto;" /></a>';
             }
             $caption = trim((string) ($p['caption'] ?? ''));
             $cap_html = $caption !== ''
@@ -139,6 +139,13 @@ final class SM_Templates
             $rows .= '<tr>' . $cells[$i] . ($cells[$i + 1] ?? '<td style="width:50%;"></td>') . '</tr>';
         }
         return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 10px 0;table-layout:fixed;">' . $rows . '</table>';
+    }
+
+    /** Content/photo module, only from caller-supplied real content. No fetching/tracking. */
+    public static function b_editorial(array $item): string
+    {
+        if (empty($item['title']) || empty($item['url']) || empty($item['image'])) return '';
+        return '<table role="presentation" width="100%" style="border-top:1px solid '.self::LINE.';margin:24px 0"><tr><td style="padding:22px 0;text-align:center"><a href="'.esc_url($item['url']).'"><img src="'.esc_url($item['image']).'" width="552" alt="'.esc_attr($item['title']).'" style="display:block;width:100%;height:auto"></a><h2 style="margin:20px 0 12px;font-family:'.self::FONT.'">'.esc_html($item['title']).'</h2><p style="font-family:'.self::FONT.'">'.esc_html((string)($item['summary']??'')).'</p>'.self::b_button((string)($item['cta']??'Read more'),(string)$item['url']).'</td></tr></table>';
     }
 
     /** Cart contents list. items: name, qty, price, url, image. */
@@ -190,50 +197,29 @@ final class SM_Templates
 
     public static function layout(string $content_html, array $ctx): string
     {
-        $email = (string) ($ctx['email'] ?? '');
-        $zone = (string) ($ctx['zone'] ?? 'US');
-        $unsub = sm_unsubscribe_url($email);
-        $prefs = sm_prefs_url($email);
+        $email = (string)($ctx['email'] ?? '');
+        $zone = (string)($ctx['zone'] ?? 'US');
         $biz = sm_business($zone);
-        $logo = self::logo_url();
+        $key = (string)($ctx['template_key'] ?? '');
+        $shop = wc_get_page_permalink('shop');
         $home = home_url('/');
-        $preheader = esc_html((string) ($ctx['preheader'] ?? ''));
-        $link = 'color:' . self::MUTED . ';text-decoration:underline;';
-
-        return '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-            . '<title>' . esc_html((string) ($ctx['subject'] ?? '')) . '</title>'
-            . '<style>@media (prefers-color-scheme: dark){body,.sm-bg{background:#0d0d0d !important}.sm-card{background:#161616 !important;border-color:#2a2a2a !important}'
-            . '.sm-ft{background:#101010 !important}.sm-ft,.sm-ft p,.sm-ft div{color:#a3a3a3 !important}.sm-ft a{color:#d4d4d4 !important}}</style></head>'
-            . '<body style="margin:0;padding:0;background:#F4F4F5;">'
-            . '<div style="display:none;max-height:0;overflow:hidden;">' . $preheader . '&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;</div>'
-            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="sm-bg" style="background:#F4F4F5;"><tr><td align="center" style="padding:24px 12px;">'
-            . '<table role="presentation" width="600" cellpadding="0" cellspacing="0" class="sm-card" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid ' . self::LINE . ';">'
-            // header
-            . '<tr><td style="padding:20px 28px;border-bottom:1px solid ' . self::LINE . ';">'
-            . '<a href="' . esc_url($home) . '"><img src="' . esc_url($logo) . '" width="150" alt="Supreme Autoparts" style="display:block;width:150px;height:auto;" /></a>'
-            . '</td></tr>'
-            // body (help line appended here, in the body, never the footer)
-            . '<tr><td style="padding:28px;">' . $content_html . self::b_help($zone) . '</td></tr>'
-            // footer: logo + business name, address, policy links, unsubscribe/preferences
-            . '<tr><td class="sm-ft" style="padding:20px 28px;background:#FAFAFA;border-top:1px solid ' . self::LINE . ';">'
-            . '<p style="margin:0 0 8px 0;font-family:' . self::FONT . ';font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:' . self::INK . ';">Supreme Autoparts</p>'
-            . '<p style="margin:0 0 10px 0;font-family:' . self::FONT . ';font-size:11.5px;line-height:1.5;color:' . self::MUTED . ';">'
-            . '<a href="' . esc_url('https://www.google.com/maps/search/?api=1&query=' . rawurlencode((string) $biz['one_line'])) . '" style="color:' . self::MUTED . ';text-decoration:none;">' . esc_html((string) $biz['one_line']) . '</a></p>'
-            . '<p style="margin:0 0 10px 0;font-family:' . self::FONT . ';font-size:11.5px;line-height:1.5;color:' . self::MUTED . ';">'
-            . '<a href="' . esc_url(home_url('/privacy-policy/')) . '" style="' . $link . '">Privacy</a> &middot; '
-            . '<a href="' . esc_url(home_url('/terms/')) . '" style="' . $link . '">Terms</a> &middot; '
-            . '<a href="' . esc_url(home_url('/returns/')) . '" style="' . $link . '">Returns</a></p>'
-            . '<p style="margin:0;font-family:' . self::FONT . ';font-size:11.5px;line-height:1.5;color:' . self::MUTED . ';">'
-            . 'You received this email because you shopped at or subscribed on supremeautoparts.co.ke. '
-            . '<a href="' . esc_url($unsub) . '" style="' . $link . '">Unsubscribe</a> &middot; '
-            . '<a href="' . esc_url($prefs) . '" style="' . $link . '">Email preferences</a>'
-            . '</p></td></tr>'
-            . '</table></td></tr></table>'
-            // Opt out of the store mail wrappers: our layout already carries the brand header
-            // and a zone-correct footer. These marker strings are what sa-brevo-mail /
-            // supreme-autoparts-core check before prepending their header / appending their footer.
-            . '<!--sa-email-brand-header--><!--sa-email-footer--><!--/sa-email-footer-->'
-            . '</body></html>';
+        $logo = self::logo_url();
+        $hero = '';
+        // A launch uses a real selected catalog product, never a fictional photo or claim.
+        if (in_array($key, ['new_product_1','category_1'], true) && !empty($ctx['products'][0]['image'])) {
+            $p = $ctx['products'][0];
+            $hero = '<tr><td style="padding:10px 24px 0;text-align:center"><a href="'.esc_url($p['url']).'"><img src="'.esc_url($p['image']).'" alt="'.esc_attr($p['name']).'" width="552" style="display:block;width:100%;max-height:420px;object-fit:contain"></a></td></tr>';
+        } elseif (!in_array($key, ['confirm_optin','repermission','cart_1','cart_2','cart_3','checkout_1','checkout_2','offer_1'],true)) {
+            $hero = '<tr><td><img src="'.esc_url(home_url('/wp-content/themes/supreme-autoparts/assets/order-email-family-banner.jpg')).'" width="600" height="200" alt="Workshop inspiration - stock photography" style="display:block;width:100%;height:auto"></td></tr>';
+        }
+        $link = 'color:#ddd;text-decoration:underline';
+        return '<!DOCTYPE html><!--sa-email-brand-header--><!--sa-email-footer--><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'.esc_html((string)($ctx['subject']??'')).'</title><style>body{margin:0;background:#fff;color:#222}table{border-collapse:collapse}img{max-width:100%;border:0}h2{text-align:center;font-size:26px!important}p{text-align:center;font-size:17px!important;line-height:1.6!important}.sm-content>table{margin-left:auto!important;margin-right:auto!important}@media(max-width:620px){.sm-main{width:100%!important}.sm-content{padding:24px 16px!important}.sm-logo{width:160px!important}.sm-nav a{font-size:12px!important;letter-spacing:1px!important}}</style></head><body><span style="display:none;max-height:0;overflow:hidden">'.esc_html((string)($ctx['preheader']??'')).'</span>'
+            .'<table role="presentation" width="100%"><tr><td align="center"><table role="presentation" width="600" class="sm-main" style="width:600px;max-width:100%;background:#fff">'
+            .'<tr><td style="background:#111;color:#fff;text-align:center;padding:8px;font:11px Arial;letter-spacing:1px">PARTS. GARAGE. FITMENT HELP.</td></tr>'
+            .'<tr><td style="padding:24px 22px"><table role="presentation" width="100%"><tr><td><a href="'.esc_url($home).'"><img class="sm-logo" src="'.esc_url($logo).'" width="200" alt="Supreme Autoparts" style="display:block;width:200px"></a></td><td class="sm-nav" align="right" style="white-space:nowrap;font:14px Arial;font-weight:bold;letter-spacing:2px"><a href="'.esc_url($shop).'" style="color:#111;text-decoration:none">SHOP</a>&nbsp;&nbsp; <a href="'.esc_url(home_url('/services/')).'" style="color:#111;text-decoration:none">GARAGE</a>&nbsp;&nbsp; <a href="'.esc_url('mailto:calvin@supremeautoparts.co.ke').'" style="color:#111;text-decoration:none">HELP</a></td></tr></table></td></tr>'
+            .$hero.'<tr><td class="sm-content" style="padding:28px 24px">'.$content_html.self::b_help($zone).'</td></tr>'
+            .'<tr><td style="padding:26px 20px;background:#050505;color:#fff;text-align:center;font:14px Arial;line-height:1.6"><img src="'.esc_url(home_url('/wp-content/themes/supreme-autoparts/assets/logo-email-dark.png')).'" width="180" alt="Supreme Autoparts" style="display:block;width:180px;margin:0 auto 16px"><strong>Supreme Autoparts</strong><br>'.esc_html((string)$biz['one_line']).'</td></tr>'
+            .'<tr><td style="padding:20px;background:#111;color:#ddd;text-align:center;font:12px Arial;line-height:1.6">You received this email because you shopped at or subscribed on supremeautoparts.co.ke.<br><a style="'.$link.'" href="'.esc_url(sm_unsubscribe_url($email)).'">Unsubscribe</a> &middot; <a style="'.$link.'" href="'.esc_url(sm_prefs_url($email)).'">Email preferences</a><br><a style="'.$link.'" href="'.esc_url(home_url('/privacy-policy/')).'">Privacy</a> &middot; <a style="'.$link.'" href="'.esc_url(home_url('/terms/')).'">Terms</a> &middot; <a style="'.$link.'" href="'.esc_url(home_url('/returns/')).'">Returns</a></td></tr></table></td></tr></table></body></html>';
     }
 
     public static function layout_text(string $text, array $ctx): string
@@ -257,7 +243,13 @@ final class SM_Templates
         $html = '';
         $text = '';
         foreach ($blocks as $b) {
-            if (isset($b['h'])) {
+            if (isset($b['editorial'])) {
+                $html .= self::b_editorial($b['editorial']);
+                if (!empty($b['editorial']['title']) && !empty($b['editorial']['url']) && !empty($b['editorial']['image'])) $text .= $b['editorial']['title']."\n".($b['editorial']['summary']??'')."\n".$b['editorial']['url']."\n\n";
+            } elseif (isset($b['section'])) {
+                $html .= '<h2 style="padding:10px;background:#222;color:#fff;font-size:18px!important;letter-spacing:1px">'.esc_html($b['section']).'</h2>';
+                $text .= strtoupper($b['section'])."\n\n";
+            } elseif (isset($b['h'])) {
                 $html .= self::b_h($b['h']);
                 $text .= strtoupper($b['h']) . "\n\n";
             } elseif (isset($b['p'])) {
@@ -310,6 +302,7 @@ final class SM_Templates
         $rendered = self::render_blocks($blocks, $ctx);
         $ctx['subject'] = $def['subject'];
         $ctx['preheader'] = $def['preheader'];
+        $ctx['template_key'] = $key;
         return [
             'subject'   => $def['subject'],
             'preheader' => $def['preheader'],
