@@ -142,7 +142,7 @@ function sa_careers_location(): string
 add_action('wp_enqueue_scripts',static function(){
     if(!is_page('careers'))return;
     wp_enqueue_style('sa-services',SA_CORE_URL.'assets/services.css',[],SA_CORE_VERSION);
-    wp_enqueue_style('sa-careers-v2',SA_CORE_URL.'assets/careers.css',['sa-services'],'2');
+    wp_enqueue_style('sa-careers-v2',SA_CORE_URL.'assets/careers.css',['sa-services'],'3');
 },40);
 
 /* ---------- render ---------- */
@@ -177,6 +177,7 @@ add_shortcode('sa_careers', static function (): string {
     echo '<div class="sa-careers__form" id="sa-careers-apply">';
     echo '<span class="sa-careers__eyebrow">YOUR NEXT STEP</span><h2>Make your move.</h2><p>Choose a role, add your details and CV, then continue to secure payment. Your application is saved before checkout.</p>';
     echo '<p class="sa-careers-fee-notice">' . esc_html(sa_careers_fee_disclosure()) . '</p>';
+    echo '<div class="sa-careers__help"><strong>Before you apply</strong>Use an email and phone number where we can reach you. Tell us about relevant practical experience, including training or projects. Upload one CV in PDF, DOC or DOCX format, up to 10 MB. Your application is saved before payment; keep your payment reference.</div>';
     if ($state === 'sent') {
         $ref = sanitize_text_field((string) ($_GET['ref'] ?? ''));
         echo '<div class="sa-sf-ok" role="status"><strong>Thanks, we have your application' . ($ref ? ' (ref ' . esc_html($ref) . ')' : '') . '.</strong> A copy is in your inbox and we will be in touch.</div>';
