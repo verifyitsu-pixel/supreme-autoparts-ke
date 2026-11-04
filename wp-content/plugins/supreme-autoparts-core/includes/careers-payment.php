@@ -59,3 +59,18 @@ add_action('woocommerce_admin_order_data_after_order_details',static function($o
     if(!$o->get_meta('_sa_careers_source'))return;
     echo '<p><strong>Careers fee application:</strong> '.esc_html($o->get_meta('_sa_careers_source').' #'.$o->get_meta('_sa_careers_entry')).'<br>Payment: '.esc_html($o->get_meta('_sa_careers_fee_paid_at') ? 'Verified paid '.$o->get_meta('_sa_careers_fee_paid_at') : 'Not verified paid').'</p>';
 });
+
+function sa_careers_fee_email_content($o,string $stage): array {
+    $copy=[
+        'on-hold'=>['Application fee payment pending','We are waiting for your application fee payment to be confirmed. This is not a payment receipt.'],
+        'failed'=>['Application fee payment not confirmed','We do not have a successful payment confirmation. If your bank shows a debit, contact us before trying again.'],
+        'cancelled'=>['Application fee payment cancelled','This application fee payment order has been cancelled.'],
+        'refunded'=>['Application fee refund update','A refund is recorded on your payment order. This does not confirm that your bank has credited the money.'],
+        'completed'=>['Application fee payment received','Your KES 1,000 non-refundable application fee payment is recorded as complete. Payment does not guarantee an interview or employment.'],
+    ];
+    if(!isset($copy[$stage]))return [];
+    [$heading,$body]=$copy[$stage];$subject=$heading.' #'.$o->get_order_number();
+    $url=$stage==='failed'?$o->get_checkout_payment_url():$o->get_checkout_order_received_url();
+    return ['subject'=>$subject,'html'=>sa_customer_mail_layout($heading,'<p>'.sa_email_greeting($o).'</p><p>'.esc_html($body).'</p><p>Reference: '.esc_html($o->get_order_number()).'</p>', $stage==='failed'?'Continue to payment':'View payment order',$url,$subject,'','KE')];
+}
+add_filter('woocommerce_email_subject_customer_processing_order',static function($subject,$order){return $order && $order->get_meta('_sa_careers_source') ? 'Application fee payment received #'.$order->get_order_number() : $subject;},999,2);

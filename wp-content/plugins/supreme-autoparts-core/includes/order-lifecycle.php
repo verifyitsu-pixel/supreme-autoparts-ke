@@ -375,6 +375,7 @@ function sa_ol_pickup_store(WC_Order $o): array
 /** Build subject + html for a stage. */
 function sa_ol_email_content(WC_Order $o, string $stage, string $note = ''): array
 {
+    if ($o->get_meta('_sa_careers_source') && function_exists('sa_careers_fee_email_content')) return sa_careers_fee_email_content($o,$stage);
     $n = $o->get_order_number();
     $hi = '<p>' . sa_email_greeting($o) . '</p>';
     $noteh = $note !== '' ? '<p style="background:#f7f7f7;border-left:3px solid #F5A623;padding:10px 12px;margin:12px 0">' . nl2br(esc_html($note)) . '</p>' : '';
