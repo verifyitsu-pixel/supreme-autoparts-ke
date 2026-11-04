@@ -114,3 +114,10 @@ add_filter('woocommerce_gateway_icon', static function ($icon,$id) {
     }
     return $html.'</span>';
 },100,2);
+
+// Explain the existing-order currency guard rather than presenting an unusable method.
+add_action('woocommerce_pay_order_before_payment', static function (): void {
+    $order = wc_get_order(absint(get_query_var('order-pay')));
+    if (!$order || $order->get_currency() !== 'USD') return;
+    echo '<p class="woocommerce-info">Paystack is available for new KES payments. This existing order is in USD, so Paystack is not offered here. Its currency will not be changed automatically.</p>';
+});
