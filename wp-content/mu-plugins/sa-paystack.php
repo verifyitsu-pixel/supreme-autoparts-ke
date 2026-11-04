@@ -68,10 +68,16 @@ add_filter('woocommerce_available_payment_gateways', static function ($gateways)
 // Quote the exact payable amount before commitment, leaving other methods' checkout totals and defaults intact.
 add_filter('woocommerce_gateway_description', static function ($description, $id) {
     if ($id !== 'paystack' || !function_exists('WC') || !WC()->cart) return $description;
+    // On the pay-for-order page the cart is empty; quote the order being paid instead.
+    $on_order_pay = function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('order-pay');
     $usd = (float)WC()->cart->get_total('edit');
+    if ($on_order_pay) {
+        $order = wc_get_order(absint(get_query_var('order-pay')));
+        if ($order) $usd = (float)$order->get_total();
+    }
     $quote = sa_paystack_display_quote($usd);
     if (!$quote) return 'This payment option is temporarily unavailable because a KES exchange rate could not be loaded.';
-    if (WC()->session) WC()->session->set('sa_paystack_quote', $quote);
+    if (!$on_order_pay && WC()->session) WC()->session->set('sa_paystack_quote', $quote);
     return 'You will be charged <strong>'.wc_price($quote['kes'], ['currency'=>'KES','decimals'=>2]).'</strong> at 1 USD = KES '.esc_html((string)$quote['rate']).'. Your order stays in US dollars; only the payment itself is charged in Kenyan shillings.';
 }, 100, 2);
 
