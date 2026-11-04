@@ -55,8 +55,8 @@ function sa_careers_confirmation_args($e): array {
     $n[0]['email-attachment']='false';$n[0]['cc-email']='';$n[0]['bcc-email']='';$f->notifications=$n;
     Forminator_Front_Action::$prepared_data=recreate_prepared_data($f,$e);
     Forminator_Front_Action::$module_id=(int)$e->form_id;Forminator_Front_Action::$module_object=$f;Forminator_Front_Action::$module_settings=$f->settings;
-    $captured=[];$trap=static function($pre,$args)use(&$captured){$captured[]=$args;return true;};add_filter('pre_wp_mail',$trap,PHP_INT_MAX,2);
-    try{(new Forminator_CForm_Front_Mail())->process_mail($f,$e);}finally{remove_filter('pre_wp_mail',$trap,PHP_INT_MAX);}
+    $captured=[];$trap=static function($pre,$args)use(&$captured){$captured[]=$args;return true;};add_filter('pre_wp_mail',$trap,PHP_INT_MIN,2);
+    try{(new Forminator_CForm_Front_Mail())->process_mail($f,$e);}finally{remove_filter('pre_wp_mail',$trap,PHP_INT_MIN);}
     if(count($captured)!==1)throw new RuntimeException('Unexpected notification count.');$a=$captured[0];
     $to=is_array($a['to'])?$a['to']:[$a['to']];
     if(count($to)!==1||strtolower(trim($to[0]))!==strtolower($email)||!empty($a['attachments']))throw new RuntimeException('Recipient or attachment mismatch.');
