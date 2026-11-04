@@ -171,7 +171,8 @@ function pick(it){
   document.dispatchEvent(new Event('change',{bubbles:true}));
 }
 function render(w){
-  closeList();
+  // Remove only the previous dropdown; keep the freshly returned suggestions.
+  if(listEl){listEl.remove();listEl=null;}
   if(!items.length)return;
   listEl=document.createElement('ul');listEl.className='sa-aa-list';
   items.forEach(function(it){
@@ -193,7 +194,8 @@ function suggest(){
   }).catch(function(){});
 }
 function boot(){
-  var f=field();if(!f)return;
+  var f=field();if(!f||f.dataset.saAaBound)return;
+  f.dataset.saAaBound="1";
   var w=wrap(f);credit(w);
   f.setAttribute('autocomplete','off');
   f.addEventListener('input',function(){clearTimeout(timer);timer=setTimeout(suggest,300);});
@@ -201,6 +203,7 @@ function boot(){
   document.addEventListener('click',function(e){if(listEl&&!w.contains(e.target)){closeList();}});
 }
 if(document.readyState!=='loading'){boot();}else{document.addEventListener('DOMContentLoaded',boot);}
+if(window.jQuery){jQuery(document.body).on('updated_checkout',boot);}
 })();
 </script>
     <?php
