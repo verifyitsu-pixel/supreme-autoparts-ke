@@ -181,6 +181,9 @@ function sa_rcpt_order_data($order): array
         $p = is_callable([$item, 'get_product']) ? $item->get_product() : null;
         $qty = max(1, (int) $item->get_quantity());
         $thumb = ($p instanceof WC_Product && function_exists('sa_core_get_product_email_image_url')) ? (string) sa_core_get_product_email_image_url($p, 320) : '';
+        if (function_exists('sa_cod_order_photo_url')) {
+            $thumb = sa_cod_order_photo_url($p, (string) $thumb);
+        }
         if ($thumb === '' && $p instanceof WC_Product && $p->is_type('variation') && $p->get_parent_id()) {
             $parent = wc_get_product($p->get_parent_id());
             $thumb = $parent ? sa_core_get_product_email_image_url($parent, 320) : '';

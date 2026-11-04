@@ -39,7 +39,7 @@ if (function_exists('sa_rcpt_order_data')) {
         }
     }
     if (!$sent_to_admin) {
-        echo '<p style="font-family:' . esc_attr($font) . ';font-size:13px;margin:0 0 18px"><a href="' . esc_url($d['view_url']) . '" style="color:#111111;text-decoration:underline">' . esc_html($d['paid'] ? 'View or print your receipt' : 'View or print your invoice') . '</a> · ' . esc_html__('PDF copy attached', 'supreme-autoparts') . '</p>';
+        echo '<p style="font-family:' . esc_attr($font) . ';font-size:13px;margin:0 0 18px"><a href="' . esc_url($d['view_url']) . '" style="color:#111111;text-decoration:underline">' . esc_html($d['paid'] ? 'View or print your receipt' : 'View or print your invoice') . '</a></p>';
     }
 } else {
     include WC()->plugin_path() . '/templates/emails/email-order-details.php';

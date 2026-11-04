@@ -29,6 +29,16 @@ function sa_cod_is_customer_order_view(): bool
         || (function_exists('is_account_page') && is_account_page());
 }
 
+/** Presentation-only crop of the existing WIL240-5533 photo. Catalog media is unchanged. */
+function sa_cod_order_photo_url($product, string $url): string
+{
+    if ($product instanceof WC_Product && strtoupper((string) $product->get_sku()) === 'WIL240-5533'
+        && strpos($url, '9d5dc4a8bab6d04f5b4fb96f1402b6d6L.jpg') !== false) {
+        return home_url('/wp-content/themes/supreme-autoparts/assets/order-wil240-5533-crop.jpg');
+    }
+    return $url;
+}
+
 /**
  * Real product photo <img> for an order line (never a placeholder).
  *
@@ -53,6 +63,7 @@ function sa_cod_item_thumb_html($item, int $size = 64): string
     if ($url === '') {
         return '';
     }
+    $url = sa_cod_order_photo_url($product, (string) $url);
     return sprintf(
         '<img src="%s" alt="%s" width="%d" height="%d" class="sa-order-item__img" loading="lazy" decoding="async" style="width:%dpx;height:%dpx;object-fit:contain;background:#fff;border-radius:6px;border:1px solid rgba(0,0,0,.08);flex:0 0 auto;" />',
         esc_url($url),
