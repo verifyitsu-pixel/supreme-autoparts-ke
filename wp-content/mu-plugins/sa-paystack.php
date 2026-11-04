@@ -16,7 +16,7 @@ add_filter('option_woocommerce_paystack_settings', static function ($s) {
     $s['testmode'] = $s['testmode'] ?? 'no';
     $test = $s['testmode'] === 'yes';
     $prefix = $test ? 'test_' : 'live_';
-    $s['enabled'] = !empty($s[$prefix.'public_key']) && !empty($s[$prefix.'secret_key']) ? 'yes' : 'no';
+    $s['enabled'] = ($s['enabled'] ?? 'no') === 'yes' && !empty($s[$prefix.'public_key']) && !empty($s[$prefix.'secret_key']) ? 'yes' : 'no';
     $s['title'] = 'Card & M-Pesa - powered by Paystack (KES)';
     $s['description'] = 'Pay securely in Kenyan shillings. Your exact KES total is shown before payment.';
     $s['payment_page'] = 'redirect';
