@@ -16,7 +16,7 @@ function sa_careers_fee_order(string $source, int $entry_id, string $name, strin
         if(is_wp_error($o))return $o;
         $item=new WC_Order_Item_Fee();$item->set_name('Job application fee');$item->set_total(1000);$item->set_tax_status('none');$o->add_item($item);
         $o->set_currency('KES');$o->set_billing_email($email);$o->set_billing_first_name($name);$o->set_billing_country('KE');$o->set_payment_method('paystack');$o->set_payment_method_title('Paystack (KES)');
-        $o->update_meta_data('_sa_careers_source',$source);$o->update_meta_data('_sa_careers_entry',$entry_id);$o->update_meta_data('_sa_careers_fee_disclosure',sa_careers_fee_disclosure());$o->update_meta_data('_sa_native_currency','KES');
+        $o->update_meta_data('_sa_careers_application_ref',sa_careers_application_ref($source,$entry_id));$o->update_meta_data('_sa_careers_source',$source);$o->update_meta_data('_sa_careers_entry',$entry_id);$o->update_meta_data('_sa_careers_fee_disclosure',sa_careers_fee_disclosure());$o->update_meta_data('_sa_native_currency','KES');
         $o->calculate_totals(false);$o->set_total(1000);$o->save();update_option($key,$o->get_id(),false);return $o;
     } catch(Throwable $e){return new WP_Error('payment','Your application is saved, but payment could not be prepared. Please contact us before applying again.');}
     finally{delete_option($key.'_lock');}
@@ -77,3 +77,18 @@ add_filter('wc_get_template',static function($template,$name,$args){
     if($name!=='checkout/form-pay.php' || empty($args['order']) || !$args['order']->get_meta('_sa_careers_source'))return $template;
     return SA_CORE_DIR.'templates/careers-form-pay.php';
 },30,3);
+
+/** Stable application reference from the saved entry, separate from payment order number. */
+function sa_careers_application_ref(string $source,int $id): string {
+    return $id>0&&in_array($source,['forminator','native'],true) ? 'SA-APP-'.($source==='forminator'?'F':'T').'-'.$id : '';
+}
+function sa_careers_form_mail_ref($form,$entry): string {
+    if(!function_exists('sa_ff_id')||!is_object($form)||!is_object($entry)||(int)($form->id??0)!==sa_ff_id('careers')||(int)($entry->form_id??0)!==sa_ff_id('careers')||!empty($entry->is_spam))return '';
+    return sa_careers_application_ref('forminator',(int)($entry->entry_id??0));
+}
+add_filter('forminator_custom_form_mail_admin_subject',static function($subject,$form,$data,$entry,$mailer){
+    $ref=sa_careers_form_mail_ref($form,$entry);return $ref!=='' ? $subject.' ['.$ref.']' : $subject;
+},30,5);
+add_filter('forminator_custom_form_mail_admin_message',static function($message,$form,$data,$entry,$mailer){
+    $ref=sa_careers_form_mail_ref($form,$entry);return $ref!=='' ? '<p><strong>Application reference: '.esc_html($ref).'</strong></p>'.$message : $message;
+},30,5);
