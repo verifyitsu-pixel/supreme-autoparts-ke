@@ -1,0 +1,7 @@
+<?php
+define('ABSPATH',__DIR__);function add_action(...$a){}function get_stylesheet_directory_uri(){return 'https://store.invalid/theme';}function esc_url($s){return htmlspecialchars($s,ENT_QUOTES);}function esc_attr($s){return htmlspecialchars($s,ENT_QUOTES);}function esc_html($s){return htmlspecialchars($s,ENT_QUOTES);}function home_url($s){return 'https://store.invalid'.$s;}
+class GM{function get_available_payment_gateways(){return $GLOBALS['available'];}}class W{function payment_gateways(){return new GM;}}function WC(){return new W;}
+require __DIR__.'/../wp-content/mu-plugins/sa-payment-visibility.php';
+$n=0;foreach([['whop','pesapal','paystack'],['pesapal'],[],['whop','paystack']] as $ids){$GLOBALS['available']=array_fill_keys($ids,true);ob_start();sa_visible_missing_payment_cards();$h=ob_get_clean();foreach(['whop','pesapal','paystack'] as $id){if((strpos($h,'alt="'.ucfirst($id).'"')!==false)===in_array($id,$ids))throw new Exception('Missing-card drift '.$id);$n++;}if(strpos($h,'type="radio"')!==false||strpos($h,'name="payment_method"')!==false)throw new Exception('False enabled method');}
+$s=file_get_contents(__DIR__.'/../wp-content/plugins/whop-payments/includes/class-whop-open-pay.php');if(strpos($s,'Whop starts with a USD amount.')===false||strpos($s,'sa-provider-visible')===false)throw new Exception('Open-pay cards absent');
+echo "PASS $n missing-provider map cases, no enabled radio/map mutation; open-pay currency cards present.\n";
