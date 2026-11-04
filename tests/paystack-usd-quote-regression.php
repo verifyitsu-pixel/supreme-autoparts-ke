@@ -206,11 +206,12 @@ ck(Q::quote_for_reference($o,$r1)['charge_amount']===12950.0);
 ck(Q::quote_for_reference($o,$r2)['charge_amount']===20000.0);
 // Full and partial converted refunds fail closed before any provider access.
 ck(!Q::can_auto_refund($o));
-$k=new QOrder('KES',12950); ck(Q::can_auto_refund($k));
+$k=new QOrder('KES',12950); ck(!Q::can_auto_refund($k));
 $k->update_meta_data('_sa_paystack_charge_currency','USD'); ck(!Q::can_auto_refund($k));
 $e=new QOrder('EUR',100);ck(!Q::can_auto_refund($e));
 $refundSource=substr($source,strpos($source,'public function process_refund'));
-ck(strpos($refundSource,'can_auto_refund')<strpos($refundSource,'get_paystack_transaction'));
+ck(strpos($refundSource,'paystack_manual_refund_required')!==false);
+$refundBody=substr($refundSource,0,strpos($refundSource,'/**'));ck(strpos($refundBody,'wp_remote_post')===false);
 
 // Native USD is a signed explicit route, never implicit FX fallback.
 $GLOBALS['native_usd']=true;
@@ -218,7 +219,7 @@ $o=new QOrder('USD',100.0);
 $_POST['sa_paystack_quote_token']=Q::token(['usd'=>100,'kes'=>100,'rate'=>1.0,'charge_currency'=>'USD','at'=>time()],'order:'.$o->id);
 $q=Q::lock_for_order($o,'native');ck($q['charge_currency']==='USD' && $q['charge_amount']===100.0 && $q['rate']===1.0);
 ck(Q::matches_transaction($o,'native',10000,'USD'));ck(!Q::matches_transaction($o,'native',1295000,'KES'));
-ck(Q::can_auto_refund($o));
+ck(!Q::can_auto_refund($o));
 $GLOBALS['native_usd']=false;ck(Q::lock_for_order($o,'disabledNative')===null); // cannot silently switch to KES
 $GLOBALS['native_usd']=true;
 $_POST['sa_paystack_quote_token']=Q::token(['usd'=>100,'kes'=>200,'rate'=>2,'charge_currency'=>'USD','at'=>time()],'order:'.$o->id);ck(Q::lock_for_order($o,'invalidNative')===null);

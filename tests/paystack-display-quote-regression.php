@@ -13,7 +13,7 @@ function esc_html($s){return $s;}
 function esc_url($s){return $s;}
 function esc_attr($s){return $s;}
 function plugins_url($p=''){return 'https://example.invalid/'.$p;}
-function wc_price($a,$o=[]){return 'KES '.number_format($a,2);}
+function wc_price($a,$o=[]){return ($o['currency']??'KES').' '.number_format($a,2);}
 function absint($v){return (int)$v;}
 function current_user_can($c){return true;}
 class SA_FX_Rates { public static $rates=['KES'=>129.50];
@@ -175,4 +175,16 @@ $GLOBALS['orders'][15]=new MOrder('USD',75.0);
 ck(SA_Paystack_Charge_Quote::lock_for_order($GLOBALS['orders'][15],'90015_1')===null);
 
 $GLOBALS['endpoint']='';
+
+$GLOBALS['native_usd']=true;
+$GLOBALS['endpoint']=''; WC()->cart->total=100.0;
+$desc=apply_filters('woocommerce_gateway_description','orig','paystack');
+ck(strpos($desc,'in US dollars by card')!==false && strpos($desc,'KES')===false);
+$title=apply_filters('woocommerce_gateway_title','orig','paystack');ck($title==='Card - Paystack (USD)');
+$icon=apply_filters('woocommerce_gateway_icon','orig','paystack');ck(strpos($icon,'mpesa')===false && strpos($icon,'airtel')===false && strpos($icon,'mastercard')!==false);
+$o=new MOrder('USD',100.0);$_POST['sa_paystack_quote_token']=$GLOBALS['sa_paystack_rendered_token'];
+do_action('woocommerce_checkout_create_order',$o,['payment_method'=>'paystack']);
+$q=SA_Paystack_Charge_Quote::lock_for_order($o,'nativeCheckout');ck($q['charge_currency']==='USD' && $q['charge_amount']===100.0);
+$channels=apply_filters('wc_paystack_payment_channels',['card','mobile_money','bank'],'paystack',$o);ck($channels===['card']);
+$GLOBALS['native_usd']=false;ck(SA_Paystack_Charge_Quote::lock_for_order($o,'disabledNative')===null);
 echo $AC." display-quote/lock integration checks PASS (mock Woo, no network)\n";

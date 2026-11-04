@@ -71,18 +71,9 @@ final class SA_Paystack_Charge_Quote {
 		return $order_id . '_' . bin2hex( random_bytes( 16 ) );
 	}
 
-	/** Automatic refunds are supported only for unconverted KES payments. */
+	/** The legacy adapter does not reconcile the provider refund ledger. */
 	public static function can_auto_refund( $order ): bool {
-		$currency = strtoupper( (string) $order->get_currency() );
-		$charged = strtoupper( (string) $order->get_meta( '_sa_paystack_charge_currency' ) );
-		if ( !in_array($currency, array('USD','KES'), true) || ( '' !== $charged && $charged !== $currency ) ) return false;
-		$quotes = $order->get_meta( self::META_KEY );
-		if ( 'USD' === $currency && ( !is_array($quotes) || !$quotes ) ) return false;
-		foreach ( is_array( $quotes ) ? $quotes : array() as $quote ) {
-			if ( ! is_array( $quote ) || strtoupper( (string) ( $quote['order_currency'] ?? '' ) ) !== $currency
-				|| strtoupper( (string) ( $quote['charge_currency'] ?? '' ) ) !== $currency ) return false;
-		}
-		return true;
+		return false;
 	}
 
 	public static function native_usd_enabled(): bool {

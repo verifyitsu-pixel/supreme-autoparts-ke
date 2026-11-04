@@ -165,7 +165,7 @@ add_action('woocommerce_checkout_create_order', static function ($order,$data) {
 // The legacy USD notice must not contradict the gateway's quoted KES charge.
 add_filter('gettext', static function ($translated,$text,$domain) {
     if ($domain === 'supreme-autoparts' && $text === "Charged in USD. M-Pesa / Airtel amounts are shown in KES at the payment provider's rate.") {
-        return 'Orders are recorded in US dollars. Card, M-Pesa and Airtel payments through Paystack are charged in Kenyan shillings at the exact rate shown before payment.';
+        return SA_Paystack_Charge_Quote::native_usd_enabled() ? 'USD card orders are charged in US dollars. Kenyan shilling orders retain their Kenyan shilling payment amount. The exact currency and charge are shown before payment.' : 'Orders are recorded in US dollars. Card, M-Pesa and Airtel payments through Paystack are charged in Kenyan shillings at the exact rate shown before payment.';
     }
     return $translated;
 }, 20, 3);
