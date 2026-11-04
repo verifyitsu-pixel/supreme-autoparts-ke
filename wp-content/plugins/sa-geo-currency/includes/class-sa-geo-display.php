@@ -80,8 +80,18 @@ final class SA_Geo_Display
     /**
      * Whether this request should show converted prices (never change order math).
      */
+    /** Only payment surfaces suppress catalog estimates, including classic AJAX. */
+    public static function payment_surface(): bool
+    {
+        if (function_exists('is_checkout') && is_checkout()) return true;
+        if (function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('order-pay')) return true;
+        $ajax = $_GET['wc-ajax'] ?? '';
+        return is_string($ajax) && in_array($ajax, ['update_order_review', 'checkout'], true);
+    }
+
     public static function should_convert(): bool
     {
+        if (self::payment_surface()) return false;
         if (self::$busy || self::$docs_lock > 0) {
             return false;
         }
@@ -280,6 +290,7 @@ final class SA_Geo_Display
 
     public static function note_html(): string
     {
+        if (self::payment_surface()) return '<p class="sa-geo-currency-note">Order totals are shown in the order currency. Review the exact payment currency and charge below before paying.</p>';
         $display = SA_Geo_Detector::display_currency();
         $checkout = sa_geo_checkout_currency();
         $country = SA_Geo_Detector::country_code();
@@ -288,14 +299,14 @@ final class SA_Geo_Display
         if (self::should_convert()) {
             $extra = sprintf(
                 /* translators: 1: display currency 2: country code */
-                ' ' . esc_html__('(showing approx. %1$s for %2$s)', 'sa-geo-currency'),
+                ' ' . esc_html__('(catalog estimate in approx. %1$s for %2$s)', 'sa-geo-currency'),
                 esc_html($display),
                 esc_html($country)
             );
         }
 
         return '<p class="sa-geo-currency-note" data-sa-geo-cc="' . esc_attr($country) . '" data-sa-geo-display="' . esc_attr($display) . '">'
-            . esc_html__('Final amount shown at checkout', 'sa-geo-currency')
+            . esc_html__('Estimate only - the exact charge is shown and locked before payment at checkout', 'sa-geo-currency')
             . $extra
             . '</p>';
     }
