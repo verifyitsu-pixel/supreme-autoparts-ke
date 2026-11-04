@@ -97,3 +97,10 @@ add_filter('gettext', static function ($translated,$text,$domain) {
     }
     return $translated;
 }, 20, 3);
+
+// Let the gateway currency explanation wrap inside the narrow order summary.
+add_action('wp_head', static function () {
+    if (function_exists('is_checkout') && is_checkout()) {
+        echo '<style>.woocommerce-checkout-review-order-table tfoot tr.sa-usd-note td{white-space:normal!important;text-align:left!important;width:auto!important;overflow-wrap:anywhere;font-weight:400}</style>';
+    }
+}, 100);
