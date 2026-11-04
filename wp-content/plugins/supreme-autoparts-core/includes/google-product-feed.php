@@ -372,6 +372,7 @@ function sa_gpf_description(WC_Product $product, string $title): string
 
 function sa_gpf_image_url(WC_Product $product): string
 {
+    if (function_exists('sa_core_product_image_on_hold') && sa_core_product_image_on_hold($product)) return '';
     $image_id = (int) $product->get_image_id();
     if ($image_id <= 0) {
         $gallery = $product->get_gallery_image_ids();

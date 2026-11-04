@@ -11,6 +11,15 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+/** Known imagery hold: primary contains embedded disclaimer; alternate is a
+ * different rotor construction, and brand artwork is not a product photo.
+ * Presentation only: do not edit supplier evidence or silently substitute/crop.
+ */
+function sa_core_product_image_on_hold($product): bool
+{
+    return is_object($product) && method_exists($product, 'get_sku') && strtoupper((string)$product->get_sku()) === 'EBCBSD7801';
+}
+
 // Lightweight URL check if import helpers not loaded yet.
 if (!function_exists('sa_core_is_valid_remote_image_url')) {
     function sa_core_is_valid_remote_image_url(string $url): bool
@@ -92,6 +101,7 @@ function sa_core_shopify_cdn_srcset(string $url, array $widths = [150, 300, 400,
  */
 function sa_core_get_stored_shopify_image_urls(int $product_id): array
 {
+    if (strtoupper((string)get_post_meta($product_id, '_sku', true)) === 'EBCBSD7801') return [];
     $raw = get_post_meta($product_id, '_sa_shopify_image_urls', true);
     $urls = [];
     if (is_string($raw) && $raw !== '') {
@@ -134,6 +144,7 @@ function sa_core_get_product_email_image_url($product, int $width = 80): string
     if (!$product instanceof WC_Product) {
         return '';
     }
+    if (sa_core_product_image_on_hold($product)) return '';
     // Prefer local only when the attachment file exists on disk (uploads volume may be sparse).
     if (sa_core_product_has_real_local_image($product)) {
         $thumb = (int) $product->get_image_id();
@@ -216,6 +227,7 @@ add_filter('woocommerce_product_get_image', static function ($image, $product, $
     if (!$product instanceof WC_Product) {
         return $image;
     }
+    if (sa_core_product_image_on_hold($product)) return '';
     if (!empty($GLOBALS['sa_in_wc_email'])) {
         return $image;
     }
@@ -274,6 +286,7 @@ add_filter('woocommerce_product_get_image', static function ($image, $product, $
     if (!$product instanceof WC_Product) {
         return $image;
     }
+    if (sa_core_product_image_on_hold($product)) return '';
     if (sa_core_product_has_real_local_image($product)) {
         // Still force absolute https in email HTML for local srcs.
         if (!empty($GLOBALS['sa_in_wc_email']) && is_string($image) && preg_match('#\ssrc=(["\'])(/[^"\']+)\1#', $image, $m)) {
@@ -345,6 +358,8 @@ add_filter('woocommerce_product_get_image', static function ($image, $product, $
  * Single product main gallery: inject CDN frames when no local attachments.
  */
 add_filter('woocommerce_single_product_image_thumbnail_html', static function ($html, $post_thumbnail_id) {
+    global $product;
+    if (sa_core_product_image_on_hold($product)) return '';
     if ($post_thumbnail_id) {
         $file = (string) get_post_meta((int) $post_thumbnail_id, '_wp_attached_file', true);
         $uploads = wp_get_upload_dir();
@@ -425,6 +440,7 @@ add_filter('woocommerce_order_item_thumbnail', static function ($image, $item) {
     if (!$product instanceof WC_Product) {
         return $image;
     }
+    if (sa_core_product_image_on_hold($product)) return '';
     $url = sa_core_get_product_email_image_url($product, 64);
     if ($url === '') {
         return $image;
