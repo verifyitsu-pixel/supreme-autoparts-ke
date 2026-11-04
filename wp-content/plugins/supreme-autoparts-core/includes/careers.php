@@ -96,6 +96,7 @@ add_shortcode('sa_careers', static function (): string {
 
     echo '<div class="sa-careers__form" id="sa-careers-apply">';
     echo '<h2>Apply now</h2>';
+    echo '<p class="sa-careers-fee-notice">' . esc_html(sa_careers_fee_disclosure()) . '</p>';
     if ($state === 'sent') {
         $ref = sanitize_text_field((string) ($_GET['ref'] ?? ''));
         echo '<div class="sa-sf-ok" role="status"><strong>Thanks, we have your application' . ($ref ? ' (ref ' . esc_html($ref) . ')' : '') . '.</strong> A copy is in your inbox and we will be in touch.</div>';
@@ -132,7 +133,7 @@ add_shortcode('sa_careers', static function (): string {
     echo '<option value="general"' . ($want === 'general' ? ' selected' : '') . '>General application</option>';
     echo '</select></label>';
     echo '<label>Tell us about your experience *<textarea name="message" rows="5" required placeholder="What you have done, where, and why this role fits you"></textarea></label>';
-    echo '<button type="submit" class="sa-svc-btn sa-svc-btn--primary">Send application</button>';
+    echo '<button type="submit" class="sa-svc-btn sa-svc-btn--primary">Save application and continue to payment</button>';
     echo '<p class="sa-sf-note">No account needed. We only use your details to review your application.</p>';
     echo '</form>';
     echo '</div>'; // #sa-careers-native
@@ -229,6 +230,9 @@ function sa_careers_handle(): void
     ]) : 0;
     $ref = $tid ? 'T' . $tid : strtoupper(wp_generate_password(6, false));
 
+    if (!$tid) { $go('error'); }
+    $payment_order=sa_careers_fee_order('native',(int)$tid,$name,$email);
+    if(is_wp_error($payment_order)){wp_die(esc_html($payment_order->get_error_message()),'Application payment unavailable',['response'=>503]);}
     $table = '<table role="presentation" width="100%" style="border-collapse:collapse;font-size:14px;margin:8px 0">';
     foreach ($rows as $l => $v) {
         $table .= '<tr><td style="padding:6px 8px 6px 0;color:#666;vertical-align:top;white-space:nowrap">' . esc_html($l) . '</td><td style="padding:6px 0">' . nl2br(esc_html($v)) . '</td></tr>';
@@ -237,7 +241,8 @@ function sa_careers_handle(): void
     $to = function_exists('sa_core_store_email') && is_email(sa_core_store_email()) ? sa_core_store_email() : (string) get_option('admin_email');
     $html = ['Content-Type: text/html; charset=UTF-8'];
     $layout = static fn(string $h, string $inner, string $cl = '', string $cu = ''): string => function_exists('sa_mail_layout') ? sa_mail_layout($h, $inner, $cl, $cu) : '<h1>' . esc_html($h) . '</h1>' . $inner;
-    wp_mail($to, '[' . $ref . '] Job application: ' . $role_title . ' — ' . $name, $layout('Job application: ' . $role_title, '<p><strong>' . esc_html($name) . '</strong> &lt;' . esc_html($email) . '&gt;</p>' . $table, 'Open tickets', admin_url('admin.php?page=sa-super-tickets' . ($tid ? '&ticket=' . $tid : ''))), array_merge($html, ['Reply-To: ' . $name . ' <' . $email . '>']));
-    wp_mail($email, 'We received your application (' . $ref . ')', $layout('We received your application', '<p>' . sa_email_greeting((string) $name, (string) $email) . '</p><p>Thanks for applying for <strong>' . esc_html($role_title) . '</strong> at Supreme Autoparts. We will review your application and be in touch. Your reference is <strong>' . esc_html($ref) . '</strong>.</p>' . $table, 'Visit Supreme Autoparts', home_url('/')), $html);
-    $go('sent', $ref);
+    wp_mail($to, '[' . $ref . '] Job application: ' . $role_title . ' — ' . $name, $layout('Job application saved: ' . $role_title, '<p>Payment is pending. Check the linked fee order before treating this application as paid.</p><p><strong>' . esc_html($name) . '</strong> &lt;' . esc_html($email) . '&gt;</p>' . $table, 'Open tickets', admin_url('admin.php?page=sa-super-tickets' . ($tid ? '&ticket=' . $tid : ''))), array_merge($html, ['Reply-To: ' . $name . ' <' . $email . '>']));
+    wp_mail($email, 'Your application is saved (' . $ref . ')', $layout('Your application is saved', '<p>' . sa_email_greeting((string) $name, (string) $email) . '</p><p>Thanks for applying for <strong>' . esc_html($role_title) . '</strong> at Supreme Autoparts. Your application is saved. Please complete the KES 1,000 non-refundable application fee through Paystack. Payment does not guarantee an interview or employment. Your reference is <strong>' . esc_html($ref) . '</strong>.</p>' . $table, 'Continue to Paystack payment', $payment_order->get_checkout_payment_url()), $html);
+    wp_safe_redirect($payment_order->get_checkout_payment_url());
+    exit;
 }
