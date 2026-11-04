@@ -20,4 +20,3 @@ function sa_visible_missing_payment_cards(): void {
     }
 }
 // Standard checkout calls directly inside its AJAX-replaced payment fragment.
-
