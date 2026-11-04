@@ -16,8 +16,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class SA_Paystack_Charge_Quote {
 
-	const META_KEY = '_sa_paystack_charge_quotes';
-	const MAX_KEPT = 5;
+	const META_KEY         = '_sa_paystack_charge_quotes';
+	const DISPLAY_META_KEY = '_sa_paystack_display_quote';
+	const MAX_KEPT         = 5;
+	// How long the customer-visible quote stays authoritative for payment.
+	const DISPLAY_TTL      = 1800;
 
 	/**
 	 * Currency this Paystack account charges and settles in.
@@ -77,13 +80,88 @@ final class SA_Paystack_Charge_Quote {
 	}
 
 	/**
+	 * Quote from an explicit rate, used when reusing the customer-visible quote.
+	 */
+	public static function build_quote_at_rate( $order, string $txn_ref, float $rate ): ?array {
+		$order_currency = strtoupper( (string) $order->get_currency() );
+		$settlement     = self::settlement_currency();
+		$total          = (float) $order->get_total();
+		if ( '' === $order_currency || ! is_finite( $total ) || $total <= 0 || ! is_finite( $rate ) || $rate <= 0 ) {
+			return null;
+		}
+		$charge = round( $total * $rate, self::decimals_for( $settlement ) );
+		if ( ! is_finite( $charge ) || $charge <= 0 ) {
+			return null;
+		}
+		return array(
+			'reference'       => $txn_ref,
+			'order_currency'  => $order_currency,
+			'order_total'     => $total,
+			'charge_currency' => $settlement,
+			'charge_amount'   => $charge,
+			'rate'            => $rate,
+			'quoted_at'       => time(),
+		);
+	}
+
+	/**
+	 * Read the customer-visible display quote stored on the order, when it still
+	 * describes the current order and is fresh enough to honor.
+	 */
+	public static function display_quote_for_order( $order ): ?array {
+		$display = $order->get_meta( self::DISPLAY_META_KEY );
+		if ( ! is_array( $display ) ) {
+			return null;
+		}
+		if ( strtoupper( (string) ( $display['order_currency'] ?? '' ) ) !== strtoupper( (string) $order->get_currency() ) ) {
+			return null;
+		}
+		if ( abs( (float) ( $display['order_total'] ?? -1 ) - (float) $order->get_total() ) >= 0.005 ) {
+			return null;
+		}
+		if ( (int) ( $display['quoted_at'] ?? 0 ) < time() - self::DISPLAY_TTL ) {
+			return null;
+		}
+		if ( (float) ( $display['rate'] ?? 0 ) <= 0 || (float) ( $display['charge_amount'] ?? 0 ) <= 0 ) {
+			return null;
+		}
+		return $display;
+	}
+
+	/**
 	 * Persist the exact quote used to initialize a transaction, keyed by its
 	 * reference, so later verification matches what was actually initialized.
+	 *
+	 * When a customer-visible display quote exists for this order, its rate is
+	 * reused so the charge equals the figure the customer saw. If that figure
+	 * is stale and a fresh quote would charge a different amount, this returns
+	 * null: the payment must stop and the page must show the updated charge
+	 * instead of silently charging a new figure.
 	 */
 	public static function lock_for_order( $order, string $txn_ref ): ?array {
-		$quote = self::build_quote( $order, $txn_ref );
-		if ( ! is_array( $quote ) ) {
-			return null;
+		$display = self::display_quote_for_order( $order );
+		if ( is_array( $display ) ) {
+			$quote = self::build_quote_at_rate( $order, $txn_ref, (float) $display['rate'] );
+			if ( ! is_array( $quote ) ) {
+				return null;
+			}
+			if ( self::minor( (float) $quote['charge_amount'] ) !== self::minor( (float) $display['charge_amount'] ) ) {
+				return null;
+			}
+		} else {
+			$had_display = is_array( $order->get_meta( self::DISPLAY_META_KEY ) );
+			$quote       = self::build_quote( $order, $txn_ref );
+			if ( ! is_array( $quote ) ) {
+				return null;
+			}
+			if ( $had_display ) {
+				$old = $order->get_meta( self::DISPLAY_META_KEY );
+				if ( abs( (float) ( $old['order_total'] ?? -1 ) - (float) $order->get_total() ) < 0.005
+					&& self::minor( (float) ( $old['charge_amount'] ?? -1 ) ) !== self::minor( (float) $quote['charge_amount'] ) ) {
+					// Stale displayed figure for the same total: re-display, do not silently charge the new one.
+					return null;
+				}
+			}
 		}
 		$quotes = $order->get_meta( self::META_KEY );
 		$quotes = is_array( $quotes ) ? $quotes : array();

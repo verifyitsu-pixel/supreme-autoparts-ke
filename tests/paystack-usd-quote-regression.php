@@ -111,4 +111,36 @@ assert($v->get_paystack_transaction('76318_1')!==false);
 $GLOBALS['verify_body']=json_encode(['status'=>true,'data'=>['status'=>'success','reference'=>'76318_1','currency'=>'KES','amount'=>11049,'domain'=>'live']]);
 assert($v->get_paystack_transaction('76318_1')===false);
 
-echo "32 USD->KES locked-quote checks PASS (mock orders only, no network)\n";
+
+// 10. Customer-visible display quote is reused at init even after the rate table moves (drift fix).
+$o=new QOrder('USD',100.00);
+$o->update_meta_data(Q::DISPLAY_META_KEY,['order_currency'=>'USD','order_total'=>100.00,'charge_currency'=>'KES','charge_amount'=>12950.00,'rate'=>129.50,'quoted_at'=>time()]);
+SA_FX_Rates::$rates=['KES'=>200.00];
+$q=Q::lock_for_order($o,'80010_1');
+assert($q!==null && $q['rate']===129.50 && $q['charge_amount']===12950.00);
+assert(Q::matches_transaction($o,'80010_1',1295000,'KES')===true);
+
+// 11. Fresh display quote whose stored charge disagrees with its own rate: fail closed.
+$o=new QOrder('USD',100.00);
+$o->update_meta_data(Q::DISPLAY_META_KEY,['order_currency'=>'USD','order_total'=>100.00,'charge_currency'=>'KES','charge_amount'=>12900.00,'rate'=>129.50,'quoted_at'=>time()]);
+assert(Q::lock_for_order($o,'80011_1')===null);
+
+// 12. Stale display quote with a moved rate: stop and re-display instead of silently charging the new figure.
+$o=new QOrder('USD',100.00);
+$o->update_meta_data(Q::DISPLAY_META_KEY,['order_currency'=>'USD','order_total'=>100.00,'charge_currency'=>'KES','charge_amount'=>12950.00,'rate'=>129.50,'quoted_at'=>time()-3600]);
+assert(Q::lock_for_order($o,'80012_1')===null);
+
+// 13. Stale display quote but unchanged rate: same figure, proceed.
+SA_FX_Rates::$rates=['KES'=>129.50];
+$o=new QOrder('USD',100.00);
+$o->update_meta_data(Q::DISPLAY_META_KEY,['order_currency'=>'USD','order_total'=>100.00,'charge_currency'=>'KES','charge_amount'=>12950.00,'rate'=>129.50,'quoted_at'=>time()-3600]);
+$q=Q::lock_for_order($o,'80013_1'); assert($q!==null && $q['charge_amount']===12950.00);
+
+// 14. Display quote for an older total (order edited): fresh quote for the new total proceeds.
+SA_FX_Rates::$rates=['KES'=>200.00];
+$o=new QOrder('USD',120.00);
+$o->update_meta_data(Q::DISPLAY_META_KEY,['order_currency'=>'USD','order_total'=>100.00,'charge_currency'=>'KES','charge_amount'=>12950.00,'rate'=>129.50,'quoted_at'=>time()]);
+$q=Q::lock_for_order($o,'80014_1'); assert($q!==null && $q['charge_amount']===24000.00 && $q['rate']===200.00);
+SA_FX_Rates::$rates=['KES'=>129.50];
+
+echo "43 USD->KES locked-quote checks PASS (mock orders only, no network)\n";
