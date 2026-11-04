@@ -72,6 +72,7 @@ function sa_ff_defs(): array
                 sa_ff_wrap('c6', sa_ff_field('upload-1', 'upload', ['field_label' => 'CV (PDF, DOC or DOCX)', 'required' => 'true', 'file-type' => 'single', 'filetypes' => ['pdf', 'doc', 'docx'], 'file-limit' => 1, 'upload-limit' => 10, 'filesize' => 'MB', 'description' => 'Up to 10 MB.', 'required_message' => 'Please attach your CV.'])),
             ],
             'settings' => [
+                'honeypot' => true,
                 'thankyou-message' => 'Application saved. Continue to Paystack to pay the KES 1,000 application fee. The KES 1,000 fee is refundable when an invited applicant attends the paid two-day work trial. Payment does not guarantee an invitation or continued employment.',
                 'submitData' => ['custom-submit-text' => 'Save application and continue to payment'],
                 'use-user-email' => 'true',
@@ -311,10 +312,10 @@ add_action('init', static function (): void {
 
 // Update careers only. Other forms and notification families are outside this fee change.
 add_action('init',static function(){
-    if(get_option('sa_careers_fee_form_ver')==='5' || !class_exists('Forminator_API'))return;
+    if(get_option('sa_careers_fee_form_ver')==='6' || !class_exists('Forminator_API'))return;
     $ids=(array)get_option('sa_forminator_forms',[]);$id=(int)($ids['careers']??0);if(!$id || !get_post_status($id))return;
     $def=sa_ff_defs()['careers'];$r=Forminator_API::update_form($id,$def['wrappers'],sa_ff_settings($def['name'],$def['settings']),'publish',$def['notifications']);
-    if(!is_wp_error($r))update_option('sa_careers_fee_form_ver','5',false);
+    if(!is_wp_error($r))update_option('sa_careers_fee_form_ver','6',false);
 },27);
 
 function sa_ff_id(string $key): int
