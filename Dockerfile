@@ -65,6 +65,7 @@ RUN mkdir -p /usr/src/sa-lib \
 # Custom theme + plugins (baked into image for Git auto-deploy)
 COPY wp-content/themes/supreme-autoparts /usr/src/wordpress/wp-content/themes/supreme-autoparts
 COPY wp-content/plugins/supreme-autoparts-core /usr/src/wordpress/wp-content/plugins/supreme-autoparts-core
+COPY wp-content/plugins/woo-paystack /usr/src/wordpress/wp-content/plugins/woo-paystack
 COPY wp-content/plugins/whop-payments /usr/src/wordpress/wp-content/plugins/whop-payments
 COPY wp-content/plugins/sa-brevo-mail /usr/src/wordpress/wp-content/plugins/sa-brevo-mail
 COPY wp-content/plugins/sa-geo-currency /usr/src/wordpress/wp-content/plugins/sa-geo-currency

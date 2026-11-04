@@ -91,7 +91,7 @@ sync_custom_content() {
   if [[ -d /usr/src/wordpress/wp-content/plugins/sa-geo-currency ]]; then
     swap_dir /usr/src/wordpress/wp-content/plugins/sa-geo-currency /var/www/html/wp-content/plugins/sa-geo-currency
   fi
-  for gw in pesapal-woocommerce transactworld-payment-integration woocommerce-paypal-payments jotform-ai-chatbot supreme-agent-intake forminator supreme-marketing; do
+  for gw in woo-paystack pesapal-woocommerce transactworld-payment-integration woocommerce-paypal-payments jotform-ai-chatbot supreme-agent-intake forminator supreme-marketing; do
     if [[ -d /usr/src/wordpress/wp-content/plugins/$gw ]]; then
       swap_dir "/usr/src/wordpress/wp-content/plugins/$gw" "/var/www/html/wp-content/plugins/$gw"
       chown -R www-data:www-data "/var/www/html/wp-content/plugins/$gw" 2>/dev/null || true
@@ -119,6 +119,7 @@ sync_custom_content() {
   fi
   cp -f /usr/src/wordpress/wp-content/mu-plugins/sa-privacy-clarity.php /var/www/html/wp-content/mu-plugins/
   cp -f /usr/src/wordpress/wp-content/mu-plugins/sa-google-analytics.php /var/www/html/wp-content/mu-plugins/
+  cp -f /usr/src/wordpress/wp-content/mu-plugins/sa-paystack.php /var/www/html/wp-content/mu-plugins/
   if [[ -f /usr/src/wordpress/wp-content/mu-plugins/sa-customer-analytics.php ]]; then
     cp -f /usr/src/wordpress/wp-content/mu-plugins/sa-customer-analytics.php /var/www/html/wp-content/mu-plugins/ || true
   fi
@@ -286,6 +287,7 @@ bootstrap_wordpress() {
 
   wp_as plugin activate supreme-autoparts-core || true
   wp_as plugin activate whop-payments || true
+  wp_as plugin activate woo-paystack || true
   wp_as plugin activate sa-brevo-mail || true
   wp_as plugin activate sa-geo-currency || true
   wp_as plugin activate pesapal-woocommerce || true
