@@ -16,17 +16,20 @@ if (!wp_doing_ajax()) {
   <?php if (WC()->cart && WC()->cart->needs_payment()) : ?>
     <ul class="wc_payment_methods payment_methods methods">
       <?php
-      if (!empty($available_gateways)) {
-          foreach ($available_gateways as $gateway) {
+      // Display order only. Do not change checked state or gateway availability.
+      foreach (['paystack', 'pesapal', 'whop'] as $id) {
+          if (isset($available_gateways[$id])) {
+              wc_get_template('checkout/payment-method.php', ['gateway' => $available_gateways[$id]]);
+          } elseif (function_exists('sa_visible_missing_payment_cards')) {
+              sa_visible_missing_payment_cards($id);
+          }
+      }
+      foreach (($available_gateways ?? []) as $id => $gateway) {
+          if (!in_array($id, ['paystack', 'pesapal', 'whop'], true)) {
               wc_get_template('checkout/payment-method.php', ['gateway' => $gateway]);
           }
-      } else {
-          echo '<li class="woocommerce-notice woocommerce-notice--info woocommerce-info">';
-          echo esc_html(apply_filters('woocommerce_no_available_payment_methods_message', WC()->customer->get_billing_country() ? esc_html__('Sorry, it seems that there are no available payment methods. Please contact us for assistance.', 'supreme-autoparts') : esc_html__('Please fill in your details above to see available payment methods.', 'supreme-autoparts')));
-          echo '</li>';
       }
       ?>
-      <?php if (function_exists('sa_visible_missing_payment_cards')) sa_visible_missing_payment_cards(); ?>
     </ul>
   <?php endif; ?>
 

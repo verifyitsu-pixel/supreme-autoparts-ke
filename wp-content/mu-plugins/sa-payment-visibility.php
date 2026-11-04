@@ -10,11 +10,11 @@ function sa_visible_whop_over_limit(): bool {
     }
     return function_exists('sa_whop_over_cap') && sa_whop_over_cap();
 }
-function sa_visible_missing_payment_cards(): void {
+function sa_visible_missing_payment_cards(?string $only = null): void {
     if (!function_exists('WC') || !WC() || !WC()->payment_gateways()) return;
     $available=WC()->payment_gateways()->get_available_payment_gateways();
     foreach (['whop'=>['Whop','whop.svg'],'pesapal'=>['Pesapal','pesapal.png'],'paystack'=>['Paystack','paystack.png']] as $id=>$brand) {
-        if (isset($available[$id])) continue;
+        if (($only !== null && $only !== $id) || isset($available[$id])) continue;
         $over=$id==='whop' && sa_visible_whop_over_limit();
         echo '<li class="wc_payment_method payment_method_'.esc_attr($id).'" aria-disabled="true" style="'.($over?'background:#eee;filter:grayscale(1);color:#666':'').'"><input type="radio" disabled aria-disabled="true" name="sa_unavailable_provider" value="'.esc_attr($id).'" /><label><span class="sa-provider-brand"><img src="'.esc_url(get_stylesheet_directory_uri().'/assets/images/providers/'.$brand[1]).'" alt="'.esc_attr($brand[0]).'" /></span></label>'.($over?'<p>Above the USD 2,500 Whop limit.</p>':'').'</li>';
     }
