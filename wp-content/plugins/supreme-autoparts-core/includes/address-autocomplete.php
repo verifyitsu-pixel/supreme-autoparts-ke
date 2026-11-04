@@ -153,10 +153,10 @@ function setVal(id,v){var e=document.getElementById(id);if(!e)return;v=v==null?'
 function stateNorm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(county|state|province|region)\b/g,'').replace(/[^a-z0-9]/g,'');}
 function stateValue(st,it){if(!st||st.tagName!=='SELECT')return it.state||'';var opts=[].slice.call(st.options),code=String(it.state_code||'').toLowerCase(),countryCode=String(it.country||'').toLowerCase(),name=stateNorm(it.state),hit=opts.find(function(o){return o.value&&code&&(o.value.toLowerCase()===code||o.value.toLowerCase()===code.replace(new RegExp('^'+countryCode+'[-_]'),''));});if(!hit&&name){var matches=opts.filter(function(o){return o.value&&stateNorm(o.text)===name;});if(matches.length===1)hit=matches[0];}return hit?hit.value:'';}
 var pickGeneration=0;
-function wrap(el){if(el.parentNode&&el.parentNode.classList.contains('sa-aa-wrap'))return el.parentNode;var w=document.createElement('div');w.className='sa-aa-wrap';el.parentNode.insertBefore(w,el);w.appendChild(el);return w;}
+function wrap(el){if(el.parentNode&&el.parentNode.classList.contains('sa-aa-wrap'))return el.parentNode;var w=document.createElement('span');w.className='sa-aa-wrap';el.parentNode.insertBefore(w,el);w.appendChild(el);return w;}
 var listEl=null,timer=null,items=[];
 function closeList(){if(listEl){listEl.remove();listEl=null;}items=[];}
-function credit(w){if(w.parentNode.querySelector('.sa-aa-credit'))return;var c=document.createElement('div');c.className='sa-aa-credit';c.innerHTML='Address search powered by <a href="https://www.geoapify.com/" target="_blank" rel="noopener">Geoapify</a>';w.parentNode.insertBefore(c,w.nextSibling);}
+function credit(w){if(w.parentNode.querySelector('.sa-aa-credit'))return;var c=document.createElement('span');c.className='sa-aa-credit';c.innerHTML='Address search powered by <a href="https://www.geoapify.com/" target="_blank" rel="noopener">Geoapify</a>';w.parentNode.insertBefore(c,w.nextSibling);}
 function pick(it){
   var f=field();if(!f)return;var generation=++pickGeneration;
   closeList();f.value=it.line1||it.label||'';

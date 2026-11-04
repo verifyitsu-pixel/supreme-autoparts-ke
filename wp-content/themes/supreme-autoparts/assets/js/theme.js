@@ -386,39 +386,23 @@
   }
 
 
-  // Checkout: highlight steps from visible panels; mobile sticky Place order.
+  // Accessible, reversible checkout steps. Next never submits or pays.
   function saCheckoutSteps() {
-    var steps = document.querySelectorAll('[data-sa-checkout-steps] [data-sa-step]');
-    var panels = document.querySelectorAll('[data-sa-checkout-panel]');
-    if (!steps.length || !panels.length || !('IntersectionObserver' in window)) return;
-
-    var order = ['contact', 'shipping', 'payment'];
-    var visible = { contact: false, shipping: false, payment: false };
-
-    function paint() {
-      var active = 'contact';
-      for (var i = order.length - 1; i >= 0; i--) {
-        if (visible[order[i]]) { active = order[i]; break; }
-      }
-      var activeIdx = order.indexOf(active);
-      steps.forEach(function (el) {
-        var key = el.getAttribute('data-sa-step');
-        var idx = order.indexOf(key);
-        el.classList.toggle('is-active', key === active);
-        el.classList.toggle('is-done', idx > -1 && idx < activeIdx);
-      });
+    var panels=[].slice.call(document.querySelectorAll('[data-sa-checkout-panel]'));
+    if(panels.length!==3)return;
+    var keys=['contact','shipping','payment'],active=0,furthest=0;
+    function body(p){return p.querySelector('.sa-checkout-section__body');}
+    function open(index,focus){active=index;furthest=Math.max(furthest,index);panels.forEach(function(p,i){body(p).hidden=i!==index;var edit=p.querySelector('[data-sa-edit-step]');edit.hidden=i===index||i>furthest;edit.setAttribute('aria-expanded',String(i===index));});
+      document.querySelectorAll('[data-sa-step]').forEach(function(el,i){el.classList.toggle('is-active',i===index);el.classList.toggle('is-done',i<index);el.setAttribute('aria-current',i===index?'step':'false');});
+      if(focus){var title=panels[index].querySelector('h2');title.setAttribute('tabindex','-1');title.focus({preventScroll:true});panels[index].scrollIntoView({behavior:'smooth',block:'start'});}
     }
-
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        var key = entry.target.getAttribute('data-sa-checkout-panel');
-        if (!key) return;
-        visible[key] = entry.isIntersecting && entry.intersectionRatio > 0.2;
-      });
-      paint();
-    }, { rootMargin: '-20% 0px -45% 0px', threshold: [0, 0.2, 0.5, 1] });
-
-    panels.forEach(function (p) { io.observe(p); });
+    function valid(p){var fields=[].slice.call(p.querySelectorAll('input,select,textarea'));var bad=fields.find(function(e){if(e.disabled||e.type==='hidden'||(!e.getClientRects().length&&!(e.tagName==='SELECT'&&e.classList.contains('select2-hidden-accessible')&&e.parentElement.getClientRects().length))||e.closest('.shipping_address')&& !document.querySelector('#ship-to-different-address-checkbox:checked'))return false;var row=e.closest('.form-row'),required=e.required||row&&row.classList.contains('validate-required');return required&&!String(e.value||'').trim()||e.type==='email'&&e.value&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.value);});if(bad){bad.setAttribute('aria-invalid','true');bad.focus();var row=bad.closest('.form-row');if(row)row.classList.add('woocommerce-invalid');return false;}return true;}
+    panels.forEach(function(p,i){var h=p.querySelector('.sa-checkout-section__head'),b=body(p);b.id=b.id||'sa-checkout-step-body-'+keys[i];var edit=document.createElement('button');edit.type='button';edit.className='sa-checkout-edit-step';edit.textContent='Edit';edit.setAttribute('data-sa-edit-step',keys[i]);edit.setAttribute('aria-controls',b.id);edit.addEventListener('click',function(){if(i<=furthest)open(i,true);});h.appendChild(edit);
+      if(i<2){var next=document.createElement('button');next.type='button';next.className='sa-checkout-next';next.textContent=i===0?'Next: Shipping':'Next: Payment';next.addEventListener('click',function(){if(i===active&&valid(p))open(i+1,true);});b.appendChild(next);}
+    });
+    document.querySelector('.sa-checkout-page').classList.add('sa-checkout-is-stepped');open(0,false);
+    if(window.jQuery)jQuery(document.body).on('checkout_error',function(){var invalid=document.querySelector('.woocommerce-invalid');var p=invalid&&invalid.closest('[data-sa-checkout-panel]');if(p)open(keys.indexOf(p.dataset.saCheckoutPanel),true);});
+    document.querySelector('form.checkout').addEventListener('submit',function(e){if(active<2){e.preventDefault();e.stopImmediatePropagation();if(valid(panels[active]))open(active+1,true);}},true);
   }
 
   function saCheckoutStickyPay() {

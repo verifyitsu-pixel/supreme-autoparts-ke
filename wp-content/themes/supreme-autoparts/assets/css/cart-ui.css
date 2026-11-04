@@ -176,3 +176,23 @@ body.woocommerce-checkout .sa-page__content,body.woocommerce-cart .sa-page__cont
 #shipping_method li input{margin-top:.2rem;flex:0 0 auto}
 #shipping_method li label{flex:1;font-weight:500}
 tr.sa-fargo-nobranch{display:block}tr.sa-fargo-nobranch td{display:block;width:100%!important;white-space:normal!important}
+
+/* Checkout contact and shipping: generous form controls, no payment-card changes. */
+.sa-checkout-section--contact .sa-checkout-section__body,.sa-checkout-section--shipping .sa-checkout-section__body{padding:24px!important}
+.sa-checkout-section--contact .form-row,.sa-checkout-section--shipping .form-row{margin-bottom:20px!important;float:none!important;width:100%!important}
+.sa-checkout-section--contact .form-row label,.sa-checkout-section--shipping .form-row label{display:block;font-size:15px!important;font-weight:600!important;margin-bottom:8px!important;line-height:1.4}
+.sa-checkout-section--contact input.input-text,.sa-checkout-section--shipping input.input-text,.sa-checkout-section--contact select,.sa-checkout-section--shipping select,.sa-checkout-section--shipping textarea{display:block;width:100%!important;min-height:54px!important;padding:14px!important;box-sizing:border-box;font-size:16px!important;line-height:24px!important;background:#fff!important}
+.sa-checkout-section--contact .select2-selection--single,.sa-checkout-section--shipping .select2-selection--single{min-height:54px!important;height:54px!important;display:flex;align-items:center}
+.sa-checkout-section--contact .select2-selection__rendered,.sa-checkout-section--shipping .select2-selection__rendered{padding-left:14px!important;font-size:16px!important;line-height:24px!important}
+.sa-checkout-section--contact .select2-selection__arrow,.sa-checkout-section--shipping .select2-selection__arrow{height:52px!important;right:10px!important}
+.sa-checkout-section__body[hidden]{display:none!important}
+.sa-checkout-edit-step{margin-left:auto;flex-shrink:0;min-width:54px;min-height:44px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#111;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.sa-checkout-edit-step[hidden]{display:none!important}
+.sa-checkout-next{display:block;width:100%;min-height:54px;padding:14px 20px;margin-top:24px;border:0;border-radius:10px;background:#111;color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+.sa-checkout-next:focus-visible,.sa-checkout-edit-step:focus-visible{outline:3px solid #f5a623;outline-offset:3px}
+.sa-checkout-is-stepped [data-sa-checkout-panel]{scroll-margin-top:150px}
+@media(min-width:768px){.sa-checkout-section--contact .woocommerce-billing-fields__field-wrapper,.sa-checkout-section--shipping .woocommerce-shipping-fields__field-wrapper{display:grid;grid-template-columns:1fr 1fr;column-gap:20px}.sa-checkout-section--contact .form-row,.sa-checkout-section--shipping .form-row{grid-column:1/-1}.sa-checkout-section--contact #billing_first_name_field,.sa-checkout-section--contact #billing_last_name_field,.sa-checkout-section--shipping #shipping_first_name_field,.sa-checkout-section--shipping #shipping_last_name_field{grid-column:auto}}
+@media(max-width:767px){.sa-checkout-section--contact .sa-checkout-section__body,.sa-checkout-section--shipping .sa-checkout-section__body{padding:20px!important}.sa-checkout-section--contact .form-row-first,.sa-checkout-section--contact .form-row-last{width:100%!important}.sa-checkout-section__head{padding:18px!important}}
+.sa-checkout-section--contact .sa-aa-wrap,.sa-checkout-section--shipping .sa-aa-wrap{display:block!important;width:100%!important;max-width:none!important}
+.sa-checkout-section--contact .sa-aa-credit,.sa-checkout-section--shipping .sa-aa-credit{display:block;clear:both;margin-top:6px}
+.sa-checkout-section--contact #billing_address_1_field .woocommerce-input-wrapper,.sa-checkout-section--shipping #shipping_address_1_field .woocommerce-input-wrapper{display:block!important;width:100%!important}
