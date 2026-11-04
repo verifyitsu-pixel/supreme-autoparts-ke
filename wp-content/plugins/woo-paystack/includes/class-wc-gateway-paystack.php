@@ -4,6 +4,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// Supreme: server-locked charge quotes (orders keep their own currency; charges settle in KES).
+if ( ! class_exists( 'SA_Paystack_Charge_Quote' ) && file_exists( __DIR__ . '/class-sa-paystack-charge-quote.php' ) ) {
+	require_once __DIR__ . '/class-sa-paystack-charge-quote.php';
+}
+
 class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 	/**
@@ -735,15 +740,22 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 		);
 
 		if ( is_checkout_pay_page() && get_query_var( 'order-pay' ) ) {
-			$email    = $order->get_billing_email();
-			$amount   = round( (float) $order->get_total() * 100 );
-			$txnref   = $order_id . '_' . time();
-			$currency = $order->get_currency();
+			$email  = $order->get_billing_email();
+			$txnref = $order_id . '_' . time();
+
+			$charge = $this->lock_order_charge_quote( $order, $txnref );
+
+			if ( null === $charge ) {
+				return;
+			}
+
+			$order->update_meta_data( '_paystack_txn_ref', $txnref );
+			$order->save();
 
 			$paystack_params['email']    = $email;
-			$paystack_params['amount']   = absint( $amount );
+			$paystack_params['amount']   = $charge['amount_minor'];
 			$paystack_params['txnref']   = $txnref;
-			$paystack_params['currency'] = $currency;
+			$paystack_params['currency'] = $charge['currency'];
 
 			if ( $this->split_payment ) {
 				$paystack_params['subaccount_code'] = $this->subaccount_code;
@@ -940,15 +952,22 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 		$order        = wc_get_order( $order_id );
 		$txnref       = $order_id . '_' . time();
-        $amount       = round( (float) $order->get_total() * 100 );
 		$callback_url = WC()->api_request_url( 'WC_Gateway_Paystack' );
+
+		// Supreme: lock the exact charge (converting to the account settlement currency when the order is not KES) before initializing.
+		$charge = $this->lock_order_charge_quote( $order, $txnref );
+
+		if ( null === $charge ) {
+			wc_add_notice( __( 'Paystack could not quote an exact Kenyan shilling total for this order right now. Please try again shortly or choose another payment method.', 'woo-paystack' ), 'error' );
+			return;
+		}
 
 		$payment_channels = $this->get_gateway_payment_channels( $order );
 
 		$paystack_params = array(
-			'amount'       => absint( $amount ),
+			'amount'       => $charge['amount_minor'],
 			'email'        => $order->get_billing_email(),
-			'currency'     => $order->get_currency(),
+			'currency'     => $charge['currency'],
 			'reference'    => $txnref,
 			'callback_url' => $callback_url,
 		);
@@ -970,6 +989,20 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 		}
 
 		$paystack_params['metadata']['custom_fields'] = $this->get_custom_fields( $order_id );
+
+		if ( ! empty( $charge['quote'] ) ) {
+			$paystack_params['metadata']['custom_fields'][] = array(
+				'display_name'  => 'Order Total',
+				'variable_name' => 'sa_order_total',
+				'value'         => $charge['quote']['order_currency'] . ' ' . number_format( (float) $charge['quote']['order_total'], 2 ),
+			);
+			$paystack_params['metadata']['custom_fields'][] = array(
+				'display_name'  => 'Conversion Rate',
+				'variable_name' => 'sa_fx_rate',
+				'value'         => '1 ' . $charge['quote']['order_currency'] . ' = ' . $charge['quote']['rate'] . ' ' . $charge['quote']['charge_currency'],
+			);
+		}
+
 		$paystack_params['metadata']['cancel_action'] = wc_get_cart_url();
 		$paystack_params['metadata']['referrer']      = esc_url( site_url() );
 
@@ -1024,8 +1057,14 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 			$order = wc_get_order( $order_id );
 
-            $order_amount = round( (float) $order->get_total() * 100 );
-			$txnref       = $order_id . '_' . time();
+			$txnref = $order_id . '_' . time();
+
+			$charge = $this->lock_order_charge_quote( $order, $txnref );
+
+			if ( null === $charge ) {
+				wc_add_notice( __( 'Paystack could not quote an exact Kenyan shilling total for this order right now. Please choose another payment option.', 'woo-paystack' ), 'error' );
+				return false;
+			}
 
 			$order->update_meta_data( '_paystack_txn_ref', $txnref );
 			$order->save();
@@ -1051,11 +1090,11 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 			$body = array(
 				'email'              => $customer_email,
-				'amount'             => absint( $order_amount ),
+				'amount'             => $charge['amount_minor'],
 				'metadata'           => $metadata,
 				'authorization_code' => $auth_code,
 				'reference'          => $txnref,
-				'currency'           => $order->get_currency(),
+				'currency'           => $charge['currency'],
 			);
 
 			$args = array(
@@ -1092,8 +1131,10 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 					$payment_currency = $paystack_response->data->currency;
 					$gateway_symbol   = get_woocommerce_currency_symbol( $payment_currency );
 
+					$expected = SA_Paystack_Charge_Quote::expected_charge( $order, $paystack_ref );
+
 					// check if the amount paid is equal to the order amount.
-					if ( round( $amount_paid, 2 ) < round( $order_total, 2 ) ) {
+					if ( round( $amount_paid, 2 ) < round( $expected['amount'], 2 ) ) {
 
 						$order->update_status( 'on-hold', '' );
 
@@ -1115,7 +1156,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 					} else {
 
-						if ( $payment_currency !== $order_currency ) {
+						if ( strtoupper( (string) $payment_currency ) !== $expected['currency'] ) {
 
 							$order->update_status( 'on-hold', '' );
 
@@ -1139,6 +1180,9 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 						} else {
 
+							if ( ! empty( $expected['quote'] ) ) {
+								$this->record_converted_charge_details( $order, $expected['quote'], $amount_paid, $payment_currency );
+							}
 							$this->store_receipt_payment_details( $order, $paystack_response );
 				$order->payment_complete( $paystack_ref );
 
@@ -1269,8 +1313,10 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 					$payment_currency = strtoupper( $paystack_response->data->currency );
 					$gateway_symbol   = get_woocommerce_currency_symbol( $payment_currency );
 
+					$expected = SA_Paystack_Charge_Quote::expected_charge( $order, $paystack_ref );
+
 					// check if the amount paid is equal to the order amount.
-					if ( round( $amount_paid, 2 ) < round( $order_total, 2 ) ) {
+					if ( round( $amount_paid, 2 ) < round( $expected['amount'], 2 ) ) {
 
 						$order->update_status( 'on-hold', '' );
 
@@ -1294,7 +1340,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 					} else {
 
-						if ( $payment_currency !== $order_currency ) {
+						if ( strtoupper( (string) $payment_currency ) !== $expected['currency'] ) {
 
 							$order->update_status( 'on-hold', '' );
 
@@ -1318,6 +1364,9 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 						} else {
 
+							if ( ! empty( $expected['quote'] ) ) {
+								$this->record_converted_charge_details( $order, $expected['quote'], $amount_paid, $payment_currency );
+							}
 							$this->store_receipt_payment_details( $order, $paystack_response );
 				$order->payment_complete( $paystack_ref );
 							/* translators: %s: Paystack transaction reference. */
@@ -1428,8 +1477,10 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 		$gateway_symbol = get_woocommerce_currency_symbol( $payment_currency );
 
+		$expected = SA_Paystack_Charge_Quote::expected_charge( $order, $paystack_ref );
+
 		// check if the amount paid is equal to the order amount.
-		if ( round( $amount_paid, 2 ) < round( $order_total, 2 ) ) {
+		if ( round( $amount_paid, 2 ) < round( $expected['amount'], 2 ) ) {
 
 			$order->update_status( 'on-hold', '' );
 
@@ -1455,7 +1506,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 		} else {
 
-			if ( $payment_currency !== $order_currency ) {
+			if ( strtoupper( (string) $payment_currency ) !== $expected['currency'] ) {
 
 				$order->update_status( 'on-hold', '' );
 
@@ -1479,6 +1530,9 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 			} else {
 
+				if ( ! empty( $expected['quote'] ) ) {
+					$this->record_converted_charge_details( $order, $expected['quote'], $amount_paid, $payment_currency );
+				}
 				$this->store_receipt_payment_details( $order, $paystack_response );
 				$order->payment_complete( $paystack_ref );
 
@@ -1505,8 +1559,8 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
         $d = $response->data ?? null;
         if (!$d || ($d->status ?? '') !== 'success'
             || (string) ($d->reference ?? '') !== (string) $order->get_meta('_paystack_txn_ref')
-            || strtoupper((string) ($d->currency ?? '')) !== $order->get_currency()
-            || (int) ($d->amount ?? 0) !== (int) round((float) $order->get_total() * 100)) {
+            || !class_exists('SA_Paystack_Charge_Quote')
+            || !SA_Paystack_Charge_Quote::matches_transaction($order, (string) ($d->reference ?? ''), $d->amount ?? -1, (string) ($d->currency ?? ''))) {
             return;
         }
         $auth = $d->authorization ?? null;
@@ -1608,6 +1662,57 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 			}
 		}
 
+	}
+
+	/**
+	 * Supreme: lock the exact server-side charge quote for this transaction reference.
+	 * Returns the minor-unit amount and currency to send to Paystack, or null when no
+	 * truthful quote exists, which must fail the payment attempt closed.
+	 *
+	 * @param WC_Order $order  Order being paid.
+	 * @param string   $txnref Transaction reference for this attempt.
+	 * @return array|null {amount_minor:int, currency:string, quote:?array}
+	 */
+	protected function lock_order_charge_quote( $order, string $txnref ): ?array {
+		if ( ! class_exists( 'SA_Paystack_Charge_Quote' ) ) {
+			return null;
+		}
+		$quote = SA_Paystack_Charge_Quote::lock_for_order( $order, $txnref );
+		if ( ! is_array( $quote ) ) {
+			return null;
+		}
+		$converted = strtoupper( (string) $quote['charge_currency'] ) !== strtoupper( (string) $quote['order_currency'] );
+		return array(
+			'amount_minor' => SA_Paystack_Charge_Quote::minor( (float) $quote['charge_amount'] ),
+			'currency'     => strtoupper( (string) $quote['charge_currency'] ),
+			'quote'        => $converted ? $quote : null,
+		);
+	}
+
+	/**
+	 * Supreme: record a settled converted charge on the order. The order keeps its
+	 * own currency and totals; the charge figures live in meta plus an order note.
+	 *
+	 * @param WC_Order $order            Order that was paid.
+	 * @param array    $quote            Locked quote used for this charge.
+	 * @param float    $amount_paid      Amount Paystack reports as paid (major units).
+	 * @param string   $payment_currency Currency Paystack reports as paid.
+	 */
+	protected function record_converted_charge_details( $order, array $quote, $amount_paid, string $payment_currency ): void {
+		$order->update_meta_data( '_sa_paystack_charge_currency', strtoupper( $payment_currency ) );
+		$order->update_meta_data( '_sa_paystack_charge_amount', round( (float) $amount_paid, 2 ) );
+		$order->update_meta_data( '_sa_paystack_quote_fx_rate', (float) $quote['rate'] );
+		$order->add_order_note(
+			sprintf(
+				/* translators: 1: charged amount and currency, 2: order total and currency, 3: order currency, 4: locked rate, 5: charge currency. */
+				__( 'Paystack charged %1$s for this %2$s order at the locked rate 1 %3$s = %4$s %5$s. Order totals remain in %3$s.', 'woo-paystack' ),
+				strtoupper( $payment_currency ) . ' ' . number_format( (float) $amount_paid, 2 ),
+				$quote['order_currency'] . ' ' . number_format( (float) $quote['order_total'], 2 ),
+				$quote['order_currency'],
+				$quote['rate'],
+				strtoupper( $payment_currency )
+			)
+		);
 	}
 
 	/**
@@ -1890,8 +1995,9 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
         if (empty($response->status) || !$data || ($data->status ?? '') !== 'success' || ($data->reference ?? '') !== $paystack_txn_ref) return false;
         $order = wc_get_order((int)explode('_', $paystack_txn_ref)[0]);
         if (!$order || $order->get_payment_method() !== 'paystack' || $order->get_meta('_paystack_txn_ref') !== $paystack_txn_ref) return false;
-        if (strtoupper((string)($data->currency ?? '')) !== $order->get_currency()) return false;
-        if ((int)($data->amount ?? -1) !== (int)round((float)$order->get_total()*100)) return false;
+        // Supreme: accept only the exact locked charge quote for this reference (converted orders) or the order's own figures.
+        if (!class_exists('SA_Paystack_Charge_Quote')) return false;
+        if (!SA_Paystack_Charge_Quote::matches_transaction($order, $paystack_txn_ref, $data->amount ?? -1, (string)($data->currency ?? ''))) return false;
         if (($data->domain ?? '') !== ($this->testmode ? 'test' : 'live')) return false;
         return $response;
     }
