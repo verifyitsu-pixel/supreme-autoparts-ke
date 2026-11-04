@@ -56,6 +56,12 @@ function sa_ff_defs(): array
                     'options' => sa_ff_options([
                         'delivery-rider' => 'Delivery Rider (3 openings)',
                         'intern' => 'Intern',
+                        'customer-care-executive' => 'Customer Care Executive',
+                        'ppf-technician' => 'PPF Technician',
+                        'detailing-technician' => 'Buffing & Detailing Technician',
+                        'general-mechanic' => 'General Mechanic',
+                        'store-person' => 'Store Person',
+                        'workshop-cleaner' => 'Workshop Cleaner',
                         'mazda-specialist' => 'Mazda Specialist',
                         'custom-mods-technician' => 'Custom Mods Technician',
                         'online-orders-coordinator' => 'Online Orders & Receipts Coordinator',
@@ -305,10 +311,10 @@ add_action('init', static function (): void {
 
 // Update careers only. Other forms and notification families are outside this fee change.
 add_action('init',static function(){
-    if(get_option('sa_careers_fee_form_ver')==='4' || !class_exists('Forminator_API'))return;
+    if(get_option('sa_careers_fee_form_ver')==='5' || !class_exists('Forminator_API'))return;
     $ids=(array)get_option('sa_forminator_forms',[]);$id=(int)($ids['careers']??0);if(!$id || !get_post_status($id))return;
     $def=sa_ff_defs()['careers'];$r=Forminator_API::update_form($id,$def['wrappers'],sa_ff_settings($def['name'],$def['settings']),'publish',$def['notifications']);
-    if(!is_wp_error($r))update_option('sa_careers_fee_form_ver','4',false);
+    if(!is_wp_error($r))update_option('sa_careers_fee_form_ver','5',false);
 },27);
 
 function sa_ff_id(string $key): int

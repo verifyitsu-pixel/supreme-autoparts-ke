@@ -40,6 +40,66 @@ function sa_careers_roles(): array
                 'Follow workplace safety instructions and ask for guidance when needed',
             ],
         ],
+        'customer-care-executive' => [
+            'title' => 'Customer Care Executive',
+            'blurb' => 'Keep customers informed from the first enquiry to vehicle handover.',
+            'duties' => [
+                'Welcome customers and record enquiries and service requests',
+                'Coordinate job updates between customers and the workshop team',
+                'Follow up questions and complaints with clear records',
+                'Keep customer and job-card information organised',
+            ],
+        ],
+        'ppf-technician' => [
+            'title' => 'PPF Technician',
+            'blurb' => 'Prepare and protect vehicle paint with careful film installation.',
+            'duties' => [
+                'Clean and prepare surfaces before film installation',
+                'Measure, cut and fit paint protection film around panels and edges',
+                'Use heat guns and application tools carefully to protect paint',
+                'Check the finished film for bubbles, creases and lifting edges',
+            ],
+        ],
+        'detailing-technician' => [
+            'title' => 'Buffing & Detailing Technician',
+            'blurb' => 'Care for vehicle finishes, interiors and presentation, including car washing.',
+            'duties' => [
+                'Wash vehicle exteriors and clean interiors with suitable products',
+                'Buff and polish paint and assess minor surface marks',
+                'Vacuum and clean upholstery, dashboards and trim',
+                'Protect customer vehicles and check the finished work',
+            ],
+        ],
+        'general-mechanic' => [
+            'title' => 'General Mechanic',
+            'blurb' => 'Diagnose and service vehicles with attention to electrical and alignment work.',
+            'duties' => [
+                'Diagnose and repair routine mechanical faults',
+                'Check batteries, wiring, lights and starting or charging faults',
+                'Carry out wheel alignment and balancing checks',
+                'Handle basic panel and bumper fitting and quality-check repairs',
+            ],
+        ],
+        'store-person' => [
+            'title' => 'Store Person',
+            'blurb' => 'Keep the garage parts store accurate, organised and ready for each job.',
+            'duties' => [
+                'Receive, label and organise parts using correct part numbers',
+                'Issue parts against job records and track stock movement',
+                'Flag low stock and parts required for upcoming work',
+                'Support counter enquiries and keep stock and billing records accurate',
+            ],
+        ],
+        'workshop-cleaner' => [
+            'title' => 'Workshop Cleaner',
+            'blurb' => 'Keep shared work and customer areas clean and welcoming.',
+            'duties' => [
+                'Clean reception, office and customer waiting areas',
+                'Keep washrooms and break areas tidy and stocked',
+                'Dust, mop and dispose of waste using safe procedures',
+                'Report spills and hazards and follow workshop safety instructions',
+            ],
+        ],
         'mazda-specialist' => [
             'title' => 'Mazda Specialist',
             'blurb' => 'Service and repair technician focused on Mazda vehicles.',
