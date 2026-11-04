@@ -14,7 +14,8 @@ class SA_Brevo_Sync
     {
         add_action('woocommerce_register_form', [self::class, 'render_optin_checkbox']);
         add_action('woocommerce_edit_account_form', [self::class, 'render_account_optin']);
-        add_action('woocommerce_checkout_terms_and_conditions', [self::class, 'render_checkout_optin'], 20);
+        // Checkout policy-area marketing row removed at the owner's request (2026-11-04).
+        // Registration/account opt-ins and existing subscriptions remain unchanged.
 
         add_action('woocommerce_created_customer', [self::class, 'on_customer_created'], 20, 3);
         add_action('woocommerce_checkout_order_processed', [self::class, 'on_checkout_order'], 20, 3);
