@@ -582,8 +582,8 @@ function sa_fx_state(): array
         'specs'    => $specs,
         'instock'  => $g('instock') === '1',
         'freeship' => $g('freeship') === '1',
-        'min'      => $num($g('min_price')),
-        'max'      => $num($g('max_price')),
+        'min'      => $num((string)($GLOBALS['sa_catalog_local_prices']['min_price'] ?? $g('min_price'))),
+        'max'      => $num((string)($GLOBALS['sa_catalog_local_prices']['max_price'] ?? $g('max_price'))),
         'cat'      => $cat,
         's'        => function_exists('sa_core_sanitize_filter_text') ? sa_core_sanitize_filter_text($g('s')) : $g('s'),
         'pn'       => function_exists('sa_core_sanitize_filter_text') ? sa_core_sanitize_filter_text($g('sa_pn')) : $g('sa_pn'),
@@ -621,8 +621,8 @@ function sa_fx_where(array $st, string $skip = '', bool $include_base = true): a
                 : $wpdb->prepare('(l.sku LIKE %s OR p.post_title LIKE %s)', $like, $like);
         }
         if ($skip !== 'price') {
-            if ($st['min'] !== '') { $w[] = $wpdb->prepare('l.max_price >= %f', (float) $st['min']); }
-            if ($st['max'] !== '') { $w[] = $wpdb->prepare('l.min_price <= %f', (float) $st['max']); }
+            if ($st['min'] !== '') { $w[] = $wpdb->prepare('l.max_price >= %f', sa_catalog_price_to_usd((float) $st['min'])); }
+            if ($st['max'] !== '') { $w[] = $wpdb->prepare('l.min_price <= %f', sa_catalog_price_to_usd((float) $st['max'])); }
         }
     }
     if ($st['year'] !== '' && $skip !== 'vehicle' && $skip !== 'year') {
@@ -876,7 +876,7 @@ function sa_fx_chips(): array
         }
     }
     if ($st['min'] !== '' || $st['max'] !== '') {
-        $cur = function_exists('get_woocommerce_currency_symbol') ? html_entity_decode(get_woocommerce_currency_symbol()) : '$';
+        $cur = function_exists('get_woocommerce_currency_symbol') ? html_entity_decode(get_woocommerce_currency_symbol(sa_catalog_display_currency())) : '$';
         $chips[] = ['label' => $cur . ($st['min'] !== '' ? $st['min'] : '0') . ' – ' . ($st['max'] !== '' ? $cur . $st['max'] : __('any', 'supreme-autoparts-core')), 'url' => sa_fx_url(['min_price' => '', 'max_price' => ''])];
     }
     if ($st['instock']) {
@@ -946,10 +946,10 @@ function sa_fx_search_facets_ajax(): void
     $out['cats'] = $cats;
     $out['brands'] = sa_fx_ready() ? $sort_label(sa_fx_counts('brand', 'brand', 400)) : [];
     $stats = sa_fx_stats();
-    $out['price'] = ['min' => floor((float) $stats['min']), 'max' => ceil((float) $stats['max'])];
-    $out['cur'] = function_exists('get_woocommerce_currency_symbol') ? html_entity_decode(get_woocommerce_currency_symbol(), ENT_QUOTES, 'UTF-8') : '$';
+    $out['price'] = ['min' => floor(sa_catalog_price_from_usd((float) $stats['min'])), 'max' => ceil(sa_catalog_price_from_usd((float) $stats['max']))];
+    $out['cur'] = function_exists('get_woocommerce_currency_symbol') ? html_entity_decode(get_woocommerce_currency_symbol(sa_catalog_display_currency()), ENT_QUOTES, 'UTF-8') : '$';
     $out['freeship'] = (!function_exists('sa_ship_is_us') || sa_ship_is_us()) && $stats['freeship'] > 0;
-    $out['freeMin'] = sa_fx_free_ship_min();
+    $out['freeMin'] = sa_catalog_price_from_usd(sa_fx_free_ship_min());
     $out['shop'] = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
     wp_send_json_success($out);
 }

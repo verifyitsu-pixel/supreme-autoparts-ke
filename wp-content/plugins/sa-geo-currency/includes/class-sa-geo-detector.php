@@ -323,6 +323,14 @@ final class SA_Geo_Detector
     public static function display_currency(): string
     {
         // Currency only: never overwrite customer country or shipping region.
+        // Browse in the selected storefront currency; never rewrite an order.
+        $catalog = !(function_exists('is_checkout') && is_checkout())
+            && !(function_exists('is_account_page') && is_account_page())
+            && !(function_exists('is_cart') && is_cart())
+            && empty($_GET['sa_market']);
+        if ($catalog && function_exists('sa_storefront_country')) {
+            return sa_storefront_country() === 'KE' ? 'KES' : 'USD';
+        }
         $market = $_GET['sa_market'] ?? '';
         if (is_string($market) && $market === 'ke') {
             return 'USD';

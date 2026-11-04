@@ -22,7 +22,7 @@ $shop    = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sho
 $clear   = function_exists('sa_core_catalog_clear_filters_url') ? sa_core_catalog_clear_filters_url() : $shop;
 $stats   = sa_fx_stats();
 $chips   = sa_fx_chips();
-$cur     = function_exists('get_woocommerce_currency_symbol') ? html_entity_decode(get_woocommerce_currency_symbol(), ENT_QUOTES, 'UTF-8') : '$';
+$cur     = function_exists('get_woocommerce_currency_symbol') ? html_entity_decode(get_woocommerce_currency_symbol(sa_catalog_display_currency()), ENT_QUOTES, 'UTF-8') : '$';
 $free_min = sa_fx_free_ship_min();
 $orderby = isset($_GET['orderby']) ? sanitize_key(wp_unslash((string) $_GET['orderby'])) : ''; // phpcs:ignore
 
@@ -110,8 +110,8 @@ if ($current instanceof WP_Term || $st['s'] !== '' || $st['make'] !== '') {
     }
 }
 
-$pmin = (int) floor($stats['min']);
-$pmax = (int) ceil($stats['max']);
+$pmin = (int) floor(sa_catalog_price_from_usd((float)$stats['min']));
+$pmax = (int) ceil(sa_catalog_price_from_usd((float)$stats['max']));
 $vmin = $st['min'] !== '' ? (int) $st['min'] : $pmin;
 $vmax = $st['max'] !== '' ? (int) $st['max'] : $pmax;
 $n_active = count($chips);

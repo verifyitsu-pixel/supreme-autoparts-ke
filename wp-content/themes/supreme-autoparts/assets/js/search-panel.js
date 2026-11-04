@@ -55,6 +55,7 @@
   function get(params) {
     var u = new URL(cfg.ajaxUrl, location.href);
     u.searchParams.set('action', 'sa_search_facets');
+    if (cfg.view) u.searchParams.set('sa_view', cfg.view);
     Object.keys(params || {}).forEach(function (k) { if (params[k]) u.searchParams.set(k, params[k]); });
     return fetch(u.toString(), { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) { return j && j.success ? j.data : null; });
   }
