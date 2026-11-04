@@ -1689,7 +1689,10 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 			return false;
 		}
 		// Reload state after the database-backed lock, not before it.
+		clean_post_cache( $order->get_id() );
+		wp_cache_delete( $order->get_id(), 'post_meta' );
 		$order->get_data_store()->read( $order );
+		$order->read_meta_data( true );
 		$paid = $order->get_transaction_id();
 		if ( $order->is_paid() || in_array( $order->get_status(), array( 'processing', 'completed' ), true ) ) {
 			if ( $paid && $paid !== $reference ) {
@@ -1735,7 +1738,10 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 		// Serialize initialization requests so two tabs cannot lose each other's
 		// recorded quote in a read-modify-write race. A competing request retries.
 		if ( ! $this->acquire_order_payment_lock( $order ) ) return null;
+		clean_post_cache( $order->get_id() );
+		wp_cache_delete( $order->get_id(), 'post_meta' );
 		$order->get_data_store()->read( $order );
+		$order->read_meta_data( true );
 		if ( $order->is_paid() || ! in_array( $order->get_status(), array( 'pending', 'failed' ), true ) ) return null;
 
 		$quote = SA_Paystack_Charge_Quote::lock_for_order( $order, $txnref );
