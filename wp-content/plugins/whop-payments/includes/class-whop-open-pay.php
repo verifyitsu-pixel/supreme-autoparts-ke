@@ -92,6 +92,16 @@ final class Whop_Open_Pay {
     /**
      * @param array<string,string>|string $atts
      */
+    /** Use the same gateway-owned method marks as shopping checkout. */
+    public static function method_icons(string $gateway): string {
+        if (!in_array($gateway, ['pesapal', 'paystack'], true) || !function_exists('WC') || !WC()) return '';
+        $manager = WC()->payment_gateways();
+        if (!$manager) return '';
+        $gateways = $manager->payment_gateways();
+        if (empty($gateways[$gateway]) || !is_callable([$gateways[$gateway], 'get_icon'])) return '';
+        return '<span class="sa-open-pay-method-icons" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:12px">'.$gateways[$gateway]->get_icon().'</span>';
+    }
+
     public static function render_shortcode($atts = []): string {
         // Existing unpaid order: send them to Whop (HTTP redirect already ran; this is the fallback).
         if (class_exists('Whop_Checkout_Embed')) {
@@ -214,9 +224,9 @@ final class Whop_Open_Pay {
 
                     <fieldset class="sa-open-pay__methods" style="border:1px solid #777;border-radius:8px;padding:16px;margin:20px 0">
                         <legend style="font-weight:600">Payment method</legend>
-                        <label style="display:flex;align-items:center;gap:12px;min-height:100px;border:1px solid #ddd;border-radius:8px;padding:14px;margin-bottom:12px;cursor:pointer"><input type="radio" name="gateway" value="pesapal" checked style="width:24px;height:24px"><span style="display:block;min-width:0"><img src="<?php echo esc_url(get_stylesheet_directory_uri().'/assets/images/providers/pesapal.png'); ?>" alt="Pesapal" style="display:block;width:100%;max-width:280px;height:80px;object-fit:contain;object-position:left center"><span>Card, M-Pesa &amp; Airtel (<?php echo esc_html($cur); ?>)</span></span></label>
+                        <label style="display:flex;align-items:center;gap:12px;min-height:100px;border:1px solid #ddd;border-radius:8px;padding:14px;margin-bottom:12px;cursor:pointer"><input type="radio" name="gateway" value="pesapal" checked style="width:24px;height:24px"><span style="display:block;min-width:0"><img src="<?php echo esc_url(get_stylesheet_directory_uri().'/assets/images/providers/pesapal.png'); ?>" alt="Pesapal" style="display:block;width:100%;max-width:280px;height:80px;object-fit:contain;object-position:left center"><span>Card, M-Pesa &amp; Airtel (<?php echo esc_html($cur); ?>)</span><?php echo self::method_icons('pesapal'); ?></span></label>
                         <?php if ($cur === 'KES') : ?>
-                        <label style="display:flex;align-items:center;gap:12px;min-height:100px;border:1px solid #ddd;border-radius:8px;padding:14px;margin-bottom:12px;cursor:pointer"><input type="radio" name="gateway" value="paystack" style="width:24px;height:24px"><span style="display:block;min-width:0"><img src="<?php echo esc_url(get_stylesheet_directory_uri().'/assets/images/providers/paystack.png'); ?>" alt="Paystack" style="display:block;width:100%;max-width:280px;height:80px;object-fit:contain;object-position:left center"><span>Paystack - pay in KES</span></span></label>
+                        <label style="display:flex;align-items:center;gap:12px;min-height:100px;border:1px solid #ddd;border-radius:8px;padding:14px;margin-bottom:12px;cursor:pointer"><input type="radio" name="gateway" value="paystack" style="width:24px;height:24px"><span style="display:block;min-width:0"><img src="<?php echo esc_url(get_stylesheet_directory_uri().'/assets/images/providers/paystack.png'); ?>" alt="Paystack" style="display:block;width:100%;max-width:280px;height:80px;object-fit:contain;object-position:left center"><span>Paystack - pay in KES</span><?php echo self::method_icons('paystack'); ?></span></label>
                         <p class="sa-open-pay__hint">Paystack charges exactly the KES amount entered above. Available methods are shown on its secure checkout.</p>
                         <?php else : ?>
                         <p class="sa-open-pay__hint">Paystack is currently available in KES only. <a href="<?php echo esc_url(add_query_arg('cur', 'KES', home_url('/pay/'))); ?>">Enter a KES amount to use Paystack</a>. No automatic USD conversion.</p>
