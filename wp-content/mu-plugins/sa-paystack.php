@@ -33,6 +33,42 @@ function sa_paystack_lock_display_quote($order, array $quote): void {
     ]);
 }
 
+/** Order total expressed in USD for the standing >2500 cap; null when unsupported or unknown. */
+function sa_paystack_order_total_usd($order): ?float {
+    $total = (float)$order->get_total();
+    if (!is_finite($total) || $total <= 0) return null;
+    $currency = strtoupper((string)$order->get_currency());
+    if ($currency === 'USD') return $total;
+    if ($currency === 'KES') { $r = sa_paystack_rate(); return $r ? $total / $r : null; }
+    return null;
+}
+
+/**
+ * The single customer-visible KES quote for a USD order's pay-for-order page.
+ * The first display wins within its freshness window: notice and description
+ * reuse the locked figure instead of fetching a new rate, so two tabs or a
+ * rate move can never show or charge two different figures. A new quote is
+ * built, displayed and locked only when none fresh matches the current order.
+ */
+function sa_paystack_order_pay_quote($order): ?array {
+    if (!$order || strtoupper((string)$order->get_currency()) !== 'USD') return null;
+    $locked = $order->get_meta(SA_PAYSTACK_DISPLAY_META_KEY);
+    if (is_array($locked)
+        && strtoupper((string)($locked['order_currency'] ?? '')) === 'USD'
+        && abs((float)($locked['order_total'] ?? -1) - (float)$order->get_total()) < 0.005
+        && (int)($locked['quoted_at'] ?? 0) >= time() - 1800
+        && (float)($locked['rate'] ?? 0) > 0
+        && (float)($locked['charge_amount'] ?? 0) > 0) {
+        return ['usd'=>(float)$locked['order_total'], 'rate'=>(float)$locked['rate'], 'kes'=>(float)$locked['charge_amount'], 'at'=>(int)$locked['quoted_at']];
+    }
+    $quote = sa_paystack_display_quote((float)$order->get_total());
+    if ($quote) {
+        sa_paystack_lock_display_quote($order, $quote);
+        $order->save();
+    }
+    return $quote;
+}
+
 // Reuse securely saved plugin settings. Absent credentials means no broken checkout option.
 add_filter('option_woocommerce_paystack_settings', static function ($s) {
     $s = is_array($s) ? $s : [];
@@ -56,10 +92,19 @@ add_filter('woocommerce_available_payment_gateways', static function ($gateways)
     if (!empty($gateways['paystack']->testmode) && !current_user_can('manage_woocommerce')) $allowed = false;
     // Preserve the standing user rule: orders above USD 2500 go to Pesapal only.
     if (function_exists('WC') && WC()->cart && (float)WC()->cart->get_total('edit') > 2500) $allowed = false;
-    // On the pay-for-order page, offer Paystack only when it is the order's chosen method. USD orders are quoted in KES at payment time; their totals are never rewritten.
+    // On the pay-for-order page keep every guard above and add the order's own:
+    // paystack only when it is the order's chosen method, the currency is supported
+    // (USD converts to KES, KES charges as-is), and the order is within the same cap.
     if (function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('order-pay')) {
         $order = wc_get_order(absint(get_query_var('order-pay')));
-        $allowed = $order && $order->get_payment_method() === 'paystack';
+        if (!$order || $order->get_payment_method() !== 'paystack') {
+            $allowed = false;
+        } else {
+            $currency = strtoupper((string)$order->get_currency());
+            if ($currency !== 'USD' && $currency !== 'KES') $allowed = false;
+            $total_usd = sa_paystack_order_total_usd($order);
+            if ($total_usd === null || $total_usd > 2500) $allowed = false;
+        }
     }
     if (!$allowed) unset($gateways['paystack']);
     return $gateways;
@@ -69,15 +114,21 @@ add_filter('woocommerce_available_payment_gateways', static function ($gateways)
 add_filter('woocommerce_gateway_description', static function ($description, $id) {
     if ($id !== 'paystack' || !function_exists('WC') || !WC()->cart) return $description;
     // On the pay-for-order page the cart is empty; quote the order being paid instead.
-    $on_order_pay = function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('order-pay');
-    $usd = (float)WC()->cart->get_total('edit');
-    if ($on_order_pay) {
-        $order = wc_get_order(absint(get_query_var('order-pay')));
-        if ($order) $usd = (float)$order->get_total();
+    $order = (function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('order-pay'))
+        ? wc_get_order(absint(get_query_var('order-pay'))) : null;
+    $currency = $order ? strtoupper((string)$order->get_currency()) : strtoupper((string)get_woocommerce_currency());
+    // KES orders charge their own figures: no conversion, no USD wording.
+    if ($currency === 'KES') return $description;
+    // Only USD converts to KES; anything else fails closed rather than misquoting.
+    if ($currency !== 'USD') return 'This payment option is unavailable for this order\'s currency.';
+    if ($order) {
+        // Reuse the exact locked customer-visible quote the notice displays.
+        $quote = sa_paystack_order_pay_quote($order);
+    } else {
+        $quote = sa_paystack_display_quote((float)WC()->cart->get_total('edit'));
+        if ($quote && WC()->session) WC()->session->set('sa_paystack_quote', $quote);
     }
-    $quote = sa_paystack_display_quote($usd);
     if (!$quote) return 'This payment option is temporarily unavailable because a KES exchange rate could not be loaded.';
-    if (!$on_order_pay && WC()->session) WC()->session->set('sa_paystack_quote', $quote);
     return 'You will be charged <strong>'.wc_price($quote['kes'], ['currency'=>'KES','decimals'=>2]).'</strong> at 1 USD = KES '.esc_html((string)$quote['rate']).'. Your order stays in US dollars; only the payment itself is charged in Kenyan shillings.';
 }, 100, 2);
 
@@ -124,13 +175,17 @@ add_filter('woocommerce_gateway_icon', static function ($icon,$id) {
 // Show and lock the exact KES charge when an existing USD order is paid through its pay-for-order page.
 add_action('woocommerce_pay_order_before_payment', static function (): void {
     $order = wc_get_order(absint(get_query_var('order-pay')));
-    if (!$order || $order->get_payment_method() !== 'paystack' || $order->get_currency() === 'KES') return;
-    $quote = sa_paystack_display_quote((float)$order->get_total());
+    if (!$order || $order->get_payment_method() !== 'paystack') return;
+    $currency = strtoupper((string)$order->get_currency());
+    if ($currency === 'KES') return; // Same-currency order: charged as-is, nothing to quote.
+    if ($currency !== 'USD') {
+        echo '<p class="woocommerce-info">Paystack is unavailable for this order\'s currency. Please choose another payment method.</p>';
+        return;
+    }
+    $quote = sa_paystack_order_pay_quote($order);
     if (!$quote) {
         echo '<p class="woocommerce-info">Paystack is temporarily unavailable because a KES exchange rate could not be loaded. Please choose another payment method.</p>';
         return;
     }
-    sa_paystack_lock_display_quote($order, $quote);
-    $order->save();
     echo '<p class="woocommerce-info">This order is in US dollars. You will be charged <strong>'.wc_price($quote['kes'], ['currency'=>'KES','decimals'=>2]).'</strong> at 1 USD = KES '.esc_html((string)$quote['rate']).'.</p>';
 });

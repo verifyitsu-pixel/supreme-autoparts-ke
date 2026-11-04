@@ -55,6 +55,11 @@ final class SA_Paystack_Charge_Quote {
 		}
 		$rate = 1.0;
 		if ( $order_currency !== $settlement ) {
+			// Only USD converts to this account's KES settlement; every other
+			// currency pair is unsupported and must fail closed, never approximated.
+			if ( 'USD' !== $order_currency || 'KES' !== $settlement ) {
+				return null;
+			}
 			if ( ! class_exists( 'SA_FX_Rates' ) ) {
 				return null;
 			}
@@ -87,6 +92,9 @@ final class SA_Paystack_Charge_Quote {
 		$settlement     = self::settlement_currency();
 		$total          = (float) $order->get_total();
 		if ( '' === $order_currency || ! is_finite( $total ) || $total <= 0 || ! is_finite( $rate ) || $rate <= 0 ) {
+			return null;
+		}
+		if ( $order_currency !== $settlement && ( 'USD' !== $order_currency || 'KES' !== $settlement ) ) {
 			return null;
 		}
 		$charge = round( $total * $rate, self::decimals_for( $settlement ) );
@@ -139,29 +147,25 @@ final class SA_Paystack_Charge_Quote {
 	 * instead of silently charging a new figure.
 	 */
 	public static function lock_for_order( $order, string $txn_ref ): ?array {
-		$display = self::display_quote_for_order( $order );
-		if ( is_array( $display ) ) {
-			$quote = self::build_quote_at_rate( $order, $txn_ref, (float) $display['rate'] );
-			if ( ! is_array( $quote ) ) {
-				return null;
-			}
-			if ( self::minor( (float) $quote['charge_amount'] ) !== self::minor( (float) $display['charge_amount'] ) ) {
-				return null;
-			}
+		if ( strtoupper( (string) $order->get_currency() ) === self::settlement_currency() ) {
+			// Same-currency charge: the order figures are the charge figures,
+			// so no customer-visible conversion quote is required.
+			$quote = self::build_quote( $order, $txn_ref );
 		} else {
-			$had_display = is_array( $order->get_meta( self::DISPLAY_META_KEY ) );
-			$quote       = self::build_quote( $order, $txn_ref );
-			if ( ! is_array( $quote ) ) {
+			// Converted charge: only ever initialize the exact figure already
+			// shown to the customer. No fresh matching display quote, no charge.
+			$display = self::display_quote_for_order( $order );
+			if ( ! is_array( $display ) ) {
 				return null;
 			}
-			if ( $had_display ) {
-				$old = $order->get_meta( self::DISPLAY_META_KEY );
-				if ( abs( (float) ( $old['order_total'] ?? -1 ) - (float) $order->get_total() ) < 0.005
-					&& self::minor( (float) ( $old['charge_amount'] ?? -1 ) ) !== self::minor( (float) $quote['charge_amount'] ) ) {
-					// Stale displayed figure for the same total: re-display, do not silently charge the new one.
-					return null;
-				}
+			$quote = self::build_quote_at_rate( $order, $txn_ref, (float) $display['rate'] );
+			if ( is_array( $quote )
+				&& self::minor( (float) $quote['charge_amount'] ) !== self::minor( (float) $display['charge_amount'] ) ) {
+				return null;
 			}
+		}
+		if ( ! is_array( $quote ) ) {
+			return null;
 		}
 		$quotes = $order->get_meta( self::META_KEY );
 		$quotes = is_array( $quotes ) ? $quotes : array();
