@@ -1315,3 +1315,10 @@ body.woocommerce-order-pay ul.order_details::before,body.woocommerce-order-pay u
 .sa-checkout-page .sa-checkout-hero__lead {
   text-wrap: balance;
 }
+
+/* Provider marks replace written processor credits, without changing gateway behavior. */
+.sa-checkout-payment .sa-provider-brand { display:block; margin:0 0 10px; }
+.sa-checkout-payment .sa-provider-brand img { display:block!important; float:none!important; width:auto!important; height:30px!important; max-width:150px!important; max-height:30px!important; object-fit:contain; }
+.sa-checkout-payment .sa-payment-method-title { display:block; line-height:1.45; }
+.sa-checkout-payment .sa-payment-method-icons { display:block; margin-top:10px; }
+.sa-checkout-payment .sa-payment-method-icons img { min-height:24px; }

@@ -45,11 +45,11 @@ add_filter('woocommerce_available_payment_gateways', static function ($gateways)
 add_filter('woocommerce_gateway_description', static function ($description, $id) {
     if ($id !== 'paystack' || !function_exists('WC') || !WC()->cart) return $description;
     $rate = sa_paystack_rate();
-    if (!$rate) return 'Paystack is temporarily unavailable because a KES exchange rate could not be loaded.';
+    if (!$rate) return 'This payment option is temporarily unavailable because a KES exchange rate could not be loaded.';
     $usd = (float)WC()->cart->get_total('edit');
     $amount = sa_paystack_amount($usd, $rate);
     if (WC()->session) WC()->session->set('sa_paystack_quote', ['usd'=>$usd,'rate'=>$rate,'kes'=>$amount,'at'=>time()]);
-    return 'Paystack will charge <strong>'.wc_price($amount, ['currency'=>'KES','decimals'=>2]).'</strong>. This order is charged and recorded in KES; your bank may convert it if your account uses another currency.';
+    return 'You will be charged <strong>'.wc_price($amount, ['currency'=>'KES','decimals'=>2]).'</strong>. This order is charged and recorded in KES; your bank may convert it if your account uses another currency.';
 }, 100, 2);
 
 function sa_paystack_convert_order($order, float $rate): void {
@@ -93,7 +93,7 @@ add_action('woocommerce_checkout_create_order', static function ($order,$data) {
 // The legacy USD notice must not contradict the new gateway's KES charge.
 add_filter('gettext', static function ($translated,$text,$domain) {
     if ($domain === 'supreme-autoparts' && $text === "Charged in USD. M-Pesa / Airtel amounts are shown in KES at the payment provider's rate.") {
-        return 'Whop and Pesapal orders are recorded in USD. Paystack orders are charged and recorded in KES at the exact total shown under Paystack before payment.';
+        return 'Orders are recorded in USD unless you select the KES payment option. The exact KES total is shown with that option before payment.';
     }
     return $translated;
 }, 20, 3);
