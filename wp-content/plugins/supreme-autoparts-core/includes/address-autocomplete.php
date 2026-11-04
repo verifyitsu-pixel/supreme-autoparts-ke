@@ -57,7 +57,7 @@ add_action('rest_api_init', static function (): void {
             if (function_exists('sa_ft_rate_ok') && !sa_ft_rate_ok('aa' . $ip, 20, 60)) {
                 return new WP_REST_Response(['suggestions' => [], 'message' => 'Too many lookups.'], 429);
             }
-            $ck = 'sa_aa_' . md5(strtolower($q) . '|' . $country);
+            $ck = 'sa_aa_v2_' . md5(strtolower($q) . '|' . $country);
             $hit = get_transient($ck);
             if (is_array($hit)) {
                 return ['suggestions' => $hit, 'cached' => true];
@@ -87,6 +87,9 @@ add_action('rest_api_init', static function (): void {
                         'line1' => (string) ($it['address_line1'] ?? ''),
                         'city' => (string) ($it['city'] ?? ($it['town'] ?? ($it['village'] ?? ($it['county'] ?? '')))),
                         'state' => (string) ($it['state'] ?? ($it['county'] ?? '')),
+                        'state_code' => (string) ($it['state_code'] ?? ''),
+                        'country' => strtoupper((string) ($it['country_code'] ?? '')),
+                        'line2' => '',
                         'postcode' => (string) ($it['postcode'] ?? ''),
                         'lat' => (float) $it['lat'],
                         'lng' => (float) $it['lon'],
@@ -146,30 +149,35 @@ add_action('wp_footer', static function (): void {
 var REST=<?php echo wp_json_encode($rest); ?>;
 function field(){return document.getElementById('billing_address_1');}
 function country(){var e=document.getElementById('billing_country');return e?e.value:'';}
-function setVal(id,v){var e=document.getElementById(id);if(e&&v){e.value=v;}}
+function setVal(id,v){var e=document.getElementById(id);if(!e)return;v=v==null?'':String(v);if(e.tagName==='SELECT'&&v&&![].some.call(e.options,function(o){return o.value===v;})){if(id==='billing_city')e.add(new Option(v,v));else v='';}e.value=v;if(window.jQuery)jQuery(e).trigger('change');else e.dispatchEvent(new Event('change',{bubbles:true}));}
+function stateNorm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(county|state|province|region)\b/g,'').replace(/[^a-z0-9]/g,'');}
+function stateValue(st,it){if(!st||st.tagName!=='SELECT')return it.state||'';var opts=[].slice.call(st.options),code=String(it.state_code||'').toLowerCase(),countryCode=String(it.country||'').toLowerCase(),name=stateNorm(it.state),hit=opts.find(function(o){return o.value&&code&&(o.value.toLowerCase()===code||o.value.toLowerCase()===code.replace(new RegExp('^'+countryCode+'[-_]'),''));});if(!hit&&name){var matches=opts.filter(function(o){return o.value&&stateNorm(o.text)===name;});if(matches.length===1)hit=matches[0];}return hit?hit.value:'';}
+var pickGeneration=0;
 function wrap(el){if(el.parentNode&&el.parentNode.classList.contains('sa-aa-wrap'))return el.parentNode;var w=document.createElement('div');w.className='sa-aa-wrap';el.parentNode.insertBefore(w,el);w.appendChild(el);return w;}
 var listEl=null,timer=null,items=[];
 function closeList(){if(listEl){listEl.remove();listEl=null;}items=[];}
 function credit(w){if(w.parentNode.querySelector('.sa-aa-credit'))return;var c=document.createElement('div');c.className='sa-aa-credit';c.innerHTML='Address search powered by <a href="https://www.geoapify.com/" target="_blank" rel="noopener">Geoapify</a>';w.parentNode.insertBefore(c,w.nextSibling);}
 function pick(it){
-  var f=field();if(!f)return;
-  f.value=it.line1||it.label;
-  setVal('billing_city',it.city);
-  var st=document.getElementById('billing_state');
-  if(st&&it.state){
-    var opts=st.options||[];
-    var want=it.state.toLowerCase();
-    for(var i=0;i<opts.length;i++){
-      if((opts[i].text||'').toLowerCase()===want||(opts[i].value||'').toLowerCase()===want){st.selectedIndex=i;break;}
-    }
+  var f=field();if(!f)return;var generation=++pickGeneration;
+  closeList();f.value=it.line1||it.label||'';
+  // Country change replaces Woo's state control synchronously or asynchronously.
+  var current=country(),target=it.country||current;
+  setVal('billing_state','');setVal('billing_address_2',it.line2||'');
+  setVal('billing_city','');setVal('billing_postcode','');
+  if(target!==current)setVal('billing_country',target);
+  function complete(){if(generation!==pickGeneration)return;
+    setVal('billing_state',stateValue(document.getElementById('billing_state'),it));
+    setVal('billing_city',it.city||'');setVal('billing_postcode',it.postcode||'');
+    setVal('sa_addr_lat',String(it.lat));setVal('sa_addr_lng',String(it.lng));
+    if(window.jQuery)jQuery(document.body).trigger('update_checkout');
   }
-  setVal('billing_postcode',it.postcode);
-  setVal('sa_addr_lat',String(it.lat));
-  setVal('sa_addr_lng',String(it.lng));
-  closeList();
-  if(window.jQuery){jQuery(document.body).trigger('update_checkout');}
-  document.dispatchEvent(new Event('change',{bubbles:true}));
+  complete();
+  // Re-apply to a replacement state node, without carrying a stale prior address.
+  var oldState=document.getElementById('billing_state'),oldOptions=oldState?oldState.innerHTML:'';
+  var observer=new MutationObserver(function(){var st=document.getElementById('billing_state');if(st!==oldState||(st&&st.innerHTML!==oldOptions)){oldState=st;oldOptions=st?st.innerHTML:'';complete();}});
+  observer.observe(document.body,{childList:true,subtree:true});setTimeout(function(){observer.disconnect();},2000);
 }
+
 function render(w){
   // Remove only the previous dropdown; keep the freshly returned suggestions.
   if(listEl){listEl.remove();listEl=null;}
@@ -186,9 +194,10 @@ function suggest(){
   var f=field();if(!f)return;
   var q=f.value.trim();
   if(q.length<3){closeList();return;}
-  var u=REST+'?q='+encodeURIComponent(q)+'&country='+encodeURIComponent(country());
+  var queryCountry=country();
+  var u=REST+'?q='+encodeURIComponent(q)+'&country='+encodeURIComponent(queryCountry);
   fetch(u,{credentials:'same-origin'}).then(function(r){return r.json();}).then(function(d){
-    if(f.value.trim()!==q)return;
+    if(f.value.trim()!==q||country()!==queryCountry)return;
     items=(d&&d.suggestions)||[];
     render(wrap(f));
   }).catch(function(){});
@@ -198,7 +207,7 @@ function boot(){
   f.dataset.saAaBound="1";
   var w=wrap(f);credit(w);
   f.setAttribute('autocomplete','off');
-  f.addEventListener('input',function(){clearTimeout(timer);timer=setTimeout(suggest,300);});
+  f.addEventListener('input',function(){pickGeneration++;setVal('sa_addr_lat','');setVal('sa_addr_lng','');clearTimeout(timer);timer=setTimeout(suggest,300);});
   f.addEventListener('blur',function(){setTimeout(closeList,200);});
   document.addEventListener('click',function(e){if(listEl&&!w.contains(e.target)){closeList();}});
 }

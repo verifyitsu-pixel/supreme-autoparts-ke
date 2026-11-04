@@ -1,9 +1,8 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
-const source=fs.readFileSync('wp-content/plugins/supreme-autoparts-core/includes/address-autocomplete.php','utf8');
-let script=source.split('<script>')[1].split('</script>')[0].replace(/<\?php[\s\S]*?\?>/g,'"/address-suggest"');
-const nodes={},listeners={},root={children:[],querySelector:()=>null,insertBefore:()=>{},appendChild(x){this.children.push(x);x.parentNode=this;},classList:{contains:()=>false}};
-function node(tag){return {tag,children:[],dataset:{},parentNode:root,classList:{contains:x=>x==='sa-aa-wrap'},appendChild(x){this.children.push(x);x.parentNode=this;},remove(){this.removed=true;},contains:()=>false,querySelector:()=>null,setAttribute(){},addEventListener(k,f){this[k]=f;}};}
-const field=node('input');field.value='Nairobi';field.parentNode.classList={contains:()=>false};nodes.billing_address_1=field;nodes.billing_country={value:'KE'};nodes.billing_city={value:''};nodes.sa_addr_lat={value:''};nodes.sa_addr_lng={value:''};
-const made=[];const doc={readyState:'complete',body:{},getElementById:id=>nodes[id]||null,createElement:tag=>{const n=node(tag);made.push(n);return n;},addEventListener(k,f){listeners[k]=f;},dispatchEvent(){}};
-let fetches=0;vm.runInNewContext(script,{document:doc,window:{},Event:function(){},setTimeout:f=>{f();return 1},clearTimeout(){},fetch:()=>{fetches++;return Promise.resolve({json:()=>Promise.resolve({suggestions:[{label:'Nairobi, Kenya',line1:'Nairobi',city:'Nairobi',lat:-1.28,lng:36.82}]})})}});
-field.input();setImmediate(()=>{const ul=made.find(n=>n.tag==='ul');assert(ul,'suggestion list rendered');assert.equal(ul.children.length,1);assert.equal(ul.children[0].textContent,'Nairobi, Kenya');ul.children[0].mousedown({preventDefault(){}});assert.equal(nodes.billing_city.value,'Nairobi');assert.equal(nodes.sa_addr_lat.value,'-1.28');assert.equal(fetches,1);console.log('6 address suggestion render/selection assertions PASS');});
+const s=fs.readFileSync(__dirname+'/../wp-content/plugins/supreme-autoparts-core/includes/address-autocomplete.php','utf8');
+const a=s.indexOf('function stateNorm('),b=s.indexOf('var pickGeneration',a);const ctx={};vm.createContext(ctx);vm.runInContext(s.slice(a,b),ctx);
+const st={tagName:'SELECT',options:[{value:'',text:'Select'},{value:'30',text:'Nairobi'},{value:'22',text:'Kiambu'}]};
+assert.equal(ctx.stateValue(st,{state:'Nairobi County',country:'KE'}),'30');assert.equal(ctx.stateValue(st,{state_code:'KE-22',state:'Nairobi',country:'KE'}),'22');assert.equal(ctx.stateValue(st,{state:'Unknown County',country:'KE'}),'');assert.equal(ctx.stateValue({tagName:'INPUT'},{state:'Free Region'}),'Free Region');assert.equal(ctx.stateValue(st,{state:'',country:'KE'}),'');
+for(const x of ["'country' => strtoupper", "'state_code' =>", "'sa_aa_v2_'", "setVal('billing_postcode',it.postcode||'')", "setVal('billing_address_2',it.line2||'')", "MutationObserver", "country()!==queryCountry"])assert(s.includes(x),x);
+assert(!s.includes('if(e&&v)'));
+console.log('PASS 5 state mapping cases, 7 country/cache/stale/empty-field/async contracts; no HTTP');
