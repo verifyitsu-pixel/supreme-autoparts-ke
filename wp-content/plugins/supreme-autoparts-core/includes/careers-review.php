@@ -68,7 +68,7 @@ function sa_careers_confirmation_args($e): array {
 function sa_careers_confirmation_control($e): void {
     $id=(int)$e->entry_id;$r=(array)get_option('sa_careers_confirmation_v1_'.$id,[]);
     if($r){echo '<p>Updated confirmation: '.esc_html((string)($r['state']??'unknown')).' '.esc_html((string)($r['at']??'')).'</p>';if(!empty($r['message_id']))echo '<p>Provider ID: '.esc_html((string)$r['message_id']).'</p>';return;}
-    try{$a=sa_careers_confirmation_args($e);echo '<details><summary>Preview applicant confirmation</summary><p>'.esc_html(implode(', ',(array)$a['to'])).'</p><p>'.esc_html($a['subject']).'</p><div style="max-width:500px">'.wp_kses_post($a['message']).'</div></details>';}catch(Throwable $x){echo '<p>'.esc_html($x->getMessage()).'</p>';return;}
+    try{$a=sa_careers_confirmation_args($e);echo '<details><summary>Preview applicant confirmation</summary><p>'.esc_html(implode(', ',(array)$a['to'])).'</p><p>'.esc_html($a['subject']).'</p><p>'.esc_html(implode(' | ',(array)$a['headers'])).'</p><div style="max-width:500px">'.wp_kses_post($a['message']).'</div></details>';}catch(Throwable $x){echo '<p>'.esc_html($x->getMessage()).'</p>';return;}
     echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'"><input type="hidden" name="action" value="sa_careers_confirmation"><input type="hidden" name="entry" value="'.esc_attr((string)$id).'">';wp_nonce_field('sa_careers_confirmation_'.$id);echo '<button class="button">Send updated applicant confirmation</button><p><small>Applicant only, no CV attachment. One send per application.</small></p></form>';
 }
 add_action('admin_post_sa_careers_confirmation',static function(){
