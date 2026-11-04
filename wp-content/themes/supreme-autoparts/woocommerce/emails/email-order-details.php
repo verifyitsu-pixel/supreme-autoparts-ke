@@ -16,7 +16,7 @@ if (function_exists('sa_rcpt_order_data')) {
         . esc_html(sprintf('%s %s · %s', $d['doc'], $d['number'], $d['date'])) . '</div>';
     echo sa_rcpt_items_html($d['items'], 'email', $font); // phpcs:ignore
     echo '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:10px 0 18px;border-collapse:collapse">' . sa_rcpt_totals_html($d['totals'], $font) . '</table>'; // phpcs:ignore
-    // Same "Ships from / Bill to / Ship to" block as the invoice and receipt, placed above the items.
+    // Same "Ships from / Bill to / Ship to" block as the invoice and receipt, placed after totals like the order confirmation reference.
     $lbl = 'font-family:' . $font . ';font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:' . SA_RCPT_MUTED . ';font-weight:600;margin:0 0 6px';
     $txt = 'font-family:' . $font . ';font-size:14px;line-height:1.55;color:' . SA_RCPT_INK;
     $cols = [[$d['seller_lbl'] ?? 'Ships from', sa_rcpt_lines($d['seller']['lines'], true)], ['Bill to', sa_rcpt_lines($d['bill'], true)]];

@@ -1140,7 +1140,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 						} else {
 
 							$this->store_receipt_payment_details( $order, $paystack_response );
-							$order->payment_complete( $paystack_ref );
+				$order->payment_complete( $paystack_ref );
 
 							/* translators: %s: Paystack transaction reference. */
 							$order->add_order_note( sprintf( __( 'Payment via Paystack successful (Transaction Reference: %s)', 'woo-paystack' ), $paystack_ref ) );
@@ -1319,7 +1319,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 						} else {
 
 							$this->store_receipt_payment_details( $order, $paystack_response );
-							$order->payment_complete( $paystack_ref );
+				$order->payment_complete( $paystack_ref );
 							/* translators: %s: Paystack transaction reference. */
 							$order->add_order_note( sprintf( __( 'Payment via Paystack successful (Transaction Reference: %s)', 'woo-paystack' ), $paystack_ref ) );
 
@@ -1480,7 +1480,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 			} else {
 
 				$this->store_receipt_payment_details( $order, $paystack_response );
-							$order->payment_complete( $paystack_ref );
+				$order->payment_complete( $paystack_ref );
 
 				/* translators: %s: Paystack transaction reference. */
 				$order->add_order_note( sprintf( __( 'Payment via Paystack successful (Transaction Reference: %s)', 'woo-paystack' ), $paystack_ref ) );
