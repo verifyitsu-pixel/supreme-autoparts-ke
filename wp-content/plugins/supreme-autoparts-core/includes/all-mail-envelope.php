@@ -21,5 +21,7 @@ add_filter('forminator_custom_form_mail_admin_message',static function($message,
     $key=is_object($mailer)?spl_object_id($mailer):0;
     $subject=(string)($GLOBALS['sa_private_forminator_mail_subject'][$key]??'Supreme Autoparts update');
     unset($GLOBALS['sa_private_forminator_mail_subject'][$key]);
+    // Careers recruitment is based in Nairobi, not the recipient request's browse region.
+    if(function_exists('sa_ff_id')&&is_object($form)&&(int)($form->id??0)===sa_ff_id('careers'))return sa_customer_mail_layout($subject,$message,'','','','','KE');
     $args=sa_allmail_family_envelope(['subject'=>$subject,'message'=>$message]);return $args['message'];
 },40,5);
