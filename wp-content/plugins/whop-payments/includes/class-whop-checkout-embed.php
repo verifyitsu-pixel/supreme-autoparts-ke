@@ -125,13 +125,7 @@ final class Whop_Checkout_Embed {
             if ($hosted_order instanceof WC_Order) {
                 $hosted_url = self::whop_checkout_url($hosted_order);
                 if ($hosted_url !== '') {
-                    // Choose visibly before continuing the existing hosted attempt.
-                    // No provider is initialized and no order/reference is changed here.
-                    nocache_headers();
-                    get_header();
-                    echo self::render_provider_chooser($hosted_order, $hosted_url);
-                    get_footer();
-                    exit;
+                    self::redirect_customer_to_whop($hosted_url);
                 }
             }
         }
@@ -152,34 +146,6 @@ final class Whop_Checkout_Embed {
             return;
         }
         self::redirect_customer_to_whop($url);
-    }
-
-    /** Existing attempt continuation, never a cross-provider order remap. */
-    public static function render_provider_chooser(WC_Order $order, string $hosted_url): string {
-        if (!self::is_allowed_whop_url($hosted_url) || $order->get_payment_method() !== 'whop'
-            || $order->is_paid() || $order->has_status(['processing','completed','cancelled','refunded','failed'])) return '';
-        $base = get_stylesheet_directory_uri().'/assets/images/providers/';
-        ob_start();
-        ?>
-        <main class="sa-payment-chooser" style="max-width:680px;margin:32px auto;padding:20px">
-        <h1>Payment options</h1>
-        <p>Order #<?php echo esc_html($order->get_order_number()); ?> - <?php echo wp_kses_post($order->get_formatted_order_total()); ?></p>
-        <section style="border:1px solid #ddd;border-radius:8px;padding:20px;margin:16px 0">
-        <img src="<?php echo esc_url($base.'whop.svg'); ?>" alt="Whop" style="width:100%;max-width:280px;height:80px;object-fit:contain;object-position:left center">
-        <h2>Whop</h2><p>Continue this order's existing secure payment. Supported cards, wallets and local currencies are shown by Whop before you pay.</p>
-        <a class="button alt" href="<?php echo esc_url($hosted_url); ?>">Continue this order with Whop</a>
-        </section>
-        <?php foreach (['pesapal'=>['Pesapal','pesapal.png','Card, M-Pesa and Airtel; supported currency and methods appear in checkout.'], 'paystack'=>['Paystack','paystack.png','Card, M-Pesa and Airtel in KES on the current live integration.']] as $id=>$brand): ?>
-        <section style="border:1px solid #ddd;border-radius:8px;padding:20px;margin:16px 0">
-        <img src="<?php echo esc_url($base.$brand[1]); ?>" alt="<?php echo esc_attr($brand[0]); ?>" style="width:100%;max-width:280px;height:80px;object-fit:contain;object-position:left center">
-        <h2><?php echo esc_html($brand[0]); ?></h2><p><?php echo esc_html($brand[2]); ?></p>
-        <p>This order is linked to an existing Whop payment. Changing to this provider for the same order is not available here. Continue with the linked Whop payment.</p>
-
-        </section>
-        <?php endforeach; ?>
-        </main>
-        <?php
-        return (string) ob_get_clean();
     }
 
     private static function unpaid_whop_order_from_request(): ?WC_Order {
