@@ -212,6 +212,17 @@ final class Whop_Open_Pay {
                         value="<?php echo esc_attr($prefill_note); ?>"
                     />
 
+                    <fieldset class="sa-open-pay__methods" style="border:1px solid #777;border-radius:8px;padding:16px;margin:20px 0">
+                        <legend style="font-weight:600">Payment method</legend>
+                        <label style="display:flex;align-items:center;gap:12px;min-height:48px"><input type="radio" name="gateway" value="pesapal" checked style="width:24px;height:24px"> Pesapal (<?php echo esc_html($cur); ?>)</label>
+                        <?php if ($cur === 'KES') : ?>
+                        <label style="display:flex;align-items:center;gap:12px;min-height:48px"><input type="radio" name="gateway" value="paystack" style="width:24px;height:24px"> Paystack (KES)</label>
+                        <p class="sa-open-pay__hint">Paystack charges exactly the KES amount entered above. Available methods are shown on its secure checkout.</p>
+                        <?php else : ?>
+                        <p class="sa-open-pay__hint">Paystack is currently available in KES only. <a href="<?php echo esc_url(add_query_arg('cur', 'KES', home_url('/pay/'))); ?>">Enter a KES amount to use Paystack</a>. No automatic USD conversion.</p>
+                        <?php endif; ?>
+                    </fieldset>
+
                     <button type="submit" class="sa-open-pay__btn">
                         <?php echo esc_html__('Pay', 'whop-payments'); ?>
                     </button>
@@ -517,14 +528,29 @@ final class Whop_Open_Pay {
         $currency = self::pay_currency(isset($_POST['currency']) ? sanitize_text_field(wp_unslash((string) $_POST['currency'])) : '');
         $pay_url  = add_query_arg('cur', $currency, $pay_url);
         $gws = function_exists('WC') ? WC()->payment_gateways()->payment_gateways() : [];
-        if (empty($gws['pesapal'])) {
+        $gateway = isset($_POST['gateway']) ? sanitize_key(wp_unslash((string) $_POST['gateway'])) : 'pesapal';
+        if (!in_array($gateway, ['pesapal','paystack'], true)) {
+            self::redirect_error($pay_url, __('Please choose an available payment method.', 'whop-payments'));
+        }
+        if ($gateway === 'paystack') {
+            // USD requires an approved USD settlement account; do not silently convert an entered amount.
+            if ($currency !== 'KES') {
+                self::redirect_error($pay_url, __('Paystack currently accepts KES here. Please choose KES and enter the amount in shillings.', 'whop-payments'));
+            }
+            $g = $gws['paystack'] ?? null;
+            $rate = function_exists('sa_paystack_rate') ? sa_paystack_rate() : null;
+            if (!$g || $g->enabled !== 'yes' || (empty($g->secret_key) || empty($g->public_key)) || (!empty($g->testmode) && !current_user_can('manage_woocommerce')) || !$rate || $amount > 2500*$rate) {
+                self::redirect_error($pay_url, __('Paystack is unavailable for this payment. Please choose Pesapal or contact us.', 'whop-payments'));
+            }
+        }
+        if (empty($gws[$gateway])) {
             self::redirect_error($pay_url, __('Online payments are temporarily unavailable. Please contact us on WhatsApp.', 'whop-payments'));
         }
-        $order = self::create_pending_order($amount, $email, $note, [], $currency);
+        $order = self::create_pending_order($amount, $email, $note, [], $currency, $gateway);
         if (!$order instanceof WC_Order) {
             self::redirect_error($pay_url, __('We could not start your payment. Please try again.', 'whop-payments'));
         }
-        $order->add_order_note(sprintf('Open-pay: %s %s, customer sent to Pesapal.', $currency, number_format($amount, 2)));
+        $order->add_order_note(sprintf('Open-pay: %s %s, customer selected %s.', $currency, number_format($amount, 2), $gateway));
         $order->save();
         wp_safe_redirect($order->get_checkout_payment_url());
         exit;
@@ -533,7 +559,10 @@ final class Whop_Open_Pay {
     /**
      * Create a pending Woo order for an open-amount payment.
      */
-    public static function create_pending_order(float $amount, string $email, string $note = '', array $extra_meta = [], string $currency = 'USD'): ?WC_Order {
+    public static function create_pending_order(float $amount, string $email, string $note = '', array $extra_meta = [], string $currency = 'USD', string $gateway = 'pesapal'): ?WC_Order {
+        if (!in_array($gateway, ['pesapal','paystack'], true) || ($gateway === 'paystack' && $currency !== 'KES')) {
+            return null;
+        }
         if (!function_exists('wc_create_order')) {
             return null;
         }
@@ -571,8 +600,8 @@ final class Whop_Open_Pay {
             }
         }
 
-        $order->set_payment_method('pesapal');
-        $order->set_payment_method_title('Pesapal');
+        $order->set_payment_method($gateway);
+        $order->set_payment_method_title($gateway === 'paystack' ? 'Paystack (KES)' : 'Pesapal');
         $order->update_meta_data('_sa_open_pay', '1');
         $order->update_meta_data('_sa_open_pay_amount_usd', (string) $amount);
         if ($note !== '') {
