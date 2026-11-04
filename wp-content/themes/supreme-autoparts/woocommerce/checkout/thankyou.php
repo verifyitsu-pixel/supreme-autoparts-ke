@@ -21,7 +21,7 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
   <?php if ($order) : ?>
     <?php do_action('woocommerce_before_thankyou', $order->get_id()); ?>
 
-    <?php if ($order->has_status('failed')) : ?>
+    <?php if ($order->has_status(['failed', 'cancelled'])) : ?>
       <div class="sa-thankyou__card sa-thankyou__card--failed">
         <p class="sa-thankyou__eyebrow"><?php esc_html_e('Payment issue', 'supreme-autoparts'); ?></p>
         <h1 class="sa-thankyou__title"><?php esc_html_e('Order not completed', 'supreme-autoparts'); ?></h1>
@@ -39,7 +39,7 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
       </div>
     <?php else : ?>
       <?php
-      $paid     = $order->is_paid() || $order->has_status(['processing', 'completed', 'ready-pickup', 'shipped', 'out-for-delivery', 'delivered']);
+      $paid = (bool) $order->get_date_paid() && !$order->has_status(['pending', 'on-hold', 'failed', 'cancelled', 'refunded']);
       $is_pickup = false;
       foreach ($order->get_shipping_methods() as $sa_sm) {
           if (strpos((string) $sa_sm->get_method_id(), 'local_pickup') === 0) {
@@ -49,10 +49,10 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
       $pending  = $order->has_status(['pending', 'on-hold']);
       $eyebrow  = $paid ? __('Order confirmed', 'supreme-autoparts') : __('Order received', 'supreme-autoparts');
       $heading  = $paid
-          ? __('Thank you — payment received', 'supreme-autoparts')
-          : __('Thank you — we have your order', 'supreme-autoparts');
+          ? __('Thank you - payment received', 'supreme-autoparts')
+          : __('Payment confirmation pending', 'supreme-autoparts');
       $lead = $paid
-          ? __('Your order is confirmed and a copy is on its way to your email. Check inbox and spam. We will prepare your parts and keep you updated by email.', 'supreme-autoparts')
+          ? __('Your payment is confirmed. Your order details and chosen shipping method are below. We will keep you updated by email.', 'supreme-autoparts')
           : __('If you just paid, confirmation can take a few seconds. Refresh this page if the status does not update.', 'supreme-autoparts');
       ?>
       <div class="sa-thankyou__card<?php echo $paid ? ' sa-thankyou__card--success' : ''; ?>">
@@ -81,7 +81,7 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
             <dd><?php echo esc_html($order->get_billing_email()); ?></dd>
           </div>
           <div>
-            <dt><?php esc_html_e('Total', 'supreme-autoparts'); ?></dt>
+            <dt><?php echo esc_html($paid ? __('Amount paid', 'supreme-autoparts') : __('Order total', 'supreme-autoparts')); ?></dt>
             <dd><?php echo wp_kses_post($order->get_formatted_order_total()); ?></dd>
           </div>
           <?php if ($order->get_payment_method_title()) : ?>
@@ -111,9 +111,28 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
 
       </div>
 
-      <?php /* Rock 2026-10-17 13:14: this page is confirmation only. The full order
-                 details, receipt and invoice live in the logged-in account section
-                 (My Account > Orders), not on the thank-you page. */ ?>
+      <section class="sa-thankyou__card sa-order-reminder" aria-labelledby="sa-order-reminder-title">
+        <h2 id="sa-order-reminder-title"><?php esc_html_e('Your order details', 'supreme-autoparts'); ?></h2>
+        <table class="shop_table"><thead><tr><th>Item</th><th>Quantity</th><th>Total</th></tr></thead><tbody>
+        <?php foreach ($order->get_items() as $item) : ?>
+          <tr><td><?php echo esc_html($item->get_name()); ?><?php echo wc_display_item_meta($item, ['echo'=>false]); ?></td><td><?php echo esc_html((string) $item->get_quantity()); ?></td><td><?php echo wp_kses_post($order->get_formatted_line_subtotal($item)); ?></td></tr>
+        <?php endforeach; ?>
+        </tbody><tfoot>
+        <?php foreach ($order->get_order_item_totals() as $total) : ?>
+          <tr><th colspan="2"><?php echo wp_kses_post($total['label']); ?></th><td><?php echo wp_kses_post($total['value']); ?></td></tr>
+        <?php endforeach; ?>
+        </tfoot></table>
+        <?php if ($order->get_shipping_methods()) : ?>
+          <h3>Shipping method</h3><p><?php echo esc_html($order->get_shipping_method()); ?></p>
+          <?php $sa_ff = function_exists('sa_ff_order_block') ? sa_ff_order_block($order) : ''; ?>
+          <?php if ($sa_ff !== '') : echo wp_kses_post($sa_ff); else : ?>
+            <p>Estimated delivery or pickup time will be confirmed when your order is prepared.</p>
+          <?php endif; ?>
+          <?php if (!$is_pickup && $order->get_formatted_shipping_address()) : ?>
+            <h3>Delivery address</h3><address><?php echo wp_kses_post($order->get_formatted_shipping_address()); ?></address>
+          <?php endif; ?>
+        <?php endif; ?>
+      </section>
 
       <div class="sa-thankyou__card sa-thankyou__card--actions">
         <?php /* Rock 2026-10-17: one clear next action. Receipt/invoice/order details are in
@@ -164,7 +183,7 @@ $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : 
     <div class="sa-thankyou__card">
       <p class="sa-thankyou__eyebrow"><?php esc_html_e('Order received', 'supreme-autoparts'); ?></p>
       <h1 class="sa-thankyou__title"><?php esc_html_e('Thank you', 'supreme-autoparts'); ?></h1>
-      <p class="sa-thankyou__lead"><?php esc_html_e('Your order was submitted. If payment completed, a confirmation email is on its way — check inbox and spam.', 'supreme-autoparts'); ?></p>
+      <p class="sa-thankyou__lead"><?php esc_html_e('No verified order is available on this page. Contact us if you need help checking your payment.', 'supreme-autoparts'); ?></p>
       <div class="sa-thankyou__actions">
         <a class="sa-btn" href="<?php echo esc_url($shop_url); ?>"><?php esc_html_e('Continue shopping', 'supreme-autoparts'); ?></a>
         <a class="sa-btn sa-btn--outline" href="<?php echo esc_url($wa_url); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('WhatsApp support', 'supreme-autoparts'); ?></a>
