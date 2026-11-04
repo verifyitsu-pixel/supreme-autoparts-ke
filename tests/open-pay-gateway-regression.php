@@ -9,4 +9,7 @@ $o=Whop_Open_Pay::create_pending_order(110.48,'fixture@example.invalid','',[],'K
 $o=Whop_Open_Pay::create_pending_order(25,'fixture@example.invalid','',[],'USD');assert($o->gateway==='pesapal' && $o->currency==='USD' && $o->total===25.0);
 $n=$GLOBALS['created'];assert(Whop_Open_Pay::create_pending_order(25,'fixture@example.invalid','',[],'USD','paystack')===null);assert($GLOBALS['created']===$n);
 assert(Whop_Open_Pay::create_pending_order(25,'fixture@example.invalid','',[],'KES','invalid')===null);assert($GLOBALS['created']===$n);
-echo "4 open-pay gateway/currency checks PASS (mock orders only)\n";
+$o=Whop_Open_Pay::create_pending_order(25,'fixture@example.invalid','',[],'USD','whop');assert($o->gateway==='whop' && $o->currency==='USD');
+$n=$GLOBALS['created'];assert(Whop_Open_Pay::create_pending_order(25,'fixture@example.invalid','',[],'KES','whop')===null);assert($GLOBALS['created']===$n);
+assert(Whop_Open_Pay::create_pending_order(2500.01,'fixture@example.invalid','',[],'USD','whop')===null);assert($GLOBALS['created']===$n);
+echo "7 open-pay gateway/currency checks PASS (mock orders only)\n";

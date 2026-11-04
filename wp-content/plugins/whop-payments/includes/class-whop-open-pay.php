@@ -94,7 +94,7 @@ final class Whop_Open_Pay {
      */
     /** Use the same gateway-owned method marks as shopping checkout. */
     public static function method_icons(string $gateway): string {
-        if (!in_array($gateway, ['pesapal', 'paystack'], true) || !function_exists('WC') || !WC()) return '';
+        if (!in_array($gateway, ['pesapal', 'paystack', 'whop'], true) || !function_exists('WC') || !WC()) return '';
         $manager = WC()->payment_gateways();
         if (!$manager) return '';
         $gateways = $manager->payment_gateways();
@@ -225,6 +225,10 @@ final class Whop_Open_Pay {
                     <fieldset class="sa-open-pay__methods" style="border:1px solid #777;border-radius:8px;padding:16px;margin:20px 0">
                         <legend style="font-weight:600">Payment method</legend>
                         <label style="display:flex;align-items:center;gap:12px;min-height:100px;border:1px solid #ddd;border-radius:8px;padding:14px;margin-bottom:12px;cursor:pointer"><input type="radio" name="gateway" value="pesapal" checked style="width:24px;height:24px"><span style="display:block;min-width:0"><img src="<?php echo esc_url(get_stylesheet_directory_uri().'/assets/images/providers/pesapal.png'); ?>" alt="Pesapal" style="display:block;width:100%;max-width:280px;height:80px;object-fit:contain;object-position:left center"><span>Card, M-Pesa &amp; Airtel (<?php echo esc_html($cur); ?>)</span><?php echo self::method_icons('pesapal'); ?></span></label>
+                        <?php if ($cur === 'USD') : ?>
+                        <label style="display:flex;align-items:center;gap:12px;min-height:100px;border:1px solid #ddd;border-radius:8px;padding:14px;margin-bottom:12px;cursor:pointer"><input type="radio" name="gateway" value="whop" style="width:24px;height:24px"><span style="display:block;min-width:0"><img src="<?php echo esc_url(get_stylesheet_directory_uri().'/assets/images/providers/whop.svg'); ?>" alt="Whop" style="display:block;width:100%;max-width:280px;height:80px;object-fit:contain;object-position:left center"><span>Card &amp; supported wallets</span><?php echo self::method_icons('whop'); ?></span></label>
+                        <p class="sa-open-pay__hint">Whop starts from the USD amount entered. Its secure checkout offers supported local currencies through adaptive pricing; availability and the final payable amount are shown there. Not every currency is supported. Maximum USD 2,500.</p>
+                        <?php endif; ?>
                         <?php if ($cur === 'KES') : ?>
                         <label style="display:flex;align-items:center;gap:12px;min-height:100px;border:1px solid #ddd;border-radius:8px;padding:14px;margin-bottom:12px;cursor:pointer"><input type="radio" name="gateway" value="paystack" style="width:24px;height:24px"><span style="display:block;min-width:0"><img src="<?php echo esc_url(get_stylesheet_directory_uri().'/assets/images/providers/paystack.png'); ?>" alt="Paystack" style="display:block;width:100%;max-width:280px;height:80px;object-fit:contain;object-position:left center"><span>Paystack - pay in KES</span><?php echo self::method_icons('paystack'); ?></span></label>
                         <p class="sa-open-pay__hint">Paystack charges exactly the KES amount entered above. Available methods are shown on its secure checkout.</p>
@@ -539,8 +543,14 @@ final class Whop_Open_Pay {
         $pay_url  = add_query_arg('cur', $currency, $pay_url);
         $gws = function_exists('WC') ? WC()->payment_gateways()->payment_gateways() : [];
         $gateway = isset($_POST['gateway']) ? sanitize_key(wp_unslash((string) $_POST['gateway'])) : 'pesapal';
-        if (!in_array($gateway, ['pesapal','paystack'], true)) {
+        if (!in_array($gateway, ['pesapal','paystack','whop'], true)) {
             self::redirect_error($pay_url, __('Please choose an available payment method.', 'whop-payments'));
+        }
+        if ($gateway === 'whop') {
+            $g = $gws['whop'] ?? null;
+            if ($currency !== 'USD' || $amount > 2500 || !$g || $g->enabled !== 'yes' || !$g->is_available() || (method_exists($g, 'is_sandbox_mode') && $g->is_sandbox_mode() && !current_user_can('manage_woocommerce'))) {
+                self::redirect_error($pay_url, __('Whop is available here for USD amounts up to 2,500. Please choose another method.', 'whop-payments'));
+            }
         }
         if ($gateway === 'paystack') {
             // USD requires an approved USD settlement account; do not silently convert an entered amount.
@@ -570,7 +580,7 @@ final class Whop_Open_Pay {
      * Create a pending Woo order for an open-amount payment.
      */
     public static function create_pending_order(float $amount, string $email, string $note = '', array $extra_meta = [], string $currency = 'USD', string $gateway = 'pesapal'): ?WC_Order {
-        if (!in_array($gateway, ['pesapal','paystack'], true) || ($gateway === 'paystack' && $currency !== 'KES')) {
+        if (!in_array($gateway, ['pesapal','paystack','whop'], true) || ($gateway === 'paystack' && $currency !== 'KES') || ($gateway === 'whop' && ($currency !== 'USD' || $amount > 2500))) {
             return null;
         }
         if (!function_exists('wc_create_order')) {
@@ -611,7 +621,7 @@ final class Whop_Open_Pay {
         }
 
         $order->set_payment_method($gateway);
-        $order->set_payment_method_title($gateway === 'paystack' ? 'Paystack (KES)' : 'Pesapal');
+        $order->set_payment_method_title($gateway === 'paystack' ? 'Paystack (KES)' : ($gateway === 'whop' ? 'Whop' : 'Pesapal'));
         $order->update_meta_data('_sa_open_pay', '1');
         $order->update_meta_data('_sa_open_pay_amount_usd', (string) $amount);
         if ($note !== '') {
