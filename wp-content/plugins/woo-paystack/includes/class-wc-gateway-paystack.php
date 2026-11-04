@@ -1938,6 +1938,9 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 			return new WP_Error( 'paystack_converted_refund_disabled', __( 'Automatic Paystack refunds are disabled for converted or unsupported-currency orders. Review the original settled payment and refund manually through Paystack.', 'woo-paystack' ) );
 		}
 
+		if ( $order->get_meta('_sa_paystack_refund_pending') ) return new WP_Error('paystack_refund_pending','An earlier refund result is unresolved. Review Paystack before retrying.');
+		if ( abs((float)$amount - round((float)$amount,2)) > 0.000001 ) return new WP_Error('paystack_refund_precision','Refund amount must use at most two decimal places.');
+
 		$order_currency = $order->get_currency();
 		$transaction_id = $order->get_transaction_id();
 
@@ -1948,7 +1951,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 			if ( 'success' === $paystack_response->data->status ) {
 
 				$minor = SA_Paystack_Charge_Quote::minor((float)$amount);
-				$already = (int)$order->get_meta('_sa_paystack_refunded_minor');
+				$already = max((int)$order->get_meta('_sa_paystack_refunded_minor'), SA_Paystack_Charge_Quote::minor(abs((float)$order->get_total_refunded())));
 				$settled = (int)$paystack_response->data->amount;
 				if ($minor <= 0 || $minor + $already > $settled) return new WP_Error('paystack_refund_limit','Refund exceeds the verified settled payment remaining.');
 
@@ -1975,6 +1978,10 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 				$refund_url = 'https://api.paystack.co/refund';
 
+				// Persist before outbound request: timeout/crash must not permit a blind duplicate refund.
+				$order->update_meta_data('_sa_paystack_refund_pending', array('reference'=>$transaction_id,'amount_minor'=>$minor,'currency'=>$order_currency,'at'=>time()));
+				$order->save();
+
 				$refund_request = wp_remote_post( $refund_url, $args );
 
 				if ( ! is_wp_error( $refund_request ) && 200 === wp_remote_retrieve_response_code( $refund_request ) ) {
@@ -1983,6 +1990,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 					if ( $refund_response->status ) {
 						$order->update_meta_data('_sa_paystack_refunded_minor', $already + $minor);
+						$order->delete_meta_data('_sa_paystack_refund_pending');
 						$order->save();
 
 						$amount    = wc_price( $amount, array( 'currency' => $order_currency ) );
