@@ -25,3 +25,4 @@ jobs:
         run: |
           php tests/careers-payment-regression.php
           php tests/careers-provider-verification-regression.php
+          php tests/careers-redirect-contract-regression.php
