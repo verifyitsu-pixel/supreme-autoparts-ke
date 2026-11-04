@@ -89,3 +89,11 @@ add_action('woocommerce_checkout_create_order', static function ($order,$data) {
     if (!$rate || (float)$order->get_total() > 2500) throw new Exception('Paystack is unavailable for this order. Please choose another payment method.');
     sa_paystack_convert_order($order,$rate);
 }, 100, 2);
+
+// The legacy USD notice must not contradict the new gateway's KES charge.
+add_filter('gettext', static function ($translated,$text,$domain) {
+    if ($domain === 'supreme-autoparts' && $text === "Charged in USD. M-Pesa / Airtel amounts are shown in KES at the payment provider's rate.") {
+        return 'Whop and Pesapal orders are recorded in USD. Paystack orders are charged and recorded in KES at the exact total shown under Paystack before payment.';
+    }
+    return $translated;
+}, 20, 3);
