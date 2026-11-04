@@ -77,6 +77,6 @@ add_action('admin_post_sa_careers_confirmation',static function(){
     try{$e=new Forminator_Form_Entry_Model($id);$a=sa_careers_confirmation_args($e);}catch(Throwable $x){wp_die(esc_html($x->getMessage()));}
     $r=['state'=>'attempting','at'=>current_time('mysql'),'by'=>get_current_user_id(),'to'=>$a['to'],'subject'=>$a['subject'],'sha256'=>hash('sha256',$a['message'])];
     if(!add_option($key,$r,'','no'))wp_die('Confirmation already being handled.');
-    $ok=wp_mail($a['to'],$a['subject'],$a['message'],$a['headers'],[]);$r['state']=$ok?'accepted by mail transport':'transport failed';update_option($key,$r,false);
+    $previous_message_id=(string)get_option('sa_brevo_last_message_id','');$ok=wp_mail($a['to'],$a['subject'],$a['message'],$a['headers'],[]);$message_id=(string)get_option('sa_brevo_last_message_id','');if($ok&&$message_id!==$previous_message_id)$r['message_id']=$message_id;$r['state']=$ok?'accepted by mail transport':'transport failed';update_option($key,$r,false);
     wp_safe_redirect(admin_url('admin.php?page=sa-careers-review'));exit;
 });
