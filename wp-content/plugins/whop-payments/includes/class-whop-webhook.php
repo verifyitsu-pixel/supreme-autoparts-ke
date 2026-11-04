@@ -49,7 +49,7 @@ final class Whop_Webhook {
             exit;
         }
 
-        if (in_array($status, ['error', 'cancel', 'failed'], true)) {
+        if (in_array($status, ['error', 'cancel', 'canceled', 'cancelled', 'failed'], true)) {
             wc_add_notice(__('Payment was cancelled or failed. You can try again.', 'whop-payments'), 'notice');
             wp_safe_redirect($order->get_checkout_payment_url());
             exit;
@@ -88,7 +88,7 @@ final class Whop_Webhook {
                 echo 'invalid_signature';
                 exit;
             }
-        } elseif (!$sandbox) {
+        } else {
             status_header(401);
             echo 'webhook_secret_required';
             exit;
@@ -124,7 +124,7 @@ final class Whop_Webhook {
                 echo 'already_processed';
                 exit;
             }
-            set_transient($seen_key, 1, WEEK_IN_SECONDS);
+            // Mark only after successful handling; failed deliveries remain retryable.
         }
 
         $data       = is_array($event['data'] ?? null) ? $event['data'] : [];
@@ -138,7 +138,8 @@ final class Whop_Webhook {
         $purpose    = (string) ($metadata['purpose'] ?? '');
 
         $expected_company = $gateway->get_company_id();
-        if ($expected_company !== '' && $company !== '' && !hash_equals($expected_company, $company)) {
+        $company = $company !== '' ? $company : (string) ($data['company']['id'] ?? $data['account_id'] ?? '');
+        if ($expected_company === '' || $company === '' || !hash_equals($expected_company, $company)) {
             status_header(403);
             echo 'company_mismatch';
             exit;
@@ -184,72 +185,49 @@ final class Whop_Webhook {
 
         $order = $order_id ? wc_get_order($order_id) : false;
 
-        // Open-amount /pay: create Woo order from webhook if pending order missing
-        // (legacy checkouts used openpay-* synthetic ids before WC order wiring).
-        $is_open_pay = ((string) ($metadata['open_pay'] ?? '') === '1')
-            || ((string) ($metadata['source'] ?? '') === 'supreme-autoparts-open-pay')
-            || str_starts_with((string) ($metadata['order_id'] ?? ''), 'openpay-');
-
-        if (!$order && $is_open_pay && class_exists('Whop_Open_Pay')) {
-            $amount = null;
-            foreach (['total', 'final_amount', 'amount', 'subtotal'] as $field) {
-                if (isset($data[$field]) && is_numeric($data[$field])) {
-                    $amount = (float) $data[$field];
-                    break;
-                }
-            }
-            if ($amount === null && isset($metadata['amount_usd']) && is_numeric($metadata['amount_usd'])) {
-                $amount = (float) $metadata['amount_usd'];
-            }
-            $email = sanitize_email((string) ($metadata['email'] ?? $data['email'] ?? $data['user_email'] ?? ''));
-            if ($email === '' || !is_email($email)) {
-                $email = 'openpay+' . substr(md5($payment_id !== '' ? $payment_id : wp_generate_password(8, false)), 0, 10) . '@supremeautoparts.co.ke';
-            }
-            $note = sanitize_text_field((string) ($metadata['note'] ?? ''));
-            if ($amount !== null && $amount >= 1) {
-                $order = Whop_Open_Pay::create_pending_order($amount, $email, $note, [
-                    '_whop_payment_id_pending' => $payment_id,
-                    '_sa_open_pay_legacy'      => '1',
-                ]);
-                if ($order instanceof WC_Order) {
-                    $order_id = (int) $order->get_id();
-                    $order->add_order_note(__('Open-pay: Woo order created from payment.succeeded webhook (no prior pending order).', 'whop-payments'));
-                }
-            }
-        }
-
+        // Never synthesize an order from an unmatched payment. Reconciliation is manual.
         if (!$order) {
-            status_header(404);
+            status_header(422);
             echo 'order_not_found';
             exit;
         }
-
-        if ($order->is_paid() || $order->has_status(['processing', 'completed'])) {
+        $problem = self::payment_validation_error($data, $metadata, $order);
+        if ($problem !== '') {
+            error_log('[whop-payments] payment rejected order=' . $order_id . ' reason=' . $problem);
+            status_header(422);
+            echo $problem;
+            exit;
+        }
+        // Atomic per-order lock, including separate webhook ids for the same payment.
+        $lock_key = 'sa_whop_pay_lock_' . $order_id;
+        global $wpdb;
+        if ((int) $wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 0)', $lock_key)) !== 1) {
+            status_header(503);
+            echo 'order_busy';
+            exit;
+        }
+        register_shutdown_function(static function () use ($lock_key, $wpdb) {
+            $wpdb->get_var($wpdb->prepare('SELECT RELEASE_LOCK(%s)', $lock_key));
+        });
+        $order = wc_get_order($order_id); // Refresh under the lock.
+        if (!$order || self::payment_validation_error($data, $metadata, $order) !== '') {
+            status_header(422);
+            echo 'order_changed';
+            exit;
+        }
+        if ($order->is_paid() || $order->get_date_paid()) {
+            if ($id !== '') set_transient($seen_key, 1, WEEK_IN_SECONDS);
             status_header(200);
             echo 'already_paid';
             exit;
         }
-
-        $paid_amount = null;
-        foreach (['total', 'final_amount', 'amount', 'subtotal'] as $field) {
-            if (isset($data[$field]) && is_numeric($data[$field])) {
-                $paid_amount = (float) $data[$field];
-                break;
-            }
+        if ($order->has_status(['cancelled', 'refunded', 'failed'])) {
+            status_header(422);
+            echo 'order_requires_review';
+            exit;
         }
-        if ($paid_amount !== null) {
-            $order_total = (float) $order->get_total();
-            if (abs($paid_amount - $order_total) > max(0.05, $order_total * 0.02)) {
-                $order->add_order_note(sprintf(
-                    /* translators: 1: webhook amount 2: order total */
-                    __('Whop webhook amount mismatch (paid %1$s vs order %2$s). Completing with note for review.', 'whop-payments'),
-                    (string) $paid_amount,
-                    (string) $order_total
-                ));
-            }
-        }
-
         $txn = $payment_id !== '' ? $payment_id : ('whop_' . ($id !== '' ? $id : wp_generate_password(8, false)));
+        $order->update_meta_data('_sa_whop_verified_payment', $payment_id);
         $order->payment_complete($txn);
         if ($order->get_meta('_sa_open_pay') === '1' && $order->has_status('processing')) {
             // Digital/custom payment — no shipping fulfillment required.
@@ -268,6 +246,8 @@ final class Whop_Webhook {
         }
         $order->save();
 
+        if ($id !== '') set_transient($seen_key, 1, WEEK_IN_SECONDS);
+
         // Whop buyer receipts are off — store must email the customer confirmation.
         if (function_exists('sa_core_ensure_customer_order_email')) {
             sa_core_ensure_customer_order_email($order);
@@ -283,6 +263,29 @@ final class Whop_Webhook {
         header('Content-Type: application/json; charset=utf-8');
         echo wp_json_encode(['received' => true, 'order_id' => $order_id]);
         exit;
+    }
+
+    /** Validate the pinned pre-native Payment shape. total is creator total, not buyer FX fees.
+     * Docs: /api-reference/payments/payment and /developer/api/versioning (2026-08-21).
+     * Unknown/new money-object shapes fail closed rather than guessing units or FX.
+     */
+    public static function payment_validation_error(array $data, array $metadata, $order): string {
+        if ($order->get_payment_method() !== 'whop') return 'gateway_mismatch';
+        if ((string) ($metadata['order_id'] ?? '') !== (string) $order->get_id()) return 'order_mismatch';
+        if (!hash_equals($order->get_order_key(), (string) ($metadata['order_key'] ?? ''))) return 'order_key_mismatch';
+        if (!preg_match('/^pay_[A-Za-z0-9]+$/', (string) ($data['id'] ?? ''))) return 'payment_id_missing';
+        if (($data['status'] ?? '') !== 'paid' || ($data['substatus'] ?? '') !== 'succeeded' || empty($data['paid_at'])) return 'payment_not_paid';
+        $checkout = (string) $order->get_meta('_whop_checkout_id');
+        $plan = (string) $order->get_meta('_whop_plan_id');
+        if ($checkout === '' || !hash_equals($checkout, (string) ($data['checkout_configuration_id'] ?? ''))) return 'checkout_mismatch';
+        if ($plan === '' || !hash_equals($plan, (string) ($data['plan']['id'] ?? $data['plan_id'] ?? ''))) return 'plan_mismatch';
+        if (strtoupper((string) ($data['currency'] ?? '')) !== $order->get_currency()) return 'currency_mismatch';
+        $total = $data['total'] ?? null;
+        if (!is_scalar($total) || !is_numeric($total) || !is_finite((float) $total) || (float) $total <= 0) return 'amount_missing';
+        if (abs((float) $total * 100 - round((float) $total * 100)) > 0.00001) return 'amount_precision';
+        if ((int) round((float) $total * 100) !== (int) round((float) $order->get_total() * 100)) return 'amount_mismatch';
+        if (!empty($data['auto_refunded']) || (float) ($data['refunded_amount'] ?? 0) > 0) return 'payment_refunded';
+        return '';
     }
 
     /**
