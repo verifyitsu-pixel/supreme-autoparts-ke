@@ -187,7 +187,10 @@ final class SA_Geo_Display
             return (string) $html;
         }
 
-        $converted = self::snap($converted, $usd, $display);
+        // Checkout must show the actual cents instead of catalog rounding.
+        if (!(function_exists('is_checkout') && is_checkout())) {
+            $converted = self::snap($converted, $usd, $display);
+        }
 
         // Prevent recursive wc_price filter (calling wc_price inside this filter).
         self::$busy = true;
