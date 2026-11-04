@@ -1115,7 +1115,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 					$order = wc_get_order( $order_id );
 
-					if ( in_array( $order->get_status(), array( 'processing', 'completed', 'on-hold' ), true ) ) {
+					if ( ! $this->reconcile_attempt_guard( $order, (string)$paystack_response->data->reference ) ) {
 
 						wp_safe_redirect( $this->get_return_url( $order ) );
 
@@ -1671,19 +1671,27 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 	}
 
+	/** One request-owned lock for initialization AND settlement of an order. */
+	private function acquire_order_payment_lock( $order ): bool {
+		static $owned = array();
+		$key = 'sa_paystack_payment_' . $order->get_id();
+		if ( isset( $owned[$key] ) ) return true;
+		if ( ! add_option( $key, time(), '', false ) ) return false;
+		$owned[$key] = true;
+		register_shutdown_function( static function () use ( $key ) { delete_option( $key ); } );
+		return true;
+	}
+
 	/** Serialize settlement callbacks and flag a second paid reference once. */
 	private function reconcile_attempt_guard( $order, string $reference ): bool {
-		$key = 'sa_paystack_reconcile_' . $order->get_id();
-		if ( ! add_option( $key, time(), '', false ) ) {
-			// A parallel callback owns settlement. Ask the webhook sender to retry.
+		if ( ! $this->acquire_order_payment_lock( $order ) ) {
 			http_response_code( 503 );
 			return false;
 		}
-		register_shutdown_function( static function () use ( $key ) { delete_option( $key ); } );
 		// Reload state after the database-backed lock, not before it.
 		$order->get_data_store()->read( $order );
 		$paid = $order->get_transaction_id();
-		if ( $order->is_paid() || in_array( $order->get_status(), array( 'processing', 'completed', 'on-hold' ), true ) ) {
+		if ( $order->is_paid() || in_array( $order->get_status(), array( 'processing', 'completed' ), true ) ) {
 			if ( $paid && $paid !== $reference ) {
 				$duplicates = $order->get_meta( '_sa_paystack_duplicate_paid_refs' );
 				$duplicates = is_array( $duplicates ) ? $duplicates : array();
@@ -1696,6 +1704,18 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 			}
 			return false;
 		}
+		if ( 'on-hold' === $order->get_status() || in_array( $order->get_status(), array( 'cancelled', 'refunded' ), true ) ) {
+			$reviews = $order->get_meta( '_sa_paystack_held_paid_refs' );
+			$reviews = is_array( $reviews ) ? $reviews : array();
+			if ( ! isset( $reviews[$reference] ) ) {
+				$reviews[$reference] = time();
+				$order->update_meta_data( '_sa_paystack_held_paid_refs', $reviews );
+				$order->add_order_note( 'MANUAL PAYMENT REVIEW: verified Paystack payment ' . $reference . ' received while order status is ' . $order->get_status() . '. Payment is recorded for review; no automatic fulfillment or status change.' );
+				$order->save();
+			}
+			return false;
+		}
+
 		return true;
 	}
 
@@ -1714,10 +1734,9 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 		}
 		// Serialize initialization requests so two tabs cannot lose each other's
 		// recorded quote in a read-modify-write race. A competing request retries.
-		$key = 'sa_paystack_init_' . $order->get_id();
-		if ( ! add_option( $key, time(), '', false ) ) return null;
-		register_shutdown_function( static function () use ( $key ) { delete_option( $key ); } );
+		if ( ! $this->acquire_order_payment_lock( $order ) ) return null;
 		$order->get_data_store()->read( $order );
+		if ( $order->is_paid() || ! in_array( $order->get_status(), array( 'pending', 'failed' ), true ) ) return null;
 
 		$quote = SA_Paystack_Charge_Quote::lock_for_order( $order, $txnref );
 		if ( ! is_array( $quote ) ) {
