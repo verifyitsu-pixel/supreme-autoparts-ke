@@ -29,7 +29,7 @@ add_action('forminator_custom_form_submit_before_set_fields',static function($en
 function sa_careers_form_response(array $response,int $form_id): array {
     if(!function_exists('sa_ff_id') || $form_id!==sa_ff_id('careers') || empty($response['success']) || empty($GLOBALS['sa_careers_saved_entry']) || !class_exists('Forminator_Form_Entry_Model'))return $response;
     $e=new Forminator_Form_Entry_Model();$e->get((int)$GLOBALS['sa_careers_saved_entry']);
-    if((int)$e->form_id!==$form_id || !empty($e->is_spam) || in_array($e->status,['spam','draft','abandoned'],true))return $response;
+    if((int)$e->form_id!==$form_id || !empty($e->is_spam) || in_array((string)($e->status??'active'),['spam','draft','abandoned'],true))return $response;
     $o=sa_careers_fee_order('forminator',(int)$e->entry_id,sanitize_text_field((string)$e->get_meta('name-1','')),sanitize_email((string)$e->get_meta('email-1','')));
     if(is_wp_error($o)){$response['success']=false;$response['message']=$o->get_error_message();unset($response['url'],$response['redirect']);return $response;}
     $response['url']=$o->get_checkout_payment_url();$response['redirect']=true;$response['newtab']='sametab';$response['behav']='behaviour-redirect';$response['message']='Application saved. Continue to Paystack to pay the KES 1,000 non-refundable application fee.';return $response;
