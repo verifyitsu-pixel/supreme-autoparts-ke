@@ -86,7 +86,7 @@ CSS
         'supreme-autoparts-loader',
         SA_THEME_URI . '/assets/js/sa-loader.js',
         ['jquery', 'supreme-autoparts'],
-        SA_THEME_VERSION,
+        SA_THEME_VERSION . '.careers-pay1',
         true
     );
     wp_enqueue_script(
