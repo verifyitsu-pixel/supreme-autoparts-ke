@@ -153,8 +153,8 @@ add_filter('woocommerce_gateway_title', static function ($title, $gateway_id) {
 
 /* Pesapal's plugin overrides checkout/thankyou.php for all orders; take it back for the theme. */
 add_filter('woocommerce_locate_template', static function ($template, $template_name) {
-    if ('checkout/thankyou.php' === $template_name) {
-        $theme = get_stylesheet_directory() . '/woocommerce/checkout/thankyou.php';
+    if (in_array($template_name, ['checkout/thankyou.php', 'checkout/payment-method.php'], true)) {
+        $theme = get_stylesheet_directory() . '/woocommerce/' . $template_name;
         if (file_exists($theme)) {
             return $theme;
         }
