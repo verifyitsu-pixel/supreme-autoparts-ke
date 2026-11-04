@@ -1925,6 +1925,13 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 			return false;
 		}
 
+		if ( ! $this->acquire_order_payment_lock( $order ) ) return new WP_Error('paystack_busy','Payment review in progress; retry later.');
+		clean_post_cache( $order->get_id() );
+		wp_cache_delete( $order->get_id(), 'post_meta' );
+		$order->get_data_store()->read( $order );
+		$order->read_meta_data( true );
+		if ( !is_numeric($amount) || !is_finite((float)$amount) || (float)$amount <= 0 ) return new WP_Error('paystack_refund_amount','A positive refund amount is required.');
+
 		// Never send a USD order amount as though it were the settled KES charge.
 		// Converted payments require a separate reviewed manual refund workflow.
 		if ( ! class_exists( 'SA_Paystack_Charge_Quote' ) || ! SA_Paystack_Charge_Quote::can_auto_refund( $order ) ) {
@@ -1940,12 +1947,17 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 			if ( 'success' === $paystack_response->data->status ) {
 
+				$minor = SA_Paystack_Charge_Quote::minor((float)$amount);
+				$already = (int)$order->get_meta('_sa_paystack_refunded_minor');
+				$settled = (int)$paystack_response->data->amount;
+				if ($minor <= 0 || $minor + $already > $settled) return new WP_Error('paystack_refund_limit','Refund exceeds the verified settled payment remaining.');
+
 				/* translators: 1: WooCommerce order ID, 2: Site URL. */
 				$merchant_note = sprintf( __( 'Refund for Order ID: #%1$s on %2$s', 'woo-paystack' ), $order_id, get_site_url() );
 
 				$body = array(
 					'transaction'   => $transaction_id,
-					'amount'        => $amount * 100,
+					'amount'        => $minor,
 					'currency'      => $order_currency,
 					'customer_note' => $reason,
 					'merchant_note' => $merchant_note,
@@ -1970,6 +1982,9 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 					$refund_response = json_decode( wp_remote_retrieve_body( $refund_request ) );
 
 					if ( $refund_response->status ) {
+						$order->update_meta_data('_sa_paystack_refunded_minor', $already + $minor);
+						$order->save();
+
 						$amount    = wc_price( $amount, array( 'currency' => $order_currency ) );
 						$refund_id = $refund_response->data->id;
 						/* translators: 1: Refunded amount, 2: Paystack refund ID, 3: Refund reason. */

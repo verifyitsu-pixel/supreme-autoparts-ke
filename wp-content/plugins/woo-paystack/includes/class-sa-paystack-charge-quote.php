@@ -61,6 +61,8 @@ final class SA_Paystack_Charge_Quote {
 			|| ! is_numeric( $q['rate'] ?? null ) || ! is_finite( (float) $q['rate'] ) || (float) $q['rate'] <= 0
 			|| ! is_numeric( $q['kes'] ?? null ) || ! is_finite( (float) $q['kes'] ) || (float) $q['kes'] <= 0
 			|| self::minor( round( (float) $q['usd'] * (float) $q['rate'], 2 ) ) !== self::minor( (float) $q['kes'] ) ) return null;
+		$currency = $q['charge_currency'] ?? 'KES';
+		if ( ! in_array( $currency, array('USD','KES'), true ) || ( 'USD' === $currency && ( !self::native_usd_enabled() || (float)$q['rate'] !== 1.0 ) ) ) return null;
 		return $q;
 	}
 
@@ -73,13 +75,20 @@ final class SA_Paystack_Charge_Quote {
 	public static function can_auto_refund( $order ): bool {
 		$currency = strtoupper( (string) $order->get_currency() );
 		$charged = strtoupper( (string) $order->get_meta( '_sa_paystack_charge_currency' ) );
-		if ( 'KES' !== $currency || ( '' !== $charged && $charged !== $currency ) ) return false;
+		if ( !in_array($currency, array('USD','KES'), true) || ( '' !== $charged && $charged !== $currency ) ) return false;
 		$quotes = $order->get_meta( self::META_KEY );
+		if ( 'USD' === $currency && ( !is_array($quotes) || !$quotes ) ) return false;
 		foreach ( is_array( $quotes ) ? $quotes : array() as $quote ) {
 			if ( ! is_array( $quote ) || strtoupper( (string) ( $quote['order_currency'] ?? '' ) ) !== $currency
 				|| strtoupper( (string) ( $quote['charge_currency'] ?? '' ) ) !== $currency ) return false;
 		}
 		return true;
+	}
+
+	public static function native_usd_enabled(): bool {
+		// Account capability verified by an unpaid USD initialize/verify probe.
+		// Explicitly disabling this selects the visible KES-conversion route.
+		return (bool) apply_filters( 'sa_paystack_native_usd_enabled', true );
 	}
 
 	public static function decimals_for( string $currency ): int {
@@ -208,7 +217,11 @@ final class SA_Paystack_Charge_Quote {
 			// shown to the customer. No fresh matching display quote, no charge.
 			$submitted = self::submitted_quote( $order );
 			if ( ! $submitted ) return null;
-			$quote = self::build_quote_at_rate( $order, $txn_ref, (float) $submitted['rate'] );
+			if ( ($submitted['charge_currency'] ?? 'KES') === 'USD' ) {
+				$quote = array('reference'=>$txn_ref,'order_currency'=>'USD','order_total'=>(float)$order->get_total(),'charge_currency'=>'USD','charge_amount'=>(float)$order->get_total(),'rate'=>1.0,'quoted_at'=>time());
+			} else {
+				$quote = self::build_quote_at_rate( $order, $txn_ref, (float) $submitted['rate'] );
+			}
 			if ( ! $quote || self::minor( (float) $quote['charge_amount'] ) !== self::minor( (float) $submitted['kes'] ) ) return null;
 		}
 		if ( ! is_array( $quote ) ) {

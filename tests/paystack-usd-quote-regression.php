@@ -2,7 +2,7 @@
 // Supreme USD->KES server-locked charge quote regression checks (mock orders only, no network).
 define('ABSPATH',1);
 $AC=0; function ck($c,$m=''){ $GLOBALS['AC']++; if(!$c) throw new Exception('CHECK FAILED: '.$m); }
-function apply_filters($tag,$value){return $value;}
+function apply_filters($tag,$value){return $tag==='sa_paystack_native_usd_enabled' ? ($GLOBALS['native_usd']??false) : $value;}
 function __($s,$d=''){return $s;}
 function wp_salt($s){return 'test-only-signing-key';}
 class SA_FX_Rates { public static $rates=['KES'=>129.50];
@@ -211,4 +211,16 @@ $k->update_meta_data('_sa_paystack_charge_currency','USD'); ck(!Q::can_auto_refu
 $e=new QOrder('EUR',100);ck(!Q::can_auto_refund($e));
 $refundSource=substr($source,strpos($source,'public function process_refund'));
 ck(strpos($refundSource,'can_auto_refund')<strpos($refundSource,'get_paystack_transaction'));
+
+// Native USD is a signed explicit route, never implicit FX fallback.
+$GLOBALS['native_usd']=true;
+$o=new QOrder('USD',100.0);
+$_POST['sa_paystack_quote_token']=Q::token(['usd'=>100,'kes'=>100,'rate'=>1.0,'charge_currency'=>'USD','at'=>time()],'order:'.$o->id);
+$q=Q::lock_for_order($o,'native');ck($q['charge_currency']==='USD' && $q['charge_amount']===100.0 && $q['rate']===1.0);
+ck(Q::matches_transaction($o,'native',10000,'USD'));ck(!Q::matches_transaction($o,'native',1295000,'KES'));
+ck(Q::can_auto_refund($o));
+$GLOBALS['native_usd']=false;ck(Q::lock_for_order($o,'disabledNative')===null); // cannot silently switch to KES
+$GLOBALS['native_usd']=true;
+$_POST['sa_paystack_quote_token']=Q::token(['usd'=>100,'kes'=>200,'rate'=>2,'charge_currency'=>'USD','at'=>time()],'order:'.$o->id);ck(Q::lock_for_order($o,'invalidNative')===null);
+$GLOBALS['native_usd']=false;
 echo $AC." USD->KES locked-quote checks PASS (mock orders only, no network)\n";

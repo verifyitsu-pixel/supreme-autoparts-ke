@@ -5,7 +5,7 @@ $AC=0; function ck($c,$m=''){ $GLOBALS['AC']++; if(!$c) throw new Exception('CHE
 $hooks=[];
 function add_filter($tag,$fn,$p=10,$a=1){global $hooks;$hooks[$tag][]=$fn;}
 function add_action($tag,$fn,$p=10,$a=1){add_filter($tag,$fn,$p,$a);}
-function apply_filters($tag,$v,...$args){global $hooks;foreach($hooks[$tag]??[] as $fn)$v=$fn($v,...$args);return $v;}
+function apply_filters($tag,$v,...$args){if($tag==='sa_paystack_native_usd_enabled')return $GLOBALS['native_usd']??false;global $hooks;foreach($hooks[$tag]??[] as $fn)$v=$fn($v,...$args);return $v;}
 function do_action($tag,...$args){global $hooks;foreach($hooks[$tag]??[] as $fn)$fn(...$args);}
 function __($s,$d=''){return $s;}
 function wp_salt($s){return 'test-only-signing-key';}

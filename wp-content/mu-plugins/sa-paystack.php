@@ -21,12 +21,19 @@ function sa_paystack_display_quote(float $usd): ?array {
     return ['usd'=>$usd, 'rate'=>$rate, 'kes'=>sa_paystack_amount($usd,$rate), 'at'=>time()];
 }
 
+/** Selected route for a USD order: native USD, or explicitly configured visible KES conversion. */
+function sa_paystack_usd_quote(float $usd): ?array {
+    if (!is_finite($usd) || $usd <= 0) return null;
+    if (SA_Paystack_Charge_Quote::native_usd_enabled()) return ['usd'=>$usd,'rate'=>1.0,'kes'=>$usd,'charge_currency'=>'USD','at'=>time()];
+    return sa_paystack_display_quote($usd);
+}
+
 /** Lock the customer-visible quote on the order; the gateway charges exactly this figure. */
 function sa_paystack_lock_display_quote($order, array $quote): void {
     $order->update_meta_data(SA_PAYSTACK_DISPLAY_META_KEY, [
         'order_currency'  => $order->get_currency(),
         'order_total'     => (float)$order->get_total(),
-        'charge_currency' => 'KES',
+        'charge_currency' => $quote['charge_currency'] ?? 'KES',
         'charge_amount'   => (float)$quote['kes'],
         'rate'            => (float)$quote['rate'],
         'quoted_at'       => (int)$quote['at'],
@@ -57,14 +64,15 @@ function sa_paystack_order_pay_quote($order): ?array {
     if (isset($request_quotes[$request_key])) return $request_quotes[$request_key];
     $locked = $order->get_meta(SA_PAYSTACK_DISPLAY_META_KEY);
     if (is_array($locked)
+        && ($locked['charge_currency'] ?? 'KES') === (SA_Paystack_Charge_Quote::native_usd_enabled() ? 'USD' : 'KES')
         && strtoupper((string)($locked['order_currency'] ?? '')) === 'USD'
         && abs((float)($locked['order_total'] ?? -1) - (float)$order->get_total()) < 0.005
         && (int)($locked['quoted_at'] ?? 0) >= time() - 1800
         && (float)($locked['rate'] ?? 0) > 0
         && (float)($locked['charge_amount'] ?? 0) > 0) {
-        return $request_quotes[$request_key] = ['usd'=>(float)$locked['order_total'], 'rate'=>(float)$locked['rate'], 'kes'=>(float)$locked['charge_amount'], 'at'=>(int)$locked['quoted_at']];
+        return $request_quotes[$request_key] = ['usd'=>(float)$locked['order_total'], 'rate'=>(float)$locked['rate'], 'kes'=>(float)$locked['charge_amount'], 'at'=>(int)$locked['quoted_at'], 'charge_currency'=>$locked['charge_currency'] ?? 'KES'];
     }
-    $quote = sa_paystack_display_quote((float)$order->get_total());
+    $quote = sa_paystack_usd_quote((float)$order->get_total());
     if ($quote) {
         sa_paystack_lock_display_quote($order, $quote);
         $order->save();
@@ -80,7 +88,7 @@ add_filter('option_woocommerce_paystack_settings', static function ($s) {
     $test = $s['testmode'] === 'yes';
     $prefix = $test ? 'test_' : 'live_';
     $s['enabled'] = ($s['enabled'] ?? 'no') === 'yes' && !empty($s[$prefix.'public_key']) && !empty($s[$prefix.'secret_key']) ? 'yes' : 'no';
-    $s['title'] = 'Card, M-Pesa & Airtel - powered by Paystack (KES)';
+    $s['title'] = 'Paystack';
     $s['description'] = 'Pay securely by card, M-Pesa or Airtel. The exact KES charge and rate are shown before payment; your order is recorded in US dollars.';
     $s['payment_page'] = 'redirect';
     $s['saved_cards'] = 'no';
@@ -92,7 +100,7 @@ add_filter('option_woocommerce_paystack_settings', static function ($s) {
 
 add_filter('woocommerce_available_payment_gateways', static function ($gateways) {
     if (!is_array($gateways) || !isset($gateways['paystack'])) return $gateways;
-    $allowed = sa_paystack_rate() !== null;
+    $allowed = SA_Paystack_Charge_Quote::native_usd_enabled() || sa_paystack_rate() !== null;
     if (!in_array(strtoupper((string)get_woocommerce_currency()), ['USD','KES'], true) && !(function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('order-pay'))) $allowed = false;
     if (!empty($gateways['paystack']->testmode) && !current_user_can('manage_woocommerce')) $allowed = false;
     // Preserve the standing user rule: orders above USD 2500 go to Pesapal only.
@@ -130,13 +138,14 @@ add_filter('woocommerce_gateway_description', static function ($description, $id
         // Reuse the exact locked customer-visible quote the notice displays.
         $quote = sa_paystack_order_pay_quote($order);
     } else {
-        $quote = sa_paystack_display_quote((float)WC()->cart->get_total('edit'));
+        $quote = sa_paystack_usd_quote((float)WC()->cart->get_total('edit'));
         if ($quote && WC()->session) WC()->session->set('sa_paystack_quote', $quote);
     }
     if (!$quote) return 'This payment option is temporarily unavailable because a KES exchange rate could not be loaded.';
     $scope = $order ? 'order:'.$order->get_id() : SA_Paystack_Charge_Quote::checkout_scope();
     $token = SA_Paystack_Charge_Quote::token($quote, $scope);
     $GLOBALS['sa_paystack_rendered_token'] = $token;
+    if (($quote['charge_currency'] ?? 'KES') === 'USD') return 'You will be charged <strong>'.wc_price($quote['usd'], ['currency'=>'USD','decimals'=>2]).'</strong> in US dollars by card. No store currency conversion applies. Your card issuer may apply its own exchange rate or fees.';
     return 'You will be charged <strong>'.wc_price($quote['kes'], ['currency'=>'KES','decimals'=>2]).'</strong> at 1 USD = KES '.esc_html((string)$quote['rate']).'. Your order stays in US dollars; only the payment itself is charged in Kenyan shillings.';
 }, 100, 2);
 
@@ -193,6 +202,7 @@ add_action('woocommerce_pay_order_before_payment', static function (): void {
         echo '<p class="woocommerce-info">Paystack is temporarily unavailable because a KES exchange rate could not be loaded. Please choose another payment method.</p>';
         return;
     }
+    if (($quote['charge_currency'] ?? 'KES') === 'USD') { echo '<p class="woocommerce-info">This order and its card payment are in US dollars. Exact charge: '.wc_price($quote['usd'], ['currency'=>'USD','decimals'=>2]).'. No store currency conversion applies.</p>'; return; }
     echo '<p class="woocommerce-info">This order is in US dollars. You will be charged <strong>'.wc_price($quote['kes'], ['currency'=>'KES','decimals'=>2]).'</strong> at 1 USD = KES '.esc_html((string)$quote['rate']).'.</p>';
 });
 
@@ -204,3 +214,21 @@ function sa_paystack_render_quote_token(): void {
 }
 add_action('woocommerce_review_order_before_submit', 'sa_paystack_render_quote_token');
 add_action('woocommerce_pay_order_before_submit', 'sa_paystack_render_quote_token');
+
+function sa_paystack_native_usd_context(): bool {
+    $order = (function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('order-pay')) ? wc_get_order(absint(get_query_var('order-pay'))) : null;
+    $currency = $order ? $order->get_currency() : get_woocommerce_currency();
+    return strtoupper((string)$currency) === 'USD' && SA_Paystack_Charge_Quote::native_usd_enabled();
+}
+add_filter('woocommerce_gateway_title', static function($title,$id){
+    if ($id !== 'paystack') return $title;
+    return sa_paystack_native_usd_context() ? 'Card - Paystack (USD)' : 'Card, M-Pesa & Airtel - Paystack (KES)';
+},100,2);
+add_filter('woocommerce_gateway_icon', static function($icon,$id){
+    if ($id !== 'paystack' || !sa_paystack_native_usd_context()) return $icon;
+    return '<span aria-label="Visa and Mastercard"><img src="'.esc_url(plugins_url('woo-paystack/assets/images/supreme/visa.svg')).'" alt="Visa" style="height:24px;width:auto"><img src="'.esc_url(plugins_url('woo-paystack/assets/images/supreme/mastercard.svg')).'" alt="Mastercard" style="height:24px;width:auto"></span>';
+},110,2);
+add_filter('wc_paystack_payment_channels', static function($channels,$id,$order){
+    $q = SA_Paystack_Charge_Quote::submitted_quote($order);
+    return $q && ($q['charge_currency'] ?? 'KES') === 'USD' ? ['card'] : $channels;
+},100,3);
