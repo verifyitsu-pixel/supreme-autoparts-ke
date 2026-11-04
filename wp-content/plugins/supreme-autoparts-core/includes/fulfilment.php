@@ -436,7 +436,7 @@ add_action('sa_pk_reminders', static function (): void {
             continue;
         }
         $inner = '<p>' . sa_email_greeting($o) . '</p><p>Reminder: your pickup window for order #' . esc_html($o->get_order_number()) . ' is <strong>' . esc_html(sa_pk_slot_text($o)) . '</strong>.</p><p>' . esc_html(sa_pk_address()) . '</p><p>Please bring your order number and the phone number used at checkout.</p>';
-        $html = function_exists('sa_mail_layout') ? sa_mail_layout('Pickup reminder', $inner, 'Get directions', sa_pk_map()) : $inner;
+        $html = function_exists('sa_customer_mail_layout') ? sa_customer_mail_layout('Pickup reminder', $inner, 'Get directions', sa_pk_map()) : $inner;
         wp_mail($o->get_billing_email(), 'Reminder: pick up order #' . $o->get_order_number() . ' today', $html, ['Content-Type: text/html; charset=UTF-8']);
         $o->update_meta_data('_sa_pickup_reminded', time());
         $o->add_order_note('Pickup reminder sent.');

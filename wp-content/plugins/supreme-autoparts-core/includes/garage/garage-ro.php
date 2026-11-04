@@ -398,13 +398,13 @@ function sa_g_ro_email(int $ro, string $kind): bool
     switch ($kind) {
         case 'estimate':
             $subject = 'Your estimate ' . $r['ref'] . ' is ready to approve';
-            $html = sa_mail_layout('Your estimate is ready', $hi . '<p>We have checked your vehicle and prepared an estimate. You can approve or decline each item. Nothing is done without your approval.</p>' . $veh . sa_g_items_email_table($ro) . '<p><strong>Estimate total: ' . esc_html(sa_g_kes($t['total'])) . '</strong></p>', 'Review and approve', sa_g_estimate_url($r), $subject);
+            $html = sa_customer_mail_layout('Your estimate is ready', $hi . '<p>We have checked your vehicle and prepared an estimate. You can approve or decline each item. Nothing is done without your approval.</p>' . $veh . sa_g_items_email_table($ro) . '<p><strong>Estimate total: ' . esc_html(sa_g_kes($t['total'])) . '</strong></p>', 'Review and approve', sa_g_estimate_url($r), $subject);
             break;
         case 'ready':
             $o = (int) $r['order_id'] ? wc_get_order((int) $r['order_id']) : null;
             $pay = $o && !$o->is_paid() ? $o->get_checkout_payment_url() : '';
             $subject = 'Your vehicle is ready — ' . $r['ref'];
-            $html = sa_mail_layout('Your vehicle is ready for collection', $hi . '<p>Good news, the work on your vehicle is done and it is ready to collect at Ground Floor, Midax Plaza, Kangundo Rd, Njiru.</p>' . $veh . '<p><strong>Amount due: ' . esc_html(sa_g_kes($t['approved'])) . '</strong></p>', $pay ? 'Pay invoice online' : 'View your repair order', $pay ?: sa_g_estimate_url($r), $subject);
+            $html = sa_customer_mail_layout('Your vehicle is ready for collection', $hi . '<p>Good news, the work on your vehicle is done and it is ready to collect at Ground Floor, Midax Plaza, Kangundo Rd, Njiru.</p>' . $veh . '<p><strong>Amount due: ' . esc_html(sa_g_kes($t['approved'])) . '</strong></p>', $pay ? 'Pay invoice online' : 'View your repair order', $pay ?: sa_g_estimate_url($r), $subject);
             break;
         case 'invoice':
             $o = sa_g_ro_invoice($ro);
@@ -412,7 +412,7 @@ function sa_g_ro_email(int $ro, string $kind): bool
                 return false;
             }
             $subject = 'Invoice for ' . $r['ref'] . ' — ' . sa_g_kes($t['approved']);
-            $html = sa_mail_layout('Your invoice', $hi . '<p>Here is the invoice for the approved work on your vehicle.</p>' . $veh . sa_g_items_email_table($ro, true) . '<p><strong>Total: ' . esc_html(sa_g_kes($t['approved'])) . '</strong></p><p style="font-size:13px;color:#6b6b6b">Pay securely by M-Pesa or card through Pesapal.</p>', 'Pay now', $o->get_checkout_payment_url(), $subject);
+            $html = sa_customer_mail_layout('Your invoice', $hi . '<p>Here is the invoice for the approved work on your vehicle.</p>' . $veh . sa_g_items_email_table($ro, true) . '<p><strong>Total: ' . esc_html(sa_g_kes($t['approved'])) . '</strong></p><p style="font-size:13px;color:#6b6b6b">Pay securely by M-Pesa or card through Pesapal.</p>', 'Pay now', $o->get_checkout_payment_url(), $subject);
             break;
         default:
             return false;

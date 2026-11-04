@@ -135,7 +135,7 @@ function sa_bk_invoice_email(int $id, string $kind = ''): void
     $d['lead'] = $lead;
     $d['pay_url'] = '';
     $d['extra_html'] = ($btn !== '' ? str_replace('border-radius:10px', 'border-radius:0', $btn) : '') . $d['extra_html'];
-    $body = sa_rcpt_render($d, 'email');
+    $body = sa_customer_receipt_email($d);
     $pdf = sa_rcpt_pdf_tempfile($d);
     wp_mail($b['email'], $subject, $body, ['Content-Type: text/html; charset=UTF-8'], $pdf !== '' ? [$pdf] : []);
     sa_rcpt_cleanup($pdf);

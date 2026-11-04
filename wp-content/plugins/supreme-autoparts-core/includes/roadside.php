@@ -432,13 +432,13 @@ function sa_rs_email(int $id, string $event, string $note = ''): void
     $pay_order = $event === 'pay' && $r['pay_order'] ? wc_get_order((int) $r['pay_order']) : null;
     $cta_url = $pay_order instanceof WC_Order ? $pay_order->get_checkout_payment_url() : sa_rs_status_url($id);
     $cta_label = $pay_order instanceof WC_Order ? 'Pay ' . $r['pay_amount'] . ' securely' : ($r['status'] === 'completed' && !$r['rated'] ? 'Rate your roadside help' : 'Track live status');
-    if (function_exists('sa_mail_layout')) {
+    if (function_exists('sa_customer_mail_layout')) {
         $heading = [
             'created' => 'Help is being arranged',
             'message' => 'New message about your request',
             'pay'     => 'Payment link for your roadside request',
         ][$event] ?? 'Request update: ' . $label;
-        $html = sa_mail_layout($heading, '<p>' . $lead . '</p>' . $table . $call, $cta_label, $cta_url, $subject);
+        $html = sa_customer_mail_layout($heading, '<p>' . $lead . '</p>' . $table . $call, $cta_label, $cta_url, $subject);
     } else {
         $html = $wrap('<p>' . $lead . '</p>' . $btn($cta_url, $cta_label) . $table . $call);
     }

@@ -216,7 +216,7 @@ function sa_core_build_invoice_html($order, bool $for_email = false): string
 {
     $d = sa_rcpt_order_data($order);
     if ($for_email) {
-        return sa_rcpt_render($d, 'email');
+        return sa_customer_receipt_email($d);
     }
     $id = (int) $order->get_id();
     $inv = sa_core_invoice_url($id);

@@ -1,8 +1,7 @@
 <?php
 /**
  * Customer new account email (welcome).
- * The working password is emailed separately as plain text
- * (sa_core_email_customer_password) so HTML escaping cannot mangle it.
+ * Existing passwordless login instructions are preserved.
  *
  * @package Supreme_Autoparts
  * @version 1.4.28
@@ -10,13 +9,13 @@
 
 defined('ABSPATH') || exit;
 
-do_action('woocommerce_email_header', $email_heading, $email); ?>
+ob_start(); ?>
 
 <p><?php echo function_exists('sa_email_greeting') ? sa_email_greeting(get_user_by('login', $user_login) ?: '') : esc_html__('Hello,', 'supreme-autoparts'); ?></p>
 
 <p><?php printf(
     /* translators: %s: store name */
-    esc_html__('Thanks for creating an account on %s.', 'supreme-autoparts'),
+    esc_html__('Welcome to the garage! Thanks for creating your account on %s.', 'supreme-autoparts'),
     esc_html($blogname)
 ); ?></p>
 
@@ -42,4 +41,5 @@ if ($additional_content) {
     echo wp_kses_post(wpautop(wptexturize($additional_content)));
 }
 
-do_action('woocommerce_email_footer', $email);
+$inner = (string) ob_get_clean();
+echo function_exists('sa_customer_mail_layout') ? sa_customer_mail_layout('Welcome to Supreme Autoparts', $inner, 'Open My Account', wc_get_page_permalink('myaccount'), 'Your account is ready') : $inner;

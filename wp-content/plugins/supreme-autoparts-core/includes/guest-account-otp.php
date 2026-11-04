@@ -498,8 +498,8 @@ function sa_core_otp_email_html(array $ctx): string
         . '<p style="margin:16px 0 0;font-size:13px;line-height:1.5;color:#71717a;">If you did not request this, you can ignore this email. Never share the code.</p>'
         . '</div>';
     // Same black/amber layout and dark mode as the order emails (the layout carries the logo header, so the Brevo logo strip is skipped).
-    if (function_exists('sa_mail_layout')) {
-        return sa_mail_layout('Your login code', $inner, 'Open My Account', (string) ($ctx['account_url'] ?? ''), 'Login code', 'Login code');
+    if (function_exists('sa_customer_mail_layout')) {
+        return sa_customer_mail_layout('Your login code', $inner, 'Open My Account', (string) ($ctx['account_url'] ?? ''), 'Login code', 'Login code');
     }
     return $inner;
 }

@@ -543,8 +543,8 @@ function sa_svc_send_emails(int $id, string $event): void
         'cancel_request' => 'Cancellation request received', 'cancel_approved' => 'Cancellation approved',
         'cancel_declined' => 'Cancellation request declined', 'reminder' => 'Your service is tomorrow',
     ];
-    $html = function_exists('sa_mail_layout')
-        ? sa_mail_layout($headings[$event] ?? 'Booking update', $inner, 'View booking', $manage, $subjects[$event] ?? $subjects['status'])
+    $html = function_exists('sa_customer_mail_layout')
+        ? sa_customer_mail_layout($headings[$event] ?? 'Booking update', $inner, 'View booking', $manage, $subjects[$event] ?? $subjects['status'])
         : '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#222"><h2 style="color:#111111">Supreme Autoparts &mdash; Car Service</h2>' . $inner . '</div>';
     $headers = ['Content-Type: text/html; charset=UTF-8'];
     // Unpaid new bookings: the customer gets the combined invoice + pay email instead (no duplicate).
@@ -553,7 +553,7 @@ function sa_svc_send_emails(int $id, string $event): void
     }
     if (!in_array($event, ['status', 'reminder', 'cancel_approved', 'cancel_declined'], true)) {
         $admin = (string) get_option('woocommerce_email_from_address', get_option('admin_email'));
-        wp_mail($admin, '[Bookings] ' . ($subjects[$event] ?? '') . ' — ' . $b['name'], $html, $headers);
+        wp_mail($admin, '[Bookings] ' . ($subjects[$event] ?? '') . ' — ' . $b['name'], function_exists('sa_mail_layout') ? sa_mail_layout($headings[$event] ?? 'Booking update', $inner, 'View booking', $manage, $subjects[$event] ?? $subjects['status']) : $html, $headers);
     }
 }
 
