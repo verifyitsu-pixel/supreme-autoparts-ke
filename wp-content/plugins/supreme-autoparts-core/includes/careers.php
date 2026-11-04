@@ -79,10 +79,15 @@ function sa_careers_location(): string
     return 'Midax Plaza, Kangundo Rd, Njiru, Nairobi';
 }
 
+add_action('wp_enqueue_scripts',static function(){
+    if(!is_page('careers'))return;
+    wp_enqueue_style('sa-services',SA_CORE_URL.'assets/services.css',[],SA_CORE_VERSION);
+    wp_enqueue_style('sa-careers-v2',SA_CORE_URL.'assets/careers.css',['sa-services'],'2');
+},40);
+
 /* ---------- render ---------- */
 add_shortcode('sa_careers', static function (): string {
     wp_enqueue_style('sa-services', SA_CORE_URL . 'assets/services.css', [], SA_CORE_VERSION);
-    wp_enqueue_style('sa-careers-v2',SA_CORE_URL.'assets/careers.css',['sa-services'],'2');
     $roles = sa_careers_roles();
     $state = sanitize_key((string) ($_GET['sa_careers'] ?? ''));
     $want  = sanitize_key((string) ($_GET['role'] ?? ''));
