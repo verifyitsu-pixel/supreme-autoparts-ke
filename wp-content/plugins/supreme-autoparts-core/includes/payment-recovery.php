@@ -113,7 +113,7 @@ add_action('woocommerce_cart_item_removed', static function (): void {
 function sa_pr_saved_notice_html(?WC_Order $o = null): string
 {
     $pay = $o && $o->needs_payment() ? '<a class="button" href="' . esc_url($o->get_checkout_payment_url()) . '">Try payment again</a> ' : '';
-    return '<div class="sa-pr-notice woocommerce-info" role="alert"><strong>Payment didn\'t go through — your items are saved.</strong> Nothing was charged for this attempt. ' . $pay . '<a href="' . esc_url(wc_get_cart_url()) . '">View cart</a></div>';
+    return '<div class="sa-pr-notice woocommerce-info" role="alert"><strong>Payment is not confirmed.</strong> If you see a charge, contact us with your order number before trying again. ' . $pay . '<a href="' . esc_url(wc_get_cart_url()) . '">View cart</a></div>';
 }
 add_action('woocommerce_before_thankyou', static function ($order_id): void {
     $o = wc_get_order($order_id);
@@ -132,7 +132,7 @@ add_action('woocommerce_cancelled_order', static function ($order_id): void {
     $o = wc_get_order($order_id);
     if ($o) {
         sa_pr_restore_order_to_cart($o);
-        wc_add_notice('Payment cancelled — your items are saved in your cart.', 'notice');
+        wc_add_notice('Payment was cancelled. If you see a charge, contact us before trying again.', 'notice');
     }
 });
 
