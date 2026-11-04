@@ -994,10 +994,15 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 		if ( ! is_wp_error( $request ) && 200 === wp_remote_retrieve_response_code( $request ) ) {
 
 			$paystack_response = json_decode( wp_remote_retrieve_body( $request ) );
-
+            $redirect = $paystack_response->data->authorization_url ?? '';
+            $parts = is_string($redirect) ? wp_parse_url($redirect) : false;
+            if (empty($paystack_response->status) || !$parts || ($parts['scheme'] ?? '') !== 'https' || ($parts['host'] ?? '') !== 'checkout.paystack.com') {
+                wc_add_notice('Unable to initialize Paystack. Please choose another payment method.', 'error');
+                return;
+            }
 			return array(
 				'result'   => 'success',
-				'redirect' => $paystack_response->data->authorization_url,
+				'redirect' => $redirect,
 			);
 
 		}
