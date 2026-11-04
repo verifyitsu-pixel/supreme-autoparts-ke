@@ -66,9 +66,8 @@ if (!function_exists('sa_whop_over_cap')) {
         if (!function_exists('WC') || !WC()->cart) {
             return false;
         }
-        $env = getenv('SA_WHOP_MAX_USD');
-        $cap = (float) (($env !== false && $env !== '') ? $env : 2500);
-        return (float) WC()->cart->get_total('edit') > $cap;
+        // Owner's exact rule: exceeds USD 2,500, not equal to it. Cart stores USD.
+        return round((float) WC()->cart->get_total('edit'), 2) > 2500;
     }
 }
 

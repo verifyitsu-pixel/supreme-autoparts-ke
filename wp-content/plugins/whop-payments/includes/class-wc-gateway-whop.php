@@ -227,6 +227,10 @@ class WC_Gateway_Whop extends WC_Payment_Gateway {
         // sa-geo-currency only converts display — rebase if order currency ever drifts.
         $charge = self::resolve_usd_charge($order);
         $amount = (float) $charge['amount_usd'];
+        if (!is_finite($amount) || $amount > 2500) {
+            wc_add_notice(__('This amount exceeds the USD 2,500 Whop limit. Please choose another payment method.', 'whop-payments'), 'error');
+            return ['result' => 'failure'];
+        }
 
         if ($amount <= 0) {
             $order->payment_complete();

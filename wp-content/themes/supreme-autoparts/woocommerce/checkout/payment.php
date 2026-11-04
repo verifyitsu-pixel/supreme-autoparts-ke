@@ -29,6 +29,8 @@ if (!wp_doing_ajax()) {
     </ul>
   <?php endif; ?>
 
+  <?php if (function_exists('sa_visible_missing_payment_cards')) sa_visible_missing_payment_cards(); ?>
+
   <div class="form-row place-order sa-checkout-place">
     <noscript>
       <?php

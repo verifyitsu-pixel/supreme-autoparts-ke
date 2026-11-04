@@ -247,7 +247,12 @@ final class Whop_Open_Pay {
                 <script>
                 (function(){try{var u=new URL(window.location.href);if(u.searchParams.has('sa_pay_err')){u.searchParams.delete('sa_pay_err');history.replaceState(null,'',u.toString());}
                 var i=document.getElementById('sa_open_pay_amount'),n=document.querySelector('.sa-open-pay__notice--err');
-                if(i&&n){i.addEventListener('input',function(){n.style.display='none';});}}catch(e){}})();
+                if(i&&n){i.addEventListener('input',function(){n.style.display='none';});}
+                var w=document.querySelector('input[name="gateway"][value="whop"]');
+                if(i&&w){var card=w.closest('label'),msg=document.createElement('p');msg.setAttribute('role','status');msg.hidden=true;msg.textContent='This amount exceeds the USD 2,500 Whop limit. Choose another payment method.';card.appendChild(msg);
+                  function limit(){var amount=Number(i.value.replace(/,/g,'')),over=Number.isFinite(amount)&&Math.round(amount*100)>250000;w.disabled=over;card.setAttribute('aria-disabled',String(over));card.style.filter=over?'grayscale(1)':'';card.style.background=over?'#eee':'';card.style.color=over?'#666':'';card.style.cursor=over?'not-allowed':'pointer';msg.hidden=!over;if(over&&w.checked){w.checked=false;var p=document.querySelector('input[name="gateway"][value="pesapal"]');if(p)p.checked=true;}}
+                  i.addEventListener('input',limit);limit();
+                }}catch(e){}})();
                 </script>
             </div>
         </div>
