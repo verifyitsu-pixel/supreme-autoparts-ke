@@ -73,16 +73,16 @@ function sa_ff_defs(): array
             ],
             'settings' => [
                 'honeypot' => true,
-                'thankyou-message' => 'Application saved. Continue to Paystack to pay the KES 1,000 application fee. The KES 1,000 fee is refundable when an invited applicant attends the paid two-day work trial. Payment does not guarantee an invitation or continued employment.',
+                'thankyou-message' => 'Application saved. Continue to Paystack to pay the KES 1,000 application fee. The KES 1,000 fee is refundable when an invited applicant attends the paid two-day work trial, and if an applicant is never invited. The two-day work trial is paid and includes lunch. Employment depends on the trial outcome. Payment does not guarantee an invitation or continued employment.',
                 'submitData' => ['custom-submit-text' => 'Save application and continue to payment'],
                 'use-user-email' => 'true',
                 'user-email-title' => 'Your Supreme Autoparts application: {select-1}',
-                'user-email-editor' => '<p>Hi {name-1},</p><p>Thank you for applying for <strong>{select-1}</strong> at Supreme Autoparts. Your application and CV have been saved. A KES 1,000 application fee is payable through Paystack. Your payment status is shown on the payment receipt. The KES 1,000 fee is refundable when an invited applicant attends the paid two-day work trial. Payment does not guarantee an invitation or continued employment.</p><p>Supreme Autoparts, Midax Plaza, Kangundo Rd, Njiru, Nairobi</p>',
+                'user-email-editor' => '<p>Hi {name-1},</p><p>Thank you for applying for <strong>{select-1}</strong> at Supreme Autoparts. Your application and CV have been saved. A KES 1,000 application fee is payable through Paystack. Your payment status is shown on the payment receipt. The KES 1,000 fee is refundable when an invited applicant attends the paid two-day work trial, and if an applicant is never invited. The two-day work trial is paid and includes lunch. Employment depends on the trial outcome. Payment does not guarantee an invitation or continued employment.</p><p>Supreme Autoparts, Midax Plaza, Kangundo Rd, Njiru, Nairobi</p>',
                 'user-email-recipients' => ['{email-1}'],
             ],
             'notifications' => [
                 ['slug' => 'notification-9001-0001', 'label' => 'Calvin', 'email-recipients' => 'default', 'recipients' => SA_FF_NOTIFY, 'email-subject' => 'New careers application: {name-1}', 'email-editor' => 'Application saved; check the linked careers fee order before treating payment as complete:<br/><br/>{all_fields}<br/><br/>Sent from {site_url}.', 'email-attachment' => 'true', 'type' => 'default'],
-                ['slug' => 'notification-9001-0002', 'label' => 'Applicant copy', 'email-recipients' => 'default', 'recipients' => '{email-1}', 'email-subject' => 'Your Supreme Autoparts application: {select-1}', 'email-editor' => '<p>Hi {name-1},</p><p>Thank you for applying for <strong>{select-1}</strong> at Supreme Autoparts. Your application and CV have been saved. A KES 1,000 application fee is payable through Paystack. Your payment status is shown on the payment receipt. The KES 1,000 fee is refundable when an invited applicant attends the paid two-day work trial. Payment does not guarantee an invitation or continued employment.</p><p>Supreme Autoparts, Midax Plaza, Kangundo Rd, Njiru, Nairobi</p>', 'email-attachment' => 'false', 'type' => 'default'],
+                ['slug' => 'notification-9001-0002', 'label' => 'Applicant copy', 'email-recipients' => 'default', 'recipients' => '{email-1}', 'email-subject' => 'Your Supreme Autoparts application: {select-1}', 'email-editor' => '<p>Hi {name-1},</p><p>Thank you for applying for <strong>{select-1}</strong> at Supreme Autoparts. Your application and CV have been saved. A KES 1,000 application fee is payable through Paystack. Your payment status is shown on the payment receipt. The KES 1,000 fee is refundable when an invited applicant attends the paid two-day work trial, and if an applicant is never invited. The two-day work trial is paid and includes lunch. Employment depends on the trial outcome. Payment does not guarantee an invitation or continued employment.</p><p>Supreme Autoparts, Midax Plaza, Kangundo Rd, Njiru, Nairobi</p>', 'email-attachment' => 'false', 'type' => 'default'],
             ],
         ],
         'contact' => [
@@ -312,10 +312,10 @@ add_action('init', static function (): void {
 
 // Update careers only. Other forms and notification families are outside this fee change.
 add_action('init',static function(){
-    if(get_option('sa_careers_fee_form_ver')==='6' || !class_exists('Forminator_API'))return;
+    if(get_option('sa_careers_fee_form_ver')==='7' || !class_exists('Forminator_API'))return;
     $ids=(array)get_option('sa_forminator_forms',[]);$id=(int)($ids['careers']??0);if(!$id || !get_post_status($id))return;
     $def=sa_ff_defs()['careers'];$r=Forminator_API::update_form($id,$def['wrappers'],sa_ff_settings($def['name'],$def['settings']),'publish',$def['notifications']);
-    if(!is_wp_error($r))update_option('sa_careers_fee_form_ver','6',false);
+    if(!is_wp_error($r))update_option('sa_careers_fee_form_ver','7',false);
 },27);
 
 function sa_ff_id(string $key): int
