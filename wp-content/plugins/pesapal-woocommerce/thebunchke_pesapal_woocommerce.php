@@ -927,9 +927,10 @@ use Google\Service\ShoppingContent\Account;
 									$request->notification_id = ( $this->testmode ) ? $this->notification_id : $merchant->notification_id;
 									// $request->notification_id = $this->notification_id;
 									$request->app_id = ( $this->testmode ) ? "9929d525-e667-46d3-a167-dee83c0db482" : "fec867a7-049a-4456-848e-dee87bf84011";
-									$request->billing_address_1 = str_replace(' ', '', $order->get_billing_address_1());
-									$request->billing_address_2 = str_replace(' ', '', $order->get_billing_address_2());
-									if(!is_numeric($request->billing_address_1)) $request->billing_address_1 = "";
+									// Pesapal line_1/line_2 accept street text, not just numbers.
+                                    // Preserve the exact order billing address, never substitute shipping.
+                                    $request->billing_address_1 = trim((string) $order->get_billing_address_1());
+                                    $request->billing_address_2 = trim((string) $order->get_billing_address_2());
 									$request->billing_email = $order->get_billing_email();
 									$request->billing_country = $order->get_billing_country();
 									$request->billing_phone = $this->validate_phone_number($request->billing_country, $order->get_billing_phone());
