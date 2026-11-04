@@ -96,7 +96,7 @@ add_shortcode('sa_careers', static function (): string {
     echo '<div class="sa-careers" id="sa-careers">';
 
     echo '<section class="sa-careers__hero"><span class="sa-careers__eyebrow">SUPREME / CAREERS</span><h2>Build your next chapter with us.</h2><p>On the road, in the garage, or behind the orders. Find your place in our Nairobi team.</p><a href="#sa-careers-roles">Explore the roles <span aria-hidden="true">&#8595;</span></a></section>';
-    echo '<ol class="sa-careers__steps" aria-label="Application steps"><li><b>01</b><span><strong>Choose your role</strong><small>Check the responsibilities</small></span></li><li><b>02</b><span><strong>Save your application</strong><small>Share your details and CV</small></span></li><li><b>03</b><span><strong>Pay with Paystack</strong><small>KES 1,000</small></span></li></ol>';
+    echo '<ol class="sa-careers__steps" aria-label="Application steps"><li><b>01</b><span><strong>Choose your role</strong><small>Check the responsibilities</small></span></li><li><b>02</b><span><strong>Save your application</strong><small>Share your details and CV</small></span></li><li><b>03</b><span><strong>Pay with Paystack</strong><small>KES 1,000 attendance fee</small></span></li></ol>';
     echo '<div class="sa-careers__grid" id="sa-careers-roles">';
     foreach ($roles as $slug => $r) {
         echo '<article class="sa-careers__card">';
@@ -262,7 +262,7 @@ function sa_careers_handle(): void
     $html = ['Content-Type: text/html; charset=UTF-8'];
     $layout = static fn(string $h, string $inner, string $cl = '', string $cu = ''): string => function_exists('sa_mail_layout') ? sa_mail_layout($h, $inner, $cl, $cu) : '<h1>' . esc_html($h) . '</h1>' . $inner;
     wp_mail($to, '[' . $ref . '] Job application: ' . $role_title . ' — ' . $name, $layout('Job application saved: ' . $role_title, '<p>Payment is pending. Check the linked fee order before treating this application as paid.</p><p><strong>' . esc_html($name) . '</strong> &lt;' . esc_html($email) . '&gt;</p>' . $table, 'Open tickets', admin_url('admin.php?page=sa-super-tickets' . ($tid ? '&ticket=' . $tid : ''))), array_merge($html, ['Reply-To: ' . $name . ' <' . $email . '>']));
-    wp_mail($email, 'Your application is saved (' . $ref . ')', $layout('Your application is saved', '<p>' . sa_email_greeting((string) $name, (string) $email) . '</p><p>Thanks for applying for <strong>' . esc_html($role_title) . '</strong> at Supreme Autoparts. Your application is saved. Please complete the KES 1,000 application fee through Paystack. Payment does not guarantee an interview or employment. Your reference is <strong>' . esc_html($ref) . '</strong>.</p>' . $table, 'Continue to Paystack payment', $payment_order->get_checkout_payment_url()), $html);
+    wp_mail($email, 'Your application is saved (' . $ref . ')', $layout('Your application is saved', '<p>' . sa_email_greeting((string) $name, (string) $email) . '</p><p>Thanks for applying for <strong>' . esc_html($role_title) . '</strong> at Supreme Autoparts. Your application is saved. Please complete the KES 1,000 application fee through Paystack. The KES 1,000 fee is refundable when an invited applicant attends the paid two-day work trial. Payment does not guarantee an invitation or continued employment. Your reference is <strong>' . esc_html($ref) . '</strong>.</p>' . $table, 'Continue to Paystack payment', $payment_order->get_checkout_payment_url()), $html);
     wp_safe_redirect($payment_order->get_checkout_payment_url());
     exit;
 }

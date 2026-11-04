@@ -3,7 +3,7 @@
 declare(strict_types=1);
 defined('ABSPATH') || exit;
 function sa_careers_fee_disclosure(): string {
-    return 'Application fee: KES 1,000. After saving your application, continue to Paystack checkout. Payment does not guarantee an interview or employment.';
+    return 'Application fee: KES 1,000. This attendance fee is intended to discourage spam applications and no-shows. After saving your application, continue to Paystack checkout. The KES 1,000 fee is refundable when an invited applicant attends the paid two-day work trial. Payment does not guarantee an invitation or continued employment.';
 }
 function sa_careers_fee_order(string $source, int $entry_id, string $name, string $email) {
     if (!in_array($source,['forminator','native'],true) || $entry_id < 1 || !is_email($email) || !function_exists('wc_create_order')) return new WP_Error('unavailable','Your application is saved, but payment is unavailable. Please contact us before applying again.');
@@ -49,7 +49,7 @@ add_action('woocommerce_payment_complete',static function($id){
 // Fixed-fee orders never use the catalogue/cart FX quote in gateway copy.
 add_filter('woocommerce_gateway_description',static function($description,$id){
     if($id!=='paystack' || !function_exists('is_wc_endpoint_url') || !is_wc_endpoint_url('order-pay'))return $description;
-    $o=wc_get_order(absint(get_query_var('order-pay')));return $o && $o->get_meta('_sa_careers_source') ? 'Pay the KES 1,000 application fee securely with Paystack. Payment does not guarantee an interview or employment.' : $description;
+    $o=wc_get_order(absint(get_query_var('order-pay')));return $o && $o->get_meta('_sa_careers_source') ? 'Pay the KES 1,000 application fee securely with Paystack. The KES 1,000 fee is refundable when an invited applicant attends the paid two-day work trial. Payment does not guarantee an invitation or continued employment.' : $description;
 },999,2);
 
 add_action('woocommerce_admin_order_data_after_order_details',static function($o){
@@ -63,7 +63,7 @@ function sa_careers_fee_email_content($o,string $stage): array {
         'failed'=>['Application fee payment not confirmed','We do not have a successful payment confirmation. If your bank shows a debit, contact us before trying again.'],
         'cancelled'=>['Application fee payment cancelled','This application fee payment order has been cancelled.'],
         'refunded'=>['Application fee refund update','A refund is recorded on your payment order. This does not confirm that your bank has credited the money.'],
-        'completed'=>['Application fee payment received','Your KES 1,000 application fee payment is recorded as complete. Payment does not guarantee an interview or employment.'],
+        'completed'=>['Application fee payment received','Your KES 1,000 application fee payment is recorded as complete. The KES 1,000 fee is refundable when an invited applicant attends the paid two-day work trial. Payment does not guarantee an invitation or continued employment.'],
     ];
     if(!isset($copy[$stage]))return [];
     [$heading,$body]=$copy[$stage];$subject=$heading.' #'.$o->get_order_number();
