@@ -105,12 +105,15 @@ add_action('wp_head', static function () {
     }
 }, 100);
 
-// These brands match this account's enabled Card and Mobile Money channels.
+// Enabled account channels, including hosted-checkout Apple Pay and bank transfer.
 add_filter('woocommerce_gateway_icon', static function ($icon,$id) {
     if ($id !== 'paystack') return $icon;
-    $html='<span class="sa-paystack-icons" aria-label="Visa, Mastercard, M-Pesa and Airtel Money">';
+    $html='<span class="sa-paystack-icons" aria-label="Visa, Mastercard, M-Pesa, Airtel Money, Apple Pay and bank transfer">';
     foreach (['visa'=>'Visa','mastercard'=>'Mastercard','mpesa'=>'M-Pesa','airtel'=>'Airtel Money'] as $file=>$label) {
         $html.='<img src="'.esc_url(plugins_url('woo-paystack/assets/images/supreme/'.$file.'.svg')).'" alt="'.esc_attr($label).'" style="display:inline-block;height:24px;width:auto;max-width:72px;margin:4px 4px 0 0;vertical-align:middle">';
+    }
+    foreach (['apple-pay'=>'Apple Pay','bank-transfer'=>'Bank transfer'] as $file=>$label) {
+        $html.='<img src="'.esc_url(get_stylesheet_directory_uri().'/assets/images/payments/'.$file.'.svg').'" alt="'.esc_attr($label).'" style="display:inline-block;height:24px;width:auto;max-width:72px;margin:4px 4px 0 0;vertical-align:middle">';
     }
     return $html.'</span>';
 },100,2);
