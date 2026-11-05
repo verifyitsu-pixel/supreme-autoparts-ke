@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
 
 final class SM_Welcome
 {
-    public const DISCOUNT = 30;
+    public const DISCOUNT = 20;
     public const EXPIRY_DAYS = 14;
     public const PREFIX = 'SUP20-';
     public const MAX_SIGNUPS_PER_IP_DAY = 5;
@@ -41,6 +41,7 @@ final class SM_Welcome
         add_action('woocommerce_checkout_update_order_review', [self::class, 'checkout_review'], 25);
         add_filter('woocommerce_coupon_is_valid', [self::class, 'validate_coupon'], 25, 3);
         add_filter('woocommerce_coupon_get_amount', [self::class, 'current_coupon_amount'], 25, 2);
+        add_filter('woocommerce_get_shop_coupon_data', [self::class, 'november_coupon'], 25, 3);
         add_filter('woocommerce_package_rates', [self::class, 'first_order_shipping'], 100, 2);
         add_filter('woocommerce_shipping_chosen_method', [self::class, 'choose_first_order_shipping'], 25, 3);
         add_filter('woocommerce_cart_shipping_packages', [self::class, 'shipping_identity'], 25);
@@ -64,9 +65,23 @@ final class SM_Welcome
         return $detail === '' ? '' : strtoupper((string) $c->{'get_' . $prefix . '_country'}());
     }
 
+    /** November 2026 campaign uses one explicit store-time boundary for all destinations. */
+    public static function campaign_active(): bool
+    {
+        $country = function_exists('WC') && WC()->customer ? self::offer_country() : '';
+        $state = function_exists('WC') && WC()->customer ? WC()->customer->get_shipping_state() : '';
+        $zone = 'Africa/Nairobi';
+        if ($country === 'US') {
+            $zone = in_array($state,['HI'],true) ? 'Pacific/Honolulu' : ($state==='AK' ? 'America/Anchorage' : (in_array($state,['CA','WA','OR','NV'],true) ? 'America/Los_Angeles' : (in_array($state,['AZ'],true) ? 'America/Phoenix' : (in_array($state,['CO','UT','NM','WY','MT','ID'],true) ? 'America/Denver' : (in_array($state,['TX','IL','WI','MN','IA','MO','AR','LA','MS','AL','OK','KS','NE','ND','SD','TN'],true) ? 'America/Chicago' : 'America/New_York')))));
+        }
+        $tz = new DateTimeZone($zone);
+        $now = new DateTimeImmutable('now', $tz);
+        return $now >= new DateTimeImmutable('2026-11-01 00:00:00', $tz) && $now < new DateTimeImmutable('2026-12-01 00:00:00', $tz);
+    }
+
     public static function offer_destination_allowed(?string $country = null): bool
     {
-        return in_array($country ?? self::offer_country(), ['US', 'KE'], true);
+        return self::campaign_active() && in_array($country ?? self::offer_country(), ['US', 'KE'], true);
     }
 
     /** Checkout review supplies the actual entered destination before Woo recalculates rates. */
@@ -109,6 +124,10 @@ final class SM_Welcome
     /** Guard already-issued codes too, without editing past orders or deleting their history. */
     public static function validate_coupon($valid, $coupon, $discount = null)
     {
+        if (strtoupper((string)$coupon->get_code()) === self::NOVEMBER_CODE) {
+            if (!self::offer_destination_allowed()) throw new Exception('The November offer is for US or Kenya delivery during November 2026.');
+            return $valid;
+        }
         if (!$valid || !str_starts_with(strtoupper((string) $coupon->get_code()), self::PREFIX)) {
             return $valid;
         }
@@ -125,13 +144,22 @@ final class SM_Welcome
         return $valid;
     }
 
+    public const NOVEMBER_CODE = 'SUPREME-NOVEMBER-30';
+
+    /** Virtual campaign coupon: no individual coupon issuance or historical order changes. */
+    public static function november_coupon($data, $code, $coupon)
+    {
+        if (strtoupper((string)$code) !== self::NOVEMBER_CODE || !self::offer_destination_allowed()) return $data;
+        return ['id'=>0, 'code'=>strtolower(self::NOVEMBER_CODE), 'discount_type'=>'percent', 'amount'=>30, 'individual_use'=>true, 'product_ids'=>[], 'exclude_product_ids'=>[], 'usage_limit'=>0, 'usage_limit_per_user'=>0, 'limit_usage_to_x_items'=>null, 'free_shipping'=>false, 'exclude_sale_items'=>false, 'minimum_amount'=>'', 'maximum_amount'=>'', 'email_restrictions'=>[], 'description'=>'November 2026 automatic 30% offer'];
+    }
+
     /** Current eligible active offers use the current percent, without editing coupon/order history. */
     public static function current_coupon_amount($amount, $coupon)
     {
-        if (!str_starts_with(strtoupper((string)$coupon->get_code()), self::PREFIX) || (float)$coupon->get_usage_count() > 0 || $coupon->get_discount_type() !== 'percent') return $amount;
+        if (!self::campaign_active() || !str_starts_with(strtoupper((string)$coupon->get_code()), self::PREFIX) || (float)$coupon->get_usage_count() > 0 || $coupon->get_discount_type() !== 'percent') return $amount;
         global $wpdb;
         $active = $wpdb->get_var($wpdb->prepare('SELECT code FROM ' . SM_DB::table('welcome_codes') . " WHERE code = %s AND status = 'active' AND (expires_at IS NULL OR expires_at > %s) LIMIT 1", strtoupper((string)$coupon->get_code()), sm_now()));
-        return $active ? self::DISCOUNT : $amount;
+        return $active ? 30 : $amount;
     }
 
     /** Same phone/destination cannot claim another first-order benefit under a new mailbox. */
@@ -193,15 +221,7 @@ final class SM_Welcome
             || !self::offer_destination_allowed() || !function_exists('WC') || !WC()->customer || !class_exists('WC_Shipping_Rate')) {
             return $rates;
         }
-        $email = (string) WC()->customer->get_billing_email();
-        if ($email === '' && is_user_logged_in()) {
-            $email = (string) wp_get_current_user()->user_email;
-        }
-        if ($email === '' || !is_email($email) || !self::has_zero_orders(get_current_user_id(), $email)
-            || self::norm_has_orders(self::norm_email($email)) || self::identity_used_offer()) {
-            return $rates;
-        }
-        return ['sm_first_order_free' => new WC_Shipping_Rate('sm_first_order_free', 'Free delivery - first order', 0, [], 'sm_first_order_free')] + $rates;
+        return ['sm_first_order_free' => new WC_Shipping_Rate('sm_first_order_free', 'Free delivery - November offer', 0, [], 'sm_first_order_free')] + $rates;
     }
 
     /* ------------------------------------------------------------------ */
@@ -326,6 +346,7 @@ final class SM_Welcome
     /** Issue a personal 30% code when eligible; log and skip when abuse checks trip. */
     public static function maybe_issue(int $user_id, string $trigger): ?string
     {
+        if (self::campaign_active()) return null; // November campaign needs no personal-code issuance.
         if (!class_exists('WC_Coupon')) {
             return null;
         }
@@ -528,36 +549,15 @@ final class SM_Welcome
             return;
         }
         if (!self::offer_destination_allowed()) {
-            return;
-        }
-        $user_id = get_current_user_id();
-        $email = (string) WC()->customer->get_billing_email();
-        if ($email === '' && is_user_logged_in()) $email = (string) wp_get_current_user()->user_email;
-        if (!is_email($email)) return;
-        self::maybe_issue($user_id, 'checkout');
-        $active = self::active_code_for_email($email);
-        if (!$active) {
-            return;
-        }
-        // Needs at least one eligible (non booking-fee) item.
-        $fee = (int) get_option('sa_svc_fee_product', 0);
-        $eligible = false;
-        foreach (WC()->cart->get_cart() as $item) {
-            $pid = (int) ($item['product_id'] ?? 0);
-            $vid = (int) ($item['variation_id'] ?? 0);
-            if ($fee <= 0 || ($pid !== $fee && $vid !== $fee)) {
-                $eligible = true;
-                break;
-            }
-        }
-        if (!$eligible) {
+            if (WC()->cart->has_discount(self::NOVEMBER_CODE)) WC()->cart->remove_coupon(self::NOVEMBER_CODE);
             return;
         }
         $applied = WC()->cart->get_applied_coupons();
-        if ($applied) {
-            return; // personal code is individual_use; never push another coupon off
+        foreach ($applied as $code) {
+            if (str_starts_with(strtoupper((string)$code), self::PREFIX)) WC()->cart->remove_coupon($code);
+            elseif (strtoupper((string)$code) !== self::NOVEMBER_CODE) return; // Never silently replace an unrelated coupon.
         }
-        WC()->cart->apply_coupon($active['code']);
+        if (!WC()->cart->has_discount(self::NOVEMBER_CODE)) WC()->cart->apply_coupon(self::NOVEMBER_CODE);
     }
 
     /**

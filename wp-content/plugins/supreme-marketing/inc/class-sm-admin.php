@@ -1001,8 +1001,8 @@ final class SM_Admin
         if (!current_user_can(self::CAP)) {
             wp_die('nope');
         }
-        self::header('Welcome 30 - first-order discount');
-        echo '<p>Every first-time customer who creates an account or signs in (Google or email code) gets a personal <strong>30% off</strong> code: '
+        self::header('November offer and welcome codes');
+        echo '<p>November 2026: all US and Kenya orders receive automatic 30% off and free delivery, with no minimum, through November 30 in the delivery region. Historical personal welcome codes are listed below: '
             . 'one use, first order only, valid ' . SM_Welcome::EXPIRY_DAYS . ' days, locked to their own email, auto-applied at checkout while signed in. '
             . 'Abuse checks: normalized email (plus-tags, Gmail dots), disposable domains blocked, one code per device / IP / email, '
             . 'signup rate limits, and phone + address matching against past welcome orders. Blocks are logged below.</p>';
