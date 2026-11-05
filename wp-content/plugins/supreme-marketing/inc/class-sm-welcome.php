@@ -64,6 +64,10 @@ final class SM_Welcome
     public static function campaign_reminder(): void
     {
         if (!self::campaign_active()) return;
+        if (function_exists('is_product') && is_product()) {
+            echo '<p style="color:#a70819;font-size:13px;line-height:1.5;margin:10px 0"><strong>Red November: 30% off + free standard shipping.</strong><br>US &amp; Kenya · No minimum · Automatic at checkout · Through Nov 30</p>';
+            return;
+        }
         echo '<aside class="sm-nov-reminder" aria-label="November checkout offer"><strong>Red November: 30% off + FREE standard shipping</strong><span>All US and Kenya orders. No minimum. Applied automatically when you enter your delivery address. Through November 30.</span></aside>';
     }
 

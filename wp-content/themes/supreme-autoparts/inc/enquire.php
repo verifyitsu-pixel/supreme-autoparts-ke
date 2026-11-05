@@ -293,3 +293,14 @@ function sa_enquire_page_url(): string
 {
     return function_exists('sa_page_url') ? sa_page_url('enquire') : home_url('/enquire/');
 }
+
+// Product detail only: a quiet request route beside the price, not a repricing promise.
+add_action('woocommerce_single_product_summary', static function (): void {
+    global $product;
+    if (!$product instanceof WC_Product) return;
+    $subject = 'Price match request: ' . $product->get_name() . ' (' . $product->get_sku() . ')';
+    $body = "Product: " . $product->get_name() . "\nPart number: " . $product->get_sku() . "\nProduct link: " . get_permalink($product->get_id()) . "\n\nCompeting offer link:\nCompeting price including delivery:\n";
+    $email = 'mailto:calvin@supremeautoparts.co.ke?subject=' . rawurlencode($subject) . '&body=' . rawurlencode($body);
+    echo '<style>.sa-price-match{margin:9px 0 16px;font-size:13px;line-height:1.5}.sa-price-match summary{display:inline-block;cursor:pointer;border:1px solid #d9d7d2;border-radius:7px;padding:8px 11px;color:#333;background:#fff;font-weight:600;list-style:none}.sa-price-match summary::-webkit-details-marker{display:none}.sa-price-match summary:hover{border-color:#555}.sa-price-match p{font-size:13px!important;margin:9px 0 0!important;color:#555}.sa-price-match a{color:#333;text-decoration:underline;text-underline-offset:3px}</style>';
+    echo '<details class="sa-price-match"><summary>Found it cheaper? Request a price match</summary><p>Send the competing offer before you buy. We review the same brand, part number, condition and delivery terms. <a href="' . esc_url($email) . '">Email a price-match request</a> · <a href="' . esc_url(home_url('/price-match/')) . '">Price-match policy</a></p></details>';
+}, 11);
