@@ -32,6 +32,10 @@ final class SM_Welcome
     public static function init(): void
     {
         add_action('init', [self::class, 'ensure_device_cookie'], 5);
+        add_action('wp_body_open', [self::class, 'campaign_banner'], 2);
+        add_action('woocommerce_before_add_to_cart_form', [self::class, 'campaign_reminder'], 4);
+        add_action('woocommerce_before_cart', [self::class, 'campaign_reminder'], 4);
+        add_action('woocommerce_before_checkout_form', [self::class, 'campaign_reminder'], 4);
         add_action('woocommerce_new_order', [self::class, 'record_order_norm'], 20);
         add_action('user_register', [self::class, 'on_register'], 20);
         add_action('wp_login', [self::class, 'on_login'], 20, 2);
@@ -48,6 +52,19 @@ final class SM_Welcome
         add_action('woocommerce_order_status_processing', [self::class, 'mark_redeemed']);
         add_action('woocommerce_order_status_completed', [self::class, 'mark_redeemed']);
         add_action('woocommerce_order_status_on-hold', [self::class, 'mark_redeemed']);
+    }
+
+    public static function campaign_banner(): void
+    {
+        if (!self::campaign_active()) return;
+        echo '<style>.sm-nov-banner{background:#fcb900;color:#151515;text-align:center;padding:12px 18px;border-bottom:2px solid #151515;font-family:Arial,sans-serif}.sm-nov-banner strong{font-size:23px;font-weight:900;letter-spacing:-.4px}.sm-nov-banner span{display:inline-block;font-size:14px;margin-left:14px;font-weight:600}.sm-nov-reminder{background:#fff5cf;border:2px solid #fcb900;border-radius:10px;padding:14px 16px;margin:14px 0 20px;color:#151515;line-height:1.45}.sm-nov-reminder strong{display:block;font-size:20px;font-weight:800}.sm-nov-reminder span{display:block;font-size:14px;margin-top:3px}@media(max-width:600px){.sm-nov-banner{padding:10px 12px}.sm-nov-banner strong{font-size:21px}.sm-nov-banner span{display:block;font-size:12px;margin:4px 0 0;line-height:1.45}.sm-nov-reminder strong{font-size:19px}}</style>';
+        echo '<aside class="sm-nov-banner" aria-label="November offer"><strong>NOVEMBER: 30% OFF ALL ORDERS</strong><span>+ FREE standard shipping · No minimum · US &amp; Kenya · Through Nov 30</span></aside>';
+    }
+
+    public static function campaign_reminder(): void
+    {
+        if (!self::campaign_active()) return;
+        echo '<aside class="sm-nov-reminder" aria-label="November checkout offer"><strong>30% off + FREE standard shipping</strong><span>All US and Kenya orders. No minimum. Applied automatically when you enter your delivery address. Through November 30.</span></aside>';
     }
 
     /** Explicit customer destination only. Never infer offer eligibility from IP/store view. */
