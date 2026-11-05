@@ -418,7 +418,7 @@ function sa_core_email_login_otp(WP_User $user, string $code): bool
     $lines = [
         ($name !== '' ? 'Hi ' . $name . ',' : 'Hello,'),
         '',
-        'Your one-time login code for ' . $site . ' is:',
+        'A quick update from our garage: your one-time login code for ' . $site . ' is:',
         '',
         $code,
         '',
@@ -487,7 +487,7 @@ function sa_core_otp_email_html(array $ctx): string
 
     $inner = '<div class="sa-otp-mail" style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#18181b;">'
         . '<p style="margin:0 0 12px;font-size:15px;line-height:1.5;">' . $greet . '</p>'
-        . '<p style="margin:0 0 12px;font-size:15px;line-height:1.5;">Your one-time login code for <strong>' . $site . '</strong> is:</p>'
+        . '<p style="margin:0 0 12px;font-size:15px;line-height:1.5;">A quick update from our garage: your one-time login code for <strong>' . $site . '</strong> is:</p>'
         . '<p style="margin:20px 0;text-align:center;">'
         . '<span style="display:inline-block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:32px;letter-spacing:0.28em;font-weight:700;color:#f59e0b;background:#111111;border:0;border-radius:10px;padding:16px 26px;">'
         . $code
@@ -529,7 +529,7 @@ function sa_core_email_guest_account_ready(WP_User $user, WC_Order $order): void
     $body = implode("\n", [
         ($name !== '' ? 'Hi ' . $name . ',' : 'Hello,'),
         '',
-        'Thanks for your order #' . $order_no . ' at ' . $site . '.',
+        'Thank you so much for supporting Supreme Autoparts! We linked order #' . $order_no . ' to your account at ' . $site . '.',
         '',
         'We linked this order to an account using your email so you can track orders, invoices, and payment methods later.',
         '',

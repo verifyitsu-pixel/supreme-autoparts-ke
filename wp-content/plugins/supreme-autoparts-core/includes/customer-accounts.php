@@ -516,10 +516,10 @@ function sa_core_email_customer_password(WP_User $user, string $password, string
 
     if ($reason === 'new') {
         $subject = sprintf('%s · Your account password', $site);
-        $intro   = 'Thanks for creating an account on ' . $site . '. We set a secure password for you — it works right away.';
+        $intro   = 'Welcome to the garage! Thank you for creating an account on ' . $site . '. We set a secure password for you — it works right away.';
     } else {
         $subject = sprintf('%s · Your new password', $site);
-        $intro   = 'You asked us to issue a new password for your ' . $site . ' account. We set a secure password for you — it works right away.';
+        $intro   = 'A quick update from our garage: you asked us to issue a new password for your ' . $site . ' account. We set a secure password for you — it works right away.';
     }
 
     $lines = [

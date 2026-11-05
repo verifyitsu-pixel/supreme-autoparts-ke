@@ -235,7 +235,7 @@ function sa_hr_mail_build(WC_Order $o, array $r, string $kind, string $message =
     $trust = sa_hr_trust_html($o, $uploads);
     $sum = sa_hr_summary_html($o);
     $cta = sa_hr_btn($fill($c['cta']), $url);
-    $sec = '<p style="font-size:13px;color:#555;margin:0 0 4px">Takes about 2 minutes on your phone. No login needed.</p>';
+    $sec = '<p style="font-size:13px;color:#555;margin:0 0 4px">Send the information from your phone. No login needed.</p>';
     switch ($kind) {
         case 'new':
             $subject = $fill($c['subject']);
@@ -261,7 +261,7 @@ function sa_hr_mail_build(WC_Order $o, array $r, string $kind, string $message =
             $subject = 'Thanks, order #' . $n . ' is moving again';
             $pre = 'Everything checks out. Your order is back in progress.';
             $head = 'Thanks, your order is moving again';
-            $inner = $hi . '<p style="margin:0 0 12px">Everything checks out. We\'ve released the hold on order #' . esc_html($n) . ' and it\'s back in progress. We\'ll email you when it ships or is ready to collect.</p>'
+            $inner = $hi . '<p style="margin:0 0 12px">A big thank-you from our garage to yours! Everything checks out. We\'ve released the hold on order #' . esc_html($n) . ' and it\'s back in progress. We\'ll email you when it ships or is ready to collect.</p>'
                 . ($uploads ? '<p style="margin:0 0 12px;color:#555">The files you sent will be deleted from our systems within 30 days.</p>' : '') . $msg . $sum . sa_hr_btn('View my order', function_exists('sa_ol_view_url') ? sa_ol_view_url($o) : home_url('/my-account/')) . sa_hr_trust_html($o, false);
             break;
         case 'cancelled':
