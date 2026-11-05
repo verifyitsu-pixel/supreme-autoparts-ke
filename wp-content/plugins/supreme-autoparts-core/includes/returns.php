@@ -268,12 +268,12 @@ function sa_ret_email_customer(int $rid, string $status, string $note = ''): voi
             break;
         case 'approved':
             $head = 'Your return is approved';
-            $body = '<p>Good news, your return for ' . $ordl . ' is approved. Next, choose how to send the item back: ship it to us with a tracking number' . ($o && sa_ret_address($o)['dropoff'] ? ', or drop it off at our shop' : '') . '.</p>' . $noteh;
+            $body = '<p>A quick update from our garage: your return for ' . $ordl . ' is approved. Next, choose how to send the item back: ship it to us with a tracking number' . ($o && sa_ret_address($o)['dropoff'] ? ', or drop it off at our shop' : '') . '.</p>' . $noteh;
             $cta = ['Choose how to return', sa_ret_view_url($rid)];
             break;
         case 'rejected':
             $head = 'We could not approve this return';
-            $body = '<p>We reviewed your return request for ' . $ordl . ' and could not approve it.</p>' . $noteh . '<p>If you think this is a mistake, contact us and we will look again.</p>';
+            $body = '<p>A quick update from our garage: we reviewed your return request for ' . $ordl . ' and could not approve it.</p>' . $noteh . '<p>If you think this is a mistake, contact us and we will look again.</p>';
             $cta = ['Contact us', $o ? sa_ret_contact_url($o) : home_url('/contact/')];
             break;
         case 'shipped':
@@ -290,7 +290,7 @@ function sa_ret_email_customer(int $rid, string $status, string $note = ''): voi
             break;
         case 'inspected':
             $head = 'Your return was inspected';
-            $body = '<p>We finished checking your item for ' . $ordl . '. Your refund is being prepared.</p>' . $noteh;
+            $body = '<p>A quick update from our garage: we finished checking your item for ' . $ordl . '. Your refund is being prepared.</p>' . $noteh;
             break;
         case 'refunded':
             $head = 'Your refund is on its way';

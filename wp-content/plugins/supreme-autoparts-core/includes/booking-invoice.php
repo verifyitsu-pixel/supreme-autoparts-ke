@@ -112,7 +112,7 @@ function sa_bk_invoice_email(int $id, string $kind = ''): void
         $lead = 'The booking fee waiver on this booking has ended because ' . ($w['revoked_reason'] ?? 'the linked order changed') . '. To keep your appointment, please pay the ' . $feelbl . ' booking fee within 24 hours. It is deducted from your final bill.';
     } elseif ($paid) {
         $subject = 'Booking confirmed — paid invoice ' . sa_bk_invoice_no($b) . ' (' . $b['ref'] . ')';
-        $lead = 'Thank you, your booking fee is paid and your booking is confirmed. Your paid invoice is below.';
+        $lead = 'Thank you so much for supporting Supreme Autoparts! Your booking fee is paid and your booking is confirmed. Your paid invoice is below.';
     } elseif ($kind === 'nudge1') {
         $subject = 'Complete your payment to secure booking ' . $b['ref'];
         $lead = 'Your slot is on hold, but the ' . $feelbl . ' booking fee is still unpaid. Pay now to secure it. Unpaid bookings are released at ' . $release . '.';
@@ -121,7 +121,7 @@ function sa_bk_invoice_email(int $id, string $kind = ''): void
         $lead = 'This is your last reminder. If the ' . $feelbl . ' booking fee is not paid, your slot will be released at ' . $release . ' and offered to other customers.';
     } else {
         $subject = 'Booking received — pay ' . $feelbl . ' to secure your slot (' . $b['ref'] . ')';
-        $lead = 'Thanks for booking. Pay the ' . $feelbl . ' booking fee to secure your slot. It is deducted from your final bill. Unpaid bookings are released after 3 hours (at ' . $release . ').';
+        $lead = 'Thank you for booking with our garage. Pay the ' . $feelbl . ' booking fee to secure your slot. It is deducted from your final bill. Unpaid bookings are released after 3 hours (at ' . $release . ').';
     }
     $btn = $paid || $b['status'] !== 'pending' ? '' : '<p style="text-align:center;margin:18px 0"><a href="' . esc_url($pay) . '" style="display:inline-block;background:#F5A623;color:#111;text-decoration:none;font-weight:800;font-size:16px;padding:14px 30px;border-radius:10px">Pay booking fee — ' . $feelbl . '</a></p>';
     if ($waived) {

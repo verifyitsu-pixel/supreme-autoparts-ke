@@ -79,7 +79,7 @@ function sa_customer_mail_layout(string $heading, string $inner, string $cta_lab
     $sender_address = sa_email_sender_address($country, (bool)preg_match('/service reminder|due for service/i', $heading));
     $cta = $cta_label !== '' && $cta_url !== '' ? '<p style="text-align:center;margin:28px 0"><a href="'.esc_url($cta_url).'" style="display:inline-block;background:#f5a623;color:#111;padding:15px 24px;text-decoration:none;font-weight:bold">'.esc_html($cta_label).'</a></p>' : '';
     // Codes and urgent roadside information stay first, without a large promo photograph.
-    $urgent = (bool)preg_match('/login code|password|verify|verification|roadside|payment failed|payment not confirmed/i', $heading);
+    $urgent = (bool)preg_match('/login code|password|verify|verification|roadside|payment failed|payment not confirmed|order was unsuccessful/i', $heading);
     $reset = (bool)preg_match('/reset (?:your )?password/i', $heading);
     $reply_help = ($reset || stripos($inner, 'feel free to bug us') !== false) ? '' : '<p style="font-size:14px;margin:24px 0 0">If you have any questions, feel free to bug us. Just reply to this email.</p>';
     $hero = $urgent ? '' : '<tr><td><img src="'.esc_url($asset.'order-email-family-banner.jpg').'" width="600" height="200" alt="Workshop inspiration - stock photography"></td></tr>';
