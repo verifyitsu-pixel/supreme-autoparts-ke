@@ -25,6 +25,15 @@ function sa_email_footer_business(string $country = ''): array
     return $business;
 }
 
+/** Sender address presentation only. Fulfilment directions and customer addresses are untouched. */
+function sa_email_sender_address(string $country = '', bool $commercial = false): string
+{
+    $business = sa_email_footer_business($country);
+    // The user's request names the Midax-to-Nairobi line, not the US postal address.
+    $kenya = (string)($business['whatsapp'] ?? '') === '254714498451';
+    return $kenya && !$commercial ? '' : (string)$business['one_line'];
+}
+
 /** Dark mode overrides shared by every email. The content card stays white so inline colours inside it keep their contrast; page background, footer card and footer logo switch. */
 /** Country for a recipient with no order attached (login codes, return updates): the customer's saved billing country, then their latest order, else '' (falls back to the request geo). */
 function sa_email_country_for_recipient($to): string
@@ -60,9 +69,10 @@ function sa_email_dark_css(): string
         . '.sa-lm{display:none !important}.sa-dm{display:block !important;max-height:none !important;overflow:visible !important}}';
 }
 
-function sa_email_footer_html(string $country = ''): string
+function sa_email_footer_html(string $country = '', bool $commercial = true): string
 {
     $business = sa_email_footer_business($country);
+    $address = sa_email_sender_address($country, $commercial);
     $logo = home_url('/wp-content/themes/supreme-autoparts/assets/logo-email.png');
     $logo_dm = home_url('/wp-content/themes/supreme-autoparts/assets/logo-email-dark.png');
     $link = 'color:#555555;text-decoration:underline;';
@@ -70,7 +80,7 @@ function sa_email_footer_html(string $country = ''): string
         . '<tr><td class="sa-ft-t" style="padding:20px 28px 28px;color:#737373;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;text-align:center">'
         . '<div class="sa-ft-b" style="border-top:1px solid #dedede;padding-top:20px">'
         . '<p style="margin:0 0 12px;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#111111;line-height:28px"><img class="sa-lm" src="' . esc_url($logo) . '" alt="Supreme Autoparts" width="180" height="28" border="0" style="display:block;margin:0 auto;width:180px;height:28px;max-width:100%;border:0;outline:none;text-decoration:none;font-size:13px;font-weight:700;color:#111111"><img class="sa-dm" src="' . esc_url($logo_dm) . '" alt="" width="180" height="28" border="0" style="display:none;margin:0 auto;width:180px;height:28px;max-width:100%;border:0;outline:none;mso-hide:all"></p>'
-        . '<p style="margin:0 0 10px"><a href="' . esc_url('https://www.google.com/maps/search/?api=1&query=' . rawurlencode((string) $business['one_line'])) . '" style="color:#737373;text-decoration:none">' . esc_html($business['one_line']) . '</a></p>'
+        . ($address !== '' ? '<p style="margin:0 0 10px"><a href="' . esc_url('https://www.google.com/maps/search/?api=1&query=' . rawurlencode($address)) . '" style="color:#737373;text-decoration:none">' . esc_html($address) . '</a></p>' : '')
         . '<p style="margin:0"><a href="' . esc_url(home_url('/privacy-policy/')) . '" style="' . $link . '">Privacy</a> &nbsp;&middot;&nbsp; '
         . '<a href="' . esc_url(home_url('/terms/')) . '" style="' . $link . '">Terms</a> &nbsp;&middot;&nbsp; '
         . '<a href="' . esc_url(home_url('/returns/')) . '" style="' . $link . '">Returns</a></p>'
@@ -179,10 +189,10 @@ function sa_email_help_html(string $country = '', string $ctx = 'generic'): stri
         . '</div><!--/sa-email-help-->';
 }
 
-function sa_email_footer_text(string $country = ''): string
+function sa_email_footer_text(string $country = '', bool $commercial = true): string
 {
     $business = sa_email_footer_business($country);
-    return "Supreme Autoparts\n" . $business['one_line'] . "\n\n"
+    return "Supreme Autoparts" . (($address = sa_email_sender_address($country, $commercial)) !== '' ? "\n" . $address : '') . "\n\n"
         . 'Privacy: ' . home_url('/privacy-policy/') . "\n"
         . 'Terms: ' . home_url('/terms/') . "\n"
         . 'Returns: ' . home_url('/returns/');
@@ -225,7 +235,7 @@ function sa_email_add_footer(string $message, string $country = '', string $woo_
             $message .= $help;
         }
     }
-    $footer = sa_email_footer_html($country);
+    $footer = sa_email_footer_html($country, $woo_id === '' && $ctx === 'generic');
     // The mail client sees the footer classes only after injection, so the dark mode rules for them go in the final head.
     if (strpos($message, '.sa-ft-t') === false && ($hp = stripos($message, '</head>')) !== false) {
         $message = substr_replace($message, '<meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"><style>' . sa_email_dark_css() . '</style>', $hp, 0);
@@ -246,7 +256,7 @@ function sa_email_add_text_footer(string $message, string $country = '', string 
     if ($ctx === 'contact') {
         $help .= "Email: calvin@supremeautoparts.co.ke";
     }
-    return rtrim($message) . $help . "\n\n--\n" . sa_email_footer_text($country);
+    return rtrim($message) . $help . "\n\n--\n" . sa_email_footer_text($country, $woo_id === '' && $ctx === 'generic');
 }
 
 add_action('woocommerce_email_footer', static function ($email = null): void {

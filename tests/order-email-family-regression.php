@@ -82,6 +82,17 @@ foreach(['KE','UG','US'] as $country){
 $us=sa_customer_mail_layout('Your update','<p>Existing details</p>','','','Update','','US');
 if(strpos($us,'+1 917 437 5121')===false||strpos($us,'12800 NE Sandy Blvd')===false)throw new Exception('US contacts changed');
 $ke=sa_customer_mail_layout('Your update','<p>Existing details</p>','','','Update','','KE');
-if(strpos($ke,'+254')!==false||strpos($ke,'Nairobi, Kenya')===false)throw new Exception('KE presentation changed beyond phone');
+if(strpos($ke,'+254')!==false||strpos($ke,'Nairobi, Kenya')!==false)throw new Exception('KE presentation changed beyond phone');
 if(getenv('SA_EMAIL_RENDER_DIR')){file_put_contents(getenv('SA_EMAIL_RENDER_DIR').'/us-companion.html',$us);file_put_contents(getenv('SA_EMAIL_RENDER_DIR').'/ke-companion.html',$ke);file_put_contents(getenv('SA_EMAIL_RENDER_DIR').'/ke-help.html',sa_email_help_html('KE','order').sa_email_footer_html('KE'));}
-echo "PASS phone removal in real shared helpers and all stage/companion renders; US contact, KE postal, roadside link retained. No sends.\n";
+echo "PASS phone removal in real shared helpers and all stage/companion renders; US contact and roadside link retained. No sends.\n";
+
+if(sa_email_sender_address('KE')!==''||sa_email_sender_address('US')==='')throw new Exception('Transactional address scope');
+if(sa_email_sender_address('KE',true)!=='Nairobi, Kenya')throw new Exception('Commercial address missing');
+if(strpos(sa_email_footer_html('KE',false),'Nairobi, Kenya')!==false||strpos(sa_email_footer_text('KE',false),'Nairobi, Kenya')!==false)throw new Exception('Transactional sender address retained');
+if(strpos(sa_email_footer_html('KE'),'Nairobi, Kenya')===false)throw new Exception('Unknown-purpose address removed');
+if(strpos(sa_customer_mail_layout('Service reminder','Service is due','','','','','KE'),'Nairobi, Kenya')===false)throw new Exception('Commercial reminder address missing');
+echo "PASS sender-address scope: KE transaction omitted, US retained, marketing/unknown retained. Customer billing/shipping fixture still preserved.\n";
+
+foreach(['Your application is saved','Booking received','Your estimate is ready','Return approved','Your invoice'] as $h){$v=sa_customer_mail_layout($h,'<p>Existing information</p>');if(strpos($v,'order-email-family-banner.jpg')===false)throw new Exception('Missing companion picture: '.$h);}
+foreach(['Your login code','Reset your password','Roadside request'] as $h){$v=sa_customer_mail_layout($h,'<p>Urgent information</p>');if(strpos($v,'order-email-family-banner.jpg')!==false)throw new Exception('Urgent action buried: '.$h);}
+echo "PASS companion pictures for application/booking/estimate/return/invoice; urgent login/password/roadside action remains first.\n";
