@@ -18,6 +18,13 @@ add_filter('forminator_custom_form_mail_admin_subject',static function($subject,
 // Installed Forminator 1.44.2 message hook: notification recipients/subject/attachments untouched.
 add_filter('forminator_custom_form_mail_admin_message',static function($message,$form,$data,$entry,$mailer){
     if(!is_string($message) || stripos($message,'sa-email-brand-header')!==false || stripos($message,'<html')!==false)return $message;
+    // Adapt only known store-authored phrases; never reseed or replace a custom notification.
+    $message = strtr($message, [
+        'Thanks for contacting Supreme Autoparts. We received your message and will reply soon by email or phone.' => 'Thank you for getting in touch with our garage. We received your message and will be in touch by email or phone.',
+        'Thank you - we have your request for <strong>' => 'Thank you for getting in touch with our garage. We have your request for <strong>',
+        'Thank you - we have your fitment check for <strong>' => 'Thank you for getting in touch with our garage. We have your fitment check for <strong>',
+        'Thank you - we have your booking request for <strong>' => 'Thank you for booking with our garage. We have your booking request for <strong>',
+    ]);
     $key=is_object($mailer)?spl_object_id($mailer):0;
     $subject=(string)($GLOBALS['sa_private_forminator_mail_subject'][$key]??'Supreme Autoparts update');
     unset($GLOBALS['sa_private_forminator_mail_subject'][$key]);

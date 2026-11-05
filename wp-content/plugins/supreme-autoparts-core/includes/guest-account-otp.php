@@ -529,7 +529,7 @@ function sa_core_email_guest_account_ready(WP_User $user, WC_Order $order): void
     $body = implode("\n", [
         ($name !== '' ? 'Hi ' . $name . ',' : 'Hello,'),
         '',
-        'Thank you so much for supporting Supreme Autoparts! We linked order #' . $order_no . ' to your account at ' . $site . '.',
+        'Thank you so much for supporting Supreme Autoparts! This account update is about order #' . $order_no . ' at ' . $site . '.',
         '',
         'We linked this order to an account using your email so you can track orders, invoices, and payment methods later.',
         '',
