@@ -1,6 +1,6 @@
 <?php
 /**
- * wp-admin UI: Dashboard, Flows, Campaigns, Subscribers, Queue, Welcome 20, Settings, template previews.
+ * wp-admin UI: Dashboard, Flows, Campaigns, Subscribers, Queue, Welcome 30, Settings, template previews.
  */
 declare(strict_types=1);
 
@@ -36,7 +36,7 @@ final class SM_Admin
         add_submenu_page('sm-dashboard', 'Campaigns', 'Campaigns', self::CAP, 'sm-campaigns', [self::class, 'page_campaigns']);
         add_submenu_page('sm-dashboard', 'Subscribers', 'Subscribers', self::CAP, 'sm-subscribers', [self::class, 'page_subscribers']);
         add_submenu_page('sm-dashboard', 'Queue', 'Queue', self::CAP, 'sm-queue', [self::class, 'page_queue']);
-        add_submenu_page('sm-dashboard', 'Welcome 20', 'Welcome 20', self::CAP, 'sm-welcome', [self::class, 'page_welcome']);
+        add_submenu_page('sm-dashboard', 'Welcome 30', 'Welcome 30', self::CAP, 'sm-welcome', [self::class, 'page_welcome']);
         add_submenu_page('sm-dashboard', 'Settings', 'Settings', self::CAP, 'sm-settings', [self::class, 'page_settings']);
         add_submenu_page('sm-dashboard', 'System check', 'System check', self::CAP, 'sm-debug', [self::class, 'page_debug']);
     }
@@ -464,7 +464,7 @@ final class SM_Admin
         self::card('Unsubscribed', (string) $unsub, 'never emailed', admin_url('admin.php?page=sm-subscribers&status=unsubscribed'));
         self::card('Queued (waiting)', (string) $q['pending'], 'sends when master is ON', admin_url('admin.php?page=sm-queue'));
         self::card('Sent (7 days)', (string) $q['sent_7d'], $q['opens_7d'] . ' opens / ' . $q['clicks_7d'] . ' clicks', admin_url('admin.php?page=sm-dashboard&sm_drill=sent7'));
-        self::card('Welcome 20 codes', (string) $w['active'] . ' active', $w['redeemed'] . ' redeemed / ' . $w['blocked'] . ' abuse blocks', admin_url('admin.php?page=sm-welcome'));
+        self::card('Welcome 30 codes', (string) $w['active'] . ' active', $w['redeemed'] . ' redeemed / ' . $w['blocked'] . ' abuse blocks', admin_url('admin.php?page=sm-welcome'));
         echo '</div>';
 
         echo '<h2>Controls</h2><p>';
@@ -993,7 +993,7 @@ final class SM_Admin
     }
 
     /* ---------------------------------------------------------------- */
-    /* Welcome 20                                                        */
+    /* Welcome 30                                                        */
     /* ---------------------------------------------------------------- */
 
     public static function page_welcome(): void
@@ -1001,8 +1001,8 @@ final class SM_Admin
         if (!current_user_can(self::CAP)) {
             wp_die('nope');
         }
-        self::header('Welcome 20 - first-order discount');
-        echo '<p>Every first-time customer who creates an account or signs in (Google or email code) gets a personal <strong>20% off</strong> code: '
+        self::header('Welcome 30 - first-order discount');
+        echo '<p>Every first-time customer who creates an account or signs in (Google or email code) gets a personal <strong>30% off</strong> code: '
             . 'one use, first order only, valid ' . SM_Welcome::EXPIRY_DAYS . ' days, locked to their own email, auto-applied at checkout while signed in. '
             . 'Abuse checks: normalized email (plus-tags, Gmail dots), disposable domains blocked, one code per device / IP / email, '
             . 'signup rate limits, and phone + address matching against past welcome orders. Blocks are logged below.</p>';

@@ -334,8 +334,8 @@ final class SM_Templates
         $welcome_expires = (string) ($ctx['welcome_expires'] ?? '');
 
         $shipping_line = $ke
-            ? 'Free delivery in Nairobi, fast countrywide delivery, or free pickup at our shop on Kangundo Rd, Njiru'
-            : 'Tracked shipping across the US - free on eligible orders';
+            ? 'First-order free delivery throughout Kenya with no minimum order amount; free pickup at our shop on Kangundo Rd, Njiru'
+            : 'First-order free shipping anywhere in the US, including Alaska and Hawaii, with no minimum order amount';
 
         switch ($key) {
 
@@ -370,9 +370,9 @@ final class SM_Templates
                     ['p' => 'Thank you so much for supporting Supreme Autoparts! A big thank-you from our garage to yours. Have a look around the parts store, and ask us if you need a hand with your car or motorcycle.'],
                 ];
                 if ($welcome_code !== '') {
-                    $blocks[] = ['coupon' => [$welcome_code, '20% off your first order', ($welcome_expires !== '' ? 'Valid until ' . $welcome_expires . '. ' : '') . 'One use. Applies automatically at checkout when you are signed in.']];
+                    $blocks[] = ['coupon' => [$welcome_code, '30% off your first order', ($welcome_expires !== '' ? 'Valid until ' . $welcome_expires . '. ' : '') . 'One use. Applies automatically at checkout for eligible first orders delivered in the US or Kenya.']];
                 } else {
-                    $blocks[] = ['p' => 'Your first order comes with 20% off: create an account or sign in with Google at checkout and your personal code is issued on the spot.'];
+                    $blocks[] = ['p' => 'Your first order gets 30% off automatically after you enter your email and delivery address for the US or Kenya at checkout. No minimum order amount.'];
                 }
                 $blocks[] = ['bullets' => [
                     'Not sure a part fits? Send your year, make, model or VIN and we confirm fitment before you pay',
@@ -386,8 +386,8 @@ final class SM_Templates
                 $blocks[] = ['button' => ['Shop parts', $shop]];
                 return [
                     'subject'   => $welcome_code !== ''
-                        ? 'Your 20% first-order code is inside - welcome to Supreme Autoparts'
-                        : 'Welcome to Supreme Autoparts - 20% off your first order',
+                        ? 'Your 30% first-order code is inside - welcome to Supreme Autoparts'
+                        : 'Welcome to Supreme Autoparts - 30% off your first order',
                     'preheader' => 'Genuine and aftermarket parts, fitment checked before you buy.',
                     'blocks'    => $blocks,
                 ];
@@ -480,13 +480,13 @@ final class SM_Templates
                 $blocks = [
                     ['h' => ($theme_line !== '' ? 'For your ' . $theme_line . ' work' : 'Ready when you are')],
                     ['p' => ($theme_line !== ''
-                        ? 'A look at the ' . $theme_line . ' side of the catalog - all in stock, and your 20% first-order code is below.'
+                        ? 'A look at the ' . $theme_line . ' side of the catalog - all in stock, and your 30% first-order code is below.'
                         : 'You have seen how we stock, check fitment and deliver. Whenever your car needs something, the store is organized to get you to the right part fast.')],
                 ];
                 if ($welcome_code !== '') {
-                    $blocks[] = ['coupon' => [$welcome_code, 'Your 20% first-order discount', ($welcome_expires !== '' ? 'Valid until ' . $welcome_expires . '. ' : '') . 'One use. Applies automatically at checkout when you are signed in.']];
+                    $blocks[] = ['coupon' => [$welcome_code, 'Your 30% first-order discount', ($welcome_expires !== '' ? 'Valid until ' . $welcome_expires . '. ' : '') . 'One use. Applies automatically at checkout for eligible first orders delivered in the US or Kenya.']];
                 } else {
-                    $blocks[] = ['p' => 'Remember: sign up or sign in with Google at checkout and your first order gets 20% off.'];
+                    $blocks[] = ['p' => 'Your first order gets 30% off automatically at checkout for delivery in the US or Kenya, with no minimum order amount.'];
                 }
                 if ($products) {
                     $blocks[] = ['p' => 'In-stock picks from the catalog:'];
@@ -497,7 +497,7 @@ final class SM_Templates
                 $blocks[] = ['button' => [($theme_line !== '' ? 'Shop ' . $theme_line . ' parts' : 'Go to the store'), $shop]];
                 $blocks[] = ['p' => 'This is the last email in your welcome series. From here you will hear from us when there is something worth sharing.'];
                 return [
-                    'subject'   => ($theme_line !== '' ? 'Your 20% first-order code, plus ' . $theme_line . ' picks' : 'Your first order, when you are ready'),
+                    'subject'   => ($theme_line !== '' ? 'Your 30% first-order code, plus ' . $theme_line . ' picks' : 'Your first order, when you are ready'),
                     'preheader' => 'Your first-order code and parts to explore.',
                     'blocks'    => $blocks,
                 ];

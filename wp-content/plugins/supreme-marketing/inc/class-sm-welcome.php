@@ -1,6 +1,6 @@
 <?php
 /**
- * First-order welcome discount: a personal 20% code for first-time customers
+ * First-order welcome discount: a personal 30% code for first-time customers
  * who create an account or sign in (Google or code login) at checkout.
  *
  * Replaces the old shared WELCOME30. One use per customer, first order only,
@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
 
 final class SM_Welcome
 {
-    public const DISCOUNT = 20;
+    public const DISCOUNT = 30;
     public const EXPIRY_DAYS = 14;
     public const PREFIX = 'SUP20-';
     public const MAX_SIGNUPS_PER_IP_DAY = 5;
@@ -38,9 +38,170 @@ final class SM_Welcome
         add_action('woocommerce_cart_loaded_from_session', [self::class, 'auto_apply'], 35);
         add_action('woocommerce_before_checkout_form', [self::class, 'auto_apply'], 6);
         add_action('woocommerce_checkout_process', [self::class, 'validate_at_checkout'], 5);
+        add_action('woocommerce_checkout_update_order_review', [self::class, 'checkout_review'], 25);
+        add_filter('woocommerce_coupon_is_valid', [self::class, 'validate_coupon'], 25, 3);
+        add_filter('woocommerce_coupon_get_amount', [self::class, 'current_coupon_amount'], 25, 2);
+        add_filter('woocommerce_package_rates', [self::class, 'first_order_shipping'], 100, 2);
+        add_filter('woocommerce_shipping_chosen_method', [self::class, 'choose_first_order_shipping'], 25, 3);
+        add_filter('woocommerce_cart_shipping_packages', [self::class, 'shipping_identity'], 25);
         add_action('woocommerce_order_status_processing', [self::class, 'mark_redeemed']);
         add_action('woocommerce_order_status_completed', [self::class, 'mark_redeemed']);
         add_action('woocommerce_order_status_on-hold', [self::class, 'mark_redeemed']);
+    }
+
+    /** Explicit customer destination only. Never infer offer eligibility from IP/store view. */
+    public static function offer_country(): string
+    {
+        if (!function_exists('WC') || !WC()->customer) {
+            return '';
+        }
+        $c = WC()->customer;
+        $shipping = WC()->cart && WC()->cart->needs_shipping();
+        $prefix = $shipping ? 'shipping' : 'billing';
+        $detail = trim((string) $c->{'get_' . $prefix . '_address_1'}()
+            . (string) $c->{'get_' . $prefix . '_city'}()
+            . (string) $c->{'get_' . $prefix . '_postcode'}());
+        return $detail === '' ? '' : strtoupper((string) $c->{'get_' . $prefix . '_country'}());
+    }
+
+    public static function offer_destination_allowed(?string $country = null): bool
+    {
+        return in_array($country ?? self::offer_country(), ['US', 'KE'], true);
+    }
+
+    /** Checkout review supplies the actual entered destination before Woo recalculates rates. */
+    public static function checkout_review(string $posted): void
+    {
+        if (!function_exists('WC') || !WC()->customer) {
+            return;
+        }
+        parse_str($posted, $data);
+        $c = WC()->customer;
+        foreach (['country', 'state', 'city', 'postcode', 'address_1', 'address_2'] as $key) {
+            if (isset($data['billing_' . $key])) {
+                $c->{'set_billing_' . $key}(wc_clean($data['billing_' . $key]));
+            }
+            $from = !empty($data['ship_to_different_address']) ? 'shipping_' : 'billing_';
+            if (isset($data[$from . $key])) {
+                $c->{'set_shipping_' . $key}(wc_clean($data[$from . $key]));
+            }
+        }
+        foreach (['email', 'phone'] as $key) {
+            if (isset($data['billing_' . $key])) {
+                $c->{'set_billing_' . $key}(wc_clean($data['billing_' . $key]));
+            }
+        }
+        if (WC()->cart) {
+            foreach (WC()->cart->get_applied_coupons() as $code) {
+                if (!str_starts_with(strtoupper($code), self::PREFIX)) {
+                    continue;
+                }
+                try {
+                    self::validate_coupon(true, new WC_Coupon($code));
+                } catch (Exception $e) {
+                    WC()->cart->remove_coupon($code);
+                }
+            }
+        }
+        self::auto_apply();
+    }
+
+    /** Guard already-issued codes too, without editing past orders or deleting their history. */
+    public static function validate_coupon($valid, $coupon, $discount = null)
+    {
+        if (!$valid || !str_starts_with(strtoupper((string) $coupon->get_code()), self::PREFIX)) {
+            return $valid;
+        }
+        if (!self::offer_destination_allowed()) {
+            throw new Exception(__('The first-order offer is for delivery in the US or Kenya. Enter your delivery address to use it.', 'supreme-marketing'));
+        }
+        $email = function_exists('WC') && WC()->customer ? (string) WC()->customer->get_billing_email() : '';
+        if ($email === '' && is_user_logged_in()) {
+            $email = (string) wp_get_current_user()->user_email;
+        }
+        if ($email === '' || !self::has_zero_orders(get_current_user_id(), $email) || self::norm_has_orders(self::norm_email($email)) || self::identity_used_offer()) {
+            throw new Exception(__('This offer is for your first order only.', 'supreme-marketing'));
+        }
+        return $valid;
+    }
+
+    /** Current eligible active offers use the current percent, without editing coupon/order history. */
+    public static function current_coupon_amount($amount, $coupon)
+    {
+        if (!str_starts_with(strtoupper((string)$coupon->get_code()), self::PREFIX) || (float)$coupon->get_usage_count() > 0 || $coupon->get_discount_type() !== 'percent') return $amount;
+        global $wpdb;
+        $active = $wpdb->get_var($wpdb->prepare('SELECT code FROM ' . SM_DB::table('welcome_codes') . " WHERE code = %s AND status = 'active' AND (expires_at IS NULL OR expires_at > %s) LIMIT 1", strtoupper((string)$coupon->get_code()), sm_now()));
+        return $active ? self::DISCOUNT : $amount;
+    }
+
+    /** Same phone/destination cannot claim another first-order benefit under a new mailbox. */
+    public static function identity_used_offer(): bool
+    {
+        if (!function_exists('WC') || !WC()->customer) {
+            return true;
+        }
+        $c = WC()->customer;
+        $phone = self::norm_phone((string) $c->get_billing_phone());
+        $shipping = WC()->cart && WC()->cart->needs_shipping();
+        $prefix = $shipping ? 'shipping' : 'billing';
+        $addr = self::norm_address([(string) $c->{'get_' . $prefix . '_address_1'}(), (string) $c->{'get_' . $prefix . '_city'}(), (string) $c->{'get_' . $prefix . '_postcode'}()]);
+        if ($phone === '' && $addr === '') {
+            return false;
+        }
+        $orders = wc_get_orders(['limit' => -1, 'status' => ['wc-processing', 'wc-completed', 'wc-on-hold', 'wc-pending'], 'return' => 'objects']);
+        foreach ($orders as $o) {
+            $offer = false;
+            foreach ($o->get_coupon_codes() as $code) {
+                $offer = $offer || str_starts_with(strtoupper($code), self::PREFIX);
+            }
+            foreach ($o->get_items('shipping') as $item) {
+                $offer = $offer || $item->get_method_id() === 'sm_first_order_free';
+            }
+            if (!$offer) {
+                continue;
+            }
+            $oaddr = self::norm_address([$o->has_shipping_address() ? $o->get_shipping_address_1() : $o->get_billing_address_1(), $o->has_shipping_address() ? $o->get_shipping_city() : $o->get_billing_city(), $o->has_shipping_address() ? $o->get_shipping_postcode() : $o->get_billing_postcode()]);
+            if (($phone !== '' && $phone === self::norm_phone((string) $o->get_billing_phone())) || ($addr !== '' && $addr === $oaddr)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Changing checkout email must invalidate Woo's cached shipping eligibility. */
+    public static function shipping_identity($packages)
+    {
+        if (function_exists('WC') && WC()->customer) {
+            $email = self::norm_email((string) WC()->customer->get_billing_email());
+            foreach ($packages as &$package) {
+                $package['sm_first_order_identity'] = hash('sha256', $email . '|' . get_current_user_id());
+            }
+            unset($package);
+        }
+        return $packages;
+    }
+
+    public static function choose_first_order_shipping($chosen, $rates, $previous)
+    {
+        return isset($rates['sm_first_order_free']) ? 'sm_first_order_free' : $chosen;
+    }
+
+    /** First-order delivery is separate from coupons; existing repeat-customer rates stay intact. */
+    public static function first_order_shipping($rates, $package)
+    {
+        if (!is_array($package) || !self::offer_destination_allowed(strtoupper((string) ($package['destination']['country'] ?? '')))
+            || !self::offer_destination_allowed() || !function_exists('WC') || !WC()->customer || !class_exists('WC_Shipping_Rate')) {
+            return $rates;
+        }
+        $email = (string) WC()->customer->get_billing_email();
+        if ($email === '' && is_user_logged_in()) {
+            $email = (string) wp_get_current_user()->user_email;
+        }
+        if ($email === '' || !is_email($email) || !self::has_zero_orders(get_current_user_id(), $email)
+            || self::norm_has_orders(self::norm_email($email)) || self::identity_used_offer()) {
+            return $rates;
+        }
+        return ['sm_first_order_free' => new WC_Shipping_Rate('sm_first_order_free', 'Free delivery - first order', 0, [], 'sm_first_order_free')] + $rates;
     }
 
     /* ------------------------------------------------------------------ */
@@ -149,7 +310,7 @@ final class SM_Welcome
         if (!function_exists('wc_get_orders')) {
             return false;
         }
-        $statuses = ['wc-processing', 'wc-completed', 'wc-on-hold', 'wc-pending'];
+        $statuses = array_values(array_diff(array_keys(wc_get_order_statuses()), ['wc-cancelled', 'wc-failed', 'wc-checkout-draft']));
         if ($user_id > 0 && (int) wc_get_customer_order_count($user_id) > 0) {
             return false;
         }
@@ -162,19 +323,22 @@ final class SM_Welcome
         return true;
     }
 
-    /** Issue a personal 20% code when eligible; log and skip when abuse checks trip. */
+    /** Issue a personal 30% code when eligible; log and skip when abuse checks trip. */
     public static function maybe_issue(int $user_id, string $trigger): ?string
     {
-        if ($user_id <= 0 || !class_exists('WC_Coupon')) {
+        if (!class_exists('WC_Coupon')) {
             return null;
         }
-        $user = get_userdata($user_id);
+        $user = $user_id > 0 ? get_userdata($user_id) : (object)['user_email' => function_exists('WC') && WC()->customer ? WC()->customer->get_billing_email() : '', 'roles' => ['customer']];
         if (!$user || !is_email($user->user_email)) {
             return null;
         }
         // Customers only - never staff/admin accounts.
         if (!in_array('customer', (array) $user->roles, true) && !in_array('subscriber', (array) $user->roles, true)) {
             return null;
+        }
+        if (!self::offer_destination_allowed()) {
+            return null; // Defer issuance until an actual eligible destination is entered.
         }
         $email = strtolower($user->user_email);
         $norm = self::norm_email($email);
@@ -185,7 +349,7 @@ final class SM_Welcome
         global $wpdb;
         $t = SM_DB::table('welcome_codes');
         $existing = $wpdb->get_var($wpdb->prepare(
-            "SELECT code FROM $t WHERE (user_id = %d OR email = %s OR email_norm = %s) AND status IN ('active','redeemed') LIMIT 1",
+            "SELECT code FROM $t WHERE ((user_id > 0 AND user_id = %d) OR email = %s OR email_norm = %s) AND status IN ('active','redeemed') LIMIT 1",
             $user_id, $email, $norm
         ));
         if ($existing) {
@@ -241,7 +405,7 @@ final class SM_Welcome
         $expires = time() + self::EXPIRY_DAYS * DAY_IN_SECONDS;
         $coupon = new WC_Coupon();
         $coupon->set_code($code);
-        $coupon->set_description('Welcome 20: personal first-order discount for ' . $email . ' (trigger: ' . $trigger . ').');
+        $coupon->set_description('Welcome 30: personal first-order discount for ' . $email . ' (trigger: ' . $trigger . ').');
         $coupon->set_discount_type('percent');
         $coupon->set_amount(self::DISCOUNT);
         $coupon->set_individual_use(true);
@@ -267,7 +431,7 @@ final class SM_Welcome
             'created_at' => sm_now(),
             'expires_at' => sm_dt($expires),
         ]);
-        update_user_meta($user_id, '_sm_welcome20_code', $code);
+        if ($user_id > 0) update_user_meta($user_id, '_sm_welcome20_code', $code);
         return $code;
     }
 
@@ -360,11 +524,18 @@ final class SM_Welcome
     /** Apply the signed-in customer's personal code silently when the cart allows it. */
     public static function auto_apply(): void
     {
-        if (!is_user_logged_in() || !function_exists('WC') || !WC()->cart || WC()->cart->is_empty() || !wc_coupons_enabled()) {
+        if (!function_exists('WC') || !WC()->cart || WC()->cart->is_empty() || !wc_coupons_enabled()) {
             return;
         }
-        $user = wp_get_current_user();
-        $active = self::active_code_for_email((string) $user->user_email);
+        if (!self::offer_destination_allowed()) {
+            return;
+        }
+        $user_id = get_current_user_id();
+        $email = (string) WC()->customer->get_billing_email();
+        if ($email === '' && is_user_logged_in()) $email = (string) wp_get_current_user()->user_email;
+        if (!is_email($email)) return;
+        self::maybe_issue($user_id, 'checkout');
+        $active = self::active_code_for_email($email);
         if (!$active) {
             return;
         }
@@ -411,6 +582,11 @@ final class SM_Welcome
             ), ARRAY_A);
             if (!$row) {
                 continue; // not one of ours
+            }
+            if (!self::offer_destination_allowed()) {
+                WC()->cart->remove_coupon($code);
+                wc_add_notice(__('The first-order offer is for delivery in the US or Kenya.', 'supreme-marketing'), 'error');
+                continue;
             }
             // phpcs:ignore WordPress.Security.NonceVerification.Missing
             $email = !empty($_POST['billing_email']) ? strtolower(sanitize_email(wp_unslash((string) $_POST['billing_email']))) : '';
@@ -488,7 +664,7 @@ final class SM_Welcome
         }
     }
 
-    /** Retire the old shared WELCOME30 (owner decision 2026-10-19: personal 20% codes instead). */
+    /** Retire the old shared WELCOME30 (owner decision 2026-10-19: personal 30% codes instead). */
     public static function retire_legacy_shared_coupon(): void
     {
         if (get_option('sm_welcome30_retired')) {
