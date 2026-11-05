@@ -202,7 +202,7 @@ final class SM_Welcome
         if (function_exists('WC') && WC()->customer) {
             $email = self::norm_email((string) WC()->customer->get_billing_email());
             foreach ($packages as &$package) {
-                $package['sm_first_order_identity'] = hash('sha256', $email . '|' . get_current_user_id());
+                $package['sm_first_order_identity'] = hash('sha256', $email . '|' . get_current_user_id() . '|' . (self::campaign_active() ? 'november-active' : 'november-ended'));
             }
             unset($package);
         }
