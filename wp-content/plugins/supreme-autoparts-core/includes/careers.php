@@ -142,7 +142,7 @@ function sa_careers_location(): string
 add_action('wp_enqueue_scripts',static function(){
     if(!is_page('careers'))return;
     wp_enqueue_style('sa-services',SA_CORE_URL.'assets/services.css',[],SA_CORE_VERSION);
-    wp_enqueue_style('sa-careers-v2',SA_CORE_URL.'assets/careers.css',['sa-services'],'3');
+    wp_enqueue_style('sa-careers-v2',SA_CORE_URL.'assets/careers.css',['sa-services'],'4');
 },40);
 
 /* ---------- render ---------- */
@@ -155,7 +155,7 @@ add_shortcode('sa_careers', static function (): string {
     ob_start();
     echo '<div class="sa-careers" id="sa-careers">';
 
-    echo '<section class="sa-careers__hero"><span class="sa-careers__eyebrow">SUPREME / CAREERS</span><h2>Build your next chapter with us.</h2><p>On the road, in the garage, or behind the orders. Find your place in our Nairobi team.</p><a href="#sa-careers-roles">Explore the roles <span aria-hidden="true">&#8595;</span></a></section>';
+    echo '<section class="sa-careers__hero"><span class="sa-careers__eyebrow">SUPREME / CAREERS</span><h2>Join our Nairobi team.</h2><p>See the open roles and apply below.</p><a href="#sa-careers-roles">Explore the roles <span aria-hidden="true">&#8595;</span></a></section>';
     echo '<ol class="sa-careers__steps" aria-label="Application steps"><li><b>01</b><span><strong>Choose your role</strong><small>Check the responsibilities</small></span></li><li><b>02</b><span><strong>Save your application</strong><small>Share your details and CV</small></span></li><li><b>03</b><span><strong>Pay with Paystack</strong><small>KES 1,000 attendance fee</small></span></li></ol>';
     echo '<div class="sa-careers__grid" id="sa-careers-roles">';
     foreach ($roles as $slug => $r) {
@@ -175,10 +175,8 @@ add_shortcode('sa_careers', static function (): string {
     echo '</div>';
 
     echo '<div class="sa-careers__form" id="sa-careers-apply">';
-    echo '<span class="sa-careers__eyebrow">YOUR NEXT STEP</span><h2>Make your move.</h2><p>Choose a role, add your details and CV, then continue to secure payment. Your application is saved before checkout.</p>';
-    echo '<p class="sa-careers-fee-notice">' . esc_html(sa_careers_fee_disclosure()) . '</p>';
-    echo '<section class="sa-careers__help" id="application-terms"><h3>Application terms</h3><p>The KES 1,000 application fee is intended to discourage spam applications and no-shows. It is refundable if you are never invited, or when you attend an invited paid two-day work trial. The trial includes lunch. We aim to offer work opportunities while a position remains open, but an application or payment does not guarantee an invitation. Employment depends on the trial outcome.</p><p>Before any trial starts, we will confirm the tasks, work hours, pay and payment arrangements with you. Your statutory employment rights are not waived.</p><h3>Your application data</h3><p>We use your name, email, phone, selected role, experience and CV to review and manage your application and contact you. Applications are stored on our website and shared with our reviewers through our existing notification system. Paystack receives the fee payment details, not your CV or experience text through this integration.</p><p>Please do not include unnecessary sensitive documents. For questions about your application or access, correction or deletion requests, contact <a href="mailto:calvin@supremeautoparts.co.ke">calvin@supremeautoparts.co.ke</a>. Rights remain subject to applicable law. Read our <a href="'.esc_url(home_url('/privacy-policy/')).'">Privacy Policy</a>.</p></section>';
-    echo '<div class="sa-careers__help"><strong>Before you apply</strong>Use an email and phone number where we can reach you. Tell us about relevant practical experience, including training or projects. Upload one CV in PDF, DOC or DOCX format, up to 10 MB. Your application is saved before payment; keep your payment reference.</div>';
+    echo '<span class="sa-careers__eyebrow">APPLY</span><h2>Send your application.</h2><p>Choose a role, add your details and CV, then continue to secure payment. Your application is saved before checkout.</p>';
+    echo '<section class="sa-careers-fee-notice" id="application-terms" aria-label="Application fee and trial terms"><strong>Application fee: KES 1,000</strong><p>Pay through Paystack after saving your application. The fee is refundable if you are never invited, or when you attend an invited paid two-day work trial. The trial includes lunch.</p><p>Payment does not guarantee an invitation or employment. Employment depends on the trial outcome.</p><details><summary>Trial arrangements and application data</summary><p>The fee is intended to discourage spam applications and no-shows. We aim to offer work opportunities while a position remains open. Before a trial starts, we will confirm the tasks, hours, pay and payment arrangements. Your statutory employment rights are not waived.</p><p>We use your name, email, phone, selected role, experience and CV to review your application and contact you. Applications are stored on our website and shared with our reviewers through our existing notification system. Paystack receives payment details, not your CV or experience text.</p><p>Do not include unnecessary sensitive documents. For questions or access, correction or deletion requests, email <a href="mailto:calvin@supremeautoparts.co.ke">calvin@supremeautoparts.co.ke</a>. Rights remain subject to applicable law. Read our <a href="' . esc_url(home_url('/privacy-policy/')) . '">Privacy Policy</a>.</p></details></section>';
     if ($state === 'sent') {
         $ref = sanitize_text_field((string) ($_GET['ref'] ?? ''));
         echo '<div class="sa-sf-ok" role="status"><strong>Thanks, we have your application' . ($ref ? ' (ref ' . esc_html($ref) . ')' : '') . '.</strong> A copy is in your inbox and we will be in touch.</div>';
