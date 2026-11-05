@@ -418,7 +418,7 @@ function sa_rs_email(int $id, string $event, string $note = ''): void
     }
     if ($event === 'created') {
         $subject = 'Help is being arranged — request ' . $r['ref'];
-        $lead = sa_email_greeting((string) $r['name']) . ' we have your roadside request. Our dispatcher will call you on ' . esc_html($r['phone']) . ' to confirm the details and the price before anyone is sent. No payment is needed to request help.';
+        $lead = sa_email_greeting((string) $r['name']) . ' a quick update from our garage: we have your roadside request. Our dispatcher will call you on ' . esc_html($r['phone']) . ' to confirm the details and the price before anyone is sent. No payment is needed to request help.';
     } elseif ($event === 'message') {
         $subject = 'New message about your request ' . $r['ref'];
         $lead = sa_email_greeting((string) $r['name']) . ' you have a new message from our team: <em>' . esc_html($note) . '</em>';
