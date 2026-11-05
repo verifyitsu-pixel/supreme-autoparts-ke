@@ -198,7 +198,10 @@ function sa_ol_items_html(WC_Order $o): string
             if (in_array($row[0] ?? '', ['Total paid', 'Total due'], true)) { $row[0] = 'Order total'; }
         }
         unset($row);
-        return '<div style="margin:16px 0">' . sa_rcpt_items_html($d['items'], 'email', SA_RCPT_FONT)
+        // Woo's CSS inliner removes display:none nodes before mobile rules can reveal them.
+        // Keep the compact quantity/unit detail visible in this email-only summary.
+        $items_html = str_replace('display:none;mso-hide:all;max-height:0;overflow:hidden;', '', sa_rcpt_items_html($d['items'], 'email', SA_RCPT_FONT));
+        return '<div style="margin:16px 0">' . $items_html
             . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:8px;border-collapse:collapse">' . sa_rcpt_totals_html($d['totals'], SA_RCPT_FONT) . '</table></div>';
     }
     $rows = '';
