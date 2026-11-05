@@ -1,6 +1,6 @@
 <?php
 /**
- * First-order welcome discount: a personal 30% code for first-time customers
+ * November all-orders campaign plus historical personal 20% codes for first-time customers
  * who create an account or sign in (Google or code login) at checkout.
  *
  * Replaces the old shared WELCOME30. One use per customer, first order only,
@@ -65,7 +65,7 @@ final class SM_Welcome
         return $detail === '' ? '' : strtoupper((string) $c->{'get_' . $prefix . '_country'}());
     }
 
-    /** November 2026 campaign uses one explicit store-time boundary for all destinations. */
+    /** November 2026 campaign ends at midnight after November 30 in the delivery state timezone. */
     public static function campaign_active(): bool
     {
         $country = function_exists('WC') && WC()->customer ? self::offer_country() : '';
@@ -131,7 +131,7 @@ final class SM_Welcome
         if (!$valid || !str_starts_with(strtoupper((string) $coupon->get_code()), self::PREFIX)) {
             return $valid;
         }
-        if (!self::offer_destination_allowed()) {
+        if (self::campaign_active() && !self::offer_destination_allowed()) {
             throw new Exception(__('The first-order offer is for delivery in the US or Kenya. Enter your delivery address to use it.', 'supreme-marketing'));
         }
         $email = function_exists('WC') && WC()->customer ? (string) WC()->customer->get_billing_email() : '';
@@ -358,9 +358,6 @@ final class SM_Welcome
         if (!in_array('customer', (array) $user->roles, true) && !in_array('subscriber', (array) $user->roles, true)) {
             return null;
         }
-        if (!self::offer_destination_allowed()) {
-            return null; // Defer issuance until an actual eligible destination is entered.
-        }
         $email = strtolower($user->user_email);
         $norm = self::norm_email($email);
         $ip = self::ip();
@@ -542,7 +539,39 @@ final class SM_Welcome
     /* Auto-apply + redemption                                              */
     /* ------------------------------------------------------------------ */
 
-    /** Apply the signed-in customer's personal code silently when the cart allows it. */
+    public static function legacy_auto_apply(): void
+    {
+        if (!is_user_logged_in() || !function_exists('WC') || !WC()->cart || WC()->cart->is_empty() || !wc_coupons_enabled()) {
+            return;
+        }
+        $user = wp_get_current_user();
+        $active = self::active_code_for_email((string) $user->user_email);
+        if (!$active) {
+            return;
+        }
+        // Needs at least one eligible (non booking-fee) item.
+        $fee = (int) get_option('sa_svc_fee_product', 0);
+        $eligible = false;
+        foreach (WC()->cart->get_cart() as $item) {
+            $pid = (int) ($item['product_id'] ?? 0);
+            $vid = (int) ($item['variation_id'] ?? 0);
+            if ($fee <= 0 || ($pid !== $fee && $vid !== $fee)) {
+                $eligible = true;
+                break;
+            }
+        }
+        if (!$eligible) {
+            return;
+        }
+        $applied = WC()->cart->get_applied_coupons();
+        if ($applied) {
+            return; // personal code is individual_use; never push another coupon off
+        }
+        WC()->cart->apply_coupon($active['code']);
+    }
+
+
+    /** Automatic November campaign; unrelated coupon selections are preserved. */
     public static function auto_apply(): void
     {
         if (!function_exists('WC') || !WC()->cart || WC()->cart->is_empty() || !wc_coupons_enabled()) {
@@ -550,6 +579,7 @@ final class SM_Welcome
         }
         if (!self::offer_destination_allowed()) {
             if (WC()->cart->has_discount(self::NOVEMBER_CODE)) WC()->cart->remove_coupon(self::NOVEMBER_CODE);
+            if (!self::campaign_active()) self::legacy_auto_apply();
             return;
         }
         $applied = WC()->cart->get_applied_coupons();
@@ -583,7 +613,7 @@ final class SM_Welcome
             if (!$row) {
                 continue; // not one of ours
             }
-            if (!self::offer_destination_allowed()) {
+            if (self::campaign_active() && !self::offer_destination_allowed()) {
                 WC()->cart->remove_coupon($code);
                 wc_add_notice(__('The first-order offer is for delivery in the US or Kenya.', 'supreme-marketing'), 'error');
                 continue;

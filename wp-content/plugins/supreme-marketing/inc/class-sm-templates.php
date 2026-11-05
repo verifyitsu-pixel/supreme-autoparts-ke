@@ -330,7 +330,8 @@ final class SM_Templates
         $campaign = is_array($ctx['campaign'] ?? null) ? $ctx['campaign'] : [];
         $coupon = is_array($ctx['coupon'] ?? null) ? $ctx['coupon'] : null;
         $category = is_array($ctx['category'] ?? null) ? $ctx['category'] : null;
-        $welcome_code = (string) ($ctx['welcome_code'] ?? '');
+        $november_offer = class_exists('SM_Welcome') && SM_Welcome::campaign_active();
+        $welcome_code = $november_offer ? '' : (string) ($ctx['welcome_code'] ?? '');
         $welcome_expires = (string) ($ctx['welcome_expires'] ?? '');
 
         $shipping_line = $ke
@@ -370,9 +371,9 @@ final class SM_Templates
                     ['p' => 'Thank you so much for supporting Supreme Autoparts! A big thank-you from our garage to yours. Have a look around the parts store, and ask us if you need a hand with your car or motorcycle.'],
                 ];
                 if ($welcome_code !== '') {
-                    $blocks[] = ['coupon' => [$welcome_code, '30% off November orders', ($welcome_expires !== '' ? 'Valid until ' . $welcome_expires . '. ' : '') . 'One use. Applies automatically at checkout for orders delivered in the US or Kenya.']];
+                    $blocks[] = ['coupon' => [$welcome_code, '20% off your first order', ($welcome_expires !== '' ? 'Valid until ' . $welcome_expires . '. ' : '') . 'One use. Applies automatically at checkout for orders delivered in the US or Kenya.']];
                 } else {
-                    $blocks[] = ['p' => 'Orders delivered in the US or Kenya get 30% off and free shipping automatically at checkout during November. No minimum order amount. November offer ends November 30, 2026 in your delivery region.'];
+                    $blocks[] = ['p' => $november_offer ? 'Orders delivered in the US or Kenya get 30% off and free shipping automatically at checkout during November. No minimum order amount. Offer ends November 30, 2026 in your delivery region.' : 'Thanks for joining our garage. Explore the store for parts and fitment help.'];
                 }
                 $blocks[] = ['bullets' => [
                     'Not sure a part fits? Send your year, make, model or VIN and we confirm fitment before you pay',
@@ -386,8 +387,8 @@ final class SM_Templates
                 $blocks[] = ['button' => ['Shop parts', $shop]];
                 return [
                     'subject'   => $welcome_code !== ''
-                        ? 'November: 30% off and free shipping - welcome to Supreme Autoparts'
-                        : 'Welcome to Supreme Autoparts - 30% off November orders',
+                        ? 'Welcome to Supreme Autoparts - your welcome code is inside'
+                        : ($november_offer ? 'November: 30% off and free shipping' : 'Welcome to Supreme Autoparts'),
                     'preheader' => 'Genuine and aftermarket parts, fitment checked before you buy.',
                     'blocks'    => $blocks,
                 ];
@@ -480,13 +481,13 @@ final class SM_Templates
                 $blocks = [
                     ['h' => ($theme_line !== '' ? 'For your ' . $theme_line . ' work' : 'Ready when you are')],
                     ['p' => ($theme_line !== ''
-                        ? 'A look at the ' . $theme_line . ' side of the catalog - all in stock, and your 30% first-order code is below.'
+                        ? 'A look at the ' . $theme_line . ' side of the catalog - all in stock and ready to explore.'
                         : 'You have seen how we stock, check fitment and deliver. Whenever your car needs something, the store is organized to get you to the right part fast.')],
                 ];
                 if ($welcome_code !== '') {
-                    $blocks[] = ['coupon' => [$welcome_code, 'Your November 30% discount', ($welcome_expires !== '' ? 'Valid until ' . $welcome_expires . '. ' : '') . 'One use. Applies automatically at checkout for orders delivered in the US or Kenya.']];
+                    $blocks[] = ['coupon' => [$welcome_code, 'Your 20% first-order discount', ($welcome_expires !== '' ? 'Valid until ' . $welcome_expires . '. ' : '') . 'One use. Applies automatically at checkout for orders delivered in the US or Kenya.']];
                 } else {
-                    $blocks[] = ['p' => 'All orders get 30% off automatically at checkout for delivery in the US or Kenya, with no minimum order amount. November offer ends November 30, 2026 in your delivery region.'];
+                    $blocks[] = ['p' => $november_offer ? 'All US and Kenya orders get 30% off and free shipping automatically, with no minimum. Offer ends November 30, 2026 in your delivery region.' : 'Explore the in-stock catalog when your vehicle needs something.'];
                 }
                 if ($products) {
                     $blocks[] = ['p' => 'In-stock picks from the catalog:'];
@@ -497,8 +498,8 @@ final class SM_Templates
                 $blocks[] = ['button' => [($theme_line !== '' ? 'Shop ' . $theme_line . ' parts' : 'Go to the store'), $shop]];
                 $blocks[] = ['p' => 'This is the last email in your welcome series. From here you will hear from us when there is something worth sharing.'];
                 return [
-                    'subject'   => ($theme_line !== '' ? 'November 30% off, plus ' . $theme_line . ' picks' : 'Your first order, when you are ready'),
-                    'preheader' => 'Your first-order code and parts to explore.',
+                    'subject'   => ($theme_line !== '' ? ($november_offer ? 'November 30% off, plus ' : 'Explore ') . $theme_line . ' picks' : 'Your first order, when you are ready'),
+                    'preheader' => 'Parts to explore, with fitment help when you need it.',
                     'blocks'    => $blocks,
                 ];
 
