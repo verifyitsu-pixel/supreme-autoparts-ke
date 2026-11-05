@@ -15,7 +15,7 @@ ob_start(); ?>
 
 <p><?php printf(
     /* translators: %s: store name */
-    esc_html__('Welcome to the garage! Thanks for creating your account on %s.', 'supreme-autoparts'),
+    esc_html__('Welcome to the garage! Thank you so much for creating your account on %s.', 'supreme-autoparts'),
     esc_html($blogname)
 ); ?></p>
 

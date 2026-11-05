@@ -182,7 +182,7 @@ final class SM_Templates
     /** Standard help line, lives in the body (never the footer) per store rules. */
     public static function help_line(string $zone): string
     {
-        return 'Questions? <a href="' . esc_url(sm_whatsapp_url()) . '" style="color:' . self::INK . ';text-decoration:underline;font-weight:600;">Chat on WhatsApp</a> or reply to this email - a real person answers.';
+        return 'If you have any questions, feel free to bug us. <a href="' . esc_url(sm_whatsapp_url()) . '" style="color:' . self::INK . ';text-decoration:underline;font-weight:600;">Chat on WhatsApp</a> or just reply to this email.';
     }
 
     public static function b_help(string $zone): string
@@ -227,7 +227,7 @@ final class SM_Templates
         $email = (string) ($ctx['email'] ?? '');
         $zone = (string) ($ctx['zone'] ?? 'US');
         $biz = sm_business($zone);
-        return $text . "\n\nQuestions? Chat on WhatsApp: " . sm_whatsapp_url() . " or reply to this email.\n\n---\nSupreme Autoparts\n"
+        return $text . "\n\nIf you have any questions, feel free to bug us. Chat on WhatsApp: " . sm_whatsapp_url() . " or reply to this email.\n\n---\nSupreme Autoparts\n"
             . (string) $biz['one_line'] . "\n"
             . 'Unsubscribe: ' . sm_unsubscribe_url($email) . "\n"
             . 'Preferences: ' . sm_prefs_url($email) . "\n";
@@ -345,7 +345,7 @@ final class SM_Templates
                     'preheader' => 'One click to confirm you want store emails from us.',
                     'blocks'    => [
                         ['h' => 'Confirm your subscription'],
-                        ['p' => 'You asked to hear from Supreme Autoparts by email: new parts, restocks, offers and service reminders.'],
+                        ['p' => 'Thanks for asking to hear from our garage. Our emails cover new parts, restocks, offers and service reminders.'],
                         ['p' => 'Click below to confirm. If you did not request this, ignore this email and you will not be subscribed.'],
                         ['button' => ['Confirm my subscription', sm_confirm_url((string) ($ctx['email'] ?? ''))]],
                         ['p' => 'We send about one email a week. Every message includes an unsubscribe link.'],
@@ -357,7 +357,7 @@ final class SM_Templates
                     'subject'   => 'Want Supreme Autoparts updates by email?',
                     'preheader' => 'New parts, restocks and offers - only if you want them.',
                     'blocks'    => [
-                        ['h' => 'Stay in the loop, your call'],
+                        ['h' => 'Want to hear from our garage?'],
                         ['p' => 'You have ordered from Supreme Autoparts before. We are setting up store emails: new arrivals, restock notices, offers and service reminders.'],
                         ['p' => 'We will only send them if you say yes. Click below to opt in - if you do nothing, you will not receive marketing emails from us. Your order and account emails are not affected.'],
                         ['button' => ['Yes, keep me posted', sm_confirm_url((string) ($ctx['email'] ?? ''))]],
@@ -367,7 +367,7 @@ final class SM_Templates
             case 'welcome_1':
                 $blocks = [
                     ['h' => 'Welcome to Supreme Autoparts'],
-                    ['p' => 'You drive, we keep you driving. Genuine and quality aftermarket parts for cars, trucks, SUVs and motorcycles - engine, suspension, brakes, exhaust, performance and more - every one checked against the catalog before it ships.'],
+                    ['p' => 'Thank you so much for supporting Supreme Autoparts! A big thank-you from our garage to yours. Have a look around the parts store, and ask us if you need a hand with your car or motorcycle.'],
                 ];
                 if ($welcome_code !== '') {
                     $blocks[] = ['coupon' => [$welcome_code, '20% off your first order', ($welcome_expires !== '' ? 'Valid until ' . $welcome_expires . '. ' : '') . 'One use. Applies automatically at checkout when you are signed in.']];
@@ -498,17 +498,17 @@ final class SM_Templates
                 $blocks[] = ['p' => 'This is the last email in your welcome series. From here you will hear from us when there is something worth sharing.'];
                 return [
                     'subject'   => ($theme_line !== '' ? 'Your 20% first-order code, plus ' . $theme_line . ' picks' : 'Your first order, when you are ready'),
-                    'preheader' => 'Everything is set - the parts are waiting.',
+                    'preheader' => 'Your first-order code and parts to explore.',
                     'blocks'    => $blocks,
                 ];
 
             case 'cart_1':
                 return [
                     'subject'   => 'You left something in your cart',
-                    'preheader' => 'Your parts are still set aside.',
+                    'preheader' => 'The parts you picked are still in your cart.',
                     'blocks'    => [
                         ['h' => 'Your cart is waiting'],
-                        ['p' => 'You added these parts and stepped away before checkout. They are still in your cart:'],
+                        ['p' => 'You, yes you, picked out these parts. Here is what you left in your cart:'],
                         $cart ? ['cart' => [$cart['items'], $cart['total']]] : ['p' => 'Your selected parts are saved in your cart.'],
                         ['button' => ['Return to my cart', (string) ($ctx['cart_url'] ?? home_url('/cart/'))]],
                         ['p' => 'Not 100% sure a part fits? Reply with your year, make, model or VIN and we will confirm before you pay.'],
@@ -520,7 +520,7 @@ final class SM_Templates
                     'subject'   => 'Still thinking it over? Your cart is saved',
                     'preheader' => 'Fitment help, returns and your saved cart.',
                     'blocks'    => [
-                        ['h' => 'A few things worth knowing'],
+                        ['h' => 'Before you order'],
                         ['p' => 'Your cart is still saved. While you decide:'],
                         ['bullets' => [
                             'We check fitment on request before you pay - send your vehicle details',
@@ -538,7 +538,7 @@ final class SM_Templates
                     'preheader' => 'We will stop reminding you after this one.',
                     'blocks'    => [
                         ['h' => 'Final reminder'],
-                        ['p' => 'This is the last note about the parts in your cart - stock on popular parts moves, and we cannot hold items indefinitely.'],
+                        ['p' => 'One last note from our garage about the parts you picked. You can review them below; availability is checked at checkout.'],
                         $cart ? ['cart' => [$cart['items'], $cart['total']]] : ['p' => 'Your selected parts are saved in your cart.'],
                         ['button' => ['Check out now', (string) ($ctx['cart_url'] ?? home_url('/cart/'))]],
                         ['p' => 'If you decided not to order, no action needed - you will not hear about this cart again.'],
@@ -551,7 +551,7 @@ final class SM_Templates
                     'preheader' => 'You started checkout - finish when you are ready.',
                     'blocks'    => [
                         ['h' => 'Almost there'],
-                        ['p' => 'You started checkout on supremeautoparts.co.ke and stopped before payment. Everything you entered is saved - picking up where you left off takes under a minute.'],
+                        ['p' => 'You picked some parts and started checkout, but have not finished payment. Take another look at your order details when you are ready.'],
                         $cart ? ['cart' => [$cart['items'], $cart['total']]] : ['p' => 'Your selected parts are saved at checkout.'],
                         ['button' => ['Finish checkout', (string) ($ctx['cart_url'] ?? home_url('/checkout/'))]],
                         ['p' => $ke
@@ -566,10 +566,9 @@ final class SM_Templates
                     'preheader' => 'We can help with payment, fitment or delivery questions.',
                     'blocks'    => [
                         ['h' => 'We can help'],
-                        ['p' => 'Your checkout is still open. If something got in the way - a payment step, a delivery question, a fitment doubt - tell us and we will fix it with you.'],
+                        ['p' => 'Need a hand with the parts you picked? If payment, delivery or fitment got in the way, tell us what happened.'],
                         $cart ? ['cart' => [$cart['items'], $cart['total']]] : ['p' => 'Your selected parts are saved at checkout.'],
                         ['button' => ['Return to checkout', (string) ($ctx['cart_url'] ?? home_url('/checkout/'))]],
-                        ['p' => 'You can also reply to this email and a real person will answer.'],
                     ],
                 ];
 
@@ -613,8 +612,8 @@ final class SM_Templates
                     'preheader' => 'A quick check-in from Supreme Autoparts.',
                     'blocks'    => [
                         ['h' => 'Checking in'],
-                        ['p' => 'Your recent order should have arrived by now. If anything was damaged, missing or not what you expected, tell us and we will make it right.'],
-                        ['p' => 'And if you need help with fitment or installation, we are one reply away.'],
+                        ['p' => 'A quick check-in from our garage about your recent order. If anything is damaged, missing or not what you expected, reply with your order number.'],
+                        ['p' => 'Need a hand with fitment or installation? Tell us which parts you are working with.'],
                         ['button' => ['Review my order', (string) ($order['url'] ?? $account)]],
                     ],
                 ];
@@ -622,11 +621,11 @@ final class SM_Templates
             case 'post_3':
                 return [
                     'subject'   => 'How did we do? Two lines is enough',
-                    'preheader' => 'Your feedback shapes what we stock next.',
+                    'preheader' => 'Tell our garage how your order went.',
                     'blocks'    => [
-                        ['h' => 'Two lines, honestly'],
+                        ['h' => 'How did your order go?'],
                         ['p' => 'You ordered from Supreme Autoparts recently. How was the experience - the part, the fit, the delivery speed?'],
-                        ['p' => 'A short reply to this email is all it takes. It helps us fix what is broken and stock more of what drivers actually need.'],
+                        ['p' => 'A short reply is all it takes. Tell us what worked and what needs a fix.'],
                         ['button' => ['Leave a review', (string) ($ctx['review_url'] ?? $account)]],
                     ],
                 ];
@@ -688,7 +687,7 @@ final class SM_Templates
                     $blocks[] = ['p' => ($rot_label !== '' ? 'In-stock picks from the ' . $rot_label . ' shelf:' : 'In-stock picks from the catalog:')];
                     $blocks[] = ['products' => $products];
                 } else {
-                    $blocks[] = ['p' => 'Nothing fresh on this shelf right now - the catalog is ready when you are.'];
+                    $blocks[] = ['p' => 'Nothing new on this shelf right now. Have a look around the rest of the store.'];
                 }
                 $blocks[] = ['button' => [($rot_label !== '' ? 'Shop ' . $rot_label : 'Browse the catalog'), $shop]];
                 $subject = trim((string) ($ai['subject'] ?? ''));

@@ -100,3 +100,10 @@ echo "PASS companion pictures for application/booking/estimate/return/invoice; u
 $reset=sa_customer_mail_layout('Reset your password','<p>If you did not request a reset, ignore this email.</p><a href="https://fixture.invalid/exact-reset">Reset</a>');
 if(strpos($reset,'Questions? Reply')!==false||strpos($reset,'https://fixture.invalid/exact-reset')===false||sa_email_context('reset body','customer_reset_password')!=='none')throw new Exception('Reset repeated-help suppression failed');
 echo "PASS reset body/link retained, shared request warning and generic reply line omitted.\n";
+
+$voice=sa_customer_mail_layout('Your invoice','<p>Thank you so much for supporting Supreme Autoparts! Feel free to bug us.</p>');
+if(substr_count(strtolower($voice),'feel free to bug us')!==1)throw new Exception('Repeated confirmation help');
+$voice=sa_customer_mail_layout('Your update','<p>Your existing purpose details.</p>');
+if(strpos($voice,'If you have any questions, feel free to bug us.')===false)throw new Exception('Confirmation help voice missing');
+foreach(['Your order is with the courier.','A big thank-you from our garage to yours!','If your bank shows a debit, contact us before trying again.','This update is not confirmation that your bank has credited the amount.'] as $text)if(strpos($s,$text)===false)throw new Exception('Purpose copy lost: '.$text);
+echo "PASS confirmation wording mapped to shared help and lifecycle, no repeated help, failed-payment/refund safeguards retained.\n";
