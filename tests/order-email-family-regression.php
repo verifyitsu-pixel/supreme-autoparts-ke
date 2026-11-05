@@ -7,7 +7,11 @@ function esc_html($s){return htmlspecialchars((string)$s,ENT_QUOTES);}
 function esc_attr($s){return esc_html($s);}
 function esc_url($s){return esc_html($s);}
 function wp_date($f){return '2026';}
-function sa_email_footer_business($c){return ['one_line'=>'Nairobi, Kenya','phone_display'=>'+254 714 498 451'];}
+function add_action(...$args){}
+function add_filter(...$args){}
+function WC(){return (object)['countries'=>new class{function get_continent_code_for_country($c){return in_array($c,['KE','UG','TZ'])?'AF':'NA';}}];}
+function sa_geo_business($c){return ['one_line'=>$c==='KE'?'Nairobi, Kenya':'12800 NE Sandy Blvd, Portland, OR 97230','phone_display'=>$c==='KE'?'+254 714 498 451':'+1 917 437 5121','whatsapp'=>$c==='KE'?'254714498451':'19174375121'];}
+require __DIR__.'/../wp-content/plugins/supreme-autoparts-core/includes/email-footer.php';
 function sa_rcpt_order_data($o){if(isset($GLOBALS['sa_test_receipt']))return $GLOBALS['sa_test_receipt'];return ['date'=>'04 November 2026','bill'=>['Test Customer','Nairobi, Kenya'],'ship'=>['Test Customer','Nairobi, Kenya'],'view_url'=>home_url('/track-order/')];}
 function sa_rcpt_lines($lines,$html=true){return implode('<br>',array_map('esc_html',$lines));}
 function sa_ol_stage_labels(){return ['staged'=>'Staged to ship','cancelled'=>'Cancelled'];}
@@ -18,6 +22,7 @@ require __DIR__.'/../wp-content/plugins/sa-brevo-mail/includes/class-brevo-maile
 $n=0;
 foreach(['processing','on-hold','awaiting-info','staged','shipped','out-for-delivery','delivered','ready-pickup','completed','cancelled','refunded','failed'] as $stage){
  $h=sa_ol_family_layout(new WC_Order,($stage==='cancelled'?'Your order has been cancelled.':($stage==='staged'?'Your order is staged to ship':ucwords(str_replace('-',' ',$stage)))),($stage==='cancelled'?'<p>Hello Test Customer,</p><p>We are sorry it did not work out. If you need help finding something different, let us know.</p><p>Order #TEST-76318 has been cancelled.</p><p>If there is anything else we can do for you, please reply to this email.</p>':'<p>Hello Test Customer,</p><p>Your order update. Reply if you need a hand.</p>'),'View your order',home_url('/track-order/'),'Order update',$stage);
+ if(strpos($h,'+254')!==false||strpos($h,'254714498451')!==false)throw new Exception('Kenyan number in stage email');
  foreach(['sa-email-brand-header','SHOP','GARAGE','HELP','YOUR ORDER','SHIPPING DETAILS','PAYMENT METHOD','Privacy policy','not a confirmed fitment match'] as $token){if($token==='not a confirmed fitment match'||($stage==='cancelled'&&in_array($token,['SHIPPING DETAILS','PAYMENT METHOD'])))continue; if(strpos($h,$token)===false)throw new Exception($stage.': missing '.$token);$n++;}
  if(substr_count($h,'sa-email-brand-header')!==1||SA_Brevo_Mailer::brand_html(SA_Brevo_Mailer::brand_html($h))!==$h)throw new Exception('Duplicate branding');$n++;
  if(strpos($h,'worldwidecyclery')!==false||strpos($h,'Nothing was charged')!==false)throw new Exception('Source leakage');$n++;
@@ -62,3 +67,21 @@ echo "PASS 2 real stage adapter paid/unpaid neutral totals checks; refund amount
 
 foreach(['This cancellation email does not confirm a refund','your payment will be refunded'] as $unverified){if(strpos($s,$unverified)!==false)throw new Exception('Unasked cancellation refund wording');}
 echo "PASS cancellation source-led short copy, no refund promise/disclaimer.\n";
+
+foreach(['KE','UG','US'] as $country){
+ $b=sa_email_footer_business($country);
+ // Fallback without WC treats KE as African; actual WC continent lookup is covered below.
+ if(in_array($country,['KE','UG']) && $b['phone_display']!=='')throw new Exception('KE business phone retained');
+ if($country==='US' && $b['phone_display']!=='+1 917 437 5121')throw new Exception('US phone removed');
+ foreach(['order','pickup_order','delivery','delivered','generic','contact'] as $ctx){
+  $h=sa_email_help_html($country,$ctx).sa_email_footer_html($country);
+  if(strpos($h,'+254')!==false||strpos($h,'tel:+254')!==false)throw new Exception('Kenyan phone in shared footer/help');
+  if($country==='KE'&&$ctx==='order'&&strpos($h,'Request roadside help')===false)throw new Exception('Roadside link removed');
+ }
+}
+$us=sa_customer_mail_layout('Your update','<p>Existing details</p>','','','Update','','US');
+if(strpos($us,'+1 917 437 5121')===false||strpos($us,'12800 NE Sandy Blvd')===false)throw new Exception('US contacts changed');
+$ke=sa_customer_mail_layout('Your update','<p>Existing details</p>','','','Update','','KE');
+if(strpos($ke,'+254')!==false||strpos($ke,'Nairobi, Kenya')===false)throw new Exception('KE presentation changed beyond phone');
+if(getenv('SA_EMAIL_RENDER_DIR')){file_put_contents(getenv('SA_EMAIL_RENDER_DIR').'/us-companion.html',$us);file_put_contents(getenv('SA_EMAIL_RENDER_DIR').'/ke-companion.html',$ke);file_put_contents(getenv('SA_EMAIL_RENDER_DIR').'/ke-help.html',sa_email_help_html('KE','order').sa_email_footer_html('KE'));}
+echo "PASS phone removal in real shared helpers and all stage/companion renders; US contact, KE postal, roadside link retained. No sends.\n";

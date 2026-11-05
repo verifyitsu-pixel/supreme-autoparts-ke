@@ -13,11 +13,16 @@ function sa_email_footer_business(string $country = ''): array
     $africa = function_exists('WC') && WC()->countries
         ? WC()->countries->get_continent_code_for_country($country) === 'AF'
         : $country === 'KE';
-    return function_exists('sa_geo_business') ? sa_geo_business($africa ? 'KE' : 'US') : [
+    $business = function_exists('sa_geo_business') ? sa_geo_business($africa ? 'KE' : 'US') : [
         'one_line' => $africa ? 'Ground Floor, Midax Plaza, Kangundo Rd, Njiru, Nairobi, Kenya' : '12800 NE Sandy Blvd, Portland, OR 97230',
-        'phone_display' => $africa ? '+254 714 498 451' : '+1 917 437 5121',
+        'phone_display' => $africa ? '' : '+1 917 437 5121',
         'whatsapp' => $africa ? '254714498451' : '19174375121',
     ];
+    // Email presentation only: keep regional addresses and website contacts unchanged.
+    if ($africa) {
+        $business['phone_display'] = '';
+    }
+    return $business;
 }
 
 /** Dark mode overrides shared by every email. The content card stays white so inline colours inside it keep their contrast; page background, footer card and footer logo switch. */
@@ -164,7 +169,7 @@ function sa_email_help_html(string $country = '', string $ctx = 'generic'): stri
     // Roadside rescue is a Nairobi service: mention it only in African-region help blocks on order emails.
     $roadside = '';
     if ($business['whatsapp'] === '254714498451' && in_array($ctx, ['order', 'pickup_order', 'pickup', 'delivery', 'delivered'], true)) {
-        $roadside = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #e4e4e0">Car trouble? <a href="' . esc_url(home_url('/roadside/')) . '" style="color:#333333;text-decoration:underline">Request roadside help</a> or call <a href="tel:+254714498451" style="color:#333333;text-decoration:underline;white-space:nowrap">+254 714 498 451</a>.</div>';
+        $roadside = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #e4e4e0">Car trouble? <a href="' . esc_url(home_url('/roadside/')) . '" style="color:#333333;text-decoration:underline">Request roadside help</a>.</div>';
     }
     return '<!--sa-email-help--><div class="sa-help" style="margin:20px 0 4px;padding:16px 0 0;border-top:1px solid #e4e4e0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.65;color:#555555">'
         . '<div>' . esc_html(sa_email_help_lead($ctx))
