@@ -96,3 +96,7 @@ echo "PASS sender-address scope: KE transaction omitted, US retained, marketing/
 foreach(['Your application is saved','Booking received','Your estimate is ready','Return approved','Your invoice'] as $h){$v=sa_customer_mail_layout($h,'<p>Existing information</p>');if(strpos($v,'order-email-family-banner.jpg')===false)throw new Exception('Missing companion picture: '.$h);}
 foreach(['Your login code','Reset your password','Roadside request'] as $h){$v=sa_customer_mail_layout($h,'<p>Urgent information</p>');if(strpos($v,'order-email-family-banner.jpg')!==false)throw new Exception('Urgent action buried: '.$h);}
 echo "PASS companion pictures for application/booking/estimate/return/invoice; urgent login/password/roadside action remains first.\n";
+
+$reset=sa_customer_mail_layout('Reset your password','<p>If you did not request a reset, ignore this email.</p><a href="https://fixture.invalid/exact-reset">Reset</a>');
+if(strpos($reset,'Questions? Reply')!==false||strpos($reset,'https://fixture.invalid/exact-reset')===false||sa_email_context('reset body','customer_reset_password')!=='none')throw new Exception('Reset repeated-help suppression failed');
+echo "PASS reset body/link retained, shared request warning and generic reply line omitted.\n";

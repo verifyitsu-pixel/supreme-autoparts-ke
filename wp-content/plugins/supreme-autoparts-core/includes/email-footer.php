@@ -93,6 +93,10 @@ function sa_email_context(string $message, string $woo_id = '', bool $customer =
     if (!$customer) {
         return 'none';
     }
+    // Woo's reset template already carries its own request-security instructions.
+    if ($woo_id === 'customer_reset_password') {
+        return 'none';
+    }
     $has = static fn(string $needle): bool => stripos($message, $needle) !== false;
     if ($has('sa-otp-mail') || $has('Never share the code') || $has('Is this really us?') || $has('Need us now?') || $has('Need help? calvin@')) {
         return 'none';
@@ -342,3 +346,9 @@ add_action('woocommerce_email_before_order_table', static function ($order = nul
         $GLOBALS['sa_email_current'] = $email;
     }
 }, 1, 4);
+
+// Remove only Woo's default reset-email sign-off. Preserve owner-written additional content.
+add_filter('woocommerce_email_additional_content_customer_reset_password', static function ($text): string {
+    $plain = trim(wp_strip_all_tags((string)$text));
+    return in_array($plain, ['Thanks for reading.', __('Thanks for reading.', 'woocommerce')], true) ? '' : (string)$text;
+}, 100);
