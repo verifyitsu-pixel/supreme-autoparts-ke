@@ -107,3 +107,8 @@ $voice=sa_customer_mail_layout('Your update','<p>Your existing purpose details.<
 if(strpos($voice,'If you have any questions, feel free to bug us.')===false)throw new Exception('Confirmation help voice missing');
 foreach(['Your order is with the courier.','A big thank-you from our garage to yours!','If your bank shows a debit, contact us before trying again.','This update is not confirmation that your bank has credited the amount.'] as $text)if(strpos($s,$text)===false)throw new Exception('Purpose copy lost: '.$text);
 echo "PASS confirmation wording mapped to shared help and lifecycle, no repeated help, failed-payment/refund safeguards retained.\n";
+$layout_source=file_get_contents(__DIR__.'/../wp-content/plugins/supreme-autoparts-core/includes/order-email-family.php');
+foreach(['.sa-family .sa-hide-sm{display:none!important}', '.sa-family .sa-show-sm{display:block!important;max-height:none!important;overflow:visible!important}'] as $css)if(strpos($layout_source,$css)===false)throw new Exception('Lifecycle mobile item presentation missing');
+$marketing_source=file_get_contents(__DIR__.'/../wp-content/plugins/supreme-marketing/inc/class-sm-templates.php');
+foreach(['Your selected parts are saved at checkout.','Your selected parts are saved in your cart.','Your cart is still saved.'] as $claim)if(strpos($marketing_source,$claim)!==false)throw new Exception('Unverified cart persistence claim');
+echo "PASS scoped mobile qty/unit stacking and no unverified cart persistence copy.\n";

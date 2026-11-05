@@ -505,11 +505,11 @@ final class SM_Templates
             case 'cart_1':
                 return [
                     'subject'   => 'You left something in your cart',
-                    'preheader' => 'The parts you picked are still in your cart.',
+                    'preheader' => 'Take another look at the parts you picked.',
                     'blocks'    => [
-                        ['h' => 'Your cart is waiting'],
+                        ['h' => 'Take another look'],
                         ['p' => 'You, yes you, picked out these parts. Here is what you left in your cart:'],
-                        $cart ? ['cart' => [$cart['items'], $cart['total']]] : ['p' => 'Your selected parts are saved in your cart.'],
+                        $cart ? ['cart' => [$cart['items'], $cart['total']]] : ['p' => 'Review your selection and availability in the store.'],
                         ['button' => ['Return to my cart', (string) ($ctx['cart_url'] ?? home_url('/cart/'))]],
                         ['p' => 'Not 100% sure a part fits? Reply with your year, make, model or VIN and we will confirm before you pay.'],
                     ],
@@ -517,17 +517,17 @@ final class SM_Templates
 
             case 'cart_2':
                 return [
-                    'subject'   => 'Still thinking it over? Your cart is saved',
-                    'preheader' => 'Fitment help, returns and your saved cart.',
+                    'subject'   => 'Still thinking it over? Take another look',
+                    'preheader' => 'Fitment help, returns and the parts you picked.',
                     'blocks'    => [
                         ['h' => 'Before you order'],
-                        ['p' => 'Your cart is still saved. While you decide:'],
+                        ['p' => 'Still thinking about those parts? While you decide:'],
                         ['bullets' => [
                             'We check fitment on request before you pay - send your vehicle details',
                             '15-day returns if a part is not right',
                             $shipping_line,
                         ]],
-                        $cart ? ['cart' => [$cart['items'], $cart['total']]] : ['p' => 'Your selected parts are saved in your cart.'],
+                        $cart ? ['cart' => [$cart['items'], $cart['total']]] : ['p' => 'Review your selection and availability in the store.'],
                         ['button' => ['Complete my order', (string) ($ctx['cart_url'] ?? home_url('/cart/'))]],
                     ],
                 ];
@@ -539,7 +539,7 @@ final class SM_Templates
                     'blocks'    => [
                         ['h' => 'Final reminder'],
                         ['p' => 'One last note from our garage about the parts you picked. You can review them below; availability is checked at checkout.'],
-                        $cart ? ['cart' => [$cart['items'], $cart['total']]] : ['p' => 'Your selected parts are saved in your cart.'],
+                        $cart ? ['cart' => [$cart['items'], $cart['total']]] : ['p' => 'Review your selection and availability in the store.'],
                         ['button' => ['Check out now', (string) ($ctx['cart_url'] ?? home_url('/cart/'))]],
                         ['p' => 'If you decided not to order, no action needed - you will not hear about this cart again.'],
                     ],
@@ -552,7 +552,7 @@ final class SM_Templates
                     'blocks'    => [
                         ['h' => 'Almost there'],
                         ['p' => 'You picked some parts and started checkout, but have not finished payment. Take another look at your order details when you are ready.'],
-                        $cart ? ['cart' => [$cart['items'], $cart['total']]] : ['p' => 'Your selected parts are saved at checkout.'],
+                        $cart ? ['cart' => [$cart['items'], $cart['total']]] : ['p' => 'Review your selection and availability at checkout.'],
                         ['button' => ['Finish checkout', (string) ($ctx['cart_url'] ?? home_url('/checkout/'))]],
                         ['p' => $ke
                             ? 'Payment trouble or a question about delivery or pickup? Reply and we will sort it out.'
@@ -567,7 +567,7 @@ final class SM_Templates
                     'blocks'    => [
                         ['h' => 'We can help'],
                         ['p' => 'Need a hand with the parts you picked? If payment, delivery or fitment got in the way, tell us what happened.'],
-                        $cart ? ['cart' => [$cart['items'], $cart['total']]] : ['p' => 'Your selected parts are saved at checkout.'],
+                        $cart ? ['cart' => [$cart['items'], $cart['total']]] : ['p' => 'Review your selection and availability at checkout.'],
                         ['button' => ['Return to checkout', (string) ($ctx['cart_url'] ?? home_url('/checkout/'))]],
                     ],
                 ];
