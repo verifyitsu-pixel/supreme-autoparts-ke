@@ -246,6 +246,9 @@ function sm_product_price(WC_Product $p, string $zone = 'US'): string
 /** Absolute product image URL ('' when none); uses the store's email-safe image helper. */
 function sm_product_image(WC_Product $p): string
 {
+    if (function_exists('sa_core_product_image_on_hold') && sa_core_product_image_on_hold($p)) {
+        return ''; // A deliberate imagery hold must not fall through to local attachments.
+    }
     if (function_exists('sa_core_get_product_email_image_url')) {
         $src = sa_core_get_product_email_image_url($p, 300);
         if (is_string($src) && $src !== '') {
