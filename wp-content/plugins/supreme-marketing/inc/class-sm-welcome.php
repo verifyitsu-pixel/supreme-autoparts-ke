@@ -221,6 +221,16 @@ final class SM_Welcome
             || !self::offer_destination_allowed() || !function_exists('WC') || !WC()->customer || !class_exists('WC_Shipping_Rate')) {
             return $rates;
         }
+        // Woo preserves a still-valid paid standard method without calling its chosen-method filter.
+        // Migrate only standard delivery selections; leave explicit priority/express choices alone.
+        if (WC()->session) {
+            $chosen = (array) WC()->session->get('chosen_shipping_methods', []);
+            foreach ($chosen as $index => $method) {
+                $rate = $rates[$method] ?? null;
+                if ($rate instanceof WC_Shipping_Rate && (float)$rate->get_cost() > 0 && stripos($rate->get_label(), 'standard') !== false) $chosen[$index] = 'sm_first_order_free';
+            }
+            WC()->session->set('chosen_shipping_methods', $chosen);
+        }
         return ['sm_first_order_free' => new WC_Shipping_Rate('sm_first_order_free', 'Free delivery - November offer', 0, [], 'sm_first_order_free')] + $rates;
     }
 
