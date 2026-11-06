@@ -14,6 +14,6 @@ foreach([[false,true,true],[true,true,true],[false,false,true],[false,true,false
 echo 'PASS actual stock branch new-special/update/normal/unavailable regressions'.PHP_EOL;
 // Custom cart: the theme prints no Woo backorder notification, so the mu-plugin labels the cart line itself.
 $GLOBALS['fixture_product']->meta='yes';$cart=$GLOBALS['actions']['woocommerce_after_cart_item_name'];
-ob_start();$cart(['data'=>$GLOBALS['fixture_product']],'k');$h=ob_get_clean();if(!str_contains($h,'Special order')||!str_contains($h,'not confirmed'))throw new Exception('custom cart label');
+ob_start();$cart(['data'=>$GLOBALS['fixture_product']],'k');$h=ob_get_clean();if(!str_contains($h,'Special order')||str_contains($h,'not confirmed'))throw new Exception('custom cart label');
 $GLOBALS['fixture_product']->meta='';ob_start();$cart(['data'=>$GLOBALS['fixture_product']],'k');$h=ob_get_clean();if($h!=='')throw new Exception('existing cart line changed');
 echo 'PASS custom cart line labels new special-order items; unmarked existing cart lines unchanged'.PHP_EOL;
