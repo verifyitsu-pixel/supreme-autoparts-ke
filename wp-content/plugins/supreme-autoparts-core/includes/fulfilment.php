@@ -53,6 +53,29 @@ function sa_ff_lead_days($product): int
     $id = $product->get_parent_id() ?: $product->get_id();
     return max(0, (int) get_post_meta($id, '_sa_stock_lead_days', true));
 }
+/** Only newly source-marked special orders with no verified lead time. */
+function sa_ff_unknown_special_order($product): bool
+{
+    return $product instanceof WC_Product
+        && $product->get_meta('_sa_source_special_order') === 'yes'
+        && $product->is_on_backorder(1)
+        && (string) $product->get_meta('_sa_stock_lead_days') === '';
+}
+function sa_ff_contents_unknown_special_order(array $contents): bool
+{
+    foreach ($contents as $item) {
+        if (sa_ff_unknown_special_order($item['data'] ?? null)) {
+            return true;
+        }
+    }
+    return false;
+}
+function sa_ff_cart_unknown_special_order(): bool
+{
+    return function_exists('WC') && WC()->cart
+        && sa_ff_contents_unknown_special_order(WC()->cart->get_cart());
+}
+
 function sa_ff_contents_lead(array $contents): int
 {
     $l = 0;
@@ -243,6 +266,15 @@ add_filter('woocommerce_package_rates', static function ($rates, $package) {
     if ($cc !== 'KE') {
         return $rates;
     }
+    if (sa_ff_contents_unknown_special_order((array) ($package['contents'] ?? []))) {
+        foreach ($rates as $rate) {
+            if (is_object($rate) && method_exists($rate, 'set_label')) {
+                $label = preg_replace('/\s*·\s*Estimated.*$/u', '', $rate->get_label());
+                $rate->set_label($label . ' · Special order: dates not confirmed');
+            }
+        }
+        return $rates;
+    }
     $lead = sa_ff_contents_lead((array) ($package['contents'] ?? []));
     foreach ($rates as $rate) {
         if (!is_object($rate) || !method_exists($rate, 'set_label')) {
@@ -304,6 +336,10 @@ add_action('woocommerce_review_order_after_shipping', static function (): void {
     if (!sa_pk_chosen()) {
         return;
     }
+    if (sa_ff_cart_unknown_special_order()) {
+        echo '<tr class="sa-pk-row"><td colspan="2">Special order. Delivery and collection dates are not confirmed.</td></tr>';
+        return;
+    }
     $cur = WC()->session ? (string) WC()->session->get('sa_pickup_slot') : '';
     $slots = sa_pk_slots(sa_pk_cart_lead());
     echo '<tr class="sa-pk-row"><td colspan="2"><div class="sa-pk"><strong>Pickup time</strong>'
@@ -329,6 +365,9 @@ add_action('woocommerce_after_checkout_validation', static function ($data, $err
     if (!sa_pk_chosen()) {
         return;
     }
+    if (sa_ff_cart_unknown_special_order()) {
+        return;
+    }
     $v = sanitize_text_field(wp_unslash((string) ($_POST['sa_pickup_slot'] ?? '')));
     $ok = false;
     foreach (sa_pk_slots(sa_pk_cart_lead()) as $s) {
@@ -344,7 +383,7 @@ add_action('woocommerce_after_checkout_validation', static function ($data, $err
     }
 }, 10, 2);
 add_action('woocommerce_checkout_create_order', static function ($order): void {
-    if (sa_pk_chosen()) {
+    if (sa_pk_chosen() && !sa_ff_cart_unknown_special_order()) {
         $v = sanitize_text_field(wp_unslash((string) ($_POST['sa_pickup_slot'] ?? '')));
         if (str_contains($v, '|')) {
             [$d, $t] = explode('|', $v, 2);
@@ -450,6 +489,10 @@ add_action('sa_pk_reminders', static function (): void {
 add_action('woocommerce_single_product_summary', static function (): void {
     global $product;
     if (!$product instanceof WC_Product || !$product->needs_shipping() || !function_exists('WC') || !WC()->customer) {
+        return;
+    }
+    if (sa_ff_unknown_special_order($product)) {
+        echo '<div class="sa-ff-pdp"><div><strong>Special order</strong><span>Delivery and collection dates are not confirmed.</span></div></div>';
         return;
     }
     $c = WC()->customer;
