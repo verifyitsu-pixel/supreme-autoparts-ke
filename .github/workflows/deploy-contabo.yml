@@ -7,12 +7,8 @@ name: Test and deploy to Contabo
 on:
   push:
     branches: [main]
-    paths:
-      - 'wp-content/**'
-      - 'healthz.php'
-      - 'llms.txt'
-      - 'llms-full.txt'
-      - '.github/workflows/deploy-contabo.yml'
+  # Every push to main is tested; a push that changes no deployed code deploys nothing
+  # (the server compares and skips). So docs/tests/scripts/data-only commits never touch the live site.
   workflow_dispatch:
 
 permissions:
@@ -35,7 +31,7 @@ jobs:
       - name: Regression tests (isolated, no network, no payments)
         run: |
           set -e
-          for t in careers-payment-regression careers-terms-presentation-regression catalog-display-currency-regression feed-stream-regression hold-review-presentation-regression kenya-market-regression native-email-wording-regression open-pay-gateway-regression order-email-family-regression order-email-transport-brand-regression order-reference-regression paid-confirmation-routing-regression payment-visibility-regression paystack-availability-regression paystack-card-display-regression processor-billing-prefill-regression product-card-shipping-copy-regression product-image-policy-regression storefront-region-regression whop-express-quote-regression whop-payment-validation-regression; do
+          for t in careers-payment-regression careers-provider-verification-regression careers-redirect-contract-regression careers-terms-presentation-regression catalog-display-currency-regression feed-stream-regression hold-review-presentation-regression kenya-market-regression native-email-wording-regression open-pay-gateway-regression order-email-family-regression order-email-transport-brand-regression order-reference-regression paid-confirmation-routing-regression payment-visibility-regression paystack-availability-regression paystack-card-display-regression processor-billing-prefill-regression product-card-shipping-copy-regression product-image-policy-regression storefront-region-regression whop-express-quote-regression whop-payment-validation-regression; do
             echo "== $t"; php tests/$t.php
           done
 
