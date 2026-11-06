@@ -245,10 +245,19 @@ function sa_core_otp_can_send(string $email)
     return true;
 }
 
-function sa_core_otp_mark_send(string $email): void
+/**
+ * Record a send attempt. The per-send cooldown always applies. The hourly email
+ * and IP caps count only sends that were actually delivered to the mail API:
+ * a transient mail outage must not burn the customer's hourly allowance and
+ * lock them out for an hour with no code ever sent.
+ */
+function sa_core_otp_mark_send(string $email, bool $delivered = true): void
 {
     $email = strtolower(trim($email));
     set_transient('sa_otp_cool_' . hash('sha256', $email), time(), SA_OTP_SEND_COOLDOWN + 5);
+    if (!$delivered) {
+        return;
+    }
 
     $hour_key = 'sa_otp_hour_' . hash('sha256', $email);
     $count = (int) get_transient($hour_key);
@@ -292,7 +301,7 @@ function sa_core_otp_send(string $email)
 
     $sent = sa_core_email_login_otp($user, $code);
     $code = ''; // scrub
-    sa_core_otp_mark_send($email);
+    sa_core_otp_mark_send($email, (bool) $sent);
 
     if (!$sent) {
         delete_transient(sa_core_otp_email_key($email));

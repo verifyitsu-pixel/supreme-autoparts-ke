@@ -6,6 +6,16 @@ if (!defined('ABSPATH')) {
 }
 
 /**
+ * This host has no working IPv6 route. Resolve api.brevo.com over IPv4 so a
+ * dead AAAA address cannot stall or fail the connection.
+ */
+add_action('http_api_curl', static function ($handle, $parsed_args, $url): void {
+    if (defined('CURL_IPRESOLVE_V4') && parse_url((string) $url, PHP_URL_HOST) === 'api.brevo.com') {
+        curl_setopt($handle, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+    }
+}, 10, 3);
+
+/**
  * Thin Brevo REST client (api.brevo.com/v3).
  */
 class SA_Brevo_API
@@ -38,7 +48,13 @@ class SA_Brevo_API
             $args['body'] = wp_json_encode($body);
         }
 
-        $response = wp_remote_request($url, $args);
+        // Retry once only when the connection was never established (cURL 6 DNS,
+        // 7 connect): nothing reached Brevo, so a resend cannot duplicate mail.
+        $tries = 0;
+        do {
+            $response = wp_remote_request($url, $args);
+            $tries++;
+        } while (is_wp_error($response) && $tries < 2 && preg_match('/cURL error (6|7):/', $response->get_error_message()) === 1);
         if (is_wp_error($response)) {
             return [
                 'ok'    => false,
