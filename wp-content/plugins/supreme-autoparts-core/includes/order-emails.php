@@ -48,7 +48,7 @@ function sa_core_confirmation_unlock(WC_Order $order): void
 add_filter('woocommerce_email_enabled_customer_processing_order', static function($enabled,$order) {
     if (!$order instanceof WC_Order) return $enabled;
     if (($GLOBALS['sa_force_paid_confirmation'] ?? 0) === (int)$order->get_id()) $enabled = true;
-    return $enabled && sa_core_order_is_verified_paid($order) && !sa_core_paid_confirmation_sent($order);
+    return $enabled && sa_core_order_is_verified_paid($order) && (!sa_core_paid_confirmation_sent($order) || sa_core_manual_confirmation_scope($order));
 }, 60, 2);
 
 function sa_core_mark_paid_confirmation(WC_Order $order): void
@@ -149,7 +149,9 @@ add_filter('woocommerce_mail_callback', static function($callback,$email) {
             $fresh=sa_core_confirmation_fresh_order($order);
             if (!$fresh || !hash_equals($rendered_fingerprint,sa_core_confirmation_snapshot($fresh)) || !sa_core_order_is_verified_paid($fresh)) return false;
             // Use only fresh state for bookkeeping; the rendered message stays unchanged.
-            if (sa_core_paid_confirmation_sent($fresh) || !sa_core_order_is_verified_paid($fresh) || $fresh->get_meta('_sa_paid_confirmation_pending') === '1') return false;
+            if ((sa_core_paid_confirmation_sent($fresh) && !sa_core_manual_confirmation_scope($fresh, $email)) || !sa_core_order_is_verified_paid($fresh) || $fresh->get_meta('_sa_paid_confirmation_pending') === '1') return false;
+            $manual = sa_core_manual_confirmation_scope($fresh, $email);
+            if ($manual) { $GLOBALS['sa_manual_confirmation']['used'] = true; }
             // A crash/exception after acceptance is ambiguous. Never retry it blindly.
             $fresh->update_meta_data('_sa_paid_confirmation_pending','1');
             $fresh->save();
@@ -165,6 +167,10 @@ add_filter('woocommerce_mail_callback', static function($callback,$email) {
             }
             // Persist while still serialized, before Woo emits email_sent.
             sa_core_mark_paid_confirmation($fresh);
+            if ($manual) {
+                $GLOBALS['sa_manual_confirmation']['accepted'] = true;
+                $fresh->add_order_note('Customer confirmation manually resent by staff user #' . get_current_user_id() . ' to the order billing email. Mail transport accepted it; inbox delivery is not confirmed.');
+            }
             $order->read_meta_data(true);
             return true;
         } finally { sa_core_confirmation_unlock($order); }
@@ -290,3 +296,62 @@ add_filter('woocommerce_email_heading_customer_processing_order', static functio
     unset($order);
     return __('Thank you — your order is confirmed', 'supreme-autoparts-core');
 }, 20, 2);
+
+
+/** Only the explicit admin action may bypass an already-sent marker, once. */
+function sa_core_manual_confirmation_scope(WC_Order $order, $email = null): bool
+{
+    $scope = $GLOBALS['sa_manual_confirmation'] ?? [];
+    return !empty($scope) && empty($scope['used'])
+        && ($scope['order_id'] ?? 0) === (int) $order->get_id()
+        && ($scope['recipient'] ?? '') === (string) $order->get_billing_email()
+        && ($email === null || ($scope['email_id'] ?? 0) === spl_object_id($email));
+}
+
+add_filter('woocommerce_order_actions', static function (array $actions, $order = null): array {
+    if (current_user_can('edit_shop_orders')) {
+        $actions['sa_resend_customer_confirmation'] = 'Resend customer confirmation';
+    }
+    return $actions;
+}, 20, 2);
+
+/** Woo saves the order first; independently recheck staff, nonce and exact order. */
+add_action('woocommerce_order_action_sa_resend_customer_confirmation', static function ($order): void {
+    if (!$order instanceof WC_Order || !is_admin() || !current_user_can('edit_shop_orders')
+        || !current_user_can('edit_shop_order', $order->get_id())
+        || ($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST'
+        || empty($_POST['woocommerce_meta_nonce'])
+        || !wp_verify_nonce(wp_unslash($_POST['woocommerce_meta_nonce']), 'woocommerce_save_data')
+        || (int) ($_POST['post_ID'] ?? 0) !== (int) $order->get_id()
+        || ($_POST['wc_order_action'] ?? '') !== 'sa_resend_customer_confirmation') { return; }
+    $fresh = sa_core_confirmation_fresh_order($order);
+    if (!$fresh || !sa_core_order_is_verified_paid($fresh) || !is_email($fresh->get_billing_email())
+        || $fresh->get_meta('_sa_paid_confirmation_pending') === '1') {
+        $order->add_order_note('Customer confirmation not resent: verified paid order, valid billing email and no unresolved email attempt are required.');
+        return;
+    }
+    if (!function_exists('WC') || !WC()->mailer()) { return; }
+    $emails = WC()->mailer()->get_emails();
+    $email = $emails['WC_Email_Customer_Processing_Order'] ?? null;
+    if (!is_object($email) || !empty($GLOBALS['sa_manual_confirmation'])) { return; }
+    $previous_enabled = $email->enabled;
+    $previous_force = $GLOBALS['sa_force_paid_confirmation'] ?? 0;
+    $GLOBALS['sa_manual_confirmation'] = [
+        'order_id' => (int) $fresh->get_id(), 'recipient' => (string) $fresh->get_billing_email(),
+        'email_id' => spl_object_id($email), 'used' => false, 'accepted' => false,
+    ];
+    $GLOBALS['sa_force_paid_confirmation'] = (int) $fresh->get_id();
+    $email->enabled = 'yes';
+    try {
+        $email->trigger($fresh->get_id(), $fresh);
+        if (empty($GLOBALS['sa_manual_confirmation']['accepted'])) {
+            $fresh->add_order_note('Manual customer confirmation was not confirmed accepted by mail transport. Check email logs before retrying.');
+        }
+    } catch (Throwable $e) {
+        $fresh->add_order_note('Manual customer confirmation outcome is unverified. Check email logs before retrying.');
+    } finally {
+        unset($GLOBALS['sa_confirmation_render_state'][spl_object_id($email)], $GLOBALS['sa_manual_confirmation']);
+        $GLOBALS['sa_force_paid_confirmation'] = $previous_force;
+        $email->enabled = $previous_enabled;
+    }
+});
