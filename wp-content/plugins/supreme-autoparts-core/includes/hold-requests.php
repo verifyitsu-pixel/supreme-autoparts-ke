@@ -263,6 +263,7 @@ function sa_hr_mail_build(WC_Order $o, array $r, string $kind, string $message =
         $items = sa_hr_items_email($r);
         $inner = $ref . $msg . $items . ($items !== '' ? $deadline : '') . sa_hr_btn('Reply', $url);
     }
+    if (in_array($kind, ['new', 'reminder', 'more'], true)) $inner .= '<p style="font-size:14px;color:#59636d;margin-top:18px">We will review what you send and email you with the next step.</p>';
     $pre = $subject;
     return ['subject' => $subject, 'pre' => $pre, 'html' => sa_hr_mail_wrap($head, $inner, $pre)];
     } finally {
