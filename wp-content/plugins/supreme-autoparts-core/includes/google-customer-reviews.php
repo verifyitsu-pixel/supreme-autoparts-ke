@@ -30,12 +30,37 @@ function sa_gcr_estimated_delivery(WC_Order $o): string
     return gmdate('Y-m-d', $ts + $days * DAY_IN_SECONDS);
 }
 
+/**
+ * True when the order holds a new source-marked special-order item with no
+ * verified lead time. Such orders have no honest estimated delivery date, so
+ * the survey opt-in is withheld rather than sending Google an invented date.
+ */
+function sa_gcr_order_has_unknown_special_order(WC_Order $o): bool
+{
+    foreach ($o->get_items() as $item) {
+        $product = is_object($item) && method_exists($item, 'get_product') ? $item->get_product() : null;
+        if (!$product instanceof WC_Product) {
+            continue;
+        }
+        $pid = $product->get_parent_id() ?: $product->get_id();
+        if ((string) get_post_meta((int) $pid, '_sa_source_special_order', true) === 'yes'
+            && (string) get_post_meta((int) $pid, '_sa_stock_lead_days', true) === ''
+        ) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /* Render the opt-in module on the order confirmation page for paid orders only —
  * a survey invite must never go out for an unpaid, pending or failed order. */
 add_action('woocommerce_thankyou', static function ($order_id): void {
     $o = wc_get_order($order_id);
     if (!$o instanceof WC_Order || !$o->is_paid()) {
         return;
+    }
+    if (sa_gcr_order_has_unknown_special_order($o)) {
+        return; // no verified delivery window: do not invent a survey date.
     }
     $email = (string) $o->get_billing_email();
     if ($email === '' || !is_email($email)) {
