@@ -422,7 +422,16 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
             if ($sa_grams > 0 && (string) $product->get_weight() === '') {
                 $product->set_weight((string) round($sa_grams / 453.59237, 2));
             }
-            $product->set_stock_status(!empty($variant['available']) ? 'instock' : 'outofstock');
+            $special_order = sa_core_shopify_is_special_order($item);
+            if (!$is_update && $special_order && !empty($variant['available'])) {
+                // Source orderable does not mean stock on the shelf. Never change
+                // existing products' fulfillment status during targeted additions.
+                $product->update_meta_data('_sa_source_special_order', 'yes');
+                $product->set_backorders('notify');
+                $product->set_stock_status('onbackorder');
+            } else {
+                $product->set_stock_status(!empty($variant['available']) ? 'instock' : 'outofstock');
+            }
         }
 
         $id = $product->save();
@@ -555,6 +564,21 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
             $result['messages'][] = $e->getMessage();
         }
     }
+}
+
+/** True only for the source's explicit special-order tag, not title guesses. */
+function sa_core_shopify_is_special_order(array $item): bool
+{
+    $tags = $item['tags'] ?? [];
+    if (is_string($tags)) {
+        $tags = explode(',', $tags);
+    }
+    foreach (is_array($tags) ? $tags : [] as $tag) {
+        if (is_string($tag) && preg_match('/^SpecialOrder\s*:\s*Y$/i', trim($tag))) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
