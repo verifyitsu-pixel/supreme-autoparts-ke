@@ -32,11 +32,12 @@ jobs:
         run: |
           php -v
           find wp-content healthz.php -name '*.php' -print0 | xargs -0 -n1 -P4 php -l > /dev/null
-      - name: Regression tests
+      - name: Regression tests (isolated, no network, no payments)
         run: |
-          php tests/careers-payment-regression.php
-          php tests/careers-provider-verification-regression.php
-          php tests/careers-redirect-contract-regression.php
+          set -e
+          for t in careers-payment-regression careers-terms-presentation-regression catalog-display-currency-regression feed-stream-regression hold-review-presentation-regression kenya-market-regression native-email-wording-regression open-pay-gateway-regression order-email-family-regression order-email-transport-brand-regression order-reference-regression paid-confirmation-routing-regression payment-visibility-regression paystack-availability-regression paystack-card-display-regression processor-billing-prefill-regression product-card-shipping-copy-regression product-image-policy-regression storefront-region-regression whop-express-quote-regression whop-payment-validation-regression; do
+            echo "== $t"; php tests/$t.php
+          done
 
   deploy:
     needs: test
