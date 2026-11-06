@@ -31,8 +31,8 @@ add_filter('woocommerce_available_payment_gateways', static function ($gateways)
     if (!is_array($gateways) || !isset($gateways['paystack'])) return $gateways;
     $allowed = sa_paystack_rate() !== null;
     if (!empty($gateways['paystack']->testmode) && !current_user_can('manage_woocommerce')) $allowed = false;
-    // Preserve the current >USD2500 Pesapal-only rule, and never convert an existing USD order at payment time.
-    if (function_exists('WC') && WC()->cart && (float)WC()->cart->get_total('edit') > 2500) $allowed = false;
+    // Paystack has no site-only amount cap. Preserve real configuration, quote and currency guards.
+    // Never convert an existing USD order at payment time.
     if (function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('order-pay')) {
         $order = wc_get_order(absint(get_query_var('order-pay')));
         $allowed = $order && $order->get_currency() === 'KES' && $order->get_payment_method() === 'paystack';
@@ -86,7 +86,7 @@ add_action('woocommerce_checkout_create_order', static function ($order,$data) {
     if (($data['payment_method'] ?? '') !== 'paystack') return;
     $quote = function_exists('WC') && WC()->session ? WC()->session->get('sa_paystack_quote') : null;
     $rate = is_array($quote) && ($quote['at'] ?? 0) > time()-1800 && abs((float)($quote['usd'] ?? -1)-(float)$order->get_total()) < 0.005 ? (float)$quote['rate'] : null;
-    if (!$rate || (float)$order->get_total() > 2500) throw new Exception('Paystack is unavailable for this order. Please choose another payment method.');
+    if (!$rate) throw new Exception('Paystack is unavailable for this order. Please choose another payment method.');
     sa_paystack_convert_order($order,$rate);
 }, 100, 2);
 
