@@ -29,3 +29,9 @@ add_filter('woocommerce_cart_item_name', static function ($name, $cart_item, $ke
     }
     return $name;
 }, 20, 3);
+
+add_action('wp_head', static function (): void {
+    if (function_exists('is_checkout') && is_checkout()) {
+        echo '<style id="sa-special-order-checkout-label">.sa-co-line__t:has(.backorder_notification){display:block;-webkit-line-clamp:unset;overflow:visible}</style>';
+    }
+}, 20);
