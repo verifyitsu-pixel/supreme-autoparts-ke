@@ -8,7 +8,7 @@ require __DIR__.'/../wp-content/plugins/supreme-autoparts-core/includes/hold-cop
 require __DIR__.'/../wp-content/plugins/supreme-autoparts-core/includes/hold-requests.php';
 function check($ok,$label){if(!$ok)throw new Exception($label);echo "PASS $label\n";}
 $o=new WC_Order;$o->paid=false;check(sa_hr_pay($o)['date']==='', 'unverified payment never labelled paid');$o->paid=true;check(sa_hr_pay($o)['date']!=='','verified paid date retained');check(strpos(sa_hr_item_guide()['card_front'][1],'first 6')===false,'last-four-only card masking consistent');ob_start();sa_hr_metabox_inner($o);$panel=ob_get_clean();
-check(substr_count($panel,'name="sa_hr_items[]"')===26,'all26 original item choices retained');
+foreach(sa_hr_items() as $key=>$item){check(trim($item[2])!=='' && strpos($panel,esc_html($item[2]))!==false,'specific visible description '.$key);}check(strpos($panel,'Document upload')===false,'generic helper labels removed');check(substr_count($panel,'name="sa_hr_items[]"')===26,'all26 original item choices retained');
 check(strpos($panel,'data-items="id_front,id_back,card_front,card_back,selfie_id,billing_phone"')!==false,'existing fraud defaults unchanged');
 check(strpos($panel,'name="sa_hr_rem_set"')!==false && strpos($panel,'applies to all orders')!==false,'global reminder scope explicit');
 check(strpos($panel,'grid-template-columns:1fr')!==false,'phone layout included');

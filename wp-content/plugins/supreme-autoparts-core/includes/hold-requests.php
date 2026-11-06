@@ -17,31 +17,31 @@ function sa_hr_items(): array
     $card = 'Cover all card digits except the last 4 with paper or your finger. Cover the CVV (3 digits on the back). We never need the full number.';
     return [
         'id_front'     => ['Government photo ID (front)', 'upload', 'National ID, passport or driving licence. All corners visible, no glare.'],
-        'id_back'      => ['Government photo ID (back)', 'upload', 'Back of the same ID.'],
+        'id_back'      => ['Government photo ID (back)', 'upload', 'Show the back of the same ID so we can check both sides.'],
         'selfie_id'    => ['Selfie holding your ID', 'upload', 'Hold the ID next to your face. Both must be clear.'],
         'card_front'   => ['Photo of the card used (front)', 'upload', $card],
         'card_back'    => ['Photo of the card used (back)', 'upload', 'Cover the CVV (3 digits) completely. Signature strip should be visible.'],
         'pay_proof'    => ['Payment proof (M-Pesa message or bank slip)', 'upload', 'Screenshot or photo showing the amount, date and reference.'],
-        'pay_ref'      => ['Payment reference / M-Pesa code', 'text', 'E.g. SJK4XXXXXX.'],
+        'pay_ref'      => ['Payment reference / M-Pesa code', 'text', 'Enter the M-Pesa code or bank reference so we can find the payment.'],
         'addr_proof'   => ['Proof of address', 'upload', 'Utility bill or bank statement from the last 3 months showing your name and address.'],
         'billing_phone'=> ['Confirm your billing phone number', 'text', 'The number linked to the card or M-Pesa used.'],
-        'contact'      => ['Confirm best phone and email to reach you', 'text', 'Phone number and email you check often.'],
-        'address_fix'  => ['Correct delivery address', 'address', 'Please give the full address the courier should use.'],
-        'landmark'     => ['Nearest landmark / directions for the rider', 'text', 'Building name, floor, nearby shop or stage.'],
-        'recipient'    => ['Who will receive the parcel', 'text', 'Name and phone number of the person receiving it.'],
+        'contact'      => ['Confirm best phone and email to reach you', 'text', 'Give us a phone number and email you check so we can reach you about this order.'],
+        'address_fix'  => ['Correct delivery address', 'address', 'Give the full delivery address so the courier goes to the right place.'],
+        'landmark'     => ['Nearest landmark / directions for the rider', 'text', 'Add a building name, floor or nearby landmark to help the rider find you.'],
+        'recipient'    => ['Who will receive the parcel', 'text', 'Tell us who will receive the parcel and the number the courier can call.'],
         'customs_docs' => ['Customs / import documents', 'upload', 'ID or tax number and any documents your country\'s customs asks for.'],
         'tax_id'       => ['Tax ID for customs (if required)', 'text', 'E.g. KRA PIN, EORI, CPF, or "not required".'],
         'remote_fee'   => ['Approve remote-area delivery charge', 'choice', 'Your area has an extra courier charge. Choose how to continue.', ['Approve the extra charge', 'Switch to store pickup / nearest branch', 'Cancel and refund']],
-        'reschedule'   => ['Pick a new delivery date', 'date', 'Choose a day someone will be available.'],
-        'redelivery'   => ['How should we deliver again?', 'choice', '', ['Deliver again to the same address', 'Deliver to a different address', 'I will collect at the store / courier branch']],
-        'pickup_plan'  => ['When will you collect your order?', 'date', 'Your order is waiting at the store.'],
+        'reschedule'   => ['Pick a new delivery date', 'date', 'Choose a delivery date when someone will be there to receive the parcel.'],
+        'redelivery'   => ['How should we deliver again?', 'choice', 'Tell us whether to try the same address, use a different one or arrange collection.', ['Deliver again to the same address', 'Deliver to a different address', 'I will collect at the store / courier branch']],
+        'pickup_plan'  => ['When will you collect your order?', 'date', 'Choose when you plan to collect the order.'],
         'vin'          => ['VIN / chassis number', 'text', 'Found on the logbook or the plate at the bottom of the windscreen.'],
         'logbook'      => ['Logbook photo', 'upload', 'Page showing make, model, year and chassis number.'],
-        'vehicle_photo'=> ['Photo of the vehicle', 'upload', 'Full side or front view.'],
-        'old_part'     => ['Photo of the old part', 'upload', 'Include any numbers stamped or printed on it.'],
-        'part_number'  => ['Part number on the old part', 'text', 'If you can read it.'],
-        'stock_choice' => ['The item is out of stock. What would you like?', 'choice', '', ['Wait for new stock', 'Accept a substitute part', 'Refund this item']],
-        'quote_approve'=> ['Approve the updated price', 'choice', 'See the message above for the extra cost.', ['I approve the extra cost', 'I do not approve, cancel and refund']],
+        'vehicle_photo'=> ['Photo of the vehicle', 'upload', 'Send a clear front or side photo to help us identify the vehicle.'],
+        'old_part'     => ['Photo of the old part', 'upload', 'Show the old part and any stamped numbers so we can compare it.'],
+        'part_number'  => ['Part number on the old part', 'text', 'Type the number printed on the old part, if you can read it.'],
+        'stock_choice' => ['The item is out of stock. What would you like?', 'choice', 'Choose whether to wait, consider a substitute or request a refund for this item.', ['Wait for new stock', 'Accept a substitute part', 'Refund this item']],
+        'quote_approve'=> ['Approve the updated price', 'choice', 'Check the new amount in our message, then tell us whether you approve it.', ['I approve the extra cost', 'I do not approve, cancel and refund']],
     ];
 }
 
@@ -420,7 +420,7 @@ function sa_hr_metabox_inner(WC_Order $o): void
         echo '<div class="sa-hr-group">' . esc_html($label) . '</div><div class="grid">';
         foreach ($visible as $k) {
             $v = $cat[$k];
-            echo '<label class="ck"><input type="checkbox" name="sa_hr_items[]" value="' . esc_attr($k) . '"><span>' . esc_html($v[0]) . '<small>' . esc_html(['upload'=>'Document upload','text'=>'Written answer','choice'=>'Customer choice','address'=>'Delivery address','date'=>'Date selection'][$v[1]] ?? $v[1]) . '</small></span></label>';
+            echo '<label class="ck"><input type="checkbox" name="sa_hr_items[]" value="' . esc_attr($k) . '"><span>' . esc_html($v[0]) . '<small>' . esc_html($v[2]) . '</small></span></label>';
         }
         echo '</div>';
     }
