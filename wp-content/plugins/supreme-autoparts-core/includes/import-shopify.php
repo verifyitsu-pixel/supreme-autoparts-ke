@@ -997,55 +997,99 @@ function sa_core_bootstrap_image_claim_registry(): void
         return;
     }
     $reg = &sa_core_image_claim_registry();
-    $ids = get_posts([
-        'post_type'      => 'product',
-        'post_status'    => 'any',
-        'posts_per_page' => -1,
-        'fields'         => 'ids',
-        'no_found_rows'  => true,
-    ]);
-    foreach ($ids as $pid) {
-        $pid = (int) $pid;
-        $single = (string) get_post_meta($pid, '_sa_shopify_image_src', true);
-        if ($single !== '') {
-            $reg[sa_core_image_url_identity_key($single)] = $pid;
+    global $wpdb;
+    if (!isset($wpdb) || !($wpdb instanceof wpdb)) {
+        throw new RuntimeException('Image claim registry requires the database.');
+    }
+    // Read only image metadata. Do not prime WP's complete product/meta cache:
+    // a tiny import must not load the whole catalog into PHP memory.
+    // Keep newest-to-oldest product order, as get_posts() used previously.
+    $before_date = null;
+    $before_id = 0;
+    do {
+        $where = "post_type = 'product' AND post_status NOT IN ('trash', 'auto-draft', 'inherit')";
+        if ($before_date !== null) {
+            $where .= $wpdb->prepare(
+                ' AND (post_date < %s OR (post_date = %s AND ID < %d))',
+                $before_date, $before_date, $before_id
+            );
         }
-        $raw = get_post_meta($pid, '_sa_shopify_image_urls', true);
-        if (is_string($raw) && $raw !== '') {
-            $decoded = json_decode($raw, true);
-            if (is_array($decoded)) {
-                foreach ($decoded as $u) {
-                    if (is_string($u) && $u !== '') {
-                        $reg[sa_core_image_url_identity_key($u)] = $pid;
+        $products = $wpdb->get_results(
+            "SELECT ID, post_date FROM {$wpdb->posts} WHERE {$where} ORDER BY post_date DESC, ID DESC LIMIT 250",
+            ARRAY_A
+        );
+        if ($wpdb->last_error !== '') {
+            throw new RuntimeException('Could not read product image claims.');
+        }
+        if (!$products) {
+            break;
+        }
+        $ids = array_map(static fn ($p): int => (int) $p['ID'], $products);
+        $rows = $wpdb->get_results(
+            "SELECT post_id, meta_key, meta_value FROM {$wpdb->postmeta} WHERE post_id IN ("
+            . implode(',', $ids)
+            . ") AND meta_key IN ('_sa_shopify_image_src', '_sa_shopify_image_urls', '_sa_web_fallback_image_url') ORDER BY meta_id ASC",
+            ARRAY_A
+        );
+        if ($wpdb->last_error !== '') {
+            throw new RuntimeException('Could not read product image metadata.');
+        }
+        $meta = [];
+        foreach ($rows ?: [] as $row) {
+            $pid = (int) $row['post_id'];
+            $key = (string) $row['meta_key'];
+            // get_post_meta(..., true) used the first stored value.
+            if (!isset($meta[$pid][$key])) {
+                $meta[$pid][$key] = (string) $row['meta_value'];
+            }
+        }
+        foreach ($ids as $pid) {
+            foreach (['_sa_shopify_image_src', '_sa_shopify_image_urls', '_sa_web_fallback_image_url'] as $key) {
+                $value = $meta[$pid][$key] ?? '';
+                $urls = $key === '_sa_shopify_image_urls' ? json_decode($value, true) : [$value];
+                if (is_array($urls)) {
+                    foreach ($urls as $url) {
+                        if (is_string($url) && $url !== '') {
+                            $reg[sa_core_image_url_identity_key($url)] = $pid;
+                        }
                     }
                 }
             }
         }
-        $web = (string) get_post_meta($pid, '_sa_web_fallback_image_url', true);
-        if ($web !== '') {
-            $reg[sa_core_image_url_identity_key($web)] = $pid;
-        }
-    }
-    // Attachment-level source URLs / GUIDs.
-    global $wpdb;
-    if (isset($wpdb) && $wpdb instanceof wpdb) {
+        $last = $products[count($products) - 1];
+        $before_date = (string) $last['post_date'];
+        $before_id = (int) $last['ID'];
+    } while (count($products) === 250);
+
+    // Preserve the existing 50,000 attachment-claim ceiling, but avoid
+    // per-attachment WP_Post cache loads and large single result buffers.
+    $after_meta_id = 0;
+    $remaining = 50000;
+    while ($remaining > 0) {
+        $limit = min(250, $remaining);
         $rows = $wpdb->get_results(
-            "SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = '_sa_source_image_url' AND meta_value <> '' LIMIT 50000",
-            ARRAY_A
+            $wpdb->prepare(
+                "SELECT m.meta_id, m.meta_value, p.post_parent FROM {$wpdb->postmeta} m LEFT JOIN {$wpdb->posts} p ON p.ID = m.post_id WHERE m.meta_key = '_sa_source_image_url' AND m.meta_value <> '' AND m.meta_id > %d ORDER BY m.meta_id ASC LIMIT %d",
+                $after_meta_id, $limit
+            ), ARRAY_A
         );
-        if (is_array($rows)) {
-            foreach ($rows as $row) {
-                $att_id = (int) ($row['post_id'] ?? 0);
-                $url = (string) ($row['meta_value'] ?? '');
-                if ($att_id <= 0 || $url === '') {
-                    continue;
-                }
-                $parent = (int) wp_get_post_parent_id($att_id);
-                if ($parent <= 0) {
-                    continue;
-                }
+        if ($wpdb->last_error !== '') {
+            throw new RuntimeException('Could not read attachment image claims.');
+        }
+        if (!$rows) {
+            break;
+        }
+        foreach ($rows as $row) {
+            $after_meta_id = (int) $row['meta_id'];
+            $parent = (int) ($row['post_parent'] ?? 0);
+            $url = (string) $row['meta_value'];
+            if ($parent > 0 && $url !== '') {
                 $reg[sa_core_image_url_identity_key($url)] = $parent;
             }
+        }
+        $remaining -= count($rows);
+        if (count($rows) < $limit) {
+            break;
         }
     }
     $GLOBALS['sa_core_image_claim_registry_bootstrapped'] = true;
