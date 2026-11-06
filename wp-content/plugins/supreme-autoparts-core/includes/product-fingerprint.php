@@ -53,6 +53,59 @@ function sa_product_loop_fingerprint($source): string
 }
 
 /**
+ * Exact meta lookup used by the importer's "already exists?" checks.
+ *
+ * A failed or timed-out query must never read as "no match", because that creates duplicates.
+ * It throws instead, which the importer records as an error without creating anything.
+ * A bulk-import run can install a KenyaImportLookup registry (import-lookup-registry.php) in
+ * $GLOBALS['sa_core_import_lookup_registry']; the lookup is then answered from it. An unknown
+ * key or value in registry mode throws as well.
+ *
+ * @param 'any'|'publish' $status
+ */
+function sa_core_import_meta_lookup(string $key, string $value, string $status, int $exclude_id = 0): int
+{
+    global $wpdb;
+    $reg = $GLOBALS['sa_core_import_lookup_registry'] ?? null;
+    if (is_object($reg)) {
+        $ids = array_map('intval', (array) $reg->lookup($key, $value));
+        sort($ids);
+        foreach ($ids as $id) {
+            if ($id <= 0 || $id === $exclude_id) {
+                continue;
+            }
+            $post = get_post($id);
+            if (!$post || $post->post_type !== 'product') {
+                continue;
+            }
+            $ok = $status === 'publish'
+                ? $post->post_status === 'publish'
+                : !in_array($post->post_status, ['trash', 'auto-draft'], true);
+            if ($ok) {
+                return $id;
+            }
+        }
+        return 0;
+    }
+    $wpdb->last_error = '';
+    $found = get_posts([
+        'post_type'      => 'product',
+        'post_status'    => $status,
+        'posts_per_page' => 1,
+        'fields'         => 'ids',
+        'exclude'        => $exclude_id > 0 ? [$exclude_id] : [],
+        'meta_key'       => $key,
+        'meta_value'     => $value,
+        'orderby'        => 'ID',
+        'order'          => 'ASC',
+    ]);
+    if ($wpdb->last_error !== '') {
+        throw new RuntimeException('Product lookup failed; nothing was imported for this item');
+    }
+    return $found ? (int) $found[0] : 0;
+}
+
+/**
  * Find a published product ID that already owns this title fingerprint.
  * Excludes $exclude_id. Used by import harden to UPDATE instead of cloning.
  */
@@ -64,21 +117,13 @@ function sa_core_find_published_by_fingerprint(string $fingerprint, int $exclude
     }
 
     // Prefer an indexed meta lookup if we already stamped fingerprints.
-    $meta_q = get_posts([
-        'post_type'      => 'product',
-        'post_status'    => 'publish',
-        'posts_per_page' => 1,
-        'fields'         => 'ids',
-        'exclude'        => $exclude_id > 0 ? [$exclude_id] : [],
-        'meta_key'       => '_sa_title_fingerprint',
-        'meta_value'     => $fingerprint,
-        'orderby'        => 'ID',
-        'order'          => 'ASC',
-    ]);
-    if ($meta_q) {
-        return (int) $meta_q[0];
+    // Throws when the lookup itself fails; a failed query must not read as "no match".
+    $meta_id = sa_core_import_meta_lookup('_sa_title_fingerprint', $fingerprint, 'publish', $exclude_id);
+    if ($meta_id > 0) {
+        return $meta_id;
     }
 
+    $GLOBALS['wpdb']->last_error = '';
     // Fallback: scan recent published titles (bounded) — import path only.
     $batch = get_posts([
         'post_type'      => 'product',
@@ -90,6 +135,9 @@ function sa_core_find_published_by_fingerprint(string $fingerprint, int $exclude
         'order'          => 'DESC',
         'no_found_rows'  => true,
     ]);
+    if ($GLOBALS['wpdb']->last_error !== '') {
+        throw new RuntimeException('Product fingerprint scan failed; nothing was imported for this item');
+    }
     foreach ($batch as $pid) {
         $pid = (int) $pid;
         $post = get_post($pid);

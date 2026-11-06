@@ -294,17 +294,7 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
 
         // 1) By stored Shopify id meta
         if ($shopify_id !== '') {
-            $q = get_posts([
-                'post_type'      => 'product',
-                'post_status'    => 'any',
-                'posts_per_page' => 1,
-                'fields'         => 'ids',
-                'meta_key'       => '_sa_shopify_id',
-                'meta_value'     => $shopify_id,
-            ]);
-            if ($q) {
-                $existing_id = (int) $q[0];
-            }
+            $existing_id = sa_core_import_meta_lookup('_sa_shopify_id', $shopify_id, 'any');
         }
 
         // 2) By handle / slug
