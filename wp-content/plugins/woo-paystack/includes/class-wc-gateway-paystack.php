@@ -737,12 +737,13 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 		if ( is_checkout_pay_page() && get_query_var( 'order-pay' ) ) {
 			$email    = $order->get_billing_email();
 			$amount   = round( (float) $order->get_total() * 100 );
-			$txnref   = $order_id . '_' . time();
+			$txnref   = $this->supreme_attempt_reference($order);
 			$currency = $order->get_currency();
 
 			$paystack_params['email']    = $email;
 			$paystack_params['amount']   = absint( $amount );
 			$paystack_params['txnref']   = $txnref;
+            $paystack_params['order_reference'] = (string) $order->get_meta('_sa_order_reference');
 			$paystack_params['currency'] = $currency;
 
 			if ( $this->split_payment ) {
@@ -939,7 +940,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 	public function process_redirect_payment_option( $order_id ) {
 
 		$order        = wc_get_order( $order_id );
-		$txnref       = $order_id . '_' . time();
+		$txnref       = $this->supreme_attempt_reference($order);
         $amount       = round( (float) $order->get_total() * 100 );
 		$callback_url = WC()->api_request_url( 'WC_Gateway_Paystack' );
 
@@ -1025,7 +1026,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 			$order = wc_get_order( $order_id );
 
             $order_amount = round( (float) $order->get_total() * 100 );
-			$txnref       = $order_id . '_' . time();
+			$txnref       = $this->supreme_attempt_reference($order);
 
 			$order->update_meta_data( '_paystack_txn_ref', $txnref );
 			$order->save();
@@ -1249,8 +1250,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 				if ( 'success' === $paystack_response->data->status ) {
 
-					$order_details = explode( '_', $paystack_response->data->reference );
-					$order_id      = (int) $order_details[0];
+					$order_id = $this->supreme_reference_order_id($paystack_response->data->reference);
 					$order         = wc_get_order( $order_id );
 
 					if ( in_array( $order->get_status(), array( 'processing', 'completed', 'on-hold' ), true ) ) {
@@ -1337,9 +1337,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 
 				} else {
 
-					$order_details = explode( '_', $paystack_txn_ref );
-
-					$order_id = (int) $order_details[0];
+					$order_id = $this->supreme_reference_order_id($paystack_txn_ref);
 
 					$order = wc_get_order( $order_id );
 
@@ -1392,9 +1390,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 			return;
 		}
 
-		$order_details = explode( '_', $paystack_response->data->reference );
-
-		$order_id = (int) $order_details[0];
+		$order_id = $this->supreme_reference_order_id($paystack_response->data->reference);
 
 		$order = wc_get_order( $order_id );
 
@@ -1617,11 +1613,33 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 	 *
 	 * @return array
 	 */
+    /** New branded attempts are unique; legacy references retain their original parser. */
+    public function supreme_attempt_reference($order) {
+        $reference = (string) $order->get_meta('_sa_order_reference');
+        if (preg_match('/^Supreme-[1-9][0-9]*$/D', $reference)) {
+            return $reference . '-' . bin2hex(random_bytes(8));
+        }
+        return $order->get_id() . '_' . time();
+    }
+
+    public function supreme_reference_order_id($reference) {
+        if (!is_string($reference)) { return 0; }
+        if (preg_match('/^Supreme-([1-9][0-9]*)-[a-f0-9]{16}$/D', $reference, $match)
+            || preg_match('/^([1-9][0-9]*)_[0-9]+$/D', $reference, $match)) {
+            return (int) $match[1];
+        }
+        return 0;
+    }
+
 	public function get_custom_fields( $order_id ) {
 
 		$order = wc_get_order( $order_id );
 
 		$custom_fields = array();
+        $supreme_reference = (string) $order->get_meta('_sa_order_reference');
+        if (preg_match('/^Supreme-[1-9][0-9]*$/D', $supreme_reference)) {
+            $custom_fields[] = array('display_name' => 'Order reference', 'variable_name' => 'order_reference', 'value' => $supreme_reference);
+        }
 
 		$custom_fields[] = array(
 			'display_name'  => 'Plugin',
@@ -1880,7 +1898,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
 	 */
 	private function get_paystack_transaction( $paystack_txn_ref ) {
         // Supreme: fail closed on every callback/webhook. A 200 response alone is not proof of payment.
-        if (!is_string($paystack_txn_ref) || !preg_match('/^[0-9]+_[0-9]+$/', $paystack_txn_ref)) return false;
+        if (!is_string($paystack_txn_ref) || !$this->supreme_reference_order_id($paystack_txn_ref)) return false;
         $request = wp_remote_get('https://api.paystack.co/transaction/verify/' . rawurlencode($paystack_txn_ref), [
             'headers'=>['Authorization'=>'Bearer '.$this->secret_key], 'timeout'=>30,
         ]);
@@ -1888,7 +1906,7 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
         $response = json_decode(wp_remote_retrieve_body($request));
         $data = $response->data ?? null;
         if (empty($response->status) || !$data || ($data->status ?? '') !== 'success' || ($data->reference ?? '') !== $paystack_txn_ref) return false;
-        $order = wc_get_order((int)explode('_', $paystack_txn_ref)[0]);
+        $order = wc_get_order($this->supreme_reference_order_id($paystack_txn_ref));
         if (!$order || $order->get_payment_method() !== 'paystack' || $order->get_meta('_paystack_txn_ref') !== $paystack_txn_ref) return false;
         if (strtoupper((string)($data->currency ?? '')) !== $order->get_currency()) return false;
         if ((int)($data->amount ?? -1) !== (int)round((float)$order->get_total()*100)) return false;

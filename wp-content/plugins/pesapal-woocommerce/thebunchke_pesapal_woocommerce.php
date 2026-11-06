@@ -815,7 +815,7 @@ use Google\Service\ShoppingContent\Account;
 													pesapalIframe.addClass("item-fade-in");
 												//});
 		
-												var reference = '<?php echo ($this->get_option('ppprefix')) ? strtoupper(str_replace(" ","",$this->get_option('ppprefix')))."-".$order->get_order_number() : $order->get_order_number(); ?>';
+												var reference = '<?php echo ($order->get_meta('_sa_order_reference') !== '') ? $order->get_order_number() : (($this->get_option('ppprefix')) ? strtoupper(str_replace(" ","",$this->get_option('ppprefix')))."-".$order->get_order_number() : $order->get_order_number()); ?>';
 												jQuery(document).on('click', '.mpesabtn', function () {
 													jQuery.ajax({
 														type: 'POST',
@@ -938,7 +938,7 @@ use Google\Service\ShoppingContent\Account;
 									$request->billing_city = $order->get_billing_city();
 									$request->billing_state = $order->get_billing_state();
 									$request->billing_postcode = $order->get_billing_postcode();
-									$request->pesapalMerchantReference = ($this->get_option('ppprefix')) ? strtoupper(str_replace(" ","",$this->get_option('ppprefix')))."-".$order->get_order_number() : $order->get_order_number();
+									$request->pesapalMerchantReference = ($order->get_meta('_sa_order_reference') !== '') ? $order->get_order_number() : (($this->get_option('ppprefix')) ? strtoupper(str_replace(" ","",$this->get_option('ppprefix')))."-".$order->get_order_number() : $order->get_order_number());
 
 									$request->billing_first_name = ucfirst($order->get_billing_first_name());
 									$request->billing_last_name = ucfirst($order->get_billing_last_name());

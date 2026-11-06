@@ -24,6 +24,10 @@ jQuery( function( $ ) {
 			}
 		];
 
+        if ( /^Supreme-[1-9][0-9]*$/.test( wc_paystack_params.order_reference || '' ) ) {
+            custom_fields.push( { display_name: 'Order reference', variable_name: 'order_reference', value: wc_paystack_params.order_reference } );
+        }
+
 		if ( wc_paystack_params.meta_order_id ) {
 
 			custom_fields.push( {

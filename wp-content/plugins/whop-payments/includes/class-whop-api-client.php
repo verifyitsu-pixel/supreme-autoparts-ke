@@ -74,7 +74,7 @@ final class Whop_Api_Client {
      */
     public static function default_order_plan_title(string $order_id): string {
         $id = preg_replace('/[^0-9A-Za-z\-]/', '', $order_id) ?: $order_id;
-        return self::sanitize_plan_title('SA Order #' . $id, 30);
+        return self::sanitize_plan_title(strpos($id, 'Supreme-') === 0 ? $id : 'SA Order #' . $id, 30);
     }
 
     /**
@@ -122,6 +122,12 @@ final class Whop_Api_Client {
             'amount_usd'   => (string) $amount,
             'currency'     => 'usd',
         ];
+        // Keep numeric reconciliation keys and provider IDs unchanged.
+        $reference_order = function_exists('wc_get_order') ? wc_get_order((int) $order_id) : null;
+        $order_reference = $reference_order ? (string) $reference_order->get_meta('_sa_order_reference') : '';
+        if (preg_match('/^Supreme-[1-9][0-9]*$/D', $order_reference)) {
+            $metadata['order_reference'] = $order_reference;
+        }
         if (!empty($args['note'])) {
             $metadata['note'] = (string) $args['note'];
         }

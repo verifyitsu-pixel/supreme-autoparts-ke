@@ -196,6 +196,7 @@ function sa_pesapal_define_classes() {
 
         /* ---------- shared, guarded status application ---------- */
         protected function sa_merchant_ref($order) {
+            if ($order->get_meta('_sa_order_reference') !== '') { return (string) $order->get_order_number(); }
             $prefix = $this->get_option('ppprefix');
             return $prefix ? strtoupper(str_replace(' ', '', $prefix)) . '-' . $order->get_order_number() : (string) $order->get_order_number();
         }
