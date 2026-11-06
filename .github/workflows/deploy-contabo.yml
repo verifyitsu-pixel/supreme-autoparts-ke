@@ -35,6 +35,12 @@ jobs:
             echo "== $t"; php tests/$t.php
           done
 
+      - name: GA4 event tests (no network)
+        run: |
+          node --version
+          node tests/ga4-commerce-regression.cjs
+          php tests/ga4-payload-regression.php
+
   deploy:
     needs: test
     if: github.ref == 'refs/heads/main'
