@@ -204,8 +204,8 @@ function sa_hr_items_email(array $r): string
         $i++;
         [$why, $how] = $g[$k] ?? ['', (string) $it['help']];
         $h .= '<tr><td style="width:30px;vertical-align:top;padding:12px 0 12px"><div style="width:24px;height:24px;line-height:24px;border-radius:12px;background:#F5A623;color:#111;font-family:' . $F . ';font-size:13px;font-weight:700;text-align:center">' . $i . '</div></td>'
-            . '<td style="vertical-align:top;padding:12px 0;border-bottom:1px solid #eeeeee;font-family:' . $F . ';font-size:14px;line-height:1.5;color:#333">'
-            . '<div style="font-weight:700;color:#111;font-size:15px">' . esc_html($it['label']) . '</div>'
+            . '<td style="vertical-align:top;padding:12px 0;border-bottom:1px solid #eeeeee;font-family:' . $F . ';font-size:16px;line-height:1.6;color:#333">'
+            . '<div style="font-weight:700;color:#111;font-size:17px">' . esc_html($it['label']) . '</div>'
             . ($it['status'] === 'rejected' && $it['why'] ? '<div style="color:#8a4b00;background:#fff3dc;padding:4px 8px;border-radius:4px;margin:4px 0;display:inline-block">Please send again: ' . esc_html($it['why']) . '</div>' : '')
             . ($why ? '<div style="color:#555"><strong style="color:#111">Why:</strong> ' . esc_html($why) . '</div>' : '')
             . ($how ? '<div style="color:#555"><strong style="color:#111">How:</strong> ' . esc_html($how) . '</div>' : '')
@@ -230,8 +230,8 @@ function sa_hr_mail_build(WC_Order $o, array $r, string $kind, string $message =
     $msg = $message !== '' ? '<div style="border-left:3px solid #F5A623;background:#fafafa;padding:10px 14px;margin:14px 0"><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6b6b6b;font-weight:600">Message from our team</div>' . nl2br(esc_html($message)) . '</div>' : '';
     $verify = '<div style="border:1px solid #111;border-radius:8px;padding:12px 14px;margin:14px 0"><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6b6b6b;font-weight:600">What we need to confirm</div><div style="color:#111;font-weight:600">We need to confirm ' . esc_html($fill($c['verify'])) . '</div></div>';
     $next = '<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6b6b6b;font-weight:600;margin:20px 0 4px">What happens next</div>'
-        . '<p style="margin:0 0 6px">Once you send this, we review it ' . esc_html($c['review']) . ' and email you as soon as your order is moving again. Nothing more is charged.</p>'
-        . '<p style="margin:0 0 6px"><strong style="color:#111">Please reply by ' . esc_html($exp) . '.</strong> If we don\'t hear from you by then, your order may be cancelled and refunded in full to your original payment method.</p>';
+        . '<p style="margin:0 0 6px">Once you send this, our team reviews it and emails you with the next step.</p>'
+        . '<p style="margin:0 0 6px"><strong style="color:#111">Please reply by ' . esc_html($exp) . '.</strong> If we don\'t hear from you by then, your order may be cancelled. Any refund is handled separately.</p>';
     $trust = sa_hr_trust_html($o, $uploads);
     $sum = sa_hr_summary_html($o);
     $cta = sa_hr_btn($fill($c['cta']), $url);
@@ -261,14 +261,14 @@ function sa_hr_mail_build(WC_Order $o, array $r, string $kind, string $message =
             $subject = 'Thanks, order #' . $n . ' is moving again';
             $pre = 'Everything checks out. Your order is back in progress.';
             $head = 'Thanks, your order is moving again';
-            $inner = $hi . '<p style="margin:0 0 12px">A big thank-you from our garage to yours! Everything checks out. We\'ve released the hold on order #' . esc_html($n) . ' and it\'s back in progress. We\'ll email you when it ships or is ready to collect.</p>'
+            $inner = $hi . '<p style="margin:0 0 12px">The review is complete. We\'ve released the hold on order #' . esc_html($n) . ' and it\'s back in progress. We\'ll email you when it ships or is ready to collect.</p>'
                 . ($uploads ? '<p style="margin:0 0 12px;color:#555">The files you sent will be deleted from our systems within 30 days.</p>' : '') . $msg . $sum . sa_hr_btn('View my order', function_exists('sa_ol_view_url') ? sa_ol_view_url($o) : home_url('/my-account/')) . sa_hr_trust_html($o, false);
             break;
         case 'cancelled':
             $subject = 'Order #' . $n . ' has been cancelled';
-            $pre = 'Any payment will be refunded in full to your original payment method.';
+            $pre = 'An update about your order cancellation.';
             $head = 'Your order has been cancelled';
-            $inner = $hi . '<p style="margin:0 0 12px">We weren\'t able to complete the checks for order #' . esc_html($n) . ', so it has been cancelled. If you paid, the full amount of ' . esc_html($pay['amount']) . ' is refunded to your original payment method. Depending on your bank, it can take 5 to 10 business days to appear.</p>'
+            $inner = $hi . '<p style="margin:0 0 12px">We weren\'t able to complete the checks for order #' . esc_html($n) . ', so it has been cancelled. This email confirms the cancellation. We will send any refund update separately.</p>'
                 . $msg . '<p style="margin:0 0 12px">If you think this is a mistake, reply to this email and we\'ll gladly look again.</p>' . $sum . sa_hr_trust_html($o, false);
             break;
         default:
@@ -362,18 +362,8 @@ function sa_hr_metabox_inner(WC_Order $o): void
     $open = sa_hr_open($o);
     wp_nonce_field('sa_hr_admin', 'sa_hr_nonce');
     echo '<style>
-#sa-hr .sa-hr-b{display:inline-block;background:#0a0a0a;color:#fff;border:0;border-radius:6px;padding:9px 14px;font-weight:600;cursor:pointer;margin:3px 4px 3px 0;font-size:13px;line-height:1.2}
-#sa-hr .sa-hr-b.alt{background:#fff;color:#0a0a0a;border:1px solid #0a0a0a}#sa-hr .sa-hr-b.amber{background:#F5A623;color:#0a0a0a}
-#sa-hr .sa-hr-b.warn{background:#fff;color:#a12;border:1px solid #a12}
-#sa-hr .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:4px 14px;margin:8px 0}
-#sa-hr label.ck{display:flex;gap:6px;align-items:flex-start;font-size:13px}
-#sa-hr .it{border:1px solid #e4e4e4;border-radius:8px;padding:10px 12px;margin:8px 0;background:#fff}
-#sa-hr .st{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:4px;background:#eee;color:#333}
-#sa-hr .st.received{background:#fff3dc;color:#7a4b00}#sa-hr .st.approved{background:#0a0a0a;color:#fff}#sa-hr .st.rejected{background:#fde8e8;color:#a12}
-#sa-hr .th{background:#fafafa;border-left:3px solid #F5A623;padding:8px 10px;margin:6px 0;font-size:13px}#sa-hr .th.cust{border-left-color:#0a0a0a}
-#sa-hr img.pv{max-width:180px;max-height:140px;border:1px solid #ddd;border-radius:4px;margin:4px 6px 0 0}
-#sa-hr select,#sa-hr input[type=text],#sa-hr textarea{width:100%;max-width:100%}
-#sa-hr a{color:#0a0a0a}
+#sa-hr .inside{margin:0;padding:0}#sa-hr #sa-hr-inner{padding:24px;color:#17212b;background:#fbfbfa;font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}#sa-hr .sa-hr-intro{padding-bottom:20px;border-bottom:1px solid #e4e7e9;margin-bottom:22px}#sa-hr .sa-hr-eyebrow{font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#68727c}#sa-hr h3{font-size:20px;line-height:1.3;margin:6px 0 8px}#sa-hr .sa-hr-intro p{margin:0;color:#59636d;max-width:720px}#sa-hr .sa-hr-section{background:#fff;border:1px solid #e1e5e8;border-radius:10px;padding:20px;margin:16px 0}#sa-hr .sa-hr-section h4{font-size:14px;margin:0 0 5px}#sa-hr .sa-hr-hint{font-size:12px;color:#66717b;margin:4px 0 14px}#sa-hr .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}#sa-hr label.ck{display:flex;gap:10px;align-items:flex-start;padding:13px;border:1px solid #e5e8eb;border-radius:8px;font-size:13px;line-height:1.5;background:#fff}#sa-hr label.ck:has(input:checked){border-color:#222;background:#f6f6f3}#sa-hr label.ck input{margin:3px 0 0;flex-shrink:0}#sa-hr label.ck small{display:block;color:#74808a;font-size:11px;margin-top:3px}#sa-hr .sa-hr-row{display:grid;grid-template-columns:minmax(0,1fr) 140px;gap:12px;align-items:end}#sa-hr .sa-hr-row>label{min-width:0}#sa-hr select,#sa-hr input[type=text],#sa-hr textarea{box-sizing:border-box;width:100%;max-width:100%;border:1px solid #bdc5cc;border-radius:6px;padding:9px 11px;min-height:40px;font-size:13px;box-shadow:none}#sa-hr textarea{min-height:100px}#sa-hr .sa-hr-b{display:inline-block;background:#121820;color:#fff;border:1px solid #121820;border-radius:6px;padding:11px 16px;font-weight:600;cursor:pointer;margin:3px 6px 3px 0;font-size:13px;line-height:1.3}#sa-hr .sa-hr-b.alt{background:#fff;color:#17212b;border-color:#c1c9d0}#sa-hr .sa-hr-b.amber{background:#f5a623;color:#111;border-color:#f5a623}#sa-hr .sa-hr-b.warn{background:#fff;color:#962b35;border-color:#d9b8bc}#sa-hr .sa-hr-footer{border-top:1px solid #e2e6e9;padding-top:18px;margin-top:20px}#sa-hr .sa-hr-settings{display:flex;justify-content:space-between;gap:20px;align-items:center;background:#f7f8f9;border:1px solid #e5e8eb;border-radius:8px;padding:14px}#sa-hr .sa-hr-settings label{font-size:12px}#sa-hr .sa-hr-settings input[type=number]{width:65px;min-height:36px;border:1px solid #bdc5cc;border-radius:5px}#sa-hr .it{border:1px solid #e1e5e8;border-radius:8px;padding:16px;margin:10px 0;background:#fff}#sa-hr .st{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:4px 8px;border-radius:4px;background:#eef0f2;color:#45515c;margin-right:6px}#sa-hr .st.received{background:#fff3dc;color:#7a4b00}#sa-hr .st.approved{background:#e6f2ec;color:#246144}#sa-hr .st.rejected{background:#f9ebec;color:#962b35}#sa-hr .th{background:#fff;border:1px solid #e3e7ea;border-left:3px solid #f5a623;padding:13px 16px;margin:8px 0;font-size:13px;border-radius:5px}#sa-hr .th.cust{border-left-color:#202b35}#sa-hr img.pv{max-width:180px;max-height:140px;border:1px solid #ddd;border-radius:4px;margin:4px 6px 0 0}#sa-hr a{color:#17212b}#sa-hr summary{padding:12px 0}#sa-hr .sa-hr-group{font-size:12px;font-weight:700;margin:20px 0 0;color:#45515c}
+@media(max-width:782px){#sa-hr #sa-hr-inner{padding:16px}#sa-hr .grid{grid-template-columns:1fr}#sa-hr .sa-hr-section{padding:16px}#sa-hr .sa-hr-row{grid-template-columns:1fr}#sa-hr .sa-hr-settings{display:block}#sa-hr .sa-hr-settings>label{display:block;margin:10px 0}#sa-hr .sa-hr-b{width:100%;margin:5px 0;padding:13px}#sa-hr label.ck input{width:20px;height:20px}}
 </style>';
     echo '<div id="sa-hr-inner">';
     if ($open) {
@@ -412,25 +402,33 @@ function sa_hr_metabox_inner(WC_Order $o): void
             . '<button class="sa-hr-b warn" name="sa_hr_do" value="cancel" onclick="return confirm(\'Close the request and cancel this order? Refund separately with the Refund button below the items.\')">Cancel order</button></p><p style="color:#666;font-size:12px">Release and cancel each send the customer a confirmation email (text in the reply box is included).</p>';
         echo '<details><summary style="cursor:pointer;font-weight:600;margin:8px 0">Ask for more items</summary>';
     } else {
-        echo '<p style="margin-top:0">Put the order on hold and ask the customer for exactly what you need. They get an email with a secure link (no login) to upload photos or answer.</p>';
+        echo '<div class="sa-hr-intro"><span class="sa-hr-eyebrow">Order review</span><h3>A clear next step for your customer.</h3><p>Choose the reason, review the information requested, then send a secure reply link. No customer email is sent until you submit the request.</p></div>';
     }
-    echo '<p><label><strong>Reason</strong><br><select name="sa_hr_reason" id="sa-hr-reason">';
+    echo '<div class="sa-hr-section"><span class="sa-hr-eyebrow">01 / Review context</span><h4>Why does this order need attention?</h4><p class="sa-hr-hint">This reason guides the customer email and suggested checklist. Review every selection before sending.</p><label for="sa-hr-reason"><strong>Review reason</strong></label><select name="sa_hr_reason" id="sa-hr-reason">';
     foreach ($reasons as $k => $v) {
         echo '<option value="' . esc_attr($k) . '"' . selected($open['reason'] ?? '', $k, false) . ' data-items="' . esc_attr(implode(',', $v[1])) . '">' . esc_html($v[0]) . '</option>';
     }
-    echo '</select></label></p><div class="grid">';
-    foreach ($cat as $k => $v) {
-        if ($open && isset($open['items'][$k])) {
-            continue;
+    echo '</select></div><div class="sa-hr-section"><span class="sa-hr-eyebrow">02 / Information requested</span><h4>Ask for exactly what is needed.</h4><p class="sa-hr-hint">Selected items appear on the customer page and in their email. Sensitive documents should be requested only when needed for this review.</p>';
+    $groups = [
+        'Identity & payment' => ['id_front','id_back','selfie_id','card_front','card_back','pay_proof','pay_ref','addr_proof','billing_phone'],
+        'Contact & delivery' => ['contact','address_fix','landmark','recipient','customs_docs','tax_id','remote_fee','reschedule','redelivery','pickup_plan'],
+        'Vehicle & order decisions' => ['vin','logbook','vehicle_photo','old_part','part_number','stock_choice','quote_approve'],
+    ];
+    foreach ($groups as $label => $keys) {
+        $visible = array_filter($keys, static fn($k) => !$open || !isset($open['items'][$k]));
+        if (!$visible) { continue; }
+        echo '<div class="sa-hr-group">' . esc_html($label) . '</div><div class="grid">';
+        foreach ($visible as $k) {
+            $v = $cat[$k];
+            echo '<label class="ck"><input type="checkbox" name="sa_hr_items[]" value="' . esc_attr($k) . '"><span>' . esc_html($v[0]) . '<small>' . esc_html(['upload'=>'Document upload','text'=>'Written answer','choice'=>'Customer choice','address'=>'Delivery address','date'=>'Date selection'][$v[1]] ?? $v[1]) . '</small></span></label>';
         }
-        echo '<label class="ck"><input type="checkbox" name="sa_hr_items[]" value="' . esc_attr($k) . '"> <span>' . esc_html($v[0]) . ' <small style="color:#777">(' . esc_html($v[1]) . ')</small></span></label>';
+        echo '</div>';
     }
-    echo '</div><p><label><strong>Custom item</strong> (optional)<br><input type="text" name="sa_hr_custom" placeholder="e.g. Photo of the damaged box"></label> <select name="sa_hr_custom_type" style="width:auto"><option value="upload">Upload</option><option value="text">Text answer</option><option value="date">Date</option></select></p>'
-        . '<p><label><strong>Message to customer</strong><br><textarea name="sa_hr_msg" rows="3" placeholder="Explain briefly why you need this. For quotes, state the extra amount."></textarea></label></p>'
-        . '<p><label><input type="checkbox" name="sa_hr_rem" value="1"' . checked(get_option('sa_hr_reminders', '1'), '1', false) . '> Send automatic reminders 48h and 24h before the link expires (all orders)</label><input type="hidden" name="sa_hr_rem_set" value="1"></p>'
-        . '<p><label>Link valid for <input type="number" name="sa_hr_days" value="14" min="1" max="60" style="width:70px"> days</label></p>'
-        . '<p><button class="sa-hr-b" name="sa_hr_do" value="create">' . ($open ? 'Send extra request' : 'Put on hold &amp; request info') . '</button>'
-        . ($open ? '' : '<button class="sa-hr-b alt" name="sa_hr_do" value="create_nohold">Request info without hold</button>') . '</p>';
+    echo '<div class="sa-hr-row"><label><strong>Custom request</strong><input type="text" name="sa_hr_custom" placeholder="e.g. Photo of the damaged box"></label><label><strong>Answer format</strong><select name="sa_hr_custom_type"><option value="upload">Upload</option><option value="text">Text answer</option><option value="date">Date</option></select></label></div></div>'
+        . '<div class="sa-hr-section"><span class="sa-hr-eyebrow">03 / Customer message</span><h4>Explain the next step.</h4><p class="sa-hr-hint">Say what needs checking and why. For a price or delivery charge, include the exact amount for approval.</p><label><span class="screen-reader-text">Message to customer</span><textarea name="sa_hr_msg" rows="3" placeholder="Write a clear, specific message for this order."></textarea></label></div>'
+        . '<div class="sa-hr-settings"><label><input type="checkbox" name="sa_hr_rem" value="1"' . checked(get_option('sa_hr_reminders', '1'), '1', false) . '> Automatic reminders<br><span style="color:#68727c">48 and 24 hours before expiry. This setting applies to all orders.</span></label><input type="hidden" name="sa_hr_rem_set" value="1"><label>Reply window <input type="number" name="sa_hr_days" value="14" min="1" max="60"> days</label></div>'
+        . '<div class="sa-hr-footer"><button class="sa-hr-b" name="sa_hr_do" value="create">' . ($open ? 'Send extra request' : 'Put on hold &amp; request info') . '</button>'
+        . ($open ? '' : '<button class="sa-hr-b alt" name="sa_hr_do" value="create_nohold">Request info without hold</button>') . '<p class="sa-hr-hint">The customer receives an email with a secure link. Order status changes only when you choose the hold action.</p></div>';
     if ($open) {
         echo '</details>';
     }

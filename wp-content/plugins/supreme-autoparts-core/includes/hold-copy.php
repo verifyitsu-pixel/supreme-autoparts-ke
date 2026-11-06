@@ -48,7 +48,7 @@ function sa_hr_item_guide(): array
 function sa_hr_copy(string $reason): array
 {
     $c = [
-        'fraud' => ['Quick security check for order #{n}', 'A routine check to protect you and your card. It takes about 2 minutes.', 'Help us confirm it\'s you',
+        'fraud' => ['Quick security check for order #{n}', 'Please review the information needed for your order.', 'Your order needs a security review',
             'To protect you and your card, we run a routine security check on some orders before they ship. Your order is paused until it\'s complete.',
             'that you are the authorised holder of the {card} used for this {amount} payment.', 'Verify my order', 'usually within 1 business day of receiving your details'],
         'payment' => ['Action needed: confirm your payment for order #{n}', 'We need to match your {amount} payment to your order before we continue.', 'Let\'s confirm your payment',
@@ -146,8 +146,8 @@ function sa_hr_summary_html(WC_Order $o, bool $email = true): string
     $lab = 'font-family:' . $F . ';font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6b6b6b;font-weight:600;padding:0 0 6px';
     $h = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e6e6e6;border-radius:8px;border-collapse:separate;margin:18px 0"><tr><td style="padding:16px 18px">';
     $h .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>'
-        . '<td style="font-family:' . $F . ';font-size:16px;font-weight:700;color:#111">Order ' . $nl('#' . $o->get_order_number()) . '</td>'
-        . '<td style="font-family:' . $F . ';font-size:13px;color:#6b6b6b;text-align:right">Placed ' . $nl(wc_format_datetime($o->get_date_created(), 'j M Y')) . '</td></tr></table>';
+        . '<td class="sa-review-summary-head" style="font-family:' . $F . ';font-size:16px;font-weight:700;color:#111">Order ' . $nl('#' . $o->get_order_number()) . '</td>'
+        . '<td class="sa-review-summary-head" style="font-family:' . $F . ';font-size:13px;color:#6b6b6b;text-align:right">Placed ' . $nl(wc_format_datetime($o->get_date_created(), 'j M Y')) . '</td></tr></table>';
     if (function_exists('sa_rcpt_order_data')) {
         $d = sa_rcpt_order_data($o);
         $h .= '<div style="margin-top:10px">' . sa_rcpt_items_html($d['items'], 'email', $F) . '</div>'
@@ -168,7 +168,7 @@ function sa_hr_summary_html(WC_Order $o, bool $email = true): string
     }
     $kv = '';
     foreach ($rows as [$k, $v]) {
-        $kv .= '<tr><td style="font-family:' . $F . ';font-size:13px;color:#6b6b6b;padding:3px 12px 3px 0;white-space:nowrap;vertical-align:top">' . esc_html($k) . '</td><td style="font-family:' . $F . ';font-size:13px;color:#111;padding:3px 0;word-break:break-all">' . $nl($v) . '</td></tr>';
+        $kv .= '<tr><td style="font-family:' . $F . ';font-size:13px;color:#6b6b6b;padding:3px 12px 3px 0;white-space:nowrap;vertical-align:top">' . esc_html($k) . '</td><td style="font-family:' . $F . ';font-size:13px;color:#111;padding:3px 0;overflow-wrap:anywhere;word-break:normal">' . $nl($v) . '</td></tr>';
     }
     $billname = trim($o->get_billing_first_name() . ' ' . $o->get_billing_last_name());
     $bill = array_filter([$billname, sa_hr_mask((string) $o->get_billing_address_1()), trim($o->get_billing_city() . ', ' . $o->get_billing_state(), ' ,'), WC()->countries->countries[$o->get_billing_country()] ?? $o->get_billing_country()]);
@@ -190,22 +190,9 @@ function sa_hr_summary_html(WC_Order $o, bool $email = true): string
 /** Email shell: white, black, amber accent, auto-link safe, mobile stacking. */
 function sa_hr_mail_wrap(string $head, string $inner, string $pre, string $cta = '', string $url = ''): string
 {
-    $F = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
-    $logo = function_exists('sa_theme_logo_url') ? sa_theme_logo_url(true) : home_url('/wp-content/themes/supreme-autoparts/assets/logo-light.jpg');
-    $btn = $cta !== '' && $url !== '' ? '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 6px"><tr><td style="background:#0a0a0a;border-radius:6px"><a href="' . esc_url($url) . '" style="display:inline-block;padding:14px 28px;font-family:' . $F . ';font-size:16px;font-weight:700;color:#ffffff;text-decoration:none">' . esc_html($cta) . ' &rarr;</a></td></tr></table>' : '';
-    return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><meta name="format-detection" content="telephone=no,address=no,email=no,date=no">'
-        . '<title>' . esc_html($head) . '</title><style>a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important}u+#body a{color:inherit;text-decoration:none}'
-        . '@media (max-width:600px){.sa-hr-pad{padding-left:18px!important;padding-right:18px!important}.sa-hr-col{max-width:100%!important;display:block!important}.sa-hide-sm{display:none!important}.sa-show-sm{display:block!important;max-height:none!important}h1.sa-hr-h{font-size:22px!important}}</style></head>'
-        . '<body id="body" style="margin:0;padding:0;background:#f4f4f4;-webkit-text-size-adjust:100%">'
-        . '<div style="display:none;max-height:0;overflow:hidden;mso-hide:all">' . esc_html($pre) . str_repeat('&#8199;&#65279;&#847; ', 40) . '</div>'
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f4f4"><tr><td align="center" style="padding:24px 10px">'
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:#ffffff;border:1px solid #e4e4e4;border-radius:8px;border-collapse:separate">'
-        . '<tr><td class="sa-hr-pad" style="padding:22px 28px 16px;border-bottom:3px solid #F5A623"><img src="' . esc_url($logo) . '" alt="Supreme Autoparts" width="300" style="display:block;width:300px;max-width:100%;height:auto;border:0"></td></tr>'
-        . '<tr><td class="sa-hr-pad" style="padding:26px 28px 28px;font-family:' . $F . ';font-size:15px;line-height:1.6;color:#222">'
-        . '<h1 class="sa-hr-h" style="margin:0 0 14px;font-family:' . $F . ';font-size:24px;line-height:1.25;color:#111;font-weight:700">' . esc_html($head) . '</h1>'
-        . $inner . ($btn ? '' : '') . '</td></tr></table>'
-        . '<div style="max-width:600px;font-family:' . $F . ';font-size:12px;line-height:1.5;color:#8a8a8a;padding:14px 10px">Supreme Autoparts &middot; supremeautoparts.co.ke<br>You\'re receiving this because of an order you placed with us.</div>'
-        . '</td></tr></table></body></html>';
+    $asset = home_url('/wp-content/themes/supreme-autoparts/assets/');
+    $button = $cta !== '' && $url !== '' ? sa_hr_btn($cta, $url) : '';
+    return '<!doctype html><!--sa-email-footer--><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="format-detection" content="telephone=no,address=no,email=no,date=no"><style>body{margin:0;background:#f4f5f6;color:#202a34;font-family:Arial,Helvetica,sans-serif}table{border-collapse:collapse}p{font-size:16px;line-height:1.65;margin:0 0 18px}a{color:#17212b}img{max-width:100%;height:auto}h1{font-size:28px;line-height:1.25;letter-spacing:-.5px;margin:10px 0 24px}@media(max-width:620px){.sa-review-card{width:100%!important;border:0!important}.sa-review-pad{padding:24px 20px!important}.sa-review-outer{padding:0!important}.sa-hr-col{display:block!important;max-width:100%!important}.sa-review-summary-head{display:block!important;width:auto!important;text-align:left!important;padding-bottom:6px!important}h1{font-size:25px!important}}</style></head><body><div style="display:none;max-height:0;overflow:hidden">' . esc_html($pre) . '</div><table role="presentation" width="100%"><tr><td class="sa-review-outer" align="center" style="padding:32px 12px"><table role="presentation" class="sa-review-card" width="600" style="width:600px;max-width:100%;background:#fff;border:1px solid #e2e6e9"><tr><td class="sa-review-pad sa-email-brand-header" style="padding:30px 36px;border-bottom:1px solid #e7eaed"><img src="' . esc_url($asset . 'logo-email.png') . '" width="200" alt="Supreme Autoparts" style="display:block"></td></tr><tr><td class="sa-review-pad" style="padding:32px 36px"><div style="font-size:10px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:#687580">Order review</div><h1>' . esc_html($head) . '</h1>' . $inner . $button . '</td></tr><tr><td class="sa-review-pad" style="padding:24px 36px;border-top:1px solid #e7eaed;font-size:12px;color:#687580;line-height:1.7"><img src="' . esc_url($asset . 'logo-email.png') . '" width="150" alt="Supreme Autoparts" style="display:block;margin-bottom:14px">Supreme Autoparts<br>This email is about your order.<br><a href="' . esc_url(home_url('/privacy-policy/')) . '">Privacy policy</a> &middot; <a href="' . esc_url(home_url('/contact/')) . '">Contact Supreme</a></td></tr></table></td></tr></table></body></html>';
 }
 
 /** CTA button html (used inside inner so it sits right after the action). */
@@ -220,10 +207,10 @@ function sa_hr_trust_html(WC_Order $o, bool $uploads, bool $email = true): strin
     $c = sa_hr_contact($o);
     $nl = static fn(string $s): string => function_exists('sa_rcpt_nolink') ? sa_rcpt_nolink($s) : esc_html($s);
     $box = 'background:#fafafa;border-left:3px solid #F5A623;padding:12px 14px;margin:18px 0;font-size:13px;line-height:1.6;color:#333';
-    $h = '<div style="' . $box . '"><strong style="color:#111">Your information is protected</strong><br>'
-        . ($uploads ? 'Files are sent over an encrypted connection, stored privately, and viewed only by our verification team. They are deleted 30 days after review and never shared or sold. ' : 'Your details are sent over an encrypted connection and used only for this order. ')
-        . 'We will never ask for your full card number, CVV, PIN, M-Pesa PIN or passwords, by email, phone or chat.</div>';
+    $h = '<div style="' . $box . '"><strong style="color:#111">Before you send</strong><br>'
+        . ($uploads ? 'Only send the information requested for this order. Cover card numbers except the last four digits and cover the security code completely. ' : '')
+        . 'Never send a full card number, security code, PIN, M-Pesa PIN or password.</div>';
     $h .= '<p style="font-size:13px;line-height:1.6;color:#555;margin:0 0 10px"><strong style="color:#111">Is this really us?</strong> ' . ($email ? 'The button above opens a page on supremeautoparts.co.ke. ' : '') . 'If you\'re unsure, don\'t use the link: go to supremeautoparts.co.ke, open My Account, or contact us directly.</p>';
-    $h .= '<p style="font-size:13px;line-height:1.6;color:#555;margin:0"><strong style="color:#111">Questions?</strong> ' . ($email ? 'Reply to this email, or call ' : 'Call ') . $nl($c['phone']) . ' or email ' . $nl($c['email']) . '.</p>';
+    $h .= '<p style="font-size:13px;line-height:1.6;color:#555;margin:0"><strong style="color:#111">Questions?</strong> ' . ($email ? 'Reply to this email. Contact ' : 'Call ') . (($email && $c['zone'] === 'KE') ? '' : $nl($c['phone']) . ' or email ') . $nl($c['email']) . '.</p>';
     return $h;
 }
