@@ -14,3 +14,6 @@ $d=sa_ga4_purchase_payload($order);check($d['value']===20.0&&$d['currency']==='U
 check(array_keys($d)===['transaction_id','currency','value','tax','shipping','items'],'identity fields absent');
 check(!preg_match('/email|address|phone|customer/i',json_encode($d)),'identity absent');
 echo "PASS fixture product/purchase totals, invalid qty/product, no identity fields\n";
+
+$eligible=new class {public $status='processing';public $id=123;public $paid=true;function get_status(){return $this->status;}function get_id(){return $this->id;}function is_paid(){return $this->paid;}};
+check(sa_ga4_purchase_eligible($eligible),'processing allowed');$eligible->status='staged';check(!sa_ga4_purchase_eligible($eligible),'staged denied');$eligible->status='pending';check(!sa_ga4_purchase_eligible($eligible),'pending denied');$eligible->status='completed';$eligible->paid=false;check(!sa_ga4_purchase_eligible($eligible),'unpaid denied');$eligible->paid=true;$eligible->id=76318;if(sa_ga4_id()==='G-LCH3Y7NNRY')check(!sa_ga4_purchase_eligible($eligible),'quarantined denied');echo "PASS purchase eligibility guards\n";

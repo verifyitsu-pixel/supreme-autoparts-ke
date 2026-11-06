@@ -12,6 +12,12 @@ function sa_ga4_id(): string {
 function sa_ga4_allowed(): bool {
     return !is_admin() && !(is_user_logged_in() && current_user_can('manage_options'));
 }
+function sa_ga4_purchase_eligible($order): bool {
+    if (!$order || !$order->is_paid() || !in_array($order->get_status(), ['processing','completed'], true)) { return false; }
+    // Known quarantined diagnostic artifact, never a natural customer purchase.
+    if (sa_ga4_id() === 'G-LCH3Y7NNRY' && (int)$order->get_id() === 76318) { return false; }
+    return true;
+}
 function sa_ga4_purchase_payload($order): array {
     $items = [];
     foreach ($order->get_items() as $item) {
@@ -24,7 +30,7 @@ function sa_ga4_purchase_payload($order): array {
 add_action('woocommerce_thankyou', static function ($order_id): void {
     if (!sa_ga4_allowed() || sa_ga4_id() === '' || !function_exists('wc_get_order')) { return; }
     $order = wc_get_order($order_id);
-    if (!$order || !$order->is_paid()) { return; }
+    if (!sa_ga4_purchase_eligible($order)) { return; }
     $key = isset($_GET['key']) && is_string($_GET['key']) ? wc_clean(wp_unslash($_GET['key'])) : '';
     $owns = is_user_logged_in() && (int) $order->get_customer_id() > 0 && (int) $order->get_customer_id() === get_current_user_id();
     if (!$owns && ($key === '' || !hash_equals((string) $order->get_order_key(), $key))) { return; }
