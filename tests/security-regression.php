@@ -13,7 +13,7 @@ class WP_Error {public function __construct(public string $code,public string $m
 function user_can($u,$cap){return in_array($cap,$u->caps,true);}
 class DB {public $options='wp_options';public function prepare($sql,$name){return $name;}public function query($name){global $db;if(!isset($db[$name]))return 0;$db[$name]=(int)$db[$name]+1;return 1;}}
 $wpdb=new DB;
-require $argv[1];
+require $argv[1] ?? __DIR__.'/../wp-content/mu-plugins/sa-auth-guard.php';
 function check($condition,$label){if(!$condition){fwrite(STDERR,"FAIL $label\n");exit(1);}echo "PASS $label\n";}
 $_SERVER['REMOTE_ADDR']='203.0.113.7';$_SERVER['HTTP_CF_CONNECTING_IP']='192.0.2.4';
 check(sa_security_network()==='203.0.113.7','untrusted CF header ignored');
