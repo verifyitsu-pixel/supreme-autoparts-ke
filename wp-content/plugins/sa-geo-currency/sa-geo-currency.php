@@ -190,8 +190,10 @@ function sa_geo_is_kenya(): bool
 /** Storefront copy only. Never use this preference for currency, delivery or order data. */
 function sa_storefront_country(): string
 {
-    $view = $_GET['sa_view'] ?? ($_COOKIE['sa_storefront_view'] ?? 'ke');
-    return is_string($view) && $view === 'us' ? 'US' : 'KE';
+    $view = $_GET['sa_view'] ?? ($_COOKIE['sa_storefront_view'] ?? null);
+    if (is_string($view) && in_array($view, ['ke', 'us'], true)) return $view === 'us' ? 'US' : 'KE';
+    // First visit follows verified detection for US/KE. Other countries retain the previous Kenya fallback.
+    return sa_geo_country() === 'US' ? 'US' : 'KE';
 }
 
 function sa_storefront_is_kenya(): bool

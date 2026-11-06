@@ -24,14 +24,14 @@ function sa_svc_map_url(): string
     return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode('Midax Plaza, Kangundo Rd, Njiru, Nairobi');
 }
 
-function sa_svc_address_html(bool $compact = false): string
+function sa_svc_address_html(bool $compact = false, ?string $contact_country = null): string
 {
-    if (sa_svc_region() !== 'KE') {
-        $b = sa_geo_business();
+    if ($contact_country !== null || sa_svc_region() !== 'KE') {
+        $b = sa_geo_business($contact_country);
         return '<div class="sa-svc-addr' . ($compact ? ' sa-svc-addr--compact' : '') . '">' . sa_svc_icon('pin')
             . '<div><strong>Supreme Autoparts</strong><span>' . esc_html($b['street']) . '</span><span>' . esc_html($b['city'] . ', ' . $b['region'] . ' ' . $b['postal']) . '</span>'
             . '<span><a href="tel:' . esc_attr($b['phone']) . '">' . esc_html($b['phone_display']) . '</a> · <a href="mailto:' . esc_attr($b['email']) . '">' . esc_html($b['email']) . '</a></span>'
-            . '<a href="' . esc_url(sa_geo_map_url()) . '" target="_blank" rel="noopener">Open in Google Maps →</a></div></div>';
+            . '<a href="' . esc_url(sa_geo_map_url($contact_country)) . '" target="_blank" rel="noopener">Open in Google Maps →</a></div></div>';
     }
     return '<div class="sa-svc-addr' . ($compact ? ' sa-svc-addr--compact' : '') . '">' . sa_svc_icon('pin')
         . '<div><strong>Supreme Autoparts garage</strong><span>' . esc_html(SA_SVC_GARAGE_ADDRESS) . '</span>'
@@ -1176,12 +1176,10 @@ function sa_svc_admin_render(): void
 
 add_filter('the_content', static function (string $c): string {
     if (is_page('contact') && in_the_loop() && is_main_query()) {
-        if (function_exists('sa_geo_is_kenya') && !sa_geo_is_kenya()) {
-            $q = rawurlencode(sa_geo_business()['map_q']);
-            $c .= '<h2>Our address</h2>' . sa_svc_address_html() . '<iframe title="Map" loading="lazy" style="width:100%;height:320px;border:0;margin-top:12px" src="https://www.google.com/maps?q=' . $q . '&output=embed"></iframe>';
-        } else {
-            $c .= '<h2>Visit our garage</h2>' . sa_svc_address_html() . '<p><a class="sa-svc-btn sa-svc-btn--primary" href="' . esc_url(sa_svc_book_url()) . '">Book a service</a></p>';
-        }
+        $cc = function_exists('sa_storefront_country') ? sa_storefront_country() : sa_geo_country();
+        $q = rawurlencode(sa_geo_business($cc)['map_q']);
+        $c .= '<h2>Our address</h2>' . sa_svc_address_html(false, $cc) . '<iframe title="Map" loading="lazy" style="width:100%;height:320px;border:0;margin-top:12px" src="https://www.google.com/maps?q=' . $q . '&output=embed"></iframe>';
+        if ($cc === 'KE') $c .= '<p><a class="sa-svc-btn sa-svc-btn--primary" href="' . esc_url(sa_svc_book_url()) . '">Book a service</a></p>';
     }
     return $c;
 }, 30);

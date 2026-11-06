@@ -32,6 +32,11 @@ foreach (['/cart', '/checkout', '/my-account', '/wp-admin', '/wp-login.php', '/w
     }
 }
 
+// A manual storefront choice overrides IP and must bypass country-only cached HTML.
+if (isset($_COOKIE['sa_storefront_view']) || isset($_GET['sa_view'])) {
+    return;
+}
+
 // A Merchant USD browsing session must never receive country-only cached KES HTML.
 if ((isset($_COOKIE['sa_merchant_usd']) && $_COOKIE['sa_merchant_usd'] === '1')
     || (isset($_GET['sa_market']) && is_string($_GET['sa_market']) && $_GET['sa_market'] === 'ke')) {
