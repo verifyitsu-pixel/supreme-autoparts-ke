@@ -9,7 +9,9 @@ $GLOBALS['wpdb']=new WPDBStub;
 $GLOBALS['posts']=[];$GLOBALS['gp']=[];$GLOBALS['gp_err']=false;
 function get_posts($a){$GLOBALS['gp'][]=$a;if(($GLOBALS['gp_err_at']??0)===count($GLOBALS['gp'])){$GLOBALS['wpdb']->last_error='timeout';return [];}if($GLOBALS['gp_err']){$GLOBALS['wpdb']->last_error='timeout';return [];}return array_shift($GLOBALS['gpret'])??[];}
 function get_post($id){return $GLOBALS['posts'][$id]??null;}
-function update_post_meta(...$a){}
+class WP_Post{public $post_type='product',$post_status='publish',$post_title='Honda rear 65071';}
+function wp_strip_all_tags($s){return strip_tags((string)$s);}
+$GLOBALS['upm']=0;function update_post_meta(...$a){$GLOBALS['upm']++;}
 require __DIR__.'/../wp-content/plugins/supreme-autoparts-core/includes/product-fingerprint.php';
 require __DIR__.'/../wp-content/plugins/supreme-autoparts-core/includes/import-lookup-registry.php';
 function ok($b,$m){if(!$b)throw new Exception($m);echo "PASS $m\n";}
@@ -50,3 +52,10 @@ throws(fn()=>new KenyaImportLookup(array_map(fn($i)=>['_sku',(string)$i],range(1
 $r3=new KenyaImportLookup([['_sku','a']]);$x=['id'=>1,'handle'=>'h-1','variants'=>[['sku'=>'ABC']]];$r3->claimItem($x);$y=['id'=>2,'handle'=>'h-2','variants'=>[['sku'=>'abc ']]];
 throws(fn()=>$r3->claimItem($y),'in-batch: repeated identity (case/space) refused');
 throws(fn()=>(new KenyaImportLookup([['_sku','a']]))->claimItem(['id'=>3,'handle'=>'h','variants'=>[['sku'=>'ÀBC']]]),'in-batch: unsupported characters refused');
+// 4) fingerprint fallback stamping: default unchanged, opt-in no-write mode
+$mk=function(){$GLOBALS['wpdb']->last_error='';$GLOBALS['gp']=[];$GLOBALS['gpret']=[[],[5]];$GLOBALS['posts'][5]=new WP_Post;};
+$mk();$fp=sa_product_loop_fingerprint('Honda rear 65071');$GLOBALS['upm']=0;
+ok(sa_core_find_published_by_fingerprint($fp)===5&&$GLOBALS['upm']===1,'fallback match: default still stamps fingerprint meta (ordinary import unchanged)');
+$mk();$GLOBALS['sa_core_fingerprint_no_write']=true;$GLOBALS['upm']=0;
+ok(sa_core_find_published_by_fingerprint($fp)===5&&$GLOBALS['upm']===0,'fallback match: opt-in no-write mode returns the same match without writing');
+unset($GLOBALS['sa_core_fingerprint_no_write']);

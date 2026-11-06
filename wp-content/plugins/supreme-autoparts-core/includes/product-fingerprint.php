@@ -146,7 +146,10 @@ function sa_core_find_published_by_fingerprint(string $fingerprint, int $exclude
         }
         $fp = sa_product_loop_fingerprint($post);
         if ($fp === $fingerprint) {
-            update_post_meta($pid, '_sa_title_fingerprint', $fp);
+            // Opt-in read-only mode for bulk dry runs: $GLOBALS['sa_core_fingerprint_no_write'] = true.
+            if (empty($GLOBALS['sa_core_fingerprint_no_write'])) {
+                update_post_meta($pid, '_sa_title_fingerprint', $fp);
+            }
             return $pid;
         }
     }
