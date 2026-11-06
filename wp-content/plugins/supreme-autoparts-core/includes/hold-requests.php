@@ -230,15 +230,17 @@ function sa_hr_mail_build(WC_Order $o, array $r, string $kind, string $message =
     ];
     $msg = $message !== '' ? '<p>' . nl2br(esc_html($message)) . '</p>' : '';
     $ref = '<p style="font-size:13px;color:#687580;margin:0 0 12px">Order ' . esc_html($n) . '</p>';
-    $head = 'Information needed';
+    $titles = ['fraud'=>'Order verification','payment'=>'Payment verification','address'=>'Delivery address check','customs'=>'Customs documents','remote'=>'Delivery charge approval','delivery'=>'Delivery arrangements','pickup'=>'Collection arrangements','fitment'=>'Part fitment check','stock'=>'Out-of-stock item','quote'=>'Updated price approval','contact'=>'Contact details','other'=>'Order details'];
+    $context = $titles[$r['reason']] ?? $titles['other'];
+    $head = $context;
     $subject = 'Order ' . $n . ': information needed';
     $reason = $reasons[$r['reason']] ?? $reasons['other'];
     $inner = $ref . ($msg !== '' ? $msg : '<p>' . esc_html($reason) . '</p>') . sa_hr_items_email($r) . $deadline . sa_hr_btn('Send details', $url);
     if ($kind === 'reminder') {
-        $head = 'Reminder: information needed';
+        $head = $context . ': reminder';
         $subject = 'Order ' . $n . ': reminder';
     } elseif ($kind === 'more') {
-        $head = 'Please check these details';
+        $head = $context . ': details needed';
         $subject = 'Order ' . $n . ': details needed';
         $inner = $ref . $msg . sa_hr_items_email($r) . $deadline . sa_hr_btn('Send details', $url);
     } elseif ($kind === 'released') {
