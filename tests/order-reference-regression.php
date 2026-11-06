@@ -73,3 +73,7 @@ $GLOBALS['fixture']=$o;$fields=(new ReferenceMetadataGateway)->get_custom_fields
 check($fields[0]===['display_name'=>'Order reference','variable_name'=>'order_reference','value'=>'Supreme-76336'],'real Paystack metadata emits exact reference with optional customer metadata off');
 $GLOBALS['fixture']=$legacy;$fields=(new ReferenceMetadataGateway)->get_custom_fields(76336);
 check(count($fields)===1 && $fields[0]['variable_name']==='plugin','historical Paystack metadata unchanged');
+$track=$GLOBALS['hooks']['woocommerce_shortcode_order_tracking_order_id'];$GLOBALS['fixture']=$o;
+check($track('Supreme-76336')===76336,'tracking accepts exact stored branded reference');
+check($track('76336')==='76336','tracking preserves numeric historical ID');
+$GLOBALS['fixture']=$legacy;check($track('Supreme-76336')===0,'tracking does not alias historical order');
