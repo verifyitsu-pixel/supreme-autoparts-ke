@@ -40,6 +40,7 @@ jobs:
           node --version
           node tests/ga4-commerce-regression.cjs
           php tests/ga4-payload-regression.php
+          php tests/advanced-cache-bypass-regression.php
 
   deploy:
     needs: test

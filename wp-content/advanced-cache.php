@@ -48,7 +48,11 @@ foreach (array_keys($_COOKIE) as $sa_pc_ck) {
         || str_starts_with($sa_pc_ck, 'woocommerce_items_in_cart')
         || str_starts_with($sa_pc_ck, 'wp_woocommerce_session_')
         || str_starts_with($sa_pc_ck, 'wordpress_logged_in_')
-        || str_starts_with($sa_pc_ck, 'comment_author')) {
+        || str_starts_with($sa_pc_ck, 'comment_author')
+        // First-party personalization / preview cookies change server-rendered HTML
+        // (sa_pz: personalised ranking + recommendation note; others: preview and
+        // roadside/marketing identity). Such renders must be neither served from nor stored in the shared cache.
+        || in_array($sa_pc_ck, ['sa_pz', 'sa_couriers_preview', 'sa_rs_pt', 'sm_email'], true)) {
         return;
     }
 }
