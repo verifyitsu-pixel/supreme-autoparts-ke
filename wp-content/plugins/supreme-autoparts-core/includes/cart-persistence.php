@@ -163,7 +163,29 @@ add_filter('woocommerce_login_credentials', static function (array $creds): arra
 }, 20);
 
 /**
- * After successful login: persist cart so multi-device sync has fresh data.
+ * Merge a guest's session cart into the account's saved (persistent) cart.
+ *
+ * Never replaces a saved cart with an empty one: at wp_login the in-memory cart
+ * is still the pre-login guest cart (WooCommerce loads the saved cart on the
+ * next request), so writing it unconditionally wiped the customer's saved cart
+ * on every login. Guest items win on identical cart keys, saved items stay.
+ *
+ * @param array<string,mixed> $guest_cart
+ */
+function sa_core_merge_guest_cart_into_saved(int $user_id, array $guest_cart): void
+{
+    $guest_cart = array_filter($guest_cart);
+    if ($user_id <= 0 || $guest_cart === []) {
+        return; // nothing to merge: leave the saved cart untouched.
+    }
+    $key   = '_woocommerce_persistent_cart_' . get_current_blog_id();
+    $saved = get_user_meta($user_id, $key, true);
+    $saved_cart = (is_array($saved) && isset($saved['cart']) && is_array($saved['cart'])) ? array_filter($saved['cart']) : [];
+    update_user_meta($user_id, $key, ['cart' => array_merge($saved_cart, $guest_cart)]);
+}
+
+/**
+ * After successful login: carry a non-empty guest cart into the account cart.
  */
 add_action('wp_login', static function (string $user_login, $user): void {
     unset($user_login);
@@ -174,13 +196,9 @@ add_action('wp_login', static function (string $user_login, $user): void {
         return;
     }
     if (method_exists(WC()->cart, 'get_cart_for_session')) {
-        $persisted = WC()->cart->get_cart_for_session();
-        if (is_array($persisted)) {
-            update_user_meta(
-                (int) $user->ID,
-                '_woocommerce_persistent_cart_' . get_current_blog_id(),
-                ['cart' => $persisted]
-            );
+        $guest = WC()->cart->get_cart_for_session();
+        if (is_array($guest)) {
+            sa_core_merge_guest_cart_into_saved((int) $user->ID, $guest);
         }
     }
 }, 20, 2);
