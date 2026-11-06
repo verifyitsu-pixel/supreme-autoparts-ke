@@ -1,0 +1,58 @@
+name: Test and deploy to Contabo
+
+# Pushes to main run the test gate. Only if it passes is the code (themes, plugins,
+# mu-plugins only; never database, uploads or env) sent to the live Contabo store
+# through a restricted deploy key. Rollback: revert the commit (or re-run this workflow
+# on an older commit); the server also keeps the last 7 pre-deploy code backups.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'wp-content/**'
+      - 'healthz.php'
+      - 'llms.txt'
+      - 'llms-full.txt'
+      - '.github/workflows/deploy-contabo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contabo-deploy
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: PHP syntax (all deployed code)
+        run: |
+          php -v
+          find wp-content healthz.php -name '*.php' -print0 | xargs -0 -n1 -P4 php -l > /dev/null
+      - name: Regression tests
+        run: |
+          php tests/careers-payment-regression.php
+          php tests/careers-provider-verification-regression.php
+          php tests/careers-redirect-contract-regression.php
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy code to Contabo (restricted deploy key, code-only)
+        env:
+          DEPLOY_KEY: ${{ secrets.CONTABO_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/contabo_deploy
+          chmod 600 ~/.ssh/contabo_deploy
+          echo '5.183.33.198 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEchn3QiVLJ79JpOoisFz0BCm6vKPi6YzoUGXsyo6a6D' > ~/.ssh/contabo_known_hosts
+          echo "$GITHUB_SHA" > .deploy-sha
+          tar c .deploy-sha wp-content/themes/supreme-autoparts wp-content/plugins/supreme-autoparts-core wp-content/plugins/woo-paystack wp-content/plugins/whop-payments wp-content/plugins/sa-brevo-mail wp-content/plugins/sa-geo-currency wp-content/plugins/pesapal-woocommerce wp-content/plugins/transactworld-payment-integration wp-content/plugins/supreme-agent-intake wp-content/plugins/supreme-marketing wp-content/mu-plugins wp-content/advanced-cache.php healthz.php llms.txt llms-full.txt 602ba228c9d1427d2c329ca9d9c82c4a.txt | ssh -i ~/.ssh/contabo_deploy -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/contabo_known_hosts -o ConnectTimeout=20 deploy@5.183.33.198 deploy
