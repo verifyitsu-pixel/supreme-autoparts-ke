@@ -193,26 +193,18 @@ function sa_hr_mail_customer(WC_Order $o, array $r, string $kind, string $messag
 /** Pending items html (email) with why + how per item. */
 function sa_hr_items_email(array $r): string
 {
-    $g = sa_hr_item_guide();
-    $F = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+    $cat = sa_hr_items();
     $h = '';
-    $i = 0;
     foreach ($r['items'] as $k => $it) {
-        if (!in_array($it['status'], ['requested', 'rejected'], true)) {
-            continue;
-        }
-        $i++;
-        [$why, $how] = $g[$k] ?? ['', (string) $it['help']];
-        $h .= '<tr><td style="width:30px;vertical-align:top;padding:12px 0 12px"><div style="width:24px;height:24px;line-height:24px;border-radius:12px;background:#F5A623;color:#111;font-family:' . $F . ';font-size:13px;font-weight:700;text-align:center">' . $i . '</div></td>'
-            . '<td style="vertical-align:top;padding:12px 0;border-bottom:1px solid #eeeeee;font-family:' . $F . ';font-size:16px;line-height:1.6;color:#333">'
-            . '<div style="font-weight:700;color:#111;font-size:17px">' . esc_html($it['label']) . '</div>'
-            . ($it['status'] === 'rejected' && $it['why'] ? '<div style="color:#8a4b00;background:#fff3dc;padding:4px 8px;border-radius:4px;margin:4px 0;display:inline-block">Please send again: ' . esc_html($it['why']) . '</div>' : '')
-            . ($why ? '<div style="color:#555"><strong style="color:#111">Why:</strong> ' . esc_html($why) . '</div>' : '')
-            . ($how ? '<div style="color:#555"><strong style="color:#111">How:</strong> ' . esc_html($how) . '</div>' : '')
-            . '</td></tr>';
+        if (!in_array($it['status'], ['requested', 'rejected'], true)) continue;
+        $help = (string) ($cat[$k][2] ?? $it['help'] ?? '');
+        $h .= '<li style="margin:0 0 14px"><strong>' . esc_html($it['label']) . '</strong>'
+            . ($help !== '' ? '<br><span style="color:#59636d;font-size:14px">' . esc_html($help) . '</span>' : '')
+            . ($it['status'] === 'rejected' && !empty($it['why']) ? '<br><span style="color:#8a4b00">Please resend: ' . esc_html($it['why']) . '</span>' : '') . '</li>';
     }
-    return $h ? '<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6b6b6b;font-weight:600;margin:20px 0 0">What to send (' . $i . ')</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' . $h . '</table>' : '';
+    return $h !== '' ? '<ul style="padding-left:20px;margin:20px 0;font-size:15px;line-height:1.5">' . $h . '</ul>' : '';
 }
+
 
 function sa_hr_mail_build(WC_Order $o, array $r, string $kind, string $message = ''): array
 {
@@ -220,64 +212,50 @@ function sa_hr_mail_build(WC_Order $o, array $r, string $kind, string $message =
     $GLOBALS['sa_sending_order_email'] = 1;
     try {
     $n = $o->get_order_number();
-    $pay = sa_hr_pay($o);
-    $c = sa_hr_copy((string) $r['reason']);
-    $fill = static fn(string $s): string => sa_hr_fill($s, $o, $pay);
     $url = sa_hr_url($o, $r);
-    $exp = wp_date('l, j F Y', (int) $r['exp']);
-    $uploads = (bool) array_filter($r['items'], static fn($it) => $it['type'] === 'upload');
-    $hi = '<p style="margin:0 0 12px">' . sa_email_greeting($o) . '</p>';
-    $msg = $message !== '' ? '<div style="border-left:3px solid #F5A623;background:#fafafa;padding:10px 14px;margin:14px 0"><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6b6b6b;font-weight:600">Message from our team</div>' . nl2br(esc_html($message)) . '</div>' : '';
-    $verify = '<div style="border:1px solid #111;border-radius:8px;padding:12px 14px;margin:14px 0"><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6b6b6b;font-weight:600">What we need to confirm</div><div style="color:#111;font-weight:600">We need to confirm ' . esc_html($fill($c['verify'])) . '</div></div>';
-    $next = '<div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6b6b6b;font-weight:600;margin:20px 0 4px">What happens next</div>'
-        . '<p style="margin:0 0 6px">Once you send this, our team reviews it and emails you with the next step.</p>'
-        . '<p style="margin:0 0 6px"><strong style="color:#111">Please reply by ' . esc_html($exp) . '.</strong> If we don\'t hear from you by then, your order may be cancelled. Any refund is handled separately.</p>';
-    $trust = sa_hr_trust_html($o, $uploads);
-    $sum = sa_hr_summary_html($o);
-    $cta = sa_hr_btn($fill($c['cta']), $url);
-    $sec = '<p style="font-size:13px;color:#555;margin:0 0 4px">Send the information from your phone. No login needed.</p>';
-    switch ($kind) {
-        case 'new':
-            $subject = $fill($c['subject']);
-            $pre = $fill($c['pre']);
-            $head = $c['head'];
-            $inner = $hi . '<p style="margin:0 0 12px">' . esc_html($fill($c['reason'])) . '</p>' . $verify . $msg . sa_hr_items_email($r) . $cta . $sec . $next . $sum . $trust;
-            break;
-        case 'reminder':
-            $left = max(1, (int) ceil(((int) $r['exp'] - time()) / DAY_IN_SECONDS));
-            $subject = 'Reminder: order #' . $n . ' is still waiting for you';
-            $pre = 'Your order is on hold. Please reply by ' . $exp . ' to keep it.';
-            $head = $left <= 1 ? 'Last day to keep your order' : 'Your order is still on hold';
-            $inner = $hi . '<p style="margin:0 0 12px">We\'re still holding order #' . esc_html($n) . ' for you, but we haven\'t received what we need yet. ' . esc_html($fill($c['reason'])) . '</p>' . $verify . sa_hr_items_email($r) . $cta . $sec . $next . $sum . $trust;
-            break;
-        case 'more':
-            $rej = (bool) array_filter($r['items'], static fn($it) => $it['status'] === 'rejected');
-            $subject = $rej ? 'Order #' . $n . ': please resend one item' : 'Order #' . $n . ': one more detail needed';
-            $pre = $rej ? 'Thanks for sending your details. One item needs a clearer copy.' : 'Thanks for your reply. We need one more thing to finish.';
-            $head = $rej ? 'Almost there, one item to resend' : 'Thanks, just one more thing';
-            $inner = $hi . '<p style="margin:0 0 12px">Thank you for what you\'ve sent so far. ' . ($rej ? 'We couldn\'t accept one item, usually because part of it was hard to read. Everything else is fine and you don\'t need to send it again.' : 'To finish our review we need the item below.') . '</p>' . $msg . sa_hr_items_email($r) . sa_hr_btn($rej ? 'Resend now' : $fill($c['cta']), $url) . $sec . $next . $sum . $trust;
-            break;
-        case 'released':
-            $subject = 'Thanks, order #' . $n . ' is moving again';
-            $pre = 'Everything checks out. Your order is back in progress.';
-            $head = 'Thanks, your order is moving again';
-            $inner = $hi . '<p style="margin:0 0 12px">The review is complete. We\'ve released the hold on order #' . esc_html($n) . ' and it\'s back in progress. We\'ll email you when it ships or is ready to collect.</p>'
-                . ($uploads ? '<p style="margin:0 0 12px;color:#555">The files you sent will be deleted from our systems within 30 days.</p>' : '') . $msg . $sum . sa_hr_btn('View my order', function_exists('sa_ol_view_url') ? sa_ol_view_url($o) : home_url('/my-account/')) . sa_hr_trust_html($o, false);
-            break;
-        case 'cancelled':
-            $subject = 'Order #' . $n . ' has been cancelled';
-            $pre = 'An update about your order cancellation.';
-            $head = 'Your order has been cancelled';
-            $inner = $hi . '<p style="margin:0 0 12px">We weren\'t able to complete the checks for order #' . esc_html($n) . ', so it has been cancelled. This email confirms the cancellation. We will send any refund update separately.</p>'
-                . $msg . '<p style="margin:0 0 12px">If you think this is a mistake, reply to this email and we\'ll gladly look again.</p>' . $sum . sa_hr_trust_html($o, false);
-            break;
-        default:
-            $subject = 'Order #' . $n . ': new message from our team';
-            $pre = mb_substr(preg_replace('/\s+/', ' ', $message), 0, 110);
-            $head = 'New message about your order';
-            $pend = (bool) array_filter($r['items'], static fn($it) => in_array($it['status'], ['requested', 'rejected'], true));
-            $inner = $hi . $msg . ($pend ? sa_hr_items_email($r) : '') . sa_hr_btn($pend ? $fill($c['cta']) : 'Reply securely', $url) . '<p style="font-size:13px;color:#555;margin:0 0 4px">You can also just reply to this email.</p>' . $sum . sa_hr_trust_html($o, $uploads);
+    $deadline = '<p style="font-size:14px;color:#59636d">Reply by ' . esc_html(wp_date('j M Y, g:i a T', (int) $r['exp'])) . '.</p>';
+    $reasons = [
+        'fraud'=>'We need to check a few details before this order can continue.',
+        'payment'=>'We could not match the payment to this order.',
+        'address'=>'We need the correct delivery details.',
+        'customs'=>'We need the documents listed below for customs.',
+        'remote'=>'Please review the extra delivery charge in our message.',
+        'delivery'=>'Please confirm how you would like to receive this order.',
+        'pickup'=>'Please let us know when you can collect this order.',
+        'fitment'=>'We need a few details to check that the part fits.',
+        'stock'=>'An item is out of stock. Please choose how to continue.',
+        'quote'=>'Please review the updated price in our message.',
+        'contact'=>'We need up-to-date contact details for this order.',
+        'other'=>'Please send the information below.'
+    ];
+    $msg = $message !== '' ? '<p>' . nl2br(esc_html($message)) . '</p>' : '';
+    $ref = '<p style="font-size:13px;color:#687580;margin:0 0 12px">Order ' . esc_html($n) . '</p>';
+    $head = 'Information needed';
+    $subject = 'Order ' . $n . ': information needed';
+    $reason = $reasons[$r['reason']] ?? $reasons['other'];
+    $inner = $ref . ($msg !== '' ? $msg : '<p>' . esc_html($reason) . '</p>') . sa_hr_items_email($r) . $deadline . sa_hr_btn('Send details', $url);
+    if ($kind === 'reminder') {
+        $head = 'Reminder: information needed';
+        $subject = 'Order ' . $n . ': reminder';
+    } elseif ($kind === 'more') {
+        $head = 'Please check these details';
+        $subject = 'Order ' . $n . ': details needed';
+        $inner = $ref . $msg . sa_hr_items_email($r) . $deadline . sa_hr_btn('Send details', $url);
+    } elseif ($kind === 'released') {
+        $head = 'Review complete';
+        $subject = 'Order ' . $n . ': review complete';
+        $inner = $ref . '<p>The hold has been released. Your order is back in progress.</p>' . $msg . sa_hr_btn('View order', function_exists('sa_ol_view_url') ? sa_ol_view_url($o) : home_url('/my-account/'));
+    } elseif ($kind === 'cancelled') {
+        $head = 'Order cancelled';
+        $subject = 'Order ' . $n . ': cancelled';
+        $inner = $ref . '<p>Your order has been cancelled. Any refund update will be sent separately.</p>' . $msg;
+    } elseif ($kind !== 'new' && $kind !== 'reminder') {
+        $head = 'A message about your order';
+        $subject = 'Order ' . $n . ': new message';
+        $items = sa_hr_items_email($r);
+        $inner = $ref . $msg . $items . ($items !== '' ? $deadline : '') . sa_hr_btn('Reply', $url);
     }
+    $pre = $subject;
     return ['subject' => $subject, 'pre' => $pre, 'html' => sa_hr_mail_wrap($head, $inner, $pre)];
     } finally {
         unset($GLOBALS['sa_sending_order_email']);
