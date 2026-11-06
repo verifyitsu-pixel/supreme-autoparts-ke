@@ -18,6 +18,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+const SA_PAGE_CACHE_WARM_WID = 'sapagecachewarmer00000';
+
 /** @return array<int,array{url:string,cc:string}> */
 function sa_page_cache_warm_targets(): array {
     $paths = ['/', '/shop/'];
@@ -62,6 +64,13 @@ function sa_page_cache_warm_run(): void {
             'headers'     => [
                 'X-Country-Code' => $target['cc'],
                 'User-Agent'     => 'SA-PageCacheWarmer/1.0',
+                // A request without sm_wid gets a Set-Cookie from the marketing
+                // plugin, and advanced-cache never stores responses that set
+                // other cookies, so every cookie-less warm request rendered in
+                // PHP and cached nothing. Send a fixed, non-personal warmer id
+                // (valid sm_wid shape) so the render is stored like a returning
+                // visitor's. No personalisation/cart/session cookie is sent.
+                'Cookie'         => 'sm_wid=' . SA_PAGE_CACHE_WARM_WID,
             ],
         ]);
         // Never fatal the cron run on a warming failure; next cycle retries.
