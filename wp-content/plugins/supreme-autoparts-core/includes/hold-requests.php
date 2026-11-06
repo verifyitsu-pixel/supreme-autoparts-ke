@@ -263,7 +263,12 @@ function sa_hr_mail_build(WC_Order $o, array $r, string $kind, string $message =
         $items = sa_hr_items_email($r);
         $inner = $ref . $msg . $items . ($items !== '' ? $deadline : '') . sa_hr_btn('Reply', $url);
     }
-    if (in_array($kind, ['new', 'reminder', 'more'], true)) $inner .= '<p style="font-size:14px;color:#59636d;margin-top:18px">We will review what you send and email you with the next step.</p>';
+    if (in_array($kind, ['new', 'reminder', 'more'], true)) {
+        $outcome = $on_hold
+            ? 'After review, we will email you to confirm the hold is lifted, ask for any missing details, or confirm if the order is cancelled.'
+            : 'We will review the details and ask by email if anything is missing. Submitting this form does not change your order status.';
+        $inner .= '<p style="font-size:14px;color:#59636d;margin-top:18px">' . esc_html($outcome) . '</p>';
+    }
     $pre = $subject;
     return ['subject' => $subject, 'pre' => $pre, 'html' => sa_hr_mail_wrap($head, $inner, $pre)];
     } finally {
