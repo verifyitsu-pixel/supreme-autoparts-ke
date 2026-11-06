@@ -214,19 +214,21 @@ function sa_hr_mail_build(WC_Order $o, array $r, string $kind, string $message =
     $n = $o->get_order_number();
     $url = sa_hr_url($o, $r);
     $deadline = '<p style="font-size:14px;color:#59636d">Reply by ' . esc_html(wp_date('j M Y, g:i a T', (int) $r['exp'])) . '.</p>';
+    $on_hold = $o->has_status('on-hold');
+    $status = $on_hold ? 'Your order is on hold. ' : '';
     $reasons = [
-        'fraud'=>'We need to check a few details before this order can continue.',
-        'payment'=>'We could not match the payment to this order.',
-        'address'=>'We need the correct delivery details.',
-        'customs'=>'We need the documents listed below for customs.',
-        'remote'=>'Please review the extra delivery charge in our message.',
-        'delivery'=>'Please confirm how you would like to receive this order.',
-        'pickup'=>'Please let us know when you can collect this order.',
-        'fitment'=>'We need a few details to check that the part fits.',
-        'stock'=>'An item is out of stock. Please choose how to continue.',
-        'quote'=>'Please review the updated price in our message.',
-        'contact'=>'We need up-to-date contact details for this order.',
-        'other'=>'Please send the information below.'
+        'fraud'=>'Before this order can continue, we need to confirm the details below. Send them through the order page so we can complete the review.',
+        'payment'=>'We need to confirm your payment. Send the details below so we can complete the check.',
+        'address'=>'We need to check where to deliver this order. Send the details below so we can confirm the delivery address.',
+        'customs'=>'We need the documents listed below to complete the customs paperwork for this order.',
+        'remote'=>'This order needs your approval for an extra delivery charge. Check the amount in our message and choose how to continue.',
+        'delivery'=>'We need new delivery instructions for this order. Choose how you would like to receive it below.',
+        'pickup'=>'We need to confirm your collection plans for this order. Let us know when you can collect it.',
+        'fitment'=>'We need to check that the part matches your vehicle before this order can continue. Send the details below so we can compare them.',
+        'stock'=>'An item in this order is out of stock. Tell us whether you want to wait, consider a substitute or request a refund for that item.',
+        'quote'=>'This order needs your approval for a price change. Check the amount in our message and tell us whether you accept it.',
+        'contact'=>'We need current contact details to arrange the next step for this order. Confirm the phone number and email below.',
+        'other'=>'We need the details below to complete the review of this order.'
     ];
     $msg = $message !== '' ? '<p>' . nl2br(esc_html($message)) . '</p>' : '';
     $ref = '<p style="font-size:13px;color:#687580;margin:0 0 12px">Order ' . esc_html($n) . '</p>';
@@ -235,14 +237,18 @@ function sa_hr_mail_build(WC_Order $o, array $r, string $kind, string $message =
     $head = $context;
     $subject = 'Order ' . $n . ': information needed';
     $reason = $reasons[$r['reason']] ?? $reasons['other'];
-    $inner = $ref . ($msg !== '' ? $msg : '<p>' . esc_html($reason) . '</p>') . sa_hr_items_email($r) . $deadline . sa_hr_btn('Send details', $url);
+    $purpose = $status . $reason;
+    if ($r['reason'] === 'payment' && $on_hold) $purpose = 'Your order is on hold while we confirm your payment. Send the details below so we can complete the check.';
+    // Drop only an exact repeated generic payment prompt, never a distinct staff note.
+    if ($r['reason'] === 'payment' && in_array(trim($message), ['Please confirm the payment reference for this order.', 'Please confirm the payment reference.'], true)) $msg = '';
+    $inner = $ref . '<p>' . esc_html($purpose) . '</p>' . $msg . sa_hr_items_email($r) . $deadline . sa_hr_btn('Send details', $url);
     if ($kind === 'reminder') {
         $head = $context . ': reminder';
         $subject = 'Order ' . $n . ': reminder';
     } elseif ($kind === 'more') {
         $head = $context . ': details needed';
         $subject = 'Order ' . $n . ': details needed';
-        $inner = $ref . $msg . sa_hr_items_email($r) . $deadline . sa_hr_btn('Send details', $url);
+        $inner = $ref . '<p>' . esc_html($purpose) . '</p>' . $msg . sa_hr_items_email($r) . $deadline . sa_hr_btn('Send details', $url);
     } elseif ($kind === 'released') {
         $head = 'Review complete';
         $subject = 'Order ' . $n . ': review complete';
