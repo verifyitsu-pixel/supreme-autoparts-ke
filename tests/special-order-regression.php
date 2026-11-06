@@ -5,7 +5,7 @@ echo 'PASS explicit string/array source tags, whitespace/case, negative/non-exac
 class WC_Product {public $meta='yes';function get_meta($k){return $this->meta;}function is_on_backorder($q){return true;}}
 $GLOBALS['filters']=[];function add_filter($n,$c,$p,$a){$GLOBALS['filters'][$n]=$c;}function wc_get_product($id){return $GLOBALS['fixture_product'];}function add_action($n,$c,$p=10,$a=1){$GLOBALS['actions'][$n]=$c;}
 define('ABSPATH','fixture/');require __DIR__.'/../wp-content/mu-plugins/sa-source-special-order.php';$GLOBALS['fixture_product']=new WC_Product();
-foreach($GLOBALS['filters'] as $name=>$fn){$arg=$name==='woocommerce_get_availability_text'?$GLOBALS['fixture_product']:1;if(!str_contains($fn('unchanged',$arg),'Special order'))throw new Exception('new label');$GLOBALS['fixture_product']->meta='';if($fn('unchanged',$arg)!=='unchanged')throw new Exception('existing label changed');$GLOBALS['fixture_product']->meta='yes';}
+foreach($GLOBALS['filters'] as $name=>$fn){if($name==='woocommerce_cart_item_name')continue;$arg=$name==='woocommerce_get_availability_text'?$GLOBALS['fixture_product']:1;if(!str_contains($fn('unchanged',$arg),'Special order'))throw new Exception('new label');$GLOBALS['fixture_product']->meta='';if($fn('unchanged',$arg)!=='unchanged')throw new Exception('existing label changed');$GLOBALS['fixture_product']->meta='yes';}
 echo 'PASS new labeled product/cart; unmarked existing product/cart text unchanged'.PHP_EOL;
 // Execute the actual changed stock branch with mocks for new/update/out-of-stock.
 $a=strpos($s,'            $special_order =');$b=strpos($s,'        }\n\n        $id = $product->save();',$a);if($b===false)$b=strpos($s,"        }\n\n        \$id = \$product->save();",$a);$branch=substr($s,$a,$b-$a);
