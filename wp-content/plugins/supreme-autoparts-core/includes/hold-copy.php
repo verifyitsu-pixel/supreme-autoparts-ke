@@ -15,7 +15,7 @@ function sa_hr_item_guide(): array
         'id_front'      => ['Confirms the person placing the order is the payment owner.', 'Photograph the front of your national ID, passport or driving licence on a flat surface. All four corners in view, text sharp, no glare.'],
         'id_back'       => ['Some IDs carry key details on the back.', 'Photograph the back of the same ID the same way.'],
         'selfie_id'     => ['Matches the ID to you, so nobody else can use your details.', 'Hold the ID next to your face in good light. Your face and the ID photo must both be clear.'],
-        'card_front'    => ['Shows you hold the card used for this payment.', 'Cover the middle digits with paper so only the first 6 and last 4 show, or just the last 4. Your name and the last 4 digits must be readable.'],
+        'card_front'    => ['Shows you hold the card used for this payment.', 'Cover all card digits except the last 4 with paper. Your name and the last 4 digits must be readable.'],
         'card_back'     => ['Confirms the card is signed and in your possession.', 'Cover the 3-digit security code (CVV) completely with paper. Never send us the CVV.'],
         'pay_proof'     => ['Lets us match your payment to this order.', 'Screenshot the M-Pesa message, bank app or statement line showing the amount, date and reference.'],
         'pay_ref'       => ['Lets us find your payment quickly.', 'Type the M-Pesa code or bank reference, e.g. SJK4XXXXXX.'],
@@ -113,7 +113,7 @@ function sa_hr_pay(WC_Order $o): array
         'label'  => $card !== '' ? $card : ($method !== '' ? $method : 'payment method used'),
         'amount' => $amt,
         'cur'    => $cur,
-        'date'   => $o->get_date_paid() ? wc_format_datetime($o->get_date_paid(), 'j M Y, g:i a') : '',
+        'date'   => ($o->get_date_paid() && $o->is_paid()) ? wc_format_datetime($o->get_date_paid(), 'j M Y, g:i a') : '',
         'txn'    => (string) ($o->get_transaction_id() ?: $o->get_meta('_sa_gateway_tx_id')),
     ];
 }
