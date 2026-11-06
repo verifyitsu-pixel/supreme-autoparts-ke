@@ -44,7 +44,9 @@ add_action('wp_footer', static function (): void {
     return location.origin+p;
   }
   function start(){
-    if(started||window.SA_ANALYTICS_CONSENT!==true)return;
+    if(window.SA_ANALYTICS_CONSENT!==true)return;
+    window["ga-disable-"+id]=false;
+    if(started)return;
     started=true;
     window.dataLayer=window.dataLayer||[];
     function gtag(){window.dataLayer.push(arguments);}
