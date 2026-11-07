@@ -39,7 +39,7 @@ jobs:
           wp core install --url=http://127.0.0.1:8080 --title=t --admin_user=a --admin_password=a --admin_email=a@example.com --skip-email --quiet
           wp plugin install woocommerce --version=11.1.0 --activate --quiet
           wp wc --info >/dev/null 2>&1 || true
-          mkdir -p wp-content/mu-plugins && cp "$GITHUB_WORKSPACE/tests/native-harness/harness-mu.php" wp-content/mu-plugins/harness-mu.php && cp "$GITHUB_WORKSPACE/tests/native-harness/adapter.php" wp-content/harness-adapter.php
+          mkdir -p wp-content/mu-plugins && cp "$GITHUB_WORKSPACE/tests/native-harness/harness-mu.php" wp-content/mu-plugins/harness-mu.php && cp "$GITHUB_WORKSPACE/tests/native-harness/adapter.php" wp-content/harness-adapter.php && cp "$GITHUB_WORKSPACE/tests/native-harness/adapter-dedicated.php" wp-content/harness-adapter-dedicated.php
           wp plugin list
       - name: Baseline stock-handler lost-update probe (informational)
         run: |
@@ -49,4 +49,8 @@ jobs:
         run: |
           cd /tmp/wp
           sudo apt-get install -y jq >/dev/null 2>&1 || true
-          bash "$GITHUB_WORKSPACE/tests/native-harness/run-cases.sh" "$GITHUB_WORKSPACE/tests/native-harness"
+          set +e; RC=0
+          ADAPTER=old bash "$GITHUB_WORKSPACE/tests/native-harness/run-cases.sh" "$GITHUB_WORKSPACE/tests/native-harness"; A=$?
+          ADAPTER=dedicated bash "$GITHUB_WORKSPACE/tests/native-harness/run-cases.sh" "$GITHUB_WORKSPACE/tests/native-harness"; B=$?
+          echo "SUITE_EXIT old=$A dedicated=$B"
+          [ "$B" -eq 0 ]

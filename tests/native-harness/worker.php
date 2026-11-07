@@ -2,6 +2,9 @@
 // Test-only worker. Env: HW_MODE=seed|save|dump  HW_CID  HW_OP  HW_PID  HW_CFG(json)  Run via `wp eval-file`.
 define( 'SA_NATIVE_SESSION_HARNESS', true );
 require __DIR__ . '/adapter.php';
+require __DIR__ . '/adapter-dedicated.php';
+$ADP = getenv( 'HW_ADAPTER' ) === 'dedicated' ? 'SA_Dedicated_Session_Test_Adapter' : 'SA_Native_Session_Test_Adapter';
+SA_Dedicated_Session_Test_Adapter::$connection_factory = function () { $m = new mysqli( DB_HOST, DB_USER, DB_PASSWORD, DB_NAME ); $m->set_charset( 'utf8mb4' ); return $m; };
 $mode = getenv( 'HW_MODE' ); $cid = getenv( 'HW_CID' ); $op = getenv( 'HW_OP' ); $pid = (int) getenv( 'HW_PID' );
 $cfg = json_decode( getenv( 'HW_CFG' ) ?: '{}', true );
 $waitfor = function ( $f ) { for ( $i = 0; $i < 200 && ! file_exists( $f ); $i++ ) usleep( 100000 ); if ( ! file_exists( $f ) ) throw new RuntimeException( 'barrier timeout: ' . basename( $f ) ); };
@@ -21,17 +24,18 @@ if ( 'dump' === $mode ) {
 	return;
 }
 
-SA_Native_Session_Test_Adapter::$checkpoint = function ( $n ) use ( $cfg, $waitfor ) {
+$ADP::$checkpoint = function ( $n, $handler = null ) use ( $cfg, $waitfor ) {
 	if ( ( $cfg['notify_at'] ?? '' ) === $n ) touch( $cfg['notify_file'] );
 	if ( ( $cfg['hold_at'] ?? '' ) === $n ) $waitfor( $cfg['hold_until'] );
 	if ( ( $cfg['crash_at'] ?? '' ) === $n ) posix_kill( getmypid(), 9 );
+	if ( ( $cfg['kill_ded_at'] ?? '' ) === $n && $handler ) { $id = $handler->harness_connection_id(); $k = new mysqli( DB_HOST, DB_USER, DB_PASSWORD ); $k->query( 'KILL ' . $id ); $k->close(); usleep( 300000 ); }
 	if ( ( $cfg['kill_conn_at'] ?? '' ) === $n ) { global $wpdb; $id = (int) $wpdb->get_var( 'SELECT CONNECTION_ID()' ); $k = new mysqli( DB_HOST, DB_USER, DB_PASSWORD ); $k->query( 'KILL ' . $id ); $k->close(); usleep( 300000 ); }
 };
 if ( $cid ) {
 	$exp = time() + 172800; $expiring = time() + 169200; $th = $cid . '|' . $exp;
 	$_COOKIE[ 'wp_woocommerce_session_' . COOKIEHASH ] = $cid . '||' . $exp . '||' . $expiring . '||' . hash_hmac( 'md5', $th, wp_hash( $th ) );
 }
-add_filter( 'woocommerce_session_handler', function () { return 'SA_Native_Session_Test_Adapter'; } );
+add_filter( 'woocommerce_session_handler', function () use ( $ADP ) { return $ADP; } );
 $res = null;
 try {
 	WC()->initialize_session(); WC()->initialize_cart(); WC()->cart->get_cart_from_session();

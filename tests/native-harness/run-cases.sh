@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Real-Woo, independent-process cases against the TEST-ONLY adapter (barrier-file interleavings; a missed barrier FAILS).
 set -u
-D=$1; FAILS=0
+D=$1; FAILS=0; export HW_ADAPTER=${ADAPTER:-old}; MODE=adapter; [ "$HW_ADAPTER" = dedicated ] && MODE=dedicated; echo "##### ADAPTER SUITE: $HW_ADAPTER"
 W() { wp eval-file "$D/worker.php" 2>&1 | grep '^RESULT ' | tail -1 | sed 's/^RESULT //'; }
-dump() { HW_MODE=dump HW_CID=$1 W; }
+dump() { local o; o=$(HW_MODE=dump HW_CID=$1 wp eval-file "$D/worker.php" 2>&1); echo "$o" | grep "^RESULT " | tail -1 | sed "s/^RESULT //"; echo "$o" | grep -q "^RESULT " || echo "DUMPFAIL: $(echo "$o" | tail -3 | cut -c1-300)" >&2; }
 ok() { echo "PASS $1"; }; bad() { echo "FAIL $1"; FAILS=$((FAILS+1)); }
 chk() { if echo "$2" | jq -e "$3" >/dev/null 2>&1; then ok "$1  $2"; else bad "$1  $2"; fi; }
+chk_neg() { if echo "$2" | jq -e ".ok==true" >/dev/null 2>&1; then echo "INFO $1 (write succeeded after connection kill, as designer predicted for the wpdb adapter) $2"; else echo "INFO $1_not_reproduced $2"; fi; }
 same() { if [ "$2" == "$3" ]; then ok "$1  $2"; else bad "$1  before=$2 after=$3"; fi; }
 waitf() { for i in $(seq 1 100); do [ -e "$1" ] && return 0; sleep 0.1; done; return 1; }
 mkp() { wp eval 'foreach([1,2,3] as $i){$p=new WC_Product_Simple();$p->set_name("Harness $i");$p->set_regular_price("10");$p->set_status("publish");$p->save();echo $p->get_id()," ";}'; }
@@ -67,11 +68,27 @@ R=$(HW_MODE=save HW_CID=$C HW_OP=opP-postcommit HW_PID=$P1 W); D2=$(dump "$C")
 chk case6_replay_ok "$R" '.ok==true and .outcome=={"ok":true,"moved":'"$P1"'}'
 same case6_state_and_hash_identical "$D1" "$D2"
 
+if [ "$HW_ADAPTER" = old ]; then
 echo "== case 7: MySQL CONNECTION KILL at before_commit (GET_LOCK lost; wpdb may reconnect) must not write"
 C=$(seed); K0=$(dump "$C")
 R=$(HW_MODE=save HW_CID=$C HW_OP=opK-kill HW_PID=$P1 HW_CFG='{"kill_conn_at":"before_commit"}' W); K1=$(dump "$C")
-chk case7_refused "$R" '.ok==false and (.error|test("lock lost|Session lock"))'
-same case7_db_hash_unchanged "$K0" "$K1"
+chk_neg case7_OLD_ADAPTER_REPRODUCES_UNSAFE_WRITE "$R" '.ok==false and (.error|test("lock lost|Session lock"))'
+true "$K0" "$K1"
+
+else
+echo "== case 7 (dedicated): kill the adapter's dedicated storage connection at each fault point; must fail closed, raw SHA256 unchanged (before_response: committed + replay)"
+for PT in before_read before_commit before_readback before_sql_commit; do
+  C=$(seed); K0=$(dump "$C"); OPK=opK-$PT
+  R=$(HW_MODE=save HW_CID=$C HW_OP=$OPK HW_PID=$P1 HW_CFG="{\"kill_ded_at\":\"$PT\"}" W); K1=$(dump "$C")
+  chk case7_${PT}_refused "$R" '.ok==false'
+  same case7_${PT}_sha_state_unchanged "$K0" "$K1"
+  R2=$(HW_MODE=save HW_CID=$C HW_OP=$OPK HW_PID=$P1 W); chk case7_${PT}_retry_fresh_request_ok "$R2" '.ok==true'
+done
+C=$(seed); HW_MODE=save HW_CID=$C HW_OP=opK-after HW_PID=$P1 HW_CFG='{"kill_ded_at":"after_commit"}' W >/dev/null; D1=$(dump "$C")
+R=$(HW_MODE=save HW_CID=$C HW_OP=opK-after HW_PID=$P1 W); D2=$(dump "$C")
+chk case7_after_commit_committed "$D1" '(.ops|index("opK-after"))!=null'
+same case7_after_commit_replay_state_identical "$D1" "$D2"
+fi
 
 echo "== case 8: actual failing MySQL statement (trigger NULLs NOT NULL column), then readback mismatch (trigger rewrites value)"
 C=$(seed); F0=$(dump "$C")
@@ -84,13 +101,14 @@ C=$(seed)
 wp db query "CREATE TRIGGER hf_rb BEFORE INSERT ON wp_woocommerce_sessions FOR EACH ROW SET NEW.session_value = IF(NEW.session_key='$C', 'x', NEW.session_value)"
 R=$(HW_MODE=save HW_CID=$C HW_OP=opF-readback HW_PID=$P1 W); wp db query "DROP TRIGGER hf_rb"
 chk case8_readback_mismatch_reported "$R" '.ok==false and (.error|test("readback"))'
+[ "$HW_ADAPTER" = dedicated ] && { DB=$(dump "$C"); chk case8_dedicated_readback_rolled_back_old_blob "$DB" '.has_row==true and .cart!=null and (.cart|length)==2'; }
 
 echo "== HTTP section: PHP built-in server (multi-worker), real wc-ajax add_to_cart, adapter via test mu-plugin. NOT Apache/FPM."
 BASE=http://127.0.0.1:8080; SRV=$(pwd)
 ( PHP_CLI_SERVER_WORKERS=6 nohup php -S 127.0.0.1:8080 -t "$SRV" >/tmp/php-server.log 2>&1 & )  # subshell: not a job of this shell, so bare `wait` does not block on it
 for i in $(seq 1 50); do curl -s -o /dev/null $BASE/ && break; sleep 0.2; done
 hreq() { curl -s -m 40 -w '\nHTTP=%{http_code}' -b "$1" -H "X-Harness-Mode: $2" -H "X-Harness-Cfg: $3" -d "product_id=$4&quantity=1" "$BASE/?wc-ajax=add_to_cart"; }
-hseed() { J=$(mktemp); curl -s -m 40 -o /dev/null -c $J -H "X-Harness-Mode: adapter" -H "X-Harness-Cfg: {}" -d "product_id=$P1&quantity=1" "$BASE/?wc-ajax=add_to_cart"
+hseed() { J=$(mktemp); curl -s -m 40 -o /dev/null -c $J -H "X-Harness-Mode: $MODE" -H "X-Harness-Cfg: {}" -d "product_id=$P1&quantity=1" "$BASE/?wc-ajax=add_to_cart"
   CID=$(grep wp_woocommerce_session $J | awk '{print $7}' | sed 's/%7C/|/g' | cut -d'|' -f1); }
 code() { echo "$1" | sed -n 's/^HTTP=//p'; }
 nofatal() { echo "$1" | grep -qiE "Fatal error|Uncaught|Stack trace" && echo false || echo true; }
@@ -100,29 +118,29 @@ hseed; D=$(dump "$CID"); chk h1_seed "$D" '.cart==[{"pid":'"$P1"',"qty":1,"var":
 
 echo "-- H2: two concurrent adapter writers, different products; X holds before_commit until Y is waiting (barriers)"
 hseed; S=$(mktemp -d)
-( hreq $J adapter "{\"notify_at\":\"before_commit\",\"notify_file\":\"$S/a-held\",\"hold_at\":\"before_commit\",\"hold_until\":\"$S/b-waiting\"}" $P2 > $S/X.out ) &
+( hreq $J $MODE "{\"notify_at\":\"before_commit\",\"notify_file\":\"$S/a-held\",\"hold_at\":\"before_commit\",\"hold_until\":\"$S/b-waiting\"}" $P2 > $S/X.out ) &
 waitf $S/a-held && ok h2_X_at_before_commit || bad h2_X_at_before_commit
-( hreq $J adapter "{\"notify_at\":\"lock_wait\",\"notify_file\":\"$S/b-waiting\"}" $P3 > $S/Y.out ) &
+( hreq $J $MODE "{\"notify_at\":\"lock_wait\",\"notify_file\":\"$S/b-waiting\"}" $P3 > $S/Y.out ) &
 wait
 chk h2_X_http200 "{\"c\":\"$(code "$(cat $S/X.out)")\",\"nofatal\":$(nofatal "$(cat $S/X.out)")}" '.c=="200" and .nofatal'
 chk h2_Y_http200 "{\"c\":\"$(code "$(cat $S/Y.out)")\",\"nofatal\":$(nofatal "$(cat $S/Y.out)")}" '.c=="200" and .nofatal'
 ls $S/*.TIMEOUT >/dev/null 2>&1 && bad h2_no_barrier_timeouts || ok h2_no_barrier_timeouts
 D=$(dump "$CID"); chk h2_final_cart "$D" '.cart==[{"pid":'"$P1"',"qty":1,"var":0},{"pid":'"$P2"',"qty":1,"var":0},{"pid":'"$P3"',"qty":1,"var":0}]'
-R=$(hreq $J adapter '{}' $P1); chk h2_lock_released_after_responses "{\"c\":\"$(code "$R")\"}" '.c=="200"'
+R=$(hreq $J $MODE '{}' $P1); chk h2_lock_released_after_responses "{\"c\":\"$(code "$R")\"}" '.c=="200"'
 D=$(dump "$CID"); chk h2_third_request_state "$D" '.cart[0].qty==2 and (.cart|length)==3'
 
 echo "-- H3: native quantity writers: two concurrent +1 on the same product (adapter) must give qty 3"
 hseed; S=$(mktemp -d)
-( hreq $J adapter "{\"notify_at\":\"before_commit\",\"notify_file\":\"$S/a-held\",\"hold_at\":\"before_commit\",\"hold_until\":\"$S/b-waiting\"}" $P1 > $S/X.out ) &
+( hreq $J $MODE "{\"notify_at\":\"before_commit\",\"notify_file\":\"$S/a-held\",\"hold_at\":\"before_commit\",\"hold_until\":\"$S/b-waiting\"}" $P1 > $S/X.out ) &
 waitf $S/a-held && ok h3_X_at_before_commit || bad h3_X_at_before_commit
-( hreq $J adapter "{\"notify_at\":\"lock_wait\",\"notify_file\":\"$S/b-waiting\"}" $P1 > $S/Y.out ) &
+( hreq $J $MODE "{\"notify_at\":\"lock_wait\",\"notify_file\":\"$S/b-waiting\"}" $P1 > $S/Y.out ) &
 wait; D=$(dump "$CID"); chk h3_qty_3 "$D" '.cart==[{"pid":'"$P1"',"qty":3,"var":0}]'
 
 echo "-- H4: HTTP lock contention: X holds, Y fails closed (non-200), Y writes nothing"
 hseed; S=$(mktemp -d)
-( hreq $J adapter "{\"notify_at\":\"before_commit\",\"notify_file\":\"$S/a-held\",\"hold_at\":\"before_commit\",\"hold_until\":\"$S/release\"}" $P2 > $S/X.out ) &
+( hreq $J $MODE "{\"notify_at\":\"before_commit\",\"notify_file\":\"$S/a-held\",\"hold_at\":\"before_commit\",\"hold_until\":\"$S/release\"}" $P2 > $S/X.out ) &
 waitf $S/a-held && ok h4_X_holding || bad h4_X_holding
-RY=$(hreq $J adapter '{}' $P3); touch $S/release; wait
+RY=$(hreq $J $MODE '{}' $P3); touch $S/release; wait
 chk h4_Y_not_200 "{\"c\":\"$(code "$RY")\"}" '.c!="200"'
 D=$(dump "$CID"); chk h4_only_X_committed "$D" '.cart==[{"pid":'"$P1"',"qty":1,"var":0},{"pid":'"$P2"',"qty":1,"var":0}]'
 
@@ -130,7 +148,7 @@ echo "-- H5 NEGATIVE CONTROL: a stock-handler writer mixed in with an adapter wr
 hseed; S=$(mktemp -d)
 ( hreq $J stock "{\"loaded_file\":\"$S/y-loaded\",\"hold_until\":\"$S/x-done\"}" $P3 > $S/Y.out ) &
 waitf $S/y-loaded && ok h5_stock_loaded_stale_snapshot || bad h5_stock_loaded_stale_snapshot
-RX=$(hreq $J adapter '{}' $P2); touch $S/x-done; wait
+RX=$(hreq $J $MODE '{}' $P2); touch $S/x-done; wait
 D=$(dump "$CID")
 if echo "$D" | jq -e '(.cart|map(.pid)|index('"$P2"'))==null' >/dev/null; then echo "INFO h5_UNSAFE_INVARIANT_DEMONSTRATED stock writer overwrote the adapter commit: $D (adapter protects only when ALL guest session writers use it)"; else echo "INFO h5_hazard_not_reproduced $D"; fi
 pkill -f "php -S 127.0.0.1:8080" 2>/dev/null; sleep 1
