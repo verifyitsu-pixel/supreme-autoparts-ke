@@ -408,6 +408,8 @@
     function field(id){var el=document.getElementById(id);return el?String(el.value||'').trim():'';}
     function selectedLabel(root){var input=root.querySelector('input.shipping_method:checked, input.shipping_method[type="hidden"]');var li=input&&input.closest('li');if(!li)return '';var name=li.querySelector('.sa-ship__name'),price=li.querySelector('.sa-ship__price');if(!name)return li.textContent.replace(/\s+/g,' ').trim();var copy=name.cloneNode(true),sub=copy.querySelector('small');if(sub)sub.remove();var title=copy.textContent.replace(' · Estimated delivery 1-2 working days from order, excluding weekends','').replace(' · Estimated delivery 1-3 working days from order, excluding weekends','').trim();return [title,sub&&sub.textContent.trim(),price&&price.textContent.replace(/\s+/g,' ').trim()].filter(Boolean).join(' · ');}
     function summaries(){
+      var different=document.querySelector('#ship-to-different-address-checkbox:checked'),country=field(different?'shipping_country':'billing_country');
+      var hint=document.querySelector('[data-sa-checkout-panel="shipping"] .sa-checkout-section__sub');if(hint)hint.textContent=country==='KE'?'Choose a courier or free store pickup.':country==='US'?'Review your US delivery address and shipping option.':'Review your delivery address and shipping options.';
       var contact=document.querySelector('[data-sa-checkout-panel="contact"] .sa-checkout-fold');
       if(contact)contact.textContent=[field('billing_first_name')+' '+field('billing_last_name'),field('billing_email'),field('billing_address_1'),field('billing_city')].map(function(s){return s.trim();}).filter(Boolean).join(' · ');
       var summary=document.querySelector('[data-sa-checkout-panel="shipping"] .sa-checkout-fold');

@@ -79,7 +79,7 @@ CSS
         'supreme-autoparts',
         SA_THEME_URI . '/assets/js/theme.js',
         ['jquery'],
-        SA_THEME_VERSION . '.checkout5',
+        SA_THEME_VERSION . '.checkout6',
         true
     );
     wp_enqueue_script(
