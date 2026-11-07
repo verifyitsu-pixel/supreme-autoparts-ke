@@ -163,11 +163,11 @@ $free_ship = function_exists('sa_theme_cart_has_free_shipping') && sa_theme_cart
 <?php if (!function_exists('sa_ship_is_us') || sa_ship_is_us()) : ?>
         <p class="sa-cart-ship-note">
           <?php
-          esc_html_e('Free shipping on USA orders. No minimum order amount.', 'supreme-autoparts');
+          esc_html_e('Free US shipping. Estimated delivery: 1-3 working days from order, excluding weekends. Product availability applies. No minimum.', 'supreme-autoparts');
           ?>
         </p>
         <?php else : ?>
-        <p class="sa-cart-ship-note"><?php esc_html_e('Kenya: free store pickup, or courier delivery to your town (priced by weight at checkout).', 'supreme-autoparts'); ?></p>
+        <p class="sa-cart-ship-note"><?php esc_html_e('Kenya: free store pickup or calculated courier delivery. Estimated delivery: 1-2 working days from order, excluding weekends. Product availability applies.', 'supreme-autoparts'); ?></p>
         <?php endif; ?>
         <div class="sa-cart-trust">
           <a href="<?php echo esc_url(sa_page_url('shipping-policy')); ?>"><?php esc_html_e('Shipping', 'supreme-autoparts'); ?></a>

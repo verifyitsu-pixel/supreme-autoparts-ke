@@ -32,13 +32,14 @@ function sa_gc_shipping_html(?string $zone = null): string
     if ($z === 'KE') {
         return '<h2>Delivery in Kenya</h2>'
             . '<ul><li><strong>Courier delivery</strong>: Fargo and other available couriers are calculated by destination and parcel weight. The available methods and exact price show at checkout before you pay. You can track the parcel on our site.</li>'
-            . '<li><strong>Store pickup</strong> is free. Pick a collection time at checkout and collect from our shop at Ground Floor, Midax Plaza, Kangundo Rd, Njiru.</li>'
+            . '<li><strong>Store pickup</strong> is free. Available collection times are shown at checkout for ready-to-collect items. Special-order collection dates are confirmed separately. Collect from our shop at Ground Floor, Midax Plaza, Kangundo Rd, Njiru.</li>'
             . '<li>Parts you buy with fitting stay at our garage and are not shipped.</li></ul>'
+            . '<p>Estimated Kenya delivery is 1-2 working days from placing your order, excluding weekends. Special-order or backordered items follow their confirmed availability dates; where availability is unconfirmed, delivery and collection dates are not confirmed.</p>'
             . '<p>Questions about a delivery: call or <a href="https://wa.me/supremeautopart">chat on WhatsApp</a> or email <a href="mailto:' . $mail . '">' . $mail . '</a> with your order number.</p>';
     }
     if ($z === 'US') {
         return '<h2>Shipping in the United States</h2>'
-            . '<p>Free shipping on USA orders, with no minimum order amount. The shipping charge is zero at checkout.</p>'
+            . '<p>Free shipping on USA orders, with no minimum order amount. The shipping charge is zero at checkout. Estimated delivery is 1-3 working days from placing your order, excluding weekends.</p><p>Special-order or backordered items follow their confirmed availability dates; where availability is unconfirmed, delivery dates are not confirmed.</p>'
             . '<p>Questions: <a href="https://wa.me/supremeautopart">chat on WhatsApp</a> or email <a href="mailto:' . $mail . '">' . $mail . '</a>.</p>';
     }
     return '<h2>International shipping</h2>'

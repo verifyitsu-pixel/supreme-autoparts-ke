@@ -112,11 +112,25 @@ function sa_ff_range_label(DateTimeImmutable $a, DateTimeImmutable $b): string
     }
     return $a->format('M') === $b->format('M') ? $a->format('D j') . ' – ' . $b->format('D j M') : $a->format('D j M') . ' – ' . $b->format('D j M');
 }
+/** Delivery estimates use the owner-confirmed order-to-delivery calendar.
+ * Keep the separate pickup-slot/garage calendar unchanged.
+ */
+function sa_ff_delivery_add_workdays(DateTimeImmutable $date, int $days): DateTimeImmutable
+{
+    while ($days > 0) {
+        $date = $date->modify('+1 day');
+        if ((int) $date->format('N') < 6) {
+            $days--;
+        }
+    }
+    return $date;
+}
 function sa_ff_fargo_eta(string $state, string $city, int $lead = 0): string
 {
-    [$lo, $hi] = sa_ff_fargo_tier($state, $city);
-    $dp = sa_ff_dispatch_day($lead);
-    return 'Estimated arrival ' . sa_ff_range_label(sa_ff_add_workdays($dp, $lo), sa_ff_add_workdays($dp, $hi));
+    $order_day = sa_ff_now()->setTime(0, 0);
+    // Known product availability lead times are preserved; unknown special orders are guarded upstream.
+    $ready = $lead > 0 ? sa_ff_delivery_add_workdays($order_day, $lead) : $order_day;
+    return 'Estimated arrival ' . sa_ff_range_label(sa_ff_delivery_add_workdays($ready, 1), sa_ff_delivery_add_workdays($ready, 2));
 }
 
 /* =========================================================

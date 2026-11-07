@@ -335,8 +335,8 @@ final class SM_Templates
         $welcome_expires = (string) ($ctx['welcome_expires'] ?? '');
 
         $shipping_line = $ke
-            ? 'Kenya delivery is calculated by courier, destination and parcel weight at checkout; free pickup at our shop on Kangundo Rd, Njiru'
-            : 'Free shipping on USA orders, with no minimum order amount';
+            ? 'Kenya delivery is calculated by courier, destination and parcel weight at checkout, estimated in 1-2 working days from order excluding weekends (product availability applies); free pickup at our shop on Kangundo Rd, Njiru'
+            : 'Free shipping on USA orders, with no minimum order amount; estimated delivery in 1-3 working days from order excluding weekends (product availability applies)';
 
         switch ($key) {
 
@@ -373,7 +373,7 @@ final class SM_Templates
                 if ($welcome_code !== '') {
                     $blocks[] = ['coupon' => [$welcome_code, '20% off your first order', ($welcome_expires !== '' ? 'Valid until ' . $welcome_expires . '. ' : '') . 'One use. Applies automatically at checkout for orders delivered in the US or Kenya.']];
                 } else {
-                    $blocks[] = ['p' => $november_offer ? 'Orders delivered in the US or Kenya get 30% off automatically at checkout during November. US shipping is free; Kenya delivery uses calculated courier rates. No minimum order amount. Offer ends November 30, 2026 in your delivery region.' : 'Thanks for joining our garage. Explore the store for parts and fitment help.'];
+                    $blocks[] = ['p' => $november_offer ? 'Orders delivered in the US or Kenya get 30% off automatically at checkout during November. US shipping is free with estimated delivery in 1-3 working days from order; Kenya uses calculated courier rates with estimated delivery in 1-2 working days from order. Weekends are excluded and product availability applies. No minimum order amount. Offer ends November 30, 2026 in your delivery region.' : 'Thanks for joining our garage. Explore the store for parts and fitment help.'];
                 }
                 $blocks[] = ['bullets' => [
                     'Not sure a part fits? Send your year, make, model or VIN and we confirm fitment before you pay',
@@ -487,7 +487,7 @@ final class SM_Templates
                 if ($welcome_code !== '') {
                     $blocks[] = ['coupon' => [$welcome_code, 'Your 20% first-order discount', ($welcome_expires !== '' ? 'Valid until ' . $welcome_expires . '. ' : '') . 'One use. Applies automatically at checkout for orders delivered in the US or Kenya.']];
                 } else {
-                    $blocks[] = ['p' => $november_offer ? 'All US and Kenya orders get 30% off automatically, with no minimum. US shipping is free; Kenya delivery uses calculated courier rates. Offer ends November 30, 2026 in your delivery region.' : 'Explore the in-stock catalog when your vehicle needs something.'];
+                    $blocks[] = ['p' => $november_offer ? 'All US and Kenya orders get 30% off automatically, with no minimum. US shipping is free with estimated delivery in 1-3 working days from order; Kenya uses calculated courier rates with estimated delivery in 1-2 working days from order. Weekends are excluded and product availability applies. Offer ends November 30, 2026 in your delivery region.' : 'Explore the in-stock catalog when your vehicle needs something.'];
                 }
                 if ($products) {
                     $blocks[] = ['p' => 'In-stock picks from the catalog:'];

@@ -112,7 +112,7 @@ $needs_shipping = WC()->cart && WC()->cart->needs_shipping() && WC()->cart->show
   <ul class="sa-cart-perks" aria-label="<?php esc_attr_e('Checkout benefits', 'supreme-autoparts'); ?>">
     <li><?php esc_html_e('Secure card checkout', 'supreme-autoparts'); ?></li>
     <li><?php esc_html_e('Order tracking by email', 'supreme-autoparts'); ?></li>
-    <?php if (!function_exists('sa_ship_is_us') || sa_ship_is_us()) : ?><li><?php esc_html_e('Free shipping on USA orders. No minimum.', 'supreme-autoparts'); ?></li><?php else : ?><li><?php esc_html_e('Store pickup or courier delivery in Kenya', 'supreme-autoparts'); ?></li><?php endif; ?>
+    <?php if (!function_exists('sa_ship_is_us') || sa_ship_is_us()) : ?><li><?php esc_html_e('Free US shipping. Estimated delivery: 1-3 working days from order, excluding weekends. Product availability applies. No minimum.', 'supreme-autoparts'); ?></li><?php else : ?><li><?php esc_html_e('Kenya courier delivery: estimated 1-2 working days from order, excluding weekends. Product availability applies.', 'supreme-autoparts'); ?></li><?php endif; ?>
   </ul>
 
   <div class="sa-cart-sticky-bar" data-sa-cart-sticky>

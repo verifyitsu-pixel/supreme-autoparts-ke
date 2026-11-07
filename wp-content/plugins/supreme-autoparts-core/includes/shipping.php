@@ -90,7 +90,7 @@ add_filter('woocommerce_package_rates', static function ($rates, $package) {
 /** Current delivery policy: Kenya uses its calculated couriers, including Nairobi.
  * No zone/options migration is needed: this final gate also overrides old cached configuration.
  */
-const SA_DELIVERY_POLICY_VERSION = '2026-11-07-ke-couriers-us-free-special-order';
+const SA_DELIVERY_POLICY_VERSION = '2026-11-07-working-day-delivery-v2';
 add_filter('woocommerce_cart_shipping_packages', static function ($packages) {
     foreach ($packages as &$package) {
         $package['sa_delivery_policy'] = SA_DELIVERY_POLICY_VERSION;
@@ -104,8 +104,13 @@ function sa_current_delivery_rates($rates, $package)
     $cc = strtoupper((string) ($package['destination']['country'] ?? ''));
     if ($cc === 'US' && class_exists('WC_Shipping_Rate')) {
         $label = 'Free shipping';
+        $contents = (array) ($package['contents'] ?? []);
         if (function_exists('sa_ff_contents_unknown_special_order') && sa_ff_contents_unknown_special_order((array) ($package['contents'] ?? []))) {
             $label .= ' · Special order: dates not confirmed';
+        } elseif (function_exists('sa_ff_contents_lead') && sa_ff_contents_lead($contents) > 0) {
+            $label .= ' · Backorder availability lead time applies';
+        } else {
+            $label .= ' · Estimated delivery 1-3 working days from order, excluding weekends';
         }
         return ['sa_us_free' => new WC_Shipping_Rate('sa_us_free', $label, 0, [], 'sa_us_free')];
     }
@@ -118,6 +123,18 @@ function sa_current_delivery_rates($rates, $package)
         foreach ($rates as $id => $rate) {
             if (!is_object($rate) || !method_exists($rate, 'get_method_id') || !in_array($rate->get_method_id(), $allowed, true)) {
                 unset($rates[$id]);
+                continue;
+            }
+            if ($rate->get_method_id() !== 'local_pickup' && method_exists($rate, 'set_label') && method_exists($rate, 'get_label')) {
+                $contents = (array) ($package['contents'] ?? []);
+                if (function_exists('sa_ff_contents_unknown_special_order') && sa_ff_contents_unknown_special_order($contents)) {
+                    continue; // Earlier fulfilment callback already supplies the unknown-date label.
+                }
+                $label = preg_replace('/\s*·\s*Estimated.*$/u', '', $rate->get_label());
+                $label .= function_exists('sa_ff_contents_lead') && sa_ff_contents_lead($contents) > 0
+                    ? ' · Backorder availability lead time applies'
+                    : ' · Estimated delivery 1-2 working days from order, excluding weekends';
+                $rate->set_label($label);
             }
         }
     }
