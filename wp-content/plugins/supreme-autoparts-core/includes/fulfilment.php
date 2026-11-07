@@ -298,10 +298,7 @@ add_filter('woocommerce_package_rates', static function ($rates, $package) {
         if ($mid === 'sa_fargo' && !str_contains($rate->get_label(), 'Estimated')) {
             $rate->set_label($rate->get_label() . ' · ' . sa_ff_fargo_eta((string) ($package['destination']['state'] ?? ''), (string) ($package['destination']['city'] ?? ''), $lead));
         } elseif ($mid === 'local_pickup' && !str_contains($rate->get_label(), 'Estimated')) {
-            $f = sa_pk_first_label($lead);
-            if ($f !== '') {
-                $rate->set_label($rate->get_label() . ' · Estimated ready from ' . $f);
-            }
+            $rate->set_label($rate->get_label() . ' · Pickup readiness will be confirmed after your order is checked');
         }
     }
     return $rates;
@@ -356,9 +353,9 @@ add_action('woocommerce_review_order_after_shipping', static function (): void {
     }
     $cur = WC()->session ? (string) WC()->session->get('sa_pickup_slot') : '';
     $slots = sa_pk_slots(sa_pk_cart_lead());
-    echo '<tr class="sa-pk-row"><td colspan="2"><div class="sa-pk"><strong>Pickup time</strong>'
+    echo '<tr class="sa-pk-row"><td colspan="2"><div class="sa-pk"><strong>Requested collection time</strong>'
         . '<span class="sa-pk__addr">' . esc_html(sa_pk_address()) . ' · <a href="' . esc_url(sa_pk_map()) . '" target="_blank" rel="noopener">Map</a></span>'
-        . '<label>Choose a 1-hour pickup window <select name="sa_pickup_slot" class="sa-pk__sel" onchange="jQuery(document.body).trigger(\'update_checkout\')"><option value="">Choose a time</option>';
+        . '<label>Request a 1-hour collection window <select name="sa_pickup_slot" class="sa-pk__sel" onchange="jQuery(document.body).trigger(\'update_checkout\')"><option value="">Choose a requested time</option>';
     $day = '';
     foreach ($slots as $s) {
         if ($s['date'] !== $day) {
@@ -371,9 +368,9 @@ add_action('woocommerce_review_order_after_shipping', static function (): void {
     echo ($day !== '' ? '</optgroup>' : '') . '</select></label>';
     if ($cur !== '' && str_contains($cur, '|')) {
         [$d, $t] = explode('|', $cur);
-        echo '<span class="sa-pk__ready">Estimated ready by ' . esc_html(wp_date('D j M', strtotime($d)) . ', ' . $t) . '. We email you when it is ready.</span>';
+        echo '<span class="sa-pk__ready">Requested collection: ' . esc_html(wp_date('D j M', strtotime($d)) . ', ' . $t) . '. This is not a ready-for-pickup confirmation.</span>';
     }
-    echo '<small>Shop hours: Mon–Fri 08:00–17:00, Sat 08:00–13:00, closed Sundays and public holidays.</small></div></td></tr>';
+    echo '<small>Pickup readiness will be confirmed after your order is checked. Wait for our ready-for-pickup email before travelling.</small><small>Shop hours: Mon–Fri 08:00–17:00, Sat 08:00–13:00, closed Sundays and public holidays.</small></div></td></tr>';
 });
 add_action('woocommerce_after_checkout_validation', static function ($data, $errors): void {
     if (!sa_pk_chosen()) {
@@ -523,5 +520,5 @@ add_action('woocommerce_single_product_summary', static function (): void {
     $lead = sa_ff_lead_days($product);
     $pk = sa_pk_first_label($lead);
     echo '<div class="sa-ff-pdp"><div><strong>Delivery to ' . esc_html($county) . '</strong><span>Fargo Courier: ' . esc_html(sa_ff_fargo_eta($state, $city, $lead)) . '</span>'
-        . ($pk !== '' ? '<span>Store pickup: estimated ready from ' . esc_html($pk) . '</span>' : '') . '<small>Estimates, not guaranteed. Change your county at checkout.</small></div></div>';
+        . '<span>Store pickup: readiness will be confirmed after your order is checked.</span>' . '<small>Estimates, not guaranteed. Change your county at checkout.</small></div></div>';
 }, 34);
