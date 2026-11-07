@@ -44,3 +44,8 @@ jobs:
         run: |
           cd /tmp/wp
           bash "$GITHUB_WORKSPACE/tests/native-harness/run-baseline.sh" "$GITHUB_WORKSPACE/tests/native-harness"
+      - name: Real-Woo independent-process cases against the test-only adapter
+        run: |
+          cd /tmp/wp
+          sudo apt-get install -y jq >/dev/null 2>&1 || true
+          bash "$GITHUB_WORKSPACE/tests/native-harness/run-cases.sh" "$GITHUB_WORKSPACE/tests/native-harness"
