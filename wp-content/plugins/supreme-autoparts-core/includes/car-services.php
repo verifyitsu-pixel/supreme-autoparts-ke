@@ -18,15 +18,12 @@ const SA_SVC_GARAGE_POSTAL = 'P.O. Box 00516-00100 G.P.O Nairobi';
 
 function sa_svc_map_url(): string
 {
-    if (sa_svc_region() !== 'KE') {
-        return sa_geo_map_url();
-    }
     return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode('Midax Plaza, Kangundo Rd, Njiru, Nairobi');
 }
 
 function sa_svc_address_html(bool $compact = false, ?string $contact_country = null): string
 {
-    if ($contact_country !== null || sa_svc_region() !== 'KE') {
+    if ($contact_country !== null) {
         $b = sa_geo_business($contact_country);
         return '<div class="sa-svc-addr' . ($compact ? ' sa-svc-addr--compact' : '') . '">' . sa_svc_icon('pin')
             . '<div><strong>Supreme Autoparts</strong><span>' . esc_html($b['street']) . '</span><span>' . esc_html($b['city'] . ', ' . $b['region'] . ' ' . $b['postal']) . '</span>'
@@ -693,7 +690,7 @@ function sa_svc_render_index(): void
             </article>
           <?php endforeach; ?>
         </div>
-      <div class="sa-svc-locbar"><?php echo sa_svc_address_html(); ?><iframe title="Garage map" loading="lazy" src="https://www.google.com/maps?q=<?php echo rawurlencode(function_exists('sa_geo_business') ? sa_geo_business()['map_q'] : 'Midax Plaza, Kangundo Rd, Njiru, Nairobi'); ?>&output=embed"></iframe></div>
+      <div class="sa-svc-locbar"><?php echo sa_svc_address_html(); ?></div>
       <?php echo sa_svc_faq_html(sa_svc_faq_general(), 'Car service FAQ'); ?>
       <p class="sa-svc-fine">Job durations are typical estimates; your technician confirms timing. Prices shown are guide prices. Services without a listed price are quoted for your vehicle. You always approve the final price before work starts.</p>
     </section>
