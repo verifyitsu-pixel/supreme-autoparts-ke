@@ -44,6 +44,24 @@ const settle=async()=>{for(let i=0;i<20;i++)await Promise.resolve()};
     for(const bad of [{status:200,responseJSON:undefined},{status:200,responseJSON:{}},{status:504,responseJSON:undefined},{status:0,statusText:'error'}]){const b=harness();b.woo.update_checkout();b.woo.ajaxSend(null,bad,u);b.woo.ajaxComplete(null,bad,u);assert.equal(b.form.dataset.saTotalsFailed,'true','unparseable/empty/proxy failure fails closed with reload message');assert(b.button.disabled);}
     const older={status:502},newer={status:200,responseJSON:{result:'success'}};const q=harness();q.woo.update_checkout();q.woo.ajaxSend(null,older,u);q.woo.ajaxSend(null,newer,u);q.woo.ajaxComplete(null,older,u);assert.notEqual(q.form.dataset.saTotalsFailed,'true','stale older failure cannot mark newest request failed');
   }
+  {
+    const frag={'.woocommerce-checkout-review-order-table':'<table></table>'};const notice='<div class="woocommerce-message" role="alert">Coupon code applied successfully.</div>';
+    const run=(payload)=>{const c=harness();c.woo.update_checkout();assert(c.button.disabled);c.woo.updated_checkout(null,payload);return !c.button.disabled;};
+    assert(run({result:'failure',messages:notice,fragments:frag,reload:false}),'benign success notice with fragments unlocks (older Woo, no has_errors)');
+    assert(run({result:'failure',has_errors:false,messages:notice,fragments:frag}),'has_errors false unlocks');
+    assert(!run({result:'failure',has_errors:true,messages:notice,fragments:frag}),'has_errors true keeps the lock');
+    assert(!run({result:'failure',messages:'<ul class="woocommerce-error" role="alert"><li>Enter a valid postcode</li></ul>',fragments:frag}),'error notice keeps the lock');
+    assert(!run({result:'failure',messages:'<div class="woocommerce-message">x</div><ul class="woocommerce-error"><li>y</li></ul>',fragments:frag}),'mixed notice with an error keeps the lock');
+    assert(!run({result:'failure',messages:notice}),'no fragments keeps the lock');
+    assert(!run({result:'failure',messages:notice,fragments:frag,reload:true}),'reload response keeps the lock');
+    assert(!run({result:'failure',fragments:frag}),'failure without messages keeps the lock');
+    const info='<div class="woocommerce-info" role="alert">Shipping costs updated.</div>';
+    assert(run({result:'failure',messages:'\n\t'+notice+'\n',fragments:frag}),'recognised success notice with Woo whitespace unlocks');
+    assert(run({result:'failure',messages:notice+info,fragments:frag}),'two recognised notices unlock');
+    for(const [name,msg] of [['plain text','Something happened'],['unknown wrapper','<div class="custom-notice">Coupon applied</div>'],['malformed','<div class="woocommerce-message" role="alert">Coupon applied'],['error outside wrapper',notice+'<ul class="woocommerce-error"><li>Bad</li></ul>'],['stray text outside wrapper',notice+'Please wait'],['nested markup in notice','<div class="woocommerce-message" role="alert">Added <a href="/cart">View cart</a></div>'],['block banner','<div class="wc-block-components-notice-banner is-error">Bad</div>'],['script','<div class="woocommerce-message" role="alert"><script>1</script></div>'],['whitespace only','  \n\t ']])assert(!run({result:'failure',messages:msg,fragments:frag}),'unclassified markup stays locked: '+name);
+    const q=harness();q.woo.update_checkout();q.classes.add('sa-checkout-qty-busy');q.woo.updated_checkout(null,{result:'failure',messages:notice,fragments:frag});assert(q.button.disabled,'qty lock still wins over a benign notice');
+    const f2=harness();f2.woo.update_checkout();f2.form.dataset.saQtyFailed='true';f2.woo.updated_checkout(null,{result:'failure',messages:notice,fragments:frag});assert(f2.button.disabled,'quantity failure latch still wins');
+  }
   console.log('PASS actual qty/terms code: immediate debounce lock, capture-submit rejection, coalescing, serialized overlapping writes, authoritative-totals-only unlock, HTTP/JSON/network failure latches and reload recovery');
 })().catch(e=>{console.error(e);process.exit(1)});
 

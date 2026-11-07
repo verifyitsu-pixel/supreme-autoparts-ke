@@ -419,7 +419,15 @@
         if (!ok) { form.dataset.saTotalsFailed = 'true'; form.dataset.saTotalsBusy = 'true'; sync(); }
       });
       jQuery(document.body).on('updated_checkout', function (event, data) {
-        if(data&&data.result==='success'&&!document.documentElement.classList.contains('sa-checkout-qty-busy')&&form.dataset.saQtyFailed!=='true')form.dataset.saTotalsBusy='false';
+        // Woo reports result 'failure' whenever any notice was printed, even a success notice such as
+        // "Coupon code applied successfully". Its fragments are still the authoritative totals, so only a
+        // response whose notices are all recognised plain success/info notices counts. Real validation errors keep the lock until a later update succeeds.
+        var authoritative = !!data && !!data.fragments && data.reload !== true && (data.result === 'success' ||
+          (data.result === 'failure' && data.has_errors !== true && (data.has_errors === false ||
+            (typeof data.messages === 'string' && data.messages.trim() !== '' &&
+              data.messages.replace(/<div class="woocommerce-(?:message|info)" role="alert">[^<]*<\/div>/g, '').trim() === ''))));
+        if(data&&data.result==='success'&&!data.fragments)authoritative=true;
+        if(authoritative&&!document.documentElement.classList.contains('sa-checkout-qty-busy')&&form.dataset.saQtyFailed!=='true')form.dataset.saTotalsBusy='false';
         box = form.querySelector('[data-sa-terms-checkbox], #terms') || document.querySelector('[data-sa-terms-checkbox], #terms');
         btn = document.querySelector('#place_order');
         hint = document.querySelector('[data-sa-terms-hint]');
