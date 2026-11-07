@@ -328,3 +328,6 @@ body.woocommerce-checkout .sa-checkout-refreshed #payment ul.payment_methods>li>
 body.woocommerce-checkout .sa-checkout-page{padding-bottom:16px}
 body.woocommerce-checkout .sa-main{padding-bottom:24px}
 body.woocommerce-checkout .sa-foot--min{padding-bottom:16px}
+/* Product-line amount must keep all digits together on narrow phones. */
+.sa-checkout-refreshed .sa-co-line__p{max-width:none!important;white-space:nowrap!important}
+@media(max-width:600px){.sa-checkout-refreshed .sa-co-line{padding-bottom:30px}.sa-checkout-refreshed .sa-co-line__p{bottom:0}}

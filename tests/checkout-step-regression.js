@@ -13,7 +13,9 @@ assert(experience.includes("if(review&&!review.dataset.saFlowReady)sync()"));
 assert(css.includes('body.woocommerce-cart .sa-cart-sticky-bar{display:none!important}'));
 assert(css.includes('.sa-checkout-refreshed .sa-checkout-final{grid-column:1;grid-row:3}'));
 const assets=fs.readFileSync(__dirname+'/../wp-content/themes/supreme-autoparts/inc/assets.php','utf8');
-assert(assets.includes("SA_THEME_VERSION . '.checkout4'"));assert(assets.includes("SA_THEME_VERSION . '.cu13'"));
+assert(assets.includes("SA_THEME_VERSION . '.checkout4'"));assert(assets.includes("SA_THEME_VERSION . '.cu14'"));
 console.log('PASS moved native fragment controls, terms-state retention, KE-only single-package tabs, exact known-estimate compression, cache keys, final mobile CTA and no network/order side effects');
 
 assert(f.includes('edit.hidden=i>=index'));assert(f.includes('if(i<active)open(i,true)'));console.log('PASS Change only for completed earlier steps, never a future step bypass');
+
+assert(css.includes('.sa-checkout-refreshed .sa-co-line__p{max-width:none!important;white-space:nowrap!important}'));console.log('PASS product-line amounts never split digits on phones');
