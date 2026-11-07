@@ -43,6 +43,7 @@ jobs:
           php tests/advanced-cache-bypass-regression.php
           node tests/order-experience-client-regression.js
           node tests/order-experience-loading-regression.js
+          node tests/loader-recovery-regression.js
           node tests/checkout-step-regression.js
           node tests/checkout-gate-guard-regression.js
           node tests/courier-station-choice-regression.cjs

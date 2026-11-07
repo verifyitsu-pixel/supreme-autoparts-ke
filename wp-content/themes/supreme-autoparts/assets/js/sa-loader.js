@@ -24,6 +24,8 @@
   var hideTimer = null;
   var failsafeTimer = null;
   var onFailsafe = null;
+  var recoveryCb = null;
+  var recoveryAt = 0;
   var visible = false;
   var navPending = false;
 
@@ -85,6 +87,7 @@
 
   function show(labelKey, opts) {
     ensureOverlay();
+    var wasVisible = visible;
     var text = resolveLabel(labelKey);
     if (labelEl) labelEl.textContent = text;
     overlay.classList.add('is-visible');
@@ -94,10 +97,22 @@
     document.documentElement.setAttribute('aria-busy', 'true');
     visible = true;
     clearTimers();
-    onFailsafe = (opts && typeof opts.onFailsafe === 'function') ? opts.onFailsafe : null;
+    var now = Date.now();
+    if (opts && typeof opts.onFailsafe === 'function') {
+      // Payment handoff: remember its recovery callback and absolute deadline.
+      recoveryCb = opts.onFailsafe;
+      recoveryAt = now + ((opts && opts.failsafeMs) || 45000);
+    } else if (recoveryCb && recoveryAt > now && wasVisible) {
+      // A later generic show (update_checkout, class mutation...) must not
+      // replace the pending payment recovery or push its deadline out.
+    } else {
+      recoveryCb = null;
+      recoveryAt = 0;
+    }
+    onFailsafe = recoveryCb;
     var dots = overlay.querySelector('.sa-loader__dots');
     if (dots) dots.style.display = '';
-    var ms = (opts && opts.failsafeMs) || 45000;
+    var ms = recoveryCb ? Math.max(0, recoveryAt - now) : ((opts && opts.failsafeMs) || 45000);
     failsafeTimer = window.setTimeout(function () {
       if (!visible) return;
       if (onFailsafe) {
@@ -114,6 +129,8 @@
     if (!overlay && !visible) return;
     clearTimers();
     navPending = false;
+    recoveryCb = null;
+    recoveryAt = 0;
     if (!overlay) return;
     if (!force) {
       // Tiny delay avoids flicker on very fast AJAX.
@@ -300,6 +317,10 @@
     $(document.body).on('payment_method_selected', function () {
       // A preselected careers fee gateway is not a request or payment in progress.
       if (document.querySelector('.sa-careers-payment #order_review')) return;
+      // Only the checkout form follows a method change with update_checkout /
+      // updated_checkout, which ends this overlay. The order-pay page has no
+      // such request, so the overlay would never be cleared there.
+      if (!document.querySelector('form.checkout, form.woocommerce-checkout')) return;
       show('processing');
     });
 
