@@ -176,6 +176,12 @@ $g->hook = function () { $GLOBALS['drop_saves'] = true; };
 $r = H(10.0, 'a@x.invalid', $id, $g); $g->hook = null; $GLOBALS['drop_saves'] = false;
 ok($r[0] === 'recover' && state($id) === 'i' && $g->calls === $c + 1, 'dropped URL write: fresh read finds nothing, no redirect');
 ok(H(10.0, 'a@x.invalid', $id, $g)[0] === 'recover' && $g->calls === $c + 1, 'retry after dropped write: no second initialize');
+// L6. once an order exists the reference is the order id (support can find it in the existing order list)
+$id = intent(); $wpdb->fail_from = 2; $wpdb->update_calls = 0; $b = count($orders);
+$r = H(13.0, 'a@x.invalid', $id, $g); $wpdb->fail_from = 0;
+ok($r === ['recover', 'O' . (9000 + count($orders))], 'recover reference is the order id when known');
+$r2 = H(13.0, 'a@x.invalid', $id, $g);
+ok($r2 === ['recover', 'O' . (9000 + count($orders))], 'existing-claim recover reference is the order id');
 // M. paid or cancelled order behind a ready claim is refused
 $orders[9001]->paid = true; $c = $g->calls; $b = count($orders);
 ok(H(100.0, 'a@x.invalid', $i1, $g)[0] === 'recover' && $g->calls === $c && count($orders) === $b, 'paid order not reused');

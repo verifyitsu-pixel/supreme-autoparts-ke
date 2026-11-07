@@ -111,13 +111,15 @@ final class Whop_Open_Pay {
             }
         }
 
-        if (isset($_GET['sa_pay_recover']) && preg_match('/^[A-F0-9]{10}$/D', (string) $_GET['sa_pay_recover'])) {
+        if (isset($_GET['sa_pay_recover']) && preg_match('/^(?:[A-F0-9]{10}|O[0-9]{1,9})$/D', (string) $_GET['sa_pay_recover'])) {
             // Non-payable status view for an attempt whose outcome is unknown. No form, no pay button, no order data.
+            $rq   = (string) $_GET['sa_pay_recover'];
+            $show = $rq[0] === 'O' ? 'Supreme-' . substr($rq, 1) : $rq;
             return '<div class="sa-pay-recover" style="max-width:560px;margin:40px auto;padding:24px;border:1px solid #ddd;border-radius:12px;font-family:inherit">'
                 . '<h2>' . esc_html__('Payment status needs checking', 'whop-payments') . '</h2>'
                 . '<p>' . esc_html__('We could not confirm whether your payment page was prepared. Please do not pay again or start another payment yet.', 'whop-payments') . '</p>'
-                . '<p>' . esc_html__('Email us and quote this reference so we can check the status for you:', 'whop-payments') . ' <strong>' . esc_html((string) $_GET['sa_pay_recover']) . '</strong></p>'
-                . '<p><a href="' . esc_attr('mailto:calvin@supremeautoparts.co.ke?subject=' . rawurlencode('Payment status check ' . (string) $_GET['sa_pay_recover'])) . '">calvin@supremeautoparts.co.ke</a> &middot; <a href="' . esc_url(home_url('/contact/')) . '">' . esc_html__('Contact page', 'whop-payments') . '</a></p>'
+                . '<p>' . esc_html__('Email us and quote this reference so we can check the status for you:', 'whop-payments') . ' <strong>' . esc_html($show) . '</strong></p>'
+                . '<p><a style="text-decoration:underline" href="' . esc_attr('mailto:calvin@supremeautoparts.co.ke?subject=' . rawurlencode('Payment status check ' . $show)) . '">calvin@supremeautoparts.co.ke</a> &middot; <a style="text-decoration:underline" href="' . esc_url(home_url('/contact/')) . '">' . esc_html__('Contact page', 'whop-payments') . '</a></p>'
                 . '</div>';
         }
         $error   = isset($_GET['sa_pay_err']) ? sanitize_text_field(wp_unslash((string) $_GET['sa_pay_err'])) : '';
@@ -721,6 +723,9 @@ final class Whop_Open_Pay {
             if ($c === null) {
                 return ['recover', $ref];
             }
+            if ($c['oid'] > 0) {
+                $ref = 'O' . $c['oid'];
+            }
             if ($c['fp'] !== $fp) {
                 return ['recover', $ref];
             }
@@ -746,6 +751,7 @@ final class Whop_Open_Pay {
         if (!$order instanceof WC_Order) {
             return ['recover', $ref];
         }
+        $ref = 'O' . (int) $order->get_id();
         $o = self::claim_fmt('o', $fp, (int) $order->get_id(), $now, $own);
         if (!self::cas($key, $p, $o)) {
             $order->add_order_note('Open-pay: lost the intent claim after creating this order; no Paystack page was prepared.');
