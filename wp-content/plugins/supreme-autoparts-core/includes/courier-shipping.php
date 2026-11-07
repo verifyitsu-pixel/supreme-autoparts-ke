@@ -379,18 +379,18 @@ function sa_station_records(string $slug): array
     return $out;
 }
 
-function sa_selected_station(): ?array
+function sa_station_for_checkout_data(array $data): ?array
 {
-    $chosen = (array) ($_POST['shipping_method'] ?? []); // phpcs:ignore
+    $chosen = (array) ($data['shipping_method'] ?? []); // phpcs:ignore
     foreach ($chosen as $rate) {
         if (!preg_match('/^sa_(g4s|speedaf)[^_]*_pickup/', (string) $rate, $m)) continue;
-        $id = sanitize_text_field(wp_unslash((string) ($_POST['sa_pickup_station'] ?? ''))); // phpcs:ignore
+        $id = sanitize_text_field(((string) ($data['sa_pickup_station'] ?? ''))); // phpcs:ignore
         $station = sa_station_records($m[1])[$id] ?? null;
         if (!$station) return null;
-        $prefix = !empty($_POST['ship_to_different_address']) ? 'shipping_' : 'billing_'; // phpcs:ignore
-        if (strtoupper(sanitize_text_field(wp_unslash((string) ($_POST[$prefix . 'country'] ?? '')))) !== 'KE') return null; // phpcs:ignore
-        $state = sanitize_text_field(wp_unslash((string) ($_POST[$prefix . 'state'] ?? ''))); // phpcs:ignore
-        $city = sanitize_text_field(wp_unslash((string) ($_POST[$prefix . 'city'] ?? ''))); // phpcs:ignore
+        $prefix = !empty($data['ship_to_different_address']) ? 'shipping_' : 'billing_'; // phpcs:ignore
+        if (strtoupper(sanitize_text_field(((string) ($data[$prefix . 'country'] ?? '')))) !== 'KE') return null; // phpcs:ignore
+        $state = sanitize_text_field(((string) ($data[$prefix . 'state'] ?? ''))); // phpcs:ignore
+        $city = sanitize_text_field(((string) ($data[$prefix . 'city'] ?? ''))); // phpcs:ignore
         $county = function_exists('sa_fargo_county_name') ? sa_fargo_county_name($state) : '';
         $norm = static fn($v): string => function_exists('sa_fargo_norm') ? sa_fargo_norm((string) $v) : strtolower(trim((string) $v));
         if (($county !== '' && $norm($county) === $norm($station['county'] ?? '')) || ($city !== '' && $norm($city) === $norm($station['town'] ?? ''))) return $station;
@@ -398,6 +398,36 @@ function sa_selected_station(): ?array
     }
     return null;
 }
+
+function sa_selected_station(): ?array
+{
+    return sa_station_for_checkout_data(wp_unslash($_POST)); // phpcs:ignore
+}
+function sa_station_destination_signature(array $data): string
+{
+    $prefix = !empty($data['ship_to_different_address']) ? 'shipping_' : 'billing_';
+    $rate = (string) (((array) ($data['shipping_method'] ?? []))[0] ?? '');
+    if (!preg_match('/^sa_(g4s|speedaf)[^_]*_pickup/', $rate, $match)) return '';
+    return implode('|', [$match[1], strtoupper((string) ($data[$prefix . 'country'] ?? '')), (string) ($data[$prefix . 'state'] ?? ''), (string) ($data[$prefix . 'city'] ?? '')]);
+}
+/** The normal Woo update-order-review endpoint authenticates its session/nonce before this hook.
+ * Recheck the nonce here as a defence in depth. Only this customer's existing session is touched.
+ */
+add_action('woocommerce_checkout_update_order_review', static function ($posted): void {
+    if (!function_exists('WC') || !WC()->session || !wp_verify_nonce(sanitize_text_field(wp_unslash((string) ($_POST['security'] ?? ''))), 'update-order-review')) return; // phpcs:ignore
+    parse_str((string) $posted, $data);
+    $station = sa_station_for_checkout_data($data);
+    $signature = sa_station_destination_signature($data);
+    $previous = WC()->session->get('sa_courier_station_choice');
+    // Initial Woo refresh can post the empty select before its eligible options load.
+    // Preserve only an exact destination match without an explicit station edit.
+    if (!$station && empty($data['sa_pickup_station']) && ($data['sa_station_pending'] ?? '') === '1' && is_array($previous) && $signature !== '' && ($previous['signature'] ?? '') === $signature) {
+        $candidate = $data;
+        $candidate['sa_pickup_station'] = (string) ($previous['id'] ?? '');
+        if (sa_station_for_checkout_data($candidate)) return;
+    }
+    WC()->session->set('sa_courier_station_choice', $station ? ['id' => $station['id'], 'signature' => sa_station_destination_signature($data)] : null);
+}, 25);
 
 add_action('rest_api_init', static function (): void {
     register_rest_route('sa/v1', '/courier-stations', [
@@ -486,28 +516,29 @@ add_action('wp_footer', static function (): void {
     ?>
 <script>
 (function(){
-var REST=<?php echo wp_json_encode($rest); ?>, sequence=0, signature='', records=[];
+var REST=<?php echo wp_json_encode($rest, JSON_HEX_TAG | JSON_HEX_AMP); ?>, saved=<?php echo wp_json_encode(function_exists('WC') && WC()->session ? WC()->session->get('sa_courier_station_choice') : null, JSON_HEX_TAG | JSON_HEX_AMP); ?>, sequence=0, signature='', records=[];
+var pending=document.createElement('input');pending.type='hidden';pending.name='sa_station_pending';pending.value=saved?'1':'0';var checkout=document.querySelector('form.checkout');if(checkout)checkout.appendChild(pending);
 function val(id){var e=document.getElementById(id);return e?e.value:'';}
 function rate(){var r=document.querySelector('input[name^="shipping_method"]:checked,input[name^="shipping_method"][type="hidden"]');return r?r.value:'';}
 function refresh(){
   var wrap=document.getElementById('sa_pickup_station_field'),sel=document.getElementById('sa_pickup_station');if(!wrap||!sel)return;
   var delivery=document.querySelector('[data-sa-checkout-panel="shipping"] .sa-checkout-section__body');if(delivery&&wrap.parentElement!==delivery)delivery.appendChild(wrap);
   var match=rate().match(/^sa_(g4s|speedaf)[^_]*_pickup/),different=!!document.querySelector('#ship-to-different-address-checkbox:checked'),prefix=different?'shipping_':'billing_';
-  var country=val(prefix+'country'),key=match&&country==='KE'?[match[1],val(prefix+'state'),val(prefix+'city')].join('|'):'';
+  var country=val(prefix+'country'),key=match&&country==='KE'?[match[1],country,val(prefix+'state'),val(prefix+'city')].join('|'):'';
   var note=wrap.querySelector('.sa-station-status');if(!note){note=document.createElement('p');note.className='sa-station-status';note.setAttribute('role','status');wrap.appendChild(note);}
   var detail=wrap.querySelector('.sa-station-selected');if(!detail){detail=document.createElement('p');detail.className='sa-station-selected';wrap.appendChild(detail);}
   var optional=wrap.querySelector('label .optional');if(optional)optional.hidden=!!key;
   var chosen=document.querySelector('input[name^="shipping_method"]:checked,input[name^="shipping_method"][type="hidden"]');var choice=chosen&&chosen.closest('li');if(key&&choice)choice.appendChild(wrap);
   sel.required=!!key;wrap.classList.toggle('validate-required',!!key);wrap.style.display=key?'':'none';
-  if(!key){sequence++;signature='';sel.value='';detail.textContent='';return;}
-  if(key===signature)return;signature=key;var request=++sequence;sel.replaceChildren(new Option('Choose the pickup station',''));sel.disabled=true;sel.dispatchEvent(new Event('change',{bubbles:true}));detail.textContent='';note.textContent='Loading stations for your delivery town or county.';
+  if(!key){pending.value='0';saved=null;sequence++;signature='';sel.value='';detail.textContent='';return;}
+  if(key===signature)return;if(saved&&saved.signature!==key){saved=null;pending.value='0';}signature=key;var request=++sequence;sel.replaceChildren(new Option('Choose the pickup station',''));sel.disabled=true;sel.dispatchEvent(new Event('change',{bubbles:true}));detail.textContent='';note.textContent='Loading stations for your delivery town or county.';
   fetch(REST+'?courier='+encodeURIComponent(match[1])+'&state='+encodeURIComponent(val(prefix+'state'))+'&city='+encodeURIComponent(val(prefix+'city')),{credentials:'same-origin'})
     .then(function(r){if(!r.ok)throw new Error('stations');return r.json();}).then(function(data){
-      if(request!==sequence)return;records=Array.isArray(data.stations)?data.stations:[];var townGroup=document.createElement('optgroup');townGroup.label='In your delivery town';var countyGroup=document.createElement('optgroup');countyGroup.label='Other stations in your county';records.forEach(function(s){(s.same_town?townGroup:countyGroup).appendChild(new Option(s.label,s.value));});if(townGroup.children.length)sel.appendChild(townGroup);if(countyGroup.children.length)sel.appendChild(countyGroup);sel.disabled=false;sel.dispatchEvent(new Event('change',{bubbles:true}));
+      if(request!==sequence)return;records=Array.isArray(data.stations)?data.stations:[];var townGroup=document.createElement('optgroup');townGroup.label='In your delivery town';var countyGroup=document.createElement('optgroup');countyGroup.label='Other stations in your county';records.forEach(function(s){(s.same_town?townGroup:countyGroup).appendChild(new Option(s.label,s.value));});if(townGroup.children.length)sel.appendChild(townGroup);if(countyGroup.children.length)sel.appendChild(countyGroup);sel.disabled=false;if(saved&&saved.signature===key&&records.some(function(s){return s.value===saved.id;}))sel.value=saved.id;saved=null;pending.value='0';sel.dispatchEvent(new Event('change',{bubbles:true}));
       note.textContent=records.length?'Choose a pickup station in your town or county. Other stations in your county are listed separately.':'No listed stations match this town or county. Check your address or choose another delivery option.';
     }).catch(function(){if(request!==sequence)return;signature='';sel.disabled=false;sel.dispatchEvent(new Event('change',{bubbles:true}));note.textContent='Stations could not load. Change the delivery option and try again, or reload checkout.';});
 }
-document.addEventListener('change',function(e){if(e.target&&e.target.id==='sa_pickup_station'){var station=records.find(function(s){return s.value===e.target.value;});var d=e.target.closest('.form-row').querySelector('.sa-station-selected');if(d)d.textContent=station?station.label+(station.same_town===false?' (another station in '+(station.county||'your county')+')':'')+' - '+(station.address&&station.address.toLowerCase()!==station.label.split(', ').pop().toLowerCase()?station.address:'Street details not supplied. Confirm the branch before travelling.') : '';return;}if(e.target&&/shipping_method|billing_(country|state|city)|shipping_(country|state|city)|ship-to-different/.test(e.target.name||e.target.id||''))refresh();});
+document.addEventListener('change',function(e){if(e.target&&e.target.id==='sa_pickup_station'){if(e.isTrusted)pending.value='0';if(!e.target.disabled&&(e.target.value||e.isTrusted)&&window.jQuery)jQuery(document.body).trigger('update_checkout');var station=records.find(function(s){return s.value===e.target.value;});var d=e.target.closest('.form-row').querySelector('.sa-station-selected');if(d)d.textContent=station?station.label+(station.same_town===false?' (another station in '+(station.county||'your county')+')':'')+' - '+(station.address&&station.address.toLowerCase()!==station.label.split(', ').pop().toLowerCase()?station.address:'Street details not supplied. Confirm the branch before travelling.') : '';return;}if(e.target&&/shipping_method|billing_(country|state|city)|shipping_(country|state|city)|ship-to-different/.test(e.target.name||e.target.id||''))refresh();});
 if(window.jQuery)jQuery(document.body).on('updated_checkout',refresh);
 setTimeout(refresh,800);
 })();
