@@ -4,7 +4,7 @@ $role = $args[0] ?? 'A'; $dir = $args[1] ?? sys_get_temp_dir();
 $sid  = 'harness-guest-1';
 $h = new WC_Session_Handler();
 $set = function ( $name, $val ) use ( $h ) { $p = new ReflectionProperty( 'WC_Session_Handler', $name ); $p->setAccessible( true ); $p->setValue( $h, $val ); };
-$set( '_customer_id', $sid );
+$set( '_customer_id', $sid ); $set( '_has_cookie', true ); $set( '_session_expiring', time() + 3000 ); $set( '_session_expiration', time() + 6000 );
 $data = $h->get_session( $sid, array() );
 $set( '_data', is_array( $data ) ? $data : array() );
 $wait = function ( $f ) { for ( $i = 0; $i < 100 && ! file_exists( $f ); $i++ ) usleep( 100000 ); };
