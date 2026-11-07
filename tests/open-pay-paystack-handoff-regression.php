@@ -180,6 +180,8 @@ ok(H(10.0, 'a@x.invalid', $id, $g)[0] === 'recover' && $g->calls === $c + 1, 're
 $id = intent(); $wpdb->fail_from = 2; $wpdb->update_calls = 0; $b = count($orders);
 $r = H(13.0, 'a@x.invalid', $id, $g); $wpdb->fail_from = 0;
 ok($r === ['recover', 'O' . (9000 + count($orders))], 'recover reference is the order id when known');
+$rm = H(13.0, 'someone@x.invalid', $id, $g);
+ok($rm[0] === 'recover' && $rm[1][0] !== 'O', 'different-details requester does not get the order id');
 $r2 = H(13.0, 'a@x.invalid', $id, $g);
 ok($r2 === ['recover', 'O' . (9000 + count($orders))], 'existing-claim recover reference is the order id');
 // M. paid or cancelled order behind a ready claim is refused

@@ -723,11 +723,11 @@ final class Whop_Open_Pay {
             if ($c === null) {
                 return ['recover', $ref];
             }
-            if ($c['oid'] > 0) {
-                $ref = 'O' . $c['oid'];
-            }
             if ($c['fp'] !== $fp) {
                 return ['recover', $ref];
+            }
+            if ($c['oid'] > 0) {
+                $ref = 'O' . $c['oid'];
             }
             if ($c['s'] !== 'r' && $c['s'] !== 'u') {
                 return ['recover', $ref];
