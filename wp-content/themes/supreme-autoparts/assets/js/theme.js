@@ -379,7 +379,18 @@
       btn.disabled = !ok;
       recovery.hidden=form.dataset.saTotalsBusy!=='true';
       btn.setAttribute('aria-disabled', ok ? 'false' : 'true');
-      if (hint) hint.hidden = ok;
+      var failed = form.dataset.saQtyFailed==='true';
+      var failMsg = "We couldn't update the order total. Reload checkout before continuing.";
+      status.textContent = failed ? failMsg : 'Updating your order total. Please wait before placing your order.';
+      if (hint) {
+        var busy = form.dataset.saTotalsBusy==='true' || document.documentElement.classList.contains('sa-checkout-qty-busy');
+        hint.textContent = failed ? failMsg
+          : !addressOK ? 'Confirm your address and delivery option above to continue.'
+          : !stationOK ? 'Choose a pickup station above to continue.'
+          : busy ? 'Updating your order total. Please wait.'
+          : 'Accept the terms above to enable Pay.';
+        hint.hidden = ok;
+      }
     }
 
     sync();

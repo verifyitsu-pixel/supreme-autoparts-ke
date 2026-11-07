@@ -32,3 +32,15 @@ const settle=async()=>{for(let i=0;i<20;i++)await Promise.resolve()};
   }
   console.log('PASS actual qty/terms code: immediate debounce lock, capture-submit rejection, coalescing, serialized overlapping writes, authoritative-totals-only unlock, HTTP/JSON/network failure latches and reload recovery');
 })().catch(e=>{console.error(e);process.exit(1)});
+
+{
+  const src=require('fs').readFileSync(__dirname+'/../wp-content/themes/supreme-autoparts/assets/js/theme.js','utf8');
+  const syncAt=src.indexOf('function sync()',src.indexOf('function saSyncCheckoutTerms'));
+  const body=src.slice(syncAt,src.indexOf('sync();',syncAt));
+  const assert2=require('assert');
+  assert2(body.indexOf("failed ? failMsg")<body.indexOf("!addressOK ?"),'quantity failure has hint priority over address/station/busy/terms');
+  assert2(body.includes('status.textContent = failed ? failMsg'),'recovery paragraph follows quantity failure');
+  assert2(body.indexOf("!addressOK ?")<body.indexOf("!stationOK ?")&&body.indexOf("!stationOK ?")<body.indexOf("busy ? 'Updating")&&body.indexOf("busy ? 'Updating")<body.indexOf("'Accept the terms"),'hint priority address, station, busy, terms');
+  assert2(body.includes('hint.hidden = ok;')&&body.includes("btn.disabled = !ok;"),'enable/disable semantics unchanged');
+  console.log('PASS reason-specific pay hint priority and quantity-failure recovery text');
+}
