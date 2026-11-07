@@ -10,6 +10,7 @@ class SA_Native_Session_Test_Adapter extends WC_Session_Handler {
     private string $lock_name = '';
     private bool $held = false;
     private bool $poisoned = false;
+    private bool $finalized = false; // HARNESS CHANGE vs ffdf477a: sealed after finish(); no later reacquire/read/mutate/commit.
     /** Harness callback: receives checkpoint and handler; may block/fail/kill worker. */
     public static $checkpoint = null;
     public array $trace = [];
@@ -19,6 +20,7 @@ class SA_Native_Session_Test_Adapter extends WC_Session_Handler {
         if (is_callable(self::$checkpoint)) (self::$checkpoint)($name,$this);
     }
     private function acquire_for(string $id): void {
+        if ($this->finalized) throw new RuntimeException('Session finalized; no later lock or write.');
         if ($this->held) {
             if ($this->lock_name !== substr('sa_test_' . hash('sha256',$id),0,64)) throw new RuntimeException('Session identity changed under lock.');
             $this->assert_lock();
@@ -62,7 +64,12 @@ class SA_Native_Session_Test_Adapter extends WC_Session_Handler {
         if ($wpdb->last_error) {$this->poisoned=true;throw new RuntimeException('Session read failed.');}
         $this->point('after_read');return $value===null?$default_value:maybe_unserialize($value);
     }
+    public function set($key, $value) {
+        if ($this->finalized) throw new RuntimeException('Session finalized; no later mutation.');
+        parent::set($key, $value);
+    }
     public function save_data($old_session_key='') {
+        if ($this->finalized) throw new RuntimeException('Session finalized; late save refused.');
         if ($this->poisoned) return;
         if (!$this->_dirty || !$this->has_session()) return;
         if ($old_session_key!=='') throw new RuntimeException('Account/session migration unsupported in isolated adapter.');
@@ -113,10 +120,12 @@ class SA_Native_Session_Test_Adapter extends WC_Session_Handler {
         }
     }
     public function finish(): void {
+        if ($this->finalized) return;
         try {if (!$this->poisoned) $this->save_data();}
         catch (Throwable $e) {$this->trace[]=['event'=>'shutdown_commit_error','message'=>$e->getMessage()];}
         finally {
             if ($this->held) {global $wpdb;$wpdb->get_var($wpdb->prepare('SELECT RELEASE_LOCK(%s)',$this->lock_name));$this->held=false;$this->point('lock_released');}
+            $this->finalized=true;
         }
     }
 }

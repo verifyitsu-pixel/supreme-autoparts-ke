@@ -4,7 +4,7 @@ define( 'SA_NATIVE_SESSION_HARNESS', true );
 require __DIR__ . '/adapter.php';
 $mode = getenv( 'HW_MODE' ); $cid = getenv( 'HW_CID' ); $op = getenv( 'HW_OP' ); $pid = (int) getenv( 'HW_PID' );
 $cfg = json_decode( getenv( 'HW_CFG' ) ?: '{}', true );
-$waitfor = function ( $f ) { for ( $i = 0; $i < 200 && ! file_exists( $f ); $i++ ) usleep( 100000 ); };
+$waitfor = function ( $f ) { for ( $i = 0; $i < 200 && ! file_exists( $f ); $i++ ) usleep( 100000 ); if ( ! file_exists( $f ) ) throw new RuntimeException( 'barrier timeout: ' . basename( $f ) ); };
 function hw_out( $a ) { echo 'RESULT ' . wp_json_encode( $a ) . "\n"; }
 
 if ( 'dump' === $mode ) {
@@ -12,11 +12,12 @@ if ( 'dump' === $mode ) {
 	$v = $wpdb->get_var( $wpdb->prepare( "SELECT session_value FROM {$wpdb->prefix}woocommerce_sessions WHERE session_key=%s", $cid ) );
 	$s = $v ? maybe_unserialize( $v ) : array();
 	$cart = isset( $s['cart'] ) ? maybe_unserialize( $s['cart'] ) : array();
-	$ids = array(); foreach ( (array) $cart as $i ) { $ids[] = (int) $i['product_id']; }
-	$saved = isset( $s['sa_test_saved'] ) ? array_map( 'intval', array_keys( maybe_unserialize( $s['sa_test_saved'] ) ) ) : array();
-	$ops = isset( $s['sa_test_operations'] ) ? array_keys( maybe_unserialize( $s['sa_test_operations'] ) ) : array();
-	sort( $ids ); sort( $saved ); sort( $ops );
-	hw_out( array( 'cart' => $ids, 'saved' => $saved, 'ops' => $ops, 'has_row' => (bool) $v ) );
+	$lines = array(); foreach ( (array) $cart as $i ) { $lines[] = array( 'pid' => (int) $i['product_id'], 'qty' => (int) $i['quantity'], 'var' => (int) $i['variation_id'] ); }
+	usort( $lines, function ( $a, $b ) { return $a['pid'] <=> $b['pid']; } );
+	$saved = array(); foreach ( (array) ( isset( $s['sa_test_saved'] ) ? maybe_unserialize( $s['sa_test_saved'] ) : array() ) as $k => $e ) { $saved[] = array( 'pid' => (int) $k, 'qty' => (int) $e['quantity'] ); }
+	usort( $saved, function ( $a, $b ) { return $a['pid'] <=> $b['pid']; } );
+	$ops = isset( $s['sa_test_operations'] ) ? array_keys( maybe_unserialize( $s['sa_test_operations'] ) ) : array(); sort( $ops );
+	hw_out( array( 'cart' => $lines, 'saved' => $saved, 'ops' => $ops, 'marker' => $s['harness_marker'] ?? null, 'late' => isset( $s['late'] ), 'has_row' => (bool) $v ) );
 	return;
 }
 
@@ -35,7 +36,7 @@ try {
 	$h = WC()->session;
 	if ( 'seed' === $mode ) {
 		$ids = array_map( 'intval', explode( ',', getenv( 'HW_PIDS' ) ) );
-		$out = $h->operation( $op, 'seed', function ( $cart ) use ( $ids ) { foreach ( $ids as $i ) { if ( ! $cart->add_to_cart( $i, 1 ) ) throw new RuntimeException( 'add failed' ); } return array( 'ok' => true ); } );
+		$out = $h->operation( $op, 'seed', function ( $cart, $s ) use ( $ids ) { $s->set( 'harness_marker', 'keep' ); foreach ( $ids as $i ) { if ( ! $cart->add_to_cart( $i, 2 ) ) throw new RuntimeException( 'add failed' ); } return array( 'ok' => true ); } );
 		hw_out( array( 'ok' => true, 'cid' => $h->get_customer_id() ) );
 	} else { // save: move one native cart line into saved list
 		$out = $h->operation( $op, 'save-' . $pid, function ( $cart, $s ) use ( $pid ) {
@@ -49,6 +50,7 @@ try {
 		} );
 		hw_out( array( 'ok' => true, 'outcome' => $out, 'cid' => $h->get_customer_id() ) );
 	}
+	if ( 'latedirty' === getenv( 'HW_LATE' ) ) { $h->finish(); try { $h->set( 'late', 'x' ); $h->save_data(); hw_out( array( 'late_refused' => false ) ); } catch ( Throwable $e ) { hw_out( array( 'late_refused' => true, 'error' => $e->getMessage() ) ); } }
 	$h->finish();
 } catch ( Throwable $e ) {
 	hw_out( array( 'ok' => false, 'error' => $e->getMessage() ) );
