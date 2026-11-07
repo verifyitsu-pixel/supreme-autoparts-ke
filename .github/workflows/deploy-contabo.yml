@@ -44,6 +44,7 @@ jobs:
           node tests/order-experience-client-regression.js
           node tests/order-experience-loading-regression.js
           node tests/checkout-step-regression.js
+          node tests/checkout-gate-guard-regression.js
           node tests/courier-station-choice-regression.cjs
           node tests/checkout-quantity-guard-regression.cjs
 
