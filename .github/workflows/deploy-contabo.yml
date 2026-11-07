@@ -35,6 +35,15 @@ jobs:
             echo "== $t"; php tests/$t.php
           done
 
+      - name: Open-pay claim atomicity (runner's own MySQL, throwaway database)
+        run: |
+          set -e
+          sudo systemctl start mysql
+          for i in 1 2 3 4 5 6 7 8 9 10; do sudo mysql -e 'SELECT 1' >/dev/null 2>&1 && break; sleep 2; done
+          sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root'; FLUSH PRIVILEGES;"
+          php -m | grep -i mysqli
+          php tests/open-pay-claim-mysql-regression.php
+
       - name: GA4 event tests (no network)
         run: |
           node --version
