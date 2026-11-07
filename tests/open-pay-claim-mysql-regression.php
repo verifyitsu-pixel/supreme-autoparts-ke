@@ -41,7 +41,7 @@ $db->query("UPDATE wp_options SET option_value = 'o|a' WHERE option_name = 'cas'
 $db->query("UPDATE wp_options SET option_value = 'i|a' WHERE option_name = 'cas' AND option_value = 'p|a'"); $ok($db->affected_rows === 0, 'CAS from stale value is a no-op'); $checks++;
 // purge SQL parses on real MySQL and deletes only old rows
 $db->query("INSERT INTO wp_options (option_name, option_value, autoload) VALUES ('sa_op_i_old', 'r|f|1|" . (time() - 200000) . "|o', 'no'), ('sa_op_i_new', 'r|f|1|" . (time() - 10) . "|o', 'no'), ('other_option', 'x', 'yes')");
-define('ABSPATH', 1); function __($s, $d = '') { return $s; }
+if (!defined('ABSPATH')) define('ABSPATH', 1); if (!function_exists('__')) { function __($s, $d = '') { return $s; } }
 final class W2 { public $options = 'wp_options'; public $db;
     function prepare($sql, ...$a) { $i = 0; return preg_replace_callback('/%[sd]/', function ($m) use (&$i, $a) { $v = $a[$i++]; return $m[0] === '%d' ? (string) (int) $v : "'" . $this->db->real_escape_string((string) $v) . "'"; }, $sql); }
     function query($sql) { $this->db->query($sql); if ($this->db->errno) { fwrite(STDERR, "SQL error: {$this->db->error}\n"); exit(1); } return $this->db->affected_rows; } function get_var($sql) { return null; } }
