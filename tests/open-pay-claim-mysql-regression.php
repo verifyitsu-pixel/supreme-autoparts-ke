@@ -9,7 +9,7 @@ $db->query('CREATE DATABASE IF NOT EXISTS sa_claim_test'); $db->select_db('sa_cl
 if (($argv[1] ?? '') !== 'worker') { $db->query('DROP TABLE IF EXISTS wp_options');
 $db->query('CREATE TABLE wp_options (option_id BIGINT AUTO_INCREMENT PRIMARY KEY, option_name VARCHAR(191) NOT NULL DEFAULT "", option_value LONGTEXT NOT NULL, autoload VARCHAR(20) NOT NULL DEFAULT "yes", UNIQUE KEY option_name (option_name)) ENGINE=InnoDB'); }
 if (($argv[1] ?? '') === 'worker') {
-    define('ABSPATH', 1); function __($s, $d = '') { return $s; }
+    define('ABSPATH', 1); if (!function_exists('__')) { function __($s, $d = '') { return $s; } }
     final class W { public $options = 'wp_options'; public $db;
         function prepare($sql, ...$a) { $i = 0; return preg_replace_callback('/%[sd]/', function ($m) use (&$i, $a) { $v = $a[$i++]; return $m[0] === '%d' ? (string) (int) $v : "'" . $this->db->real_escape_string((string) $v) . "'"; }, $sql); }
         function query($sql) { $this->db->query($sql); return $this->db->affected_rows; }
