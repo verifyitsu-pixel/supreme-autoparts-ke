@@ -93,6 +93,23 @@ if ($GLOBALS['sa_st_route'] !== '') {
             }, (int) $prio);
         }
     }, 0);
+    // Cumulative time spent inside each listed hook (all callbacks), first-argument passthrough, for the totals path.
+    $GLOBALS['sa_st_hk'] = [];
+    foreach (['woocommerce_before_calculate_totals' => 'before_calc', 'woocommerce_cart_shipping_packages' => 'packages', 'woocommerce_package_rates' => 'pkg_rates', 'woocommerce_cart_calculate_fees' => 'fees', 'woocommerce_available_payment_gateways' => 'gateways', 'woocommerce_after_calculate_totals' => 'after_calc', 'woocommerce_cart_needs_shipping' => 'needs_ship', 'woocommerce_cart_loaded_from_session' => 'from_session', 'woocommerce_checkout_update_order_review' => 'update_review', 'woocommerce_cart_calculate_shipping' => 'calc_ship'] as $hook => $short) {
+        add_filter($hook, static function ($v = null) use ($short) {
+            $GLOBALS['sa_st_hk'][$short]['t'] = microtime(true);
+            return $v;
+        }, -1000000, 10);
+        add_filter($hook, static function ($v = null) use ($short) {
+            $h = &$GLOBALS['sa_st_hk'][$short];
+            if (!empty($h['t'])) {
+                $h['sum'] = ($h['sum'] ?? 0.0) + (microtime(true) - $h['t']);
+                $h['n'] = ($h['n'] ?? 0) + 1;
+                $h['t'] = 0.0;
+            }
+            return $v;
+        }, 1000000, 10);
+    }
     ob_start(static function (string $buffer): string {
         if (headers_sent()) {
             return $buffer;
@@ -123,6 +140,11 @@ if ($GLOBALS['sa_st_route'] !== '') {
             $top = array_slice($ip, 0, 3, true);
             foreach ($top as $prio => $sec) {
                 $parts[] = 'init_p' . $prio . ';dur=' . number_format($sec * 1000, 1, '.', '') . ';desc="' . str_replace('"', '', implode('|', $GLOBALS['sa_st_init']['names'][$prio] ?? [])) . '"';
+            }
+        }
+        foreach ($GLOBALS['sa_st_hk'] as $short => $h) {
+            if (isset($h['sum'])) {
+                $parts[] = 'hk_' . $short . ';dur=' . number_format($h['sum'] * 1000, 1, '.', '') . ';desc="n=' . (int) $h['n'] . '"';
             }
         }
         $w = $GLOBALS['sa_st_wpq'];
