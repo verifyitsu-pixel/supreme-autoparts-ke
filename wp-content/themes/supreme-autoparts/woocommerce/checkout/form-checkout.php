@@ -28,11 +28,7 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
     <p class="sa-checkout-hero__lead">
       <?php esc_html_e('Enter your details, then continue to payment.', 'supreme-autoparts'); ?>
     </p>
-    <ol class="sa-checkout-steps" aria-label="<?php esc_attr_e('Checkout steps', 'supreme-autoparts'); ?>" data-sa-checkout-steps>
-      <li class="sa-checkout-steps__item is-active" data-sa-step="contact"><span>1</span> <?php esc_html_e('Contact', 'supreme-autoparts'); ?></li>
-      <li class="sa-checkout-steps__item" data-sa-step="shipping"><span>2</span> <?php esc_html_e('Shipping', 'supreme-autoparts'); ?></li>
-      <li class="sa-checkout-steps__item" data-sa-step="payment"><span>3</span> <?php esc_html_e('Payment', 'supreme-autoparts'); ?></li>
-    </ol>
+
   </header>
 
   <form name="checkout" method="post" class="checkout woocommerce-checkout sa-checkout" action="<?php echo esc_url(wc_get_checkout_url()); ?>" enctype="multipart/form-data" novalidate>
@@ -45,7 +41,7 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
             <header class="sa-checkout-section__head">
               <span class="sa-checkout-section__num" aria-hidden="true">1</span>
               <div>
-                <h2 id="sa-checkout-contact-title" class="sa-checkout-section__title"><?php esc_html_e('Contact &amp; billing', 'supreme-autoparts'); ?></h2>
+                <h2 id="sa-checkout-contact-title" class="sa-checkout-section__title"><?php esc_html_e('Deliver to', 'supreme-autoparts'); ?></h2>
                 <p class="sa-checkout-section__sub"><?php esc_html_e('We use this email for order confirmation and tracking updates.', 'supreme-autoparts'); ?></p>
               </div>
             </header>
@@ -60,7 +56,7 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
             <header class="sa-checkout-section__head">
               <span class="sa-checkout-section__num" aria-hidden="true">2</span>
               <div>
-                <h2 id="sa-checkout-shipping-title" class="sa-checkout-section__title"><?php esc_html_e('Shipping', 'supreme-autoparts'); ?></h2>
+                <h2 id="sa-checkout-shipping-title" class="sa-checkout-section__title"><?php esc_html_e('Delivery options', 'supreme-autoparts'); ?></h2>
                 <p class="sa-checkout-section__sub"><?php
                 $sa_cc = function_exists('sa_geo_country') ? sa_geo_country() : 'KE';
                 if ($sa_cc === 'KE') {
@@ -100,7 +96,7 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
           <header class="sa-checkout-section__head">
             <span class="sa-checkout-section__num" aria-hidden="true">3</span>
             <div>
-              <h2 id="sa-checkout-payment-title" class="sa-checkout-section__title"><?php esc_html_e('Review and pay', 'supreme-autoparts'); ?></h2>
+              <h2 id="sa-checkout-payment-title" class="sa-checkout-section__title"><?php esc_html_e('Payment', 'supreme-autoparts'); ?></h2>
               <p class="sa-checkout-section__sub"><?php esc_html_e('Choose a payment method, then review the policies and pay.', 'supreme-autoparts'); ?></p>
             </div>
           </header>

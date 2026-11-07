@@ -114,17 +114,8 @@ $free_ship = function_exists('sa_theme_cart_has_free_shipping') && sa_theme_cart
                 <?php endif; ?>
                 <p class="sa-cart-line__price">
                   <span class="sa-cart-line__now"><?php echo apply_filters('woocommerce_cart_item_subtotal', WC()->cart->get_product_subtotal($_product, $cart_item['quantity']), $cart_item, $cart_item_key); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
-                  <?php if ($show_was) : ?>
-                    <del class="sa-cart-line__was"><?php echo wp_kses_post(wc_price($regular)); ?></del>
-                  <?php endif; ?>
                 </p>
-                <?php if ($free_ship && !$is_fee) : ?>
-                  <p class="sa-cart-line__ship"><?php esc_html_e('Free shipping', 'supreme-autoparts'); ?></p>
-                <?php endif; ?>
                 <p class="sa-cart-line__links">
-                  <?php if (!$is_fee && $_product->is_purchasable() && $_product->is_in_stock()) : ?>
-                    <a class="sa-cart-line__buy" href="<?php echo esc_url($checkout_url); ?>"><?php esc_html_e('Buy it now', 'supreme-autoparts'); ?></a>
-                  <?php endif; ?>
                   <?php
                   echo apply_filters( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                       'woocommerce_cart_item_remove_link',
@@ -155,6 +146,7 @@ $free_ship = function_exists('sa_theme_cart_has_free_shipping') && sa_theme_cart
         <?php do_action('woocommerce_after_cart_contents'); ?>
         <?php do_action('woocommerce_after_cart_table'); ?>
       </form>
+      <section class="sa-cart-delivery" aria-label="Delivery options"><h2>Delivery and pickup</h2><details class="sa-cart-delivery-controls"><summary class="sa-cart-delivery-current">Review delivery options</summary><div class="sa-cart-delivery__options"></div></details></section>
       <?php do_action('woocommerce_before_cart_collaterals'); ?>
     </div>
 
