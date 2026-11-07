@@ -176,7 +176,7 @@ $old = 'sa_op_i_' . str_repeat('0', 40); $wpdb->rows[$old] = 'r|' . fp('a@x.inva
 $fresh = 'sa_op_i_' . str_repeat('1', 40); $wpdb->rows[$fresh] = 'r|' . fp('a@x.invalid', 1.0) . '|9001|' . (time() - 100) . '|aaaaaaaaaaaaaaaa';
 H(12.0, 'a@x.invalid', intent(), $g);
 ok(!isset($wpdb->rows[$old]) && isset($wpdb->rows[$fresh]), 'old claims purged, recent ones kept');
-ok(H(1.0, 'a@x.invalid', intent(90000), $g)[0] === 'recover', 'a purged intent age is refused');
+ok(H(1.0, 'a@x.invalid', intent(90000), $g)[0] === 'error', 'a purged intent age is refused');
 // O. URL allowlist
 foreach (['https://checkout.paystack.com/abc', 'https://checkout.paystack.com/abc?x=1'] as $u) ok(Whop_Open_Pay::is_safe_paystack_url($u), "safe $u");
 foreach (['http://checkout.paystack.com/a', 'https://checkout.paystack.com.evil.invalid/a', 'https://evil.invalid/checkout.paystack.com', 'https://user@checkout.paystack.com/a', 'https://checkout.paystack.com:444/a', 'https://sub.checkout.paystack.com/a', "https://checkout.paystack.com/a b", 'https://checkout.paystack.com\\@evil.invalid/', 'javascript:alert(1)', '', 'https://checkout.paystack.com/a#f'] as $u) ok(!Whop_Open_Pay::is_safe_paystack_url($u), "unsafe $u");
