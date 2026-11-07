@@ -20,7 +20,7 @@ cp $REPO/wp-content/mu-plugins/sa-paystack.php $REPO/tests/integration/zz-test-h
 $WP plugin activate sa-geo-currency woo-paystack whop-payments
 $WP option update woocommerce_currency KES
 $WP option update woocommerce_paystack_settings '{"enabled":"yes","testmode":"no","live_secret_key":"sk_live_TESTONLY_NOT_REAL","live_public_key":"pk_live_TESTONLY_NOT_REAL"}' --format=json
-$WP transient set sa_fx_rates_usd_v1 '{"USD":1,"rates":{"KES":129}}' 28800 --format=json
+$WP eval 'set_transient("sa_fx_rates_usd_v1", ["USD"=>1, "rates"=>["KES"=>129]], 28800);'
 NONCE=$($WP eval 'echo wp_create_nonce("sa_open_pay");')
 export NONCE
 orders() { $WP eval 'echo count(wc_get_orders(["limit"=>-1,"created_via"=>"sa_open_pay","return"=>"ids"]));'; }
