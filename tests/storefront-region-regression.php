@@ -10,3 +10,7 @@ foreach(['KE'=>'Midax Plaza','US'=>'Portland'] as $cc=>$text){$h=sa_svc_address_
 check(strpos(sa_svc_address_html(),'Nairobi garage')!==false,'actual garage directions unchanged');
 
 check(strpos(file_get_contents(__DIR__.'/../wp-content/advanced-cache.php'),"isset(\$_COOKIE['sa_storefront_view']) || isset(\$_GET['sa_view'])")!==false,'manual view bypasses early origin cache');
+
+check(str_contains($source,'function sa_geo_ke_web_swap('),'actual web-contact region guard exists');load_function($source,'sa_storefront_is_kenya');load_function($source,'sa_geo_ke_swap');load_function($source,'sa_geo_ke_web_swap');
+foreach(['US','KE'] as $ip){$detected=$ip;foreach(['us','ke'] as $view){$_GET=['sa_view'=>$view];$_COOKIE=[];$in='<a href="tel:+19174375121">+1 917 437 5121</a>';$out=sa_geo_ke_web_swap($in);check($view==='us'?$out===$in:str_contains($out,'+254714498451'),'web contact selected '.$view.' despite IP '.$ip);}}
+check(str_contains($source,"!is_admin() && !wp_doing_cron() && sa_geo_is_kenya()"),'email actual-country gate untouched');

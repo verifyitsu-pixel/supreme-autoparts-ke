@@ -248,23 +248,31 @@ function sa_geo_ke_swap(string $html): string
     ]);
 }
 
+/** Displayed support contacts follow the selected view, not the delivery address or raw IP.
+ * The separate email filter keeps its actual-country behavior.
+ */
+function sa_geo_ke_web_swap(string $html): string
+{
+    return sa_storefront_is_kenya() ? sa_geo_ke_swap($html) : $html;
+}
+
 add_action('template_redirect', static function (): void {
     if (is_admin() || wp_doing_ajax() || is_feed() || (defined('REST_REQUEST') && REST_REQUEST) || is_robots()) {
         return;
     }
-    if (!sa_geo_is_kenya()) {
+    if (!sa_storefront_is_kenya()) {
         return;
     }
-    ob_start('sa_geo_ke_swap');
+    ob_start('sa_geo_ke_web_swap');
 }, 0);
 
 // Woo cart/checkout fragments and our REST recs are HTML too.
 add_filter('woocommerce_add_to_cart_fragments', static function ($f) {
-    if (!is_array($f) || !sa_geo_is_kenya()) { return $f; }
+    if (!is_array($f) || !sa_storefront_is_kenya()) { return $f; }
     return array_map(static fn ($v) => is_string($v) ? sa_geo_ke_swap($v) : $v, $f);
 }, 999);
 add_filter('woocommerce_update_order_review_fragments', static function ($f) {
-    if (!is_array($f) || !sa_geo_is_kenya()) { return $f; }
+    if (!is_array($f) || !sa_storefront_is_kenya()) { return $f; }
     return array_map(static fn ($v) => is_string($v) ? sa_geo_ke_swap($v) : $v, $f);
 }, 999);
 
