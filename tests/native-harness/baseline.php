@@ -1,5 +1,4 @@
 <?php
-// Usage: wp eval-file baseline.php ROLE SYNCDIR   (ROLE = A or B). Test-only; throwaway DB.
 list( , $role, $dir ) = array_merge( $args ?? array(), array( null, null ) ) + array( null, null, null );
 $role = $args[0] ?? 'A'; $dir = $args[1] ?? sys_get_temp_dir();
 $sid  = 'harness-guest-1';
