@@ -334,20 +334,24 @@
     var box = form.querySelector('[data-sa-terms-checkbox], #terms');
     var btn = form.querySelector('#place_order');
     var hint = form.querySelector('[data-sa-terms-hint]');
-    if (!box || !btn) return;
+    if (!box || !btn || form.dataset.saTermsBound) return;
+    form.dataset.saTermsBound='true';
 
     function sync() {
-      var ok = !!box.checked;
+      var ok = !!box.checked && form.dataset.saTotalsBusy!=='true' && !document.documentElement.classList.contains('sa-checkout-qty-busy');
       btn.disabled = !ok;
       btn.setAttribute('aria-disabled', ok ? 'false' : 'true');
       if (hint) hint.hidden = ok;
     }
 
     sync();
+    if(window.MutationObserver)new MutationObserver(sync).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
     box.addEventListener('change', sync);
     // Woo updates payment fragment via AJAX — rebind after refresh.
     if (window.jQuery) {
-      jQuery(document.body).on('updated_checkout', function () {
+      jQuery(document.body).on('update_checkout', function () { form.dataset.saTotalsBusy='true';sync(); });
+      jQuery(document.body).on('updated_checkout', function (event, data) {
+        if(data&&data.result==='success')form.dataset.saTotalsBusy='false';
         box = form.querySelector('[data-sa-terms-checkbox], #terms') || document.querySelector('[data-sa-terms-checkbox], #terms');
         btn = document.querySelector('#place_order');
         hint = document.querySelector('[data-sa-terms-hint]');
@@ -360,6 +364,7 @@
     }
 
     form.addEventListener('submit', function (e) {
+      if(form.dataset.saTotalsBusy==='true'||document.documentElement.classList.contains('sa-checkout-qty-busy')){e.preventDefault();e.stopImmediatePropagation();return false;}
       var current = form.querySelector('[data-sa-terms-checkbox], #terms');
       if (current && !current.checked) {
         e.preventDefault();
