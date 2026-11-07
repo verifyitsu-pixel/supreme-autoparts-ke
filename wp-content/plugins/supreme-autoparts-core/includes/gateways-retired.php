@@ -130,6 +130,17 @@ add_filter('woocommerce_available_payment_gateways', static function ($gateways)
     return $ordered;
 }, 99);
 
+/* Paystack is listed first wherever it is available (checkout, order-pay and other
+   gateway lists). Display order only: availability, eligibility rules, currency and
+   the customer's own selection are untouched. */
+function sa_paystack_first_gateways($gateways) {
+    if (!is_array($gateways) || !isset($gateways['paystack']) || array_key_first($gateways) === 'paystack') {
+        return $gateways;
+    }
+    return ['paystack' => $gateways['paystack']] + array_diff_key($gateways, ['paystack' => true]);
+}
+add_filter('woocommerce_available_payment_gateways', 'sa_paystack_first_gateways', 1000);
+
 /* Clear labels while the Whop switch is on; unchanged while it is off.
    Priority 30 so these win over the geo-content label filter. Non-KE zones get a
    distinct neutral label for the mobile-money gateway so the two options never
