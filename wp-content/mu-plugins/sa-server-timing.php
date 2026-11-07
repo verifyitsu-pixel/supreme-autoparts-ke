@@ -56,6 +56,43 @@ if ($GLOBALS['sa_st_route'] !== '') {
         }
         return $posts;
     }, PHP_INT_MAX);
+    // Per-priority init timing (callback names only: function, Class::method or file-basename:line for closures).
+    $GLOBALS['sa_st_init'] = ['t' => 0.0, 'p' => [], 'names' => []];
+    add_action('init', static function (): void {
+        global $wp_filter;
+        $GLOBALS['sa_st_init']['t'] = microtime(true);
+        if (!isset($wp_filter['init']) || !is_object($wp_filter['init']) || !is_array($wp_filter['init']->callbacks)) {
+            return;
+        }
+        foreach ($wp_filter['init']->callbacks as $prio => $cbs) {
+            if ((int) $prio <= 0 || (int) $prio === PHP_INT_MAX) {
+                continue;
+            }
+            $names = [];
+            foreach ($cbs as $cb) {
+                $fn = $cb['function'];
+                try {
+                    if (is_string($fn)) {
+                        $names[] = $fn;
+                    } elseif (is_array($fn)) {
+                        $names[] = (is_object($fn[0]) ? get_class($fn[0]) : (string) $fn[0]) . '::' . (string) $fn[1];
+                    } elseif ($fn instanceof Closure) {
+                        $r = new ReflectionFunction($fn);
+                        $names[] = 'closure@' . basename((string) $r->getFileName()) . ':' . $r->getStartLine();
+                    }
+                } catch (Throwable $e) {
+                    $names[] = 'unknown';
+                }
+            }
+            $GLOBALS['sa_st_init']['names'][(int) $prio] = array_slice($names, 0, 8);
+            add_action('init', static function () use ($prio): void {
+                $i = &$GLOBALS['sa_st_init'];
+                $now = microtime(true);
+                $i['p'][(int) $prio] = $now - $i['t'];
+                $i['t'] = $now;
+            }, (int) $prio);
+        }
+    }, 0);
     ob_start(static function (string $buffer): string {
         if (headers_sent()) {
             return $buffer;
@@ -78,6 +115,14 @@ if ($GLOBALS['sa_st_route'] !== '') {
             $parts[] = 'to_review;dur=' . $ms($prev, $m['review_start']);
             if (isset($m['totals_done'])) {
                 $parts[] = 'review_totals;dur=' . $ms($m['review_start'], $m['totals_done']);
+            }
+        }
+        $ip = $GLOBALS['sa_st_init']['p'];
+        if ($ip) {
+            arsort($ip);
+            $top = array_slice($ip, 0, 3, true);
+            foreach ($top as $prio => $sec) {
+                $parts[] = 'init_p' . $prio . ';dur=' . number_format($sec * 1000, 1, '.', '') . ';desc="' . str_replace('"', '', implode('|', $GLOBALS['sa_st_init']['names'][$prio] ?? [])) . '"';
             }
         }
         $w = $GLOBALS['sa_st_wpq'];

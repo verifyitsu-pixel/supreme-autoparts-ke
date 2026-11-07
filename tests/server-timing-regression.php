@@ -13,4 +13,5 @@ ok(strpos($s, 'headers_sent()') !== false, 'only sets header before output');
 ok(strpos($s, "header('Server-Timing: '") !== false, 'emits Server-Timing');
 ok(strpos($s, 'wc-ajax') !== false && strpos($s, "'s'") !== false, 'route detection');
 ok(strpos($s, 'wp_query_sum') !== false && strpos($s, "'posts_pre_query'") !== false, 'wp_query phase timing');
+ok(strpos($s, 'sa_st_init') !== false && strpos($s, 'init_p') !== false, 'init priority timing');
 echo "Server-Timing static checks PASS (source assertions, not runtime proof)\n";
