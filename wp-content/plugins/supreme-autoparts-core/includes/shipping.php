@@ -5,23 +5,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-/**
- * Shipping zones (USD rates — checkout currency).
- *
- * US-primary storefront for ads: continental US methods first, Kenya kept
- * honest for KE addresses, Rest of World for other destinations.
- *
- * Versioned via sa_shipping_zones_ver. Idempotent: recreates SA-managed methods
- * when the version bumps; leaves unrelated custom zones alone.
- *
- * Rates (USD):
- * - Standard Shipping (Continental US) .. $8.00  (flat_rate)
- * - Priority Shipping (US) .............. $15.00 (flat_rate)
- * - Free shipping (US only) .............. $0 when cart subtotal ≥ $199
- * - Nairobi Delivery .................... $8.00  (flat_rate, KE)
- * - Upcountry Kenya ..................... $15.00 (flat_rate, KE)
- * - Local pickup (Nairobi) .............. $0.00  (local_pickup, KE)
- * - International ....................... $25.00 (Rest of World flat_rate)
+/** Legacy zone installation is retained without a DB migration.
+ * Effective policy is enforced by sa_current_delivery_rates after campaign callbacks:
+ * USA free without a minimum; Kenya calculated couriers and pickup; other countries unchanged.
  */
 const SA_SHIPPING_ZONES_VER = '9';
 const SA_STORE_PICKUP_TITLE = 'Store pickup, Midax Plaza, Kangundo Rd';
@@ -101,47 +87,42 @@ add_filter('woocommerce_package_rates', static function ($rates, $package) {
     return $rates;
 }, 50, 2);
 
-/**
- * Nairobi delivery is free (user request 2026-10-18). Zone = Nairobi County (WC state KE30,
- * "Nairobi City County"), which holds the shop (Njiru) and the Fargo "Nairobi" branch.
- * Kiambu, Ruiru, Thika, Athi River, Kitengela and other counties are NOT in it.
- * When the destination is in the zone, only free delivery and free store pickup are offered; Fargo and
- * the other couriers are removed. Kill switch: env SA_NAIROBI_FREE_OFF=1.
+/** Current delivery policy: Kenya uses its calculated couriers, including Nairobi.
+ * No zone/options migration is needed: this final gate also overrides old cached configuration.
  */
-function sa_ship_is_nairobi_city(array $dest): bool
-{
-    if (strtoupper((string) ($dest['country'] ?? '')) !== 'KE') {
-        return false;
+const SA_DELIVERY_POLICY_VERSION = '2026-11-07-ke-couriers-us-free';
+add_filter('woocommerce_cart_shipping_packages', static function ($packages) {
+    foreach ($packages as &$package) {
+        $package['sa_delivery_policy'] = SA_DELIVERY_POLICY_VERSION;
     }
-    $state = (string) ($dest['state'] ?? '');
-    if ($state === 'KE30') {
-        return true;
-    }
-    return function_exists('sa_fargo_county_name') && sa_fargo_county_name($state) === 'Nairobi';
-}
+    unset($package);
+    return $packages;
+}, 110);
 
-add_filter('woocommerce_package_rates', static function ($rates, $package) {
-    if (getenv('SA_NAIROBI_FREE_OFF') === '1' || !is_array($package)) {
-        return $rates;
+function sa_current_delivery_rates($rates, $package)
+{
+    $cc = strtoupper((string) ($package['destination']['country'] ?? ''));
+    if ($cc === 'US' && class_exists('WC_Shipping_Rate')) {
+        return ['sa_us_free' => new WC_Shipping_Rate('sa_us_free', 'Free shipping', 0, [], 'sa_us_free')];
     }
-    if (!sa_ship_is_nairobi_city((array) ($package['destination'] ?? []))) {
-        return $rates;
-    }
-    if (!class_exists('WC_Shipping_Rate')) {
-        return $rates;
-    }
-    $out = [
-        'sa_nairobi_free' => new WC_Shipping_Rate('sa_nairobi_free', 'Free delivery, Nairobi', 0, [], 'sa_nairobi_free'),
-    ];
-    foreach ($rates as $id => $rate) {
-        if (is_object($rate) && method_exists($rate, 'get_method_id') && $rate->get_method_id() === 'local_pickup') {
-            $rate->set_cost(0);
-            $rate->set_taxes([]);
-            $out[$id] = $rate;
+    if ($cc === 'KE') {
+        $allowed = ['local_pickup', 'sa_fargo'];
+        if (function_exists('sa_couriers_enabled') && sa_couriers_enabled()) {
+            $allowed[] = 'sa_g4s';
+            $allowed[] = 'sa_speedaf';
+        }
+        foreach ($rates as $id => $rate) {
+            if (!is_object($rate) || !method_exists($rate, 'get_method_id') || !in_array($rate->get_method_id(), $allowed, true)) {
+                unset($rates[$id]);
+            }
         }
     }
-    return $out;
-}, 60, 2);
+    return $rates;
+}
+add_filter('woocommerce_package_rates', 'sa_current_delivery_rates', 110, 2);
+add_filter('woocommerce_shipping_chosen_method', static function ($chosen, $rates) {
+    return isset($rates['sa_us_free']) ? 'sa_us_free' : $chosen;
+}, 110, 2);
 
 /**
  * Free-shipping minimum in store currency (USD).
@@ -164,8 +145,7 @@ function sa_core_shipping_free_min(): float
  */
 function sa_core_shipping_free_title(float $free_min): string
 {
-    $amt = rtrim(rtrim(number_format($free_min, 2, '.', ''), '0'), '.');
-    return 'Free shipping (orders $' . $amt . '+)';
+    return 'Free shipping';
 }
 
 /**

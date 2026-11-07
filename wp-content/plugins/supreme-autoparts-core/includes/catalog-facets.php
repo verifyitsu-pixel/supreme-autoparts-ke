@@ -61,6 +61,9 @@ function sa_fx_ready(): bool
 
 function sa_fx_free_ship_min(): float
 {
+    if (function_exists('sa_ship_is_us') && sa_ship_is_us()) {
+        return 0.0; // All USA orders qualify; other storefronts retain existing filter behavior.
+    }
     if (function_exists('sa_core_shipping_free_min')) {
         return (float) sa_core_shipping_free_min();
     }

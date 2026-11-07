@@ -58,17 +58,17 @@ final class SM_Welcome
     {
         if (!self::campaign_active()) return;
         echo '<style>.sm-nov-banner{background:#faf8f7;color:#242424;text-align:center;padding:9px 16px;border-bottom:1px solid #e7e3e0;font-family:Arial,sans-serif;line-height:1.45}.sm-nov-banner strong{font-size:14px;font-weight:700;color:#971e2a}.sm-nov-banner b{font-weight:500;font-size:14px;margin-left:12px}.sm-nov-banner span{display:inline-block;font-size:11px;margin-left:12px;color:#666}.sm-nov-reminder{background:transparent;border:0;border-bottom:1px solid #e7e3e0;padding:0 0 14px;margin:0 0 20px;color:#333;line-height:1.5}.sm-nov-reminder strong{display:block;font-size:16px;font-weight:600;color:#971e2a}.sm-nov-reminder span{display:block;font-size:12px;margin-top:4px;color:#666}@media(max-width:600px){.sm-nov-banner{padding:8px 10px}.sm-nov-banner strong,.sm-nov-banner b{font-size:12px}.sm-nov-banner b{margin-left:7px}.sm-nov-banner span{display:block;font-size:10px;margin:3px 0 0}.sm-nov-reminder strong{font-size:15px}.sa-rsbar--intl .sa-rsbar__in{flex-wrap:wrap;white-space:normal;justify-content:center;gap:3px 10px}.sa-rsbar--intl .sa-rsbar__in span{white-space:normal;text-align:center}}</style>';
-        echo '<aside class="sm-nov-banner" aria-label="November offer"><strong>Red November</strong><b>30% off + free standard shipping</b><span>All US &amp; Kenya orders · No minimum · Through Nov 30</span></aside>';
+        echo '<aside class="sm-nov-banner" aria-label="November offer"><strong>Red November</strong><b>30% off US &amp; Kenya orders</b><span>Free US shipping · Kenya courier rates · No minimum · Through Nov 30</span></aside>';
     }
 
     public static function campaign_reminder(): void
     {
         if (!self::campaign_active()) return;
         if (function_exists('is_product') && is_product()) {
-            echo '<p style="color:#a70819;font-size:13px;line-height:1.5;margin:10px 0"><strong>Red November: 30% off + free standard shipping.</strong><br>US &amp; Kenya · No minimum · Automatic at checkout · Through Nov 30</p>';
+            echo '<p style="color:#a70819;font-size:13px;line-height:1.5;margin:10px 0"><strong>Red November: 30% off US &amp; Kenya orders.</strong><br>Free US shipping · Kenya courier rates · No minimum · Automatic at checkout · Through Nov 30</p>';
             return;
         }
-        echo '<aside class="sm-nov-reminder" aria-label="November checkout offer"><strong>Red November: 30% off + FREE standard shipping</strong><span>All US and Kenya orders. No minimum. Applied automatically when you enter your delivery address. Through November 30.</span></aside>';
+        echo '<aside class="sm-nov-reminder" aria-label="November checkout offer"><strong>Red November: 30% off US and Kenya orders</strong><span>Free US shipping. Kenya delivery at calculated courier rates. No minimum. Discount applied automatically when you enter your delivery address. Through November 30.</span></aside>';
     }
 
     /** Explicit customer destination only. Never infer offer eligibility from IP/store view. */
@@ -238,7 +238,7 @@ final class SM_Welcome
     /** First-order delivery is separate from coupons; existing repeat-customer rates stay intact. */
     public static function first_order_shipping($rates, $package)
     {
-        if (!is_array($package) || !self::offer_destination_allowed(strtoupper((string) ($package['destination']['country'] ?? '')))
+        if (!is_array($package) || strtoupper((string) ($package['destination']['country'] ?? '')) !== 'US' || !self::offer_destination_allowed('US')
             || !self::offer_destination_allowed() || !function_exists('WC') || !WC()->customer || !class_exists('WC_Shipping_Rate')) {
             return $rates;
         }

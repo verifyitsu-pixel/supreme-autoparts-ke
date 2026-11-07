@@ -217,7 +217,7 @@ $n_active = count($chips);
         <?php if ((!function_exists('sa_ship_is_us') || sa_ship_is_us()) && ($stats['freeship'] > 0 || $st['freeship'])) : ?>
         <label class="sa-pf__check">
           <input type="checkbox" name="freeship" value="1" <?php checked($st['freeship']); ?> />
-          <span><?php echo esc_html(sprintf(__('Free US shipping (%s+)', 'supreme-autoparts'), $cur . number_format_i18n($free_min))); ?></span>
+          <span><?php esc_html_e('Free US shipping', 'supreme-autoparts'); ?></span>
           <span class="sa-pf__n"><?php echo esc_html(number_format_i18n($stats['freeship'])); ?></span>
         </label>
         <?php endif; ?>

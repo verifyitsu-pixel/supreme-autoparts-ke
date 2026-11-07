@@ -1002,7 +1002,7 @@ final class SM_Admin
             wp_die('nope');
         }
         self::header('November offer and welcome codes');
-        echo '<p>November 2026: all US and Kenya orders receive automatic 30% off and free delivery, with no minimum, through November 30 in the delivery region. Historical personal welcome codes are listed below: '
+        echo '<p>November 2026: all US and Kenya orders receive automatic 30% off, with no minimum; US shipping is free and Kenya delivery uses calculated courier rates, through November 30 in the delivery region. Historical personal welcome codes are listed below: '
             . 'one use, first order only, valid ' . SM_Welcome::EXPIRY_DAYS . ' days, locked to their own email, auto-applied at checkout while signed in. '
             . 'Abuse checks: normalized email (plus-tags, Gmail dots), disposable domains blocked, one code per device / IP / email, '
             . 'signup rate limits, and phone + address matching against past welcome orders. Blocks are logged below.</p>';

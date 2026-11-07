@@ -279,15 +279,7 @@ add_action('wp_ajax_nopriv_sa_checkout_update_qty', 'sa_theme_checkout_update_qt
  */
 function sa_theme_free_ship_amount(): float
 {
-    $raw = getenv('SUPREME_FREE_SHIPPING_THRESHOLD');
-    if ($raw === false || $raw === '') {
-        $raw = (string) get_option('sa_free_shipping_threshold', '199');
-    }
-    $usd = (float) $raw;
-    if ($usd <= 0 || $usd > 1000) {
-        $usd = 199.0;
-    }
-    return $usd;
+    return 0.0; // USA shipping has no minimum.
 }
 
 /**

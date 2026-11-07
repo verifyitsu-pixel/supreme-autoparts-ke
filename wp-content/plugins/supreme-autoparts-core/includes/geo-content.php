@@ -23,25 +23,23 @@ add_filter('woocommerce_gateway_title', static function ($title, $id = '') {
     return $title;
 }, 20, 2);
 
-function sa_gc_shipping_html(): string
+function sa_gc_shipping_html(?string $zone = null): string
 {
-    $z = sa_gc_zone();
+    $z = $zone ?? sa_gc_zone();
     $free = function_exists('sa_core_shipping_free_min') ? sa_core_shipping_free_min() : 99.0;
     $p = static fn (float $usd): string => wp_strip_all_tags(wc_price($usd, ['decimals' => 0]));
     $mail = 'calvin@supremeautoparts.co.ke';
     if ($z === 'KE') {
         return '<h2>Delivery in Kenya</h2>'
-            . '<ul><li><strong>Fargo Courier</strong> to any of the 47 counties. The price depends on your town and the parcel weight and shows at checkout before you pay. You can track the parcel on our site.</li>'
+            . '<ul><li><strong>Courier delivery</strong>: Fargo and other available couriers are calculated by destination and parcel weight. The available methods and exact price show at checkout before you pay. You can track the parcel on our site.</li>'
             . '<li><strong>Store pickup</strong> is free. Pick a collection time at checkout and collect from our shop at Ground Floor, Midax Plaza, Kangundo Rd, Njiru.</li>'
             . '<li>Parts you buy with fitting stay at our garage and are not shipped.</li></ul>'
             . '<p>Questions about a delivery: call or <a href="https://wa.me/supremeautopart">chat on WhatsApp</a> or email <a href="mailto:' . $mail . '">' . $mail . '</a> with your order number.</p>';
     }
     if ($z === 'US') {
         return '<h2>Shipping in the United States</h2>'
-            . '<ul><li><strong>Free shipping</strong> on eligible orders of ' . esc_html($p($free)) . ' and up.</li>'
-            . '<li><strong>Standard Shipping</strong> (continental US): ' . esc_html($p(8)) . ' flat.</li>'
-            . '<li><strong>Priority Shipping</strong>: ' . esc_html($p(15)) . ' flat.</li></ul>'
-            . '<p>Oversized or direct-ship items can be excluded from free shipping; the product page and checkout show what applies. Questions: <a href="https://wa.me/supremeautopart">chat on WhatsApp</a> or email <a href="mailto:' . $mail . '">' . $mail . '</a>.</p>';
+            . '<p>Free shipping on USA orders, with no minimum order amount. The shipping charge is zero at checkout.</p>'
+            . '<p>Questions: <a href="https://wa.me/supremeautopart">chat on WhatsApp</a> or email <a href="mailto:' . $mail . '">' . $mail . '</a>.</p>';
     }
     return '<h2>International shipping</h2>'
         . '<p>We ship to most countries for a flat ' . esc_html($p(25)) . '. The rate shows at checkout before you pay. Customs duties and import taxes in your country are paid by you.</p>'
@@ -65,8 +63,18 @@ add_filter('the_content', static function (string $html): string {
         return $html;
     }
     $slug = (string) get_post_field('post_name', get_the_ID());
-    if ($slug === 'shipping-policy') {
-        return sa_gc_shipping_html();
+    $html = strtr($html, [
+        'continental US rates, free shipping $199+, international' => 'free USA shipping, Kenya calculated couriers, international rates',
+        'threshold, exclusions, Alaska/Hawaii &amp; intl notes' => 'free USA shipping and delivery details',
+        'free shipping on qualifying continental US orders' => 'free shipping on USA orders',
+        'free shipping may apply above the banner threshold' => 'USA shipping is free with no minimum; Kenya courier rates are calculated at checkout',
+        'Free shipping on orders $199+ in the continental US (eligible items). Standard from $8 · Priority $15 below threshold.' => 'Free shipping on USA orders, with no minimum order amount.',
+        'free shipping on orders $199+ in the continental US (eligible items)' => 'free shipping on USA orders with no minimum',
+        'Free shipping on qualifying continental US orders ($199+).' => 'Free shipping on USA orders, with no minimum order amount.',
+    ]);
+
+    if (in_array($slug, ['shipping-policy', 'free-shipping', 'shipping-to-kenya'], true)) {
+        return sa_gc_shipping_html($slug === 'shipping-to-kenya' ? 'KE' : null);
     }
     if ($slug === 'contact') {
         if (sa_gc_zone() === 'KE') {
@@ -89,6 +97,16 @@ add_filter('the_content', static function (string $html): string {
 add_filter('the_content', static function (string $html): string {
     if (is_admin() || !is_main_query() || !in_the_loop() || !is_page()) { return $html; }
     $slug = (string) get_post_field('post_name', get_the_ID());
+    $html = strtr($html, [
+        'continental US rates, free shipping $199+, international' => 'free USA shipping, Kenya calculated couriers, international rates',
+        'threshold, exclusions, Alaska/Hawaii &amp; intl notes' => 'free USA shipping and delivery details',
+        'free shipping on qualifying continental US orders' => 'free shipping on USA orders',
+        'free shipping may apply above the banner threshold' => 'USA shipping is free with no minimum; Kenya courier rates are calculated at checkout',
+        'Free shipping on orders $199+ in the continental US (eligible items). Standard from $8 · Priority $15 below threshold.' => 'Free shipping on USA orders, with no minimum order amount.',
+        'free shipping on orders $199+ in the continental US (eligible items)' => 'free shipping on USA orders with no minimum',
+        'Free shipping on qualifying continental US orders ($199+).' => 'Free shipping on USA orders, with no minimum order amount.',
+    ]);
+
     if ($slug === 'contact') {
         $html = '<h2>Automotive software services in Nairobi</h2><p>Ask us about ECU programming, vehicle coding, software updates and electronic diagnostics for your car. <a href="/pricing/#automotive-software">View service pricing</a>.</p>' . $html;
     }
