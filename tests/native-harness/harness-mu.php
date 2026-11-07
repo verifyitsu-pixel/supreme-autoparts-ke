@@ -7,7 +7,7 @@ $sa_wait = function ( $f ) { for ( $i = 0; $i < 200 && ! file_exists( $f ); $i++
 if ( 'adapter' === $sa_mode ) {
 	add_action( 'woocommerce_loaded', function () use ( $sa_cfg, $sa_wait ) {
 		define( 'SA_NATIVE_SESSION_HARNESS', true );
-		require __DIR__ . '/../../../../wp-content/harness-adapter.php';
+		require WP_CONTENT_DIR . '/harness-adapter.php';
 		SA_Native_Session_Test_Adapter::$checkpoint = function ( $n ) use ( $sa_cfg, $sa_wait ) {
 			if ( ( $sa_cfg['notify_at'] ?? '' ) === $n ) touch( $sa_cfg['notify_file'] );
 			if ( ( $sa_cfg['hold_at'] ?? '' ) === $n ) $sa_wait( $sa_cfg['hold_until'] );

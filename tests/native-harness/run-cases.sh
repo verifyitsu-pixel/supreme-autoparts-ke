@@ -82,7 +82,7 @@ same case8_db_hash_unchanged_no_stale_flush "$F0" "$F1"
 R=$(HW_MODE=save HW_CID=$C HW_OP=opF-fail HW_PID=$P1 W); chk case8_same_op_succeeds_after_fix "$R" '.ok==true'
 C=$(seed)
 wp db query "CREATE TRIGGER hf_rb BEFORE INSERT ON wp_woocommerce_sessions FOR EACH ROW SET NEW.session_value = IF(NEW.session_key='$C', 'x', NEW.session_value)"
-R=$(HW_MODE=save HW_CID=$C HW_OP=opF-rb HW_PID=$P1 W); wp db query "DROP TRIGGER hf_rb"
+R=$(HW_MODE=save HW_CID=$C HW_OP=opF-readback HW_PID=$P1 W); wp db query "DROP TRIGGER hf_rb"
 chk case8_readback_mismatch_reported "$R" '.ok==false and (.error|test("readback"))'
 
 echo "== HTTP section: PHP built-in server (multi-worker), real wc-ajax add_to_cart, adapter via test mu-plugin. NOT Apache/FPM."
