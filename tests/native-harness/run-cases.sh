@@ -114,7 +114,7 @@ code() { echo "$1" | sed -n 's/^HTTP=//p'; }
 nofatal() { echo "$1" | grep -qiE "Fatal error|Uncaught|Stack trace" && echo false || echo true; }
 
 echo "-- H1: seed over HTTP creates a guest session via real cookie"
-hseed; D=$(dump "$CID"); chk h1_seed "$D" '.cart==[{"pid":'"$P1"',"qty":1,"var":0}] and .has_row==true'
+hseed; HD=$(dump "$CID"); chk h1_seed "$HD" '.cart==[{"pid":'"$P1"',"qty":1,"var":0}] and .has_row==true'
 
 echo "-- H2: two concurrent adapter writers, different products; X holds before_commit until Y is waiting (barriers)"
 hseed; S=$(mktemp -d)
@@ -125,16 +125,16 @@ wait
 chk h2_X_http200 "{\"c\":\"$(code "$(cat $S/X.out)")\",\"nofatal\":$(nofatal "$(cat $S/X.out)")}" '.c=="200" and .nofatal'
 chk h2_Y_http200 "{\"c\":\"$(code "$(cat $S/Y.out)")\",\"nofatal\":$(nofatal "$(cat $S/Y.out)")}" '.c=="200" and .nofatal'
 ls $S/*.TIMEOUT >/dev/null 2>&1 && bad h2_no_barrier_timeouts || ok h2_no_barrier_timeouts
-D=$(dump "$CID"); chk h2_final_cart "$D" '.cart==[{"pid":'"$P1"',"qty":1,"var":0},{"pid":'"$P2"',"qty":1,"var":0},{"pid":'"$P3"',"qty":1,"var":0}]'
+HD=$(dump "$CID"); chk h2_final_cart "$HD" '.cart==[{"pid":'"$P1"',"qty":1,"var":0},{"pid":'"$P2"',"qty":1,"var":0},{"pid":'"$P3"',"qty":1,"var":0}]'
 R=$(hreq $J $MODE '{}' $P1); chk h2_lock_released_after_responses "{\"c\":\"$(code "$R")\"}" '.c=="200"'
-D=$(dump "$CID"); chk h2_third_request_state "$D" '.cart[0].qty==2 and (.cart|length)==3'
+HD=$(dump "$CID"); chk h2_third_request_state "$HD" '.cart[0].qty==2 and (.cart|length)==3'
 
 echo "-- H3: native quantity writers: two concurrent +1 on the same product (adapter) must give qty 3"
 hseed; S=$(mktemp -d)
 ( hreq $J $MODE "{\"notify_at\":\"before_commit\",\"notify_file\":\"$S/a-held\",\"hold_at\":\"before_commit\",\"hold_until\":\"$S/b-waiting\"}" $P1 > $S/X.out ) &
 waitf $S/a-held && ok h3_X_at_before_commit || bad h3_X_at_before_commit
 ( hreq $J $MODE "{\"notify_at\":\"lock_wait\",\"notify_file\":\"$S/b-waiting\"}" $P1 > $S/Y.out ) &
-wait; D=$(dump "$CID"); chk h3_qty_3 "$D" '.cart==[{"pid":'"$P1"',"qty":3,"var":0}]'
+wait; HD=$(dump "$CID"); chk h3_qty_3 "$HD" '.cart==[{"pid":'"$P1"',"qty":3,"var":0}]'
 
 echo "-- H4: HTTP lock contention: X holds, Y fails closed (non-200), Y writes nothing"
 hseed; S=$(mktemp -d)
@@ -142,15 +142,15 @@ hseed; S=$(mktemp -d)
 waitf $S/a-held && ok h4_X_holding || bad h4_X_holding
 RY=$(hreq $J $MODE '{}' $P3); touch $S/release; wait
 chk h4_Y_not_200 "{\"c\":\"$(code "$RY")\"}" '.c!="200"'
-D=$(dump "$CID"); chk h4_only_X_committed "$D" '.cart==[{"pid":'"$P1"',"qty":1,"var":0},{"pid":'"$P2"',"qty":1,"var":0}]'
+HD=$(dump "$CID"); chk h4_only_X_committed "$HD" '.cart==[{"pid":'"$P1"',"qty":1,"var":0},{"pid":'"$P2"',"qty":1,"var":0}]'
 
 echo "-- H5 NEGATIVE CONTROL: a stock-handler writer mixed in with an adapter writer (expected UNSAFE; not an adapter PASS)"
 hseed; S=$(mktemp -d)
 ( hreq $J stock "{\"loaded_file\":\"$S/y-loaded\",\"hold_until\":\"$S/x-done\"}" $P3 > $S/Y.out ) &
 waitf $S/y-loaded && ok h5_stock_loaded_stale_snapshot || bad h5_stock_loaded_stale_snapshot
 RX=$(hreq $J $MODE '{}' $P2); touch $S/x-done; wait
-D=$(dump "$CID")
-if echo "$D" | jq -e '(.cart|map(.pid)|index('"$P2"'))==null' >/dev/null; then echo "INFO h5_UNSAFE_INVARIANT_DEMONSTRATED stock writer overwrote the adapter commit: $D (adapter protects only when ALL guest session writers use it)"; else echo "INFO h5_hazard_not_reproduced $D"; fi
+HD=$(dump "$CID")
+if echo "$HD" | jq -e '(.cart|map(.pid)|index('"$P2"'))==null' >/dev/null; then echo "INFO h5_UNSAFE_INVARIANT_DEMONSTRATED stock writer overwrote the adapter commit: $HD (adapter protects only when ALL guest session writers use it)"; else echo "INFO h5_hazard_not_reproduced $HD"; fi
 pkill -f "php -S 127.0.0.1:8080" 2>/dev/null; sleep 1
 grep -iE "fatal|uncaught" /tmp/php-server.log | head -3
 
