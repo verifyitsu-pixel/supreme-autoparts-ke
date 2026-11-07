@@ -90,10 +90,14 @@ add_filter('woocommerce_package_rates', static function ($rates, $package) {
 /** Current delivery policy: Kenya uses its calculated couriers, including Nairobi.
  * No zone/options migration is needed: this final gate also overrides old cached configuration.
  */
-const SA_DELIVERY_POLICY_VERSION = '2026-11-07-working-day-delivery-v2';
+const SA_DELIVERY_POLICY_VERSION = '2026-11-07-cutoff-date-delivery-v3';
 add_filter('woocommerce_cart_shipping_packages', static function ($packages) {
     foreach ($packages as &$package) {
         $package['sa_delivery_policy'] = SA_DELIVERY_POLICY_VERSION;
+        $country = strtoupper((string) ($package['destination']['country'] ?? ''));
+        if (in_array($country, ['KE','US'], true) && function_exists('sa_ff_delivery_context_key')) {
+            $package['sa_delivery_date_context'] = sa_ff_delivery_context_key($country);
+        }
     }
     unset($package);
     return $packages;
@@ -110,7 +114,7 @@ function sa_current_delivery_rates($rates, $package)
         } elseif (function_exists('sa_ff_contents_lead') && sa_ff_contents_lead($contents) > 0) {
             $label .= ' · Backorder availability lead time applies';
         } else {
-            $label .= ' · Estimated delivery 1-3 working days from order, excluding weekends';
+            $label .= ' · ' . (function_exists('sa_ff_delivery_estimate') ? sa_ff_delivery_estimate('US') : 'Estimated delivery 1-3 working days from order, excluding weekends');
         }
         return ['sa_us_free' => new WC_Shipping_Rate('sa_us_free', $label, 0, [], 'sa_us_free')];
     }
@@ -133,7 +137,7 @@ function sa_current_delivery_rates($rates, $package)
                 $label = preg_replace('/\s*·\s*Estimated.*$/u', '', $rate->get_label());
                 $label .= function_exists('sa_ff_contents_lead') && sa_ff_contents_lead($contents) > 0
                     ? ' · Backorder availability lead time applies'
-                    : ' · Estimated delivery 1-2 working days from order, excluding weekends';
+                    : ' · ' . (function_exists('sa_ff_delivery_estimate') ? sa_ff_delivery_estimate('KE') : 'Estimated delivery 1-2 working days from order, excluding weekends');
                 $rate->set_label($label);
             }
         }

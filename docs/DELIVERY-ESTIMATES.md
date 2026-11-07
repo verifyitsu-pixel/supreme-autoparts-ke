@@ -1,32 +1,26 @@
-# Delivery estimates, pickup slots and fitted items
+# Delivery estimates, pickup requests and fitted items
 
-All dates shown to customers are labelled **Estimated** and are never guaranteed.
-Code: `wp-content/plugins/supreme-autoparts-core/includes/fulfilment.php`.
+## Delivery policy (as instructed by the user, Nov 7 2026)
 
-## Fargo Courier transit (sources and assumptions)
-- Fargo's rate card (`data/fargo-rates.json`) has **no transit times**.
-- Fargo's own service description (Fargo/Wells Fargo proposal to KOAN, 2023,
-  https://koan.co.ke/wp-content/uploads/2023/06/WellsFargo-Proposal-to-KOAN-2023.pdf): overnight service,
-  "delivered the following working day to all major towns ... items destined for remote off-grid locations may take longer".
-- Conservative tiers used (working days after hand-over to Fargo):
-  - Nairobi county: 1–2
-  - Other towns with a Fargo branch: 1–3
-  - Remote towns (`remote_150_towns`, `starred_towns` on the card) and counties without a branch (Wajir, Mandera → Garissa): 3–5
-  - County not chosen / unknown: 3–5
-- Hand-over (dispatch) assumption: same day if paid on a working day before 14:00 EAT, otherwise the next working day.
-  This is OUR assumption, not a Fargo figure; change `sa_ff_dispatch_day()` if the shop's real cut-off differs.
-- Working days skip Sundays and Kenyan public holidays (list in `sa_ff_holidays()`; extend yearly).
-  Saturdays are counted as working days (assumption: Fargo branches operate Saturdays).
-- Stock lead time: added only when a product has `_sa_stock_lead_days` set AND is out of stock / on backorder.
+- Kenya: 1-2 working days. US: 1-3 working days.
+- Count excludes Saturdays and Sundays. No exact arrival clock time is promised.
+- Before the 3pm cutoff on a weekday, the count is based on that order day.
+- After the 3pm cutoff on a weekday, the count starts the next weekday.
+- Kenya cutoff clock: Africa/Nairobi. US cutoff clock: literal EST (fixed UTC-05:00). Daylight-saving Eastern has not been approved.
+- Weekend checkout origin remains unresolved. Show the working-day range and say the checkout date estimate must be confirmed; do not invent exact calendar dates.
+- Source-marked special orders without a known lead keep dates unconfirmed. Existing verified availability leads remain separate; final shipping labels continue to disclose backorder availability rather than replacing it with a normal-stock date.
+- Rates are session-cache keyed by destination country, local date and cutoff phase so a previous day's estimate does not survive a later recalculation.
+- Estimates are not guarantees. Public holidays are not added to the delivery calendar without an owner-grounded rule. Pickup/garage holidays remain separate.
 
-## Store pickup slots
-- Hours from the booking settings in code (`sa_svc_available_slots`): Mon–Fri 08:00–17:00, Sat 08:00–13:00,
-  closed Sunday and public holidays.
-- 1-hour windows; earliest = 2 hours after checkout rounded up to the hour (assumption: preparation time).
-- Capacity per window: option `sa_pickup_slot_capacity` (default 3, our choice; change in wp_options).
-- Saved as order meta `_sa_pickup_date`, `_sa_pickup_time`; shown in order emails, thank-you, My Account and admin.
-- "Ready for pickup" email = existing order status `ready-pickup` (now includes the window). Reminder email ~2 h before.
+Provenance: the user wrote KE 1-2 and US 1-3 working days, excluding weekends, orders before 3pm ship the same day and later ones the next day, "3pm kenyan time and 3pm usa time so find out the timezones urself" (9:22), and on 9:23:55 answered "Yes because their terms but our name" to the question whether US orders follow Supreme Mods' 3pm cutoff, so the Supreme Mods shipping terms apply under the Supreme Autoparts name. Their page (https://supreme-mods.com/pages/free-shipping-details) states orders received after 3pm EST ship the following business day; the code follows that wording literally as fixed UTC-5. The user did not themselves say EST, and daylight-saving Eastern has not been decided. At 11:47:54 the user added: "And checkout next weekday if after 3pm". That resolves the after-cutoff basis, not the separate weekend-origin question.
+
+## Store pickup requests
+
+- Existing garage slot calendar remains unchanged. Its preparation-time arithmetic is not evidence of stock readiness.
+- A selected 1-hour collection window is a request, not a ready-for-pickup confirmation.
+- Readiness is confirmed after the order is checked. Customers must wait for the ready-for-pickup email before travelling.
+- Store location, contact, free pickup fee and existing ready-pickup status email remain intact.
 
 ## Fitted items
-- Cart lines with fitting are removed from the shipping package (no Fargo weight or fee) and listed as "Fitted at our garage" (KES 0). One package only, because WooCommerce drops Local pickup when a cart has several packages.
-- All-fitted carts need no shipping. Earliest fitting date = next open garage slot after payment.
+
+Fitting lines retain the existing no-shipping/garage flow. Delivery date helpers do not change fitting bookings, capacities, orders or readiness.

@@ -125,12 +125,45 @@ function sa_ff_delivery_add_workdays(DateTimeImmutable $date, int $days): DateTi
     }
     return $date;
 }
+/** Confirmed delivery cutoffs use the fulfilment origin's local clock, not shopper location.
+ * Weekend checkout origin is not yet settled: no calendar-date promise on Saturday/Sunday.
+ */
+function sa_ff_delivery_clock(string $country, ?DateTimeImmutable $now = null): DateTimeImmutable
+{
+    $zone = new DateTimeZone($country === 'US' ? 'Etc/GMT+5' : 'Africa/Nairobi');
+    return $now ? $now->setTimezone($zone) : new DateTimeImmutable('now', $zone);
+}
+function sa_ff_delivery_origin(string $country, ?DateTimeImmutable $now = null): ?DateTimeImmutable
+{
+    $clock = sa_ff_delivery_clock($country, $now);
+    if ((int) $clock->format('N') >= 6) return null;
+    $origin = $clock->setTime(0, 0);
+    return (int) $clock->format('G') >= 15 ? sa_ff_delivery_add_workdays($origin, 1) : $origin;
+}
+function sa_ff_delivery_context_key(string $country, ?DateTimeImmutable $now = null): string
+{
+    $clock = sa_ff_delivery_clock($country, $now);
+    return $country . '|' . $clock->format('Y-m-d') . '|' . ((int) $clock->format('G') >= 15 ? 'after-cutoff' : 'before-cutoff');
+}
+function sa_ff_delivery_estimate(string $country, int $lead = 0, ?DateTimeImmutable $now = null): string
+{
+    $country = strtoupper($country);
+    if (!in_array($country, ['KE','US'], true)) return '';
+    $days = $country === 'US' ? '1-3' : '1-2';
+    $origin = sa_ff_delivery_origin($country, $now);
+    if (!$origin) return 'Estimated delivery ' . $days . ' working days, excluding weekends; checkout date estimate to be confirmed';
+    $ready = $lead > 0 ? sa_ff_delivery_add_workdays($origin, $lead) : $origin;
+    $last = $country === 'US' ? 3 : 2;
+    $range = sa_ff_range_label(sa_ff_delivery_add_workdays($ready, 1), sa_ff_delivery_add_workdays($ready, $last));
+    $clock = sa_ff_delivery_clock($country, $now);
+    $basis = (int) $clock->format('G') >= 15
+        ? 'count starts next weekday after 3pm ' . ($country === 'US' ? 'EST' : 'Kenya time')
+        : 'from order, excluding weekends';
+    return 'Estimated arrival ' . $range . ' · ' . $days . ' working days ' . $basis;
+}
 function sa_ff_fargo_eta(string $state, string $city, int $lead = 0): string
 {
-    $order_day = sa_ff_now()->setTime(0, 0);
-    // Known product availability lead times are preserved; unknown special orders are guarded upstream.
-    $ready = $lead > 0 ? sa_ff_delivery_add_workdays($order_day, $lead) : $order_day;
-    return 'Estimated arrival ' . sa_ff_range_label(sa_ff_delivery_add_workdays($ready, 1), sa_ff_delivery_add_workdays($ready, 2));
+    return sa_ff_delivery_estimate('KE', $lead);
 }
 
 /* =========================================================
