@@ -14,3 +14,11 @@ check(strpos(file_get_contents(__DIR__.'/../wp-content/advanced-cache.php'),"iss
 check(str_contains($source,'function sa_geo_ke_web_swap('),'actual web-contact region guard exists');load_function($source,'sa_storefront_is_kenya');load_function($source,'sa_geo_ke_swap');load_function($source,'sa_geo_ke_web_swap');
 foreach(['US','KE'] as $ip){$detected=$ip;foreach(['us','ke'] as $view){$_GET=['sa_view'=>$view];$_COOKIE=[];$in='<a href="tel:+19174375121">+1 917 437 5121</a>';$out=sa_geo_ke_web_swap($in);check($view==='us'?$out===$in:str_contains($out,'+254714498451'),'web contact selected '.$view.' despite IP '.$ip);}}
 check(str_contains($source,"!is_admin() && !wp_doing_cron() && sa_geo_is_kenya()"),'email actual-country gate untouched');
+
+$dual = 'call +1 917 437 5121 (US) or +254 714 498 451 (Kenya)';
+foreach (['US','KE'] as $ip) { $detected=$ip; foreach (['us','ke'] as $view) { $_GET=['sa_view'=>$view]; $_COOKIE=[];
+    check(html_entity_decode(sa_geo_ke_web_swap($dual))===$dual, 'explicit dual contacts unchanged '.$ip.$view);
+    check(html_entity_decode(sa_geo_ke_web_swap(sa_geo_ke_web_swap($dual)))===$dual, 'dual contact refresh remains stable '.$ip.$view);
+} }
+check(sa_geo_ke_swap($dual)!==$dual, 'email legacy helper behavior unchanged');
+check(substr_count($source,'is_string($v) ? sa_geo_ke_web_swap($v) : $v')===2,'both web fragment filters preserve explicit labelled contacts');

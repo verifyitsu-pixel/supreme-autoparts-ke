@@ -253,7 +253,11 @@ function sa_geo_ke_swap(string $html): string
  */
 function sa_geo_ke_web_swap(string $html): string
 {
-    return sa_storefront_is_kenya() ? sa_geo_ke_swap($html) : $html;
+    if (!sa_storefront_is_kenya()) { return $html; }
+    // An explicitly labelled US contact is factual in both views, not a regional default.
+    // Encode its spaces in HTML before the legacy catch-all swap; the visible value is unchanged.
+    $html = str_replace('+1 917 437 5121 (US)', '+1&#32;917&#32;437&#32;5121 (US)', $html);
+    return sa_geo_ke_swap($html);
 }
 
 add_action('template_redirect', static function (): void {
@@ -269,11 +273,11 @@ add_action('template_redirect', static function (): void {
 // Woo cart/checkout fragments and our REST recs are HTML too.
 add_filter('woocommerce_add_to_cart_fragments', static function ($f) {
     if (!is_array($f) || !sa_storefront_is_kenya()) { return $f; }
-    return array_map(static fn ($v) => is_string($v) ? sa_geo_ke_swap($v) : $v, $f);
+    return array_map(static fn ($v) => is_string($v) ? sa_geo_ke_web_swap($v) : $v, $f);
 }, 999);
 add_filter('woocommerce_update_order_review_fragments', static function ($f) {
     if (!is_array($f) || !sa_storefront_is_kenya()) { return $f; }
-    return array_map(static fn ($v) => is_string($v) ? sa_geo_ke_swap($v) : $v, $f);
+    return array_map(static fn ($v) => is_string($v) ? sa_geo_ke_web_swap($v) : $v, $f);
 }, 999);
 
 add_filter('wp_mail', static function (array $a): array {
