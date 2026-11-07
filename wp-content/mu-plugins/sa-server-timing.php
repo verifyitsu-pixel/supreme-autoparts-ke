@@ -147,6 +147,9 @@ if ($GLOBALS['sa_st_route'] !== '') {
                 $parts[] = 'hk_' . $short . ';dur=' . number_format($h['sum'] * 1000, 1, '.', '') . ';desc="n=' . (int) $h['n'] . '"';
             }
         }
+        if (isset($GLOBALS['sa_fx_fetch_ms'])) {
+            $parts[] = 'fx_fetch;dur=' . number_format((float) $GLOBALS['sa_fx_fetch_ms'], 1, '.', '');
+        }
         $w = $GLOBALS['sa_st_wpq'];
         $parts[] = 'wp_query_sum;dur=' . number_format($w['sum'] * 1000, 1, '.', '');
         $parts[] = 'wp_query_n;desc="' . (int) $w['n'] . '"';

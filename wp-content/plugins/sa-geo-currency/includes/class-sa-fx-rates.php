@@ -14,6 +14,10 @@ final class SA_FX_Rates
 {
     private const TRANSIENT = 'sa_fx_rates_usd_v1';
     private const TTL       = 8 * HOUR_IN_SECONDS; // 6–12h window
+    // Failed live fetch is remembered briefly so a provider/DNS stall is not re-paid (up to 2 x 4s) on every call.
+    private const FAIL_TRANSIENT = 'sa_fx_rates_fetch_failed_v1';
+    private const FAIL_TTL       = 5 * MINUTE_IN_SECONDS;
+    private static bool $fetch_failed = false;
 
     /** @var array<string,float>|null */
     private static ?array $rates = null;
@@ -61,9 +65,18 @@ final class SA_FX_Rates
             return self::$rates;
         }
 
+        if (self::$fetch_failed || get_transient(self::FAIL_TRANSIENT)) {
+            self::$fetch_failed = true;
+            return null; // same result as a failed fetch, without waiting again
+        }
+
+        $t0 = microtime(true);
         $fetched = self::fetch_rates();
+        $GLOBALS['sa_fx_fetch_ms'] = (float) ($GLOBALS['sa_fx_fetch_ms'] ?? 0.0) + (microtime(true) - $t0) * 1000;
         if ($fetched === null) {
             self::$rates = null;
+            self::$fetch_failed = true;
+            set_transient(self::FAIL_TRANSIENT, 1, self::FAIL_TTL);
             return null;
         }
 
