@@ -84,10 +84,12 @@ for PT in before_read before_commit before_readback before_sql_commit; do
   same case7_${PT}_sha_state_unchanged "$K0" "$K1"
   R2=$(HW_MODE=save HW_CID=$C HW_OP=$OPK HW_PID=$P1 W); chk case7_${PT}_retry_fresh_request_ok "$R2" '.ok==true'
 done
-C=$(seed); HW_MODE=save HW_CID=$C HW_OP=opK-after HW_PID=$P1 HW_CFG='{"kill_ded_at":"after_commit"}' W >/dev/null; D1=$(dump "$C")
+C=$(seed); R0=$(HW_MODE=save HW_CID=$C HW_OP=opK-after HW_PID=$P1 HW_CFG='{"kill_ded_at":"after_commit"}' W); D1=$(dump "$C")
+echo "INFO case7_after_commit_initial_outcome $R0"
 R=$(HW_MODE=save HW_CID=$C HW_OP=opK-after HW_PID=$P1 W); D2=$(dump "$C")
 chk case7_after_commit_committed "$D1" '(.ops|index("opK-after"))!=null'
 same case7_after_commit_replay_state_identical "$D1" "$D2"
+same case7_after_commit_replay_outcome_exact "$(echo "$R0" | jq -cS '.outcome // .error')" "$(echo "$R" | jq -cS '.outcome // .error')"
 fi
 
 echo "== case 8: actual failing MySQL statement (trigger NULLs NOT NULL column), then readback mismatch (trigger rewrites value)"
@@ -97,11 +99,56 @@ R=$(HW_MODE=save HW_CID=$C HW_OP=opF-fail HW_PID=$P1 W); wp db query "DROP TRIGG
 chk case8_commit_failure_reported "$R" '.ok==false and (.error|test("commit failed"))'
 same case8_db_hash_unchanged_no_stale_flush "$F0" "$F1"
 R=$(HW_MODE=save HW_CID=$C HW_OP=opF-fail HW_PID=$P1 W); chk case8_same_op_succeeds_after_fix "$R" '.ok==true'
-C=$(seed)
+C=$(seed); F0R=$(dump "$C")
 wp db query "CREATE TRIGGER hf_rb BEFORE INSERT ON wp_woocommerce_sessions FOR EACH ROW SET NEW.session_value = IF(NEW.session_key='$C', 'x', NEW.session_value)"
 R=$(HW_MODE=save HW_CID=$C HW_OP=opF-readback HW_PID=$P1 W); wp db query "DROP TRIGGER hf_rb"
 chk case8_readback_mismatch_reported "$R" '.ok==false and (.error|test("readback"))'
-[ "$HW_ADAPTER" = dedicated ] && { DB=$(dump "$C"); chk case8_dedicated_readback_rolled_back_old_blob "$DB" '.has_row==true and .cart!=null and (.cart|length)==2'; }
+[ "$HW_ADAPTER" = dedicated ] && { DB=$(dump "$C"); same case8_dedicated_readback_rollback_exact_raw_sha_and_ledger "$F0R" "$DB"; }
+
+
+if [ "$HW_ADAPTER" = dedicated ]; then
+echo "== FUNCTIONAL BATCH (dedicated adapter, real native variable products/variations/attributes): exact save/restore"
+read VP V1 V2 SI <<<"$(wp eval '$p=new WC_Product_Variable();$p->set_name("Var");$a=new WC_Product_Attribute();$a->set_name("Size");$a->set_options(array("S","M"));$a->set_visible(true);$a->set_variation(true);$p->set_attributes(array($a));$p->set_status("publish");$pid=$p->save();$ids=array();foreach(array("S","M") as $s){$v=new WC_Product_Variation();$v->set_parent_id($pid);$v->set_attributes(array("size"=>$s));$v->set_regular_price("10");$v->set_manage_stock(true);$v->set_stock_quantity(20);$v->set_status("publish");$ids[]=$v->save();}WC_Product_Variable::sync($pid);$si=new WC_Product_Simple();$si->set_name("SI");$si->set_regular_price("5");$si->set_sold_individually(true);$si->set_status("publish");$si->save();echo $pid," ",$ids[0]," ",$ids[1]," ",$si->get_id();')"
+echo "fixtures parent=$VP vS=$V1 vM=$V2 soldindiv=$SI"
+IT() { echo "{\"pid\":$1,\"vid\":$2,\"qty\":$3,\"attrs\":$4}"; }
+fw() { HW_MODE=$1 HW_CID=$2 HW_OP=$3 HW_ITEMS="$4" W; }
+fd() { HW_MODE=dumpf HW_CID=$1 W; }
+AS='{"attribute_size":"S"}'; AM='{"attribute_size":"M"}'
+fseed() { local c; c=$(HW_MODE=seedv HW_OP=fs-$RANDOM$RANDOM HW_ITEMS="[$(IT $VP $V1 2 "$AS"),$(IT $VP $V2 3 "$AM"),$(IT $P1 0 1 '{}'),$(IT $SI 0 1 '{}')]" W | jq -r .cid); echo $c; }
+
+C=$(fseed); G0=$(fd "$C")
+chk f0_seed_two_variants_same_parent_distinct "$G0" '(.cart|map(select(.pid=='"$VP"'))|map({vid,qty,a:.attrs.attribute_size}))==[{"vid":'"$V1"',"qty":2,"a":"S"},{"vid":'"$V2"',"qty":3,"a":"M"}] and (.cart|map(.key)|unique|length)==4'
+KEY1=$(echo "$G0" | jq -r '.cart[]|select(.vid=='"$V1"')|.key')
+R=$(fw savekey "$C" f1-save "$(IT $VP $V1 0 '{}')"); G1=$(fd "$C")
+chk f1_save_variant_exact_payload_key "$G1" '.saved==[{"key":"'"$KEY1"'","pid":'"$VP"',"vid":'"$V1"',"attrs":{"attribute_size":"S"},"qty":2}] and (.cart|map(select(.vid=='"$V2"'))|.[0].qty)==3 and ((.cart|map(.vid))|index('"$V1"'))==null'
+R=$(fw restore "$C" f2-restore "$(IT $VP $V1 0 '{}')"); G2=$(fd "$C")
+chk f2_restore_exact_same_key_qty_attrs "$G2" '.saved==[] and (.cart|map(select(.vid=='"$V1"'))|.[0]|{key,qty,a:.attrs.attribute_size})=={"key":"'"$KEY1"'","qty":2,"a":"S"} and (.cart|length)==4'
+
+C=$(fseed); fw savekey "$C" f3-save "$(IT $VP $V1 0 '{}')" >/dev/null; fw addv "$C" f3-add "[$(IT $VP $V1 1 "$AS")]" >/dev/null
+R=$(fw restore "$C" f3-restore "$(IT $VP $V1 0 '{}')"); G3=$(fd "$C")
+chk f3_restore_native_merge "$G3" '.saved==[] and (.cart|map(select(.vid=='"$V1"'))|.[0].qty)==3'
+
+echo "-- last active line saved: cart empties, saved persists"
+C=$(HW_MODE=seedv HW_OP=f4-seed HW_ITEMS="[$(IT $VP $V1 2 "$AS")]" W | jq -r .cid)
+fw savekey "$C" f4-save "$(IT $VP $V1 0 '{}')" >/dev/null; G4=$(fd "$C")
+chk f4_last_line_saved_persists "$G4" '.cart==[] and (.saved|length)==1 and .saved[0].vid=='"$V1"' and .saved[0].qty==2 and .sha256!=null'
+
+echo "-- failures keep the saved payload byte-identical (raw sha) and the cart unchanged"
+C=$(fseed); fw savekey "$C" f5-save "$(IT $VP $V2 0 '{}')" >/dev/null; B5=$(fd "$C")
+wp eval '$v=wc_get_product('$V2');$v->set_stock_quantity(0);$v->set_stock_status("outofstock");$v->save();'
+R=$(fw restore "$C" f5-restore "$(IT $VP $V2 0 '{}')"); A5=$(fd "$C")
+chk f5a_out_of_stock_restore_refused "$R" '.ok==false and (.error|test("refused"))'
+same f5a_out_of_stock_saved_and_cart_raw_sha_unchanged "$B5" "$A5"
+C=$(fseed); fw savekey "$C" f6-save "$(IT $VP $V1 0 '{}')" >/dev/null; B6=$(fd "$C")
+wp post delete $V1 --force >/dev/null
+R=$(fw restore "$C" f6-restore "$(IT $VP $V1 0 '{}')"); A6=$(fd "$C")
+chk f5b_deleted_variation_restore_refused "$R" '.ok==false'
+same f5b_deleted_variation_saved_and_cart_raw_sha_unchanged "$B6" "$A6"
+C=$(fseed); fw savekey "$C" f7-save "$(IT $SI 0 0 '{}')" >/dev/null; fw addv "$C" f7-add "[$(IT $SI 0 1 '{}')]" >/dev/null; B7=$(fd "$C")
+R=$(fw restore "$C" f7-restore "$(IT $SI 0 0 '{}')"); A7=$(fd "$C")
+chk f5c_sold_individually_restore_refused "$R" '.ok==false and (.error|test("refused"))'
+same f5c_sold_individually_saved_and_cart_raw_sha_unchanged "$B7" "$A7"
+fi
 
 echo "== HTTP section: PHP built-in server (multi-worker), real wc-ajax add_to_cart, adapter via test mu-plugin. NOT Apache/FPM."
 BASE=http://127.0.0.1:8080; SRV=$(pwd)
@@ -134,13 +181,15 @@ hseed; S=$(mktemp -d)
 ( hreq $J $MODE "{\"notify_at\":\"before_commit\",\"notify_file\":\"$S/a-held\",\"hold_at\":\"before_commit\",\"hold_until\":\"$S/b-waiting\"}" $P1 > $S/X.out ) &
 waitf $S/a-held && ok h3_X_at_before_commit || bad h3_X_at_before_commit
 ( hreq $J $MODE "{\"notify_at\":\"lock_wait\",\"notify_file\":\"$S/b-waiting\"}" $P1 > $S/Y.out ) &
-wait; HD=$(dump "$CID"); chk h3_qty_3 "$HD" '.cart==[{"pid":'"$P1"',"qty":3,"var":0}]'
+wait; chk h3_X_status "{\"c\":\"$(code "$(cat $S/X.out)")\"}" '.c=="200"'; chk h3_Y_status "{\"c\":\"$(code "$(cat $S/Y.out)")\"}" '.c=="200"'; ls $S/*.TIMEOUT >/dev/null 2>&1 && bad h3_barrier_timeout || ok h3_no_barrier_timeout
+HD=$(dump "$CID"); chk h3_qty_3 "$HD" '.cart==[{"pid":'"$P1"',"qty":3,"var":0}]'
 
 echo "-- H4: HTTP lock contention: X holds, Y fails closed (non-200), Y writes nothing"
 hseed; S=$(mktemp -d)
 ( hreq $J $MODE "{\"notify_at\":\"before_commit\",\"notify_file\":\"$S/a-held\",\"hold_at\":\"before_commit\",\"hold_until\":\"$S/release\"}" $P2 > $S/X.out ) &
 waitf $S/a-held && ok h4_X_holding || bad h4_X_holding
-RY=$(hreq $J $MODE '{}' $P3); touch $S/release; wait
+LN0=$(wc -l < /tmp/php-server.log); RY=$(hreq $J $MODE '{}' $P3); touch $S/release; wait
+tail -n +$((LN0+1)) /tmp/php-server.log | grep -q "Guest session busy" && ok h4_expected_busy_exception_in_server_log || bad h4_expected_busy_exception_in_server_log
 chk h4_Y_not_200 "{\"c\":\"$(code "$RY")\"}" '.c!="200"'
 HD=$(dump "$CID"); chk h4_only_X_committed "$HD" '.cart==[{"pid":'"$P1"',"qty":1,"var":0},{"pid":'"$P2"',"qty":1,"var":0}]'
 

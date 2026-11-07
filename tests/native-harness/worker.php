@@ -24,6 +24,19 @@ if ( 'dump' === $mode ) {
 	return;
 }
 
+if ( 'dumpf' === $mode ) {
+	global $wpdb;
+	$v = $wpdb->get_var( $wpdb->prepare( "SELECT session_value FROM {$wpdb->prefix}woocommerce_sessions WHERE session_key=%s", $cid ) );
+	$s = $v ? maybe_unserialize( $v ) : array();
+	$cart = isset( $s['cart'] ) ? maybe_unserialize( $s['cart'] ) : array();
+	$lines = array(); foreach ( (array) $cart as $k => $i ) { $a = (array) $i['variation']; ksort( $a ); $lines[] = array( 'key' => $k, 'pid' => (int) $i['product_id'], 'vid' => (int) $i['variation_id'], 'attrs' => $a, 'qty' => (int) $i['quantity'] ); }
+	usort( $lines, function ( $a, $b ) { return array( $a['pid'], $a['vid'] ) <=> array( $b['pid'], $b['vid'] ); } );
+	$saved = array(); foreach ( (array) ( isset( $s['sa_test_saved'] ) ? maybe_unserialize( $s['sa_test_saved'] ) : array() ) as $k => $e ) { $a = (array) $e['variation']; ksort( $a ); $saved[] = array( 'key' => $k, 'pid' => (int) $e['product_id'], 'vid' => (int) $e['variation_id'], 'attrs' => $a, 'qty' => (int) $e['quantity'] ); }
+	usort( $saved, function ( $a, $b ) { return array( $a['pid'], $a['vid'] ) <=> array( $b['pid'], $b['vid'] ); } );
+	hw_out( array( 'cart' => $lines, 'saved' => $saved, 'sha256' => $v ? hash( 'sha256', $v ) : null ) );
+	return;
+}
+
 $ADP::$checkpoint = function ( $n, $handler = null ) use ( $cfg, $waitfor ) {
 	if ( ( $cfg['notify_at'] ?? '' ) === $n ) touch( $cfg['notify_file'] );
 	if ( ( $cfg['hold_at'] ?? '' ) === $n ) $waitfor( $cfg['hold_until'] );
@@ -44,6 +57,33 @@ try {
 		$ids = array_map( 'intval', explode( ',', getenv( 'HW_PIDS' ) ) );
 		$out = $h->operation( $op, 'seed', function ( $cart, $s ) use ( $ids ) { $s->set( 'harness_marker', 'keep' ); foreach ( $ids as $i ) { if ( ! $cart->add_to_cart( $i, 2 ) ) throw new RuntimeException( 'add failed' ); } return array( 'ok' => true ); } );
 		$res = array( 'ok' => true, 'cid' => $h->get_customer_id() );
+	} elseif ( in_array( $mode, array( 'seedv', 'addv' ), true ) ) {
+		$items = json_decode( getenv( 'HW_ITEMS' ), true );
+		$res = array( 'ok' => true, 'outcome' => $h->operation( $op, $mode . '-' . getenv( 'HW_ITEMS' ), function ( $cart ) use ( $items ) {
+			foreach ( $items as $it ) { if ( ! $cart->add_to_cart( $it['pid'], $it['qty'], $it['vid'] ?? 0, $it['attrs'] ?? array() ) ) throw new RuntimeException( 'native add failed' ); }
+			return array( 'ok' => true ); } ), 'cid' => $h->get_customer_id() );
+	} elseif ( 'savekey' === $mode ) {
+		$it = json_decode( getenv( 'HW_ITEMS' ), true );
+		$res = array( 'ok' => true, 'outcome' => $h->operation( $op, 'savekey-' . getenv( 'HW_ITEMS' ), function ( $cart, $s ) use ( $it ) {
+			foreach ( $cart->get_cart() as $k => $i ) {
+				if ( (int) $i['product_id'] === (int) $it['pid'] && (int) $i['variation_id'] === (int) ( $it['vid'] ?? 0 ) ) {
+					$saved = $s->get( 'sa_test_saved', array() );
+					$saved[ $k ] = array( 'product_id' => (int) $i['product_id'], 'variation_id' => (int) $i['variation_id'], 'variation' => (array) $i['variation'], 'quantity' => (int) $i['quantity'] );
+					$s->set( 'sa_test_saved', $saved ); $cart->remove_cart_item( $k ); return array( 'ok' => true, 'key' => $k );
+				}
+			}
+			throw new RuntimeException( 'line not in cart' ); } ), 'cid' => $h->get_customer_id() );
+	} elseif ( 'restore' === $mode ) {
+		$it = json_decode( getenv( 'HW_ITEMS' ), true );
+		$res = array( 'ok' => true, 'outcome' => $h->operation( $op, 'restore-' . getenv( 'HW_ITEMS' ), function ( $cart, $s ) use ( $it ) {
+			$saved = $s->get( 'sa_test_saved', array() );
+			foreach ( $saved as $k => $e ) {
+				if ( (int) $e['product_id'] === (int) $it['pid'] && (int) $e['variation_id'] === (int) ( $it['vid'] ?? 0 ) ) {
+					if ( ! $cart->add_to_cart( $e['product_id'], $e['quantity'], $e['variation_id'], $e['variation'] ) ) throw new RuntimeException( 'native validation refused restore' );
+					unset( $saved[ $k ] ); $s->set( 'sa_test_saved', $saved ); return array( 'ok' => true, 'restored' => $k );
+				}
+			}
+			throw new RuntimeException( 'saved entry not found' ); } ), 'cid' => $h->get_customer_id() );
 	} else { // save: move one native cart line into saved list
 		$out = $h->operation( $op, 'save-' . $pid, function ( $cart, $s ) use ( $pid ) {
 			foreach ( $cart->get_cart() as $k => $i ) {
