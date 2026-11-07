@@ -26,6 +26,7 @@
   var onFailsafe = null;
   var recoveryCb = null;
   var recoveryAt = 0;
+  var recoveryFired = false;
   var visible = false;
   var navPending = false;
 
@@ -88,6 +89,9 @@
   function show(labelKey, opts) {
     ensureOverlay();
     var wasVisible = visible;
+    // Once the payment recovery UI is on screen, a generic show must not
+    // overwrite it (the order state is unknown there).
+    if (recoveryFired && wasVisible && !(opts && typeof opts.onFailsafe === 'function')) return;
     var text = resolveLabel(labelKey);
     if (labelEl) labelEl.textContent = text;
     overlay.classList.add('is-visible');
@@ -101,13 +105,15 @@
     if (opts && typeof opts.onFailsafe === 'function') {
       // Payment handoff: remember its recovery callback and absolute deadline.
       recoveryCb = opts.onFailsafe;
+      recoveryFired = false;
       recoveryAt = now + ((opts && opts.failsafeMs) || 45000);
-    } else if (recoveryCb && recoveryAt > now && wasVisible) {
+    } else if (recoveryCb && wasVisible) {
       // A later generic show (update_checkout, class mutation...) must not
       // replace the pending payment recovery or push its deadline out.
     } else {
       recoveryCb = null;
       recoveryAt = 0;
+      recoveryFired = false;
     }
     onFailsafe = recoveryCb;
     var dots = overlay.querySelector('.sa-loader__dots');
@@ -118,6 +124,7 @@
       if (onFailsafe) {
         // Page still alive when the failsafe elapses = the expected navigation
         // never happened; navPending must not suppress the payment recovery UI.
+        recoveryFired = true;
         onFailsafe();
       } else if (!navPending) {
         hide(true);
@@ -131,6 +138,7 @@
     navPending = false;
     recoveryCb = null;
     recoveryAt = 0;
+    recoveryFired = false;
     if (!overlay) return;
     if (!force) {
       // Tiny delay avoids flicker on very fast AJAX.

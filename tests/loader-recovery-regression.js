@@ -22,7 +22,7 @@ function run(hasCheckoutForm){
   const D={now:()=>now};
   vm.runInNewContext(src,{window:win,document:doc,Date:D,URL,console,Math},{});
   const advance=t=>{const end=now+t;for(;;){let b=null;for(const [id,j] of jobs)if(j.at<=end&&(!b||j.at<b[1].at))b=[id,j];if(!b)break;now=b[1].at;jobs.delete(b[0]);b[1].f();}now=end;};
-  return {win,handlers,advance,isVisible:()=>cls.has('o:is-visible'),label,jobs};
+  return {setNow:v=>{now=v},win,handlers,advance,isVisible:()=>cls.has('o:is-visible'),label,jobs};
 }
 // 1) generic show after payment show keeps the 90s recovery
 {const t=run(true);let rec=0;
@@ -32,6 +32,15 @@ function run(hasCheckoutForm){
  t.advance(30000);t.handlers.update_checkout[0]();
  t.advance(49999);assert.equal(rec,0,'too early');
  t.advance(2);assert.equal(rec,1,'recovery must fire at the original 90s deadline');}
+// 1b) throttled timer: generic show arrives AFTER the deadline but BEFORE the late timer ran
+{const t=run(true);let rec=0;
+ t.win.saLoader.show('payment',{failsafeMs:90000,onFailsafe:()=>rec++});
+ // simulate a throttled tab: clock jumps past the deadline without timers executing
+ t.setNow(91000);
+ t.handlers.update_checkout[0]();
+ t.advance(1);assert.equal(rec,1,'overdue recovery must still fire once');
+ t.handlers.update_checkout[0]();t.advance(200000);assert.equal(rec,1,'no repeat, generic show must not overwrite recovery UI');
+ assert.equal(t.win.document.querySelector&&true,true);}
 // 2) plain generic show still self-clears at 45s
 {const t=run(true);t.handlers.update_checkout[0]();t.advance(44000);assert(t.isVisible());t.advance(2000);assert(!t.isVisible());}
 // 3) hide() clears the recovery

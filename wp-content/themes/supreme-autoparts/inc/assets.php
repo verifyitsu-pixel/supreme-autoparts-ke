@@ -86,7 +86,7 @@ CSS
         'supreme-autoparts-loader',
         SA_THEME_URI . '/assets/js/sa-loader.js',
         ['jquery', 'supreme-autoparts'],
-        SA_THEME_VERSION . '.loader2',
+        SA_THEME_VERSION . '.loader3',
         true
     );
     wp_enqueue_script(
