@@ -26,6 +26,7 @@ if ($sa_provider) {
     <?php if ($sa_provider) : ?>
       <span class="sa-provider-brand"><img src="<?php echo esc_url(get_stylesheet_directory_uri() . '/assets/images/providers/' . $sa_provider[1]); ?>" alt="<?php echo esc_attr($sa_provider[0]); ?>" /></span>
     <?php endif; ?>
+    <?php if ('paystack' === $gateway->id) : ?><span class="sa-recommended-badge">Recommended</span><?php endif; ?>
     <span class="sa-payment-method-title"><?php echo wp_kses_post($sa_title); ?></span>
     <span class="sa-payment-method-icons"><?php echo $gateway->get_icon(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped - gateway-generated brand logo markup (as in Woo core) ?></span>
   </label>

@@ -459,3 +459,6 @@ body:has(.sa-purchase-header) .woocommerce-message[hidden]{display:none!importan
  .sa-cart-page.sa-cart-coherent .sa-cart-line__title{font-size:17px!important;line-height:1.45!important}
  .sa-cart-page.sa-cart-coherent .sa-cart-line__qty-label{font-size:16px!important}
 }
+
+/* Paystack "Recommended" label on the checkout payment row (user request 2026-11-07). */
+.sa-checkout-payment .sa-recommended-badge,#payment .sa-recommended-badge{display:inline-block;margin:0 0 8px;padding:2px 10px;border-radius:999px;background:#e8f5e9;color:#1b5e20;font-size:12px;font-weight:700;line-height:1.6;letter-spacing:.02em}
