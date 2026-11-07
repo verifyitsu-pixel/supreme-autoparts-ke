@@ -48,7 +48,7 @@ ok $([[ "$L" == https://checkout.paystack.com/stub* ]] && echo 1 || echo 0) "T1 
 ok $([ "$(orders)" = "$((O0+1))" ] && [ "$(inits)" = "$((I0+1))" ] && echo 1 || echo 0) "T1 expected exactly one order and one initialize"
 OID=$($WP eval 'echo (wc_get_orders(["limit"=>1,"created_via"=>"sa_open_pay","return"=>"ids","orderby"=>"id","order"=>"DESC"])[0]);')
 ok $([ "$($WP eval "echo wc_get_order($OID)->get_meta('_sa_op_hosted_url');")" = "$L" ] && echo 1 || echo 0) "T1 hosted URL not persisted in the real datastore"
-ok $([ "$($WP eval "\$o=wc_get_order($OID); echo \$o->get_currency().'|'.\$o->get_total().'|'.\$o->get_payment_method().'|'.\$o->get_status();")" = "KES|100|paystack|pending" ] && echo 1 || echo 0) "T1 order currency/total/method/status"
+ok $([ "$($WP eval "\$o=wc_get_order($OID); echo \$o->get_currency().'|'.(float)\$o->get_total().'|'.\$o->get_payment_method().'|'.\$o->get_status();")" = "KES|100|paystack|pending" ] && echo 1 || echo 0) "T1 order currency/total/method/status (got: $($WP eval "\$o=wc_get_order($OID); echo \$o->get_currency().'|'.(float)\$o->get_total().'|'.\$o->get_payment_method().'|'.\$o->get_status();"))"
 # T2 duplicate submit of the same intent: same URL, no second order or initialize
 L2=$(post 8080 $I1 100 a@example.invalid 10.0.0.2)
 ok $([ "$L2" = "$L" ] && [ "$(orders)" = "$((O0+1))" ] && [ "$(inits)" = "$((I0+1))" ] && echo 1 || echo 0) "T2 duplicate created a second order or initialize"
