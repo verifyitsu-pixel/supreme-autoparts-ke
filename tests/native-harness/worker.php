@@ -17,7 +17,7 @@ if ( 'dump' === $mode ) {
 	$saved = array(); foreach ( (array) ( isset( $s['sa_test_saved'] ) ? maybe_unserialize( $s['sa_test_saved'] ) : array() ) as $k => $e ) { $saved[] = array( 'pid' => (int) $k, 'qty' => (int) $e['quantity'] ); }
 	usort( $saved, function ( $a, $b ) { return $a['pid'] <=> $b['pid']; } );
 	$ops = isset( $s['sa_test_operations'] ) ? array_keys( maybe_unserialize( $s['sa_test_operations'] ) ) : array(); sort( $ops );
-	hw_out( array( 'cart' => $lines, 'saved' => $saved, 'ops' => $ops, 'marker' => $s['harness_marker'] ?? null, 'late' => isset( $s['late'] ), 'has_row' => (bool) $v ) );
+	hw_out( array( 'cart' => $lines, 'saved' => $saved, 'ops' => $ops, 'marker' => $s['harness_marker'] ?? null, 'late' => isset( $s['late'] ), 'has_row' => (bool) $v, 'sha256' => $v ? hash( 'sha256', $v ) : null ) );
 	return;
 }
 
@@ -25,19 +25,21 @@ SA_Native_Session_Test_Adapter::$checkpoint = function ( $n ) use ( $cfg, $waitf
 	if ( ( $cfg['notify_at'] ?? '' ) === $n ) touch( $cfg['notify_file'] );
 	if ( ( $cfg['hold_at'] ?? '' ) === $n ) $waitfor( $cfg['hold_until'] );
 	if ( ( $cfg['crash_at'] ?? '' ) === $n ) posix_kill( getmypid(), 9 );
+	if ( ( $cfg['kill_conn_at'] ?? '' ) === $n ) { global $wpdb; $id = (int) $wpdb->get_var( 'SELECT CONNECTION_ID()' ); $k = new mysqli( DB_HOST, DB_USER, DB_PASSWORD ); $k->query( 'KILL ' . $id ); $k->close(); usleep( 300000 ); }
 };
 if ( $cid ) {
 	$exp = time() + 172800; $expiring = time() + 169200; $th = $cid . '|' . $exp;
 	$_COOKIE[ 'wp_woocommerce_session_' . COOKIEHASH ] = $cid . '||' . $exp . '||' . $expiring . '||' . hash_hmac( 'md5', $th, wp_hash( $th ) );
 }
 add_filter( 'woocommerce_session_handler', function () { return 'SA_Native_Session_Test_Adapter'; } );
+$res = null;
 try {
 	WC()->initialize_session(); WC()->initialize_cart(); WC()->cart->get_cart_from_session();
 	$h = WC()->session;
 	if ( 'seed' === $mode ) {
 		$ids = array_map( 'intval', explode( ',', getenv( 'HW_PIDS' ) ) );
 		$out = $h->operation( $op, 'seed', function ( $cart, $s ) use ( $ids ) { $s->set( 'harness_marker', 'keep' ); foreach ( $ids as $i ) { if ( ! $cart->add_to_cart( $i, 2 ) ) throw new RuntimeException( 'add failed' ); } return array( 'ok' => true ); } );
-		hw_out( array( 'ok' => true, 'cid' => $h->get_customer_id() ) );
+		$res = array( 'ok' => true, 'cid' => $h->get_customer_id() );
 	} else { // save: move one native cart line into saved list
 		$out = $h->operation( $op, 'save-' . $pid, function ( $cart, $s ) use ( $pid ) {
 			foreach ( $cart->get_cart() as $k => $i ) {
@@ -48,11 +50,12 @@ try {
 			}
 			throw new RuntimeException( 'line not in cart' );
 		} );
-		hw_out( array( 'ok' => true, 'outcome' => $out, 'cid' => $h->get_customer_id() ) );
+		$res = array( 'ok' => true, 'outcome' => $out, 'cid' => $h->get_customer_id() );
 	}
-	if ( 'latedirty' === getenv( 'HW_LATE' ) ) { $h->finish(); try { $h->set( 'late', 'x' ); $h->save_data(); hw_out( array( 'late_refused' => false ) ); } catch ( Throwable $e ) { hw_out( array( 'late_refused' => true, 'error' => $e->getMessage() ) ); } }
-	$h->finish();
+	if ( 'latedirty' === getenv( 'HW_LATE' ) ) { $h->finish(); try { $h->set( 'late', 'x' ); $h->save_data(); $res['late_refused'] = false; } catch ( Throwable $e ) { $res['late_refused'] = true; $res['late_error'] = $e->getMessage(); } }
+	$h->finish(); // result is printed only after finish (all shutdown-equivalent work done)
 } catch ( Throwable $e ) {
-	hw_out( array( 'ok' => false, 'error' => $e->getMessage() ) );
+	$res = array( 'ok' => false, 'error' => $e->getMessage() );
 	if ( WC()->session && method_exists( WC()->session, 'finish' ) ) { try { WC()->session->finish(); } catch ( Throwable $x ) {} }
 }
+hw_out( $res );

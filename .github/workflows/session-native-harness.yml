@@ -36,9 +36,10 @@ jobs:
           mkdir /tmp/wp && cd /tmp/wp
           wp core download --quiet
           wp config create --dbname=wp --dbuser=root --dbpass=root --dbhost=127.0.0.1 --quiet
-          wp core install --url=http://localhost --title=t --admin_user=a --admin_password=a --admin_email=a@example.com --skip-email --quiet
+          wp core install --url=http://127.0.0.1:8080 --title=t --admin_user=a --admin_password=a --admin_email=a@example.com --skip-email --quiet
           wp plugin install woocommerce --version=11.1.0 --activate --quiet
           wp wc --info >/dev/null 2>&1 || true
+          mkdir -p wp-content/mu-plugins && cp "$GITHUB_WORKSPACE/tests/native-harness/harness-mu.php" wp-content/mu-plugins/harness-mu.php && cp "$GITHUB_WORKSPACE/tests/native-harness/adapter.php" wp-content/harness-adapter.php
           wp plugin list
       - name: Baseline stock-handler lost-update probe (informational)
         run: |
