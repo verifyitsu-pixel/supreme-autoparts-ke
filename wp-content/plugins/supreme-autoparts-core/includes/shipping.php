@@ -90,7 +90,7 @@ add_filter('woocommerce_package_rates', static function ($rates, $package) {
 /** Current delivery policy: Kenya uses its calculated couriers, including Nairobi.
  * No zone/options migration is needed: this final gate also overrides old cached configuration.
  */
-const SA_DELIVERY_POLICY_VERSION = '2026-11-07-ke-couriers-us-free';
+const SA_DELIVERY_POLICY_VERSION = '2026-11-07-ke-couriers-us-free-special-order';
 add_filter('woocommerce_cart_shipping_packages', static function ($packages) {
     foreach ($packages as &$package) {
         $package['sa_delivery_policy'] = SA_DELIVERY_POLICY_VERSION;
@@ -103,7 +103,11 @@ function sa_current_delivery_rates($rates, $package)
 {
     $cc = strtoupper((string) ($package['destination']['country'] ?? ''));
     if ($cc === 'US' && class_exists('WC_Shipping_Rate')) {
-        return ['sa_us_free' => new WC_Shipping_Rate('sa_us_free', 'Free shipping', 0, [], 'sa_us_free')];
+        $label = 'Free shipping';
+        if (function_exists('sa_ff_contents_unknown_special_order') && sa_ff_contents_unknown_special_order((array) ($package['contents'] ?? []))) {
+            $label .= ' · Special order: dates not confirmed';
+        }
+        return ['sa_us_free' => new WC_Shipping_Rate('sa_us_free', $label, 0, [], 'sa_us_free')];
     }
     if ($cc === 'KE') {
         $allowed = ['local_pickup', 'sa_fargo'];
