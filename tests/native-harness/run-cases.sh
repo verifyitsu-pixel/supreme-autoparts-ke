@@ -87,7 +87,7 @@ chk case8_readback_mismatch_reported "$R" '.ok==false and (.error|test("readback
 
 echo "== HTTP section: PHP built-in server (multi-worker), real wc-ajax add_to_cart, adapter via test mu-plugin. NOT Apache/FPM."
 BASE=http://127.0.0.1:8080; SRV=$(pwd)
-PHP_CLI_SERVER_WORKERS=6 php -S 127.0.0.1:8080 -t "$SRV" >/tmp/php-server.log 2>&1 & SP=$!
+( PHP_CLI_SERVER_WORKERS=6 nohup php -S 127.0.0.1:8080 -t "$SRV" >/tmp/php-server.log 2>&1 & )  # subshell: not a job of this shell, so bare `wait` does not block on it
 for i in $(seq 1 50); do curl -s -o /dev/null $BASE/ && break; sleep 0.2; done
 hreq() { curl -s -m 40 -w '\nHTTP=%{http_code}' -b "$1" -H "X-Harness-Mode: $2" -H "X-Harness-Cfg: $3" -d "product_id=$4&quantity=1" "$BASE/?wc-ajax=add_to_cart"; }
 hseed() { J=$(mktemp); curl -s -m 40 -o /dev/null -c $J -H "X-Harness-Mode: adapter" -H "X-Harness-Cfg: {}" -d "product_id=$P1&quantity=1" "$BASE/?wc-ajax=add_to_cart"
@@ -133,7 +133,7 @@ waitf $S/y-loaded && ok h5_stock_loaded_stale_snapshot || bad h5_stock_loaded_st
 RX=$(hreq $J adapter '{}' $P2); touch $S/x-done; wait
 D=$(dump "$CID")
 if echo "$D" | jq -e '(.cart|map(.pid)|index('"$P2"'))==null' >/dev/null; then echo "INFO h5_UNSAFE_INVARIANT_DEMONSTRATED stock writer overwrote the adapter commit: $D (adapter protects only when ALL guest session writers use it)"; else echo "INFO h5_hazard_not_reproduced $D"; fi
-kill $SP 2>/dev/null; sleep 1
+pkill -f "php -S 127.0.0.1:8080" 2>/dev/null; sleep 1
 grep -iE "fatal|uncaught" /tmp/php-server.log | head -3
 
 echo "FAILS=$FAILS"; exit $FAILS
