@@ -111,6 +111,14 @@ final class Whop_Open_Pay {
             }
         }
 
+        if (isset($_GET['sa_pay_recover']) && preg_match('/^[A-F0-9]{10}$/D', (string) $_GET['sa_pay_recover'])) {
+            // Non-payable status view for an attempt whose outcome is unknown. No form, no pay button, no order data.
+            return '<div class="sa-pay-recover" style="max-width:560px;margin:40px auto;padding:24px;border:1px solid #ddd;border-radius:12px;font-family:inherit">'
+                . '<h2>' . esc_html__('Your payment status is being confirmed', 'whop-payments') . '</h2>'
+                . '<p>' . esc_html__('We could not confirm whether your payment page was prepared. Please do not pay again or start another payment yet.', 'whop-payments') . '</p>'
+                . '<p>' . esc_html__('Contact us and quote this reference so we can confirm the status for you:', 'whop-payments') . ' <strong>' . esc_html((string) $_GET['sa_pay_recover']) . '</strong></p>'
+                . '</div>';
+        }
         $error   = isset($_GET['sa_pay_err']) ? sanitize_text_field(wp_unslash((string) $_GET['sa_pay_err'])) : '';
         $paid    = isset($_GET['paid']) && (string) $_GET['paid'] === '1';
         $order_q = isset($_GET['order']) ? absint($_GET['order']) : 0;
@@ -582,6 +590,11 @@ final class Whop_Open_Pay {
             if ($url[0] === 'error') {
                 self::redirect_error($pay_url, $url[1]);
             }
+            if ($url[0] === 'recover') {
+                // Attempt exists or is unknown: non-payable status view, never the live form.
+                wp_safe_redirect(add_query_arg('sa_pay_recover', $url[1], $pay_url), 302);
+                exit;
+            }
             if ($url[0] === 'external') {
                 wp_redirect($url[1], 302, 'Supreme Open Pay');
                 exit;
@@ -665,7 +678,7 @@ final class Whop_Open_Pay {
     }
 
     /**
-     * Paystack only. Returns [kind, url|message]: kind is external (hosted page), internal (order-pay) or error.
+     * Paystack only. Returns [kind, url|message]: kind is external (hosted page), internal (order-pay, only before any provider call), recover (attempt exists or unknown: non-payable status view) or error (nothing started).
      *
      * Per-intent state lives in one wp_options row: p preparing, o order saved, i initialize started, r hosted URL ready,
      * u initialize failed or unusable. Only transitions by compare-and-set on the exact previous value, which carries
@@ -675,12 +688,14 @@ final class Whop_Open_Pay {
      * page, where paying is a deliberate customer action.
      */
     public static function paystack_handoff(float $amount, string $email, string $note, string $currency, string $intent, $gateway): array {
+        // $fail/$busy copy is kept for tests of wording only; customers see the non-payable recovery view.
         $fail    = __('We could not confirm that your payment page was prepared. Please do not pay again or start a new payment yet. Check your email, or contact us and we will confirm the status.', 'whop-payments');
         $busy    = __('Your payment is already being prepared. Please do not pay again or start a new payment; check your email or contact us if it does not arrive.', 'whop-payments');
         $now     = time();
         if (!self::intent_is_fresh($intent, $now)) {
-            return ['error', __('Please reload this page and try again. Your payment was not started.', 'whop-payments')];
+            return ['error', __('This payment form is no longer valid. Please reload the page. If you already submitted a payment, do not pay again; contact us and we will confirm the status.', 'whop-payments')];
         }
+        $ref = strtoupper(substr(hash('sha256', $intent), 0, 10));
         $fp  = hash('sha256', implode('|', [strtolower($email), number_format($amount, 2, '.', ''), $currency, 'paystack', $note]));
         $key = self::claim_key($intent);
         $own = bin2hex(random_bytes(8));
@@ -690,23 +705,23 @@ final class Whop_Open_Pay {
             $cur = self::claim_value($key);
             $c   = $cur === '' ? null : self::claim_parse($cur);
             if ($c === null) {
-                return ['error', $fail];
+                return ['recover', $ref];
             }
             if ($c['fp'] !== $fp) {
-                return ['error', __('This payment form was already used with different details. Please do not start another payment yet; contact us and we will confirm the status.', 'whop-payments')];
+                return ['recover', $ref];
             }
             if ($c['s'] !== 'r' && $c['s'] !== 'u') {
-                return ['error', $busy];
+                return ['recover', $ref];
             }
             $order = wc_get_order($c['oid']);
             if (!$order instanceof WC_Order || $order->get_meta('_sa_open_pay_intent') !== hash('sha256', $intent) || !$order->needs_payment() || $order->get_payment_method() !== 'paystack') {
-                return ['error', $fail];
+                return ['recover', $ref];
             }
             if ($c['s'] === 'u') {
                 return ['internal', $order->get_checkout_payment_url()];
             }
             $hosted = (string) $order->get_meta('_sa_op_hosted_url');
-            return self::is_safe_paystack_url($hosted) ? ['external', $hosted] : ['error', $fail];
+            return self::is_safe_paystack_url($hosted) ? ['external', $hosted] : ['recover', $ref];
         }
 
         self::purge_old_claims($now);
@@ -715,13 +730,13 @@ final class Whop_Open_Pay {
         // keeps failing closed for this intent.
         $order = self::create_pending_order($amount, $email, $note, ['_sa_open_pay_intent' => hash('sha256', $intent), '_sa_open_pay_fp' => $fp], $currency, 'paystack');
         if (!$order instanceof WC_Order) {
-            return ['error', $fail];
+            return ['recover', $ref];
         }
         $o = self::claim_fmt('o', $fp, (int) $order->get_id(), $now, $own);
         if (!self::cas($key, $p, $o)) {
             $order->add_order_note('Open-pay: lost the intent claim after creating this order; no Paystack page was prepared.');
             $order->save();
-            return ['error', $fail];
+            return ['recover', $ref];
         }
         $order->add_order_note(sprintf('Open-pay: %s %s, customer selected paystack.', $currency, number_format($amount, 2)));
         $order->save();
@@ -730,12 +745,12 @@ final class Whop_Open_Pay {
         $i = self::claim_fmt('i', $fp, (int) $order->get_id(), $now, $own);
         $u = self::claim_fmt('u', $fp, (int) $order->get_id(), $now, $own);
         if (!self::cas($key, $o, $i)) {
-            return ['error', $fail];
+            return ['recover', $ref];
         }
         if (!is_object($gateway) || !method_exists($gateway, 'process_redirect_payment_option')
             || $order->get_currency() !== 'KES' || $order->get_payment_method() !== 'paystack' || !$order->needs_payment() || (float) $order->get_total() <= 0) {
-            self::cas($key, $i, $u);
-            return ['internal', $order_pay];
+            // Only a confirmed CAS to u allows the order-pay fallback; otherwise the state is unknown.
+            return self::cas($key, $i, $u) ? ['internal', $order_pay] : ['recover', $ref];
         }
         try {
             $res = $gateway->process_redirect_payment_option($order->get_id());
@@ -750,12 +765,17 @@ final class Whop_Open_Pay {
             // Failure or an unusable response is not proof Paystack did nothing: stay in the uncertain state (i) and fail closed.
             $order->add_order_note('Open-pay: Paystack payment page could not be confirmed (outcome at Paystack unknown); no second attempt is made automatically. Check Paystack before any action.');
             $order->save();
-            return ['error', $fail];
+            return ['recover', $ref];
         }
         $order->update_meta_data('_sa_op_hosted_url', $hosted);
         $order->add_order_note('Open-pay: Paystack payment page prepared; customer redirected to Paystack.');
         $order->save();
-        self::cas($key, $i, self::claim_fmt('r', $fp, (int) $order->get_id(), $now, $own));
+        // Persist proof first: re-read the URL from storage and win the i->r CAS, else stay uncertain and non-payable.
+        $saved = wc_get_order($order->get_id());
+        if (!$saved instanceof WC_Order || (string) $saved->get_meta('_sa_op_hosted_url') !== $hosted
+            || !self::cas($key, $i, self::claim_fmt('r', $fp, (int) $order->get_id(), $now, $own))) {
+            return ['recover', $ref];
+        }
         return ['external', $hosted];
     }
 

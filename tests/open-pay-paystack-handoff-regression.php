@@ -8,7 +8,7 @@ function is_user_logged_in() { return false; }
 function wc_clear_notices() { $GLOBALS['notices_cleared']++; }
 final class FakeWpdb {
     public $options = 'wp_options'; public $rows = [];
-    public $drop_insert_ack = false, $drop_update_ack = false, $fail_update = false, $null_reads = false, $fail_insert = false;
+    public $drop_insert_ack = false, $drop_update_ack = false, $fail_update = false, $fail_from = 0, $update_calls = 0, $null_reads = false, $fail_insert = false;
     public function prepare($sql, ...$args) { $i = 0; return preg_replace_callback('/%[sd]/', function ($m) use (&$i, $args) { $v = $args[$i++]; return $m[0] === '%d' ? (string) (int) $v : "'" . addslashes((string) $v) . "'"; }, $sql); }
     private function q($sql) { preg_match_all("/'((?:[^'\\\\]|\\\\.)*)'/", $sql, $m); return array_map('stripslashes', $m[1]); }
     public function query($sql) {
@@ -22,6 +22,7 @@ final class FakeWpdb {
         }
         if (strpos($sql, 'UPDATE') === 0) {
             if ($this->fail_update) return false;
+            if ($this->fail_from && ++$this->update_calls >= $this->fail_from) return false;
             if (($this->rows[$a[1]] ?? null) !== $a[2]) return 0;
             $this->rows[$a[1]] = $a[0];
             if ($this->drop_update_ack) { $this->drop_update_ack = false; return false; }
@@ -76,7 +77,7 @@ $r = H(100.0, 'a@x.invalid', $i1, $g);
 ok($r === ['external', 'https://checkout.paystack.com/abc1'] && count($orders) === 1 && $g->calls === 1 && state($i1) === 'r', 'first submit reaches ready');
 $r = H(100.0, 'a@x.invalid', $i1, $g);
 ok($r === ['external', 'https://checkout.paystack.com/abc1'] && count($orders) === 1 && $g->calls === 1, 'duplicate reuses hosted URL');
-ok(H(200.0, 'a@x.invalid', $i1, $g)[0] === 'error' && H(100.0, 'o@x.invalid', $i1, $g)[0] === 'error' && count($orders) === 1 && $g->calls === 1, 'mismatch and other email rejected');
+ok(H(200.0, 'a@x.invalid', $i1, $g)[0] === 'recover' && H(100.0, 'o@x.invalid', $i1, $g)[0] === 'recover' && count($orders) === 1 && $g->calls === 1, 'mismatch and other email rejected');
 $r = H(100.0, 'a@x.invalid', intent(), $g);
 ok($r[0] === 'external' && count($orders) === 2 && $g->calls === 2, 'new intent is a new intentional payment');
 
@@ -84,7 +85,7 @@ ok($r[0] === 'external' && count($orders) === 2 && $g->calls === 2, 'new intent 
 $c = $g->calls; $b = count($orders);
 foreach (['', 'not-hex', strtoupper(intent()), substr(intent(), 0, 31), intent(90000), sprintf('%08x', time() + 4000) . bin2hex(random_bytes(12))] as $bad) {
     $r = H(50.0, 'a@x.invalid', $bad, $g);
-    ok($r[0] === 'error' && count($orders) === $b && $g->calls === $c, 'bad/stale/future intent fails closed: ' . $bad);
+    ok($r[0] === 'error' && count($orders) === $b && $g->calls === $c, 'bad/stale/future intent creates nothing: ' . $bad);
 }
 
 // C. concurrent retry while A is inside the provider call: no order-pay link, no second initialize, no second order
@@ -92,7 +93,7 @@ $i2 = intent(); $seen = null; $b = count($orders);
 $g->hook = function () use ($i2, &$seen, $g) { $seen = H(70.0, 'a@x.invalid', $i2, $g); };
 $r = H(70.0, 'a@x.invalid', $i2, $g);
 $g->hook = null;
-ok($seen[0] === 'error' && count($orders) === $b + 1, 'retry during initialize fails closed (not order-pay)');
+ok($seen[0] === 'recover' && count($orders) === $b + 1, 'retry during initialize fails closed (not order-pay)');
 ok($r[0] === 'external' && state($i2) === 'r', 'original request still completes');
 $calls_after = $g->calls;
 
@@ -101,11 +102,11 @@ foreach (['p', 'o', 'i'] as $st) {
     $id = intent(); $b = count($orders); $c = $g->calls;
     $wpdb->rows[ckey($id)] = "$st|" . fp('a@x.invalid', 30.0) . '|9001|' . (time() - 7200) . '|deadbeefdeadbeef';
     $r = H(30.0, 'a@x.invalid', $id, $g);
-    ok($r[0] === 'error' && count($orders) === $b && $g->calls === $c && explode('|', $wpdb->rows[ckey($id)])[0] === $st, "old $st claim fails closed and is kept");
+    ok($r[0] === 'recover' && count($orders) === $b && $g->calls === $c && explode('|', $wpdb->rows[ckey($id)])[0] === $st, "old $st claim fails closed and is kept");
 }
 // E. kill after the claim, before the order exists: nothing is created by anyone else
 $id = intent(); $wpdb->rows[ckey($id)] = 'p|' . fp('a@x.invalid', 31.0) . '|0|' . (time() - 9000) . '|aaaaaaaaaaaaaaaa';
-$b = count($orders); ok(H(31.0, 'a@x.invalid', $id, $g)[0] === 'error' && count($orders) === $b, 'claim without order never reclaimed');
+$b = count($orders); ok(H(31.0, 'a@x.invalid', $id, $g)[0] === 'recover' && count($orders) === $b, 'claim without order never reclaimed');
 
 // F. order creation throws: claim stays (ambiguous), no initialize
 $id = intent(); $GLOBALS['create_throws'] = false;
@@ -115,8 +116,8 @@ $id2 = intent();
 function create_fail($v) { $GLOBALS['create_throws'] = $v; }
 // create_pending_order catches Throwable and returns null
 create_fail(true); $r = H(80.0, 'a@x.invalid', $id2, $g); create_fail(false);
-ok($r[0] === 'error' && count($orders) === $b && $g->calls === $c && state($id2) === 'p', 'creation failure keeps claim, no initialize');
-ok(H(80.0, 'a@x.invalid', $id2, $g)[0] === 'error' && count($orders) === $b, 'retry of an ambiguous creation does not create a second order');
+ok($r[0] === 'recover' && count($orders) === $b && $g->calls === $c && state($id2) === 'p', 'creation failure keeps claim, no initialize');
+ok(H(80.0, 'a@x.invalid', $id2, $g)[0] === 'recover' && count($orders) === $b, 'retry of an ambiguous creation does not create a second order');
 
 // G. INSERT acknowledgement lost (row written, driver reports failure): we still own it, exactly one order
 $wpdb->drop_insert_ack = true; $id3 = intent(); $b = count($orders);
@@ -129,27 +130,27 @@ ok($r[0] === 'external' && count($orders) === $b + 1 && $g->calls === $c + 1, 'u
 // I. UPDATE fails outright (set_claim false): no initialize
 $wpdb->fail_update = true; $id5 = intent(); $b = count($orders); $c = $g->calls;
 $r = H(92.0, 'a@x.invalid', $id5, $g); $wpdb->fail_update = false;
-ok($r[0] === 'error' && $g->calls === $c && count($orders) === $b + 1 && state($id5) === 'p', 'failed CAS blocks initialize; claim kept');
-ok(H(92.0, 'a@x.invalid', $id5, $g)[0] === 'error' && count($orders) === $b + 1 && $g->calls === $c, 'later retry fails closed');
+ok($r[0] === 'recover' && $g->calls === $c && count($orders) === $b + 1 && state($id5) === 'p', 'failed CAS blocks initialize; claim kept');
+ok(H(92.0, 'a@x.invalid', $id5, $g)[0] === 'recover' && count($orders) === $b + 1 && $g->calls === $c, 'later retry fails closed');
 // J. reads fail (null): never treated as "not found"
 $id6 = intent(); $wpdb->rows[ckey($id6)] = 'p|' . fp('a@x.invalid', 5.0) . '|0|' . time() . '|aaaaaaaaaaaaaaaa'; $wpdb->null_reads = true;
 $b = count($orders); $r = H(5.0, 'a@x.invalid', $id6, $g); $wpdb->null_reads = false;
-ok($r[0] === 'error' && count($orders) === $b, 'unreadable claim fails closed');
+ok($r[0] === 'recover' && count($orders) === $b, 'unreadable claim fails closed');
 // K. provider response lost before the URL save (state i stays): retries fail closed
 $id7 = intent(); $b = count($orders); $c = $g->calls;
 $g->hook = function () { throw new Error('process killed'); };
 try { H(11.0, 'a@x.invalid', $id7, $g); } catch (Error $e) {}
 $g->hook = null;
 ok(state($id7) === 'i', 'crash inside provider call leaves state i');
-ok(H(11.0, 'a@x.invalid', $id7, $g)[0] === 'error' && count($orders) === $b + 1 && $g->calls === $c + 1, 'retry after crash: no second order, no second initialize');
+ok(H(11.0, 'a@x.invalid', $id7, $g)[0] === 'recover' && count($orders) === $b + 1 && $g->calls === $c + 1, 'retry after crash: no second order, no second initialize');
 // L. unsafe or failed provider results are uncertain (state i): fail closed, never the order-pay page, no second initialize
 foreach (['http', 'evil', 'throw', 'null'] as $mode) {
     $g->mode = $mode; $b = count($orders); $id = intent(); $c = $g->calls;
     $r = H(10.0, 'a@x.invalid', $id, $g, $mode);
-    ok($r[0] === 'error' && count($orders) === $b + 1 && state($id) === 'i' && $g->calls === $c + 1, "uncertain $mode fails closed");
+    ok($r[0] === 'recover' && count($orders) === $b + 1 && state($id) === 'i' && $g->calls === $c + 1, "uncertain $mode fails closed");
     ok($orders[9000 + count($orders)]->get_meta('_sa_op_hosted_url') === '', "no hosted url for $mode");
     $r2 = H(10.0, 'a@x.invalid', $id, $g, $mode);
-    ok($r2[0] === 'error' && $g->calls === $c + 1 && count($orders) === $b + 1, "retry after $mode: no second initialize or order");
+    ok($r2[0] === 'recover' && $g->calls === $c + 1 && count($orders) === $b + 1, "retry after $mode: no second initialize or order");
 }
 // L2. pre-initialize ineligibility (state u) routes to the same order's order-pay page only
 $id = intent(); $b = count($orders); $c = $g->calls;
@@ -158,15 +159,24 @@ ok($r[0] === 'internal' && strpos($r[1], '/order-pay/') !== false && state($id) 
 ok(H(10.0, 'a@x.invalid', $id, $g)[1] === $r[1] && $g->calls === $c && count($orders) === $b + 1, 'state u retry goes to the same order, no initialize');
 ok($GLOBALS['notices_cleared'] > 0, 'gateway notices cleared');
 $g->mode = 'ok';
+// L3. i->u CAS fails: not order-pay, recovery only
+$wpdb->fail_from = 3; $wpdb->update_calls = 0; $id = intent(); $b = count($orders);
+$r = H(10.0, 'a@x.invalid', $id, new stdClass); $wpdb->fail_from = 0;
+ok($r[0] === 'recover' && state($id) === 'i' && count($orders) === $b + 1, 'u CAS failure never returns order-pay');
+// L4. i->r CAS fails after provider answered: URL is not released
+$wpdb->fail_from = 3; $wpdb->update_calls = 0; $id = intent(); $b = count($orders); $c = $g->calls;
+$r = H(10.0, 'a@x.invalid', $id, $g); $wpdb->fail_from = 0;
+ok($r[0] === 'recover' && state($id) === 'i' && $g->calls === $c + 1, 'r CAS failure: no redirect, stays uncertain');
+ok(H(10.0, 'a@x.invalid', $id, $g)[0] === 'recover' && $g->calls === $c + 1, 'retry after r CAS failure: no second initialize');
 // M. paid or cancelled order behind a ready claim is refused
 $orders[9001]->paid = true; $c = $g->calls; $b = count($orders);
-ok(H(100.0, 'a@x.invalid', $i1, $g)[0] === 'error' && $g->calls === $c && count($orders) === $b, 'paid order not reused');
+ok(H(100.0, 'a@x.invalid', $i1, $g)[0] === 'recover' && $g->calls === $c && count($orders) === $b, 'paid order not reused');
 // N. retention: claims older than 48 h are purged on the next claim, and their intents are already refused as stale
 $old = 'sa_op_i_' . str_repeat('0', 40); $wpdb->rows[$old] = 'r|' . fp('a@x.invalid', 1.0) . '|9001|' . (time() - 200000) . '|aaaaaaaaaaaaaaaa';
 $fresh = 'sa_op_i_' . str_repeat('1', 40); $wpdb->rows[$fresh] = 'r|' . fp('a@x.invalid', 1.0) . '|9001|' . (time() - 100) . '|aaaaaaaaaaaaaaaa';
 H(12.0, 'a@x.invalid', intent(), $g);
 ok(!isset($wpdb->rows[$old]) && isset($wpdb->rows[$fresh]), 'old claims purged, recent ones kept');
-ok(H(1.0, 'a@x.invalid', intent(90000), $g)[0] === 'error', 'a purged intent age is refused');
+ok(H(1.0, 'a@x.invalid', intent(90000), $g)[0] === 'recover', 'a purged intent age is refused');
 // O. URL allowlist
 foreach (['https://checkout.paystack.com/abc', 'https://checkout.paystack.com/abc?x=1'] as $u) ok(Whop_Open_Pay::is_safe_paystack_url($u), "safe $u");
 foreach (['http://checkout.paystack.com/a', 'https://checkout.paystack.com.evil.invalid/a', 'https://evil.invalid/checkout.paystack.com', 'https://user@checkout.paystack.com/a', 'https://checkout.paystack.com:444/a', 'https://sub.checkout.paystack.com/a', "https://checkout.paystack.com/a b", 'https://checkout.paystack.com\\@evil.invalid/', 'javascript:alert(1)', '', 'https://checkout.paystack.com/a#f'] as $u) ok(!Whop_Open_Pay::is_safe_paystack_url($u), "unsafe $u");
