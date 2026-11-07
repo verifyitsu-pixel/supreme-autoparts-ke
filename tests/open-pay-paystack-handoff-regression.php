@@ -41,7 +41,9 @@ $wpdb = new FakeWpdb();
 class WC_Order_Item_Fee { function set_name($x) {} function set_total($x) {} function set_tax_status($x) {} }
 class WC_Order {
     public $id, $meta = [], $notes = [], $paid = false, $pm = '', $cur = '', $total = 0.0;
-    function __construct($id) { $this->id = $id; }
+    public static $db = [];
+    function __construct($id) { $this->id = $id; $this->meta = self::$db[$id] ?? []; }
+    function read_meta_data($force = false) { $this->meta = self::$db[$this->id] ?? []; }
     function get_id() { return $this->id; }
     function add_item($x) {} function set_billing_email($x) {} function set_billing_country($x) {} function set_payment_method_title($x) {}
     function set_currency($x) { $this->cur = $x; } function get_currency() { return $this->cur; }
@@ -49,7 +51,7 @@ class WC_Order {
     function update_meta_data($k, $v) { $this->meta[$k] = $v; } function get_meta($k) { return $this->meta[$k] ?? ''; }
     function add_order_note($n) { $this->notes[] = $n; }
     function calculate_totals($x) {} function set_total($t) { $this->total = $t; } function get_total() { return $this->total; }
-    function save() {} function needs_payment() { return !$this->paid; }
+    function save() { if (empty($GLOBALS['drop_saves'])) { self::$db[$this->id] = $this->meta; } } function needs_payment() { return !$this->paid; }
     function get_checkout_payment_url() { return 'https://shop.invalid/checkout/order-pay/' . $this->id . '/'; }
 }
 $GLOBALS['orders'] = []; $GLOBALS['notices_cleared'] = 0; $GLOBALS['create_throws'] = false;
@@ -168,6 +170,12 @@ $wpdb->fail_from = 3; $wpdb->update_calls = 0; $id = intent(); $b = count($order
 $r = H(10.0, 'a@x.invalid', $id, $g); $wpdb->fail_from = 0;
 ok($r[0] === 'recover' && state($id) === 'i' && $g->calls === $c + 1, 'r CAS failure: no redirect, stays uncertain');
 ok(H(10.0, 'a@x.invalid', $id, $g)[0] === 'recover' && $g->calls === $c + 1, 'retry after r CAS failure: no second initialize');
+// L5. a dropped meta write (save reports nothing but storage has no URL) must not release the URL
+$id = intent(); $b = count($orders); $c = $g->calls;
+$g->hook = function () { $GLOBALS['drop_saves'] = true; };
+$r = H(10.0, 'a@x.invalid', $id, $g); $g->hook = null; $GLOBALS['drop_saves'] = false;
+ok($r[0] === 'recover' && state($id) === 'i' && $g->calls === $c + 1, 'dropped URL write: fresh read finds nothing, no redirect');
+ok(H(10.0, 'a@x.invalid', $id, $g)[0] === 'recover' && $g->calls === $c + 1, 'retry after dropped write: no second initialize');
 // M. paid or cancelled order behind a ready claim is refused
 $orders[9001]->paid = true; $c = $g->calls; $b = count($orders);
 ok(H(100.0, 'a@x.invalid', $i1, $g)[0] === 'recover' && $g->calls === $c && count($orders) === $b, 'paid order not reused');

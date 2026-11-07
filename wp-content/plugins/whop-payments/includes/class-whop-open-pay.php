@@ -114,9 +114,10 @@ final class Whop_Open_Pay {
         if (isset($_GET['sa_pay_recover']) && preg_match('/^[A-F0-9]{10}$/D', (string) $_GET['sa_pay_recover'])) {
             // Non-payable status view for an attempt whose outcome is unknown. No form, no pay button, no order data.
             return '<div class="sa-pay-recover" style="max-width:560px;margin:40px auto;padding:24px;border:1px solid #ddd;border-radius:12px;font-family:inherit">'
-                . '<h2>' . esc_html__('Your payment status is being confirmed', 'whop-payments') . '</h2>'
+                . '<h2>' . esc_html__('Payment status needs checking', 'whop-payments') . '</h2>'
                 . '<p>' . esc_html__('We could not confirm whether your payment page was prepared. Please do not pay again or start another payment yet.', 'whop-payments') . '</p>'
-                . '<p>' . esc_html__('Contact us and quote this reference so we can confirm the status for you:', 'whop-payments') . ' <strong>' . esc_html((string) $_GET['sa_pay_recover']) . '</strong></p>'
+                . '<p>' . esc_html__('Email us and quote this reference so we can check the status for you:', 'whop-payments') . ' <strong>' . esc_html((string) $_GET['sa_pay_recover']) . '</strong></p>'
+                . '<p><a href="' . esc_attr('mailto:calvin@supremeautoparts.co.ke?subject=' . rawurlencode('Payment status check ' . (string) $_GET['sa_pay_recover'])) . '">calvin@supremeautoparts.co.ke</a> &middot; <a href="' . esc_url(home_url('/contact/')) . '">' . esc_html__('Contact page', 'whop-payments') . '</a></p>'
                 . '</div>';
         }
         $error   = isset($_GET['sa_pay_err']) ? sanitize_text_field(wp_unslash((string) $_GET['sa_pay_err'])) : '';
@@ -665,6 +666,19 @@ final class Whop_Open_Pay {
         return $t <= $now + 600 && $t >= $now - 86400;
     }
 
+    /** A new order object whose meta is forced to reload from the datastore, never the object we just wrote. */
+    private static function fresh_order(int $id): ?WC_Order {
+        try {
+            $o = new WC_Order($id);
+            if (method_exists($o, 'read_meta_data')) {
+                $o->read_meta_data(true);
+            }
+            return $o;
+        } catch (Throwable $e) {
+            return null;
+        }
+    }
+
     private static function claim_fmt(string $state, string $fp, int $oid, int $ts, string $owner): string {
         return implode('|', [$state, $fp, $oid, $ts, $owner]);
     }
@@ -684,7 +698,7 @@ final class Whop_Open_Pay {
      * u initialize failed or unusable. Only transitions by compare-and-set on the exact previous value, which carries
      * this request's owner token. A claim is never reclaimed or dropped automatically: time does not prove a request is
      * dead. Anything unclear (stalled, crashed, lost ownership, unreadable) fails closed with no second order and
-     * no second initialize. Only state u (a known-failed initialize) sends the customer to that same order's order-pay
+     * no second initialize. Only state u (decided ineligible before any provider call) sends the customer to that same order's order-pay
      * page, where paying is a deliberate customer action.
      */
     public static function paystack_handoff(float $amount, string $email, string $note, string $currency, string $intent, $gateway): array {
@@ -738,7 +752,7 @@ final class Whop_Open_Pay {
             $order->save();
             return ['recover', $ref];
         }
-        $order->add_order_note(sprintf('Open-pay: %s %s, customer selected paystack.', $currency, number_format($amount, 2)));
+        $order->add_order_note(sprintf('Open-pay: %s %s, customer selected paystack. Reference %s (first 10 chars of the intent hash; matches the start of order meta _sa_open_pay_intent and of option sa_op_i_<ref lowercase>).', $currency, number_format($amount, 2), $ref));
         $order->save();
         $order_pay = $order->get_checkout_payment_url();
 
@@ -771,7 +785,7 @@ final class Whop_Open_Pay {
         $order->add_order_note('Open-pay: Paystack payment page prepared; customer redirected to Paystack.');
         $order->save();
         // Persist proof first: re-read the URL from storage and win the i->r CAS, else stay uncertain and non-payable.
-        $saved = wc_get_order($order->get_id());
+        $saved = self::fresh_order((int) $order->get_id());
         if (!$saved instanceof WC_Order || (string) $saved->get_meta('_sa_op_hosted_url') !== $hosted
             || !self::cas($key, $i, self::claim_fmt('r', $fp, (int) $order->get_id(), $now, $own))) {
             return ['recover', $ref];
