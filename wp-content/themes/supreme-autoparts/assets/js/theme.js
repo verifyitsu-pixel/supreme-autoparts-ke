@@ -386,19 +386,109 @@
   }
 
 
+  // Google-inspired cart/checkout hierarchy, using the existing WooCommerce controls.
+  // No prices, gateways, shipping rules or account data are changed here.
+  function saCheckoutExperience() {
+    var form=document.querySelector('form.checkout'),layout=document.querySelector('.sa-checkout-layout');
+    if(!form||!layout)return;
+    var main=layout.querySelector('.sa-checkout-layout__main');
+    var payment=layout.querySelector('[data-sa-checkout-panel="payment"]');
+    var shipping=layout.querySelector('[data-sa-checkout-panel="shipping"] .sa-checkout-section__body');
+    if(!main||!payment||!shipping)return;
+    var delivery=document.createElement('div');delivery.className='sa-delivery-options';var notes=shipping.querySelector('.woocommerce-additional-fields');shipping.insertBefore(delivery,notes);
+    var comments=shipping.querySelector('#order_comments_field');if(comments&&!comments.classList.contains('validate-required')){var extra=document.createElement('details');extra.className='sa-checkout-extras';var toggle=document.createElement('summary');toggle.textContent='Add order notes (optional)';extra.appendChild(toggle);comments.replaceWith(extra);extra.appendChild(comments);}
+    var final=document.createElement('div');final.className='sa-checkout-final';layout.appendChild(final);
+    main.appendChild(payment);
+    form.classList.add('sa-checkout-refreshed');
+    function field(id){var el=document.getElementById(id);return el?String(el.value||'').trim():'';}
+    function selectedLabel(root){var input=root.querySelector('input.shipping_method:checked, input.shipping_method[type="hidden"]');var li=input&&input.closest('li');if(!li)return '';var name=li.querySelector('.sa-ship__name'),price=li.querySelector('.sa-ship__price');if(!name)return li.textContent.replace(/\s+/g,' ').trim();var copy=name.cloneNode(true),sub=copy.querySelector('small');if(sub)sub.remove();var title=copy.textContent.replace(' · Estimated delivery 1-2 working days from order, excluding weekends','').replace(' · Estimated delivery 1-3 working days from order, excluding weekends','').trim();return [title,sub&&sub.textContent.trim(),price&&price.textContent.replace(/\s+/g,' ').trim()].filter(Boolean).join(' · ');}
+    function summaries(){
+      var contact=document.querySelector('[data-sa-checkout-panel="contact"] .sa-checkout-fold');
+      if(contact)contact.textContent=[field('billing_first_name')+' '+field('billing_last_name'),field('billing_email'),field('billing_address_1'),field('billing_city')].map(function(s){return s.trim();}).filter(Boolean).join(' · ');
+      var summary=document.querySelector('[data-sa-checkout-panel="shipping"] .sa-checkout-fold');
+      if(summary)summary.textContent=selectedLabel(delivery)||'Review your delivery address and shipping options.';
+    }
+    function compressEstimates(container){
+      // Only remove a literally identical, known estimate, and only from courier labels.
+      // Unknown dates / special-order text and all pickup readiness windows stay intact.
+      var labels=[].slice.call(container.querySelectorAll('li label')).filter(function(l){return !/^Store pickup\s*[,·]/i.test(l.textContent.trim());});
+      var estimate=' · Estimated delivery 1-2 working days from order, excluding weekends';
+      if(!labels.length||!labels.every(function(l){return l.textContent.indexOf(estimate)!==-1;}))return;
+      var shared=document.createElement('p');shared.className='sa-delivery-estimate';
+      shared.textContent='All courier options: estimated delivery 1-2 working days from order, excluding weekends. Product availability applies.';
+      container.insertBefore(shared,container.firstChild);
+      labels.forEach(function(l){var walker=document.createTreeWalker(l,4),node;while((node=walker.nextNode())){if(node.nodeValue.indexOf(estimate)!==-1)node.nodeValue=node.nodeValue.replace(estimate,'');}});
+    }
+    function tabs(container){
+      var different=document.querySelector('#ship-to-different-address-checkbox:checked');
+      var country=field(different?'shipping_country':'billing_country');
+      var lists=container.querySelectorAll('ul.woocommerce-shipping-methods,ul#shipping_method');
+      if(country!=='KE'||lists.length!==1)return; // Do not combine multiple shipping packages.
+      var items=[].slice.call(lists[0].querySelectorAll('li'));
+      items.forEach(function(li){var label=li.querySelector('label');if(label&&/^Store pickup\s*[,·]/i.test(label.textContent.trim()))li.dataset.saPickup='true';});
+      if(!items.some(function(li){return li.dataset.saPickup;})||!items.some(function(li){return !li.dataset.saPickup;}))return;
+      var buttons=document.createElement('div');buttons.className='sa-delivery-tabs';buttons.setAttribute('role','group');buttons.setAttribute('aria-label','Delivery or store pickup');
+      var chosen=items.find(function(li){return !!li.querySelector('input:checked');});
+      function show(pickup,choose){
+        items.forEach(function(li){li.hidden=!!li.dataset.saPickup!==pickup;});
+        buttons.querySelectorAll('button').forEach(function(b,i){b.setAttribute('aria-pressed',String(pickup===(i===1)));});
+        var estimate=container.querySelector('.sa-delivery-estimate');if(estimate)estimate.hidden=pickup;
+        if(choose){var target=items.find(function(li){return !!li.dataset.saPickup===pickup&&li.querySelector('input:not(:disabled)');});var input=target&&target.querySelector('input');if(input&&!input.checked){input.checked=true;input.dispatchEvent(new Event('change',{bubbles:true}));}}
+      }
+      ['Courier delivery','Store pickup'].forEach(function(text,i){var b=document.createElement('button');b.type='button';b.textContent=text;b.addEventListener('click',function(){show(i===1,true);});buttons.appendChild(b);});
+      container.insertBefore(buttons,container.firstChild);show(!!(chosen&&chosen.dataset.saPickup),false);
+    }
+    function moveFinal(fresh){
+      var old=final.querySelector('.place-order');
+      if(old){
+        // Woo restores terms before updated_checkout. Its ID lookup can still
+        // see the moved old control, so carry each user's checkbox state forward.
+        fresh.querySelectorAll('input[type="checkbox"]').forEach(function(box){var prior=[].slice.call(old.querySelectorAll('input[type="checkbox"]')).find(function(el){return box.name?el.name===box.name:box.id&&el.id===box.id;});if(prior)box.checked=prior.checked;});
+        old.remove();
+      }
+      fresh.hidden=form.dataset.saActiveStep!==undefined&&form.dataset.saActiveStep!=='payment';final.appendChild(fresh);
+    }
+    function sync(){
+      // #payment and the review table are Woo AJAX fragments. Keep only the newest
+      // controls, including nonce/terms, and move them, never copy IDs or inputs.
+      var fresh=payment.querySelector('#payment .place-order');
+      if(fresh)moveFinal(fresh);
+      var review=layout.querySelector('#order_review .woocommerce-checkout-review-order-table');if(review)review.dataset.saFlowReady='true';
+      var rows=[].slice.call(layout.querySelectorAll('#order_review tr.woocommerce-shipping-totals'));
+      delivery.replaceChildren();
+      if(rows.length){
+        var table=document.createElement('table');table.className='sa-delivery-table';var tbody=document.createElement('tbody');table.appendChild(tbody);delivery.appendChild(table);
+        rows.forEach(function(row){
+          var selected=selectedLabel(row),replacement=document.createElement('tr');replacement.className='sa-shipping-selection';
+          var th=document.createElement('th');th.textContent='Delivery';var td=document.createElement('td');td.textContent=selected||'Choose at the delivery step';replacement.appendChild(th);replacement.appendChild(td);
+          row.replaceWith(replacement);tbody.appendChild(row);
+        });
+        compressEstimates(delivery);tabs(delivery);
+      }
+      summaries();
+    }
+    form.addEventListener('change',summaries);form.addEventListener('sa:stepchange',summaries);
+    // Do not clear moved shipping controls on unrelated repeated events. Woo's
+    // update replaces its table with new shipping rows before this handler runs.
+    function refreshed(){var review=layout.querySelector('#order_review .woocommerce-checkout-review-order-table');if(review&&!review.dataset.saFlowReady)sync();else{var fresh=payment.querySelector('#payment .place-order');if(fresh)moveFinal(fresh);summaries();}}
+    sync();
+    if(window.jQuery)jQuery(document.body).on('updated_checkout',refreshed);
+  }
+
   // Accessible, reversible checkout steps. Next never submits or pays.
   function saCheckoutSteps() {
     var panels=[].slice.call(document.querySelectorAll('[data-sa-checkout-panel]'));
     if(panels.length!==3)return;
     var keys=['contact','shipping','payment'],active=0,furthest=0;
-    var actions=document.createElement('div');actions.className='sa-checkout-step-actions';document.querySelector('form.checkout').appendChild(actions);
+    var actions=document.createElement('div');actions.className='sa-checkout-step-actions';(document.querySelector('.sa-checkout-final')||document.querySelector('form.checkout')).appendChild(actions);
     function body(p){return p.querySelector('.sa-checkout-section__body');}
-    function open(index,focus){active=index;actions.querySelectorAll('[data-sa-next-index]').forEach(function(n){n.hidden=Number(n.dataset.saNextIndex)!==index;});actions.hidden=index===2;furthest=Math.max(furthest,index);panels.forEach(function(p,i){body(p).hidden=i!==index;var edit=p.querySelector('[data-sa-edit-step]');edit.hidden=i===index||i>furthest;edit.setAttribute('aria-expanded',String(i===index));});
+    function open(index,focus){active=index;actions.querySelectorAll('[data-sa-next-index]').forEach(function(n){n.hidden=Number(n.dataset.saNextIndex)!==index;});actions.hidden=index===2;var place=document.querySelector('.sa-checkout-final > .place-order');if(place)place.hidden=index!==2;document.querySelector('form.checkout').dataset.saActiveStep=keys[index];furthest=Math.max(furthest,index);panels.forEach(function(p,i){body(p).hidden=i!==index;p.classList.toggle('is-active',i===index);p.classList.toggle('is-complete',i<index);var fold=p.querySelector('.sa-checkout-fold');if(fold)fold.hidden=i>=index;var edit=p.querySelector('[data-sa-edit-step]');edit.hidden=i>=index;edit.setAttribute('aria-expanded',String(i===index));});
       document.querySelectorAll('[data-sa-step]').forEach(function(el,i){el.classList.toggle('is-active',i===index);el.classList.toggle('is-done',i<index);el.setAttribute('aria-current',i===index?'step':'false');});
+      document.querySelector('form.checkout').dispatchEvent(new Event('sa:stepchange'));
       if(focus){var title=panels[index].querySelector('h2');title.setAttribute('tabindex','-1');title.focus({preventScroll:true});panels[index].scrollIntoView({behavior:'smooth',block:'start'});}
     }
     function valid(p){var fields=[].slice.call(p.querySelectorAll('input,select,textarea'));var bad=fields.find(function(e){if(e.disabled||e.type==='hidden'||(!e.getClientRects().length&&!(e.tagName==='SELECT'&&e.classList.contains('select2-hidden-accessible')&&e.parentElement.getClientRects().length))||e.closest('.shipping_address')&& !document.querySelector('#ship-to-different-address-checkbox:checked'))return false;var row=e.closest('.form-row'),required=e.required||row&&row.classList.contains('validate-required');return required&&!String(e.value||'').trim()||e.type==='email'&&e.value&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.value);});if(bad){bad.setAttribute('aria-invalid','true');bad.focus();var row=bad.closest('.form-row');if(row)row.classList.add('woocommerce-invalid');return false;}return true;}
-    panels.forEach(function(p,i){var h=p.querySelector('.sa-checkout-section__head'),b=body(p);b.id=b.id||'sa-checkout-step-body-'+keys[i];var edit=document.createElement('button');edit.type='button';edit.className='sa-checkout-edit-step';edit.textContent='Edit';edit.setAttribute('data-sa-edit-step',keys[i]);edit.setAttribute('aria-controls',b.id);edit.addEventListener('click',function(){if(i<=furthest)open(i,true);});h.appendChild(edit);
+    panels.forEach(function(p,i){var h=p.querySelector('.sa-checkout-section__head'),b=body(p);b.id=b.id||'sa-checkout-step-body-'+keys[i];var edit=document.createElement('button');edit.type='button';edit.className='sa-checkout-edit-step';edit.textContent='Change';edit.setAttribute('aria-label','Change '+keys[i]+' details');edit.setAttribute('data-sa-edit-step',keys[i]);edit.setAttribute('aria-controls',b.id);edit.addEventListener('click',function(){if(i<active)open(i,true);});h.appendChild(edit);var fold=document.createElement('p');fold.className='sa-checkout-fold';fold.hidden=true;h.insertAdjacentElement('afterend',fold);
       if(i<2){var next=document.createElement('button');next.type='button';next.className='sa-checkout-next';next.dataset.saNextIndex=String(i);next.textContent=i===0?'Next: Shipping':'Next: Payment';next.addEventListener('click',function(){if(i===active&&valid(p))open(i+1,true);});actions.appendChild(next);}
     });
     document.querySelector('.sa-checkout-page').classList.add('sa-checkout-is-stepped');open(0,false);
@@ -460,6 +550,7 @@
     }
   }
 
+  saCheckoutExperience();
   saCheckoutSteps();
   saCheckoutStickyPay();
 

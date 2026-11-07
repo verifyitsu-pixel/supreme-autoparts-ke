@@ -19,6 +19,7 @@ $free_ship = function_exists('sa_theme_cart_has_free_shipping') && sa_theme_cart
     <?php if ($shop_url) : ?>
       <a class="sa-cart-hero__shop" href="<?php echo esc_url($shop_url); ?>"><?php esc_html_e('Continue shopping', 'supreme-autoparts'); ?></a>
     <?php endif; ?>
+    <p class="sa-cart-hero__lead"><?php esc_html_e('Review your items, then choose delivery and payment at checkout.', 'supreme-autoparts'); ?></p>
   </header>
 
   <div class="sa-cart-layout">

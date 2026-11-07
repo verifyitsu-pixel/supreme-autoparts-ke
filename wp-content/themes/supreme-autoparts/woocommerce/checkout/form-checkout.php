@@ -64,7 +64,7 @@ $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('sh
                 <p class="sa-checkout-section__sub"><?php
                 $sa_cc = function_exists('sa_geo_country') ? sa_geo_country() : 'KE';
                 if ($sa_cc === 'KE') {
-                    esc_html_e('Enter your delivery address. Choose Fargo Courier delivery or free store pickup.', 'supreme-autoparts');
+                    esc_html_e('Enter your delivery address. Choose a courier or free store pickup.', 'supreme-autoparts');
                 } elseif ($sa_cc === 'US') {
                     esc_html_e('Enter your US delivery address. Shipping options and prices show below.', 'supreme-autoparts');
                 } else {
