@@ -173,6 +173,8 @@ final class Whop_Open_Pay {
                     <input type="hidden" name="action" value="<?php echo esc_attr(self::ACTION); ?>" />
                     <input type="hidden" name="currency" value="<?php echo esc_attr($cur); ?>" />
                     <?php echo $nonce; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                    <input type="hidden" name="sa_intent" value="" data-sa-intent>
+                    <script>(function(){var f=document.querySelector('input[data-sa-intent]');if(!f||!window.crypto||!crypto.getRandomValues)return;var a=new Uint8Array(16);crypto.getRandomValues(a);f.value=Array.prototype.map.call(a,function(b){return('0'+b.toString(16)).slice(-2)}).join('');})();</script>
 
                     <label class="sa-open-pay__label" for="sa_open_pay_email">
                         <?php echo esc_html__('Email (for receipt)', 'whop-payments'); ?>
@@ -574,6 +576,19 @@ final class Whop_Open_Pay {
         if (empty($gws[$gateway])) {
             self::redirect_error($pay_url, __('Online payments are temporarily unavailable. Please contact us on WhatsApp.', 'whop-payments'));
         }
+        $intent = isset($_POST['sa_intent']) ? sanitize_text_field(wp_unslash((string) $_POST['sa_intent'])) : '';
+        if ($gateway === 'paystack') {
+            $url = self::paystack_handoff($amount, $email, $note, $currency, $intent, $gws['paystack'] ?? null);
+            if ($url[0] === 'error') {
+                self::redirect_error($pay_url, $url[1]);
+            }
+            if ($url[0] === 'external') {
+                wp_redirect($url[1], 302, 'Supreme Open Pay');
+                exit;
+            }
+            wp_safe_redirect($url[1]);
+            exit;
+        }
         $order = self::create_pending_order($amount, $email, $note, [], $currency, $gateway);
         if (!$order instanceof WC_Order) {
             self::redirect_error($pay_url, __('We could not start your payment. Please try again.', 'whop-payments'));
@@ -582,6 +597,128 @@ final class Whop_Open_Pay {
         $order->save();
         wp_safe_redirect($order->get_checkout_payment_url());
         exit;
+    }
+
+    /** Exact hosted Paystack page: https, host checkout.paystack.com, no userinfo, no port. */
+    public static function is_safe_paystack_url($url): bool {
+        if (!is_string($url) || $url === '' || strlen($url) > 2048 || preg_match('/[\x00-\x20\x7f\\\\]/', $url)) {
+            return false;
+        }
+        $p = parse_url($url);
+        return is_array($p)
+            && ($p['scheme'] ?? '') === 'https'
+            && ($p['host'] ?? '') === 'checkout.paystack.com'
+            && !isset($p['user']) && !isset($p['pass']) && !isset($p['port']) && !isset($p['fragment']);
+    }
+
+    private static function claim_key(string $intent): string {
+        return 'sa_op_i_' . substr(hash('sha256', $intent), 0, 40);
+    }
+
+    /** Atomic: one INSERT IGNORE on the unique option_name. 1 row = this request owns the intent. */
+    public static function claim_intent(string $key, string $value): bool {
+        global $wpdb;
+        $n = $wpdb->query($wpdb->prepare("INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", $key, $value));
+        return (int) $n === 1;
+    }
+
+    private static function claim_value(string $key): string {
+        global $wpdb;
+        return (string) $wpdb->get_var($wpdb->prepare("SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $key));
+    }
+
+    private static function set_claim(string $key, string $from, string $to): bool {
+        global $wpdb;
+        return (int) $wpdb->query($wpdb->prepare("UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s", $to, $key, $from)) === 1;
+    }
+
+    private static function drop_claim(string $key, string $value): void {
+        global $wpdb;
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s", $key, $value));
+    }
+
+    /**
+     * Paystack only. Returns [kind, url|message]: kind is external (hosted page), internal (order-pay) or error.
+     * The hosted-page initialize runs at most once per intent. Any doubt falls back to the same order's
+     * order-pay page, never to a second order or a second initialize.
+     */
+    public static function paystack_handoff(float $amount, string $email, string $note, string $currency, string $intent, $gateway): array {
+        $fail = __('We could not start your payment. Please try again.', 'whop-payments');
+        $valid_intent = (bool) preg_match('/^[a-f0-9]{32}$/D', $intent);
+        $fp = hash('sha256', implode('|', [strtolower($email), number_format($amount, 2, '.', ''), $currency, 'paystack', $note]));
+        $key = $valid_intent ? self::claim_key($intent) : '';
+
+        if ($valid_intent) {
+            $mine = 'p|' . $fp . '|' . time();
+            if (!self::claim_intent($key, $mine)) {
+                $cur = self::claim_value($key);
+                $parts = explode('|', $cur);
+                if (count($parts) !== 3 || $parts[1] !== $fp) {
+                    return ['error', __('This payment form was already used with different details. Please reload the page and try again.', 'whop-payments')];
+                }
+                if ($parts[0] === 'o') {
+                    $order = wc_get_order((int) $parts[2]);
+                    if (!$order instanceof WC_Order || $order->get_meta('_sa_open_pay_fp') !== $fp || !$order->needs_payment() || $order->get_payment_method() !== 'paystack') {
+                        return ['error', __('This payment was already started. Please check your email or contact us on WhatsApp before paying again.', 'whop-payments')];
+                    }
+                    $hosted = (string) $order->get_meta('_sa_op_hosted_url');
+                    return self::is_safe_paystack_url($hosted) ? ['external', $hosted] : ['internal', $order->get_checkout_payment_url()];
+                }
+                // Another request holds the intent, or it crashed before the order existed.
+                if ((int) $parts[2] > time() - 120) {
+                    return ['error', __('Your payment is already being prepared. Please wait a moment, then check your email before trying again.', 'whop-payments')];
+                }
+                $found = wc_get_orders(['limit' => 1, 'return' => 'ids', 'meta_query' => [['key' => '_sa_open_pay_intent', 'value' => hash('sha256', $intent)]]]);
+                if (!empty($found)) {
+                    $order = wc_get_order((int) $found[0]);
+                    return $order instanceof WC_Order ? ['internal', $order->get_checkout_payment_url()] : ['error', $fail];
+                }
+                self::drop_claim($key, $cur);
+                if (!self::claim_intent($key, $mine)) {
+                    return ['error', $fail];
+                }
+            }
+        }
+
+        $order = self::create_pending_order($amount, $email, $note, [], $currency, 'paystack');
+        if (!$order instanceof WC_Order) {
+            if ($valid_intent) {
+                self::drop_claim($key, $mine);
+            }
+            return ['error', $fail];
+        }
+        if ($valid_intent) {
+            $order->update_meta_data('_sa_open_pay_intent', hash('sha256', $intent));
+            $order->update_meta_data('_sa_open_pay_fp', $fp);
+        }
+        $order->add_order_note(sprintf('Open-pay: %s %s, customer selected paystack.', $currency, number_format($amount, 2)));
+        $order->save();
+        if ($valid_intent) {
+            self::set_claim($key, $mine, 'o|' . $fp . '|' . $order->get_id());
+        }
+        $order_pay = $order->get_checkout_payment_url();
+        if (!$valid_intent || !is_object($gateway) || !method_exists($gateway, 'process_redirect_payment_option')
+            || $order->get_currency() !== 'KES' || $order->get_payment_method() !== 'paystack' || !$order->needs_payment() || (float) $order->get_total() <= 0) {
+            return ['internal', $order_pay];
+        }
+        try {
+            $res = $gateway->process_redirect_payment_option($order->get_id());
+        } catch (Throwable $e) {
+            $res = null;
+        }
+        if (function_exists('wc_clear_notices')) {
+            wc_clear_notices();
+        }
+        $hosted = is_array($res) && ($res['result'] ?? '') === 'success' ? ($res['redirect'] ?? '') : '';
+        if (!self::is_safe_paystack_url($hosted)) {
+            $order->add_order_note('Open-pay: Paystack payment page could not be prepared; customer sent to the order payment page.');
+            $order->save();
+            return ['internal', $order_pay];
+        }
+        $order->update_meta_data('_sa_op_hosted_url', $hosted);
+        $order->add_order_note('Open-pay: Paystack payment page prepared; customer redirected to Paystack.');
+        $order->save();
+        return ['external', $hosted];
     }
 
     /**
