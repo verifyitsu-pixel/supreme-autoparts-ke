@@ -675,8 +675,8 @@ final class Whop_Open_Pay {
      * page, where paying is a deliberate customer action.
      */
     public static function paystack_handoff(float $amount, string $email, string $note, string $currency, string $intent, $gateway): array {
-        $fail    = __('We could not start your payment. Please check your email, then reload this page before trying again.', 'whop-payments');
-        $busy    = __('Your payment is already being prepared. Please wait a moment and check your email before trying again.', 'whop-payments');
+        $fail    = __('We could not confirm that your payment page was prepared. Please do not pay again or start a new payment yet. Check your email, or contact us and we will confirm the status.', 'whop-payments');
+        $busy    = __('Your payment is already being prepared. Please do not pay again or start a new payment; check your email or contact us if it does not arrive.', 'whop-payments');
         $now     = time();
         if (!self::intent_is_fresh($intent, $now)) {
             return ['error', __('Please reload this page and try again. Your payment was not started.', 'whop-payments')];
@@ -693,7 +693,7 @@ final class Whop_Open_Pay {
                 return ['error', $fail];
             }
             if ($c['fp'] !== $fp) {
-                return ['error', __('This payment form was already used with different details. Please reload the page and try again.', 'whop-payments')];
+                return ['error', __('This payment form was already used with different details. Please do not start another payment yet; contact us and we will confirm the status.', 'whop-payments')];
             }
             if ($c['s'] !== 'r' && $c['s'] !== 'u') {
                 return ['error', $busy];
