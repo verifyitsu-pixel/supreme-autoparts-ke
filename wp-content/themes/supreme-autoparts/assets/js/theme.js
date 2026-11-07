@@ -138,43 +138,72 @@
     }, 350);
   }
 
+  // Hold payment from the first quantity edit, including its debounce window.
+  // Serialize writes so an older response cannot overwrite a newer quantity.
+  var saCheckoutQtyState = { pending: 0, requests: 0, failed: false, queue: Promise.resolve() };
+  function saLockCheckoutQty() {
+    document.documentElement.classList.add('sa-checkout-qty-busy');
+    var form = document.querySelector('form.checkout');
+    if (!form) return;
+    form.dataset.saTotalsBusy = 'true';
+    var pay = form.querySelector('#place_order');
+    if (pay) { pay.disabled = true; pay.setAttribute('aria-disabled', 'true'); }
+    var recovery = form.querySelector('.sa-checkout-recovery');
+    if (recovery) recovery.hidden = false;
+  }
+  function saFailCheckoutQty() {
+    saCheckoutQtyState.failed = true;
+    var form = document.querySelector('form.checkout');
+    if (form) {
+      form.dataset.saQtyFailed = 'true';
+      var status = form.querySelector('.sa-checkout-recovery p');
+      if (status) status.textContent = "We couldn't update the quantity. Reload checkout before paying.";
+    }
+    saLockCheckoutQty();
+  }
   function saCheckoutQtyUpdate(cartKey, qty) {
     var cfg = window.saTheme || {};
     var url = cfg.ajaxUrl || '/wp-admin/admin-ajax.php';
-    var body = new FormData();
-    body.append('action', 'sa_checkout_update_qty');
-    body.append('nonce', cfg.checkoutQtyNonce || '');
-    body.append('cart_key', cartKey);
-    body.append('qty', String(qty));
-    document.documentElement.classList.add('sa-checkout-qty-busy');
-    return fetch(url, { method: 'POST', body: body, credentials: 'same-origin' })
-      .then(function (r) { return r.json(); })
-      .then(function (json) {
+    saLockCheckoutQty();
+    saCheckoutQtyState.requests++;
+    saCheckoutQtyState.queue = saCheckoutQtyState.queue.then(function () {
+      if (saCheckoutQtyState.failed) return;
+      var body = new FormData();
+      body.append('action', 'sa_checkout_update_qty');
+      body.append('nonce', cfg.checkoutQtyNonce || '');
+      body.append('cart_key', cartKey);
+      body.append('qty', String(qty));
+      return fetch(url, { method: 'POST', body: body, credentials: 'same-origin' })
+        .then(function (r) { if (!r.ok) throw new Error('Quantity update failed'); return r.json(); })
+        .then(function (json) {
+          if (!json || !json.success) { saFailCheckoutQty(); return; }
+          if (json.data && json.data.empty && json.data.redirect) {
+            window.location.href = json.data.redirect;
+          }
+        }).catch(saFailCheckoutQty);
+    }).then(function () {
+      saCheckoutQtyState.requests--;
+      if (saCheckoutQtyState.failed || saCheckoutQtyState.pending || saCheckoutQtyState.requests) return;
+      // Release only the quantity-write lock. The totals lock remains until Woo
+      // confirms a successful authoritative update_checkout response.
+      if (window.jQuery) {
         document.documentElement.classList.remove('sa-checkout-qty-busy');
-        if (!json || !json.success) {
-          var msg = (json && json.data && json.data.message) || (cfg.i18n && cfg.i18n.qtyUpdateFailed) || 'Update failed';
-          if (window.console) console.warn('[sa] checkout qty', msg);
-          return;
-        }
-        if (json.data && json.data.empty && json.data.redirect) {
-          window.location.href = json.data.redirect;
-          return;
-        }
-        if (window.jQuery) {
-          jQuery(document.body).trigger('update_checkout');
-        }
-      })
-      .catch(function () {
-        document.documentElement.classList.remove('sa-checkout-qty-busy');
-      });
+        jQuery(document.body).trigger('update_checkout');
+      } else saFailCheckoutQty();
+    });
+    return saCheckoutQtyState.queue;
   }
 
   function saScheduleCheckoutQty(wrap) {
     var key = wrap.getAttribute('data-sa-checkout-qty');
     var input = wrap.querySelector('input.qty');
     if (!key || !input) return;
+    saLockCheckoutQty();
+    if (!wrap.__saQtyPending) { wrap.__saQtyPending = true; saCheckoutQtyState.pending++; }
     clearTimeout(wrap.__saQtyT);
     wrap.__saQtyT = setTimeout(function () {
+      wrap.__saQtyPending = false;
+      saCheckoutQtyState.pending--;
       var q = parseFloat(input.value);
       if (isNaN(q)) q = 1;
       saCheckoutQtyUpdate(key, q);
@@ -359,7 +388,7 @@
     if (window.jQuery) {
       jQuery(document.body).on('update_checkout', function () { form.dataset.saTotalsBusy='true';sync(); });
       jQuery(document.body).on('updated_checkout', function (event, data) {
-        if(data&&data.result==='success')form.dataset.saTotalsBusy='false';
+        if(data&&data.result==='success'&&!document.documentElement.classList.contains('sa-checkout-qty-busy')&&form.dataset.saQtyFailed!=='true')form.dataset.saTotalsBusy='false';
         box = form.querySelector('[data-sa-terms-checkbox], #terms') || document.querySelector('[data-sa-terms-checkbox], #terms');
         btn = document.querySelector('#place_order');
         hint = document.querySelector('[data-sa-terms-hint]');

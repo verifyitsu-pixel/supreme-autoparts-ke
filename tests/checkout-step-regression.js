@@ -13,7 +13,7 @@ assert(experience.includes("if(review&&!review.dataset.saFlowReady)sync()"));
 assert(css.includes('body.woocommerce-cart .sa-cart-sticky-bar{display:none!important}'));
 assert(css.includes('.sa-checkout-refreshed .sa-checkout-final{grid-column:1;grid-row:3}'));
 const assets=fs.readFileSync(__dirname+'/../wp-content/themes/supreme-autoparts/inc/assets.php','utf8');
-assert(assets.includes("SA_THEME_VERSION . '.checkout7'"));assert(assets.includes("SA_THEME_VERSION . '.cu15'"));
+assert(assets.includes("SA_THEME_VERSION . '.checkout8'"));assert(assets.includes("SA_THEME_VERSION . '.cu15'"));
 console.log('PASS moved native fragment controls, terms-state retention, KE-only single-package tabs, exact known-estimate compression, cache keys, final mobile CTA and no network/order side effects');
 
 assert(f.includes('edit.hidden=i>=index'));assert(f.includes('if(i<active)open(i,true)'));console.log('PASS Change only for completed earlier steps, never a future step bypass');
@@ -28,3 +28,5 @@ assert(experience.includes("layout.querySelector('.sa-checkout-layout__summary')
 assert(experience.includes("shipping.insertBefore(station,notes)"));
 assert(terms.includes('stationOK'));assert(terms.includes('Reload checkout'));
 console.log('PASS summary-local final action, pickup selector in shipping, station readiness guard and safe reload');
+
+require('./checkout-quantity-guard-regression.cjs');
