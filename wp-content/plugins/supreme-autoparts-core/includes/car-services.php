@@ -1671,9 +1671,16 @@ add_filter('woocommerce_order_needs_payment', static function ($needs, $order) {
 
 
 add_action('woocommerce_before_calculate_totals', static function ($cart): void {
-    $usd = sa_svc_fee_usd();
+    // The booking fee (and its FX lookup) is only needed when a booking line is in the cart.
+    $usd = false;
     foreach ($cart->get_cart() as $item) {
-        if (!empty($item['sa_booking']) && $usd !== null) {
+        if (empty($item['sa_booking'])) {
+            continue;
+        }
+        if ($usd === false) {
+            $usd = sa_svc_fee_usd();
+        }
+        if ($usd !== null) {
             $item['data']->set_price($usd);
         }
     }
