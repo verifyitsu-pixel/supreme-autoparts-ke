@@ -747,10 +747,10 @@ final class Whop_Open_Pay {
         }
         $hosted = is_array($res) && ($res['result'] ?? '') === 'success' ? ($res['redirect'] ?? '') : '';
         if (!self::is_safe_paystack_url($hosted)) {
-            $order->add_order_note('Open-pay: Paystack payment page could not be prepared (outcome at Paystack unknown); customer sent to the order payment page.');
+            // Failure or an unusable response is not proof Paystack did nothing: stay in the uncertain state (i) and fail closed.
+            $order->add_order_note('Open-pay: Paystack payment page could not be confirmed (outcome at Paystack unknown); no second attempt is made automatically. Check Paystack before any action.');
             $order->save();
-            self::cas($key, $i, $u);
-            return ['internal', $order_pay];
+            return ['error', $fail];
         }
         $order->update_meta_data('_sa_op_hosted_url', $hosted);
         $order->add_order_note('Open-pay: Paystack payment page prepared; customer redirected to Paystack.');

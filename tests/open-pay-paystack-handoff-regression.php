@@ -142,15 +142,20 @@ try { H(11.0, 'a@x.invalid', $id7, $g); } catch (Error $e) {}
 $g->hook = null;
 ok(state($id7) === 'i', 'crash inside provider call leaves state i');
 ok(H(11.0, 'a@x.invalid', $id7, $g)[0] === 'error' && count($orders) === $b + 1 && $g->calls === $c + 1, 'retry after crash: no second order, no second initialize');
-// L. unsafe or failed provider results: state u, same order's order-pay page, later retries same order
+// L. unsafe or failed provider results are uncertain (state i): fail closed, never the order-pay page, no second initialize
 foreach (['http', 'evil', 'throw', 'null'] as $mode) {
-    $g->mode = $mode; $b = count($orders); $id = intent();
+    $g->mode = $mode; $b = count($orders); $id = intent(); $c = $g->calls;
     $r = H(10.0, 'a@x.invalid', $id, $g, $mode);
-    ok($r[0] === 'internal' && strpos($r[1], '/order-pay/') !== false && count($orders) === $b + 1 && state($id) === 'u', "fallback $mode");
+    ok($r[0] === 'error' && count($orders) === $b + 1 && state($id) === 'i' && $g->calls === $c + 1, "uncertain $mode fails closed");
     ok($orders[9000 + count($orders)]->get_meta('_sa_op_hosted_url') === '', "no hosted url for $mode");
-    $c = $g->calls; $r2 = H(10.0, 'a@x.invalid', $id, $g, $mode);
-    ok($r2 === $r && $g->calls === $c && count($orders) === $b + 1, "retry after $mode goes to the same order, no second initialize");
+    $r2 = H(10.0, 'a@x.invalid', $id, $g, $mode);
+    ok($r2[0] === 'error' && $g->calls === $c + 1 && count($orders) === $b + 1, "retry after $mode: no second initialize or order");
 }
+// L2. pre-initialize ineligibility (state u) routes to the same order's order-pay page only
+$id = intent(); $b = count($orders); $c = $g->calls;
+$r = H(10.0, 'a@x.invalid', $id, new stdClass);
+ok($r[0] === 'internal' && strpos($r[1], '/order-pay/') !== false && state($id) === 'u' && count($orders) === $b + 1, 'ineligible gateway before initialize -> same order order-pay');
+ok(H(10.0, 'a@x.invalid', $id, $g)[1] === $r[1] && $g->calls === $c && count($orders) === $b + 1, 'state u retry goes to the same order, no initialize');
 ok($GLOBALS['notices_cleared'] > 0, 'gateway notices cleared');
 $g->mode = 'ok';
 // M. paid or cancelled order behind a ready claim is refused
