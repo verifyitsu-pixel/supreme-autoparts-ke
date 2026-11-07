@@ -449,3 +449,13 @@ body:has(.sa-purchase-header) .woocommerce-message[hidden]{display:none!importan
 .sa-checkout-onepage .sa-payment-gate-note{background:#f8f9fa;border:1px solid #dadce0;padding:12px;border-radius:8px;color:#202124}
 .sa-pickup-context{margin:0 24px 24px;padding:16px;background:#f8f9fa;border-radius:8px;font-size:16px;line-height:1.6;white-space:pre-line}.sa-pickup-context[hidden]{display:none!important}
 @media(max-width:767px){.sa-pickup-context{margin:0 16px 24px}}
+/* Keep quantity and item amount on one row instead of a tall phone stack. */
+@media(max-width:767px){
+ .sa-cart-page.sa-cart-coherent .sa-cart-line__body{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;column-gap:8px!important;row-gap:8px!important;align-items:center!important}
+ .sa-cart-page.sa-cart-coherent .sa-cart-line__title,.sa-cart-page.sa-cart-coherent .sa-cart-line__sku,.sa-cart-page.sa-cart-coherent .variation{grid-column:1/-1!important;margin:0!important}
+ .sa-cart-page.sa-cart-coherent .sa-cart-line__qty{grid-column:1!important;grid-row:auto!important;gap:4px!important;margin:4px 0 0!important}
+ .sa-cart-page.sa-cart-coherent .sa-cart-line__price{grid-column:2!important;grid-row:auto!important;text-align:right!important;font-size:16px!important;margin:4px 0 0!important}
+ .sa-cart-page.sa-cart-coherent .sa-cart-line__links{grid-column:1/-1!important;justify-content:flex-end!important;margin:0!important;min-height:32px}
+ .sa-cart-page.sa-cart-coherent .sa-cart-line__title{font-size:17px!important;line-height:1.45!important}
+ .sa-cart-page.sa-cart-coherent .sa-cart-line__qty-label{font-size:16px!important}
+}
