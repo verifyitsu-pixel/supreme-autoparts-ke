@@ -42,6 +42,20 @@ if ($GLOBALS['sa_st_route'] !== '') {
     add_action('wp_loaded', $sa_st_mark('loaded'), PHP_INT_MAX);
     add_action('woocommerce_checkout_update_order_review', $sa_st_mark('review_start'), 0);
     add_action('woocommerce_after_calculate_totals', $sa_st_mark('totals_done'), PHP_INT_MAX);
+    $GLOBALS['sa_st_wpq'] = ['sum' => 0.0, 'n' => 0, 'start' => 0.0];
+    add_filter('posts_pre_query', static function ($posts) {
+        $GLOBALS['sa_st_wpq']['start'] = microtime(true);
+        return $posts;
+    }, 0);
+    add_filter('the_posts', static function ($posts) {
+        $w = &$GLOBALS['sa_st_wpq'];
+        if ($w['start'] > 0.0) {
+            $w['sum'] += microtime(true) - $w['start'];
+            $w['n']++;
+            $w['start'] = 0.0;
+        }
+        return $posts;
+    }, PHP_INT_MAX);
     ob_start(static function (string $buffer): string {
         if (headers_sent()) {
             return $buffer;
@@ -66,6 +80,9 @@ if ($GLOBALS['sa_st_route'] !== '') {
                 $parts[] = 'review_totals;dur=' . $ms($m['review_start'], $m['totals_done']);
             }
         }
+        $w = $GLOBALS['sa_st_wpq'];
+        $parts[] = 'wp_query_sum;dur=' . number_format($w['sum'] * 1000, 1, '.', '');
+        $parts[] = 'wp_query_n;desc="' . (int) $w['n'] . '"';
         $queries = isset($GLOBALS['wpdb']) && isset($GLOBALS['wpdb']->num_queries) ? (int) $GLOBALS['wpdb']->num_queries : 0;
         $parts[] = 'queries;desc="' . $queries . '"';
         $parts[] = 'peak_mem;desc="' . (int) round(memory_get_peak_usage(true) / 1048576) . 'MB"';
