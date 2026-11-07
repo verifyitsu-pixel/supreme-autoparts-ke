@@ -336,10 +336,17 @@
     var hint = form.querySelector('[data-sa-terms-hint]');
     if (!box || !btn || form.dataset.saTermsBound) return;
     form.dataset.saTermsBound='true';
+    var recovery=document.createElement('div');recovery.className='sa-checkout-recovery';recovery.hidden=true;
+    var status=document.createElement('p');status.textContent='Updating your order total. Please wait before placing your order.';
+    var reload=document.createElement('button');reload.type='button';reload.textContent='Reload checkout';reload.addEventListener('click',function(){window.location.reload();});recovery.append(status,reload);(form.querySelector('.sa-checkout-final')||form).prepend(recovery);
+
 
     function sync() {
-      var ok = !!box.checked && form.dataset.saTotalsBusy!=='true' && !document.documentElement.classList.contains('sa-checkout-qty-busy');
+      var station=form.querySelector('#sa_pickup_station');
+      var stationOK=!station||!station.required||(!station.disabled&&!!station.value);
+      var ok = !!box.checked && stationOK && form.dataset.saTotalsBusy!=='true' && !document.documentElement.classList.contains('sa-checkout-qty-busy');
       btn.disabled = !ok;
+      recovery.hidden=form.dataset.saTotalsBusy!=='true';
       btn.setAttribute('aria-disabled', ok ? 'false' : 'true');
       if (hint) hint.hidden = ok;
     }
@@ -347,6 +354,7 @@
     sync();
     if(window.MutationObserver)new MutationObserver(sync).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
     box.addEventListener('change', sync);
+    form.addEventListener('change',function(e){if(e.target&&/sa_pickup_station|shipping_method/.test(e.target.name||''))sync();});
     // Woo updates payment fragment via AJAX — rebind after refresh.
     if (window.jQuery) {
       jQuery(document.body).on('update_checkout', function () { form.dataset.saTotalsBusy='true';sync(); });
@@ -397,12 +405,14 @@
     var form=document.querySelector('form.checkout'),layout=document.querySelector('.sa-checkout-layout');
     if(!form||!layout)return;
     var main=layout.querySelector('.sa-checkout-layout__main');
+    document.body.classList.add('sa-purchase-workspace');
     var payment=layout.querySelector('[data-sa-checkout-panel="payment"]');
     var shipping=layout.querySelector('[data-sa-checkout-panel="shipping"] .sa-checkout-section__body');
     if(!main||!payment||!shipping)return;
     var delivery=document.createElement('div');delivery.className='sa-delivery-options';var notes=shipping.querySelector('.woocommerce-additional-fields');shipping.insertBefore(delivery,notes);
+    var station=document.getElementById('sa_pickup_station_field');if(station)shipping.insertBefore(station,notes);
     var comments=shipping.querySelector('#order_comments_field');if(comments&&!comments.classList.contains('validate-required')){var extra=document.createElement('details');extra.className='sa-checkout-extras';var toggle=document.createElement('summary');toggle.textContent='Add order notes (optional)';extra.appendChild(toggle);comments.replaceWith(extra);extra.appendChild(comments);}
-    var final=document.createElement('div');final.className='sa-checkout-final';layout.appendChild(final);
+    var final=document.createElement('div');final.className='sa-checkout-final';(layout.querySelector('.sa-checkout-layout__summary')||layout).appendChild(final);
     main.appendChild(payment);
     form.classList.add('sa-checkout-refreshed');
     function field(id){var el=document.getElementById(id);return el?String(el.value||'').trim():'';}
@@ -413,7 +423,7 @@
       var contact=document.querySelector('[data-sa-checkout-panel="contact"] .sa-checkout-fold');
       if(contact)contact.textContent=[field('billing_first_name')+' '+field('billing_last_name'),field('billing_email'),field('billing_address_1'),field('billing_city')].map(function(s){return s.trim();}).filter(Boolean).join(' · ');
       var summary=document.querySelector('[data-sa-checkout-panel="shipping"] .sa-checkout-fold');
-      if(summary)summary.textContent=selectedLabel(delivery)||'Review your delivery address and shipping options.';
+      if(summary){var station=document.getElementById('sa_pickup_station');summary.textContent=[selectedLabel(delivery),station&&station.value?station.options[station.selectedIndex].textContent:''].filter(Boolean).join(' · ')||'Review your delivery address and shipping options.';}
     }
     function compressEstimates(container){
       // Only remove a literally identical, known estimate, and only from courier labels.
@@ -462,6 +472,7 @@
       if(fresh)moveFinal(fresh);
       var review=layout.querySelector('#order_review .woocommerce-checkout-review-order-table');if(review)review.dataset.saFlowReady='true';
       var rows=[].slice.call(layout.querySelectorAll('#order_review tr.woocommerce-shipping-totals'));
+      var stationField=document.getElementById('sa_pickup_station_field');if(stationField&&delivery.contains(stationField))shipping.appendChild(stationField);
       delivery.replaceChildren();
       if(rows.length){
         var table=document.createElement('table');table.className='sa-delivery-table';var tbody=document.createElement('tbody');table.appendChild(tbody);delivery.appendChild(table);
@@ -471,6 +482,7 @@
           row.replaceWith(replacement);tbody.appendChild(row);
         });
         compressEstimates(delivery);tabs(delivery);
+        delivery.querySelectorAll('input.shipping_method').forEach(function(input){var brand=/fargo/.test(input.value)?'fargo':/g4s/.test(input.value)?'g4s':/speedaf/.test(input.value)?'speedaf':'';var label=input.closest('li').querySelector('label');if(brand&&label){if(/_pickup/.test(input.value)){var title=label.querySelector('.sa-ship__name');if(title&&title.firstChild&&title.firstChild.nodeType===3)title.firstChild.nodeValue=title.firstChild.nodeValue.replace(/pickup at station\s*\([^)]*\)/i,'pickup at station');}var img=document.createElement('img');img.className='sa-carrier-logo';img.src='/wp-content/themes/supreme-autoparts/assets/couriers/'+brand+'.png';img.alt=brand==='g4s'?'G4S':brand==='fargo'?'Fargo Courier':'Speedaf';label.prepend(img);}});
       }
       summaries();
     }
@@ -494,7 +506,7 @@
       document.querySelector('form.checkout').dispatchEvent(new Event('sa:stepchange'));
       if(focus){var title=panels[index].querySelector('h2');title.setAttribute('tabindex','-1');title.focus({preventScroll:true});panels[index].scrollIntoView({behavior:'smooth',block:'start'});}
     }
-    function valid(p){var fields=[].slice.call(p.querySelectorAll('input,select,textarea'));var bad=fields.find(function(e){if(e.disabled||e.type==='hidden'||(!e.getClientRects().length&&!(e.tagName==='SELECT'&&e.classList.contains('select2-hidden-accessible')&&e.parentElement.getClientRects().length))||e.closest('.shipping_address')&& !document.querySelector('#ship-to-different-address-checkbox:checked'))return false;var row=e.closest('.form-row'),required=e.required||row&&row.classList.contains('validate-required');return required&&!String(e.value||'').trim()||e.type==='email'&&e.value&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.value);});if(bad){bad.setAttribute('aria-invalid','true');bad.focus();var row=bad.closest('.form-row');if(row)row.classList.add('woocommerce-invalid');return false;}return true;}
+    function valid(p){var station=p.querySelector('#sa_pickup_station');if(station&&station.required&&(station.disabled||!station.value)){station.setAttribute('aria-invalid','true');if(!station.disabled)station.focus();return false;}var fields=[].slice.call(p.querySelectorAll('input,select,textarea'));var bad=fields.find(function(e){if(e.disabled||e.type==='hidden'||(!e.getClientRects().length&&!(e.tagName==='SELECT'&&e.classList.contains('select2-hidden-accessible')&&e.parentElement.getClientRects().length))||e.closest('.shipping_address')&& !document.querySelector('#ship-to-different-address-checkbox:checked'))return false;var row=e.closest('.form-row'),required=e.required||row&&row.classList.contains('validate-required');return required&&!String(e.value||'').trim()||e.type==='email'&&e.value&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.value);});if(bad){bad.setAttribute('aria-invalid','true');bad.focus();var row=bad.closest('.form-row');if(row)row.classList.add('woocommerce-invalid');return false;}return true;}
     panels.forEach(function(p,i){var h=p.querySelector('.sa-checkout-section__head'),b=body(p);b.id=b.id||'sa-checkout-step-body-'+keys[i];var edit=document.createElement('button');edit.type='button';edit.className='sa-checkout-edit-step';edit.textContent='Change';edit.setAttribute('aria-label','Change '+keys[i]+' details');edit.setAttribute('data-sa-edit-step',keys[i]);edit.setAttribute('aria-controls',b.id);edit.addEventListener('click',function(){if(i<active)open(i,true);});h.appendChild(edit);var fold=document.createElement('p');fold.className='sa-checkout-fold';fold.hidden=true;h.insertAdjacentElement('afterend',fold);
       if(i<2){var next=document.createElement('button');next.type='button';next.className='sa-checkout-next';next.dataset.saNextIndex=String(i);next.textContent=i===0?'Next: Shipping':'Next: Payment';next.addEventListener('click',function(){if(i===active&&valid(p))open(i+1,true);});actions.appendChild(next);}
     });
@@ -557,6 +569,13 @@
     }
   }
 
+  function saCompactCartEstimates(){
+    var root=document.querySelector('.sa-cart-page');if(!root)return;
+    var labels=[].slice.call(root.querySelectorAll('#shipping_method li label'));
+    var phrase='Estimated delivery 1-2 working days from order, excluding weekends';
+    if(labels.length&&labels.every(function(l){return l.textContent.indexOf(phrase)!==-1;}))labels.forEach(function(l){var w=document.createTreeWalker(l,4),n;while((n=w.nextNode()))n.nodeValue=n.nodeValue.replace(' · '+phrase,'').replace(phrase,'');});
+  }
+  saCompactCartEstimates();
   saCheckoutExperience();
   saCheckoutSteps();
   saCheckoutStickyPay();

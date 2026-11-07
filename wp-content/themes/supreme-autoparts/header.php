@@ -25,6 +25,13 @@ if (!defined('ABSPATH')) {
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
 
+<?php if (function_exists('is_cart') && (is_cart() || (is_checkout() && !is_order_received_page()))) : ?>
+<header class="sa-purchase-header" role="banner"><div class="sa-purchase-header__in">
+  <a class="sa-purchase-brand" href="<?php echo esc_url(home_url('/')); ?>"><img src="<?php echo esc_url(sa_theme_logo_url(true)); ?>" alt="Supreme Autoparts" width="195" height="30"></a>
+  <div class="sa-purchase-title"><?php echo is_cart() ? 'Cart' : 'Checkout'; ?> <span>(<?php echo esc_html((string) WC()->cart->get_cart_contents_count()); ?> items)</span></div>
+  <a class="sa-purchase-back" href="<?php echo esc_url(is_cart() ? wc_get_page_permalink('shop') : wc_get_cart_url()); ?>"><?php echo is_cart() ? 'Continue shopping' : 'Edit cart'; ?></a>
+</div></header>
+<?php return; endif; ?>
 <header class="sa-header" role="banner">
   <?php if (function_exists('sa_storefront_switch')) { sa_storefront_switch(); } ?>
   <?php if ((!function_exists('sa_storefront_is_kenya') || sa_storefront_is_kenya())) : ?>
