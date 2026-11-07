@@ -30,6 +30,20 @@ const settle=async()=>{for(let i=0;i<20;i++)await Promise.resolve()};
     if(failure==='network')f.requests[0].reject(new Error('offline'));else f.requests[0].resolve({ok:failure!=='http',json:async()=>({success:false})});
     await settle();assert.equal(f.form.dataset.saQtyFailed,'true');assert(f.button.disabled);assert(f.submit());assert(f.classes.has('sa-checkout-qty-busy'));assert.equal(f.refreshes,0);assert(!f.recovery.hidden,'safe reload recovery visible');f.woo.updated_checkout(null,{result:'success'});assert(f.button.disabled,'unrelated success never clears failed quantity write');
   }
+  {
+    const t=harness(),u={url:'/?wc-ajax=update_order_review'};t.woo.update_checkout();assert(t.button.disabled);
+    const x1={status:0,statusText:'abort'},x2={status:502,statusText:'Bad Gateway',responseJSON:undefined},x3={status:200,responseJSON:{result:'success'}};
+    t.woo.ajaxSend(null,x1,u);t.woo.ajaxSend(null,x2,u);
+    t.woo.ajaxComplete(null,x1,u);assert.notEqual(t.form.dataset.saTotalsFailed,'true','intentional abort of a superseded request is ignored');
+    t.woo.ajaxComplete(null,x2,{url:'/other'});assert.notEqual(t.form.dataset.saTotalsFailed,'true','other endpoints ignored');
+    t.woo.ajaxComplete(null,x2,u);assert.equal(t.form.dataset.saTotalsFailed,'true','newest request 502 shows failure');assert.equal(t.form.dataset.saTotalsBusy,'true','lock stays closed');assert(t.button.disabled);assert(t.submit(),'submit still blocked');
+    t.woo.ajaxSend(null,x3,u);assert.equal(t.form.dataset.saTotalsFailed,'false','a new request clears the failure message only');assert(t.button.disabled,'still locked until success');
+    t.woo.updated_checkout(null,{result:'success'});t.woo.ajaxComplete(null,x3,u);assert(!t.button.disabled,'success unlocks');assert.notEqual(t.form.dataset.saTotalsFailed,'true');
+    const ab=harness(),a1={status:0,statusText:'abort'};ab.woo.update_checkout();ab.woo.ajaxSend(null,a1,u);ab.woo.ajaxComplete(null,a1,u);assert.notEqual(ab.form.dataset.saTotalsFailed,'true','Woo aborts the old request before sending the new one, so an abort of the still-latest request is not a failure');
+    const v=harness(),vf={status:200,responseJSON:{result:'failure',messages:'<ul><li>Enter a valid postcode</li></ul>'}};v.woo.update_checkout();v.woo.ajaxSend(null,vf,u);v.woo.ajaxComplete(null,vf,u);assert.notEqual(v.form.dataset.saTotalsFailed,'true','Woo validation failure keeps its own messages and is not a reload failure');assert(v.button.disabled,'lock unchanged on validation failure');
+    for(const bad of [{status:200,responseJSON:undefined},{status:200,responseJSON:{}},{status:504,responseJSON:undefined},{status:0,statusText:'error'}]){const b=harness();b.woo.update_checkout();b.woo.ajaxSend(null,bad,u);b.woo.ajaxComplete(null,bad,u);assert.equal(b.form.dataset.saTotalsFailed,'true','unparseable/empty/proxy failure fails closed with reload message');assert(b.button.disabled);}
+    const older={status:502},newer={status:200,responseJSON:{result:'success'}};const q=harness();q.woo.update_checkout();q.woo.ajaxSend(null,older,u);q.woo.ajaxSend(null,newer,u);q.woo.ajaxComplete(null,older,u);assert.notEqual(q.form.dataset.saTotalsFailed,'true','stale older failure cannot mark newest request failed');
+  }
   console.log('PASS actual qty/terms code: immediate debounce lock, capture-submit rejection, coalescing, serialized overlapping writes, authoritative-totals-only unlock, HTTP/JSON/network failure latches and reload recovery');
 })().catch(e=>{console.error(e);process.exit(1)});
 

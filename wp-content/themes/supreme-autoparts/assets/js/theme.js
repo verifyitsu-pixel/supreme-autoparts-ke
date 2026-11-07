@@ -379,7 +379,7 @@
       btn.disabled = !ok;
       recovery.hidden=form.dataset.saTotalsBusy!=='true';
       btn.setAttribute('aria-disabled', ok ? 'false' : 'true');
-      var failed = form.dataset.saQtyFailed==='true';
+      var failed = form.dataset.saQtyFailed==='true' || form.dataset.saTotalsFailed==='true';
       var failMsg = "We couldn't update the order total. Reload checkout before continuing.";
       status.textContent = failed ? failMsg : 'Updating your order total. Please wait before placing your order.';
       if (hint) {
@@ -401,6 +401,23 @@
     // Woo updates payment fragment via AJAX — rebind after refresh.
     if (window.jQuery) {
       jQuery(document.body).on('update_checkout', function () { form.dataset.saTotalsBusy='true';sync(); });
+      // Woo's update_order_review request has no error callback. Show a reload message when the
+      // newest totals request fails at transport level or returns a non-success body. The lock stays
+      // closed; an intentional abort or an older superseded request is ignored.
+      var latestTotals = null;
+      var isTotals = function (o) { return !!o && typeof o.url === 'string' && o.url.indexOf('update_order_review') !== -1; };
+      jQuery(document).on('ajaxSend', function (e, xhr, o) {
+        if (!isTotals(o)) return;
+        latestTotals = xhr; form.dataset.saTotalsFailed = 'false'; sync();
+      });
+      jQuery(document).on('ajaxComplete', function (e, xhr, o) {
+        if (!isTotals(o) || xhr !== latestTotals || xhr.statusText === 'abort') return;
+        // A 200 with result 'failure' is Woo's own validation answer: its messages are shown and the
+        // customer can correct the input, so only transport or unparseable responses count here.
+        var r = xhr.responseJSON && xhr.responseJSON.result;
+        var ok = xhr.status === 200 && (r === 'success' || r === 'failure');
+        if (!ok) { form.dataset.saTotalsFailed = 'true'; form.dataset.saTotalsBusy = 'true'; sync(); }
+      });
       jQuery(document.body).on('updated_checkout', function (event, data) {
         if(data&&data.result==='success'&&!document.documentElement.classList.contains('sa-checkout-qty-busy')&&form.dataset.saQtyFailed!=='true')form.dataset.saTotalsBusy='false';
         box = form.querySelector('[data-sa-terms-checkbox], #terms') || document.querySelector('[data-sa-terms-checkbox], #terms');
