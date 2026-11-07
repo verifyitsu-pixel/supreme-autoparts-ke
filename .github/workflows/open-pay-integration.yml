@@ -1,0 +1,16 @@
+name: Open-pay WordPress integration (test only, never deploys)
+on:
+  push:
+    branches: ['ci/**']
+permissions:
+  contents: read
+jobs:
+  it:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Real WP/Woo integration test (stubbed Paystack, other HTTP denied)
+        run: |
+          php -v; php -m | grep -iE 'mysqli|posix|curl|mbstring|gd|xml'
+          bash tests/integration/open-pay-wp-integration.sh
