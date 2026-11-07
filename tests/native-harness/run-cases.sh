@@ -111,7 +111,7 @@ echo "== FUNCTIONAL BATCH (dedicated adapter, real native variable products/vari
 read VP V1 V2 SI <<<"$(wp eval '$p=new WC_Product_Variable();$p->set_name("Var");$a=new WC_Product_Attribute();$a->set_name("Size");$a->set_options(array("S","M"));$a->set_visible(true);$a->set_variation(true);$p->set_attributes(array($a));$p->set_status("publish");$pid=$p->save();$ids=array();foreach(array("S","M") as $s){$v=new WC_Product_Variation();$v->set_parent_id($pid);$v->set_attributes(array("size"=>$s));$v->set_regular_price("10");$v->set_manage_stock(true);$v->set_stock_quantity(20);$v->set_status("publish");$ids[]=$v->save();}WC_Product_Variable::sync($pid);$si=new WC_Product_Simple();$si->set_name("SI");$si->set_regular_price("5");$si->set_sold_individually(true);$si->set_status("publish");$si->save();echo $pid," ",$ids[0]," ",$ids[1]," ",$si->get_id();')"
 echo "fixtures parent=$VP vS=$V1 vM=$V2 soldindiv=$SI"
 IT() { echo "{\"pid\":$1,\"vid\":$2,\"qty\":$3,\"attrs\":$4}"; }
-fw() { HW_MODE=$1 HW_CID=$2 HW_OP=$3 HW_ITEMS="$4" W; }
+fw() { HW_MODE=$1 HW_CID=$2 HW_OP=op-$3 HW_ITEMS="$4" W; }
 fd() { HW_MODE=dumpf HW_CID=$1 W; }
 AS='{"attribute_size":"S"}'; AM='{"attribute_size":"M"}'
 fseed() { local c; c=$(HW_MODE=seedv HW_OP=fs-$RANDOM$RANDOM HW_ITEMS="[$(IT $VP $V1 2 "$AS"),$(IT $VP $V2 3 "$AM"),$(IT $P1 0 1 '{}'),$(IT $SI 0 1 '{}')]" W | jq -r .cid); echo $c; }
@@ -129,7 +129,7 @@ R=$(fw restore "$C" f3-restore "$(IT $VP $V1 0 '{}')"); G3=$(fd "$C")
 chk f3_restore_native_merge "$G3" '.saved==[] and (.cart|map(select(.vid=='"$V1"'))|.[0].qty)==3'
 
 echo "-- last active line saved: cart empties, saved persists"
-C=$(HW_MODE=seedv HW_OP=f4-seed HW_ITEMS="[$(IT $VP $V1 2 "$AS")]" W | jq -r .cid)
+C=$(HW_MODE=seedv HW_OP=op-f4-seed HW_ITEMS="[$(IT $VP $V1 2 "$AS")]" W | jq -r .cid)
 fw savekey "$C" f4-save "$(IT $VP $V1 0 '{}')" >/dev/null; G4=$(fd "$C")
 chk f4_last_line_saved_persists "$G4" '.cart==[] and (.saved|length)==1 and .saved[0].vid=='"$V1"' and .saved[0].qty==2 and .sha256!=null'
 
@@ -139,15 +139,16 @@ wp eval '$v=wc_get_product('$V2');$v->set_stock_quantity(0);$v->set_stock_status
 R=$(fw restore "$C" f5-restore "$(IT $VP $V2 0 '{}')"); A5=$(fd "$C")
 chk f5a_out_of_stock_restore_refused "$R" '.ok==false and (.error|test("refused"))'
 same f5a_out_of_stock_saved_and_cart_raw_sha_unchanged "$B5" "$A5"
+wp eval '$v=wc_get_product('$V2');$v->set_stock_quantity(20);$v->set_stock_status("instock");$v->save();'
+C=$(fseed); fw savekey "$C" f7-save "$(IT $SI 0 0 '{}')" >/dev/null; fw addv "$C" f7-add "[$(IT $SI 0 1 '{}')]" >/dev/null; B7=$(fd "$C")
+R=$(fw restore "$C" f7-restore "$(IT $SI 0 0 '{}')"); A7=$(fd "$C")
+chk f5c_sold_individually_restore_refused "$R" '.ok==false and (.error|test("refused"))'
+same f5c_sold_individually_saved_and_cart_raw_sha_unchanged "$B7" "$A7"
 C=$(fseed); fw savekey "$C" f6-save "$(IT $VP $V1 0 '{}')" >/dev/null; B6=$(fd "$C")
 wp post delete $V1 --force >/dev/null
 R=$(fw restore "$C" f6-restore "$(IT $VP $V1 0 '{}')"); A6=$(fd "$C")
 chk f5b_deleted_variation_restore_refused "$R" '.ok==false'
 same f5b_deleted_variation_saved_and_cart_raw_sha_unchanged "$B6" "$A6"
-C=$(fseed); fw savekey "$C" f7-save "$(IT $SI 0 0 '{}')" >/dev/null; fw addv "$C" f7-add "[$(IT $SI 0 1 '{}')]" >/dev/null; B7=$(fd "$C")
-R=$(fw restore "$C" f7-restore "$(IT $SI 0 0 '{}')"); A7=$(fd "$C")
-chk f5c_sold_individually_restore_refused "$R" '.ok==false and (.error|test("refused"))'
-same f5c_sold_individually_saved_and_cart_raw_sha_unchanged "$B7" "$A7"
 fi
 
 echo "== HTTP section: PHP built-in server (multi-worker), real wc-ajax add_to_cart, adapter via test mu-plugin. NOT Apache/FPM."
