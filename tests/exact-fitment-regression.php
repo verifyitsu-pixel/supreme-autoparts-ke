@@ -1,5 +1,5 @@
 <?php
-const ABSPATH='fixture/';function get_post_meta(...$a){return [];}
+const ABSPATH='fixture/';function get_post_meta($id,$key,...$a){return $GLOBALS['exact_fixture'][$id][$key]??'';}
 require __DIR__.'/../wp-content/plugins/supreme-autoparts-core/includes/garage/exact-fitment.php';
 $r=['make'=>'Toyota','model'=>'Aqua','chassis'=>'NHP10','engine'=>'1NZ-FXE','drive'=>'FF','from'=>'2011-12','through'=>'2021-07'];$v=$r;$v['production_month']='2016-06';
 function check_exact($b,$m){if(!$b)throw new RuntimeException($m);echo "PASS $m\n";}
@@ -9,3 +9,8 @@ foreach(['model'=>'Fielder','chassis'=>'NHP20','engine'=>'1NZ-FE','drive'=>'4WD'
 foreach(['2011-12'=>true,'2021-07'=>true,'2021-08'=>false,'2011-01'=>false,'2021-99'=>false]as$m=>$want){$x=$v;$x['production_month']=$m;check_exact(sa_exact_fitment_matches($r,$x)===$want,'month boundary '.$m);}
 check_exact(!sa_exact_fitment_matches($r,['make'=>'Toyota','model'=>'Aqua','year'=>2016]),'generic Aqua garage insufficient');
 check_exact(str_contains(sa_exact_fitment_label($r),'2011-12 to 2021-07'),'label retains month boundaries');
+
+foreach([null,'bad',[],array_diff_key($r,['engine'=>true]),array_replace($r,['from'=>'2011']),array_replace($r,['through'=>'2021-99']),array_replace($r,['from'=>'2022-01'])]as$bad)check_exact(!sa_exact_fitment_valid($bad),'malformed marker schema refused');
+$x=$v;$x['make']='Nissan';check_exact(!sa_exact_fitment_matches($r,$x),'wrong make no positive');
+$GLOBALS['exact_fixture']=[1=>['_sa_shopify_id'=>'7742545920177'],2=>['_sa_shopify_id'=>'other','_sa_exact_maker_fitment_v1'=>$r]];
+check_exact(sa_exact_fitment_target(1)&&sa_exact_fitment_record(1)===null,'allowlisted missing marker remains target but invalid');check_exact(!sa_exact_fitment_target(2)&&sa_exact_fitment_record(2)===null,'unallowlisted marker cannot activate');

@@ -629,7 +629,7 @@ require_once __DIR__.'/exact-fitment.php';
 
 function sa_garage_product_fits_vehicle(int $pid, string $mk_slug, string $mo_slug, int $year): ?bool
 {
-    if(sa_exact_fitment_record($pid)!==null)return false; // This signature has no chassis/engine/drive/month evidence.
+    if(sa_exact_fitment_target($pid))return false; // This signature has no chassis/engine/drive/month evidence.
     if (!function_exists('sa_fx_vehicles_for') || !function_exists('sa_fx_vehicle_vocab')) {
         return null;
     }
@@ -668,7 +668,8 @@ add_action('woocommerce_single_product_summary', static function (): void {
     }
     $pid = $product->get_id();
     $exact=sa_exact_fitment_record($pid);
-    if($exact!==null){
+    if(sa_exact_fitment_target($pid)){
+        if($exact===null)return; // Missing or malformed exact evidence never restores legacy positive.
         echo '<p class="sa-fit sa-fit--listed">'.esc_html(sa_exact_fitment_label($exact)).'</p>';
         return; // Saved garage does not carry the exact facts needed for a fit claim.
     }
