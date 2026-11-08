@@ -78,6 +78,7 @@ fixture_ok(sa_ff_unknown_order_label([['data'=>$op],['data'=>wc_get_product($id)
 $plain_order=new WC_Order();$plain_line=new WC_Order_Item_Product();$plain_line->set_product($orp);$plain_order->add_item($plain_line);fixture_ok(!sa_gcr_order_has_unknown_special_order($plain_order),'ordinary unsaved order survey guard unchanged');
 
 // Actual recommendation gate and actual registered badge callback in the native WP runtime.
+require_once SA_CORE_DIR.'includes/catalog-facets.php';
 require_once SA_CORE_DIR.'includes/garage/garage-account.php';
 $fitment=['make'=>'Toyota','model'=>'Aqua','chassis'=>'NHP10','engine'=>'1NZ-FXE','drive'=>'FF','from'=>'2011-12','through'=>'2021-07'];
 update_post_meta($oid,'_sa_shopify_id','7742545920177');update_post_meta($oid,'_sa_exact_maker_fitment_v1',$fitment);
