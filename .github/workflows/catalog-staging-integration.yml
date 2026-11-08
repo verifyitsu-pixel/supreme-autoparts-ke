@@ -14,5 +14,6 @@ jobs:
         run: |
           php -l wp-content/plugins/supreme-autoparts-core/includes/import-shopify.php
           php tests/import-new-only-staging-regression.php
+          SA_TEST_NONCLI=1 php tests/import-new-only-staging-regression.php
       - name: Isolated native WordPress WooCommerce MySQL draft import
         run: bash tests/integration/catalog-staging-integration.sh
