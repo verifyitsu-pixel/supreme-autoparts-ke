@@ -123,3 +123,5 @@ require $repo . '/tests/integration/category-intent-seo-native.php';
 require $repo.'/tests/integration/qualified-stage-postsave-native.php';
 
 require $repo.'/tests/integration/feed-reviewed-image-native.php';
+
+require $repo.'/tests/integration/garage-model-evidence-native.php';

@@ -642,11 +642,19 @@ function sa_garage_product_fits_vehicle(int $pid, string $mk_slug, string $mo_sl
     if (!$entries) {
         return null;
     }
+    // Browse make classification is not evidence that every model of that make fits.
+    // A missing customer model or product model is unknown, never a wildcard positive.
+    if ($mo_slug === '') return null;
+    $unknown_model = false;
     foreach ($entries as $e) {
         if (sanitize_title((string) $e['make']) !== $mk_slug) {
             continue;
         }
-        if ($mo_slug !== '' && (string) ($e['model'] ?? '') !== '' && sanitize_title((string) $e['model']) !== $mo_slug) {
+        if ((string) ($e['model'] ?? '') === '') {
+            $unknown_model = true;
+            continue;
+        }
+        if (sanitize_title((string) $e['model']) !== $mo_slug) {
             continue;
         }
         $years = array_map('intval', (array) ($e['years'] ?? []));
@@ -654,7 +662,7 @@ function sa_garage_product_fits_vehicle(int $pid, string $mk_slug, string $mo_sl
             return true;
         }
     }
-    return false;
+    return $unknown_model ? null : false;
 }
 
 add_action('woocommerce_single_product_summary', static function (): void {
@@ -689,6 +697,8 @@ add_action('woocommerce_single_product_summary', static function (): void {
     $mk = sanitize_title(sa_fx_make_label($veh['make']));
     $mo = sanitize_title($veh['model']);
     $yr = (int) $veh['year'];
+    // Use the same unknown-evidence gate as the positive recommendation row.
+    if (sa_garage_product_fits_vehicle($pid, $mk, $mo, $yr) === null) return;
     $fit = false;
     $same_make = false;
     $year_miss = false;
@@ -697,6 +707,7 @@ add_action('woocommerce_single_product_summary', static function (): void {
             continue;
         }
         $same_make = true;
+        if ((string) ($e['model'] ?? '') === '') continue;
         if ($e['model'] !== '' && $mo !== '' && sanitize_title($e['model']) !== $mo) {
             continue;
         }
