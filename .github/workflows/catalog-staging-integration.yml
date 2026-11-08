@@ -16,5 +16,6 @@ jobs:
           php tests/import-new-only-staging-regression.php
           SA_TEST_NONCLI=1 php tests/import-new-only-staging-regression.php
           php tests/exact-fitment-regression.php
+          php tests/aqua-activation-regression.php
       - name: Isolated native WordPress WooCommerce MySQL draft import
         run: bash tests/integration/catalog-staging-integration.sh
