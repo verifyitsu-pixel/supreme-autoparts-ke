@@ -66,3 +66,5 @@ foreach([$id,$oid] as $unknown_id){$unknown=wc_get_product($unknown_id);fixture_
 fixture_ok(!sa_ff_unknown_special_order($orp),'ordinary flow not marked unknown');
 $x=sa_promotion_snapshot($oid);$y=$x;$x['post']['guid']='https://fixture.invalid/?a=1&b=2';$y['post']['guid']='https://fixture.invalid/?a=1&#038;b=2';fixture_ok(sa_promotion_stable_state($x)===sa_promotion_stable_state($y),'positive GUID equivalent entity spelling accepted');
 set_post_thumbnail($oid,get_post_thumbnail_id($gid));$orow=['id'=>$oid,'source_id'=>$orderable['id'],'sku'=>'FIXTURE-9','snapshot_sha256'=>sa_promotion_digest(sa_promotion_snapshot($oid)),'evidence_sha256'=>hash('sha256','fixture')];$r=sa_guarded_promote(['schema'=>'supreme-reviewed-promotion-v1','items'=>[$orow]],true);fixture_ok($r['published']===[$oid]&&$r['failed']===null&&wc_get_product($oid)->get_meta('_sa_source_orderable_unknown')==='yes','orderableunknown guarded promotion preserves marker');
+
+fixture_ok(sa_ff_unknown_order_label([['data'=>$op]])==='Available to order'&&sa_ff_unknown_order_label([['data'=>wc_get_product($id)]])==='Special order','fulfilment labels preserve sourceN versusY');

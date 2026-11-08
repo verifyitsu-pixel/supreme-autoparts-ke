@@ -62,6 +62,14 @@ function sa_ff_unknown_special_order($product): bool
         && $product->is_on_backorder(1)
         && (string) $product->get_meta('_sa_stock_lead_days') === '';
 }
+function sa_ff_unknown_order_label(array $contents): string
+{
+    foreach ($contents as $item) {
+        $p=$item['data']??null;
+        if (sa_ff_unknown_special_order($p) && $p->get_meta('_sa_source_special_order') === 'yes') return 'Special order';
+    }
+    return 'Available to order';
+}
 function sa_ff_contents_unknown_special_order(array $contents): bool
 {
     foreach ($contents as $item) {
@@ -318,7 +326,7 @@ add_filter('woocommerce_package_rates', static function ($rates, $package) {
         foreach ($rates as $rate) {
             if (is_object($rate) && method_exists($rate, 'set_label')) {
                 $label = preg_replace('/\s*·\s*Estimated.*$/u', '', $rate->get_label());
-                $rate->set_label($label . ' · Special order: dates not confirmed');
+                $rate->set_label($label . ' · ' . sa_ff_unknown_order_label((array) ($package['contents'] ?? [])) . ': dates not confirmed');
             }
         }
         return $rates;
@@ -382,7 +390,7 @@ add_action('woocommerce_review_order_after_shipping', static function (): void {
         return;
     }
     if (sa_ff_cart_unknown_special_order()) {
-        echo '<tr class="sa-pk-row"><td colspan="2">Special order. Delivery and collection dates are not confirmed.</td></tr>';
+        echo '<tr class="sa-pk-row"><td colspan="2">' . esc_html(sa_ff_unknown_order_label(WC()->cart->get_cart())) . '. Delivery and collection dates are not confirmed.</td></tr>';
         return;
     }
     $cur = WC()->session ? (string) WC()->session->get('sa_pickup_slot') : '';
@@ -537,7 +545,7 @@ add_action('woocommerce_single_product_summary', static function (): void {
         return;
     }
     if (sa_ff_unknown_special_order($product)) {
-        echo '<div class="sa-ff-pdp"><div><strong>Special order</strong><span>Delivery and collection dates are not confirmed.</span></div></div>';
+        echo '<div class="sa-ff-pdp"><div><strong>' . esc_html(sa_ff_unknown_order_label([['data'=>$product]])) . '</strong><span>Delivery and collection dates are not confirmed.</span></div></div>';
         return;
     }
     $c = WC()->customer;
