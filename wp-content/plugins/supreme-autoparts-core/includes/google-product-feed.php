@@ -54,6 +54,20 @@ function sa_gpf_reviewed_image_url(string $sku, string $link, string $image): st
         && $image === 'https://www.supremeautoparts.co.ke/wp-content/uploads/2026/09/b969490e6d89e90af3c6794a027bb7adL.jpg') {
         return 'https://cdn.shopify.com/s/files/1/0643/0779/0001/files/b969490e6d89e90af3c6794a027bb7adL.jpg?v=1789536517&width=1200';
     }
+    // Fresh exact-SKU source photographs replace only individually verified 404 URLs.
+    $broken_images = [
+        'HRS60755-60' => ['https://www.supremeautoparts.co.ke/product/h-r-14-18-volkswagen-jetta-s-se-sel-gli-mk6-perf-camber-plate-req-h-r-coil-over-w-60mm-id-springs/', 'https://www.supremeautoparts.co.ke/wp-content/uploads/2026/09/7efd82bbc5acfec9e80b5ac57684f9d3L_ef1e8e1c-0667-488e-b6af-a952009d7c67.jpg', 'https://cdn.shopify.com/s/files/1/0643/0779/0001/files/7a757d3606e18c8cfdaa1948f0f079b9.jpg?v=1725114305'],
+        'FOX981-30-603-3' => ['https://www.supremeautoparts.co.ke/product/fox-3-0-factory-race-14in-internal-bypass-remote-shock-dsc-adjuster/', 'https://www.supremeautoparts.co.ke/wp-content/uploads/2026/09/3375da11d4b85c772963f22b824b8497_316719ef-c186-4b13-866b-02091c7f7db5-scaled.jpg', 'https://cdn.shopify.com/s/files/1/0643/0779/0001/files/3375da11d4b85c772963f22b824b8497_316719ef-c186-4b13-866b-02091c7f7db5.jpg?v=1789492343'],
+        'FOX981-20-120-3' => ['https://www.supremeautoparts.co.ke/product/fox-2-0-performance-elite-10in-remote-reservoir-coilover-shock-w-dsc-adjuster-7-8in-shaft/', 'https://www.supremeautoparts.co.ke/wp-content/uploads/2026/09/850947b4b80a6be493da5177f80f5a64L.jpg', 'https://cdn.shopify.com/s/files/1/0643/0779/0001/files/850947b4b80a6be493da5177f80f5a64L.jpg?v=1789492342'],
+        'FOX981-20-112' => ['https://www.supremeautoparts.co.ke/product/fox-performance-elite-2-0x14-emulsion-coilover-shock-7-8in-shaft/', 'https://www.supremeautoparts.co.ke/wp-content/uploads/2026/09/9fe8caa9d2f0fb2f0183e01579ca0779L_ea48cebf-d0c4-4ff3-b4b5-294377332d40.jpg', 'https://cdn.shopify.com/s/files/1/0643/0779/0001/files/9fe8caa9d2f0fb2f0183e01579ca0779L_ea48cebf-d0c4-4ff3-b4b5-294377332d40.jpg?v=1789492342'],
+        'FOX981-20-111' => ['https://www.supremeautoparts.co.ke/product/fox-2-0-performance-elite-12in-emulsion-coilover-shock-7-8in-shaft/', 'https://www.supremeautoparts.co.ke/wp-content/uploads/2026/09/9fe8caa9d2f0fb2f0183e01579ca0779L_a3ee5a04-423d-43e6-9936-bee58a081013.jpg', 'https://cdn.shopify.com/s/files/1/0643/0779/0001/files/9fe8caa9d2f0fb2f0183e01579ca0779L_a3ee5a04-423d-43e6-9936-bee58a081013.jpg?v=1789492340'],
+        'FOX981-20-108' => ['https://www.supremeautoparts.co.ke/product/fox-2-0-performance-elite-10in-remote-reservoir-coilover-shock-5-8in-shaft/', 'https://www.supremeautoparts.co.ke/wp-content/uploads/2026/09/dbf76b3fe31f58500effd591b8355c85L.jpg', 'https://cdn.shopify.com/s/files/1/0643/0779/0001/files/dbf76b3fe31f58500effd591b8355c85L.jpg?v=1789492340'],
+        'KNN30-2617KC' => ['https://www.supremeautoparts.co.ke/product/k-n-15-23-ford-f-150-incl-raptor-2-7l-3-5l-v6-performance-air-intake-system/', 'https://www.supremeautoparts.co.ke/wp-content/uploads/2026/09/36d2ad56f381c36cf5c0beb8d10872a8.jpg', 'https://cdn.shopify.com/s/files/1/0643/0779/0001/products/36d2ad56f381c36cf5c0beb8d10872a8.jpg?v=1707769627'],
+    ];
+    if (isset($broken_images[$sku])) {
+        [$canonical, $broken, $photo] = $broken_images[$sku];
+        if (in_array($link, [$canonical, $canonical . '?sa_market=ke'], true) && $image === $broken) return $photo;
+    }
     return $image;
 }
 
