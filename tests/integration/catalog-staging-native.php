@@ -3,6 +3,7 @@
 declare(strict_types=1);
 if(rtrim(home_url(),'/')!=='http://127.0.0.1:8091'||DB_NAME!=='catalog_staging_it')throw new RuntimeException('Not isolated fixture site: '.home_url().' database='.DB_NAME);
 $repo=getenv('SA_CATALOG_TEST_REPO');
+define('SA_CORE_DIR',$repo.'/wp-content/plugins/supreme-autoparts-core/');
 require_once $repo.'/wp-content/plugins/supreme-autoparts-core/includes/product-fingerprint.php';
 require_once $repo.'/wp-content/plugins/supreme-autoparts-core/includes/import-shopify.php';
 $GLOBALS['sa_core_fingerprint_no_write']=true;
@@ -19,4 +20,4 @@ echo "Native draft-staging checks finished. Image bytes/sideload/hooks from full
 
 $dry=fixture_item(4);file_put_contents('/tmp/catalog-dry.json',json_encode(['products'=>[$dry]]));$r=sa_core_import_shopify_products_file('/tmp/catalog-dry.json',['dry_run'=>true,'stage_new_only'=>true,'skip_images'=>true]);fixture_ok($r['imported']===1&&wc_get_product_id_by_sku('FIXTURE-4')===0,'native JSON staged dryrun no product');
 require_once $repo.'/wp-content/plugins/supreme-autoparts-core/includes/cli.php';
-$cli=fixture_item(5);file_put_contents('/tmp/catalog-cli.ndjson',json_encode($cli).PHP_EOL);WP_CLI::runcommand('supreme import-ndjson --file=/tmp/catalog-cli.ndjson --stage-new-only --skip-images --require-images',['launch'=>false,'exit_error'=>true]);$cid=wc_get_product_id_by_sku('FIXTURE-5');fixture_ok($cid>0&&get_post_status($cid)==='draft','real CLI flag creates draft');
+$cli=fixture_item(5);file_put_contents('/tmp/catalog-cli.ndjson',json_encode($cli).PHP_EOL);WP_CLI::runcommand('supreme import_ndjson --file=/tmp/catalog-cli.ndjson --stage-new-only --skip-images --require-images',['launch'=>false,'exit_error'=>true]);$cid=wc_get_product_id_by_sku('FIXTURE-5');fixture_ok($cid>0&&get_post_status($cid)==='draft','real CLI flag creates draft');
