@@ -44,6 +44,16 @@ function sa_promotion_validate(array $row): array {
     if(!hash_equals((string)$row['snapshot_sha256'],sa_promotion_digest($snapshot)))throw new RuntimeException('Snapshot drift');
     return $snapshot;
 }
+/** Ignore only intentional publication fields; every other state change is an error. */
+function sa_promotion_stable_state(array $s): array {
+    foreach(['post_status','post_modified','post_modified_gmt','post_date','post_date_gmt'] as $k)unset($s['post'][$k]);
+    unset($s['meta']['_edit_lock']);
+    foreach(['exclude-from-catalog','exclude-from-search'] as $slug) {
+        $term=get_term_by('slug',$slug,'product_visibility');
+        if($term&&!is_wp_error($term))$s['terms']['product_visibility']=array_values(array_diff($s['terms']['product_visibility']??[],[(int)$term->term_id]));
+    }
+    return $s;
+}
 /** Operator must independently verify authority and evidence. Hashes do not grant permission. */
 function sa_guarded_promote(array $manifest,bool $commit=false): array {
     if(!defined('WP_CLI')||!WP_CLI)throw new RuntimeException('CLI required');
@@ -55,18 +65,20 @@ function sa_guarded_promote(array $manifest,bool $commit=false): array {
         if($id<=0||isset($seen[$id]))throw new RuntimeException('Invalid or repeated product');
         $seen[$id]=true;sa_promotion_validate($row);
     }
-    $out=['dry_run'=>!$commit,'published'=>[],'would_publish'=>array_keys($seen),'failed'=>null];
+    $out=['dry_run'=>!$commit,'published'=>[],'requested'=>array_keys($seen),'would_publish'=>$commit?[]:array_keys($seen),'not_attempted'=>[],'failed'=>null];
     if(!$commit)return $out;
     // No automatic rollback or retry after partial success. Caller gets exact partial state.
     foreach($manifest['items'] as $row) {
         try {
-            sa_promotion_validate($row);
+            $before=sa_promotion_validate($row);
             $p=wc_get_product((int)$row['id']);$p->set_catalog_visibility('visible');$p->set_status('publish');$p->save();
             clean_post_cache((int)$row['id']);$fresh=wc_get_product((int)$row['id']);
             if($fresh->get_status()!=='publish'||$fresh->get_catalog_visibility()!=='visible')throw new RuntimeException('Post-write verification failed');
+            if(sa_promotion_stable_state($before)!==sa_promotion_stable_state(sa_promotion_snapshot((int)$row['id'])))throw new RuntimeException('Unexpected post-write state drift');
             $out['published'][]=(int)$row['id'];
         } catch(Throwable $e) {
-            $out['failed']=['id'=>(int)$row['id'],'error'=>$e->getMessage(),'read_current_state_before_retry'=>true];break;
+            $out['failed']=['id'=>(int)$row['id'],'error'=>$e->getMessage(),'read_current_state_before_retry'=>true,'may_have_published'=>get_post_status((int)$row['id'])==='publish'];
+            $out['not_attempted']=array_values(array_diff(array_keys($seen),array_merge($out['published'],[(int)$row['id']])));break;
         }
     }
     return $out;
