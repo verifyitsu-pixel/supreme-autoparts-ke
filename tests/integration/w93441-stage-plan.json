@@ -75,7 +75,7 @@
     58052
   ],
   "tags": [
-    "SpecialOrder:Y"
+    "SpecialOrder:N"
   ],
   "source_price_currency": "USD",
   "source_price": "66.49",
@@ -88,8 +88,8 @@
     "quantity": 0,
     "status": "onbackorder",
     "backorders": "notify",
-    "source_orderable_unknown": "",
-    "source_special_order": "yes"
+    "source_orderable_unknown": "yes",
+    "source_special_order": ""
   },
   "feed_hold": true,
   "save_garage_positive": false,
@@ -118,7 +118,7 @@
   "image_mode": "source_hotlinks_only_skip_images_true_no_attachments",
   "verified_ean": "9319924453757",
   "gtin_gate": "Verified source and manufacturer EAN9319924453757. Must carry in standard Woo GTIN and actual Product schema before any separately reviewed publication.",
-  "source_quantity_policy": "SourceSpecialOrderY/availabletrue is not warehouse stock. Localqty0/notify/specialorderunknownarrival.",
+  "source_quantity_policy": "SourceSpecialOrderN/availabletrue proves source orderable flag only, not on-hand warehouse stock or delivery date. Localqty0/notify/source_orderable_unknown=yes;source_special_orderempty.",
   "no_exact_marker": true,
   "excluded_source_photo_indices": [
     5,
