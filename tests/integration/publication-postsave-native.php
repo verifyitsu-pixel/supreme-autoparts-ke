@@ -9,13 +9,14 @@ function post_fixture_snapshot(int $id): array {
     usort($terms,fn($a,$b)=>[$a->taxonomy,$a->term_id]<=>[$b->taxonomy,$b->term_id]);
     return ['post'=>get_post($id,ARRAY_A),'meta'=>$meta,'terms'=>$terms];
 }
-$fixture = new WC_Product_Simple();$fixture->set_name('Isolated post-save value fixture');$fixture->set_status('draft');$fixture->set_catalog_visibility('hidden');$fixture->set_regular_price('178.40');$fixture->set_manage_stock(true);$fixture->set_stock_quantity(0);$fixture->set_backorders('notify');$fixture->save();$fid=$fixture->get_id();
+$fixture = new WC_Product_Simple();$fixture->set_name('Isolated post-save value fixture');$fixture->set_slug('isolated-postsave-value-fixture');$fixture->set_status('draft');$fixture->set_catalog_visibility('hidden');$fixture->set_regular_price('178.40');$fixture->set_manage_stock(true);$fixture->set_stock_quantity(0);$fixture->set_backorders('notify');$fixture->save();$fid=$fixture->get_id();
 // Stabilize the known GUID spelling before pinning, never normalize arbitrary values.
 wp_update_post(['ID'=>$fid,'post_excerpt'=>'Pinned fixture excerpt']);
 $before=post_fixture_snapshot($fid);fixture_ok(count(array_filter($before['terms'],fn($term)=>$term instanceof WP_Term))===count($before['terms']),'postsave fixture has actual native WP_Term objects');
 $fixture=wc_get_product($fid);$fixture->set_status('publish');$fixture->set_catalog_visibility('visible');$fixture->save();clean_post_cache($fid);$after=post_fixture_snapshot($fid);
 $visibility=[];foreach(['exclude-from-search','exclude-from-catalog']as$slug){$term=get_term_by('slug',$slug,'product_visibility');$visibility[]=(int)$term->term_id;}
 $expected=sa_publication_expected_state($before,$after,$visibility,false);
+if(wp_json_encode($expected)!==wp_json_encode($after)){foreach($expected as $section=>$values)foreach(array_unique(array_merge(array_keys($values),array_keys($after[$section])))as$key){if(wp_json_encode($values[$key]??null)!==wp_json_encode($after[$section][$key]??null))echo wp_json_encode(['expected_delta_mismatch'=>$section.'/'.$key,'expected'=>$values[$key]??null,'actual'=>$after[$section][$key]??null]).PHP_EOL;}}
 fixture_ok(wp_json_encode($expected)===wp_json_encode($after),'native post-save verification runs fully with WP_Term objects');
 $decoded_before=json_decode(wp_json_encode($before),true);$decoded_after=json_decode(wp_json_encode($after),true);
 fixture_ok(wp_json_encode(sa_publication_expected_state($decoded_before,$decoded_after,$visibility,false))===wp_json_encode($decoded_after),'postsave verifier also accepts recovered JSON array terms');
