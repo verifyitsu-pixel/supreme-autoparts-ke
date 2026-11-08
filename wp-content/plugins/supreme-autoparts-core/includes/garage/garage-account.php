@@ -623,7 +623,7 @@ function sa_garage_viewer_vehicle(): array
  * never outruns the badge.
  *
  * @param string $mk_slug sanitize_title() make slug, e.g. 'toyota'.
- * @param string $mo_slug sanitize_title() bare model slug, e.g. 'corolla' ('' = make-level check).
+ * @param string $mo_slug sanitize_title() bare model slug, e.g. 'corolla'. Empty means unknown, never a make-wide positive.
  */
 require_once __DIR__.'/exact-fitment.php';
 
@@ -639,9 +639,13 @@ function sa_garage_product_fits_vehicle(int $pid, string $mk_slug, string $mo_sl
     }
     $tags = wp_get_post_terms($pid, 'product_tag', ['fields' => 'names']);
     $entries = sa_fx_vehicles_for($name, is_array($tags) ? $tags : [], sa_fx_vehicle_vocab());
-    if (!$entries) {
-        return null;
-    }
+    return sa_garage_entries_fit_vehicle($entries, $mk_slug, $mo_slug, $year);
+}
+
+/** Model evidence gate shared by the actual matcher; null means insufficient evidence. */
+function sa_garage_entries_fit_vehicle(array $entries, string $mk_slug, string $mo_slug, int $year): ?bool
+{
+    if (!$entries) return null;
     // Browse make classification is not evidence that every model of that make fits.
     // A missing customer model or product model is unknown, never a wildcard positive.
     if ($mo_slug === '') return null;

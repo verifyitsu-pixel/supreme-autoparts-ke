@@ -16,4 +16,13 @@ $theme=$repo.'/wp-content/themes/supreme-autoparts/assets/css/main.css';$css=fil
 foreach($native_renders as$key=>$body){$title=$key==='unknown-model'?'Alcon Pro-System Toyota LC76/79 Bracket Kit - Front':'Toyota Corolla 2015-2017 Front Bracket';$html='<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'.$css.'</style><main style="max-width:720px;margin:32px auto;padding:24px;background:#fff"><p>Isolated native callback fixture. Synthetic vehicle, no live customer data.</p><h1>'.esc_html($title).'</h1><p>$153.00</p><div style="min-height:36px" data-native-badge="'.$key.'">'.$body.'</div><p>Product summary continues below the native badge position.</p><button disabled>Add to cart (fixture only)</button></main>';file_put_contents('/tmp/garage-native-'.$key.'.html',$html);}
 
 wp_set_object_terms($mid,['fits_2015-2017`Toyota`Corolla`Base'],'product_tag');fixture_ok(sa_garage_product_fits_vehicle($mid,'toyota','corolla',2016)===true&&sa_garage_product_fits_vehicle($mid,'toyota','fielder',2016)===false,'native structured tag exact model behavior retained');
+
+// Mixed same-make incomplete entries conservatively keep an unresolved possibility unknown.
+$blank=['make'=>'Toyota','model'=>'','years'=>[]];$corolla=['make'=>'Toyota','model'=>'Corolla','years'=>[2015,2016,2017]];
+fixture_ok(sa_garage_entries_fit_vehicle([$blank,$corolla],'toyota','fielder',2016)===null,'native mixed blank plus explicit model mismatch is unknown, not negative');
+fixture_ok(sa_garage_entries_fit_vehicle([$blank,$corolla],'toyota','corolla',2014)===null,'native mixed blank plus explicit year mismatch is unknown, not negative');
+fixture_ok(sa_garage_entries_fit_vehicle([$blank,$corolla],'toyota','corolla',2016)===true,'native explicit covering entry can still establish existing positive behavior');
+fixture_ok(sa_garage_entries_fit_vehicle([$corolla],'toyota','fielder',2016)===false,'native without incomplete possibility explicit mismatch stays false');
+fixture_ok(sa_garage_entries_fit_vehicle([$corolla],'toyota','corolla',2014)===false,'native without incomplete possibility year mismatch stays false');
+fixture_ok(sa_garage_entries_fit_vehicle([['make'=>'Ford','model'=>'','years'=>[]],$corolla],'toyota','fielder',2016)===false,'native unrelated-make blank cannot obscure explicit mismatch');
 update_option('sa_fx_vocab',$old_vocab);if($old_cookie===null)unset($_COOKIE['sa_pz']);else $_COOKIE['sa_pz']=$old_cookie;$GLOBALS['product']=$old_product;
