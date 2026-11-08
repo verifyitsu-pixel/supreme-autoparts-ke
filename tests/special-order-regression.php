@@ -1,4 +1,5 @@
 <?php
+function esc_html($s){return htmlspecialchars((string)$s,ENT_QUOTES,'UTF-8');}
 $s=file_get_contents($argv[1] ?? __DIR__."/../wp-content/plugins/supreme-autoparts-core/includes/import-shopify.php");$a=strpos($s,'function sa_core_shopify_is_special_order');$b=strpos($s,'/**',$a);eval(substr($s,$a,$b-$a));
 foreach([['SpecialOrder:Y',true],['SpecialOrder:N',false],[' SpecialOrder : Y ',true],[['x','SpecialOrder:Y'],true],[null,false],['notSpecialOrder:Y',false],['SpecialOrder:Yes',false]] as [$v,$want]){if(sa_core_shopify_is_special_order(['tags'=>$v])!==$want)throw new Exception('tag fixture failed');}
 echo 'PASS explicit string/array source tags, whitespace/case, negative/non-exact/missing tags'.PHP_EOL;
@@ -7,6 +8,7 @@ $GLOBALS['filters']=[];function add_filter($n,$c,$p,$a){$GLOBALS['filters'][$n]=
 define('ABSPATH','fixture/');require __DIR__.'/../wp-content/mu-plugins/sa-source-special-order.php';$GLOBALS['fixture_product']=new WC_Product();
 foreach($GLOBALS['filters'] as $name=>$fn){if($name==='woocommerce_cart_item_name')continue;$arg=$name==='woocommerce_get_availability_text'?$GLOBALS['fixture_product']:1;if(!str_contains($fn('unchanged',$arg),'Special order'))throw new Exception('new label');$GLOBALS['fixture_product']->meta='';if($fn('unchanged',$arg)!=='unchanged')throw new Exception('existing label changed');$GLOBALS['fixture_product']->meta='yes';}
 echo 'PASS new labeled product/cart; unmarked existing product/cart text unchanged'.PHP_EOL;
+$stage_new_only=false;
 // Execute the actual changed stock branch with mocks for new/update/out-of-stock.
 $a=strpos($s,'            $special_order =');$b=strpos($s,'        }\n\n        $id = $product->save();',$a);if($b===false)$b=strpos($s,"        }\n\n        \$id = \$product->save();",$a);$branch=substr($s,$a,$b-$a);
 class FixtureStock {public $events=[];function __call($n,$args){$this->events[]=[$n,$args];}}

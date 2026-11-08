@@ -1,4 +1,5 @@
 <?php
+function esc_html($s){return htmlspecialchars((string)$s,ENT_QUOTES,'UTF-8');}
 const ABSPATH='fixture/';$GLOBALS['checkout']=true;$GLOBALS['filters']=[];
 function add_action(...$a){}function add_filter($n,$cb,...$rest){$GLOBALS['filters'][$n]=$cb;}function is_checkout(){return $GLOBALS['checkout'];}
 class WC_Product {public $flag=true,$backorder=true;function get_meta($k){return $this->flag?'yes':'';}function is_on_backorder($q){return $this->backorder;}}
