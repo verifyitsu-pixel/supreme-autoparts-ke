@@ -52,3 +52,5 @@ $attack=fixture_item(8);$attack['images']=[['src'=>'https://fixture.invalid/brac
 $ar=['id'=>$aid,'source_id'=>$attack['id'],'sku'=>'FIXTURE-8','snapshot_sha256'=>sa_promotion_digest(sa_promotion_snapshot($aid)),'evidence_sha256'=>hash('sha256','fixture')];
 add_action('woocommerce_update_product',function($changed)use($aid){if((int)$changed===$aid&&get_post_status($aid)==='publish')update_post_meta($aid,'_unexpected_hook_write','injected');},99);
 $r=sa_guarded_promote(['schema'=>'supreme-reviewed-promotion-v1','items'=>[$ar]],true);fixture_ok($r['published']===[]&&$r['would_publish']===[]&&$r['failed']['id']===$aid&&$r['failed']['may_have_published']&&$r['failed']['error']==='Unexpected post-write state drift','post-save unexpected metadata change reported with possible publication');
+
+$x=sa_promotion_snapshot($gid);$y=$x;$y['post']['guid']='https://different.invalid/product';fixture_ok(sa_promotion_stable_state($x)!==sa_promotion_stable_state($y),'real GUID destination drift remains detected');

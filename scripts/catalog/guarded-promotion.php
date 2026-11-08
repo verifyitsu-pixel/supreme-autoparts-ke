@@ -46,6 +46,8 @@ function sa_promotion_validate(array $row): array {
 }
 /** Ignore only intentional publication fields; every other state change is an error. */
 function sa_promotion_stable_state(array $s): array {
+    // WP sanitizes GUID ampersands on update; compare equivalent entity spelling, not ignore GUID.
+    $s['post']['guid']=html_entity_decode((string)$s['post']['guid'],ENT_QUOTES|ENT_HTML5,'UTF-8');
     foreach(['post_status','post_modified','post_modified_gmt','post_date','post_date_gmt'] as $k)unset($s['post'][$k]);
     unset($s['meta']['_edit_lock']);
     foreach(['exclude-from-catalog','exclude-from-search'] as $slug) {
