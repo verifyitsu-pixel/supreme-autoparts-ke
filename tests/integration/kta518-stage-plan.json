@@ -1,9 +1,9 @@
 {
   "schema": "whiteline-kta518-private-qualification-v1",
   "state": "qualified_candidate_pending_native_helper_and_review_not_staged",
-  "checked_at": "2026-11-08T11:23:30.611629+00:00",
-  "source_url": "https://supreme-mods.com/products/whiteline-14-18-subaru-forester-sj-front-lower-control-arm",
-  "manufacturer_url": "https://whitelineperformance.com/us/front-lower-control-arm-arm-assembly-to-suit-subaru-forester-sj-9986-kta361.html",
+  "checked_at": "2026-11-08T11:57:30.744647+00:00",
+  "source_url": "https://supreme-mods.com/products/whiteline-toyota-land-cruiser-prado-150-front-lower-control-arm-and-ball-joint",
+  "manufacturer_url": "https://whitelineperformance.com/au/front-control-arm-lower-arm-assembly-to-suit-toyota-landcruiser-prado-150-without-kdss-9986-kta518.html",
   "item": {
     "id": 9027744071857,
     "handle": "whiteline-toyota-land-cruiser-prado-150-front-lower-control-arm-and-ball-joint",
@@ -36,16 +36,16 @@
   },
   "photos": [
     {
-      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/4623fb09af9723b6f42a30438a3ca8c4.jpg?v=1712080179",
-      "sha256": "7afda36611f690291d97f5104d4478838765960aea34664899adc3618858bc4d"
+      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/6628aea2e799049ed090d35e93072055L.jpg?v=1778818068",
+      "sha256": "b6dde3c7896b93ecc6dc3cc254da53eda3df35c319b73cc8cb8298774e661d77"
     },
     {
-      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/7bd6de6851ec439c7d4e0ea8a81651a2.jpg?v=1712080179",
-      "sha256": "8e2d9e79b19976bba1e863470f00f702e06b55d7a78d456061c3e3c9cfe427bd"
+      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/512b6a54f45f57b4812a8a7a9101554aL.jpg?v=1778818067",
+      "sha256": "8706b41aff86421d00e399c20d41c872bb6a312d2791784188b28532a3a23b9c"
     },
     {
-      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/4a08eaf9e6718bcbe4a61020d41f4e27.jpg?v=1712080179",
-      "sha256": "658060482d36bcd3be11ff9826dd67e44e511b911a101fc64fbfee5a859e3718"
+      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/56923ef968b961cda1cef650d9d1ce28L.jpg?v=1778818067",
+      "sha256": "516c61aa8e60495f47c36d61e30a91cd2a7c41113a0c30696af7a0c64262f1c3"
     }
   ],
   "categories": [
@@ -54,12 +54,12 @@
     9478
   ],
   "tags": [
-    "SpecialOrder:N"
+    "SpecialOrder:Y"
   ],
   "source_price_currency": "USD",
-  "source_price": "358.09",
+  "source_price": "742.39",
   "source_weight": {
-    "value": 20.5,
+    "value": 44.0,
     "unit": "lb"
   },
   "intended_stock": {
@@ -67,16 +67,16 @@
     "quantity": 0,
     "status": "onbackorder",
     "backorders": "notify",
-    "source_orderable_unknown": "yes",
-    "source_special_order": ""
+    "source_orderable_unknown": "",
+    "source_special_order": "yes"
   },
   "feed_hold": true,
   "save_garage_positive": false,
   "no_exact_aqua_marker": true,
   "claims_not_carried": [
-    "makerUSpreorder4-6weeksnotKenyapromise",
-    "USlimitedlifetimewarrantynotKenyaapproval",
-    "sourceUS2014-2018submodeltagsnotblanketJDMfitment"
+    "USmakerpreorderorAU24hnotKenyapromise",
+    "makerregionalwarrantynotKenyaapproval",
+    "source4RunnerFJCruiserfitmenttagsnotPradoallengineyearKDSSapproval"
   ],
   "independent_gates_remaining": [
     "exact new helper actual isolated native post-save path",
