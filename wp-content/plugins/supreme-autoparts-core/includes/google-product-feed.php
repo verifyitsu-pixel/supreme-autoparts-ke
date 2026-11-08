@@ -22,12 +22,23 @@ function sa_gpf_register(): void
 }
 add_action('init', 'sa_gpf_register', 20);
 
-/** Apply current image holds to prebuilt chunks without a catalog/cache mutation. */
+/** These two orderable products have no grounded shipping date. Keep out of
+ * Merchant feeds until date/stock evidence is separately reviewed. Never invent
+ * availability_date or call an orderable unknown-lead item in_stock/out_of_stock.
+ * Fixed identity hold also fails closed if a marker is missing or later edited.
+ */
+function sa_gpf_unknown_lead_source_hold($product): bool
+{
+    return $product instanceof WC_Product
+        && in_array((string) $product->get_meta('_sa_shopify_id'), ['7742545920177', '7742546018481'], true);
+}
+
+/** Apply current image and unknown-lead holds to prebuilt chunks without a catalog/cache mutation. */
 function sa_gpf_apply_image_holds(string $chunk): string
 {
     return (string) preg_replace_callback('#<item>\s*(.*?)</item>#s', static function(array $m): string {
         // Exact Merchant SKU tags, not substring matches against unrelated descriptions.
-        if (preg_match('#<g:(?:id|mpn)>\s*(?:<!\[CDATA\[)?EBCBSD7801(?:\]\]>)?\s*</g:(?:id|mpn)>#', $m[1])) return '';
+        if (preg_match('#<g:(?:id|mpn)>\s*(?:<!\[CDATA\[)?(?:EBCBSD7801|CUS949 477 A|CUS949 492 C)(?:\]\]>)?\s*</g:(?:id|mpn)>#', $m[1])) return '';
         return $m[0];
     }, $chunk);
 }
@@ -240,6 +251,9 @@ function sa_gpf_render_item(int $product_id): void
 {
     $product = wc_get_product($product_id);
     if (!$product instanceof WC_Product) {
+        return;
+    }
+    if (sa_gpf_unknown_lead_source_hold($product)) {
         return;
     }
     if ($product->get_status() !== 'publish') {
