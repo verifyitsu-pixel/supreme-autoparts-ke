@@ -1,0 +1,137 @@
+{
+  "schema": "whiteline-w93441-private-qualification-v1",
+  "state": "qualified_candidate_pending_native_helper_and_review_not_staged",
+  "checked_at": "2026-11-08T13:32:55.133707+00:00",
+  "source_url": "https://supreme-mods.com/products/whiteline-13-16-mazda-cx-5-rear-differential-mount-bushing-kit",
+  "manufacturer_url": "https://whitelineperformance.com/uk/rear-differential-mount-bushing-kit-to-suit-mazda-cx-5-ke-kf-9986-w93441.html",
+  "item": {
+    "id": 7686474236081,
+    "handle": "whiteline-13-16-mazda-cx-5-rear-differential-mount-bushing-kit",
+    "title": "Whiteline W93441 Mazda CX-5 KE KF Rear Differential Mount Bushing",
+    "vendor": "Whiteline",
+    "product_type": "Differential Bushings",
+    "tags": [
+      "SpecialOrder:N"
+    ],
+    "body_html": "<p>Whiteline W93441 rear differential mount bushing, listed by the manufacturer for Mazda CX-5 KE and KF.</p><ul><li>One kit contains one bushing. One kit is required.</li><li>Manufacturer dimensions: 65.5 mm outside diameter, 20.2 mm inside diameter and 51 mm length.</li><li>This is a replacement mount bushing, not a complete differential or mounting assembly.</li><li>Suspension specialist installation is recommended. Ask the installer to confirm the alignment checks needed after fitting.</li></ul><p>Confirm the manufacturer part number and exact vehicle details before ordering. A model and year label alone is not fitment confirmation.</p>",
+    "variants": [
+      {
+        "sku": "WHLW93441",
+        "price": "66.49",
+        "available": true,
+        "grams": 272
+      }
+    ],
+    "images": [
+      {
+        "src": "https://cdn.shopify.com/s/files/1/0643/0779/0001/products/bdb736ea13a65bf7a7fec44cef3454e9.jpg?v=1710243364"
+      },
+      {
+        "src": "https://cdn.shopify.com/s/files/1/0643/0779/0001/products/8c5591243f773e66ac5d6402c3b7621f.jpg?v=1710243364"
+      },
+      {
+        "src": "https://cdn.shopify.com/s/files/1/0643/0779/0001/products/b59681df34d0def85d4315680366805a.jpg?v=1710243364"
+      },
+      {
+        "src": "https://cdn.shopify.com/s/files/1/0643/0779/0001/products/68f4e5c5a0508414a82379aefc7cb359.jpg?v=1710243364"
+      },
+      {
+        "src": "https://cdn.shopify.com/s/files/1/0643/0779/0001/products/7e4e276d0ea95e3911bf32d9714de1ae.jpg?v=1710243364"
+      },
+      {
+        "src": "https://cdn.shopify.com/s/files/1/0643/0779/0001/products/b7a18f5de4562fbc3578a258e60e33b7.jpg?v=1710243364"
+      }
+    ]
+  },
+  "photos": [
+    {
+      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/products/bdb736ea13a65bf7a7fec44cef3454e9.jpg?v=1710243364",
+      "sha256": "15e60d9f84b3f0a1fa113d7f48826a6153395982c6b9eaf43bcc67e6da9baba8"
+    },
+    {
+      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/products/8c5591243f773e66ac5d6402c3b7621f.jpg?v=1710243364",
+      "sha256": "cea265960b3a9b8d70b34d7d19be1efaf2d5ecdb58b15e234dd464d135105307"
+    },
+    {
+      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/products/b59681df34d0def85d4315680366805a.jpg?v=1710243364",
+      "sha256": "c9dde09e33c1f28b7605fed09916e64e6e9830589b23bbec1aa5ebef41fc70c6"
+    },
+    {
+      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/products/68f4e5c5a0508414a82379aefc7cb359.jpg?v=1710243364",
+      "sha256": "b4c36138c7c5a1c2245cb80ef5a2c2a22442397b22520249372787ec80367083"
+    },
+    {
+      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/products/7e4e276d0ea95e3911bf32d9714de1ae.jpg?v=1710243364",
+      "sha256": "14f3f16041577625adb63c1e8c7109321788ff6af9b613e92c61ba89be026dab"
+    },
+    {
+      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/products/b7a18f5de4562fbc3578a258e60e33b7.jpg?v=1710243364",
+      "sha256": "1e841f57c35bb2b1a81574fbde6e2af6f3c1316cac79286d339e61a278503d97"
+    }
+  ],
+  "categories": [
+    27,
+    9478,
+    58052
+  ],
+  "tags": [
+    "SpecialOrder:Y"
+  ],
+  "source_price_currency": "USD",
+  "source_price": "66.49",
+  "source_weight": {
+    "value": 0.6,
+    "unit": "lb"
+  },
+  "intended_stock": {
+    "managed": true,
+    "quantity": 0,
+    "status": "onbackorder",
+    "backorders": "notify",
+    "source_orderable_unknown": "",
+    "source_special_order": "yes"
+  },
+  "feed_hold": true,
+  "save_garage_positive": false,
+  "claims_not_carried": [
+    "sourceUSyearsandCX9notbroadmarketfitmentapproval",
+    "USUKinstalltimealignmentconflictNoVsYesnotclaimed",
+    "regionalpreorderdateswarrantiesnotKenyaarrivalpromise",
+    "notcompletedifferentialormountassembly",
+    "warninggraphicandbrandlogosareexcludednonproductimagesnotredrawnorconcealedmismatch"
+  ],
+  "independent_gates_remaining": [
+    "exact new helper actual isolated native post-save path",
+    "parent technical review",
+    "fresh before-write source/code/identity/taxonomy/media preflight",
+    "hidden draft proof then separate publication review"
+  ],
+  "scope_excludes": [
+    "existing EIGHT public product edits",
+    "orders",
+    "payments",
+    "campaign approval/enqueue/mail",
+    "taxonomy creation/reparenting",
+    "money/capacity changes"
+  ],
+  "full_short_description": "Whiteline W93441 rear differential mount bushing for Mazda CX-5 KE and KF. Includes one bushing; one kit required. Not a complete differential or mount assembly. Suspension specialist installation recommended. Available to order; availability and delivery timing must be confirmed. Confirm exact vehicle details and manufacturer part number before ordering.",
+  "image_mode": "source_hotlinks_only_skip_images_true_no_attachments",
+  "verified_ean": "9319924453757",
+  "gtin_gate": "Verified source and manufacturer EAN9319924453757. Must carry in standard Woo GTIN and actual Product schema before any separately reviewed publication.",
+  "source_quantity_policy": "SourceSpecialOrderY/availabletrue is not warehouse stock. Localqty0/notify/specialorderunknownarrival.",
+  "no_exact_marker": true,
+  "excluded_source_photo_indices": [
+    5,
+    7,
+    8,
+    9
+  ],
+  "selected_source_photo_indices": [
+    1,
+    0,
+    2,
+    3,
+    4,
+    6
+  ]
+}
