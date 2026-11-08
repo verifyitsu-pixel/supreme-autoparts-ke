@@ -25,3 +25,11 @@ jobs:
           php tests/photo-registry-regression.php
       - name: Isolated native WordPress WooCommerce MySQL draft import
         run: bash tests/integration/catalog-staging-integration.sh
+
+      - name: Save isolated native callback render evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: garage-native-render
+          path: /tmp/garage-native-*.html
+          if-no-files-found: error
+          retention-days: 7
