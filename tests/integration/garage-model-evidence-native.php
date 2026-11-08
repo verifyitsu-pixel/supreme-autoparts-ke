@@ -1,6 +1,6 @@
 <?php
 // Private isolated-fixture regression for the reproduced make-only wildcard bug.
-if(rtrim(home_url(),'/')!=='http://127.0.0.1:8091'||DB_NAME!=='catalog_staging_it')throw new RuntimeException('Not isolated fixture site');
+if(realpath(ABSPATH)!=='/tmp/catalog-staging-wp'||DB_NAME!=='catalog_staging_it')throw new RuntimeException('Not isolated fixture site');
 $old_vocab=get_option('sa_fx_vocab');$old_cookie=$_COOKIE['sa_pz']??null;$old_product=$GLOBALS['product']??null;
 update_option('sa_fx_vocab',['Toyota'=>['Land Cruiser','Corolla','Aqua'],'Ford'=>['F-150']]);
 $model_fixture=new WC_Product_Simple();$model_fixture->set_name('Alcon Pro-System Toyota LC76/79 Bracket Kit - Front');$model_fixture->set_sku('FIXTURE-MODEL-WILDCARD');$model_fixture->set_regular_price('153');$model_fixture->set_status('draft');$model_fixture->set_catalog_visibility('hidden');$mid=$model_fixture->save();update_post_meta($mid,'_sa_shopify_id','fixture-wildcard-not-protected');wp_set_object_terms($mid,[],'product_tag');$model_fixture=wc_get_product($mid);$before=[$model_fixture->get_data(),get_post_meta($mid)];
