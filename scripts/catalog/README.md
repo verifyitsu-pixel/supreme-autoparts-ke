@@ -1,0 +1,13 @@
+# Guarded promotion candidate
+
+Private test-only helpers. No deployment or live execution approved. Inclusion has no effects.
+
+`sa_guarded_promote($manifest)` is read-only by default. An explicit second argument `true` writes. No import is repeated and no fields except visibility/status are deliberately changed.
+
+Before use, an operator must independently verify owner authority for the exact live action, qualifications, photo/frontend pixel review, exact maker fitment, prices, truthful fulfillment wording and the audience. Neither a manifest nor any evidence hash supplies authority or establishes factual correctness.
+
+The bounded v1 manifest has at most two exact items, each with numeric id, source_id, sku, snapshot_sha256, evidence_sha256. The latter hashes the separately retained qualification evidence; its contents need independent review. The snapshot covers full product post/meta/taxonomy state, selected attachment post/meta and on-disk byte hashes. Prepare it only after the final independent review, not from stale pre-review state. Snapshot construction is read-only.
+
+Checks require a simple hidden draft, matching source/SKU, nonexcluded item with featured attachment and positive price. Explicit source special orders must persist managed stock/zero/notify/onbackorder. Every manifest row is checked before any write, and checked again immediately before its write. All drift is refused. Unlisted rows cannot be changed through this helper. Variable products are excluded because the importer does not create their child variations.
+
+Limitations: this is not an atomic cross-system or cross-product transaction. Other writers can change state after the immediate pre-write check; operational execution requires a controlled maintenance window with imports/editor writes paused by separately approved means. Do not claim concurrency immunity. A mid-batch failure returns partial published IDs and the failed ID. Read actual current state before any retry; never replay blindly or automatically roll back. A post-save hook can change state; verification catches final visibility/status failure but cannot undo an observed publication. After commit verify full expected state, frontend pixels and exclusion of all unlisted rows. This candidate has only isolated synthetic data proof, not live compatibility proof.
