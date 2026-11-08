@@ -12,7 +12,7 @@ function sa_source_orderable_unknown_product($product): bool
 function sa_source_fulfillment_label($product): string
 {
     if (sa_source_special_order_product($product)) {
-        return 'Special order - availability and delivery timing to be confirmed';
+        return 'Special order - available on backorder';
     }
     return sa_source_orderable_unknown_product($product)
         ? 'Available to order - availability and delivery timing to be confirmed' : '';
