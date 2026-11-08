@@ -433,6 +433,14 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
                 $product->update_meta_data('_sa_source_special_order', 'yes');
                 $product->set_backorders('notify');
                 $product->set_stock_status('onbackorder');
+            } elseif (!$is_update && $stage_new_only && !empty($variant['available'])) {
+                // Targeted additions: source orderability is not local shelf stock.
+                // Keep source SpecialOrder:N untouched and use a distinct fulfillment flag.
+                $product->set_manage_stock(true);
+                $product->set_stock_quantity(0);
+                $product->set_backorders('notify');
+                $product->set_stock_status('onbackorder');
+                $product->update_meta_data('_sa_source_orderable_unknown', 'yes');
             } else {
                 $product->set_stock_status(!empty($variant['available']) ? 'instock' : 'outofstock');
             }

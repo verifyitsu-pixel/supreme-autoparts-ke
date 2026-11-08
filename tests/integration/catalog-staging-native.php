@@ -8,6 +8,7 @@ require_once $repo.'/wp-content/plugins/supreme-autoparts-core/includes/product-
 require_once $repo.'/wp-content/plugins/supreme-autoparts-core/includes/import-shopify.php';
 require_once SA_CORE_DIR.'includes/catalog-hygiene.php';
 require_once SA_CORE_DIR.'includes/catalog-search.php';
+require_once $repo.'/wp-content/mu-plugins/sa-source-special-order.php';
 $GLOBALS['sa_core_fingerprint_no_write']=true;
 $transitions=[];
 add_action('transition_post_status',function($new,$old,$p)use(&$transitions){if($p->post_type==='product')$transitions[]=['id'=>$p->ID,'new'=>$new,'old'=>$old];},10,3);
@@ -54,3 +55,7 @@ add_action('woocommerce_update_product',function($changed)use($aid){if((int)$cha
 $r=sa_guarded_promote(['schema'=>'supreme-reviewed-promotion-v1','items'=>[$ar]],true);fixture_ok($r['published']===[]&&$r['would_publish']===[]&&$r['failed']['id']===$aid&&$r['failed']['may_have_published']&&$r['failed']['error']==='Unexpected post-write state drift','post-save unexpected metadata change reported with possible publication');
 
 $x=sa_promotion_snapshot($gid);$y=$x;$y['post']['guid']='https://different.invalid/product';fixture_ok(sa_promotion_stable_state($x)!==sa_promotion_stable_state($y),'real GUID destination drift remains detected');
+
+$orderable=fixture_item(9);$orderable['tags']=['SpecialOrder:N'];$r=fixture_import($orderable);$oid=wc_get_product_id_by_sku('FIXTURE-9');$op=wc_get_product($oid);fixture_ok($r['errors']===0&&$op->get_stock_status()==='onbackorder'&&$op->get_manage_stock()&&$op->get_stock_quantity()===0&&$op->get_backorders()==='notify','nonY staged source orderability is not warehouse stock');fixture_ok($op->get_meta('_sa_source_orderable_unknown')==='yes'&&$op->get_meta('_sa_source_special_order')===''&&wp_get_object_terms($oid,'product_tag',['fields'=>'names'])===['SpecialOrder:N'],'source nonY tag and distinct fulfillment marker retained');
+fixture_ok(str_contains(wc_get_stock_html($op),'Available to order - availability and delivery timing to be confirmed')&&!str_contains(wc_get_stock_html($op),'In stock'),'native availability HTML truthful for nonY');fixture_ok(str_contains(wc_get_stock_html(wc_get_product($id)),'Special order - availability and delivery timing to be confirmed'),'native availability HTML truthful for Y');fixture_ok(str_contains(apply_filters('woocommerce_cart_item_name','Fixture',['data'=>$op],'fixture'),'Available to order'),'cartline name nonY label');ob_start();do_action('woocommerce_after_cart_item_name',['data'=>$op],'fixture');$rendered=ob_get_clean();fixture_ok(str_contains($rendered,'Available to order'),'cartline belowtitle nonY label');fixture_ok(str_contains(apply_filters('woocommerce_cart_item_backorder_notification','old',$oid),'Available to order'),'backorder notification nonY label');
+$ordinary=fixture_item(10);$ordinary['tags']=['SpecialOrder:N'];$r=fixture_import($ordinary,false);$orp=wc_get_product(wc_get_product_id_by_sku('FIXTURE-10'));fixture_ok($r['errors']===0&&$orp->get_stock_status()==='instock'&&$orp->get_meta('_sa_source_orderable_unknown')==='','ordinary nonstaged flow unchanged');

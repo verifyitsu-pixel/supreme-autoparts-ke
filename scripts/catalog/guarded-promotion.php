@@ -37,7 +37,7 @@ function sa_promotion_validate(array $row): array {
     if((string)$p->get_sku()!==(string)$row['sku']||(string)get_post_meta($id,'_sa_shopify_id',true)!==(string)$row['source_id'])throw new RuntimeException('Identity drift');
     if(!has_post_thumbnail($id)||get_post_meta($id,'_sa_catalog_excluded',true))throw new RuntimeException('Missing real image or catalog exclusion');
     if((float)$p->get_regular_price()<=0)throw new RuntimeException('Missing price');
-    if(get_post_meta($id,'_sa_source_special_order',true)==='yes') {
+    if(get_post_meta($id,'_sa_source_special_order',true)==='yes'||get_post_meta($id,'_sa_source_orderable_unknown',true)==='yes') {
         if(!$p->get_manage_stock()||$p->get_stock_quantity()!==0||$p->get_backorders()!=='notify'||$p->get_stock_status()!=='onbackorder')throw new RuntimeException('Special-order stock drift');
     }
     $snapshot=sa_promotion_snapshot($id);
