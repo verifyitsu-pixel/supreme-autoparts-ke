@@ -38,7 +38,7 @@ function sa_gpf_apply_image_holds(string $chunk): string
 {
     return (string) preg_replace_callback('#<item>\s*(.*?)</item>#s', static function(array $m): string {
         // Exact Merchant SKU tags, not substring matches against unrelated descriptions.
-        if (preg_match('#<g:(?:id|mpn)>\s*(?:<!\[CDATA\[)?(?:EBCBSD7801|CUS949 477 A|CUS949 492 C)(?:\]\]>)?\s*</g:(?:id|mpn)>#', $m[1])) return '';
+        if (preg_match('#<g:(id|mpn)>\s*(?:<!\[CDATA\[)?(?:EBCBSD7801|CUS949 477 A|CUS949 492 C)(?:\]\]>)?\s*</g:\1>#', $m[1])) return '';
         return $m[0];
     }, $chunk);
 }
