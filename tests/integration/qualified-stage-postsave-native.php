@@ -46,3 +46,6 @@ try{$pub=wl_pub_execute($pubplan,'/tmp/wl-pub-native-proof.json',true);}catch(Th
 fixture_ok($pub['exact_delta']&&$pub['campaign_expected']&&$pub['queue_count']===0,'exact publication full native commit verifies real draft campaign and zero queue');fixture_ok($pub['gtin']==='9319924475032'&&get_post_meta(76370,'_global_unique_id',true)==='9319924475032','native Woo globaluniqueid setter persists verified EAN');
 WC()->structured_data->generate_product_data(wc_get_product(76370));$schema=WC()->structured_data->get_data();fixture_ok(str_contains(wp_json_encode($schema),'9319924475032'),'actual Woo generated schema carries verified EAN');
 fixture_ok($pub['feed_hold']&&$pub['feed_bytes']===0&&$pub['cached_hold']===''&&$pub['garage']===false&&$pub['no_local_media'],'publication keeps source feed and garage holds, hotlinkonly');
+
+$unexpected=$pub['after'];$unexpected['meta']['_global_unique_id']=['9319924475033'];fixture_ok(!wl_same($pub['expected'],$unexpected),'exact publication expectedstate rejects wrong EAN');
+foreach(['guid','post_date','post_content','post_title','post_excerpt']as$key){$unexpected=$pub['after'];$unexpected['post'][$key].='UNEXPECTED';fixture_ok(!wl_same($pub['expected'],$unexpected),'exact publication expectedstate rejects '.$key);}
