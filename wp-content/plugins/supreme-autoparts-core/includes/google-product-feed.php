@@ -43,6 +43,32 @@ function sa_gpf_apply_image_holds(string $chunk): string
     }, $chunk);
 }
 
+/** Exact reviewed broken-local-image replacement. No catalog/media/cache writes. */
+function sa_gpf_reviewed_image_url(string $sku, string $link, string $image): string
+{
+    if ($sku === 'ICOK53299'
+        && in_array($link, ['https://www.supremeautoparts.co.ke/product/icon-2024-toyota-tacoma-1-25-3in-stage-9-suspension-system-billet/', 'https://www.supremeautoparts.co.ke/product/icon-2024-toyota-tacoma-1-25-3in-stage-9-suspension-system-billet/?sa_market=ke'], true)
+        && $image === 'https://www.supremeautoparts.co.ke/wp-content/uploads/2026/09/b969490e6d89e90af3c6794a027bb7adL.jpg') {
+        return 'https://cdn.shopify.com/s/files/1/0643/0779/0001/files/b969490e6d89e90af3c6794a027bb7adL.jpg?v=1789536517&width=1200';
+    }
+    return $image;
+}
+
+/** Apply exact reviewed image correction to already-built chunks. */
+function sa_gpf_apply_reviewed_images(string $chunk): string
+{
+    return (string) preg_replace_callback('#<item>\s*(.*?)</item>#s', static function(array $m): string {
+        $values = [];
+        foreach (['id', 'link', 'image_link'] as $tag) {
+            if (!preg_match('#<g:' . $tag . '>([^<]*)</g:' . $tag . '>#', $m[1], $v)) return $m[0];
+            $values[$tag] = html_entity_decode($v[1], ENT_XML1 | ENT_QUOTES, 'UTF-8');
+        }
+        $image = sa_gpf_reviewed_image_url($values['id'], $values['link'], $values['image_link']);
+        if ($image === $values['image_link']) return $m[0];
+        return str_replace('<g:image_link>' . sa_gpf_xml($values['image_link']) . '</g:image_link>', '<g:image_link>' . sa_gpf_xml($image) . '</g:image_link>', $m[0]);
+    }, $chunk);
+}
+
 /** Both regional feeds use the store/payment USD currency. Google estimates KES. */
 function sa_gpf_currency(): string
 {
@@ -189,7 +215,7 @@ function sa_gpf_render(bool $for_comments = false): void
                     $chunk
                 );
             }
-            $chunk = sa_gpf_market_links(sa_gpf_apply_image_holds($chunk));
+            $chunk = sa_gpf_market_links(sa_gpf_apply_reviewed_images(sa_gpf_apply_image_holds($chunk)));
             echo $chunk;
         }
         echo "</channel>\n</rss>\n";
@@ -300,7 +326,7 @@ function sa_gpf_render_item(int $product_id): void
     }
 
     $description = sa_gpf_description($product, $title);
-    $image = sa_gpf_image_url($product);
+    $image = sa_gpf_reviewed_image_url($sku, $link, sa_gpf_image_url($product));
     if ($image === '') {
         return; // Merchant Center requires image_link; never substitute a placeholder.
     }
