@@ -108,3 +108,13 @@ try{$kp=w56457_pub_execute($kpubplan,'/tmp/w56457-pub-native-proof.json',true);}
 fixture_ok($kp['exact_delta']&&$kp['protected_equal']&&$kp['definitions_equal']&&$kp['campaign_expected']&&$kp['queue_count']===0,'W56457 exact publication fullnative draftcampaign/allfive/taxonomy proof');
 fixture_ok($kp['gtin']==='9319924483969'&&$kp['schema_gtin']==='9319924483969'&&str_contains(wp_json_encode($kp['actual_woo_schema']),'9319924483969'),'W56457 native Woo setter and actual Woo schema EAN');
 fixture_ok($kp['feed_hold']&&$kp['feed_bytes']===0&&$kp['cached_hold']===''&&$kp['garage']===false&&$kp['raw_exact_marker']===''&&$kp['no_local_media'],'W56457 publication preserves allholds/rawempty/hotlinks');
+
+// Exact W56457 schema MPN correction, no product writes or global SKU stripping.
+$mpn_before=[];foreach([76362,76364,76366,76368,76370,76371,76372,76373]as$x)$mpn_before[$x]=sa_qualified_stage_snapshot($x);
+$mp=wc_get_product(76373);$m=sa_gpf_enrich_product_schema(['@type'=>'Product','sku'=>$mp->get_sku()],$mp);
+fixture_ok($m['sku']==='WHLW56457'&&$m['mpn']==='W56457'&&$m['gtin']==='9319924483969','W56457 verified source MPN W56457 distinct from unchanged store SKU/GTIN');
+WC()->structured_data->generate_product_data($mp);$actual_mpn=WC()->structured_data->get_data();$actual_ok=false;foreach($actual_mpn as$node){if(($node['sku']??'')==='WHLW56457'&&($node['mpn']??'')==='W56457'&&($node['gtin']??'')==='9319924483969')$actual_ok=true;}fixture_ok($actual_ok,'W56457 actual native Woo generated Product schema exact MPN SKU GTIN');
+foreach([76370=>'WHLKTA361',76371=>'WHLKTA518',76372=>'WHLKTA528']as$x=>$sk){$n=sa_gpf_enrich_product_schema(['@type'=>'Product'],wc_get_product($x));fixture_ok($n['mpn']===$sk,'Other Whiteline schema unchanged '.$sk);}
+$wrong=clone $mp;$wrong->set_sku('WHLW56457A');$n=sa_gpf_enrich_product_schema(['@type'=>'Product'],$wrong);fixture_ok($n['mpn']==='WHLW56457A','MPN override rejects partial/wrong SKU');
+$wrong=clone $mp;$wrong->update_meta_data('_sa_shopify_id','90277444978410');$n=sa_gpf_enrich_product_schema(['@type'=>'Product'],$wrong);fixture_ok($n['mpn']==='WHLW56457','MPN override rejects different source');
+$mpn_after=[];foreach([76362,76364,76366,76368,76370,76371,76372,76373]as$x)$mpn_after[$x]=sa_qualified_stage_snapshot($x);fixture_ok(w56457_same($mpn_before,$mpn_after),'MPN presentation correction changes no product state all EIGHT');

@@ -123,7 +123,8 @@ function sa_gpf_enrich_product_schema($markup, $product)
 
     $sku = trim((string) $product->get_sku());
     if ($sku !== '') {
-        $markup['mpn'] = $sku;
+        // Exact verified source MPN. Store SKU and all other products stay unchanged.
+        $markup['mpn'] = ((string) $product->get_meta('_sa_shopify_id') === '9027744497841' && $sku === 'WHLW56457') ? 'W56457' : $sku;
     }
 
     $gtin = sa_gpf_gtin($product);
