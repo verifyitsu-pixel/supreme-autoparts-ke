@@ -123,8 +123,15 @@ function sa_gpf_enrich_product_schema($markup, $product)
 
     $sku = trim((string) $product->get_sku());
     if ($sku !== '') {
-        // Exact verified source MPN. Store SKU and all other products stay unchanged.
-        $markup['mpn'] = ((string) $product->get_meta('_sa_shopify_id') === '9027744497841' && $sku === 'WHLW56457') ? 'W56457' : $sku;
+        // Exact verified source + SKU pairs only. No global prefix stripping.
+        $verified_mpn = [
+            '9027744497841' => ['WHLW56457', 'W56457'],
+            '7730383290545' => ['WHLKTA361', 'KTA361'],
+            '9027744071857' => ['WHLKTA518', 'KTA518'],
+            '9027744104625' => ['WHLKTA528', 'KTA528'],
+        ];
+        $identity = $verified_mpn[(string) $product->get_meta('_sa_shopify_id')] ?? null;
+        $markup['mpn'] = ($identity !== null && $sku === $identity[0]) ? $identity[1] : $sku;
     }
 
     $gtin = sa_gpf_gtin($product);
