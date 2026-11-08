@@ -54,21 +54,52 @@ final class SM_Welcome
         add_action('woocommerce_order_status_on-hold', [self::class, 'mark_redeemed']);
     }
 
+    /** Presentation only: explicit source unknown-lead markers must not inherit stocked-item dates. */
+    private static function campaign_unknown_lead(): bool
+    {
+        $unknown = static function ($product): bool {
+            return $product instanceof WC_Product
+                && ($product->get_meta('_sa_source_special_order') === 'yes'
+                    || $product->get_meta('_sa_source_orderable_unknown') === 'yes');
+        };
+        if (function_exists('is_product') && is_product()) {
+            $id = function_exists('get_queried_object_id') ? (int) get_queried_object_id() : 0;
+            return $id > 0 && function_exists('wc_get_product') && $unknown(wc_get_product($id));
+        }
+        if (((function_exists('is_cart') && is_cart()) || (function_exists('is_checkout') && is_checkout()))
+            && function_exists('WC') && WC()->cart) {
+            foreach (WC()->cart->get_cart() as $item) {
+                if ($unknown($item['data'] ?? null)) return true;
+            }
+        }
+        return false;
+    }
+
     public static function campaign_banner(): void
     {
         if (!self::campaign_active()) return;
         echo '<style>.sm-nov-banner{background:#faf8f7;color:#242424;text-align:center;padding:9px 16px;border-bottom:1px solid #e7e3e0;font-family:Arial,sans-serif;line-height:1.45}.sm-nov-banner strong{font-size:14px;font-weight:700;color:#971e2a}.sm-nov-banner b{font-weight:500;font-size:14px;margin-left:12px}.sm-nov-banner span{display:inline-block;font-size:11px;margin-left:12px;color:#666}.sm-nov-reminder{background:transparent;border:0;border-bottom:1px solid #e7e3e0;padding:0 0 14px;margin:0 0 20px;color:#333;line-height:1.5}.sm-nov-reminder strong{display:block;font-size:16px;font-weight:600;color:#971e2a}.sm-nov-reminder span{display:block;font-size:12px;margin-top:4px;color:#666}@media(max-width:600px){.sm-nov-banner{padding:8px 10px}.sm-nov-banner strong,.sm-nov-banner b{font-size:12px}.sm-nov-banner b{margin-left:7px}.sm-nov-banner span{display:block;font-size:10px;margin:3px 0 0}.sm-nov-reminder strong{font-size:15px}.sa-rsbar--intl .sa-rsbar__in{flex-wrap:wrap;white-space:normal;justify-content:center;gap:3px 10px}.sa-rsbar--intl .sa-rsbar__in span{white-space:normal;text-align:center}}</style>';
-        echo '<aside class="sm-nov-banner" aria-label="November offer"><strong>Red November</strong><b>30% off US &amp; Kenya orders</b><span>US free, 1-3 working days · Kenya courier rates, 1-2 working days · No minimum · Through Nov 30</span></aside>';
+        $shipping = self::campaign_unknown_lead()
+            ? 'US free shipping · Kenya courier rates · Availability and delivery timing to be confirmed'
+            : 'US free, 1-3 working days · Kenya courier rates, 1-2 working days';
+        echo '<aside class="sm-nov-banner" aria-label="November offer"><strong>Red November</strong><b>30% off US &amp; Kenya orders</b><span>' . esc_html($shipping) . ' · No minimum · Through Nov 30</span></aside>';
     }
 
     public static function campaign_reminder(): void
     {
         if (!self::campaign_active()) return;
+        $unknown = self::campaign_unknown_lead();
         if (function_exists('is_product') && is_product()) {
-            echo '<p style="color:#a70819;font-size:13px;line-height:1.5;margin:10px 0"><strong>Red November: 30% off US &amp; Kenya orders.</strong><br>US free, 1-3 working days · Kenya courier rates, 1-2 working days · No minimum · Automatic at checkout · Through Nov 30</p>';
+            $shipping = $unknown
+                ? 'US free shipping · Kenya courier rates · Availability and delivery timing to be confirmed'
+                : 'US free, 1-3 working days · Kenya courier rates, 1-2 working days';
+            echo '<p style="color:#a70819;font-size:13px;line-height:1.5;margin:10px 0"><strong>Red November: 30% off US &amp; Kenya orders.</strong><br>' . esc_html($shipping) . ' · No minimum · Automatic at checkout · Through Nov 30</p>';
             return;
         }
-        echo '<aside class="sm-nov-reminder" aria-label="November checkout offer"><strong>Red November: 30% off US and Kenya orders</strong><span>US free delivery in 1-3 working days. Kenya courier-calculated delivery in 1-2 working days. Times run from placing the order, excluding weekends; product availability applies. No minimum. Discount applied automatically when you enter your delivery address. Through November 30.</span></aside>';
+        $shipping = $unknown
+            ? 'US free shipping. Kenya courier-calculated delivery. This order includes an item with unconfirmed availability and delivery timing.'
+            : 'US free delivery in 1-3 working days. Kenya courier-calculated delivery in 1-2 working days. Times run from placing the order, excluding weekends; product availability applies.';
+        echo '<aside class="sm-nov-reminder" aria-label="November checkout offer"><strong>Red November: 30% off US and Kenya orders</strong><span>' . esc_html($shipping) . ' No minimum. Discount applied automatically when you enter your delivery address. Through November 30.</span></aside>';
     }
 
     /** Explicit customer destination only. Never infer offer eligibility from IP/store view. */
