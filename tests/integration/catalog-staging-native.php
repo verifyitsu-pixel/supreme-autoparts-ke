@@ -117,3 +117,6 @@ $product=$spp;$GLOBALS['product']=$spp;$_COOKIE['sa_pz']=json_encode(['mk'=>'maz
 update_post_meta($spid,'_sa_exact_maker_fitment_v1',$fitment);fixture_ok(sa_exact_fitment_record($spid)===null&&sa_garage_product_fits_vehicle($spid,'mazda','cx-5',2016)===false,'SPC refuses schema-valid invented marker');ob_start();$badge();fixture_ok(ob_get_clean()==='','actual SPC guessed marker does not restore badge');delete_post_meta($spid,'_sa_exact_maker_fitment_v1');
 fixture_ok(sa_gpf_unknown_lead_source_hold($spp),'SPC native fixed source feed hold');ob_start();sa_gpf_render_item($spid);fixture_ok(ob_get_clean()==='','actual native SPC feed emits zero');
 fixture_ok(sa_gpf_apply_image_holds('<item><g:id>SPC67416</g:id></item><item><g:id>SPC67416A</g:id></item>')==='<item><g:id>SPC67416A</g:id></item>','SPC cached feed exact SKU only');
+
+require $repo . '/tests/integration/publication-postsave-native.php';
+require $repo . '/tests/integration/category-intent-seo-native.php';

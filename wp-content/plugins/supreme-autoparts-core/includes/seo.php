@@ -661,6 +661,11 @@ function sa_seo_print_json_ld(array $ctx, array $brand, string $url): void
         }
     }
 
+    $collection = sa_seo_collection_entity($ctx, $url, $website_id, $org_id);
+    if ($collection !== []) {
+        $graph[] = $collection;
+    }
+
     // On front page only: WebPage entity for richer home rich results.
     if (is_front_page()) {
         $graph[] = [
@@ -1069,3 +1074,54 @@ add_filter('wp_sitemaps_taxonomies', function (array $taxonomies): array {
         return $t->name !== 'product_tag';
     });
 });
+
+/** Connect an existing product category to the same store entity, without new URLs or offers. */
+function sa_seo_collection_entity(array $ctx, string $url, string $website_id, string $org_id): array
+{
+    if (!function_exists('is_product_category') || !is_product_category() || sa_seo_should_noindex()) {
+        return [];
+    }
+    $term = get_queried_object();
+    if (!$term instanceof WP_Term || $term->taxonomy !== 'product_cat') {
+        return [];
+    }
+    $page = [
+        '@type' => 'CollectionPage',
+        '@id' => $url . '#webpage',
+        'url' => $url,
+        'name' => wp_strip_all_tags((string) $term->name),
+        'isPartOf' => ['@id' => $website_id],
+        'publisher' => ['@id' => $org_id],
+        'inLanguage' => 'en',
+    ];
+    // Only use the actual visible category description, never generated keyword claims.
+    $description = trim(wp_strip_all_tags((string) $term->description));
+    if ($description !== '' && (int) get_query_var('paged') < 2) {
+        $page['description'] = $description;
+    }
+    return $page;
+}
+
+/** Useful buying checks on the existing camber-kit category, not a keyword doorway. */
+function sa_seo_camber_buying_help(): void
+{
+    if (!function_exists('is_product_category') || !is_product_category('camber-kits')
+        || (int) get_query_var('paged') > 1 || is_search()) {
+        return;
+    }
+    $guide = get_page_by_path('fitment-guide', OBJECT, 'page');
+    if (!$guide instanceof WP_Post || $guide->post_status !== 'publish') {
+        return;
+    }
+    $guide_url = get_permalink($guide);
+    if (!is_string($guide_url) || $guide_url === '') {
+        return;
+    }
+    echo '<section class="sa-camber-buying-help" aria-label="Choosing a camber kit">';
+    echo '<h2>Choosing a camber kit</h2>';
+    echo '<p>Start with the manufacturer part number, then check your vehicle build date, chassis and suspension details. A model and year label alone is not a fitment confirmation.</p>';
+    echo '<p>Check the pack contents: one arm, a pair and a complete kit are different listings. Read the installation notes for the product and confirm availability and delivery timing before planning the work.</p>';
+    echo '<p><a href="' . esc_url($guide_url) . '">Check vehicle fitment before ordering</a>. Send the product link and your vehicle details if you need help.</p>';
+    echo '</section>';
+}
+add_action('woocommerce_archive_description', 'sa_seo_camber_buying_help', 20);
