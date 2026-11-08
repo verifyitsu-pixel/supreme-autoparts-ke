@@ -1,7 +1,7 @@
 <?php
 // Runs only in a new isolated runner WordPress database.
 declare(strict_types=1);
-if(home_url()!=='http://127.0.0.1:8091')throw new RuntimeException('Not isolated fixture site');
+if(rtrim(home_url(),'/')!=='http://127.0.0.1:8091'||DB_NAME!=='catalog_staging_it')throw new RuntimeException('Not isolated fixture site: '.home_url().' database='.DB_NAME);
 $repo=getenv('SA_CATALOG_TEST_REPO');
 require_once $repo.'/wp-content/plugins/supreme-autoparts-core/includes/product-fingerprint.php';
 require_once $repo.'/wp-content/plugins/supreme-autoparts-core/includes/import-shopify.php';
