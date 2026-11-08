@@ -1,0 +1,100 @@
+{
+  "schema": "whiteline-kta361-private-qualification-v1",
+  "state": "qualified_candidate_pending_native_helper_and_review_not_staged",
+  "checked_at": "2026-11-08T11:23:30.611629+00:00",
+  "source_url": "https://supreme-mods.com/products/whiteline-14-18-subaru-forester-sj-front-lower-control-arm",
+  "manufacturer_url": "https://whitelineperformance.com/us/front-lower-control-arm-arm-assembly-to-suit-subaru-forester-sj-9986-kta361.html",
+  "item": {
+    "id": 7730383290545,
+    "handle": "whiteline-kta361-subaru-forester-sj-front-lower-control-arm-pair",
+    "title": "Whiteline KTA361 Subaru Forester SJ Front Lower Control Arm Pair",
+    "vendor": "Whiteline",
+    "product_type": "Control Arms",
+    "tags": [
+      "SpecialOrder:N"
+    ],
+    "body_html": "<p>Whiteline KTA361 front lower control arm pair, listed by the manufacturer for Subaru Forester SJ.</p><ul><li>One kit contains two front lower control arms with bushings and ball joints.</li><li>Offset caster correction; the arms are not on-car adjustable.</li><li>Professional installation and front wheel alignment are required.</li></ul><p>Confirm the manufacturer part number and vehicle details before ordering. A model and year label alone is not fitment confirmation.</p>",
+    "variants": [
+      {
+        "sku": "WHLKTA361",
+        "price": "358.09",
+        "available": true,
+        "grams": 9299
+      }
+    ],
+    "images": [
+      {
+        "src": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/4623fb09af9723b6f42a30438a3ca8c4.jpg?v=1712080179"
+      },
+      {
+        "src": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/7bd6de6851ec439c7d4e0ea8a81651a2.jpg?v=1712080179"
+      },
+      {
+        "src": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/4a08eaf9e6718bcbe4a61020d41f4e27.jpg?v=1712080179"
+      }
+    ]
+  },
+  "photos": [
+    {
+      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/4623fb09af9723b6f42a30438a3ca8c4.jpg?v=1712080179",
+      "sha256": "7afda36611f690291d97f5104d4478838765960aea34664899adc3618858bc4d"
+    },
+    {
+      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/7bd6de6851ec439c7d4e0ea8a81651a2.jpg?v=1712080179",
+      "sha256": "8e2d9e79b19976bba1e863470f00f702e06b55d7a78d456061c3e3c9cfe427bd"
+    },
+    {
+      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/4a08eaf9e6718bcbe4a61020d41f4e27.jpg?v=1712080179",
+      "sha256": "658060482d36bcd3be11ff9826dd67e44e511b911a101fc64fbfee5a859e3718"
+    }
+  ],
+  "categories": [
+    27,
+    111,
+    9478
+  ],
+  "tags": [
+    "SpecialOrder:N"
+  ],
+  "source_price_currency": "USD",
+  "source_price": "358.09",
+  "source_weight": {
+    "value": 20.5,
+    "unit": "lb"
+  },
+  "intended_stock": {
+    "managed": true,
+    "quantity": 0,
+    "status": "onbackorder",
+    "backorders": "notify",
+    "source_orderable_unknown": "yes",
+    "source_special_order": ""
+  },
+  "feed_hold": true,
+  "save_garage_positive": false,
+  "no_exact_aqua_marker": true,
+  "claims_not_carried": [
+    "makerUSpreorder4-6weeksnotKenyapromise",
+    "USlimitedlifetimewarrantynotKenyaapproval",
+    "sourceUS2014-2018submodeltagsnotblanketJDMfitment"
+  ],
+  "independent_gates_remaining": [
+    "exact new helper actual isolated native post-save path",
+    "parent technical review",
+    "fresh before-write source/code/identity/taxonomy/media preflight",
+    "hidden draft proof then separate publication review"
+  ],
+  "scope_excludes": [
+    "existing product edits",
+    "orders",
+    "payments",
+    "campaign approval/enqueue/mail",
+    "taxonomy creation/reparenting",
+    "money/capacity changes"
+  ],
+  "full_short_description": "Whiteline KTA361 front lower control arm pair for Subaru Forester SJ. Includes two arms with bushings and ball joints. Offset caster correction, not on-car adjustable. Professional installation and front wheel alignment required. Available to order; availability and delivery timing must be confirmed. Confirm vehicle details and manufacturer part number before ordering.",
+  "image_mode": "source_hotlinks_only_skip_images_true_no_attachments",
+  "verified_ean": "9319924475032",
+  "gtin_gate": "Deferred to separate reviewed publication step because importer does not map barcode. Must not publish without verifying/carrying this known EAN.",
+  "source_quantity_policy": "Source storefront may show6lowstock; no Kenya warehouse count inferred, sourceN/orderable preserved with local0/notify."
+}
