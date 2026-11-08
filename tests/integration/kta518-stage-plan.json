@@ -1,0 +1,100 @@
+{
+  "schema": "whiteline-kta518-private-qualification-v1",
+  "state": "qualified_candidate_pending_native_helper_and_review_not_staged",
+  "checked_at": "2026-11-08T11:23:30.611629+00:00",
+  "source_url": "https://supreme-mods.com/products/whiteline-14-18-subaru-forester-sj-front-lower-control-arm",
+  "manufacturer_url": "https://whitelineperformance.com/us/front-lower-control-arm-arm-assembly-to-suit-subaru-forester-sj-9986-kta361.html",
+  "item": {
+    "id": 9027744071857,
+    "handle": "whiteline-toyota-land-cruiser-prado-150-front-lower-control-arm-and-ball-joint",
+    "title": "Whiteline KTA518 Toyota Prado 150 Front Lower Control Arm Pair Without KDSS",
+    "vendor": "Whiteline",
+    "product_type": "Control Arms",
+    "tags": [
+      "SpecialOrder:Y"
+    ],
+    "body_html": "<p>Whiteline KTA518 front lower control arm pair, listed by the manufacturer for Toyota LandCruiser Prado 150 models without KDSS.</p><ul><li>One kit contains two control arms with ball joints and four camber bolts.</li><li>Offset camber and caster correction. The arms are not on-car adjustable.</li><li>Suspension specialist installation and front wheel alignment are required.</li></ul><p>Not for models with KDSS. Confirm the manufacturer part number, KDSS equipment and vehicle details before ordering. A model and year label alone is not fitment confirmation.</p>",
+    "variants": [
+      {
+        "sku": "WHLKTA518",
+        "price": "742.39",
+        "available": true,
+        "grams": 19958
+      }
+    ],
+    "images": [
+      {
+        "src": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/6628aea2e799049ed090d35e93072055L.jpg?v=1778818068"
+      },
+      {
+        "src": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/512b6a54f45f57b4812a8a7a9101554aL.jpg?v=1778818067"
+      },
+      {
+        "src": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/56923ef968b961cda1cef650d9d1ce28L.jpg?v=1778818067"
+      }
+    ]
+  },
+  "photos": [
+    {
+      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/4623fb09af9723b6f42a30438a3ca8c4.jpg?v=1712080179",
+      "sha256": "7afda36611f690291d97f5104d4478838765960aea34664899adc3618858bc4d"
+    },
+    {
+      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/7bd6de6851ec439c7d4e0ea8a81651a2.jpg?v=1712080179",
+      "sha256": "8e2d9e79b19976bba1e863470f00f702e06b55d7a78d456061c3e3c9cfe427bd"
+    },
+    {
+      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/4a08eaf9e6718bcbe4a61020d41f4e27.jpg?v=1712080179",
+      "sha256": "658060482d36bcd3be11ff9826dd67e44e511b911a101fc64fbfee5a859e3718"
+    }
+  ],
+  "categories": [
+    27,
+    111,
+    9478
+  ],
+  "tags": [
+    "SpecialOrder:N"
+  ],
+  "source_price_currency": "USD",
+  "source_price": "358.09",
+  "source_weight": {
+    "value": 20.5,
+    "unit": "lb"
+  },
+  "intended_stock": {
+    "managed": true,
+    "quantity": 0,
+    "status": "onbackorder",
+    "backorders": "notify",
+    "source_orderable_unknown": "yes",
+    "source_special_order": ""
+  },
+  "feed_hold": true,
+  "save_garage_positive": false,
+  "no_exact_aqua_marker": true,
+  "claims_not_carried": [
+    "makerUSpreorder4-6weeksnotKenyapromise",
+    "USlimitedlifetimewarrantynotKenyaapproval",
+    "sourceUS2014-2018submodeltagsnotblanketJDMfitment"
+  ],
+  "independent_gates_remaining": [
+    "exact new helper actual isolated native post-save path",
+    "parent technical review",
+    "fresh before-write source/code/identity/taxonomy/media preflight",
+    "hidden draft proof then separate publication review"
+  ],
+  "scope_excludes": [
+    "existing product edits",
+    "orders",
+    "payments",
+    "campaign approval/enqueue/mail",
+    "taxonomy creation/reparenting",
+    "money/capacity changes"
+  ],
+  "full_short_description": "Whiteline KTA518 front lower control arm pair for Toyota Prado 150 WITHOUT KDSS. Includes two arms with ball joints and four camber bolts. Offset camber/caster correction, not on-car adjustable. Suspension specialist installation and front wheel alignment required. Special order; availability and delivery timing must be confirmed. Not for KDSS models. Confirm vehicle details and manufacturer part number before ordering.",
+  "image_mode": "source_hotlinks_only_skip_images_true_no_attachments",
+  "verified_ean": "9319924486847",
+  "gtin_gate": "Verified source and manufacturer EAN9319924486847. Must carry in standard Woo GTIN and actual Product schema before any separately reviewed publication.",
+  "source_quantity_policy": "SourceSpecialOrderY/availabletrue is not warehouse stock. Localqty0/notify/specialorderunknownarrival."
+}
