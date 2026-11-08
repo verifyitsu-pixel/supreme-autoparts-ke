@@ -46,6 +46,9 @@ function sa_gpf_apply_image_holds(string $chunk): string
 /** Exact reviewed broken-local-image replacement. No catalog/media/cache writes. */
 function sa_gpf_reviewed_image_url(string $sku, string $link, string $image): string
 {
+    if ($sku === 'BIL46-276827' && in_array($link, ['https://www.supremeautoparts.co.ke/product/bilstein-b8-5162-series-17-18-ford-f-250-f-350-front-monotube-suspension-leveling-kit-for-2in-lift/', 'https://www.supremeautoparts.co.ke/product/bilstein-b8-5162-series-17-18-ford-f-250-f-350-front-monotube-suspension-leveling-kit-for-2in-lift/?sa_market=ke'], true)) {
+        return 'https://cart.bilsteinus.com/media/catalog/product/a/p/apa_46-276827_1_20261103121034.jpg';
+    }
     if ($sku === 'ICOK53299'
         && in_array($link, ['https://www.supremeautoparts.co.ke/product/icon-2024-toyota-tacoma-1-25-3in-stage-9-suspension-system-billet/', 'https://www.supremeautoparts.co.ke/product/icon-2024-toyota-tacoma-1-25-3in-stage-9-suspension-system-billet/?sa_market=ke'], true)
         && $image === 'https://www.supremeautoparts.co.ke/wp-content/uploads/2026/09/b969490e6d89e90af3c6794a027bb7adL.jpg') {
@@ -161,6 +164,9 @@ function sa_gpf_enrich_product_schema($markup, $product)
         $identity = $verified_mpn[(string) $product->get_meta('_sa_shopify_id')] ?? null;
         $markup['mpn'] = ($identity !== null && $sku === $identity[0]) ? $identity[1] : $sku;
     }
+
+    $reviewed_image = sa_gpf_reviewed_image_url($sku, (string) get_permalink($product->get_id()), '');
+    if ($reviewed_image !== '') $markup['image'] = [$reviewed_image];
 
     $gtin = sa_gpf_gtin($product);
     if ($gtin !== '') {

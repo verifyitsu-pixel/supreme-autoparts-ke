@@ -133,6 +133,16 @@ function sa_core_get_stored_shopify_image_urls(int $product_id): array
         $u = preg_replace('#^http://#i', 'https://', $u) ?: $u;
         $clean[] = $u;
     }
+    // Exact reviewed kit: supplier primary is a promotional B8 text panel.
+    // Use the maker's exact part-number kit photo, never crop or overwrite evidence.
+    if ((string) get_post_meta($product_id, '_sku', true) === 'BIL46-276827') {
+        foreach ($clean as $source) {
+            if (wp_parse_url($source, PHP_URL_HOST) === 'cdn.shopify.com'
+                && wp_parse_url($source, PHP_URL_PATH) === '/s/files/1/0643/0779/0001/products/1867041792ea567cd6ae666049036e04_459d7740-d13b-4f5d-9bb0-97cadd2c6899.jpg') {
+                return ['https://cart.bilsteinus.com/media/catalog/product/a/p/apa_46-276827_1_20261103121034.jpg'];
+            }
+        }
+    }
     return array_values(array_unique($clean));
 }
 
