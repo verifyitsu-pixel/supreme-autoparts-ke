@@ -280,7 +280,7 @@ function sa_core_collect_shopify_image_urls(array $item): array
  *
  * @param array{imported:int,updated:int,skipped:int,errors:int,messages:array<int,string>} $result
  */
-function sa_core_import_one_shopify_product(array $item, array &$result, bool $skip_images = false, bool $dry_run = false, bool $require_images = false): void
+function sa_core_import_one_shopify_product(array $item, array &$result, bool $skip_images = false, bool $dry_run = false, bool $require_images = false, bool $stage_new_only = false): void
 {
     try {
         $handle = sanitize_title((string) ($item['handle'] ?? ''));
@@ -337,6 +337,13 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
         }
 
         $is_update = $existing_id > 0;
+        // Explicit per-item CLI staging: never modify an existing product.
+        if ($stage_new_only && $is_update) {
+            throw new RuntimeException('New-only staging refused an existing product match.');
+        }
+        if ($stage_new_only && (!defined('WP_CLI') || !WP_CLI)) {
+            throw new RuntimeException('New-only staging requires CLI.');
+        }
         if ($dry_run) {
             if ($is_update) {
                 $result['updated']++;
@@ -374,8 +381,8 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
         $title = wp_strip_all_tags((string) ($item['title'] ?? $handle));
         $product->set_name($title);
         $product->set_slug($handle);
-        $product->set_status('publish');
-        $product->set_catalog_visibility('visible');
+        $product->set_status($stage_new_only ? 'draft' : 'publish');
+        $product->set_catalog_visibility($stage_new_only ? 'hidden' : 'visible');
         // Preserve real body_html; leave empty when Shopify had no description (no AI filler).
         $body_html = (string) ($item['body_html'] ?? '');
         $product->set_description($body_html);
