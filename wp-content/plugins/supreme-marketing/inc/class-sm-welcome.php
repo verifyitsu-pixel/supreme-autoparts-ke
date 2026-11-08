@@ -55,8 +55,13 @@ final class SM_Welcome
     }
 
     /** Presentation only: explicit source unknown-lead markers must not inherit stocked-item dates. */
-    private static function campaign_unknown_lead(): bool
+    public static function campaign_unknown_lead(): bool
     {
+        // Receipt cart is normally empty. Avoid a new fixed-date promise here without
+        // reading an order or its secret key just to render marketing copy.
+        if (function_exists('is_order_received_page') && is_order_received_page()) return true;
+        // Deliberately broader than fulfilment's no-lead-days check: a known lead
+        // still cannot justify the generic stocked-item delivery promise.
         $unknown = static function ($product): bool {
             return $product instanceof WC_Product
                 && ($product->get_meta('_sa_source_special_order') === 'yes'

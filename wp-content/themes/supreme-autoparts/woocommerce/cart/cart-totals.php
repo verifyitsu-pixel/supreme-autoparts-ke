@@ -112,7 +112,8 @@ $needs_shipping = WC()->cart && WC()->cart->needs_shipping() && WC()->cart->show
   <ul class="sa-cart-perks" aria-label="<?php esc_attr_e('Checkout benefits', 'supreme-autoparts'); ?>">
     <li><?php esc_html_e('Secure card checkout', 'supreme-autoparts'); ?></li>
     <li><?php esc_html_e('Order tracking by email', 'supreme-autoparts'); ?></li>
-    <?php if (!function_exists('sa_ship_is_us') || sa_ship_is_us()) : ?><li><?php esc_html_e('Free US shipping. Estimated delivery: 1-3 working days from order, excluding weekends. Product availability applies. No minimum.', 'supreme-autoparts'); ?></li><?php else : ?><li><?php esc_html_e('Kenya courier delivery: estimated 1-2 working days from order, excluding weekends. Product availability applies.', 'supreme-autoparts'); ?></li><?php endif; ?>
+    <?php if (class_exists('SM_Welcome') && SM_Welcome::campaign_unknown_lead()) : ?><li><?php esc_html_e((!function_exists('sa_ship_is_us') || sa_ship_is_us()) ? 'Free US shipping. No minimum. Availability and delivery timing will be confirmed after your order is checked.' : 'Kenya courier delivery at calculated rates. Availability and delivery timing will be confirmed after your order is checked.', 'supreme-autoparts'); ?></li>
+    <?php elseif (!function_exists('sa_ship_is_us') || sa_ship_is_us()) : ?><li><?php esc_html_e('Free US shipping. Estimated delivery: 1-3 working days from order, excluding weekends. Product availability applies. No minimum.', 'supreme-autoparts'); ?></li><?php else : ?><li><?php esc_html_e('Kenya courier delivery: estimated 1-2 working days from order, excluding weekends. Product availability applies.', 'supreme-autoparts'); ?></li><?php endif; ?>
   </ul>
 
   <div class="sa-cart-sticky-bar" data-sa-cart-sticky>
