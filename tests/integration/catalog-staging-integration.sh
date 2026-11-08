@@ -11,6 +11,8 @@ mkdir -p "$W"
 $WP core download --version=7.1.4 --force
 $WP config create --dbname=catalog_staging_it --dbuser=root --dbpass=root --dbhost=127.0.0.1 --skip-check
 $WP core install --url=http://127.0.0.1:8091 --title=Catalog-test --admin_user=fixture --admin_password=LOCAL_THROWAWAY_ONLY_73910 --admin_email=fixture@example.invalid --skip-email
+$WP option update home http://127.0.0.1:8091
+$WP option update siteurl http://127.0.0.1:8091
 $WP plugin install woocommerce --version=11.1.0 --activate
 mkdir -p "$W/wp-content/mu-plugins"
 cat > "$W/wp-content/mu-plugins/catalog-test-deny-outbound.php" <<'PHP'
