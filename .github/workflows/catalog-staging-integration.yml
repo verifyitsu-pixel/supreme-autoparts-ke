@@ -20,5 +20,8 @@ jobs:
           php tests/campaign-unknown-lead-regression.php
           php tests/feed-unknown-lead-hold-regression.php
           php tests/feed-reviewed-image-regression.php
+          php tests/kenya-market-regression.php
+          php tests/product-image-policy-regression.php
+          php tests/photo-registry-regression.php
       - name: Isolated native WordPress WooCommerce MySQL draft import
         run: bash tests/integration/catalog-staging-integration.sh

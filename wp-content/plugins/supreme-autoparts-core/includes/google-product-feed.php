@@ -165,7 +165,7 @@ function sa_gpf_enrich_product_schema($markup, $product)
         $markup['mpn'] = ($identity !== null && $sku === $identity[0]) ? $identity[1] : $sku;
     }
 
-    $reviewed_image = sa_gpf_reviewed_image_url($sku, (string) get_permalink($product->get_id()), '');
+    $reviewed_image = $sku === 'BIL46-276827' ? sa_gpf_reviewed_image_url($sku, (string) get_permalink($product->get_id()), '') : '';
     if ($reviewed_image !== '') $markup['image'] = [$reviewed_image];
 
     $gtin = sa_gpf_gtin($product);
