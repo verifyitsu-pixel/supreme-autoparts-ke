@@ -1,0 +1,102 @@
+{
+  "schema": "whiteline-w56457-private-qualification-v1",
+  "state": "qualified_candidate_pending_native_helper_and_review_not_staged",
+  "checked_at": "2026-11-08T12:44:57.029660+00:00",
+  "source_url": "https://supreme-mods.com/products/whiteline-24-26-toyota-prado-250-front-lower-control-arm-bushing",
+  "manufacturer_url": "https://whitelineperformance.com/au/front-control-arm-lower-bushing-kit-to-suit-landcruiser-prado-250-series-9986-w56457.html",
+  "item": {
+    "id": 9027744497841,
+    "handle": "whiteline-24-26-toyota-prado-250-front-lower-control-arm-bushing",
+    "title": "Whiteline W56457 Toyota Prado 250 Front Lower Control Arm Bushing Kit",
+    "vendor": "Whiteline",
+    "product_type": "Bushing Kits",
+    "tags": [
+      "SpecialOrder:Y"
+    ],
+    "body_html": "<p>Whiteline W56457 front lower control arm bushing kit, listed by the manufacturer for Toyota LandCruiser Prado 250 Series.</p><ul><li>One kit contains four shell bushings, four tubes and eight washers. One kit is required.</li><li>This is a bushing kit, not a complete control arm assembly. Control arms and ball joints are not included.</li><li>Suspension specialist installation and front wheel alignment are required.</li></ul><p>Confirm the manufacturer part number and exact vehicle details before ordering. A model and year label alone is not fitment confirmation.</p>",
+    "variants": [
+      {
+        "sku": "WHLW56457",
+        "price": "184.39",
+        "available": true,
+        "grams": 2268
+      }
+    ],
+    "images": [
+      {
+        "src": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/95abf80df7f36be4de33de991069dc3fL.jpg?v=1778818078"
+      },
+      {
+        "src": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/5633c70ada7e0e1cfd8f4e7d021005a6L.jpg?v=1778818077"
+      },
+      {
+        "src": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/d3460be7c43688c72956c4090ebf27b3L.jpg?v=1778818078"
+      }
+    ]
+  },
+  "photos": [
+    {
+      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/95abf80df7f36be4de33de991069dc3fL.jpg?v=1778818078",
+      "sha256": "b022ab0e6a5798301db11cd11ec87ee37628bb3a8e2fa4df1718ba3a7f6ed5a8"
+    },
+    {
+      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/5633c70ada7e0e1cfd8f4e7d021005a6L.jpg?v=1778818077",
+      "sha256": "b87ed65279eb028c813a0eda969ae75ee523079a6ee2ca6aa8902a83a55f39c4"
+    },
+    {
+      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/files/d3460be7c43688c72956c4090ebf27b3L.jpg?v=1778818078",
+      "sha256": "5aea5f991fd21d7c5030bd8ae94b8263abc972acee365bdecba66393e7b80922"
+    }
+  ],
+  "categories": [
+    27,
+    176,
+    9478
+  ],
+  "tags": [
+    "SpecialOrder:Y"
+  ],
+  "source_price_currency": "USD",
+  "source_price": "184.39",
+  "source_weight": {
+    "value": 5.0,
+    "unit": "lb"
+  },
+  "intended_stock": {
+    "managed": true,
+    "quantity": 0,
+    "status": "onbackorder",
+    "backorders": "notify",
+    "source_orderable_unknown": "",
+    "source_special_order": "yes"
+  },
+  "feed_hold": true,
+  "save_garage_positive": false,
+  "claims_not_carried": [
+    "AU4-6weekpreorder/US4-6weekpreordernotKenyaarrivalpromise",
+    "makerregionalwarrantynotKenyaapproval",
+    "AU4h/US3hinstallationestimatenotrepeated",
+    "sourceUSLandCruiseryear/trimtagsnotPradoallchassisyearengineapproval",
+    "notcompletecontrolarmsorballjoints"
+  ],
+  "independent_gates_remaining": [
+    "exact new helper actual isolated native post-save path",
+    "parent technical review",
+    "fresh before-write source/code/identity/taxonomy/media preflight",
+    "hidden draft proof then separate publication review"
+  ],
+  "scope_excludes": [
+    "existing SEVEN public product edits",
+    "orders",
+    "payments",
+    "campaign approval/enqueue/mail",
+    "taxonomy creation/reparenting",
+    "money/capacity changes"
+  ],
+  "full_short_description": "Whiteline W56457 front lower control arm bushing kit for Toyota Prado 250 Series. Includes four shell bushings, four tubes and eight washers. One kit required. Not complete control arms or ball joints. Suspension specialist installation and front wheel alignment required. Special order; availability and delivery timing must be confirmed. Confirm exact vehicle details and manufacturer part number before ordering.",
+  "image_mode": "source_hotlinks_only_skip_images_true_no_attachments",
+  "verified_ean": "9319924483969",
+  "gtin_gate": "Verified source and manufacturer EAN9319924483969. Must carry in standard Woo GTIN and actual Product schema before any separately reviewed publication.",
+  "source_quantity_policy": "SourceSpecialOrderY/availabletrue is not warehouse stock. Localqty0/notify/specialorderunknownarrival.",
+  "no_exact_marker": true
+}
