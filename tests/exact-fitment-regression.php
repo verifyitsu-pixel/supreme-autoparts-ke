@@ -14,3 +14,12 @@ foreach([null,'bad',[],array_diff_key($r,['engine'=>true]),array_replace($r,['fr
 $x=$v;$x['make']='Nissan';check_exact(!sa_exact_fitment_matches($r,$x),'wrong make no positive');
 $GLOBALS['exact_fixture']=[1=>['_sa_shopify_id'=>'7742545920177'],2=>['_sa_shopify_id'=>'other','_sa_exact_maker_fitment_v1'=>$r]];
 check_exact(sa_exact_fitment_target(1)&&sa_exact_fitment_record(1)===null,'allowlisted missing marker remains target but invalid');check_exact(!sa_exact_fitment_target(2)&&sa_exact_fitment_record(2)===null,'unallowlisted marker cannot activate');
+
+// The newly reviewed strut source is narrower than the Aqua model's lifespan.
+$strut=array_replace($r,['through'=>'2017-05']);
+$GLOBALS['exact_fixture'][3]=['_sa_shopify_id'=>'7742546215089','_sa_exact_maker_fitment_v1'=>$strut];
+check_exact(sa_exact_fitment_target(3)&&sa_exact_fitment_record(3)===$strut,'strut exact source and bounded record');
+foreach(['2011-11'=>false,'2011-12'=>true,'2017-05'=>true,'2017-06'=>false,'2021-07'=>false]as$m=>$want){$x=$v;$x['production_month']=$m;check_exact(sa_exact_fitment_matches($strut,$x)===$want,'strut month boundary '.$m);}
+foreach([array_replace($strut,['through'=>'2021-07']),array_replace($strut,['from'=>'2011-11']),array_replace($strut,['engine'=>'1NZ-FE']),array_replace($strut,['model'=>'Fielder'])]as$bad){$GLOBALS['exact_fixture'][3]['_sa_exact_maker_fitment_v1']=$bad;check_exact(sa_exact_fitment_record(3)===null,'strut marker cannot widen/misstate application');}
+unset($GLOBALS['exact_fixture'][3]['_sa_exact_maker_fitment_v1']);check_exact(sa_exact_fitment_target(3)&&sa_exact_fitment_record(3)===null,'strut missing marker fails closed');
+check_exact(str_contains(sa_exact_fitment_label($strut),'2011-12 to 2017-05'),'strut label cutoff retained');

@@ -2,7 +2,7 @@
 /** Exact maker fitment for explicitly marked additions; never infer missing vehicle facts. */
 if(!defined('ABSPATH'))exit;
 function sa_exact_fitment_target(int $pid): bool {
-    return in_array((string)get_post_meta($pid,'_sa_shopify_id',true),['7742545920177','7742546018481'],true);
+    return in_array((string)get_post_meta($pid,'_sa_shopify_id',true),['7742545920177','7742546018481','7742546215089'],true);
 }
 function sa_exact_fitment_valid($r): bool {
     if(!is_array($r))return false;
@@ -13,7 +13,14 @@ function sa_exact_fitment_valid($r): bool {
 function sa_exact_fitment_record(int $pid): ?array {
     if(!sa_exact_fitment_target($pid))return null;
     $r=get_post_meta($pid,'_sa_exact_maker_fitment_v1',true);
-    return sa_exact_fitment_valid($r)?$r:null;
+    if(!sa_exact_fitment_valid($r))return null;
+    // 949 540 A: JA maker notes exclude June 2017 onward. Generic model
+    // production dates must never widen this exact source's application.
+    if((string)get_post_meta($pid,'_sa_shopify_id',true)==='7742546215089'){
+        $required=['make'=>'Toyota','model'=>'Aqua','chassis'=>'NHP10','engine'=>'1NZ-FXE','drive'=>'FF','from'=>'2011-12','through'=>'2017-05'];
+        foreach($required as$k=>$v)if($r[$k]!==$v)return null;
+    }
+    return $r;
 }
 function sa_exact_fitment_matches(array $r,array $v): bool {
     if(!sa_exact_fitment_valid($r))return false;
