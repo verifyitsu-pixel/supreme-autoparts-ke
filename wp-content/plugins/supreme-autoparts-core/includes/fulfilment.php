@@ -53,11 +53,12 @@ function sa_ff_lead_days($product): int
     $id = $product->get_parent_id() ?: $product->get_id();
     return max(0, (int) get_post_meta($id, '_sa_stock_lead_days', true));
 }
-/** Only newly source-marked special orders with no verified lead time. */
+/** Source-marked orderable items with no verified lead time; historical function name retained. */
 function sa_ff_unknown_special_order($product): bool
 {
     return $product instanceof WC_Product
-        && $product->get_meta('_sa_source_special_order') === 'yes'
+        && ($product->get_meta('_sa_source_special_order') === 'yes'
+            || $product->get_meta('_sa_source_orderable_unknown') === 'yes')
         && $product->is_on_backorder(1)
         && (string) $product->get_meta('_sa_stock_lead_days') === '';
 }

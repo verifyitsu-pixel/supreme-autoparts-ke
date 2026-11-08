@@ -43,7 +43,8 @@ function sa_gcr_order_has_unknown_special_order(WC_Order $o): bool
             continue;
         }
         $pid = $product->get_parent_id() ?: $product->get_id();
-        if ((string) get_post_meta((int) $pid, '_sa_source_special_order', true) === 'yes'
+        if (((string) get_post_meta((int) $pid, '_sa_source_special_order', true) === 'yes'
+                || (string) get_post_meta((int) $pid, '_sa_source_orderable_unknown', true) === 'yes')
             && (string) get_post_meta((int) $pid, '_sa_stock_lead_days', true) === ''
         ) {
             return true;
