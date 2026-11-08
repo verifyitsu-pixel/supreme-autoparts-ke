@@ -68,3 +68,11 @@ $x=sa_promotion_snapshot($oid);$y=$x;$x['post']['guid']='https://fixture.invalid
 set_post_thumbnail($oid,get_post_thumbnail_id($gid));$orow=['id'=>$oid,'source_id'=>$orderable['id'],'sku'=>'FIXTURE-9','snapshot_sha256'=>sa_promotion_digest(sa_promotion_snapshot($oid)),'evidence_sha256'=>hash('sha256','fixture')];$r=sa_guarded_promote(['schema'=>'supreme-reviewed-promotion-v1','items'=>[$orow]],true);fixture_ok($r['published']===[$oid]&&$r['failed']===null&&wc_get_product($oid)->get_meta('_sa_source_orderable_unknown')==='yes','orderableunknown guarded promotion preserves marker');
 
 fixture_ok(sa_ff_unknown_order_label([['data'=>$op]])==='Available to order'&&sa_ff_unknown_order_label([['data'=>wc_get_product($id)]])==='Special order','fulfilment labels preserve sourceN versusY');
+
+// Actual registered fulfilment filters, not just their shared predicate.
+foreach([$id=>$id,$oid=>$oid] as $unknown_id){
+ $unknown=wc_get_product($unknown_id);$expected=$unknown_id===$id?'Special order':'Available to order';
+ $rate=new WC_Shipping_Rate('fixture','Courier · Estimated arrival tomorrow',5,[],'fixture');$rates=apply_filters('woocommerce_package_rates',['fixture'=>$rate],['destination'=>['country'=>'KE'],'contents'=>[['data'=>$unknown]]]);fixture_ok($rates['fixture']->get_label()==='Courier · '.$expected.': dates not confirmed','actual shipping filter removes unsupported ETA '.$expected);
+}
+fixture_ok(sa_ff_unknown_order_label([['data'=>$op],['data'=>wc_get_product($id)]])==='Special order','mixed marker cart keeps Y label');
+$plain_order=new WC_Order();$plain_line=new WC_Order_Item_Product();$plain_line->set_product($orp);$plain_order->add_item($plain_line);fixture_ok(!sa_gcr_order_has_unknown_special_order($plain_order),'ordinary unsaved order survey guard unchanged');
