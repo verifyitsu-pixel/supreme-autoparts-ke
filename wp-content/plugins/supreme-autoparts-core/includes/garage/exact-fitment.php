@@ -2,6 +2,7 @@
 /** Exact maker fitment for explicitly marked additions; never infer missing vehicle facts. */
 if(!defined('ABSPATH'))exit;
 function sa_exact_fitment_record(int $pid): ?array {
+    if(!in_array((string)get_post_meta($pid,'_sa_shopify_id',true),['7742545920177','7742546018481'],true))return null;
     $r=get_post_meta($pid,'_sa_exact_maker_fitment_v1',true);
     return is_array($r)?$r:null;
 }
