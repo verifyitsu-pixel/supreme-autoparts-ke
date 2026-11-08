@@ -426,6 +426,10 @@ function sa_core_import_one_shopify_product(array $item, array &$result, bool $s
             if (!$is_update && $special_order && !empty($variant['available'])) {
                 // Source orderable does not mean stock on the shelf. Never change
                 // existing products' fulfillment status during targeted additions.
+                // Woo clears backorders on save when stock management is off.
+                // Zero local stock plus notify keeps orderable distinct from in-stock.
+                $product->set_manage_stock(true);
+                $product->set_stock_quantity(0);
                 $product->update_meta_data('_sa_source_special_order', 'yes');
                 $product->set_backorders('notify');
                 $product->set_stock_status('onbackorder');
