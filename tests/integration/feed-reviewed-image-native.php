@@ -10,7 +10,7 @@ fixture_ok([$d->get_data(),get_post_meta($id)]===$before,'native product data an
 
 // Synthetic isolated native kit. Production source evidence is never overwritten.
 $kit=new WC_Product_Simple();$kit->set_name('Bilstein B8 5162 exact fixture');$kit->set_sku('BIL46-276827');$kit->set_regular_price('968.00');$kit->set_catalog_visibility('visible');$kit->set_status('publish');$kit->set_stock_status('outofstock');$kitid=$kit->save();
-$source='https://cdn.shopify.com/s/files/1/0643/0779/0001/products/1867041792ea567cd6ae666049036e04_459d7740-d13b-4f5d-9bb0-97cadd2c6899.jpg?v=1707567107';$raw=wp_json_encode([$source,'https://test.invalid/promo.jpg']);update_post_meta($kitid,'_sa_shopify_image_urls',$raw);
+$source='https://cdn.shopify.com/s/files/1/0643/0779/0001/products/1867041792ea567cd6ae666049036e04_459d7740-d13b-4f5d-9bb0-97cadd2c6899.jpg?v=1707567107';$raw=wp_json_encode([$source,'https://test.invalid/promo.jpg']);update_post_meta($kitid,'_sa_shopify_image_urls',wp_slash($raw));
 $photo='https://cart.bilsteinus.com/media/catalog/product/a/p/apa_46-276827_1_20261103121034.jpg';$url='https://www.supremeautoparts.co.ke/product/bilstein-b8-5162-series-17-18-ford-f-250-f-350-front-monotube-suspension-leveling-kit-for-2in-lift/';
 add_filter('post_type_link',static fn($link,$post)=>$post->ID===$kitid?$url:$link,10,2);
 fixture_ok(sa_core_get_stored_shopify_image_urls($kitid)===[$photo],'native exact supplier promotional panel replaced by verified maker kit photo');fixture_ok(get_post_meta($kitid,'_sa_shopify_image_urls',true)===$raw,'supplier evidence unchanged');
