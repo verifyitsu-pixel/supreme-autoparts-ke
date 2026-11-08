@@ -120,3 +120,4 @@ fixture_ok(sa_gpf_apply_image_holds('<item><g:id>SPC67416</g:id></item><item><g:
 
 require $repo . '/tests/integration/publication-postsave-native.php';
 require $repo . '/tests/integration/category-intent-seo-native.php';
+require $repo.'/tests/integration/qualified-stage-postsave-native.php';
