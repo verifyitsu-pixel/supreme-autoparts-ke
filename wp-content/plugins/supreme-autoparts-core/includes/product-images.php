@@ -143,6 +143,17 @@ function sa_core_get_stored_shopify_image_urls(int $product_id): array
             }
         }
     }
+    // Promote a clean existing exact-product photograph; preserve every source image.
+    $promotions = ['FRPM-6007-A52XS' => ['/s/files/1/0643/0779/0001/files/1034bfafcca53dc8ad0f4e02a5b1c6eb.jpg','/s/files/1/0643/0779/0001/files/c715873decf4b232449fdff183a12628.jpg'],'DIODD8066' => ['/s/files/1/0643/0779/0001/files/5f3871e0b459f423a8550b2de4560b0aL.jpg','/s/files/1/0643/0779/0001/files/0bb6a4277769a203358604e973c31e8eL.jpg']];
+    $promotion = $promotions[(string) get_post_meta($product_id, '_sku', true)] ?? null;
+    if ($promotion !== null && !empty($clean) && wp_parse_url($clean[0], PHP_URL_HOST) === 'cdn.shopify.com' && wp_parse_url($clean[0], PHP_URL_PATH) === $promotion[0]) {
+        foreach ($clean as $source) {
+            if (wp_parse_url($source, PHP_URL_HOST) === 'cdn.shopify.com' && wp_parse_url($source, PHP_URL_PATH) === $promotion[1]) {
+                array_unshift($clean, $source);
+                break;
+            }
+        }
+    }
     return array_values(array_unique($clean));
 }
 

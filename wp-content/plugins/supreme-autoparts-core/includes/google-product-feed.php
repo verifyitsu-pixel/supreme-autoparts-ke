@@ -54,6 +54,8 @@ function sa_gpf_reviewed_image_url(string $sku, string $link, string $image): st
         && $image === 'https://www.supremeautoparts.co.ke/wp-content/uploads/2026/09/b969490e6d89e90af3c6794a027bb7adL.jpg') {
         return 'https://cdn.shopify.com/s/files/1/0643/0779/0001/files/b969490e6d89e90af3c6794a027bb7adL.jpg?v=1789536517&width=1200';
     }
+    if ($sku === 'FRPM-6007-A52XS' && in_array($link, ['https://www.supremeautoparts.co.ke/product/ford-racing-5-2l-aluminator-xs-crate-engine-no-cancel-no-returns/', 'https://www.supremeautoparts.co.ke/product/ford-racing-5-2l-aluminator-xs-crate-engine-no-cancel-no-returns/?sa_market=ke'], true) && $image === 'https://cdn.shopify.com/s/files/1/0643/0779/0001/files/1034bfafcca53dc8ad0f4e02a5b1c6eb.jpg?v=1712136187') return 'https://cdn.shopify.com/s/files/1/0643/0779/0001/files/c715873decf4b232449fdff183a12628.jpg?v=1712136187';
+    if ($sku === 'DIODD8066' && in_array($link, ['https://www.supremeautoparts.co.ke/product/diode-dynamics-15-21-subaru-wrx-c2r-4th-brake-light-kit/', 'https://www.supremeautoparts.co.ke/product/diode-dynamics-15-21-subaru-wrx-c2r-4th-brake-light-kit/?sa_market=ke'], true) && $image === 'https://cdn.shopify.com/s/files/1/0643/0779/0001/files/5f3871e0b459f423a8550b2de4560b0aL.jpg?v=1759679848') return 'https://cdn.shopify.com/s/files/1/0643/0779/0001/files/0bb6a4277769a203358604e973c31e8eL.jpg?v=1759679848';
     // Fresh exact-SKU source photographs replace only individually verified 404 URLs.
     $broken_images = [
         'HRS60755-60' => ['https://www.supremeautoparts.co.ke/product/h-r-14-18-volkswagen-jetta-s-se-sel-gli-mk6-perf-camber-plate-req-h-r-coil-over-w-60mm-id-springs/', 'https://www.supremeautoparts.co.ke/wp-content/uploads/2026/09/7efd82bbc5acfec9e80b5ac57684f9d3L_ef1e8e1c-0667-488e-b6af-a952009d7c67.jpg', 'https://cdn.shopify.com/s/files/1/0643/0779/0001/files/7a757d3606e18c8cfdaa1948f0f079b9.jpg?v=1725114305'],
@@ -181,6 +183,13 @@ function sa_gpf_enrich_product_schema($markup, $product)
 
     $reviewed_image = $sku === 'BIL46-276827' ? sa_gpf_reviewed_image_url($sku, (string) get_permalink($product->get_id()), '') : '';
     if ($reviewed_image !== '') $markup['image'] = [$reviewed_image];
+
+    // Match exact gallery promotions only when the guarded source pair is present.
+    $gallery_primary = ['FRPM-6007-A52XS' => 'https://cdn.shopify.com/s/files/1/0643/0779/0001/files/c715873decf4b232449fdff183a12628.jpg?v=1712136187','DIODD8066' => 'https://cdn.shopify.com/s/files/1/0643/0779/0001/files/0bb6a4277769a203358604e973c31e8eL.jpg?v=1759679848'];
+    if (isset($gallery_primary[$sku]) && function_exists('sa_core_get_stored_shopify_image_urls')) {
+        $photos = sa_core_get_stored_shopify_image_urls($product->get_id());
+        if (($photos[0] ?? '') === $gallery_primary[$sku]) $markup['image'] = [$photos[0]];
+    }
 
     $gtin = sa_gpf_gtin($product);
     if ($gtin !== '') {
