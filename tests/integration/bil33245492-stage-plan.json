@@ -1,0 +1,110 @@
+{
+  "schema": "bilstein-33245492-private-qualification-v1",
+  "state": "private_candidate_pending_native_helper_and_review_not_staged",
+  "checked_at": "2026-11-08T14:14:42.367108+00:00",
+  "source_url": "https://supreme-mods.com/products/bilstein-5100-series-05-15-toyota-hilux-4wd-rear-46mm-monotube-shock-absorber",
+  "manufacturer_url": "https://cart.bilsteinus.com/shock-33-245492.html",
+  "item": {
+    "id": 7655746830513,
+    "handle": "bilstein-5100-series-05-15-toyota-hilux-4wd-rear-46mm-monotube-shock-absorber",
+    "title": "Bilstein 33-245492 Toyota Hilux 4WD Rear B8 5100 Shock Absorber",
+    "vendor": "Bilstein",
+    "product_type": "Shocks and Struts",
+    "tags": [
+      "SpecialOrder:N"
+    ],
+    "body_html": "<p>Bilstein 33-245492 B8 5100 rear shock absorber for selected 2005-2015 Toyota Hilux 4WD applications with 0-1 inch rear lift. Confirm the exact vehicle and suspension setup before ordering.</p><ul><li>Sold as one shock absorber. Two are required for the rear axle.</li><li>Non-adjustable monotube damper with a 46 mm piston, zinc-plated body and black bellows.</li><li>Upper and lower mount type: 19 mm eye.</li><li>This is a shock absorber, not a lift kit or complete spring assembly. No spring seat is included.</li><li>Installation must be carried out by a qualified suspension specialist with suitable tools and safe vehicle support.</li></ul><p>Confirm the manufacturer part number, chassis, build year, drivetrain, lift height and mounting details before ordering. A model and year label alone is not fitment confirmation.</p>",
+    "variants": [
+      {
+        "sku": "BIL33-245492",
+        "price": "123.00",
+        "available": true,
+        "grams": 2268
+      }
+    ],
+    "images": [
+      {
+        "src": "https://cdn.shopify.com/s/files/1/0643/0779/0001/products/3e479f23eae7a9e2c306804cf69b1594.jpg?v=1708552886"
+      },
+      {
+        "src": "https://cdn.shopify.com/s/files/1/0643/0779/0001/products/9ed8345483b9509e80d6c283c5d491a6.jpg?v=1708552886"
+      }
+    ]
+  },
+  "photos": [
+    {
+      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/products/3e479f23eae7a9e2c306804cf69b1594.jpg?v=1708552886",
+      "sha256": "bb8aafe2eb2c48b40142abb101725a6a9073003b935f44cf6cd19422eea11829"
+    },
+    {
+      "url": "https://cdn.shopify.com/s/files/1/0643/0779/0001/products/9ed8345483b9509e80d6c283c5d491a6.jpg?v=1708552886",
+      "sha256": "224876ae68bf5cecd70f499ac7cb26828fb2140fe484d83410a5144d8751ed7e"
+    }
+  ],
+  "categories": [
+    27,
+    131,
+    141
+  ],
+  "tags": [
+    "SpecialOrder:N"
+  ],
+  "source_price_currency": "USD",
+  "source_price": "123.00",
+  "source_weight": {
+    "value": 5.0,
+    "unit": "lb"
+  },
+  "intended_stock": {
+    "managed": true,
+    "quantity": 0,
+    "status": "onbackorder",
+    "backorders": "notify",
+    "source_orderable_unknown": "yes",
+    "source_special_order": ""
+  },
+  "feed_hold": true,
+  "save_garage_positive": false,
+  "claims_not_carried": [
+    "No all-Hilux/all-market/all-engine fitment or automatic garage-positive claim",
+    "Source 2005-2015 application retained narrower than current maker selected 2005-2025 table; no expansion to later models",
+    "Official collapsed length13.5mm conflicts with14.25in; no length copied pending maker correction",
+    "Maker current extended22.49in/571.2mm differs from older reseller22.46in/570.5mm; no length copied",
+    "No MadeUSA claim: current official saysMX; no origin claim needed",
+    "No local stock/arrival/foreign warranty guarantee or generic 2-3inch lift claim",
+    "No pairpack or springs/liftkit claim",
+    "Warning graphics and logo omitted as nonproduct assets; fixed visible motorparts warning must be separately reviewed before publication, omission not exemption"
+  ],
+  "independent_gates_remaining": [
+    "exact helper native actual post-save path",
+    "parent technical review",
+    "fresh before-write source/code/identity/taxonomy/media preflight",
+    "hidden draft proof then separate publication and fixed-warning review"
+  ],
+  "scope_excludes": [
+    "existing NINE public product edits",
+    "orders",
+    "payments",
+    "campaign approval/enqueue/mail",
+    "taxonomy creation/reparenting",
+    "money/capacity changes"
+  ],
+  "full_short_description": "Bilstein 33-245492 B8 5100 rear shock for selected Toyota Hilux 4WD applications with 0-1 inch rear lift. Sold individually; two required for the rear axle. Non-adjustable monotube damper with 19 mm eye mounts. Qualified suspension specialist installation required. Available to order; availability and delivery timing must be confirmed.",
+  "image_mode": "source_hotlinks_only_skip_images_true_no_attachments",
+  "verified_ean": "651860754581",
+  "gtin_gate": "Source UPC651860754581 and primary UPC00651860754581 match after zero-padding; checkdigit validated. Actual native Woo GTIN/Product schema must be verified before any separately reviewed publication.",
+  "source_quantity_policy": "SourceSpecialOrderN/availabletrue proves source orderable flag only, not on-hand warehouse stock or delivery date. Localqty0/notify/source_orderable_unknown=yes;source_special_orderempty.",
+  "no_exact_marker": true,
+  "excluded_source_photo_indices": [
+    1,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "selected_source_photo_indices": [
+    0,
+    2
+  ]
+}

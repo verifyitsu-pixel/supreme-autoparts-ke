@@ -30,7 +30,7 @@ add_action('init', 'sa_gpf_register', 20);
 function sa_gpf_unknown_lead_source_hold($product): bool
 {
     return $product instanceof WC_Product
-        && in_array((string) $product->get_meta('_sa_shopify_id'), ['7742545920177', '7742546018481', '7742546215089', '7678281253041', '7730383290545', '9027744071857', '9027744104625', '9027744497841', '7686474236081'], true);
+        && in_array((string) $product->get_meta('_sa_shopify_id'), ['7742545920177', '7742546018481', '7742546215089', '7678281253041', '7730383290545', '9027744071857', '9027744104625', '9027744497841', '7686474236081', '7655746830513'], true);
 }
 
 /** Apply current image and unknown-lead holds to prebuilt chunks without a catalog/cache mutation. */
@@ -38,7 +38,7 @@ function sa_gpf_apply_image_holds(string $chunk): string
 {
     return (string) preg_replace_callback('#<item>\s*(.*?)</item>#s', static function(array $m): string {
         // Exact Merchant SKU tags, not substring matches against unrelated descriptions.
-        if (preg_match('#<g:(id|mpn)>\s*(?:<!\[CDATA\[)?(?:EBCBSD7801|CUS949 477 A|CUS949 492 C|CUS949 540 A|SPC67416|WHLKTA361|WHLKTA518|WHLKTA528|WHLW56457|WHLW93441)(?:\]\]>)?\s*</g:\1>#', $m[1])) return '';
+        if (preg_match('#<g:(id|mpn)>\s*(?:<!\[CDATA\[)?(?:EBCBSD7801|CUS949 477 A|CUS949 492 C|CUS949 540 A|SPC67416|WHLKTA361|WHLKTA518|WHLKTA528|WHLW56457|WHLW93441|BIL33-245492)(?:\]\]>)?\s*</g:\1>#', $m[1])) return '';
         return $m[0];
     }, $chunk);
 }
@@ -127,6 +127,7 @@ function sa_gpf_enrich_product_schema($markup, $product)
         $verified_mpn = [
             '9027744497841' => ['WHLW56457', 'W56457'],
             '7686474236081' => ['WHLW93441', 'W93441'],
+            '7655746830513' => ['BIL33-245492', '33-245492'],
             '7730383290545' => ['WHLKTA361', 'KTA361'],
             '9027744071857' => ['WHLKTA518', 'KTA518'],
             '9027744104625' => ['WHLKTA528', 'KTA528'],
