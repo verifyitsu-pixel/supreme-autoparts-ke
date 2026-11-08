@@ -1124,4 +1124,4 @@ function sa_seo_camber_buying_help(): void
     echo '<p><a href="' . esc_url($guide_url) . '">Check vehicle fitment before ordering</a>. Send the product link and your vehicle details if you need help.</p>';
     echo '</section>';
 }
-add_action('woocommerce_archive_description', 'sa_seo_camber_buying_help', 20);
+add_action('woocommerce_after_shop_loop', 'sa_seo_camber_buying_help', 20);
