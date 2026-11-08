@@ -37,7 +37,7 @@ $guess=['make'=>'Subaru','model'=>'Forester','chassis'=>'SJ','engine'=>'GUESS','
 // Exact publication helper with actual marketing draft-campaign hook, no sender/cron.
 $marketing=$repo.'/wp-content/plugins/supreme-marketing/inc/';
 foreach(['helpers.php','class-sm-db.php','class-sm-templates.php','class-sm-campaigns.php','class-sm-events.php']as$file)require_once $marketing.$file;
-SM_DB::install();add_action('transition_post_status',['SM_Events','on_product_publish'],10,3);
+define('SUPM_DB_VERSION','1.4.0');SM_DB::install();add_action('transition_post_status',['SM_Events','on_product_publish'],10,3);
 require_once $repo.'/scripts/catalog/whiteline-publication-proposal.php';
 $protected=[];foreach([76362,76364,76366,76368]as$x)$protected[$x]=sa_qualified_stage_snapshot($x);
 $pubplan=['schema'=>'whiteline76370-publication-v1','id'=>76370,'source_id'=>'7730383290545','sku'=>'WHLKTA361','ean'=>'9319924475032','feed_release'=>false,'before'=>sa_qualified_stage_snapshot(76370),'protected'=>$protected,'definitions_sha256'=>hash('sha256',wp_json_encode(wl_definitions())),'image_urls'=>$committed['hotlink_urls']];
