@@ -105,3 +105,15 @@ update_post_meta($sid,'_sa_exact_maker_fitment_v1',$fitment);fixture_ok(sa_exact
 require_once SA_CORE_DIR.'includes/google-product-feed.php';$strut_product=wc_get_product($sid);fixture_ok(sa_gpf_unknown_lead_source_hold($strut_product),'native strut fixed source feed hold');ob_start();sa_gpf_render_item($sid);fixture_ok(ob_get_clean()==='','actual native strut feed item emits nothing');
 fixture_ok(sa_gpf_apply_image_holds('<item><g:id>CUS949 540 A</g:id></item><item><g:id>CUS949 540 AB</g:id></item>')==='<item><g:id>CUS949 540 AB</g:id></item>','native cached hold exact strut SKU only');
 fixture_ok(wc_get_product($sid)->get_stock_status()==='onbackorder'&&wc_get_product($sid)->get_backorders()==='notify'&&wc_get_product($sid)->get_manage_stock()&&wc_get_product($sid)->get_stock_quantity()===0,'strut truthful source orderability remains managed zero backorder');
+
+// SPC candidate remains nonY, with no invented exact vehicle record or positive saved-garage fit.
+$spc=fixture_item(31);$spc['id']='7678281253041';$spc['title']='SPC CX-5 rear camber and toe kit';$spc['variants'][0]['sku']='FIXTURE-SPC67416';$spc['tags']=['SpecialOrder:N'];$spc['variants'][0]['price']='178.40';$spc['variants'][0]['grams']=1860;
+$sr=fixture_import($spc);$spid=wc_get_product_id_by_sku('FIXTURE-SPC67416');$spp=wc_get_product($spid);
+fixture_ok($sr['errors']===0&&$sr['imported']===1&&$spp->get_status()==='draft'&&$spp->get_catalog_visibility()==='hidden','SPC hidden new-only native draft');
+fixture_ok($spp->get_meta('_sa_source_orderable_unknown')==='yes'&&$spp->get_meta('_sa_source_special_order')===''&&wp_get_object_terms($spid,'product_tag',['fields'=>'names'])===['SpecialOrder:N'],'SPC preserves source N and distinct unknown-orderability flag');
+fixture_ok($spp->get_manage_stock()&&$spp->get_stock_quantity()===0&&$spp->get_backorders()==='notify'&&$spp->get_stock_status()==='onbackorder','SPC managed zero no stock invention');
+fixture_ok(sa_exact_fitment_target($spid)&&sa_exact_fitment_record($spid)===null&&sa_garage_product_fits_vehicle($spid,'mazda','cx-5',2016)===false,'SPC missing exact vehicle data no legacy recommendation');
+$product=$spp;$GLOBALS['product']=$spp;$_COOKIE['sa_pz']=json_encode(['mk'=>'mazda','mo'=>'mazda/cx-5','y'=>'2016']);ob_start();$badge();fixture_ok(ob_get_clean()==='','actual SPC badge makes no generic model-year fit claim');
+update_post_meta($spid,'_sa_exact_maker_fitment_v1',$fitment);fixture_ok(sa_exact_fitment_record($spid)===null&&sa_garage_product_fits_vehicle($spid,'mazda','cx-5',2016)===false,'SPC refuses schema-valid invented marker');ob_start();$badge();fixture_ok(ob_get_clean()==='','actual SPC guessed marker does not restore badge');delete_post_meta($spid,'_sa_exact_maker_fitment_v1');
+fixture_ok(sa_gpf_unknown_lead_source_hold($spp),'SPC native fixed source feed hold');ob_start();sa_gpf_render_item($spid);fixture_ok(ob_get_clean()==='','actual native SPC feed emits zero');
+fixture_ok(sa_gpf_apply_image_holds('<item><g:id>SPC67416</g:id></item><item><g:id>SPC67416A</g:id></item>')==='<item><g:id>SPC67416A</g:id></item>','SPC cached feed exact SKU only');

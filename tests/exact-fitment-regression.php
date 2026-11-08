@@ -23,3 +23,8 @@ foreach(['2011-11'=>false,'2011-12'=>true,'2017-05'=>true,'2017-06'=>false,'2021
 foreach([array_replace($strut,['through'=>'2021-07']),array_replace($strut,['from'=>'2011-11']),array_replace($strut,['engine'=>'1NZ-FE']),array_replace($strut,['model'=>'Fielder'])]as$bad){$GLOBALS['exact_fixture'][3]['_sa_exact_maker_fitment_v1']=$bad;check_exact(sa_exact_fitment_record(3)===null,'strut marker cannot widen/misstate application');}
 unset($GLOBALS['exact_fixture'][3]['_sa_exact_maker_fitment_v1']);check_exact(sa_exact_fitment_target(3)&&sa_exact_fitment_record(3)===null,'strut missing marker fails closed');
 check_exact(str_contains(sa_exact_fitment_label($strut),'2011-12 to 2017-05'),'strut label cutoff retained');
+
+// SPC maker gives CX-5 model/year only. Even a schema-valid guessed record is not authority.
+$GLOBALS['exact_fixture'][4]=['_sa_shopify_id'=>'7678281253041'];
+check_exact(sa_exact_fitment_target(4)&&sa_exact_fitment_record(4)===null,'SPC missing marker targets fail-closed path');
+foreach([$r,array_replace($r,['make'=>'Mazda','model'=>'CX-5','chassis'=>'KE','engine'=>'invented','drive'=>'FF','from'=>'2013-01','through'=>'2025-12']),'bad',[]]as$guess){$GLOBALS['exact_fixture'][4]['_sa_exact_maker_fitment_v1']=$guess;check_exact(sa_exact_fitment_record(4)===null,'SPC refuses any guessed exact marker');}

@@ -2,7 +2,7 @@
 /** Exact maker fitment for explicitly marked additions; never infer missing vehicle facts. */
 if(!defined('ABSPATH'))exit;
 function sa_exact_fitment_target(int $pid): bool {
-    return in_array((string)get_post_meta($pid,'_sa_shopify_id',true),['7742545920177','7742546018481','7742546215089'],true);
+    return in_array((string)get_post_meta($pid,'_sa_shopify_id',true),['7742545920177','7742546018481','7742546215089','7678281253041'],true);
 }
 function sa_exact_fitment_valid($r): bool {
     if(!is_array($r))return false;
@@ -12,6 +12,9 @@ function sa_exact_fitment_valid($r): bool {
 }
 function sa_exact_fitment_record(int $pid): ?array {
     if(!sa_exact_fitment_target($pid))return null;
+    // SPC 67416 has a model/year listing, not exact chassis/engine/drive evidence.
+    // Never allow guessed marker fields or legacy tags to create a garage fit claim.
+    if((string)get_post_meta($pid,'_sa_shopify_id',true)==='7678281253041')return null;
     $r=get_post_meta($pid,'_sa_exact_maker_fitment_v1',true);
     if(!sa_exact_fitment_valid($r))return null;
     // 949 540 A: JA maker notes exclude June 2017 onward. Generic model
