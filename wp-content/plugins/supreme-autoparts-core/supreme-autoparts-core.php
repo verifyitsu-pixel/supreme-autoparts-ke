@@ -37,6 +37,7 @@ require_once SA_CORE_DIR . 'includes/catalog-search.php';
 require_once SA_CORE_DIR . 'includes/catalog-facets.php';
 require_once SA_CORE_DIR . 'includes/product-images.php';
 require_once SA_CORE_DIR . 'includes/w93441-warning.php';
+require_once SA_CORE_DIR . 'includes/bil33245492-warning.php';
 require_once SA_CORE_DIR . 'includes/checkout-terms.php';
 require_once SA_CORE_DIR . 'includes/cart-persistence.php';
 require_once SA_CORE_DIR . 'includes/logout.php';
