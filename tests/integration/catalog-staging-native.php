@@ -6,6 +6,8 @@ $repo=getenv('SA_CATALOG_TEST_REPO');
 define('SA_CORE_DIR',$repo.'/wp-content/plugins/supreme-autoparts-core/');
 require_once $repo.'/wp-content/plugins/supreme-autoparts-core/includes/product-fingerprint.php';
 require_once $repo.'/wp-content/plugins/supreme-autoparts-core/includes/import-shopify.php';
+require_once SA_CORE_DIR.'includes/catalog-hygiene.php';
+require_once SA_CORE_DIR.'includes/catalog-search.php';
 $GLOBALS['sa_core_fingerprint_no_write']=true;
 $transitions=[];
 add_action('transition_post_status',function($new,$old,$p)use(&$transitions){if($p->post_type==='product')$transitions[]=['id'=>$p->ID,'new'=>$new,'old'=>$old];},10,3);
@@ -24,3 +26,12 @@ $cli=fixture_item(5);file_put_contents('/tmp/catalog-cli.ndjson',json_encode($cl
 
 // Characterization only: importer creates a variable parent, not complete purchasable variants.
 $variable=fixture_item(6);$variable["variants"][]=["sku"=>"FIXTURE-6-B","price"=>"140.00","available"=>true];$r=fixture_import($variable);$vid=(int)sa_core_import_meta_lookup("_sa_shopify_id",$variable["id"],"any");$vp=wc_get_product($vid);fixture_ok($r["errors"]===0&&$vp&&$vp->is_type("variable")&&$vp->get_status()==="draft"&&$vp->get_catalog_visibility()==="hidden","variable parent remains hidden draft only");fixture_ok(count($vp->get_children())===0,"characterized variable path has no children; not qualified for promotion");
+
+// Real media_sideload_image + attachment persistence, synthetic bytes only, no network.
+$png=base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=');
+add_filter('pre_http_request',function($pre,$args,$url)use($png){
+ if(!in_array($url,['https://fixture.invalid/brace-a.png','https://fixture.invalid/brace-b.png'],true))return $pre;
+ if(!empty($args['stream'])&&!empty($args['filename']))file_put_contents($args['filename'],$png);
+ return ['headers'=>['content-type'=>'image/png'],'body'=>!empty($args['stream'])?'':$png,'response'=>['code'=>200,'message'=>'OK'],'cookies'=>[],'filename'=>$args['filename']??null];
+},PHP_INT_MAX,3);
+$gallery=fixture_item(7);$gallery['images']=[['src'=>'https://fixture.invalid/brace-a.png'],['src'=>'https://fixture.invalid/brace-b.png']];$gr=['imported'=>0,'updated'=>0,'skipped'=>0,'errors'=>0,'messages'=>[]];sa_core_import_one_shopify_product($gallery,$gr,false,false,true,true);$gid=wc_get_product_id_by_sku('FIXTURE-7');$gp=wc_get_product($gid);fixture_ok($gr['errors']===0&&$gp&&$gp->get_status()==='draft'&&$gp->get_catalog_visibility()==='hidden','gallery second save retains hidden draft with catalog hooks loaded');$aids=array_merge([(int)get_post_thumbnail_id($gid)],$gp->get_gallery_image_ids());fixture_ok(count($aids)===2&&min($aids)>0,'featured and gallery attachment persistence');foreach($aids as $aid)fixture_ok(hash_file('sha256',get_attached_file($aid))===hash('sha256',$png),'synthetic image bytes persist exactly');fixture_ok(count(array_filter($transitions,fn($t)=>$t['id']===$gid&&$t['new']==='publish'))===0,'gallery path never publishes');
