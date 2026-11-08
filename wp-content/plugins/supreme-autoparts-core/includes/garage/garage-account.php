@@ -625,8 +625,11 @@ function sa_garage_viewer_vehicle(): array
  * @param string $mk_slug sanitize_title() make slug, e.g. 'toyota'.
  * @param string $mo_slug sanitize_title() bare model slug, e.g. 'corolla' ('' = make-level check).
  */
+require_once __DIR__.'/exact-fitment.php';
+
 function sa_garage_product_fits_vehicle(int $pid, string $mk_slug, string $mo_slug, int $year): ?bool
 {
+    if(sa_exact_fitment_record($pid)!==null)return false; // This signature has no chassis/engine/drive/month evidence.
     if (!function_exists('sa_fx_vehicles_for') || !function_exists('sa_fx_vehicle_vocab')) {
         return null;
     }
@@ -664,6 +667,11 @@ add_action('woocommerce_single_product_summary', static function (): void {
         return;
     }
     $pid = $product->get_id();
+    $exact=sa_exact_fitment_record($pid);
+    if($exact!==null){
+        echo '<p class="sa-fit sa-fit--listed">'.esc_html(sa_exact_fitment_label($exact)).'</p>';
+        return; // Saved garage does not carry the exact facts needed for a fit claim.
+    }
     $tags = wp_get_post_terms($pid, 'product_tag', ['fields' => 'names']);
     $tags = is_array($tags) ? $tags : [];
     $authoritative = false;
