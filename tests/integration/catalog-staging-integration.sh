@@ -20,4 +20,4 @@ add_filter('pre_wp_mail',fn()=>false,PHP_INT_MAX);
 PHP
 $WP core version
 $WP plugin get woocommerce --field=version
-SA_CATALOG_TEST_REPO="$REPO" $WP eval-file "$REPO/tests/integration/catalog-staging-native.php"
+SA_CATALOG_TEST_REPO="$REPO" $WP eval-file "$REPO/tests/integration/catalog-staging-native.php" --use-include

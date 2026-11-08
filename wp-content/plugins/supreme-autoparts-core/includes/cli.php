@@ -48,6 +48,9 @@ class SA_Core_CLI_Command
      * : Max products
      * [--offset=<n>]
      * : Skip first N
+     * [--stage-new-only]
+     * : CLI only. Create new items as hidden drafts; refuse existing matches.
+     *
      * [--skip-images]
      * : Skip image sideload (CDN URLs still stored)
      * [--require-images]
@@ -74,6 +77,7 @@ class SA_Core_CLI_Command
             'require_images' => isset($assoc_args['require-images']),
             'category'       => (string) ($assoc_args['category'] ?? ''),
             'dry_run'        => isset($assoc_args['dry-run']),
+            'stage_new_only' => isset($assoc_args['stage-new-only']),
             'mapping'        => (string) ($assoc_args['mapping'] ?? ''),
         ]);
         WP_CLI::success(sprintf(
@@ -103,6 +107,9 @@ class SA_Core_CLI_Command
      * : Count/match only — do not write products
      * [--mapping=<path>]
      * : JSON file mapping product_type → parent category slug
+     * [--stage-new-only]
+     * : CLI only. Create new items as hidden drafts; refuse existing matches.
+     *
      * [--skip-images]
      * : Skip binary sideload (still stores Shopify CDN URL meta for display)
      * [--require-images]
@@ -132,6 +139,7 @@ class SA_Core_CLI_Command
             'require_images' => isset($assoc_args['require-images']),
             'category'       => $category,
             'dry_run'        => isset($assoc_args['dry-run']),
+            'stage_new_only' => isset($assoc_args['stage-new-only']),
             'mapping'        => $mapping,
         ]);
         WP_CLI::success(sprintf(

@@ -50,6 +50,7 @@ function sa_core_import_shopify_products_file(string $path, array $opts = []): a
         $category = sanitize_title($category_raw);
     }
     $dry_run = !empty($opts['dry_run']);
+    $stage_new_only = !empty($opts['stage_new_only']);
     $mapping_file = (string) ($opts['mapping'] ?? $opts['mapping_file'] ?? '');
     if ($mapping_file !== '') {
         sa_core_set_product_type_parent_map_file($mapping_file);
@@ -67,7 +68,8 @@ function sa_core_import_shopify_products_file(string $path, array $opts = []): a
             $require_images,
             $result,
             $category,
-            $dry_run
+            $dry_run,
+            $stage_new_only
         );
     }
 
@@ -102,7 +104,7 @@ function sa_core_import_shopify_products_file(string $path, array $opts = []): a
         if ($limit > 0 && $processed >= $limit) {
             break;
         }
-        sa_core_import_one_shopify_product($item, $result, $skip_images, $dry_run, $require_images);
+        sa_core_import_one_shopify_product($item, $result, $skip_images, $dry_run, $require_images, $stage_new_only);
         $processed++;
     }
 
@@ -128,7 +130,8 @@ function sa_core_import_shopify_ndjson(
     bool $require_images,
     array $result,
     string $category = '',
-    bool $dry_run = false
+    bool $dry_run = false,
+    bool $stage_new_only = false
 ): array {
     if (!isset($result['filtered'])) {
         $result['filtered'] = 0;
@@ -171,7 +174,7 @@ function sa_core_import_shopify_ndjson(
         if ($limit > 0 && $processed >= $limit) {
             break;
         }
-        sa_core_import_one_shopify_product($item, $result, $skip_images, $dry_run, $require_images);
+        sa_core_import_one_shopify_product($item, $result, $skip_images, $dry_run, $require_images, $stage_new_only);
         $processed++;
     }
     fclose($fh);
