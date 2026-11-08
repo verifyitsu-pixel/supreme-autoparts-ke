@@ -76,3 +76,13 @@ foreach([$id=>$id,$oid=>$oid] as $unknown_id){
 }
 fixture_ok(sa_ff_unknown_order_label([['data'=>$op],['data'=>wc_get_product($id)]])==='Special order','mixed marker cart keeps Y label');
 $plain_order=new WC_Order();$plain_line=new WC_Order_Item_Product();$plain_line->set_product($orp);$plain_order->add_item($plain_line);fixture_ok(!sa_gcr_order_has_unknown_special_order($plain_order),'ordinary unsaved order survey guard unchanged');
+
+// Actual recommendation gate and actual registered badge callback in the native WP runtime.
+require_once SA_CORE_DIR.'includes/garage/garage-account.php';
+$fitment=['make'=>'Toyota','model'=>'Aqua','chassis'=>'NHP10','engine'=>'1NZ-FXE','drive'=>'FF','from'=>'2011-12','through'=>'2021-07'];
+update_post_meta($oid,'_sa_shopify_id','7742545920177');update_post_meta($oid,'_sa_exact_maker_fitment_v1',$fitment);
+fixture_ok(sa_garage_product_fits_vehicle($oid,'toyota','fielder',2016)===false&&sa_garage_product_fits_vehicle($oid,'toyota','aqua',2016)===false,'actual recommendation gate denies make-model-year-only positive for exact marked item');
+$_COOKIE['sa_pz']=json_encode(['mk'=>'toyota','mo'=>'toyota/fielder','y'=>'2016']);$product=wc_get_product($oid);$GLOBALS['product']=$product;
+$badge=null;foreach($GLOBALS['wp_filter']['woocommerce_single_product_summary']->callbacks[26]??[] as $cb){$f=$cb['function'];if($f instanceof Closure){$rf=new ReflectionFunction($f);if(str_ends_with((string)$rf->getFileName(),'/garage/garage-account.php'))$badge=$f;}}
+fixture_ok($badge instanceof Closure,'actual garage badge callback located');ob_start();$badge();$h=ob_get_clean();fixture_ok(str_contains($h,'Listed fitment: Toyota Aqua NHP10, 1NZ-FXE, FF, 2011-12 to 2021-07.')&&!str_contains($h,'Fits your')&&!str_contains($h,'sa-fit--yes'),'actual native badge renders exact bounds without false saved-garage fit');
+update_post_meta($oid,'_sa_shopify_id','not-allowlisted');fixture_ok(sa_exact_fitment_record($oid)===null,'unlisted source bypasses narrow exact path');
