@@ -10,7 +10,7 @@ jobs:
     timeout-minutes: 10
     services:
       mysql:
-        image: mysql:8.4
+        image: mysql:9.7.2@sha256:e2fa358a74ac81148e7e27d9433e4c0ab62133de8ea4428b4f39a51a4ba7d07f
         env:
           MYSQL_ROOT_PASSWORD: synthetic-ci-only
           MYSQL_DATABASE: gmt_test
@@ -26,9 +26,3 @@ jobs:
       - run: python tests/integration/gmt-index-qualification.py
         env:
           MYSQL_TEST_PASSWORD: synthetic-ci-only
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: synthetic-gmt-index-report
-          path: /tmp/gmt-index-report.json
-          retention-days: 7

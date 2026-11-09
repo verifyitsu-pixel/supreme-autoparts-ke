@@ -2,6 +2,7 @@ import os,json,time,statistics,threading
 import pymysql
 cfg=dict(host='127.0.0.1',port=3306,user='root',password=os.environ['MYSQL_TEST_PASSWORD'],database='gmt_test',autocommit=True)
 c=pymysql.connect(**cfg);cur=c.cursor();report={}
+cur.execute('SELECT VERSION()');report['mysql_version']=cur.fetchone()[0];assert report['mysql_version'].startswith('9.7.2'),report['mysql_version']
 cur.execute('CREATE TABLE posts (ID BIGINT UNSIGNED PRIMARY KEY, post_status VARCHAR(20) NOT NULL, post_type VARCHAR(20) NOT NULL, post_date DATETIME NOT NULL, post_date_gmt DATETIME NOT NULL,post_modified_gmt DATETIME NOT NULL,post_content LONGTEXT, KEY type_status_date(post_type,post_status,post_date,ID)) ENGINE=InnoDB')
 rows=[]
 for i in range(65000):
