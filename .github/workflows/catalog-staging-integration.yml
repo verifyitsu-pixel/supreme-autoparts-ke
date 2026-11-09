@@ -13,6 +13,7 @@ jobs:
       - name: Standalone regression
         run: |
           php -l wp-content/plugins/supreme-autoparts-core/includes/import-shopify.php
+          php tests/term-count-readonly-regression.php
           php tests/import-new-only-staging-regression.php
           SA_TEST_NONCLI=1 php tests/import-new-only-staging-regression.php
           php tests/exact-fitment-regression.php
