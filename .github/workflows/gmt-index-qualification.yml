@@ -1,0 +1,33 @@
+name: Synthetic GMT index qualification
+on:
+  push:
+    branches: ['test/gmt-index-qualification']
+permissions:
+  contents: read
+jobs:
+  synthetic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: synthetic-ci-only
+          MYSQL_DATABASE: gmt_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -psynthetic-ci-only"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - run: python -m pip install pymysql
+      - run: python tests/integration/gmt-index-qualification.py
+        env:
+          MYSQL_TEST_PASSWORD: synthetic-ci-only
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-gmt-index-report
+          path: /tmp/gmt-index-report.json
+          retention-days: 7
