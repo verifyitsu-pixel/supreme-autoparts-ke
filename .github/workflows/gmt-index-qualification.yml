@@ -27,6 +27,7 @@ jobs:
         env:
           MYSQL_TEST_PASSWORD: synthetic-ci-only
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: synthetic-gmt-index-report
           path: /tmp/gmt-index-report.json
