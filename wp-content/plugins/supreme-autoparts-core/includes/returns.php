@@ -939,6 +939,14 @@ add_filter('the_content', static function (string $c): string {
     if (!is_main_query() || !in_the_loop() || !is_page(['returns', 'refund-policy'])) {
         return $c;
     }
+    // Owner's November 9 decision: approved return delivery is free.
+    // Keep this in rendered existing pages as well as fresh page definitions.
+    // This does not invent a prepaid-label method, refund time or waive restocking fees.
+    $free_delivery = '<li>Return shipping is free for approved returns. Contact us for return instructions before sending anything back.</li>';
+    $c = str_replace('<li>Customers are responsible for return shipping costs and fees unless otherwise stated. Original outbound shipping is typically non-refundable.</li>', $free_delivery . '<li>Original outbound shipping is typically non-refundable.</li>', $c);
+    if (is_page('refund-policy') && !str_contains($c, 'Return shipping is free for approved returns.')) {
+        $c = preg_replace('#<ul>#', '<ul>' . $free_delivery, $c, 1) ?? $c;
+    }
     $c = preg_replace('#<li>After 60 days[^<]*</li>#', '<li>After ' . SA_RET_DAYS . ' days you cannot start a return or refund online. Contact us with your issue and we will review it case by case.</li>', $c) ?? $c;
     $c = preg_replace('#<li>An RMA must be issued.*?</li>#s', '<li>Start your return while signed in: open <strong>My Account &gt; Returns</strong>, pick the order and items, and follow the steps. We approve it before you send anything back.</li>', $c) ?? $c;
     $c = str_replace('(with prior RMA)', '(approved through My Account &gt; Returns)', $c);
