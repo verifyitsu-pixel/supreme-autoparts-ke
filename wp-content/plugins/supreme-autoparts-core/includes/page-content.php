@@ -86,7 +86,8 @@ HTML,
 <ul>
 <li>Returns within 60 days may be eligible for a refund to the original payment method.</li>
 <li>After 60 days, non-stocked items are accepted only at our discretion; accepted late returns may receive store credit only.</li>
-<li>Customers are responsible for return shipping costs and fees unless otherwise stated. Original outbound shipping is typically non-refundable.</li>
+<li>Return shipping is free for approved returns. Contact us for return instructions before sending anything back.</li>
+<li>Original outbound shipping is typically non-refundable.</li>
 <li>Products must be new, unused, and in original packaging with labeling and hardware.</li>
 <li>Returns are subject to a restocking fee of <strong>20%</strong> (supplier drop-ship items may incur additional supplier restocking fees).</li>
 <li>An RMA must be issued <strong>before</strong> returning any product. Email <a href="mailto:{$email}">{$email}</a> with your order number to request an RMA.</li>
@@ -152,6 +153,7 @@ HTML,
             'content' => <<<HTML
 <p>Refunds follow our Returns policy. In summary:</p>
 <ul>
+<li>Return shipping is free for approved returns. Contact us for return instructions before sending anything back.</li>
 <li>Unused products returned within 60 days (with prior RMA) may be refunded to the original payment method.</li>
 <li>Restocking fees (typically 20%) and non-refundable outbound shipping may apply.</li>
 <li>Late or discretionary returns may receive store credit only.</li>
