@@ -287,10 +287,9 @@ final class SA_Geo_Display
         $extra = '';
         if (self::should_convert()) {
             $extra = sprintf(
-                /* translators: 1: display currency 2: country code */
-                ' ' . esc_html__('(showing approx. %1$s for %2$s)', 'sa-geo-currency'),
-                esc_html($display),
-                esc_html($country)
+                /* translators: %s: estimated display currency */
+                ' ' . esc_html__('(estimated %s amount)', 'sa-geo-currency'),
+                esc_html($display)
             );
         }
 
