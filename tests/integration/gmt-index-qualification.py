@@ -21,7 +21,7 @@ def bench():
 cur.execute('ANALYZE TABLE posts');cur.execute("SELECT INDEX_LENGTH FROM information_schema.TABLES WHERE TABLE_SCHEMA='gmt_test' AND TABLE_NAME='posts'");report['baseline_index_bytes']=cur.fetchone()[0]
 report['baseline']=bench();t=time.perf_counter();cur.execute('ALTER TABLE posts ADD INDEX sa_status_date_gmt(post_status,post_date_gmt,post_type), ADD INDEX sa_status_modified_gmt(post_status,post_modified_gmt,post_type), ALGORITHM=INPLACE, LOCK=NONE');report['ddl_seconds']=time.perf_counter()-t;cur.execute('ANALYZE TABLE posts');report['indexed']=bench();print(json.dumps(report,default=str),flush=True)
 for f in fields:
- assert report['baseline'][f]['result']==report['indexed'][f]['result'];assert report['indexed'][f]['median_ms']<report['baseline'][f]['median_ms'];assert report['indexed'][f]['plan'][0][6].startswith('sa_status_')
+ assert report['baseline'][f]['result']==report['indexed'][f]['result'];assert report['indexed'][f]['median_ms']<report['baseline'][f]['median_ms'];assert ('sa_status_date_gmt' if f=='post_date_gmt' else 'sa_status_modified_gmt') in json.dumps(report['indexed'][f]['plan'])
 # Scalar-result parity for ties, unpublished/newer excluded type, insert/update/delete.
 for sql in ["UPDATE posts SET post_date_gmt='2026-12-31',post_modified_gmt='2026-12-31' WHERE ID=2", "UPDATE posts SET post_status='draft' WHERE ID=2", "UPDATE posts SET post_status='publish',post_type='revision' WHERE ID=2", "DELETE FROM posts WHERE ID=2"]:
  cur.execute(sql)
