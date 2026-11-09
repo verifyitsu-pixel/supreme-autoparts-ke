@@ -347,3 +347,25 @@ html,body{overscroll-behavior-x:none}
   }
   .sa-nav__link:active { background: var(--sa-border, #dae3ea); }
 }
+
+/* Homepage trust section only: six illustrated benefits, without long text rows. */
+.sa-ed-why.sa-trust{padding:60px 0 56px}
+.sa-trust .sa-ed-head{margin-bottom:38px}
+.sa-trust-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px 48px}
+.sa-trust-card{text-align:center;min-width:0}
+.sa-trust-card svg{display:block;width:48px;height:48px;margin:0 auto 16px;fill:none;stroke:#161616;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+.sa-trust-card svg .sa-trust-accent{stroke:#b67d00}
+.sa-trust-card h3{font-size:21px;line-height:1.25;letter-spacing:-.02em;font-weight:600;margin:0 0 10px}
+.sa-trust-card p{font-size:15px;line-height:1.55;color:var(--ed-mute);margin:0 auto 12px;max-width:290px}
+.sa-trust-card a{display:inline-block;padding:4px 0;color:var(--ed-ink);font-size:13px;font-weight:600;text-decoration:none}
+.sa-trust-card a:hover{text-decoration:underline;text-underline-offset:4px}
+.sa-trust-card a:focus-visible{outline:2px solid #a36f00;outline-offset:5px;border-radius:2px}
+@media(max-width:700px){
+ .sa-ed-why.sa-trust{padding:36px 0 34px}
+ .sa-trust .sa-ed-head{margin-bottom:30px}
+ .sa-trust-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:30px 20px}
+ .sa-trust-card svg{width:40px;height:40px;margin-bottom:12px}
+ .sa-trust-card h3{font-size:18px;line-height:1.25;margin-bottom:8px}
+ .sa-trust-card p{font-size:13px;line-height:1.5;margin-bottom:8px}
+ .sa-trust-card a{font-size:12px;min-height:32px;padding:6px 0}
+}

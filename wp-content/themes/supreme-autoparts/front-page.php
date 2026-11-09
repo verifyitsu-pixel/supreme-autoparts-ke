@@ -286,29 +286,7 @@ if ($sa_ed_brands !== []) : ?>
 </section>
 <?php endif; ?>
 
-<section class="sa-ed-sec sa-ed-why" aria-labelledby="sa-ed-why">
-  <div class="sa-container">
-    <div class="sa-ed-head"><h2 id="sa-ed-why"><?php esc_html_e('Why Supreme Autoparts', 'supreme-autoparts'); ?></h2></div>
-    <div class="sa-ed-facts">
-      <div><h3><?php echo esc_html($sa_count > 1000 ? sprintf(__('%s parts listed', 'supreme-autoparts'), number_format_i18n(floor($sa_count / 1000) * 1000) . '+') : __('Thousands of parts', 'supreme-autoparts')); ?></h3><p><?php esc_html_e('Search by part number, brand or your car’s make, model and year.', 'supreme-autoparts'); ?></p></div>
-      <?php if ($sa_is_ke) : ?>
-      <div><h3><?php esc_html_e('Delivery across Kenya', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('We ship with Fargo Courier and you can track the parcel on our site.', 'supreme-autoparts'); ?></p></div>
-      <div><h3><?php esc_html_e('Store pickup', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('Collect your order from our shop at Midax Plaza, Kangundo Road.', 'supreme-autoparts'); ?></p></div>
-      <div><h3><?php esc_html_e('M-Pesa or card', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('Pay through Pesapal when you check out.', 'supreme-autoparts'); ?></p></div>
-      <div><h3><?php esc_html_e('15-day returns', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('Return unused parts within 15 days of delivery - start it from your account.', 'supreme-autoparts'); ?></p></div>
-      <div><h3><?php esc_html_e('Calculated courier rates', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('Kenya delivery is priced by destination and parcel weight. Estimated delivery: 1-2 working days from order, excluding weekends. Product availability applies.', 'supreme-autoparts'); ?></p></div>
-      <div><h3><?php esc_html_e('Top-notch support', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('Talk to a real person on chat, WhatsApp or the phone.', 'supreme-autoparts'); ?></p></div>
-      <?php else : ?>
-      <?php $sa_us = function_exists('sa_storefront_country') && sa_storefront_country() === 'US'; ?>
-      <div><h3><?php $sa_us ? esc_html_e('Shipping across the US', 'supreme-autoparts') : esc_html_e('International shipping', 'supreme-autoparts'); ?></h3><p><?php $sa_us ? esc_html_e('Free US shipping with no minimum. Estimated delivery: 1-3 working days from order, excluding weekends. Product availability applies.', 'supreme-autoparts') : esc_html_e('Shipping to your country is priced at checkout before you pay.', 'supreme-autoparts'); ?></p></div>
-      <div><h3><?php esc_html_e('Fitment check', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('Send your year, make, model or VIN on WhatsApp and we confirm the part number.', 'supreme-autoparts'); ?></p></div>
-      <div><h3><?php esc_html_e('Pay by card', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('Secure card checkout. No account needed.', 'supreme-autoparts'); ?></p></div>
-      <div><h3><?php esc_html_e('15-day returns', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('Return unused parts within 15 days of delivery - start it from your account.', 'supreme-autoparts'); ?></p></div>
-      <div><h3><?php esc_html_e('Top-notch support', 'supreme-autoparts'); ?></h3><p><?php esc_html_e('Talk to a real person on chat, WhatsApp or the phone.', 'supreme-autoparts'); ?></p></div>
-      <?php endif; ?>
-    </div>
-  </div>
-</section>
+<?php include get_template_directory() . '/template-parts/home-trust.php'; ?>
 
 
 
