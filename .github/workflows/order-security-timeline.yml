@@ -1,7 +1,7 @@
 name: Private order security timeline tests
 on:
   push:
-    branches: [feat/private-order-risk, feat/local-security-journey]
+    branches: [feat/private-order-risk, feat/local-security-journey, feat/compact-security-events]
 permissions:
   contents: read
 jobs:
@@ -12,6 +12,7 @@ jobs:
       - run: |
           php -l wp-content/mu-plugins/sa-local-security.php
           php tests/local-security-regression.php
+          node tests/security-timeline-display-regression.cjs
           php -l wp-content/mu-plugins/sa-order-security-timeline.php
           php -l wp-content/mu-plugins/supreme-pesapal-hardening.php
           php -l wp-content/plugins/woo-paystack/includes/class-wc-gateway-paystack.php

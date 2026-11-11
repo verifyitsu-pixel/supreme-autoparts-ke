@@ -14,3 +14,7 @@ Passive Woo private notes, visible in the existing order notes timeline (includi
 Tests: isolated fake orders assert private notes, same-order deduplication, failed/completed history, absent signals, local-only lookup, safe field allowlist, imported-order exclusion and UA parsing. Git deployment gate runs the regression suite. No paid test.
 
 Rollback: git revert this feature and deploy through the existing workflow. Already-written private notes are preserved as history; no automatic deletion or payment action.
+
+## Compact chronological presentation (2026-11-11)
+
+The private Woo order-note feed keeps its native event order and timestamps. Security entries show a short sentence between existing customer/payment events; full original text is collapsed under Details. This is an admin-only display transform, not a rewrite, reorder or backdating of recorded notes. Existing customer/document/payment notes are not modified. Dynamically loaded notes get the same display. No journey collection is enabled by this presentation change. If JavaScript is unavailable the original private detail is still visible.

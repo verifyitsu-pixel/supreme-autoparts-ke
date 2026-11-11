@@ -85,3 +85,17 @@ foreach (['woocommerce_checkout_order_created','woocommerce_store_api_checkout_o
 add_action('sa_security_verified_provider',static function($order,$provider,$data): void {
     try { sa_risk_provider_note($order,$provider,$data); } catch(Throwable $e) { error_log('[sa-security] provider note unavailable'); }
 },10,3);
+
+// Display existing private security notes as short events in Woo's original note chronology.
+// Detail stays collapsed and retrievable. No new events, customer view or persisted-note rewrite.
+add_action('admin_enqueue_scripts',static function():void {
+    if(!current_user_can('manage_woocommerce')){return;}
+    $screen=get_current_screen();
+    if(!$screen || !in_array($screen->id,['woocommerce_page_wc-orders','shop_order'],true)){return;}
+    wp_enqueue_script('sa-security-timeline',plugins_url('sa-security-timeline.js',__FILE__),[],(string)filemtime(__DIR__.'/sa-security-timeline.js'),true);
+});
+add_action('admin_head',static function():void {
+    if(!current_user_can('manage_woocommerce')){return;}
+    $screen=get_current_screen();if(!$screen || !in_array($screen->id,['woocommerce_page_wc-orders','shop_order'],true)){return;}
+    echo '<style>.sa-security-event-summary{display:block;font-weight:500;line-height:1.5}.sa-security-event-details{margin-top:6px}.sa-security-event-details>summary{cursor:pointer;color:#3858a8;font-size:12px}.sa-security-event-body{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:8px;line-height:1.6;font-size:12px}</style>';
+});
