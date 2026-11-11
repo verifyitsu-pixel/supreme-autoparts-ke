@@ -33,3 +33,6 @@ check(!str_contains($svc,"rawurlencode(function_exists('sa_geo_business') ? sa_g
 
 check(!str_contains($svc,'<iframe title="Garage map"'),'unconfirmed garage pin not presented in embedded map');
 check(str_contains($svc,'<div class="sa-svc-locbar"><?php echo sa_svc_address_html(); ?></div>'),'known garage address card retained without uncertain marker');
+
+check(sa_geo_business('KE')['postal']==='00516','Kenya contact postcode matches owner-confirmed Midax postcode');
+check(sa_geo_business('US')['postal']==='97230','US contact postcode unchanged');

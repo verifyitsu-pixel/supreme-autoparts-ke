@@ -307,7 +307,7 @@ function sa_geo_business(?string $cc = null): array
     if ($cc === 'KE') {
         return [
             'zone' => 'KE', 'name' => 'Supreme Autoparts',
-            'street' => 'Ground Floor, Midax Plaza, Kangundo Rd, Njiru', 'city' => 'Nairobi', 'region' => 'Nairobi', 'postal' => '00100',
+            'street' => 'Ground Floor, Midax Plaza, Kangundo Rd, Njiru', 'city' => 'Nairobi', 'region' => 'Nairobi', 'postal' => '00516',
             'country' => 'KE', 'country_name' => 'Kenya',
             'one_line' => 'Ground Floor, Midax Plaza, Kangundo Rd, Njiru, Nairobi, Kenya',
             'map_q' => 'Midax Plaza, Kangundo Rd, Njiru, Nairobi',
