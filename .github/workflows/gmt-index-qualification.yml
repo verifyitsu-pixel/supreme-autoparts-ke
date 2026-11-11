@@ -26,3 +26,12 @@ jobs:
       - run: python tests/integration/gmt-index-qualification.py
         env:
           MYSQL_TEST_PASSWORD: synthetic-ci-only
+      - run: python tests/integration/gmt-package-qualification.py
+        env:
+          MYSQL_TEST_PASSWORD: synthetic-ci-only
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fake-gmt-qualification-reports
+          path: /tmp/gmt*-report.json
+          retention-days: 7
