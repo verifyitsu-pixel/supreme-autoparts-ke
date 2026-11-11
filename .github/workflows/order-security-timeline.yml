@@ -1,0 +1,17 @@
+name: Private order security timeline tests
+on:
+  push:
+    branches: [feat/private-order-risk]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          php -l wp-content/mu-plugins/sa-order-security-timeline.php
+          php -l wp-content/mu-plugins/supreme-pesapal-hardening.php
+          php -l wp-content/plugins/woo-paystack/includes/class-wc-gateway-paystack.php
+          php tests/order-security-timeline-regression.php
+          php tests/paystack-card-display-regression.php

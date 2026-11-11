@@ -217,6 +217,10 @@ function sa_pesapal_define_classes() {
                 return '';
             }
             $status = strtoupper((string) $resp->payment_status_description);
+            do_action('sa_security_verified_provider', $order, 'Pesapal', [
+                'status' => $status, 'method' => $resp->payment_method ?? '',
+            ]);
+
             $summary = esc_html(wp_json_encode(array(
                 'status' => $status,
                 'method' => $resp->payment_method ?? '',

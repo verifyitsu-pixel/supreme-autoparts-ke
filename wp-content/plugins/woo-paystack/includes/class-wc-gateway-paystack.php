@@ -1505,6 +1505,11 @@ class WC_Gateway_Paystack extends WC_Payment_Gateway_CC {
             || (int) ($d->amount ?? 0) !== (int) round((float) $order->get_total() * 100)) {
             return;
         }
+        // Passive private security event; no provider payload or authorization token is retained.
+        do_action('sa_security_verified_provider', $order, 'Paystack', [
+            'status' => 'success', 'channel' => $d->channel ?? '',
+            'ip' => $d->ip_address ?? '', 'country' => $d->authorization->country_code ?? '',
+        ]);
         $auth = $d->authorization ?? null;
         $channel = (string) ($d->channel ?? ($auth->channel ?? ''));
         if ($channel !== 'card' || !$auth) { return; }
