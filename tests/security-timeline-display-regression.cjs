@@ -10,6 +10,7 @@ ck(d('Payment security | Pesapal verified response\nProcessor status: FAILED').s
 ck(d('Internal security alert | Review indicators\nSomething').summary.includes('internal alert only'),'notify only label');
 ck(d('Customer email sent: info request (new)')===null,'customer event untouched');
 ck(d('Paid order confirmation accepted')===null,'payment event untouched');
+ck(d('IP reputation | Predax\nRisk: high (90/100)').summary==='IP check · Predax high','compact provider risk');
 const text='Local security checks | Notify only\nAssessed: 2026-11-11 10:04:32 UTC\nIndicators: No configured indicator matched.\nUnavailable historical journey';
 ck(d(text).detail===text,'exact original detail retained');
 class El{constructor(text=''){this.innerText=text;this.dataset={};this.children=[];}append(...e){this.children.push(...e);}replaceChildren(...e){this.children=e;}}

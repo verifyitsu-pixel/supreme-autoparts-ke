@@ -10,6 +10,8 @@ function describe(text){
   var device=field('Device:').split(' (')[0];summary='Checkout recorded'+(device?' · '+device:'');
  }else if(head.indexOf('Payment security | ')===0){
   summary=head.slice('Payment security | '.length).replace(' verified response','')+': '+(field('Processor status:')||'verified response');
+ }else if(head==='IP reputation | Predax'){
+  var risk=field('Risk:');summary=risk?'IP check · Predax '+risk.split(' (')[0]:'IP check · result unavailable';
  }else if(head==='Internal security alert | Review indicators'){
   summary='Security review needed · internal alert only';
  }else if(head==='On-site journey | Same WooCommerce session'){

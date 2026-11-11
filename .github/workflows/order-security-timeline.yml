@@ -1,7 +1,7 @@
 name: Private order security timeline tests
 on:
   push:
-    branches: [feat/private-order-risk, feat/local-security-journey, feat/compact-security-events]
+    branches: [feat/private-order-risk, feat/local-security-journey, feat/compact-security-events, feat/predax-private]
 permissions:
   contents: read
 jobs:
@@ -12,6 +12,7 @@ jobs:
       - run: |
           php -l wp-content/mu-plugins/sa-local-security.php
           php tests/local-security-regression.php
+          php tests/predax-private-regression.php
           node tests/security-timeline-display-regression.cjs
           php -l wp-content/mu-plugins/sa-order-security-timeline.php
           php -l wp-content/mu-plugins/supreme-pesapal-hardening.php
