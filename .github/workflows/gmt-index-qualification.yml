@@ -35,6 +35,12 @@ jobs:
       - run: python tests/integration/search-traversal-qualification.py
         env:
           MYSQL_TEST_PASSWORD: synthetic-ci-only
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring
+          coverage: none
+      - run: php -l tests/integration/search-php-harness.php && python tests/integration/search-php-qualification.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -43,4 +49,6 @@ jobs:
             /tmp/gmt*-report.json
             /tmp/residual-query-report.json
             /tmp/search-traversal-report.json
+            /tmp/search-php-report.json
+            /tmp/search-builder-candidate.php
           retention-days: 7
