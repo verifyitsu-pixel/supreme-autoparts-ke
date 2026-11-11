@@ -28,6 +28,7 @@ ck(count(sa_local_indicators(['ip_country'=>'US','billing_country'=>'KE']))===1,
 ck(sa_local_counter('ip','',600)===0,'no shared unknown bucket');ck(sa_local_counter('ip','1.2.3.4',600)===1,'first submission');ck(sa_local_counter('ip','1.2.3.4',600)===2,'second');ck(sa_local_counter('email','1.2.3.4',600)===1,'separate scopes');
 foreach(array_keys($transients)as$k)ck(!str_contains($k,'1.2.3.4'),'hashed keys');
 $o=new O;sa_local_order_checks($o);ck(count($o->notes)===1,'one passive note');ck(str_contains($o->notes[0],'Assessed:'),'timestamp');ck(str_contains($o->notes[0],'approximate'),'count labelled approximate');ck(str_contains($o->notes[0],'held for license'),'country unavailable labelled');$saved=$transients;sa_local_order_checks($o);ck(count($o->notes)===1&&$saved===$transients,'repeat does not recount');
+$o=new O;$saved=$transients;sa_local_order_checks($o,false);ck(str_contains($o->notes[0],'Unavailable for this historical order'),'historical unavailable');ck($saved===$transients,'historical snapshot never counted');
 $o=new O;$o->via='admin';sa_local_order_checks($o);ck(!$o->notes,'no admin or import customer assumption');
 $o=new O;sa_local_alert($o,'Fake isolated review');sa_local_alert($o,'Fake isolated review');ck(count($o->notes)===1,'alert per-order dedup');ck(count($options['sa_internal_risk_alerts_v1'])===1,'one dashboard record');
 $p=new O;$p->id=101;sa_local_alert($p,'Same pair');ck(count($options['sa_internal_risk_alerts_v1'])===1,'pair flooding suppressed');

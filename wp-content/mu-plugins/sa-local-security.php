@@ -53,14 +53,15 @@ function sa_local_alert($order,string $reason): void {
     $alerts[]=['id'=>(int)$order->get_id(),'at'=>time()];
     update_option('sa_internal_risk_alerts_v1',array_slice($alerts,-20),false);
 }
-function sa_local_order_checks($order): void {
+function sa_local_order_checks($order, bool $new_submission=true): void {
     if(!in_array($order->get_created_via(),['checkout','store-api','sa_open_pay'],true) || $order->get_meta('_sa_local_checks_v1')==='1') { return; }
     $ip=sa_risk_ip($order->get_customer_ip_address());
     $cc=''; // Third-party country database held pending explicit data provenance/license.
     $f=['email'=>$order->get_billing_email(),'first'=>$order->get_billing_first_name(),'last'=>$order->get_billing_last_name(),'billing_country'=>$order->get_billing_country(),'ip_country'=>$cc,
-        'ip_orders'=>sa_local_counter('ip',$ip,600),'email_orders'=>sa_local_counter('email',strtolower($order->get_billing_email()),3600)];
+        'ip_orders'=>$new_submission?sa_local_counter('ip',$ip,600):0,'email_orders'=>$new_submission?sa_local_counter('email',strtolower($order->get_billing_email()),3600):0];
     $indicators=sa_local_indicators($f);
-    $text="Local security checks | Notify only\nAssessed: ".gmdate('Y-m-d H:i:s')." UTC\nOffline IP country: ".($cc?:'Unavailable: additional country database held for license/provenance review').".\nCheckout Guard 2.1.1 local lists: disposable domain and exact placeholder-name checks.\nOrder submissions: ".$f['ip_orders']." per saved IP / 10-minute bucket; ".$f['email_orders']." per email / hourly bucket (approximate, starts after deployment).\nIndicators: ".($indicators?implode('; ',$indicators):'No configured indicator matched').".\nNo external reputation, VPN, hardware identity or card-IP check was performed. No automatic block or hold.";
+    $frequency=$new_submission ? $f['ip_orders']." per saved IP / 10-minute bucket; ".$f['email_orders']." per email / hourly bucket (approximate, starts after deployment)" : "Unavailable for this historical order. Current local-list snapshot only; no historical submissions or journey reconstructed";
+    $text="Local security checks | Notify only\nAssessed: ".gmdate('Y-m-d H:i:s')." UTC\nOffline IP country: ".($cc?:'Unavailable: additional country database held for license/provenance review').".\nCheckout Guard 2.1.1 local lists: disposable domain and exact placeholder-name checks.\nOrder submissions: ".$frequency.".\nIndicators: ".($indicators?implode('; ',$indicators):'No configured indicator matched').".\nNo external reputation, VPN, hardware identity or card-IP check was performed. No automatic block or hold.";
     sa_risk_note($order,'local_checks',$text);
     $order->update_meta_data('_sa_local_checks_v1','1');$order->save_meta_data();
     if(sa_local_high_risk($f)) { sa_local_alert($order,'Repeated order-submission thresholds matched for both IP and email. Review the private order timeline.'); }
