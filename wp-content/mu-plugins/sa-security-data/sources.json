@@ -1,0 +1,35 @@
+{
+  "checkout_guard": "https://downloads.wordpress.org/plugin/checkout-guard.2.1.1.zip",
+  "retrieved": "2026-11-11",
+  "files": [
+    {
+      "file": "CheckoutGuard-upstream-readme.txt",
+      "sha256": "97b2522e77f50802c7d3f514c912bf50a93b11ba94c0249d93c3a9e2b911a7ba"
+    },
+    {
+      "file": "GPL-2.0.txt",
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "file": "LICENSE-disposable-email-domains.txt",
+      "sha256": "1f47ad920055206feed7d1e3c174a00c865214e911d6746e8de02bb3f9c8238e"
+    },
+    {
+      "file": "NOTICE.txt",
+      "sha256": "0c5b488d0c25858e24f746cb08614aa0c3be898b019c4f85005239d572467769"
+    },
+    {
+      "file": "disposable-allowlist.php",
+      "sha256": "7f2494770accbbe1c4bac5089821754320ca36768d89c4a1bcf060170d8c9995"
+    },
+    {
+      "file": "disposable-domains.php",
+      "sha256": "86d524ed4af850e53d9b00e0e6c44e6ba5cace74bbe1c094152d15c46d097951"
+    },
+    {
+      "file": "spam-names.php",
+      "sha256": "aba6bdb2c9e1c20c8152159ba6d9ef09042c97c97c04ad067fd85beb838801fb"
+    }
+  ],
+  "usage": "Checkout Guard local lists only. Original headers preserved. No full plugin loader, enforcement, SDK or telemetry. SaferCheckout binary databases excluded pending source/license verification."
+}

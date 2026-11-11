@@ -1,0 +1,5 @@
+Local data used without the full plugin loader:
+Checkout Guard 2.1.1, GPL-2.0-or-later. Copyright and source headers retained. Source package: https://downloads.wordpress.org/plugin/checkout-guard.2.1.1.zip
+Disposable domain dataset: MIT, upstream attribution and license retained in LICENSE-disposable-email-domains.txt. Source snapshot date 2026-09-03.
+The unmodified PHP lists and complete corresponding source are included here. GPL-2.0 license text included.
+Supreme adapter is GPL-2.0-or-later. No third-party screening service, accounts or keys.
