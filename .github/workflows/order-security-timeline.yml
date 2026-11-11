@@ -13,6 +13,7 @@ jobs:
           php -l wp-content/mu-plugins/sa-local-security.php
           php tests/local-security-regression.php
           php tests/predax-private-regression.php
+          php tests/term-count-readonly-regression.php
           node tests/security-timeline-display-regression.cjs
           php -l wp-content/mu-plugins/sa-order-security-timeline.php
           php -l wp-content/mu-plugins/supreme-pesapal-hardening.php
