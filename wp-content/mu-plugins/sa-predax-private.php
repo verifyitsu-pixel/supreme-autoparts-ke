@@ -28,7 +28,7 @@ function sa_predax_parse(array $data):?array {
     if(!is_array($c)||!isset($c['risk_score'])||!is_numeric($c['risk_score'])){return null;}
     $score=(float)$c['risk_score'];if($score<0||$score>100){return null;}
     $out=['score'=>$score,'level'=>$score>=80?'high':($score>=50?'medium':($score>=20?'low':'minimal')),'country'=>'','flags'=>[]];
-    foreach(['is_proxy'=>'proxy','is_vpn'=>'VPN','is_tor'=>'Tor','is_datacenter'=>'datacenter','is_crawler'=>'verified crawler']as$k=>$label){
+    foreach(['is_proxy'=>'proxy','is_vpn'=>'VPN','is_tor'=>'Tor','is_datacenter'=>'datacenter','is_crawler'=>'crawler']as$k=>$label){
         if(($c[$k]??false)===true){$out['flags'][]=$label;}
     }
     $cc=strtoupper((string)($data['location']['country_code']??''));
@@ -41,7 +41,7 @@ function sa_predax_note($order,?array $result,string $unavailable='',bool $cache
     if($result){
         $text.='Risk: '.$result['level'].' ('.$result['score']."/100, provider score, not a fraud verdict).\nSignals: ".($result['flags']?implode(', ',$result['flags']):'No listed network flag returned').".\nApproximate IP country: ".($result['country']?:'Unavailable').".\nSource: ".($cached?'Local cache of a Predax result, at most one hour old.':'Predax API response for the saved checkout IP.')."\nVPN/datacenter use can be legitimate. No precise/cardholder location or identity finding.";
     }else{$text.='Result: Unavailable ('.$unavailable."). No risk conclusion inferred.";}
-    $text.="\nData sent: saved checkout IP only, plus API authentication. No name, email, address, order ID, amount, payment detail, timezone or fingerprint. No community telemetry.\nNotify only: no block, hold, status change, document request or customer message.";
+    $text.="\nPermitted payload: saved checkout IP only, plus API authentication. No name, email, address, order ID, amount, payment detail, timezone or fingerprint. No community telemetry.\nNotify only: no block, hold, status change, document request or customer message.";
     sa_risk_note($order,'predax_ip',$text);
     $order->update_meta_data('_sa_predax_done_v1','1');$order->save_meta_data();
     if($result && $result['level']==='high'){
