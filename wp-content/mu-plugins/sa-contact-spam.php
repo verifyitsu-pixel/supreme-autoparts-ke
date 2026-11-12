@@ -28,7 +28,7 @@ add_filter('forminator_render_form_submit_markup', static function($html, $form_
 }, 30, 2);
 
 add_filter('forminator_spam_protection', static function($spam, $data, $form_id, $type) {
-    if ((int)$form_id !== 51436 || $type !== 'custom-forms') return $spam;
+    if ((int)$form_id !== 51436 || $type !== 'form') return $spam;
     $fields=[];
     foreach ((array)$data as $row) {
         if (is_array($row) && isset($row['name']) && is_scalar($row['value'] ?? null)) $fields[(string)$row['name']] = (string)$row['value'];
