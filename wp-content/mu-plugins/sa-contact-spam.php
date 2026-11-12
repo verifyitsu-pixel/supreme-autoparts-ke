@@ -37,6 +37,8 @@ add_filter('forminator_spam_protection', static function($spam, $data, $form_id,
     $email = strtolower(trim((string)($fields['email-1'] ?? '')));
     // REMOTE_ADDR only, never a client-supplied forwarding header.
     $ip = isset($_SERVER['REMOTE_ADDR']) ? (string)$_SERVER['REMOTE_ADDR'] : '';
+    // A private reverse-proxy address is shared infrastructure, not a visitor.
+    if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) $ip = '';
     $reason = sa_contact_spam_reason($fields, $trap, sa_contact_spam_counter('email', $email), sa_contact_spam_counter('ip', $ip));
     return (bool)$spam || $reason !== '';
 }, 30, 4);
