@@ -2,6 +2,7 @@
 define('ABSPATH', __DIR__);
 $filters=[];
 function add_filter($name,$callback,...$args) {global $filters;$filters[$name]=$callback;}
+function add_action(...$args) {}
 function get_transient($key){return false;}
 function set_transient(...$args){}
 function wp_salt($key){return 'test-salt';}
