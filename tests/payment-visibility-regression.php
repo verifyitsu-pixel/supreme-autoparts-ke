@@ -2,4 +2,6 @@
 define('ABSPATH',__DIR__);function add_action(...$a){}function get_stylesheet_directory_uri(){return 'https://store.invalid/theme';}function esc_url($s){return htmlspecialchars($s,ENT_QUOTES);}function esc_attr($s){return htmlspecialchars($s,ENT_QUOTES);}function esc_html($s){return htmlspecialchars($s,ENT_QUOTES);}function home_url($s){return 'https://store.invalid'.$s;}
 class GM{function get_available_payment_gateways(){return $GLOBALS['available'];}}class W{function payment_gateways(){return new GM;}}function WC(){return new W;}
 require __DIR__.'/../wp-content/mu-plugins/sa-payment-visibility.php';
-$GLOBALS['available']=['pesapal'=>true];ob_start();sa_visible_missing_payment_cards();$h=ob_get_clean();if(substr_count($h,'<li ')!==2||strpos($h,'<section')!==false||strpos($h,'<p>')!==false||substr_count($h,'disabled aria-disabled="true"')!==2)throw new Exception('Single concise missing choices drift');echo "PASS single provider list, no extra section/paragraphs, unsupported radios disabled\n";
+$GLOBALS['available']=['pesapal'=>true];ob_start();sa_visible_missing_payment_cards();$h=ob_get_clean();if($h!=='')throw new Exception('Hidden providers rendered');
+$GLOBALS['available']=[];ob_start();sa_visible_missing_payment_cards();$h=ob_get_clean();if(substr_count($h,'<li ')!==1||!str_contains($h,'payment_method_pesapal')||str_contains($h,'paystack')||str_contains($h,'whop'))throw new Exception('Only unavailable Pesapal shown');
+echo "PASS only Pesapal visible, including unavailable state\n";
