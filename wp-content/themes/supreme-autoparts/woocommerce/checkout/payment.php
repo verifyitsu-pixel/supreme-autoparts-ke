@@ -16,18 +16,11 @@ if (!wp_doing_ajax()) {
   <?php if (WC()->cart && WC()->cart->needs_payment()) : ?>
     <ul class="wc_payment_methods payment_methods methods">
       <?php
-      // Display order only. Do not change checked state or gateway availability.
-      foreach (['paystack', 'pesapal', 'whop'] as $id) {
-          if (isset($available_gateways[$id])) {
-              wc_get_template('checkout/payment-method.php', ['gateway' => $available_gateways[$id]]);
-          } elseif (function_exists('sa_visible_missing_payment_cards')) {
-              sa_visible_missing_payment_cards($id);
-          }
-      }
-      foreach (($available_gateways ?? []) as $id => $gateway) {
-          if (!in_array($id, ['paystack', 'pesapal', 'whop'], true)) {
-              wc_get_template('checkout/payment-method.php', ['gateway' => $gateway]);
-          }
+      // Only the selected provider is shown, including AJAX refresh fragments.
+      if (isset($available_gateways['pesapal'])) {
+          wc_get_template('checkout/payment-method.php', ['gateway' => $available_gateways['pesapal']]);
+      } elseif (function_exists('sa_visible_missing_payment_cards')) {
+          sa_visible_missing_payment_cards('pesapal');
       }
       ?>
     </ul>

@@ -1,9 +1,9 @@
 <?php
-/** Careers application fee. Application/CV stays in Forminator; Paystack receives a fee order only. */
+/** Careers application fee. Application/CV stays in Forminator; Pesapal receives a fee order only. */
 declare(strict_types=1);
 defined('ABSPATH') || exit;
 function sa_careers_fee_disclosure(): string {
-    return 'Application fee: KES 1,000. This attendance fee is intended to discourage spam applications and no-shows. After saving your application, continue to Paystack checkout. The KES 1,000 fee is refundable when an invited applicant attends the paid two-day work trial, and if an applicant is never invited. The two-day work trial is paid and includes lunch. Employment depends on the trial outcome. Payment does not guarantee an invitation or continued employment.';
+    return 'Application fee: KES 1,000. This attendance fee is intended to discourage spam applications and no-shows. After saving your application, continue to Pesapal checkout. The KES 1,000 fee is refundable when an invited applicant attends the paid two-day work trial, and if an applicant is never invited. The two-day work trial is paid and includes lunch. Employment depends on the trial outcome. Payment does not guarantee an invitation or continued employment.';
 }
 function sa_careers_fee_order(string $source, int $entry_id, string $name, string $email) {
     if (!in_array($source,['forminator','native'],true) || $entry_id < 1 || !is_email($email) || !function_exists('wc_create_order')) return new WP_Error('unavailable','Your application is saved, but payment is unavailable. Please contact us before applying again.');
@@ -15,7 +15,7 @@ function sa_careers_fee_order(string $source, int $entry_id, string $name, strin
         $o=wc_create_order(['status'=>'pending','customer_id'=>0,'created_via'=>'sa_careers_fee']);
         if(is_wp_error($o))return $o;
         $item=new WC_Order_Item_Fee();$item->set_name('Job application fee');$item->set_total(1000);$item->set_tax_status('none');$o->add_item($item);
-        $o->set_currency('KES');$o->set_billing_email($email);$o->set_billing_first_name($name);$o->set_billing_country('KE');$o->set_payment_method('paystack');$o->set_payment_method_title('Paystack (KES)');
+        $o->set_currency('KES');$o->set_billing_email($email);$o->set_billing_first_name($name);$o->set_billing_country('KE');$o->set_payment_method('pesapal');$o->set_payment_method_title('Pesapal (KES)');
         $o->update_meta_data('_sa_careers_application_ref',sa_careers_application_ref($source,$entry_id));$o->update_meta_data('_sa_careers_source',$source);$o->update_meta_data('_sa_careers_entry',$entry_id);$o->update_meta_data('_sa_careers_fee_disclosure',sa_careers_fee_disclosure());$o->update_meta_data('_sa_native_currency','KES');
         $o->calculate_totals(false);$o->set_total(1000);$o->save();update_option($key,$o->get_id(),false);return $o;
     } catch(Throwable $e){return new WP_Error('payment','Your application is saved, but payment could not be prepared. Please contact us before applying again.');}
@@ -32,14 +32,14 @@ function sa_careers_form_response(array $response,int $form_id): array {
     if((int)$e->form_id!==$form_id || !empty($e->is_spam) || in_array((string)($e->status??'active'),['spam','draft','abandoned'],true))return $response;
     $o=sa_careers_fee_order('forminator',(int)$e->entry_id,sanitize_text_field((string)$e->get_meta('name-1','')),sanitize_email((string)$e->get_meta('email-1','')));
     if(is_wp_error($o)){$response['success']=false;$response['message']=$o->get_error_message();unset($response['url'],$response['redirect']);return $response;}
-    $response['url']=$o->get_checkout_payment_url();$response['redirect']=true;$response['newtab']='sametab';$response['behav']='behaviour-redirect';$response['message']='Application saved. Continue to Paystack to pay the KES 1,000 application fee.';return $response;
+    $response['url']=$o->get_checkout_payment_url();$response['redirect']=true;$response['newtab']='sametab';$response['behav']='behaviour-redirect';$response['message']='Application saved. Continue to Pesapal to pay the KES 1,000 application fee.';return $response;
 }
 add_filter('forminator_form_ajax_submit_response','sa_careers_form_response',30,2);
 add_filter('forminator_form_submit_response','sa_careers_form_response',30,2);
 add_filter('woocommerce_available_payment_gateways',static function($gateways){
     if(!function_exists('is_wc_endpoint_url') || !is_wc_endpoint_url('order-pay'))return $gateways;
     $o=wc_get_order(absint(get_query_var('order-pay')));if(!$o || !$o->get_meta('_sa_careers_source'))return $gateways;
-    return isset($gateways['paystack']) ? ['paystack'=>$gateways['paystack']] : [];
+    return isset($gateways['pesapal']) ? ['pesapal'=>$gateways['pesapal']] : [];
 },999);
 add_action('woocommerce_payment_complete',static function($id){
     $o=wc_get_order($id);if(!$o || !$o->is_paid() || !$o->get_meta('_sa_careers_source') || $o->get_currency()!=='KES' || (float)$o->get_total()!==1000.0)return;
@@ -48,8 +48,8 @@ add_action('woocommerce_payment_complete',static function($id){
 
 // Fixed-fee orders never use the catalogue/cart FX quote in gateway copy.
 add_filter('woocommerce_gateway_description',static function($description,$id){
-    if($id!=='paystack' || !function_exists('is_wc_endpoint_url') || !is_wc_endpoint_url('order-pay'))return $description;
-    $o=wc_get_order(absint(get_query_var('order-pay')));return $o && $o->get_meta('_sa_careers_source') ? 'Pay the KES 1,000 application fee securely with Paystack. The KES 1,000 fee is refundable when an invited applicant attends the paid two-day work trial, and if an applicant is never invited. The two-day work trial is paid and includes lunch. Employment depends on the trial outcome. Payment does not guarantee an invitation or continued employment.' : $description;
+    if($id!=='pesapal' || !function_exists('is_wc_endpoint_url') || !is_wc_endpoint_url('order-pay'))return $description;
+    $o=wc_get_order(absint(get_query_var('order-pay')));return $o && $o->get_meta('_sa_careers_source') ? 'Pay the KES 1,000 application fee securely with Pesapal. The KES 1,000 fee is refundable when an invited applicant attends the paid two-day work trial, and if an applicant is never invited. The two-day work trial is paid and includes lunch. Employment depends on the trial outcome. Payment does not guarantee an invitation or continued employment.' : $description;
 },999,2);
 
 add_action('woocommerce_admin_order_data_after_order_details',static function($o){

@@ -45,6 +45,7 @@ final class SM_Welcome
         add_action('woocommerce_checkout_update_order_review', [self::class, 'checkout_review'], 25);
         add_filter('woocommerce_coupon_is_valid', [self::class, 'validate_coupon'], 25, 3);
         add_filter('woocommerce_coupon_get_amount', [self::class, 'current_coupon_amount'], 25, 2);
+        add_filter('woocommerce_cart_totals_coupon_label', [self::class, 'campaign_coupon_label'], 25, 2);
         add_filter('woocommerce_get_shop_coupon_data', [self::class, 'november_coupon'], 25, 3);
         add_filter('woocommerce_package_rates', [self::class, 'first_order_shipping'], 100, 2);
         add_filter('woocommerce_shipping_chosen_method', [self::class, 'choose_first_order_shipping'], 25, 3);
@@ -87,7 +88,7 @@ final class SM_Welcome
         $shipping = self::campaign_unknown_lead()
             ? 'US free shipping · Kenya courier rates · Availability and delivery timing to be confirmed'
             : 'US free, 1-3 working days · Kenya courier rates, 1-2 working days';
-        echo '<aside class="sm-nov-banner" aria-label="November offer"><strong>Red November</strong><b>15% off US &amp; Kenya orders</b><span>' . esc_html($shipping) . ' · No minimum · Through Nov 30</span></aside>';
+        echo '<aside class="sm-nov-banner" aria-label="November offer"><strong>Red November</strong><b>15% off US &amp; Kenya orders · New customers get 20% total</b><span>' . esc_html($shipping) . ' · No minimum · Through Nov 30</span></aside>';
     }
 
     public static function campaign_reminder(): void
@@ -98,13 +99,13 @@ final class SM_Welcome
             $shipping = $unknown
                 ? 'US free shipping · Kenya courier rates · Availability and delivery timing to be confirmed'
                 : 'US free, 1-3 working days · Kenya courier rates, 1-2 working days';
-            echo '<p style="color:#a70819;font-size:13px;line-height:1.5;margin:10px 0"><strong>Red November: 15% off US &amp; Kenya orders.</strong><br>' . esc_html($shipping) . ' · No minimum · Automatic at checkout · Through Nov 30</p>';
+            echo '<p style="color:#a70819;font-size:13px;line-height:1.5;margin:10px 0"><strong>Red November: 15% off US &amp; Kenya orders. New customers get 20% total.</strong><br>' . esc_html($shipping) . ' · No minimum · Automatic at checkout · Through Nov 30</p>';
             return;
         }
         $shipping = $unknown
             ? 'US free shipping. Kenya courier-calculated delivery. This order includes an item with unconfirmed availability and delivery timing.'
             : 'US free delivery in 1-3 working days. Kenya courier-calculated delivery in 1-2 working days. Times run from placing the order, excluding weekends; product availability applies.';
-        echo '<aside class="sm-nov-reminder" aria-label="November checkout offer"><strong>Red November: 15% off US and Kenya orders</strong><span>' . esc_html($shipping) . ' No minimum. Discount applied automatically when you enter your delivery address. Through November 30.</span></aside>';
+        echo '<aside class="sm-nov-reminder" aria-label="November checkout offer"><strong>Red November: 15% off US and Kenya orders. New customers get 20% total</strong><span>' . esc_html($shipping) . ' No minimum. New customers: sign in for an extra 5 percentage points (20% total). Discount applied automatically when you enter your delivery address. Through November 30.</span></aside>';
     }
 
     /** Explicit customer destination only. Never infer offer eligibility from IP/store view. */
@@ -207,16 +208,38 @@ final class SM_Welcome
     public static function november_coupon($data, $code, $coupon)
     {
         if (strtoupper((string)$code) !== self::NOVEMBER_CODE || !self::offer_destination_allowed()) return $data;
-        return ['id'=>0, 'code'=>strtolower(self::NOVEMBER_CODE), 'discount_type'=>'percent', 'amount'=>15, 'individual_use'=>true, 'product_ids'=>[], 'exclude_product_ids'=>[], 'usage_limit'=>0, 'usage_limit_per_user'=>0, 'limit_usage_to_x_items'=>null, 'free_shipping'=>false, 'exclude_sale_items'=>false, 'minimum_amount'=>'', 'maximum_amount'=>'', 'email_restrictions'=>[], 'description'=>'November 2026 automatic 15% offer'];
+        return ['id'=>0, 'code'=>strtolower(self::NOVEMBER_CODE), 'discount_type'=>'percent', 'amount'=>self::november_percent(), 'individual_use'=>true, 'product_ids'=>[], 'exclude_product_ids'=>[], 'usage_limit'=>0, 'usage_limit_per_user'=>0, 'limit_usage_to_x_items'=>null, 'free_shipping'=>false, 'exclude_sale_items'=>false, 'minimum_amount'=>'', 'maximum_amount'=>'', 'email_restrictions'=>[], 'description'=>'November 2026 automatic 15% offer'];
     }
 
-    /** Current eligible active offers use the current percent, without editing coupon/order history. */
+    public static function campaign_coupon_label($label, $coupon)
+    {
+        if (strtoupper((string)$coupon->get_code()) !== self::NOVEMBER_CODE) return $label;
+        return self::november_percent() === 20 ? 'Red November 15% + new customer 5% (20% total)' : 'Red November 15%';
+    }
+
+    /** Eligible new signed-in customers receive 15 November + 5 welcome points.
+     * A single coupon avoids WooCommerce sequential percentages (19.25%).
+     * Existing order/email/device/phone/address checks still apply. */
+    public static function november_percent(): int
+    {
+        if (!is_user_logged_in() || !self::offer_destination_allowed()) return 15;
+        $user = wp_get_current_user();
+        $email = strtolower((string) $user->user_email);
+        $billing = function_exists('WC') && WC()->customer ? strtolower((string) WC()->customer->get_billing_email()) : '';
+        if ($email === '' || ($billing !== '' && self::norm_email($billing) !== self::norm_email($email))) return 15;
+        return self::has_zero_orders((int)$user->ID, $email)
+            && !self::norm_has_orders(self::norm_email($email))
+            && !self::identity_used_offer() ? 20 : 15;
+    }
+
+    /** Resolve active coupon amounts without editing historical coupons/orders. */
     public static function current_coupon_amount($amount, $coupon)
     {
-        if (!self::campaign_active() || !str_starts_with(strtoupper((string)$coupon->get_code()), self::PREFIX) || (float)$coupon->get_usage_count() > 0 || $coupon->get_discount_type() !== 'percent') return $amount;
+        if (strtoupper((string)$coupon->get_code()) === self::NOVEMBER_CODE) return self::november_percent();
+        if (!str_starts_with(strtoupper((string)$coupon->get_code()), self::PREFIX) || (float)$coupon->get_usage_count() > 0 || $coupon->get_discount_type() !== 'percent') return $amount;
         global $wpdb;
         $active = $wpdb->get_var($wpdb->prepare('SELECT code FROM ' . SM_DB::table('welcome_codes') . " WHERE code = %s AND status = 'active' AND (expires_at IS NULL OR expires_at > %s) LIMIT 1", strtoupper((string)$coupon->get_code()), sm_now()));
-        return $active ? 15 : $amount;
+        return $active ? self::DISCOUNT : $amount;
     }
 
     /** Same phone/destination cannot claim another first-order benefit under a new mailbox. */
