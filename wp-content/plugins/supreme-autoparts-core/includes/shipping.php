@@ -90,9 +90,36 @@ add_filter('woocommerce_package_rates', static function ($rates, $package) {
 /** Current delivery policy: Kenya uses its calculated couriers, including Nairobi.
  * No zone/options migration is needed: this final gate also overrides old cached configuration.
  */
-const SA_DELIVERY_POLICY_VERSION = '2026-11-07-cutoff-date-delivery-v3';
+const SA_DELIVERY_POLICY_VERSION = '2026-11-18-nairobi-10kg-v4';
+/** Known shippable weight only. Missing weights cannot prove a <=10 kg order. */
+function sa_delivery_contents_kg(array $contents): ?float
+{
+    $kg = 0.0;
+    $found = false;
+    foreach ($contents as $item) {
+        $product = $item['data'] ?? null;
+        if (!is_object($product) || !method_exists($product, 'get_weight')) { return null; }
+        if (method_exists($product, 'needs_shipping') && !$product->needs_shipping()) { continue; }
+        $quantity = (float) ($item['quantity'] ?? 1);
+        if ($quantity <= 0) { continue; }
+        $raw = $product->get_weight();
+        if (!is_numeric($raw) || (float) $raw <= 0) { return null; }
+        $weight = function_exists('wc_get_weight') ? (float) wc_get_weight((float) $raw, 'kg') : (float) $raw;
+        if (!is_finite($weight) || $weight <= 0) { return null; }
+        $kg += $weight * $quantity;
+        $found = true;
+    }
+    return $found ? $kg : null;
+}
+
 add_filter('woocommerce_cart_shipping_packages', static function ($packages) {
+    $all_contents = [];
+    foreach ($packages as $part) {
+        foreach ((array) ($part['contents'] ?? []) as $item) { $all_contents[] = $item; }
+    }
+    $order_kg = sa_delivery_contents_kg($all_contents);
     foreach ($packages as &$package) {
+        $package['sa_delivery_order_kg'] = $order_kg;
         $package['sa_delivery_policy'] = SA_DELIVERY_POLICY_VERSION;
         $country = strtoupper((string) ($package['destination']['country'] ?? ''));
         if (in_array($country, ['KE','US'], true) && function_exists('sa_ff_delivery_context_key')) {
@@ -119,6 +146,29 @@ function sa_current_delivery_rates($rates, $package)
         return ['sa_us_free' => new WC_Shipping_Rate('sa_us_free', $label, 0, [], 'sa_us_free')];
     }
     if ($cc === 'KE') {
+        $state = strtoupper(trim((string) ($package['destination']['state'] ?? '')));
+        $kg = array_key_exists('sa_delivery_order_kg', $package)
+            ? $package['sa_delivery_order_kg']
+            : sa_delivery_contents_kg((array) ($package['contents'] ?? []));
+        if (in_array($state, ['KE30', 'NAIROBI', 'NAIROBI COUNTY'], true)
+            && $kg !== null && $kg > 0 && $kg <= 10.0 && class_exists('WC_Shipping_Rate')) {
+            $contents = (array) ($package['contents'] ?? []);
+            $label = 'Free Nairobi delivery (10 kg or less)';
+            if (function_exists('sa_ff_contents_unknown_special_order') && sa_ff_contents_unknown_special_order($contents)) {
+                $label .= ' · Special order: dates not confirmed';
+            } elseif (function_exists('sa_ff_contents_lead') && sa_ff_contents_lead($contents) > 0) {
+                $label .= ' · Backorder availability lead time applies';
+            } else {
+                $label .= ' · ' . (function_exists('sa_ff_delivery_estimate') ? sa_ff_delivery_estimate('KE') : 'Estimated delivery 1-2 working days from order, excluding weekends');
+            }
+            $free = ['sa_nairobi_free' => new WC_Shipping_Rate('sa_nairobi_free', $label, 0, [], 'sa_nairobi_free')];
+            foreach ($rates as $id => $rate) {
+                if (is_object($rate) && method_exists($rate, 'get_method_id') && $rate->get_method_id() === 'local_pickup') {
+                    $free[$id] = $rate;
+                }
+            }
+            return $free;
+        }
         $allowed = ['local_pickup', 'sa_fargo'];
         if (function_exists('sa_couriers_enabled') && sa_couriers_enabled()) {
             $allowed[] = 'sa_g4s';
@@ -146,7 +196,7 @@ function sa_current_delivery_rates($rates, $package)
 }
 add_filter('woocommerce_package_rates', 'sa_current_delivery_rates', 110, 2);
 add_filter('woocommerce_shipping_chosen_method', static function ($chosen, $rates) {
-    return isset($rates['sa_us_free']) ? 'sa_us_free' : $chosen;
+    return isset($rates['sa_us_free']) ? 'sa_us_free' : (isset($rates['sa_nairobi_free']) ? 'sa_nairobi_free' : $chosen);
 }, 110, 2);
 
 /**
