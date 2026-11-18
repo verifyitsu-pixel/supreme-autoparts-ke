@@ -31,7 +31,8 @@ function sa_gc_shipping_html(?string $zone = null): string
     $mail = 'calvin@supremeautoparts.co.ke';
     if ($z === 'KE') {
         return '<h2>Delivery in Kenya</h2>'
-            . '<ul><li><strong>Courier delivery</strong>: Fargo and other available couriers are calculated by destination and parcel weight. The available methods and exact price show at checkout before you pay. You can track the parcel on our site.</li>'
+            . '<ul><li><strong>Free Nairobi delivery</strong>: orders delivered within Nairobi County weighing 10 kg or less qualify. Above 10 kg, the existing weight-based courier rates apply. If a weight is not confirmed, the free-delivery offer is not applied automatically.</li>'
+            . '<li><strong>Courier delivery</strong>: Fargo and other available couriers are calculated by destination and parcel weight. The available methods and exact price show at checkout before you pay. You can track the parcel on our site.</li>'
             . '<li><strong>Store pickup</strong> is free. Available collection times are shown at checkout for ready-to-collect items. Special-order collection dates are confirmed separately. Collect from our shop at Ground Floor, Midax Plaza, Kangundo Rd, Njiru.</li>'
             . '<li>Parts you buy with fitting stay at our garage and are not shipped.</li></ul>'
             . '<p>Estimated Kenya delivery is 1-2 working days from placing your order, excluding weekends. Special-order or backordered items follow their confirmed availability dates; where availability is unconfirmed, delivery and collection dates are not confirmed.</p>'
