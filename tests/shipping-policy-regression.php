@@ -23,10 +23,42 @@ $couriers=false;$got=apply_filters('woocommerce_package_rates',$base,['destinati
 foreach(['CA','AK','HI'] as $state){$got=apply_filters('woocommerce_package_rates',$base,['destination'=>['country'=>'US','state'=>$state]]);check(count($got)===1&&isset($got['sa_us_free'])&&$got['sa_us_free']->cost===0,'US '.$state.' free without minimum or legacy paid options');check(apply_filters('woocommerce_shipping_chosen_method','flat',$got,null)==='sa_us_free','US chosen rate is free');}
 $row=['intl'=>new WC_Shipping_Rate('intl','International',25,[],'flat_rate')];check(apply_filters('woocommerce_package_rates',$row,['destination'=>['country'=>'GB']])===$row,'other country unchanged');
 $packages=apply_filters('woocommerce_cart_shipping_packages',[['destination'=>['country'=>'US']]]);check(isset($packages[0]['sa_delivery_policy']),'cache invalidated by package policy version without DB changes');
-foreach(['KE','US','GB'] as $z){$zone=$z;$html=sa_gc_shipping_html();if($z==='US')check(str_contains($html,'Free shipping on USA orders')&&!preg_match('/199|Standard Shipping|Priority Shipping/',$html),'US policy no threshold or charge');elseif($z==='KE')check(str_contains($html,'parcel weight')&&!preg_match('/199|\$8|\$15|Free delivery/',$html),'Kenya policy calculated');else check(str_contains($html,'$25'),'international policy unchanged');}
+foreach(['KE','US','GB'] as $z){$zone=$z;$html=sa_gc_shipping_html();if($z==='US')check(str_contains($html,'Free shipping on USA orders')&&!preg_match('/199|Standard Shipping|Priority Shipping/',$html),'US policy no threshold or charge');elseif($z==='KE')check(str_contains($html,'parcel weight')&&str_contains($html,'10 kg or less')&&!preg_match('/199|\$8|\$15/',$html),'Kenya policy calculated');else check(str_contains($html,'$25'),'international policy unchanged');}
 $marketing=file_get_contents(__DIR__.'/../wp-content/plugins/supreme-marketing/inc/class-sm-welcome.php');check(str_contains($marketing,"!== 'US' || !self::offer_destination_allowed('US')"),'November free-rate callback is US only');check(!str_contains($marketing,'All US &amp; Kenya orders · No minimum'),'banner no longer promises free Kenya shipping');check(str_contains($marketing,"'amount'=>self::november_percent()")&&str_contains($marketing,"2026-12-01 00:00:00"),'November discount and expiry unchanged');
 
 $special=apply_filters('woocommerce_package_rates',$base,['destination'=>['country'=>'US'],'contents'=>['fixture_special_order'=>true]]);check($special['sa_us_free']->cost===0&&str_contains($special['sa_us_free']->label,'Special order: dates not confirmed'),'US free rate preserves unknown special-order dates');
 
 $normal=apply_filters('woocommerce_package_rates',$base,['destination'=>['country'=>'US'],'contents'=>[]]);check(str_contains($normal['sa_us_free']->label,'1-3 working days from order, excluding weekends'),'US owner-confirmed total window');
 $ke=apply_filters('woocommerce_package_rates',$base,['destination'=>['country'=>'KE','state'=>'KE30'],'contents'=>[]]);check(str_contains($ke['fargo']->label,'1-2 working days from order, excluding weekends'),'Kenya owner-confirmed total window');
+
+// Nairobi threshold uses known total shippable weight, with quantities and store-unit conversion.
+class WeightProduct {
+    function __construct(public $weight, public $physical=true){}
+    function get_weight(){return $this->weight;}
+    function needs_shipping(){return $this->physical;}
+}
+$weight_unit='kg';
+function wc_get_weight($weight,$to){global $weight_unit;return $weight_unit==='g'?$weight/1000:$weight;}
+function delivery_package($weight,$quantity=1,$state='KE30'){
+    return ['destination'=>['country'=>'KE','state'=>$state], 'contents'=>[['data'=>new WeightProduct($weight),'quantity'=>$quantity]]];
+}
+foreach([0.5,9.999,10] as $kg){
+    $got=apply_filters('woocommerce_package_rates',$base,delivery_package($kg));
+    check(array_keys($got)===['sa_nairobi_free','pickup']&&$got['sa_nairobi_free']->cost===0,'Nairobi free plus pickup at '.$kg.' kg');
+    check(apply_filters('woocommerce_shipping_chosen_method','fargo',$got,null)==='sa_nairobi_free','free Nairobi delivery selected');
+}
+foreach([10.001,11,100] as $kg){
+    $got=apply_filters('woocommerce_package_rates',$base,delivery_package($kg));
+    check(array_keys($got)===['fargo','g4s','speedaf','pickup']&&$got['fargo']===$base['fargo'],'existing courier objects above threshold '.$kg);
+}
+check(isset(apply_filters('woocommerce_package_rates',$base,delivery_package(2.5,4))['sa_nairobi_free']),'quantities total exactly 10 kg');
+check(!isset(apply_filters('woocommerce_package_rates',$base,delivery_package(2.5,5))['sa_nairobi_free']),'quantities over 10 kg pay courier');
+foreach(['',0,-1,'unknown'] as $weight){check(!isset(apply_filters('woocommerce_package_rates',$base,delivery_package($weight))['sa_nairobi_free']),'unknown or invalid weight cannot qualify');}
+foreach(['','KE22','KE28'] as $state){check(!isset(apply_filters('woocommerce_package_rates',$base,delivery_package(1,1,$state))['sa_nairobi_free']),'explicit Nairobi county required '.$state);}
+$weight_unit='g';check(isset(apply_filters('woocommerce_package_rates',$base,delivery_package(10000))['sa_nairobi_free']),'grams converted to kilograms');check(!isset(apply_filters('woocommerce_package_rates',$base,delivery_package(10001))['sa_nairobi_free']),'10001 grams exceeds threshold');$weight_unit='kg';
+$split=apply_filters('woocommerce_cart_shipping_packages',[delivery_package(6),delivery_package(6)]);
+foreach($split as $part){check($part['sa_delivery_order_kg']===12.0&&!isset(apply_filters('woocommerce_package_rates',$base,$part)['sa_nairobi_free']),'split packages use whole order weight');}
+$special=delivery_package(1);$special['contents']['fixture_special_order']=true;
+// Special-order callback fixtures use a marker rather than a product row.
+$special['sa_delivery_order_kg']=1.0;
+$got=apply_filters('woocommerce_package_rates',$base,$special);check(str_contains($got['sa_nairobi_free']->label,'dates not confirmed'),'Nairobi free rate does not promise unconfirmed special-order dates');
