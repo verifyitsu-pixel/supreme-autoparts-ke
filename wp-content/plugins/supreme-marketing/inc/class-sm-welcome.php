@@ -1,6 +1,6 @@
 <?php
 /**
- * November all-orders campaign plus historical personal 20% codes for first-time customers
+ * November all-orders campaign plus historical personal 5% codes for first-time customers
  * who create an account or sign in (Google or code login) at checkout.
  *
  * Replaces the old shared WELCOME30. One use per customer, first order only,
@@ -14,7 +14,7 @@
  *  - signup rate limit per IP;
  *  - at checkout, shipping address and phone are matched against past
  *    welcome-code orders - repeats across different accounts are blocked;
- *  - every blocked attempt is logged and visible under Marketing > Welcome 20.
+ *  - every blocked attempt is logged and visible under Marketing > Welcome 5.
  */
 declare(strict_types=1);
 
@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
 
 final class SM_Welcome
 {
-    public const DISCOUNT = 20;
+    public const DISCOUNT = 5;
     public const EXPIRY_DAYS = 14;
     public const PREFIX = 'SUP20-';
     public const MAX_SIGNUPS_PER_IP_DAY = 5;
@@ -87,7 +87,7 @@ final class SM_Welcome
         $shipping = self::campaign_unknown_lead()
             ? 'US free shipping · Kenya courier rates · Availability and delivery timing to be confirmed'
             : 'US free, 1-3 working days · Kenya courier rates, 1-2 working days';
-        echo '<aside class="sm-nov-banner" aria-label="November offer"><strong>Red November</strong><b>30% off US &amp; Kenya orders</b><span>' . esc_html($shipping) . ' · No minimum · Through Nov 30</span></aside>';
+        echo '<aside class="sm-nov-banner" aria-label="November offer"><strong>Red November</strong><b>15% off US &amp; Kenya orders</b><span>' . esc_html($shipping) . ' · No minimum · Through Nov 30</span></aside>';
     }
 
     public static function campaign_reminder(): void
@@ -98,13 +98,13 @@ final class SM_Welcome
             $shipping = $unknown
                 ? 'US free shipping · Kenya courier rates · Availability and delivery timing to be confirmed'
                 : 'US free, 1-3 working days · Kenya courier rates, 1-2 working days';
-            echo '<p style="color:#a70819;font-size:13px;line-height:1.5;margin:10px 0"><strong>Red November: 30% off US &amp; Kenya orders.</strong><br>' . esc_html($shipping) . ' · No minimum · Automatic at checkout · Through Nov 30</p>';
+            echo '<p style="color:#a70819;font-size:13px;line-height:1.5;margin:10px 0"><strong>Red November: 15% off US &amp; Kenya orders.</strong><br>' . esc_html($shipping) . ' · No minimum · Automatic at checkout · Through Nov 30</p>';
             return;
         }
         $shipping = $unknown
             ? 'US free shipping. Kenya courier-calculated delivery. This order includes an item with unconfirmed availability and delivery timing.'
             : 'US free delivery in 1-3 working days. Kenya courier-calculated delivery in 1-2 working days. Times run from placing the order, excluding weekends; product availability applies.';
-        echo '<aside class="sm-nov-reminder" aria-label="November checkout offer"><strong>Red November: 30% off US and Kenya orders</strong><span>' . esc_html($shipping) . ' No minimum. Discount applied automatically when you enter your delivery address. Through November 30.</span></aside>';
+        echo '<aside class="sm-nov-reminder" aria-label="November checkout offer"><strong>Red November: 15% off US and Kenya orders</strong><span>' . esc_html($shipping) . ' No minimum. Discount applied automatically when you enter your delivery address. Through November 30.</span></aside>';
     }
 
     /** Explicit customer destination only. Never infer offer eligibility from IP/store view. */
@@ -201,13 +201,13 @@ final class SM_Welcome
         return $valid;
     }
 
-    public const NOVEMBER_CODE = 'SUPREME-NOVEMBER-30';
+    public const NOVEMBER_CODE = 'SUPREME-NOVEMBER-15';
 
     /** Virtual campaign coupon: no individual coupon issuance or historical order changes. */
     public static function november_coupon($data, $code, $coupon)
     {
         if (strtoupper((string)$code) !== self::NOVEMBER_CODE || !self::offer_destination_allowed()) return $data;
-        return ['id'=>0, 'code'=>strtolower(self::NOVEMBER_CODE), 'discount_type'=>'percent', 'amount'=>30, 'individual_use'=>true, 'product_ids'=>[], 'exclude_product_ids'=>[], 'usage_limit'=>0, 'usage_limit_per_user'=>0, 'limit_usage_to_x_items'=>null, 'free_shipping'=>false, 'exclude_sale_items'=>false, 'minimum_amount'=>'', 'maximum_amount'=>'', 'email_restrictions'=>[], 'description'=>'November 2026 automatic 30% offer'];
+        return ['id'=>0, 'code'=>strtolower(self::NOVEMBER_CODE), 'discount_type'=>'percent', 'amount'=>15, 'individual_use'=>true, 'product_ids'=>[], 'exclude_product_ids'=>[], 'usage_limit'=>0, 'usage_limit_per_user'=>0, 'limit_usage_to_x_items'=>null, 'free_shipping'=>false, 'exclude_sale_items'=>false, 'minimum_amount'=>'', 'maximum_amount'=>'', 'email_restrictions'=>[], 'description'=>'November 2026 automatic 15% offer'];
     }
 
     /** Current eligible active offers use the current percent, without editing coupon/order history. */
@@ -216,7 +216,7 @@ final class SM_Welcome
         if (!self::campaign_active() || !str_starts_with(strtoupper((string)$coupon->get_code()), self::PREFIX) || (float)$coupon->get_usage_count() > 0 || $coupon->get_discount_type() !== 'percent') return $amount;
         global $wpdb;
         $active = $wpdb->get_var($wpdb->prepare('SELECT code FROM ' . SM_DB::table('welcome_codes') . " WHERE code = %s AND status = 'active' AND (expires_at IS NULL OR expires_at > %s) LIMIT 1", strtoupper((string)$coupon->get_code()), sm_now()));
-        return $active ? 30 : $amount;
+        return $active ? 15 : $amount;
     }
 
     /** Same phone/destination cannot claim another first-order benefit under a new mailbox. */
@@ -410,7 +410,7 @@ final class SM_Welcome
         return true;
     }
 
-    /** Issue a personal 30% code when eligible; log and skip when abuse checks trip. */
+    /** Issue a personal 5% code when eligible; log and skip when abuse checks trip. */
     public static function maybe_issue(int $user_id, string $trigger): ?string
     {
         if (self::campaign_active()) return null; // November campaign needs no personal-code issuance.
@@ -490,7 +490,7 @@ final class SM_Welcome
         $expires = time() + self::EXPIRY_DAYS * DAY_IN_SECONDS;
         $coupon = new WC_Coupon();
         $coupon->set_code($code);
-        $coupon->set_description('Welcome 30: personal first-order discount for ' . $email . ' (trigger: ' . $trigger . ').');
+        $coupon->set_description('Welcome 5: personal first-order discount for ' . $email . ' (trigger: ' . $trigger . ').');
         $coupon->set_discount_type('percent');
         $coupon->set_amount(self::DISCOUNT);
         $coupon->set_individual_use(true);
