@@ -371,9 +371,9 @@ final class SM_Templates
                     ['p' => 'Thank you so much for supporting Supreme Autoparts! A big thank-you from our garage to yours. Have a look around the parts store, and ask us if you need a hand with your car or motorcycle.'],
                 ];
                 if ($welcome_code !== '') {
-                    $blocks[] = ['coupon' => [$welcome_code, '20% off your first order', ($welcome_expires !== '' ? 'Valid until ' . $welcome_expires . '. ' : '') . 'One use. Applies automatically at checkout for orders delivered in the US or Kenya.']];
+                    $blocks[] = ['coupon' => [$welcome_code, '5% off your first order', ($welcome_expires !== '' ? 'Valid until ' . $welcome_expires . '. ' : '') . 'One use. Applies automatically at checkout for orders delivered in the US or Kenya.']];
                 } else {
-                    $blocks[] = ['p' => $november_offer ? 'Orders delivered in the US or Kenya get 30% off automatically at checkout during November. US shipping is free with estimated delivery in 1-3 working days from order; Kenya uses calculated courier rates with estimated delivery in 1-2 working days from order. Weekends are excluded and product availability applies. No minimum order amount. Offer ends November 30, 2026 in your delivery region.' : 'Thanks for joining our garage. Explore the store for parts and fitment help.'];
+                    $blocks[] = ['p' => $november_offer ? 'Orders delivered in the US or Kenya get 15% off automatically at checkout during November. US shipping is free with estimated delivery in 1-3 working days from order; Kenya uses calculated courier rates with estimated delivery in 1-2 working days from order. Weekends are excluded and product availability applies. No minimum order amount. Offer ends November 30, 2026 in your delivery region.' : 'Thanks for joining our garage. Explore the store for parts and fitment help.'];
                 }
                 $blocks[] = ['bullets' => [
                     'Not sure a part fits? Send your year, make, model or VIN and we confirm fitment before you pay',
@@ -388,7 +388,7 @@ final class SM_Templates
                 return [
                     'subject'   => $welcome_code !== ''
                         ? 'Welcome to Supreme Autoparts - your welcome code is inside'
-                        : ($november_offer ? 'November: 30% off US and Kenya orders' : 'Welcome to Supreme Autoparts'),
+                        : ($november_offer ? 'November: 15% off US and Kenya orders' : 'Welcome to Supreme Autoparts'),
                     'preheader' => 'Genuine and aftermarket parts, fitment checked before you buy.',
                     'blocks'    => $blocks,
                 ];
@@ -485,9 +485,9 @@ final class SM_Templates
                         : 'You have seen how we stock, check fitment and deliver. Whenever your car needs something, the store is organized to get you to the right part fast.')],
                 ];
                 if ($welcome_code !== '') {
-                    $blocks[] = ['coupon' => [$welcome_code, 'Your 20% first-order discount', ($welcome_expires !== '' ? 'Valid until ' . $welcome_expires . '. ' : '') . 'One use. Applies automatically at checkout for orders delivered in the US or Kenya.']];
+                    $blocks[] = ['coupon' => [$welcome_code, 'Your 5% first-order discount', ($welcome_expires !== '' ? 'Valid until ' . $welcome_expires . '. ' : '') . 'One use. Applies automatically at checkout for orders delivered in the US or Kenya.']];
                 } else {
-                    $blocks[] = ['p' => $november_offer ? 'All US and Kenya orders get 30% off automatically, with no minimum. US shipping is free with estimated delivery in 1-3 working days from order; Kenya uses calculated courier rates with estimated delivery in 1-2 working days from order. Weekends are excluded and product availability applies. Offer ends November 30, 2026 in your delivery region.' : 'Explore the in-stock catalog when your vehicle needs something.'];
+                    $blocks[] = ['p' => $november_offer ? 'All US and Kenya orders get 15% off automatically, with no minimum. US shipping is free with estimated delivery in 1-3 working days from order; Kenya uses calculated courier rates with estimated delivery in 1-2 working days from order. Weekends are excluded and product availability applies. Offer ends November 30, 2026 in your delivery region.' : 'Explore the in-stock catalog when your vehicle needs something.'];
                 }
                 if ($products) {
                     $blocks[] = ['p' => 'In-stock picks from the catalog:'];
@@ -498,7 +498,7 @@ final class SM_Templates
                 $blocks[] = ['button' => [($theme_line !== '' ? 'Shop ' . $theme_line . ' parts' : 'Go to the store'), $shop]];
                 $blocks[] = ['p' => 'This is the last email in your welcome series. From here you will hear from us when there is something worth sharing.'];
                 return [
-                    'subject'   => ($theme_line !== '' ? ($november_offer ? 'November 30% off, plus ' : 'Explore ') . $theme_line . ' picks' : 'Your first order, when you are ready'),
+                    'subject'   => ($theme_line !== '' ? ($november_offer ? 'November 15% off, plus ' : 'Explore ') . $theme_line . ' picks' : 'Your first order, when you are ready'),
                     'preheader' => 'Parts to explore, with fitment help when you need it.',
                     'blocks'    => $blocks,
                 ];
