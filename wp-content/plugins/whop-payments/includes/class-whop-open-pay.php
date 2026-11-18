@@ -237,20 +237,7 @@ final class Whop_Open_Pay {
 
                     <fieldset class="sa-open-pay__methods" style="border:1px solid #777;border-radius:8px;padding:16px;margin:20px 0">
                         <legend style="font-weight:600">Payment method</legend>
-                        <?php if ($cur === 'KES') : ?>
-                        <label style="display:flex;align-items:center;gap:12px;min-height:100px;border:1px solid #ddd;border-radius:8px;padding:14px;margin-bottom:12px;cursor:pointer"><input type="radio" name="gateway" value="paystack" checked style="width:24px;height:24px"><span style="display:block;min-width:0"><img src="<?php echo esc_url(get_stylesheet_directory_uri().'/assets/images/providers/paystack.png'); ?>" alt="Paystack" style="display:block;width:100%;max-width:280px;height:80px;object-fit:contain;object-position:left center"><span class="sa-recommended-badge" style="display:inline-block;margin:0 8px 0 0;padding:2px 8px;border-radius:999px;background:#e8f5e9;color:#1b5e20;font-size:12px;font-weight:700;line-height:1.5;vertical-align:middle">Recommended</span><span>Paystack - pay in KES</span><?php echo self::method_icons('paystack'); ?></span></label>
-
-                        <?php else : ?>
-                        <label style="display:flex;align-items:center;gap:12px;min-height:100px;border:1px solid #ddd;border-radius:8px;padding:14px;margin-bottom:12px"><input type="radio" disabled style="width:24px;height:24px"><span><img src="<?php echo esc_url(get_stylesheet_directory_uri().'/assets/images/providers/paystack.png'); ?>" alt="Paystack" style="width:100%;max-width:280px;height:80px;object-fit:contain"><span>Paystack (KES)</span></span></label>
-                        <?php endif; ?>
-                        <label style="display:flex;align-items:center;gap:12px;min-height:100px;border:1px solid #ddd;border-radius:8px;padding:14px;margin-bottom:12px;cursor:pointer"><input type="radio" name="gateway" value="pesapal" <?php checked($cur !== 'KES'); ?> style="width:24px;height:24px"><span style="display:block;min-width:0"><img src="<?php echo esc_url(get_stylesheet_directory_uri().'/assets/images/providers/pesapal.png'); ?>" alt="Pesapal" style="display:block;width:100%;max-width:280px;height:80px;object-fit:contain;object-position:left center"><span>Card, M-Pesa &amp; Airtel (<?php echo esc_html($cur); ?>)</span><?php echo self::method_icons('pesapal'); ?></span></label>
-                        <?php if ($cur === 'USD') : ?>
-                        <label style="display:flex;align-items:center;gap:12px;min-height:100px;border:1px solid #ddd;border-radius:8px;padding:14px;margin-bottom:12px;cursor:pointer"><input type="radio" name="gateway" value="whop" style="width:24px;height:24px"><span style="display:block;min-width:0"><img src="<?php echo esc_url(get_stylesheet_directory_uri().'/assets/images/providers/whop.svg'); ?>" alt="Whop" style="display:block;width:100%;max-width:280px;height:80px;object-fit:contain;object-position:left center"><span>Card &amp; supported wallets</span><?php echo self::method_icons('whop'); ?></span></label>
-
-                        <?php endif; ?>
-                        <?php if ($cur !== 'USD') : ?>
-                        <label style="display:flex;align-items:center;gap:12px;min-height:100px;border:1px solid #ddd;border-radius:8px;padding:14px;margin-bottom:12px"><input type="radio" disabled style="width:24px;height:24px"><span><img src="<?php echo esc_url(get_stylesheet_directory_uri().'/assets/images/providers/whop.svg'); ?>" alt="Whop" style="width:100%;max-width:280px;height:80px;object-fit:contain"><span>Whop (USD)</span></span></label>
-                        <?php endif; ?>
+                        <label style="display:flex;align-items:center;gap:12px;min-height:100px;border:1px solid #ddd;border-radius:8px;padding:14px;margin-bottom:12px;cursor:pointer"><input type="radio" name="gateway" value="pesapal" checked style="width:24px;height:24px"><span style="display:block;min-width:0"><img src="<?php echo esc_url(get_stylesheet_directory_uri().'/assets/images/providers/pesapal.png'); ?>" alt="Pesapal" style="display:block;width:100%;max-width:280px;height:80px;object-fit:contain;object-position:left center"><span>Card, M-Pesa &amp; Airtel (<?php echo esc_html($cur); ?>)</span><?php echo self::method_icons('pesapal'); ?></span></label>
                     </fieldset>
 
                     <button type="submit" class="sa-open-pay__btn">
@@ -564,7 +551,7 @@ final class Whop_Open_Pay {
         $pay_url  = add_query_arg('cur', $currency, $pay_url);
         $gws = function_exists('WC') ? WC()->payment_gateways()->payment_gateways() : [];
         $gateway = isset($_POST['gateway']) ? sanitize_key(wp_unslash((string) $_POST['gateway'])) : 'pesapal';
-        if (!in_array($gateway, ['pesapal','paystack','whop'], true)) {
+        if ($gateway !== 'pesapal') {
             self::redirect_error($pay_url, __('Please choose an available payment method.', 'whop-payments'));
         }
         if ($gateway === 'whop') {
@@ -584,7 +571,7 @@ final class Whop_Open_Pay {
                 self::redirect_error($pay_url, __('Paystack is unavailable for this payment. Please choose Pesapal or contact us.', 'whop-payments'));
             }
         }
-        if (empty($gws[$gateway])) {
+        if (empty($gws[$gateway]) || $gws[$gateway]->enabled !== 'yes' || !$gws[$gateway]->is_available()) {
             self::redirect_error($pay_url, __('Online payments are temporarily unavailable. Please contact us on WhatsApp.', 'whop-payments'));
         }
         $intent = isset($_POST['sa_intent']) ? sanitize_text_field(wp_unslash((string) $_POST['sa_intent'])) : '';
