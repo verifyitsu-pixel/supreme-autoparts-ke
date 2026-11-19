@@ -1,0 +1,96 @@
+<?php
+/**
+ * Support / Enquire endpoint — form + WhatsApp + policies.
+ *
+ * @package Supreme_Autoparts
+ */
+
+defined('ABSPATH') || exit;
+
+$email   = 'calvin@supremeautoparts.co.ke';
+$contact = function_exists('sa_enquire_contact') ? sa_enquire_contact() : [
+    'phone_display' => '+1 917 437 5121',
+    'whatsapp'      => '19174375121',
+    'email'         => $email,
+];
+$wa      = function_exists('sa_whatsapp_url') ? sa_whatsapp_url() : 'https://wa.me/254714498451';
+$policies = [
+    ['slug' => 'shipping-policy', 'label' => __('Shipping policy', 'supreme-autoparts')],
+    ['slug' => 'refund-policy', 'label' => __('Refund policy', 'supreme-autoparts')],
+    ['slug' => 'returns', 'label' => __('Returns', 'supreme-autoparts')],
+    ['slug' => 'chargeback-policy', 'label' => __('Chargeback / disputes', 'supreme-autoparts')],
+    ['slug' => 'privacy-policy', 'label' => __('Privacy policy', 'supreme-autoparts')],
+    ['slug' => 'terms-of-service', 'label' => __('Terms of service', 'supreme-autoparts')],
+    ['slug' => 'enquire', 'label' => __('Can\'t find a part?', 'supreme-autoparts')],
+    ['slug' => 'contact', 'label' => __('Contact', 'supreme-autoparts')],
+];
+?>
+<div class="sa-account-panel sa-support">
+  <header class="sa-account-panel__head">
+    <h2><?php esc_html_e('Support / Enquire', 'supreme-autoparts'); ?></h2>
+    <p class="sa-account-panel__lead">
+      <?php esc_html_e('Questions about fitment, US delivery, international shipping, or an existing order — we are here to help.', 'supreme-autoparts'); ?>
+    </p>
+  </header>
+
+  <div class="sa-support__wa">
+    <div class="sa-support__wa-copy">
+      <strong><?php esc_html_e('Fastest reply', 'supreme-autoparts'); ?></strong>
+      <span><?php esc_html_e('Message us on WhatsApp during business hours.', 'supreme-autoparts'); ?></span>
+    </div>
+    <a class="sa-btn" href="<?php echo esc_url($wa); ?>" target="_blank" rel="noopener noreferrer">
+      <?php
+      printf(
+          /* translators: %s: phone display */
+          esc_html__('WhatsApp %s', 'supreme-autoparts'),
+          esc_html($contact['phone_display'] ?? '+1 917 437 5121')
+      );
+      ?>
+    </a>
+  </div>
+
+  <div class="sa-support__grid">
+    <div class="sa-support__card">
+      <h3><?php esc_html_e('Reach us', 'supreme-autoparts'); ?></h3>
+      <p><?php esc_html_e('Typical reply during business hours.', 'supreme-autoparts'); ?></p>
+      <ul class="sa-support__reach">
+        <li>
+          <strong><?php esc_html_e('WhatsApp / SMS', 'supreme-autoparts'); ?></strong>
+          <a href="<?php echo esc_url($wa); ?>" target="_blank" rel="noopener noreferrer">
+            <?php echo esc_html($contact['phone_display'] ?? '+1 917 437 5121'); ?>
+          </a>
+        </li>
+        <li>
+          <strong><?php esc_html_e('Email', 'supreme-autoparts'); ?></strong>
+          <a href="mailto:<?php echo esc_attr($email); ?>?subject=<?php echo rawurlencode('Supreme Autoparts support'); ?>">
+            <?php echo esc_html($email); ?>
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="sa-support__card">
+      <h3><?php esc_html_e('Store policies', 'supreme-autoparts'); ?></h3>
+      <ul class="sa-support__links">
+        <?php foreach ($policies as $p) :
+            $page = get_page_by_path($p['slug']);
+            $url  = $page ? get_permalink($page) : home_url('/' . $p['slug'] . '/');
+            ?>
+          <li><a href="<?php echo esc_url($url); ?>"><?php echo esc_html($p['label']); ?></a></li>
+        <?php endforeach; ?>
+      </ul>
+    </div>
+  </div>
+
+  <?php if (function_exists('sa_render_enquire')) : ?>
+    <div class="sa-support__enquire">
+      <?php
+      sa_render_enquire([
+          'context' => 'account',
+          'compact' => false,
+          'title'   => __('Enquire about a part', 'supreme-autoparts'),
+          'lead'    => __('Describe the part and your vehicle. We will reply with availability and pricing.', 'supreme-autoparts'),
+      ]);
+      ?>
+    </div>
+  <?php endif; ?>
+</div>
