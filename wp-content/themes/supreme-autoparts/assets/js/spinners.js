@@ -83,7 +83,7 @@
       '<strong style="display:block;margin-bottom:8px;">This is taking longer than usual</strong>' +
       '<span style="display:block;margin-bottom:14px;">The secure payment page did not open as expected, so your order may not have been placed. If you already entered card or M-Pesa/Airtel details on a payment page, check for a confirmation email before paying again. Otherwise check your connection, then tap Try again.</span>' +
       '<button type="button" class="sa-btn" data-sa-pay-retry style="margin-right:10px;padding:10px 18px;">Try again</button>' +
-      '<a data-sa-pay-help href="https://wa.me/supremeautopart?text=Hi%2C%20my%20checkout%20payment%20page%20did%20not%20open" target="_blank" rel="noopener">Get help on WhatsApp</a>';
+      '<a data-sa-pay-help href="https://wa.me/254714498451?text=Hi%2C%20my%20checkout%20payment%20page%20did%20not%20open" target="_blank" rel="noopener">Get help on WhatsApp</a>';
     var btn = label.querySelector('[data-sa-pay-retry]');
     if (btn) {
       btn.addEventListener('click', function () {

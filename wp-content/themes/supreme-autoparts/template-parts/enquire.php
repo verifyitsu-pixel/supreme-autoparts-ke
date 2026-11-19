@@ -139,7 +139,7 @@ $lead    = (string) ($lead ?? '');
         <a
           class="sa-btn sa-enquire__btn sa-enquire__btn--wa"
           data-sa-enquire-channel="whatsapp"
-          href="<?php echo esc_url(function_exists('sa_whatsapp_url') ? sa_whatsapp_url() : 'https://wa.me/supremeautopart'); ?>"
+          href="<?php echo esc_url(function_exists('sa_whatsapp_url') ? sa_whatsapp_url() : 'https://wa.me/254714498451'); ?>"
           target="_blank"
           rel="noopener noreferrer"
         >

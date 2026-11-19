@@ -642,7 +642,7 @@ add_action('template_redirect', static function (): void {
     get_header();
     echo '<main class="sa-container" style="max-width:640px;margin:32px auto;padding:0 16px">';
     if (!$o) {
-        echo '<h1>Link not valid</h1><p>This link has expired or is incorrect. Please use the link in your latest email, or <a href="https://wa.me/supremeautopart">chat with us on WhatsApp</a>.</p>';
+        echo '<h1>Link not valid</h1><p>This link has expired or is incorrect. Please use the link in your latest email, or <a href="https://wa.me/254714498451">chat with us on WhatsApp</a>.</p>';
     } else {
         echo '<h1 style="font-size:1.6rem">Order #' . esc_html($o->get_order_number()) . ': send us more info</h1>';
         $req = '';

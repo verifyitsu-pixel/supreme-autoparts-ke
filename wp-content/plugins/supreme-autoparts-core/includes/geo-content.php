@@ -36,16 +36,16 @@ function sa_gc_shipping_html(?string $zone = null): string
             . '<li><strong>Store pickup</strong> is free. Available collection times are shown at checkout for ready-to-collect items. Special-order collection dates are confirmed separately. Collect from our shop at Ground Floor, Midax Plaza, Kangundo Rd, Njiru.</li>'
             . '<li>Parts you buy with fitting stay at our garage and are not shipped.</li></ul>'
             . '<p>Estimated Kenya delivery is 1-2 working days from placing your order, excluding weekends. Special-order or backordered items follow their confirmed availability dates; where availability is unconfirmed, delivery and collection dates are not confirmed.</p>'
-            . '<p>Questions about a delivery: call or <a href="https://wa.me/supremeautopart">chat on WhatsApp</a> or email <a href="mailto:' . $mail . '">' . $mail . '</a> with your order number.</p>';
+            . '<p>Questions about a delivery: call or <a href="https://wa.me/254714498451">chat on WhatsApp</a> or email <a href="mailto:' . $mail . '">' . $mail . '</a> with your order number.</p>';
     }
     if ($z === 'US') {
         return '<h2>Shipping in the United States</h2>'
             . '<p>Free shipping on USA orders, with no minimum order amount. The shipping charge is zero at checkout. Estimated delivery is 1-3 working days from placing your order, excluding weekends.</p><p>Special-order or backordered items follow their confirmed availability dates; where availability is unconfirmed, delivery dates are not confirmed.</p>'
-            . '<p>Questions: <a href="https://wa.me/supremeautopart">chat on WhatsApp</a> or email <a href="mailto:' . $mail . '">' . $mail . '</a>.</p>';
+            . '<p>Questions: <a href="https://wa.me/254714498451">chat on WhatsApp</a> or email <a href="mailto:' . $mail . '">' . $mail . '</a>.</p>';
     }
     return '<h2>International shipping</h2>'
         . '<p>We ship to most countries for a flat ' . esc_html($p(25)) . '. The rate shows at checkout before you pay. Customs duties and import taxes in your country are paid by you.</p>'
-        . '<p>Questions: <a href="https://wa.me/supremeautopart">chat on WhatsApp</a> or email <a href="mailto:' . $mail . '">' . $mail . '</a>.</p>';
+        . '<p>Questions: <a href="https://wa.me/254714498451">chat on WhatsApp</a> or email <a href="mailto:' . $mail . '">' . $mail . '</a>.</p>';
 }
 
 function sa_gc_about_html(): string
@@ -54,10 +54,10 @@ function sa_gc_about_html(): string
     $intro = '<p>Supreme Autoparts is a trading name of Standard Driveworks.</p><p><strong>Supreme Autoparts</strong> sells parts for Japanese, American, British and European cars, trucks and SUVs. You can search by part number, brand or vehicle, and we check fitment if you send us your car details.</p>';
     if ($z === 'KE') {
         return $intro . '<p>We are based at Ground Floor, Midax Plaza, Kangundo Rd, Njiru, Nairobi. We deliver to every county with Fargo Courier, offer store pickup, service cars at our garage and run Roadside Rescue across Nairobi.</p>'
-            . '<p>Call or <a href="https://wa.me/supremeautopart">chat on WhatsApp</a> · <a href="mailto:calvin@supremeautoparts.co.ke">calvin@supremeautoparts.co.ke</a></p>';
+            . '<p>Call or <a href="https://wa.me/254714498451">chat on WhatsApp</a> · <a href="mailto:calvin@supremeautoparts.co.ke">calvin@supremeautoparts.co.ke</a></p>';
     }
     return $intro . '<p>' . ($z === 'US' ? 'We ship across the US.' : 'We ship worldwide.') . ' Not sure a part fits? Send us your year, make, model or VIN before you order.</p>'
-        . '<p><a href="https://wa.me/supremeautopart">Chat on WhatsApp</a> · <a href="mailto:calvin@supremeautoparts.co.ke">calvin@supremeautoparts.co.ke</a></p>';
+        . '<p><a href="https://wa.me/254714498451">Chat on WhatsApp</a> · <a href="mailto:calvin@supremeautoparts.co.ke">calvin@supremeautoparts.co.ke</a></p>';
 }
 
 add_filter('the_content', static function (string $html): string {

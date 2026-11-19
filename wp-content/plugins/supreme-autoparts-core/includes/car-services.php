@@ -1190,7 +1190,7 @@ add_action('wp_footer', static function (): void {
     $acct = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : home_url('/my-account/');
     $ep = static fn(string $e): string => function_exists('wc_get_account_endpoint_url') ? wc_get_account_endpoint_url($e) : $acct;
     $shop = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
-    $wa = 'https://wa.me/supremeautopart';
+    $wa = 'https://wa.me/254714498451';
     $user = wp_get_current_user();
     $cats = function_exists('sa_megamenu_tree') ? sa_megamenu_tree() : [];
     $link = static fn(string $u, string $i, string $l, string $sub = '', string $extra = ''): string =>
@@ -1433,7 +1433,7 @@ add_action('woocommerce_single_product_summary', static function (): void {
         $msg = 'Hi, I need fitment help for ' . $product->get_name() . ($sku !== '' ? ' (part # ' . $sku . ')' : '') . '. My vehicle is: ';
         echo '<div class="sa-svc-fit">' . sa_svc_icon('service') . '<div><strong>Not sure it fits?</strong><span>'
             . 'Send us your year, make, model and VIN and we will check the part number for you before you order. Fitting is done by your own mechanic or shop.</span></div>'
-            . '<a class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--primary" href="' . esc_url('https://wa.me/supremeautopart?text=' . rawurlencode($msg)) . '" rel="noopener">Ask about fitment</a></div>';
+            . '<a class="sa-svc-btn sa-svc-btn--sm sa-svc-btn--primary" href="' . esc_url('https://wa.me/254714498451?text=' . rawurlencode($msg)) . '" rel="noopener">Ask about fitment</a></div>';
         return;
     }
     $svc = sa_svc_for_product((int) $product->get_id());

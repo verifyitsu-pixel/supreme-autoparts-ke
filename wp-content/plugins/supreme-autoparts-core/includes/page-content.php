@@ -32,7 +32,7 @@ HTML,
 <p>Have a question about fitment, US delivery, international shipping, or a special order? Reach out and our team will help.</p>
 <ul>
 <li><strong>Website:</strong> {$site}</li>
-<li><strong>WhatsApp:</strong> <a href="https://wa.me/supremeautopart">Chat on WhatsApp</a></li>
+<li><strong>WhatsApp:</strong> <a href="https://wa.me/254714498451">Chat on WhatsApp</a></li>
 <li><strong>Email:</strong> <a href="mailto:{$email}">{$email}</a></li>
 <li><strong>Hours:</strong> Monday–Friday, business hours</li>
 </ul>
@@ -152,6 +152,8 @@ HTML,
             'title'   => 'Refund Policy',
             'content' => <<<HTML
 <p>Refunds follow our Returns policy. In summary:</p>
+<h2>Refund processing time</h2>
+<p>Approved refunds are processed within 1-5 working days to the original payment method, depending on your bank.</p>
 <ul>
 <li>Return shipping is free for approved returns. Contact us for return instructions before sending anything back.</li>
 <li>Unused products returned within 60 days (with prior RMA) may be refunded to the original payment method.</li>
@@ -185,7 +187,7 @@ HTML,
 <li><strong>Direct-ship items:</strong> Some products ship from suppliers. We will notify you if an item cannot ship promptly.</li>
 <li><strong>Inspect on arrival:</strong> Check parts before installation. Contact us if anything is wrong or damaged.</li>
 </ul>
-<p>Shipping questions: <a href="mailto:{$email}">{$email}</a> · <a href="https://wa.me/supremeautopart">Chat on WhatsApp</a>.</p>
+<p>Shipping questions: <a href="mailto:{$email}">{$email}</a> · <a href="https://wa.me/254714498451">Chat on WhatsApp</a>.</p>
 HTML,
         ],
         'cookie-policy' => [
@@ -261,7 +263,7 @@ HTML,
 <li><a href="/free-shipping/"><strong>Free shipping details</strong></a> — threshold, exclusions, Alaska/Hawaii &amp; intl notes</li>
 <li><a href="/performance-truck-parts/"><strong>Performance truck &amp; off-road</strong></a> — suspension, brakes, wheels, lighting</li>
 </ul>
-<p>Need a human? <a href="https://wa.me/supremeautopart">Chat on WhatsApp</a> or email <a href="mailto:{$email}">{$email}</a>.</p>
+<p>Need a human? <a href="https://wa.me/254714498451">Chat on WhatsApp</a> or email <a href="mailto:{$email}">{$email}</a>.</p>
 HTML,
         ],
         'how-to-order' => [
@@ -282,7 +284,7 @@ HTML,
 <h2>3. After you order</h2>
 <p>You will get email confirmation from <a href="mailto:{$email}">{$email}</a>. For fitment or delivery questions:</p>
 <ul>
-<li><strong>WhatsApp:</strong> <a href="https://wa.me/supremeautopart">Chat on WhatsApp</a></li>
+<li><strong>WhatsApp:</strong> <a href="https://wa.me/254714498451">Chat on WhatsApp</a></li>
 <li><strong>Email:</strong> <a href="mailto:{$email}">{$email}</a></li>
 </ul>
 <p>Cannot find a listing? Use <a href="/enquire/">Can&rsquo;t find a part?</a> with vehicle details.</p>
@@ -306,7 +308,7 @@ HTML,
 <li><strong>Free shipping:</strong> when your cart meets the banner threshold (often ~$199) on eligible items — see <a href="/free-shipping/">Free Shipping</a></li>
 </ul>
 <h2>Duties &amp; import notes</h2>
-<p>Customs duties, VAT, or brokerage for Kenya imports are the buyer&rsquo;s responsibility unless we explicitly state otherwise on an order. Keep your invoice handy for clearance. Questions before you buy: <a href="https://wa.me/supremeautopart">chat on WhatsApp</a>.</p>
+<p>Customs duties, VAT, or brokerage for Kenya imports are the buyer&rsquo;s responsibility unless we explicitly state otherwise on an order. Keep your invoice handy for clearance. Questions before you buy: <a href="https://wa.me/254714498451">chat on WhatsApp</a>.</p>
 <h2>US &amp; international buyers</h2>
 <p>For continental US free shipping ($199+), Standard $8, Priority $15, and international $25, use the main <a href="/shipping-policy/">Shipping Policy</a>.</p>
 <h2>Support</h2>
@@ -327,7 +329,7 @@ HTML,
 <h2>US-spec catalog</h2>
 <p>Many listings use year / make / model language from the brand's home market (often US or Japan). If your vehicle is a grey import in Kenya, compare VIN/trim carefully — or WhatsApp us with the plate/chassis details and we will help check fitment for Japan, US, UK, EV, and motorcycle platforms.</p>
 <h2>When to ask us</h2>
-<p>Send year, make, model, trim, and the part link (or SKU) to <a href="mailto:{$email}">{$email}</a> or <a href="https://wa.me/supremeautopart">chat on WhatsApp</a>. For parts not listed, use <a href="/enquire/">Can&rsquo;t find a part?</a>.</p>
+<p>Send year, make, model, trim, and the part link (or SKU) to <a href="mailto:{$email}">{$email}</a> or <a href="https://wa.me/254714498451">chat on WhatsApp</a>. For parts not listed, use <a href="/enquire/">Can&rsquo;t find a part?</a>.</p>
 <p>Browse: <a href="/product-category/suspension/">Suspension</a> · <a href="/product-category/brakes/">Brakes</a> · <a href="/performance-truck-parts/">Performance truck parts</a>.</p>
 HTML,
         ],
@@ -339,7 +341,7 @@ HTML,
 <ul>
 <li>Catalog built around real performance brands and fitments common on trucks and SUVs.</li>
 <li>Secure online payment.</li>
-<li>Human support on WhatsApp/email: <a href="https://wa.me/supremeautopart">Chat on WhatsApp</a> · <a href="mailto:{$email}">{$email}</a>. Primary delivery is continental US; Kenya methods appear for KE addresses.</li>
+<li>Human support on WhatsApp/email: <a href="https://wa.me/254714498451">Chat on WhatsApp</a> · <a href="mailto:{$email}">{$email}</a>. Primary delivery is continental US; Kenya methods appear for KE addresses.</li>
 </ul>
 <h2>Popular starting points</h2>
 <ul>
@@ -367,9 +369,18 @@ HTML,
 <li><a href="/product-category/drivetrain/"><strong>Drivetrain</strong></a> · <a href="/product-category/exhaust/">Exhaust</a> · <a href="/product-category/exterior/">Exterior</a></li>
 </ul>
 <h2>Shipping</h2>
-<p>Free shipping on qualifying continental US orders ($199+). International available at checkout. Support: <a href="https://wa.me/supremeautopart">Chat on WhatsApp</a> · <a href="mailto:{$email}">{$email}</a>.</p>
+<p>Free shipping on qualifying continental US orders ($199+). International available at checkout. Support: <a href="https://wa.me/254714498451">Chat on WhatsApp</a> · <a href="mailto:{$email}">{$email}</a>.</p>
 <p>New here? Start with <a href="/how-to-order/">How to order</a> and the <a href="/fitment-guide/">Fitment guide</a>.</p>
 HTML,
         ],
     ];
 }
+
+/** Keep the approved refund timeframe visible on existing stored policy pages. */
+add_filter('the_content', static function (string $content): string {
+    if (!is_page('refund-policy') || !is_main_query() || !in_the_loop()
+        || str_contains($content, 'Approved refunds are processed within 1-5 working days')) {
+        return $content;
+    }
+    return $content . '<h2>Refund processing time</h2><p>Approved refunds are processed within 1-5 working days to the original payment method, depending on your bank.</p>';
+}, 20);

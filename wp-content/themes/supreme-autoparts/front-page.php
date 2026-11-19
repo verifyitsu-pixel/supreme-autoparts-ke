@@ -26,7 +26,7 @@ if (!$sa_is_ke) {
     $sa_is_us = function_exists('sa_storefront_country') && sa_storefront_country() === 'US';
     $sa_ed_services[0]['text'] = $sa_is_us ? __('Shipped across the US', 'supreme-autoparts') : __('Shipped worldwide', 'supreme-autoparts');
     $sa_ed_services[1]['text'] = __('We pass your request to our support team, who point you to a service centre', 'supreme-autoparts');
-    $sa_ed_services[2] = ['icon' => 'service', 'url' => 'https://wa.me/supremeautopart', 'title' => __('Fitment help', 'supreme-autoparts'), 'text' => __('Send your year, make, model or VIN and we check the part number', 'supreme-autoparts')];
+    $sa_ed_services[2] = ['icon' => 'service', 'url' => 'https://wa.me/254714498451', 'title' => __('Fitment help', 'supreme-autoparts'), 'text' => __('Send your year, make, model or VIN and we check the part number', 'supreme-autoparts')];
     if (!$sa_is_us) {
         unset($sa_ed_services[1]); // service-centre routing is only set up for the US
     }
@@ -85,7 +85,7 @@ if (!$sa_is_ke) {
       <div class="sa-ed-rs__cta">
         <a class="sa-ed-btn" href="<?php echo esc_url((function_exists('sa_rs_url') ? sa_rs_url('request') : home_url('/roadside/'))); ?>"><?php esc_html_e('Request help now', 'supreme-autoparts'); ?></a>
         <a class="sa-ed-btn sa-ed-btn--ghost" href="tel:+254714498451"><?php esc_html_e('Call +254 714 498 451', 'supreme-autoparts'); ?></a>
-        <a class="sa-ed-rs__wa" href="https://wa.me/supremeautopart" rel="noopener"><?php echo function_exists('sa_whatsapp_icon') ? sa_whatsapp_icon() : ''; esc_html_e('Chat on WhatsApp', 'supreme-autoparts'); ?></a>
+        <a class="sa-ed-rs__wa" href="https://wa.me/254714498451" rel="noopener"><?php echo function_exists('sa_whatsapp_icon') ? sa_whatsapp_icon() : ''; esc_html_e('Chat on WhatsApp', 'supreme-autoparts'); ?></a>
       </div>
     </div>
     <ol class="sa-ed-rs__steps">

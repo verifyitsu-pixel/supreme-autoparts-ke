@@ -188,7 +188,7 @@ function sa_email_help_html(string $country = '', string $ctx = 'generic'): stri
     return '<!--sa-email-help--><div class="sa-help" style="margin:20px 0 4px;padding:16px 0 0;border-top:1px solid #e4e4e0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.65;color:#555555">'
         . '<div>' . esc_html(sa_email_help_lead($ctx))
         . ($reply ? '' : '<br><a href="mailto:calvin@supremeautoparts.co.ke" style="color:#333333;text-decoration:underline">Email us</a> or '
-            . '<a href="' . esc_url(function_exists('sa_whatsapp_url') ? sa_whatsapp_url() : 'https://wa.me/supremeautopart') . '" style="color:#333333;text-decoration:underline">chat on WhatsApp</a>.')
+            . '<a href="' . esc_url(function_exists('sa_whatsapp_url') ? sa_whatsapp_url() : 'https://wa.me/254714498451') . '" style="color:#333333;text-decoration:underline">chat on WhatsApp</a>.')
         . '</div>' . $roadside
         . '</div><!--/sa-email-help-->';
 }

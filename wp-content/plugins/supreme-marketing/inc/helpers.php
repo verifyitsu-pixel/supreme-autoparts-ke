@@ -210,7 +210,7 @@ function sm_business(string $zone): array
 /** Customer chat link: WhatsApp username link only - customers never see a number. */
 function sm_whatsapp_url(): string
 {
-    return function_exists('sa_whatsapp_url') ? sa_whatsapp_url() : 'https://wa.me/supremeautopart';
+    return function_exists('sa_whatsapp_url') ? sa_whatsapp_url() : 'https://wa.me/254714498451';
 }
 
 /**

@@ -13,7 +13,7 @@ defined('ABSPATH') || exit;
 $shop_url    = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
 $account_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : home_url('/my-account/');
 $contact     = function_exists('sa_enquire_contact') ? sa_enquire_contact() : ['whatsapp' => '19174375121', 'phone_display' => '+1 917 437 5121'];
-$wa_url      = function_exists('sa_whatsapp_url') ? sa_whatsapp_url() : 'https://wa.me/supremeautopart';
+$wa_url      = function_exists('sa_whatsapp_url') ? sa_whatsapp_url() : 'https://wa.me/254714498451';
 $wa_display  = (string) ($contact['phone_display'] ?? '+1 917 437 5121');
 $enquire_url = function_exists('sa_enquire_page_url') ? sa_enquire_page_url() : home_url('/enquire/');
 ?>

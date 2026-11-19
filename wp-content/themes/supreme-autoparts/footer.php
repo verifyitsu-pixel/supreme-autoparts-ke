@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 $sa_contact = function_exists('sa_enquire_contact') ? sa_enquire_contact() : [];
-$sa_wa        = function_exists('sa_whatsapp_url') ? sa_whatsapp_url() : 'https://wa.me/supremeautopart';
+$sa_wa        = function_exists('sa_whatsapp_url') ? sa_whatsapp_url() : 'https://wa.me/254714498451';
 $sa_min        = (function_exists('is_cart') && is_cart()) || (function_exists('is_checkout') && is_checkout() && !is_order_received_page());
 $sa_logo_f     = function_exists('sa_theme_logo_url') ? sa_theme_logo_url(true) : (SA_THEME_URI . '/assets/logo-light.png');
 $sa_shop       = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
