@@ -665,6 +665,19 @@ function sa_fx_base_sql(array $st, string $skip = ''): string
             WHERE p.post_type = 'product' AND p.post_status = 'publish'{$vis}" . ($w ? ' AND ' . implode(' AND ', $w) : '');
 }
 
+/** Cache identity from the predicates this query actually uses, in stable order. */
+function sa_fx_filter_cache_key(array $st, string $skip): string
+{
+    // IN-list and independent AND-predicate ordering do not affect the result.
+    sort($st['brand'], SORT_STRING);
+    ksort($st['specs'], SORT_STRING);
+    foreach ($st['specs'] as &$values) { sort($values, SORT_STRING); }
+    unset($values);
+    $where = sa_fx_where($st, $skip);
+    sort($where, SORT_STRING);
+    return (string) wp_json_encode($where);
+}
+
 function sa_fx_cache(string $key, callable $fn)
 {
     $k = 'sa_fx_' . md5(SA_FX_VER . '|' . get_option('sa_fx_gen', '0') . '|' . $key);
@@ -689,7 +702,7 @@ function sa_fx_counts(string $facet, string $skip = '', int $limit = 300, string
     }
     $st = sa_fx_state();
     $skip = $skip !== '' ? $skip : $facet;
-    return sa_fx_cache('c|' . $facet . '|' . $skip . '|' . $value_prefix . '|' . wp_json_encode($st), static function () use ($facet, $skip, $st, $limit, $value_prefix): array {
+    return sa_fx_cache('c2|' . $facet . '|' . $limit . '|' . $value_prefix . '|' . sa_fx_filter_cache_key($st, $skip), static function () use ($facet, $skip, $st, $limit, $value_prefix): array {
         global $wpdb;
         $t = sa_fx_table();
         $base = sa_fx_base_sql($st, $skip);
@@ -721,7 +734,7 @@ function sa_fx_counts_all(string $facet, int $limit = 300, string $value_prefix 
     if (!sa_fx_ready()) {
         return [];
     }
-    return sa_fx_cache('all|' . $facet . '|' . $value_prefix, static function () use ($facet, $limit, $value_prefix): array {
+    return sa_fx_cache('all2|' . $facet . '|' . $limit . '|' . $value_prefix, static function () use ($facet, $limit, $value_prefix): array {
         global $wpdb;
         $t = sa_fx_table();
         $pre = $value_prefix !== '' ? $wpdb->prepare(' AND i.value LIKE %s', $wpdb->esc_like($value_prefix) . '%') : '';
