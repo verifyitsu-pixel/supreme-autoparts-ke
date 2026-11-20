@@ -9,6 +9,8 @@ on:
     branches: [main]
   # Every push to main is tested; a push that changes no deployed code deploys nothing
   # (the server compares and skips). So docs/tests/scripts/data-only commits never touch the live site.
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
