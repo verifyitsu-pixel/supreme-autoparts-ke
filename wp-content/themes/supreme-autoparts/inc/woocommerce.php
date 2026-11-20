@@ -49,10 +49,7 @@ add_filter('woocommerce_product_add_to_cart_text', static function (string $text
 add_filter('woocommerce_add_to_cart_fragments', static function (array $fragments): array {
     $count = (function_exists('WC') && WC()->cart) ? (int) WC()->cart->get_cart_contents_count() : 0;
     $fragments['span.sa-cart-count'] = '<span class="sa-cart-count" data-sa-cart-count>' . esc_html((string) $count) . '</span>';
-    ob_start();
-    woocommerce_mini_cart();
-    $mini = ob_get_clean();
-    $fragments['div.widget_shopping_cart_content'] = '<div class="widget_shopping_cart_content">' . $mini . '</div>';
+    // WooCommerce already rendered its mini-cart before this filter. Preserve it.
     return $fragments;
 });
 
