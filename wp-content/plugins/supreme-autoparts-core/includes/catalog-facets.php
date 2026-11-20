@@ -665,18 +665,87 @@ function sa_fx_base_sql(array $st, string $skip = ''): string
             WHERE p.post_type = 'product' AND p.post_status = 'publish'{$vis}" . ($w ? ' AND ' . implode(' AND ', $w) : '');
 }
 
+/* Opt-in diagnostics only. The private control file is provisioned for <=600s. */
+function sa_fx_observe_cache(bool $hit, ?float $compute_seconds = null): void
+{
+    static $state = null;
+    try {
+        if ($state === null) {
+            $state = false;
+            $dir = '/tmp/sa-facet-observe';
+            if (!function_exists('posix_geteuid') || is_link($dir) || !is_dir($dir)
+                || @fileowner($dir) !== posix_geteuid() || (@fileperms($dir) & 0777) !== 0700
+                || is_link($dir . '/active.json') || is_link($dir . '/records.jsonl')) { return; }
+            $raw = @file_get_contents($dir . '/active.json', false, null, 0, 1025);
+            if (!is_string($raw) || strlen($raw) > 1024) { return; }
+            $cfg = json_decode($raw, true);
+            $now = time();
+            if (!is_array($cfg) || array_keys($cfg) !== ['window_id', 'started_at', 'expires_at']
+                || !is_string($cfg['window_id']) || !preg_match('/^[a-f0-9]{24}$/D', $cfg['window_id'])
+                || !is_int($cfg['started_at']) || !is_int($cfg['expires_at'])
+                || $cfg['started_at'] > $now || $cfg['expires_at'] <= $now
+                || $cfg['expires_at'] <= $cfg['started_at']
+                || $cfg['expires_at'] - $cfg['started_at'] > 600) { return; }
+            $state = ['window_id' => $cfg['window_id'], 'started_at' => $cfg['started_at'],
+                'expires_at' => $cfg['expires_at'], 'first_seen_at' => $now, 'last_seen_at' => $now,
+                'hits' => 0, 'misses' => 0,
+                'compute_count' => 0, 'compute_seconds' => 0.0, 'max_compute_seconds' => 0.0];
+            register_shutdown_function(static function () use (&$state, $dir): void {
+                try {
+                    if (!is_array($state) || $state['hits'] + $state['misses'] === 0) { return; }
+                    $file = $dir . '/records.jsonl';
+                    $state['recorded_at'] = time();
+                    $state['late_finish'] = $state['recorded_at'] >= $state['expires_at'];
+                    $line = json_encode($state);
+                    if (!is_string($line) || strlen($line) > 510 || is_link($file)) { return; }
+                    $fp = @fopen($file, 'ab');
+                    if ($fp === false) { return; }
+                    try {
+                        // Never wait for another request. Contended/failed records are omitted.
+                        if (!@flock($fp, LOCK_EX | LOCK_NB)) { return; }
+                        $st = @fstat($fp);
+                        if (!is_array($st) || $st['size'] + strlen($line) + 1 > 1048576) { return; }
+                        @fwrite($fp, $line . "\n");
+                    } finally {
+                        @flock($fp, LOCK_UN);
+                        @fclose($fp);
+                    }
+                } catch (Throwable $ignored) {
+                    // Diagnostics must never change application behavior.
+                }
+            });
+        }
+        if (!is_array($state) || time() >= $state['expires_at']) { return; }
+        $state['last_seen_at'] = time();
+        if ($compute_seconds !== null) {
+            if (!is_finite($compute_seconds) || $compute_seconds < 0) { return; }
+            ++$state['compute_count'];
+            $state['compute_seconds'] += $compute_seconds;
+            $state['max_compute_seconds'] = max($state['max_compute_seconds'], $compute_seconds);
+        } else {
+            ++$state[$hit ? 'hits' : 'misses'];
+        }
+    } catch (Throwable $ignored) {
+        // Suppressed-warning handlers may throw; isolate observer errors only.
+        $state = false;
+    }
+}
+
 function sa_fx_cache(string $key, callable $fn)
 {
     $k = 'sa_fx_' . md5(SA_FX_VER . '|' . get_option('sa_fx_gen', '0') . '|' . $key);
     $v = get_transient($k);
     if ($v !== false) {
+        sa_fx_observe_cache(true);
         return $v;
     }
+    sa_fx_observe_cache(false);
+    $started = microtime(true);
     $v = $fn();
+    sa_fx_observe_cache(false, microtime(true) - $started);
     set_transient($k, $v, 30 * MINUTE_IN_SECONDS);
     return $v;
 }
-
 /**
  * Option counts for a facet under the other active filters.
  *
