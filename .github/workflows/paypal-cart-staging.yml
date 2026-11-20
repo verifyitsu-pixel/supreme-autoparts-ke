@@ -1,0 +1,43 @@
+name: Isolated PayPal empty-key cart (no deploy)
+on:
+  push:
+    branches: [feat/paypal-isolated-cart]
+permissions:
+  contents: read
+jobs:
+  native-synthetic-cart:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: fictional_runner_only
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -pfictional_runner_only"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Runtime and syntax
+        run: |
+          php -v
+          php -m
+          node --version
+          find tests/staging/paypal-cart -name '*.php' -print0 | xargs -0 -n1 php -l
+          bash -n tests/integration/paypal-cart-staging.sh
+          node --check tests/staging/paypal-cart/browser.cjs
+      - name: Fresh native cart with all payments blocked
+        env:
+          SA_STAGE_DB_PASSWORD: fictional_runner_only
+        run: bash tests/integration/paypal-cart-staging.sh
+      - name: Preserve synthetic cart pixels and test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paypal-empty-key-synthetic-cart
+          path: /tmp/sa-paypal-cart-evidence
+          retention-days: 7
