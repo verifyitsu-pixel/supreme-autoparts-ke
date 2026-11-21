@@ -1,0 +1,27 @@
+name: Bounded catalog attribution checks
+on:
+  pull_request:
+    paths:
+      - 'wp-content/mu-plugins/sa-catalog-attribution.php'
+      - 'tests/catalog-attribution-*'
+      - '.github/workflows/catalog-attribution-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  attribution-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify PHP 8.3 and lint
+        run: |
+          php -v
+          php -r 'exit(PHP_MAJOR_VERSION === 8 && PHP_MINOR_VERSION === 3 ? 0 : 1);'
+          php -l wp-content/mu-plugins/sa-catalog-attribution.php
+          php -l tests/catalog-attribution-regression.php
+      - name: Isolated runner-local MySQL and behavior tests
+        run: |
+          sudo systemctl start mysql
+          php -m | grep -i mysqli
+          SA_TRACE_TEST_MYSQL=1 php -d memory_limit=32M tests/catalog-attribution-regression.php
