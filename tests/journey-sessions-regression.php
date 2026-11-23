@@ -29,12 +29,23 @@ echo "PASS peer provenance, forwarded-header spoof rejection, coarse device clas
 
 function add_filter(...$a){}
 require __DIR__.'/../wp-content/mu-plugins/sa-order-journey.php';
-$fixture=new class {function get_customer_ip_address(){return '8.8.8.8';}function get_customer_user_agent(){return 'HeadlessChrome/120';}};
+$fixture=new class {function get_customer_ip_address(){return '8.8.8.8';}function get_customer_user_agent(){return 'HeadlessChrome/120';}function get_meta($k){return '';}};
 $f=sa_order_journey_facts($fixture);
 check(str_contains($f['IP format assessment'],'Valid public'),'syntax assessed without asserting identity');
 check(str_contains($f['Browser automation assessment'],'present'),'saved browser token assessed');
-check(str_contains($f['Timezone'],'Not collected')&&str_contains($f['Browser fingerprint'],'Not collected'),'unavailable additions honest');
+check(str_contains($f['Timezone'],'Not collected')&&str_contains($f['Checkout-scoped browser signature'],'No checkout'),'unavailable additions honest');
 $code=file_get_contents(__DIR__.'/../wp-content/mu-plugins/sa-order-journey.php');
 check(str_contains($code,'visitor=%s AND session=%s AND ts<=%s'),'exact checkout IDs and pre-order cutoff');
 check(!str_contains($code,'wp_remote_')&&!str_contains($code,'<script>'),'read-only local assessment, no external/device probes');
 echo "PASS unified order facts, local assessments, exact-session cutoff, no new collection\n";
+
+function wp_salt($v){return 'isolated-test-salt';}
+require __DIR__.'/../wp-content/mu-plugins/sa-checkout-signature.php';
+$a=sa_checkout_signature(['HTTP_USER_AGENT'=>'browser','REMOTE_ADDR'=>'8.8.8.8'],'one');
+check($a===sa_checkout_signature(['HTTP_USER_AGENT'=>'browser','REMOTE_ADDR'=>'1.1.1.1'],'one'),'IP not a fingerprint component');
+check($a!==sa_checkout_signature(['HTTP_USER_AGENT'=>'browser'],'two'),'signature cannot link different checkout sessions');
+$state=sa_checkout_signature_state(null,$a,1000);$state=sa_checkout_signature_state($state,$a,1020);
+check($state['observations']===2&&$state['changes']===0,'same checkout header continuity');
+$state=sa_checkout_signature_state($state,str_repeat('b',64),1030);check($state['changes']===1,'changed configuration assessed');
+check(sa_checkout_signature_state($state,$a,3000)['observations']===1,'30-minute state window resets');
+echo "PASS checkout-only session scope, noIP component, continuity and expiry\n";
