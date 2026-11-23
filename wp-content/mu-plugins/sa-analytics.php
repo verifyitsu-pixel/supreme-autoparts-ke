@@ -149,8 +149,8 @@ add_action('init', static function (): void {
         return;
     }
     $ua  = substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 500);
-    $ref = substr((string) ($_SERVER['HTTP_REFERER'] ?? ''), 0, 500);
-    $uri = substr((string) ($_SERVER['REQUEST_URI'] ?? '/'), 0, 500);
+    $ref = sa_tracking_referrer((string) ($_SERVER['HTTP_REFERER'] ?? ''));
+    $uri = sa_tracking_path((string) ($_SERVER['REQUEST_URI'] ?? '/'));
     $bot = sa_analytics_classify_ua($ua);
     $ip  = sa_analytics_client_ip();
 
@@ -378,7 +378,7 @@ function sa_analytics_render_admin(): void
     ), ARRAY_A);
     echo '<h2>' . ($tab === 'bots' ? 'Pages bots requested' : 'Top pages') . '</h2>';
     sa_analytics_table_render(['Page', 'Hits'], array_map(static fn($x) => [
-        '<a href="' . esc_url(home_url($x['uri'])) . '" target="_blank" rel="noopener">' . esc_html($x['uri']) . '</a>',
+        '<a href="' . esc_url(home_url(sa_tracking_path($x['uri']))) . '" target="_blank" rel="noopener">' . esc_html(sa_tracking_path($x['uri'])) . '</a>',
         number_format_i18n((int) $x['c']),
     ], $pages));
 
@@ -390,7 +390,7 @@ function sa_analytics_render_admin(): void
         ), ARRAY_A);
         echo '<h2>Top referrers</h2>';
         sa_analytics_table_render(['Referrer', 'Visits'], array_map(static fn($x) => [
-            '<a href="' . esc_url($x['referrer']) . '" target="_blank" rel="noopener">' . esc_html($x['referrer']) . '</a>',
+            '<a href="' . esc_url(sa_tracking_referrer($x['referrer'])) . '" target="_blank" rel="noopener">' . esc_html(sa_tracking_referrer($x['referrer'])) . '</a>',
             number_format_i18n((int) $x['c']),
         ], $refs));
     }
@@ -403,8 +403,8 @@ function sa_analytics_render_admin(): void
     sa_analytics_table_render(['Time (UTC)', 'Page', $tab === 'bots' ? 'Crawler' : 'Referrer', 'User agent'], array_map(static function ($x) use ($tab) {
         $mid = $tab === 'bots'
             ? esc_html(trim(($x['company'] !== '' ? $x['company'] . ' / ' : '') . $x['crawler']) ?: 'bot')
-            : ($x['referrer'] !== '' ? '<a href="' . esc_url($x['referrer']) . '" target="_blank" rel="noopener">' . esc_html(wp_parse_url($x['referrer'], PHP_URL_HOST) ?: $x['referrer']) . '</a>' : '<span style="color:#999">direct</span>');
-        return [esc_html($x['ts']), esc_html($x['uri']), $mid, '<span style="color:#777;font-size:11px">' . esc_html(substr($x['ua'], 0, 90)) . '</span>'];
+            : ($x['referrer'] !== '' ? '<a href="' . esc_url(sa_tracking_referrer($x['referrer'])) . '" target="_blank" rel="noopener">' . esc_html(wp_parse_url($x['referrer'], PHP_URL_HOST) ?: $x['referrer']) . '</a>' : '<span style="color:#999">direct</span>');
+        return [esc_html($x['ts']), esc_html(sa_tracking_path($x['uri'])), $mid, '<span style="color:#777;font-size:11px">' . esc_html(substr($x['ua'], 0, 90)) . '</span>'];
     }, $recent));
 
     echo '</div>';
