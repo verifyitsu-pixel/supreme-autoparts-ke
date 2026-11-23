@@ -60,6 +60,7 @@ add_action('wp_footer', static function (): void {
   }
   function applyConsent(cc){
     cc=(cc||"").toUpperCase();
+    window.SA_ANALYTICS_COUNTRY=/^[A-Z]{2}$/.test(cc)?cc:"";
     var decided=gc("sa_tconsent");
     if(decided==="0"){denyCookies();return;}
     if(!/^[A-Z]{2}$/.test(cc)){return;}
