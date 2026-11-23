@@ -16,3 +16,13 @@ $_COOKIE=['sa_jv'=>str_repeat('b',32),'sa_js'=>str_repeat('c',32)];sa_journey_or
 check(count($order->m)===2,'private order link');
 $_COOKIE=['sa_tconsent'=>'0','sa_jv'=>str_repeat('b',32),'sa_js'=>str_repeat('c',32)];$other=clone $order;$other->m=[];sa_journey_order_meta($other);check(!$other->m,'denied order linkage');
 echo "PASS URL/referrer minimization, identifier validation, private order correlation and deny guard\n";
+$net=sa_journey_network(['REMOTE_ADDR'=>'8.8.8.8','HTTP_X_FORWARDED_FOR'=>'1.2.3.4, 5.6.7.8']);
+check($net===['ip'=>'8.8.8.8','forwarding'=>1],'never treat forwarded claim as verified peer');
+check(sa_journey_network(['REMOTE_ADDR'=>'127.0.0.1'])['ip']==='','private peer not published as shopper IP');
+check(sa_journey_network(['REMOTE_ADDR'=>'not an IP'])['ip']==='','invalid peer rejected');
+check(sa_journey_network(['REMOTE_ADDR'=>'2001:4860:4860::8888'])['forwarding']===0,'IPv6 accepted without inventing proxy status');
+require __DIR__.'/../wp-content/mu-plugins/sa-order-security-timeline.php';
+check(str_contains(sa_journey_device('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17 Mobile Safari/604.1'),'iOS/iPadOS'),'coarse iPhone class');
+check(str_contains(sa_journey_device('Mozilla/5.0 (Linux; Android 14) Chrome/120 Mobile Safari/537.36'),'Android'),'coarse Android class');
+check(str_contains(sa_journey_device('Mozilla/5.0 (Windows NT 10.0) Chrome/120 Edg/120'),'Edge'),'browser precedence');
+echo "PASS peer provenance, forwarded-header spoof rejection, coarse device classes\n";
