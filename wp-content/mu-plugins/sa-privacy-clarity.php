@@ -12,10 +12,6 @@ function sa_privacy_clarity_id(): string {
 function sa_privacy_should_print(): bool {
     return !is_admin() && !(function_exists('is_user_logged_in') && is_user_logged_in() && current_user_can('manage_options'));
 }
-add_action('wp_head', static function (): void {
-    if (!sa_privacy_should_print() || sa_privacy_clarity_id() === '') { return; }
-    printf('<script>(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","%s");</script>', esc_attr(sa_privacy_clarity_id()));
-}, 3);
 add_action('wp_footer', static function (): void {
     if (!sa_privacy_should_print()) { return; }
     $cfg = ['geoUrl' => '/?wc-ajax=sa_geo_resolve', 'clarityId' => sa_privacy_clarity_id(), 'privacyUrl' => function_exists('get_privacy_policy_url') ? (string) get_privacy_policy_url() : ''];
@@ -34,6 +30,12 @@ add_action('wp_footer', static function (): void {
   if(window.SA_CONSENT_GRANTED&&CFG.clarityId&&window.clarity){try{window.clarity("consent");}catch(e){}}
   function grantCookies(){
     if(consentDone||window.SA_CONSENT_GRANTED)return;consentDone=true;
+    // Never load replay on checkout, cart, account, order or credential pages.
+    if(CFG.clarityId&&!location.search&&!/[?@]|%40|wc_order_/i.test(document.referrer)&&!/\/(checkout|cart|my-account|order-pay|order-received|wp-login|lost-password|reset-password)(\/|\.|$)/i.test(location.pathname)){
+      document.documentElement.setAttribute("data-clarity-mask","true");
+      window.clarity=window.clarity||function(){(window.clarity.q=window.clarity.q||[]).push(arguments);};
+      var replay=document.createElement("script");replay.async=true;replay.src="https://www.clarity.ms/tag/"+CFG.clarityId;document.head.appendChild(replay);
+    }
     window.SA_ANALYTICS_CONSENT=true;window.dispatchEvent(new Event("sa:analytics-consent-granted"));
     if(CFG.clarityId&&window.clarity){try{window.clarity("consent");}catch(e){}}
   }
@@ -58,8 +60,10 @@ add_action('wp_footer', static function (): void {
   }
   function applyConsent(cc){
     cc=(cc||"").toUpperCase();
-    if(EU.indexOf(cc)===-1){grantCookies();return;}
     var decided=gc("sa_tconsent");
+    if(decided==="0"){denyCookies();return;}
+    if(!/^[A-Z]{2}$/.test(cc)){return;}
+    if(EU.indexOf(cc)===-1){grantCookies();return;}
     if(decided==="1"){grantCookies();return;}
     if(decided==="0"){denyCookies();return;}
     showBanner();
