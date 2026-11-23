@@ -94,6 +94,7 @@ function sa_journey_order_meta($order): void {
     $order->save_meta_data();
 }
 add_action('woocommerce_checkout_order_created','sa_journey_order_meta',21);
+add_action('woocommerce_store_api_checkout_order_processed','sa_journey_order_meta',21);
 add_action('wp_footer',static function(): void {
     if (!function_exists('sa_ga4_allowed') || !sa_ga4_allowed()) { return; }
     ?>
