@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) { exit; }
 function sa_journey_id($id): string { return is_string($id) && preg_match('/^[a-f0-9]{32}$/D', $id) ? $id : ''; }
 function sa_journey_table(): string { global $wpdb; return $wpdb->prefix . 'sa_journey_events'; }
 add_action('admin_init', static function(): void {
-    if (get_option('sa_journey_schema') === '1') { return; }
+    if (get_option('sa_journey_schema') === '2') { return; }
     global $wpdb; require_once ABSPATH . 'wp-admin/includes/upgrade.php';
     $table = sa_journey_table(); $charset = $wpdb->get_charset_collate();
     dbDelta("CREATE TABLE {$table} (
@@ -22,10 +22,13 @@ add_action('admin_init', static function(): void {
         path varchar(300) NOT NULL,
         source varchar(190) NOT NULL DEFAULT '',
         country char(2) NOT NULL DEFAULT '',
+        device varchar(190) NOT NULL DEFAULT '',
+        network_ip varchar(45) NOT NULL DEFAULT '',
+        forwarding tinyint(1) NOT NULL DEFAULT 0,
         returning tinyint(1) NOT NULL DEFAULT 0,
         PRIMARY KEY (id), UNIQUE KEY event_key (event_key), KEY visitor_ts (visitor,ts), KEY session_ts (session,ts), KEY ts (ts)
     ) {$charset};");
-    update_option('sa_journey_schema', '1', false);
+    update_option('sa_journey_schema', '2', false);
     if (!wp_next_scheduled('sa_journey_prune')) { wp_schedule_event(time()+3600, 'daily', 'sa_journey_prune'); }
 });
 add_action('sa_journey_prune', static function(): void {
@@ -35,6 +38,21 @@ add_action('sa_journey_prune', static function(): void {
     $cut=$wpdb->get_var("SELECT id FROM {$table} ORDER BY id DESC LIMIT 1 OFFSET 100000");
     if($cut) { $wpdb->query($wpdb->prepare("DELETE FROM {$table} WHERE id <= %d",(int)$cut)); }
 });
+/** Network peer only. Forwarded headers are client-controlled unless the edge trust chain is verified. */
+function sa_journey_network(array $server): array {
+    $ip=(string)($server['REMOTE_ADDR']??'');
+    if(!filter_var($ip,FILTER_VALIDATE_IP,FILTER_FLAG_NO_PRIV_RANGE|FILTER_FLAG_NO_RES_RANGE)) { $ip=''; }
+    $forwarding=false;
+    foreach(['HTTP_FORWARDED','HTTP_X_FORWARDED_FOR','HTTP_X_REAL_IP','HTTP_CF_CONNECTING_IP','HTTP_VIA'] as $key) {
+        if(!empty($server[$key])) { $forwarding=true; }
+    }
+    return ['ip'=>$ip,'forwarding'=>$forwarding?1:0];
+}
+function sa_journey_device(string $ua): string {
+    if($ua==='')return 'Unavailable';
+    if(function_exists('sa_risk_device'))return substr(sa_risk_device(substr($ua,0,512)),0,190);
+    return 'Unavailable';
+}
 add_action('wc_ajax_sa_journey', static function(): void {
     nocache_headers();
     $origin=(string)($_SERVER['HTTP_ORIGIN']??'');
@@ -56,12 +74,15 @@ add_action('wc_ajax_sa_journey', static function(): void {
     if($wpdb->get_var($wpdb->prepare("SELECT id FROM {$table} WHERE event_key=%s",$dedupe))) { wp_send_json(['accepted'=>true,'duplicate'=>true]); }
     $n=(int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE session=%s AND ts >= %s",$s,gmdate('Y-m-d H:i:s',time()-1800)));
     if($n>=200) { wp_send_json(['accepted'=>false],429); }
+    $network=sa_journey_network($_SERVER);
     $ok=$wpdb->insert($table,[
         'event_key'=>$dedupe,'ts'=>gmdate('Y-m-d H:i:s'),'visitor'=>$v,'session'=>$s,'event'=>$event,
         'path'=>sa_tracking_path(substr((string)wp_unslash($_POST['path']??'/'),0,1000)),
         'source'=>substr((string)parse_url(sa_tracking_referrer((string)wp_unslash($_POST['referrer']??'')),PHP_URL_HOST),0,190),
+        'device'=>sa_journey_device((string)($_SERVER['HTTP_USER_AGENT']??'')),
+        'network_ip'=>$network['ip'],'forwarding'=>$network['forwarding'],
         'country'=>$cc,'returning'=>(($_COOKIE['sa_jreturn']??'')==='1'?1:0),
-    ],['%s','%s','%s','%s','%s','%s','%s','%s','%d']);
+    ],['%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%d']);
     wp_send_json(['accepted'=>(bool)$ok],$ok?200:503);
 });
 function sa_journey_order_meta($order): void {
@@ -103,17 +124,17 @@ function sa_journey_rows(array $visitors=[]): array {
     global $wpdb; $table=sa_journey_table();
     $where='';$args=[];
     if($visitors) { $visitors=array_values(array_filter(array_map('sa_journey_id',$visitors)));if(!$visitors)return[];$where=' WHERE visitor IN ('.implode(',',array_fill(0,count($visitors),'%s')).')';$args=$visitors; }
-    $sql="SELECT ts,visitor,session,event,path,source,country,returning FROM {$table}{$where} ORDER BY id DESC LIMIT 100";
+    $sql="SELECT ts,visitor,session,event,path,source,country,returning,device,network_ip,forwarding FROM {$table}{$where} ORDER BY id DESC LIMIT 100";
     return (array)$wpdb->get_results($args?$wpdb->prepare($sql,$args):$sql,ARRAY_A);
 }
 function sa_journey_render_rows(array $rows): void {
-    echo '<table class="widefat striped"><thead><tr><th>UTC</th><th>Browser / session</th><th>Event</th><th>Page</th><th>Source host</th><th>Approx. country</th><th>Returning browser</th></tr></thead><tbody>';
-    foreach($rows as $r){echo '<tr>';foreach([$r['ts'],substr($r['visitor'],0,10).' / '.substr($r['session'],0,10),$r['event'],sa_tracking_path($r['path']),$r['source'],$r['country']?:'Unknown',$r['returning']?'Yes':'No'] as $v){echo '<td>'.esc_html((string)$v).'</td>';}echo '</tr>';}
-    if(!$rows)echo '<tr><td colspan="7">No consented sessions captured yet.</td></tr>';
-    echo '</tbody></table>';
+    echo '<div style="overflow-x:auto"><table class="widefat striped" style="min-width:1300px;table-layout:auto"><thead><tr><th>UTC</th><th>Browser / session</th><th>Event</th><th>Page</th><th>Source host</th><th>Approx. country</th><th>Returning browser</th><th>Device / network</th></tr></thead><tbody>';
+    foreach($rows as $r){echo '<tr>';foreach([$r['ts'],substr($r['visitor'],0,10).' / '.substr($r['session'],0,10),$r['event'],sa_tracking_path($r['path']),$r['source'],$r['country']?:'Unknown',$r['returning']?'Yes':'No',($r['device']??'Unavailable').' | Server peer IP: '.(($r['network_ip']??'')?:'Unavailable').' | Forwarding header: '.(!empty($r['forwarding'])?'Present, unverified':'Not observed').'. VPN/proxy status: not assessed for this visit.'] as $v){echo '<td>'.esc_html((string)$v).'</td>';}echo '</tr>';}
+    if(!$rows)echo '<tr><td colspan="8">No consented sessions captured yet.</td></tr>';
+    echo '</tbody></table></div>';
 }
 function sa_journey_admin(): void {
     if(!current_user_can('manage_options'))return;
-    echo '<div class="wrap"><h1>Journey Sessions</h1><p>Private first-party browser IDs, 30-minute inactivity sessions, 180-day returning-browser cookie. Up to 30 days / 100,000 latest events, pruned daily. No replay, fingerprinting, precise location, form text or payment details. Browser events are not proof of payment. A cleared cookie or another device starts a different browser.</p>';
+    echo '<div class="wrap"><h1>Journey Sessions</h1><p>Private first-party browser IDs, 30-minute inactivity sessions, 180-day returning-browser cookie. Up to 30 days / 100,000 latest events, pruned daily. No replay, fingerprinting, precise location, form text or payment details. Device is self-reported browser/OS class, not verified hardware. Network IP is the server-observed peer, which may be a proxy; forwarding headers are unverified and do not reveal a hidden real IP. VPN/proxy reputation remains in private order security notes, not assessed for every visit. These fields stay private and are not sent to Google. Browser events are not proof of payment. A cleared cookie or another device starts a different browser.</p>';
     sa_journey_render_rows(sa_journey_rows());echo '</div>';
 }
