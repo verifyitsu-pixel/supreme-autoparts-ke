@@ -32,18 +32,19 @@ add_action('wp_footer', static function (): void {
   "use strict";
   function gc(n){var m=document.cookie.match(new RegExp("(?:^|; )"+n+"=([^;]*)"));return m?decodeURIComponent(m[1]):"";}
   function sc(n,v,days){var e=new Date(Date.now()+days*864e5);document.cookie=n+"="+encodeURIComponent(v)+";expires="+e.toUTCString()+";path=/;SameSite=Lax";}
-  // Consent: UK/EU/CH need an accepted banner before analytics cookies are written.
-  var EU="AT BE BG HR CY CZ DK EE FI FR DE GR HU IS IE IT LV LI LT LU MT NL NO PL PT RO SK SI ES SE GB CH".split(" ");
-  var cc=gc("sa_geo_cc").toUpperCase();
-  if(EU.indexOf(cc)!==-1 && gc("sa_tconsent")!=="1"){return;}
+  function capture(){
+  if(window.SA_ANALYTICS_CONSENT!==true || gc("sa_tconsent")==="0"){return;}
   try{
-    var ref=document.referrer||"";
-    var ext=ref && ref.indexOf(location.host)===-1;
-    var q=new URLSearchParams(location.search);
-    var touch={ref:ext?ref.slice(0,300):"",land:(location.pathname+location.search).slice(0,300),src:q.get("utm_source")||"",med:q.get("utm_medium")||"",cmp:q.get("utm_campaign")||"",ts:Math.floor(Date.now()/1000)};
-    if(!gc("sa_ft")){if(!ext&&!touch.src){touch.ref="direct";}sc("sa_ft",JSON.stringify(touch),365);}
-    if(ext||touch.src){sc("sa_lt",JSON.stringify(touch),30);}
+    var ref="";try{ref=document.referrer?new URL(document.referrer).origin:"";}catch(e){}
+    var ext=ref && ref!==location.origin;
+    var path=location.pathname.replace(/\/(order-received|order-pay|view-order|lost-password|reset-password)\/[^/]+\/?/gi,"/$1/");
+    if(/@|%40|token|password|secret|nonce|wc_order_/i.test(path)){path="/[private]";}
+    var touch={ref:ext?ref:"direct",land:path.slice(0,300),src:"",med:"",cmp:"",ts:Math.floor(Date.now()/1000)};
+    if(!gc("sa_ft")){sc("sa_ft",JSON.stringify(touch),180);}
+    if(ext){sc("sa_lt",JSON.stringify(touch),30);}
   }catch(e){}
+  }
+  window.addEventListener("sa:analytics-consent-granted",capture);capture();
 })();
 </script>
 <?php
@@ -88,8 +89,8 @@ function sa_cust_capture_order_meta($order): void
         }
         $parts = [];
         if (!empty($d['src'])) { $parts[] = 'utm:' . $d['src'] . (!empty($d['med']) ? '/' . $d['med'] : '') . (!empty($d['cmp']) ? '/' . $d['cmp'] : ''); }
-        if (!empty($d['ref'])) { $parts[] = (string) $d['ref']; }
-        if (!empty($d['land'])) { $parts[] = 'landed ' . $d['land']; }
+        if (!empty($d['ref'])) { $parts[] = sa_tracking_referrer((string)$d['ref']); }
+        if (!empty($d['land'])) { $parts[] = 'landed ' . sa_tracking_path((string)$d['land']); }
         if (!empty($d['ts']))  { $parts[] = gmdate('Y-m-d H:i', (int) $d['ts']) . ' UTC'; }
         return implode(' | ', array_map(static function ($p) { return substr((string) $p, 0, 300); }, $parts));
     };
@@ -303,7 +304,7 @@ function sa_cust_render_list(array $index): void
             . '<td>' . wp_kses_post(wc_price($c['spent'])) . '</td>'
             . '<td>' . esc_html($c['first'] ? date_i18n('Y-m-d', $c['first']) : '-') . '</td>'
             . '<td>' . esc_html($c['last'] ? date_i18n('Y-m-d', $c['last']) : '-') . '</td>'
-            . '<td style="max-width:220px;overflow:hidden;text-overflow:ellipsis">' . esc_html($c['first_touch'] !== '' ? $c['first_touch'] : '-') . '</td>'
+            . '<td style="max-width:220px;overflow:hidden;text-overflow:ellipsis">' . esc_html(sa_tracking_text($c['first_touch'] !== '' ? $c['first_touch'] : '-')) . '</td>'
             . '<td>' . esc_html(trim($c['city'] . ' ' . $c['country']) !== '' ? trim($c['city'] . ', ' . $c['country']) : '-') . '</td>'
             . '<td>' . esc_html($c['device'] !== '' ? $c['device'] : '-') . '</td></tr>';
     }
@@ -348,7 +349,7 @@ function sa_cust_render_detail(array $index, string $who): void
     echo '</div>';
 
     if ($c['first_touch'] !== '') {
-        echo '<p><strong>First-touch source:</strong> ' . esc_html($c['first_touch']) . '</p>';
+        echo '<p><strong>First-touch source:</strong> ' . esc_html(sa_tracking_text($c['first_touch'])) . '</p>';
     }
 
     // Orders + addresses + meta
@@ -361,8 +362,11 @@ function sa_cust_render_detail(array $index, string $who): void
         'status'        => array_keys(wc_get_order_statuses()),
     ]);
     $ips = [];
+    $journey_visitors = [];
     echo '<h3>Orders</h3><table class="widefat striped"><thead><tr><th>Order</th><th>Date</th><th>Status</th><th>Total</th><th>Items</th><th>Ship to</th><th>Source</th><th>Device</th></tr></thead><tbody>';
     foreach ($orders as $o) {
+        $jv = (string)$o->get_meta('_sa_journey_visitor');
+        if(function_exists('sa_journey_id') && sa_journey_id($jv)) { $journey_visitors[$jv]=true; }
         $ip = (string) $o->get_customer_ip_address();
         if ($ip !== '') { $ips[$ip] = true; }
         $items = [];
@@ -377,7 +381,7 @@ function sa_cust_render_detail(array $index, string $who): void
             . '<td>' . wp_kses_post($o->get_formatted_order_total()) . '</td>'
             . '<td style="max-width:320px">' . esc_html(implode('; ', array_slice($items, 0, 4))) . (count($items) > 4 ? ' ...' : '') . '</td>'
             . '<td>' . esc_html(trim($o->get_shipping_city() . ', ' . $o->get_shipping_country()) ?: '-') . '</td>'
-            . '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">' . esc_html($src !== '' ? $src : '-') . '</td>'
+            . '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">' . esc_html(sa_tracking_text($src !== '' ? $src : '-')) . '</td>'
             . '<td>' . esc_html($dev !== '' ? $dev : '-') . '</td></tr>';
     }
     echo '</tbody></table>';
@@ -395,11 +399,12 @@ function sa_cust_render_detail(array $index, string $who): void
     }
     echo '</div>';
 
+    if($journey_visitors && function_exists('sa_journey_rows')) { echo '<h3>Browser-linked sessions (order cookie match, not identity proof)</h3>';sa_journey_render_rows(sa_journey_rows(array_keys($journey_visitors))); }
     $hits = sa_cust_event_hits(array_keys($ips));
     if ($hits) {
         echo '<h3>Raw page hits (server log, matched by IP)</h3><table class="widefat striped"><thead><tr><th>Time (UTC)</th><th>URL</th><th>Referrer</th></tr></thead><tbody>';
         foreach (array_slice($hits, 0, 50) as $h) {
-            echo '<tr><td style="white-space:nowrap">' . esc_html((string) $h['ts']) . '</td><td style="word-break:break-all">' . esc_html((string) $h['uri']) . '</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">' . esc_html((string) $h['referrer']) . '</td></tr>';
+            echo '<tr><td style="white-space:nowrap">' . esc_html((string) $h['ts']) . '</td><td style="word-break:break-all">' . esc_html(sa_tracking_path((string) $h['uri'])) . '</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">' . esc_html(sa_tracking_referrer((string) $h['referrer'])) . '</td></tr>';
         }
         echo '</tbody></table>';
     }

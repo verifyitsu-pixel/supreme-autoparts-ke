@@ -50,7 +50,7 @@ add_action('wp_footer',static function(): void {
 <script>
 (function(){
 'use strict';var pending=window.SA_GA4_COMMERCE||[];
-function emit(events){if(window.SA_ANALYTICS_CONSENT!==true)return;window.dataLayer=window.dataLayer||[];events.forEach(function(e){if(['view_item','view_cart','begin_checkout','add_to_cart'].indexOf(e.event)<0)return;window.dataLayer.push((function(){return arguments;})('event',e.event,e.data));});}
+function emit(events){if(window.SA_ANALYTICS_CONSENT!==true)return;window.dataLayer=window.dataLayer||[];events.forEach(function(e){if(['view_item','view_cart','begin_checkout','add_to_cart'].indexOf(e.event)<0)return;window.dataLayer.push((function(){return arguments;})('event',e.event,e.data));if(window.dispatchEvent&&typeof CustomEvent!=='undefined')window.dispatchEvent(new CustomEvent('sa:commerce-event',{detail:{event:e.event}}));});}
 function start(){if(window.SA_ANALYTICS_CONSENT!==true)return;emit(pending);pending=[];}
 window.addEventListener('sa:analytics-consent-granted',start);start();
 if(window.jQuery){window.jQuery(document.body).on('added_to_cart',function(){fetch('/?wc-ajax=sa_ga4_commerce_pending',{credentials:'same-origin',cache:'no-store'}).then(function(r){if(!r.ok)throw Error('unavailable');return r.json();}).then(function(events){if(!Array.isArray(events))return;if(window.SA_ANALYTICS_CONSENT===true)emit(events);else pending=pending.concat(events).slice(-10);}).catch(function(){});});}

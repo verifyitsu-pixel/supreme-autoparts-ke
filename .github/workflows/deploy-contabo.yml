@@ -49,6 +49,8 @@ jobs:
           node --version
           node tests/security-timeline-display-regression.cjs
           node tests/ga4-commerce-regression.cjs
+          node tests/journey-sessions-regression.cjs
+          php tests/journey-sessions-regression.php
           php tests/ga4-payload-regression.php
           php tests/advanced-cache-bypass-regression.php
           node tests/order-experience-client-regression.js
