@@ -66,7 +66,7 @@ add_action('wp_footer', static function (): void {
     if(purchase&&purchase.items&&purchase.items.length){
       var seen=false,key="sa_ga4_purchase_"+purchase.transaction_id;
       try{seen=localStorage.getItem(key)==="1";}catch(e){}
-      if(!seen){gtag("event","purchase",purchase);try{localStorage.setItem(key,"1");}catch(e){}}
+      if(!seen){gtag("event","purchase",purchase);if(window.dispatchEvent&&typeof CustomEvent!=="undefined")window.dispatchEvent(new CustomEvent("sa:commerce-event",{detail:{event:"purchase"}}));try{localStorage.setItem(key,"1");}catch(e){}}
     }
     var s=document.createElement("script");s.async=true;s.src="https://www.googletagmanager.com/gtag/js?id="+encodeURIComponent(id);document.head.appendChild(s);
     window.addEventListener("sa:analytics-consent-denied",function(){window["ga-disable-"+id]=true;});
