@@ -129,7 +129,7 @@ function sa_journey_rows(array $visitors=[]): array {
 }
 function sa_journey_render_rows(array $rows): void {
     echo '<div style="overflow-x:auto"><table class="widefat striped" style="min-width:1300px;table-layout:auto"><thead><tr><th>UTC</th><th>Browser / session</th><th>Event</th><th>Page</th><th>Source host</th><th>Approx. country</th><th>Returning browser</th><th>Device / network</th></tr></thead><tbody>';
-    foreach($rows as $r){echo '<tr>';foreach([$r['ts'],substr($r['visitor'],0,10).' / '.substr($r['session'],0,10),$r['event'],sa_tracking_path($r['path']),$r['source'],$r['country']?:'Unknown',$r['returning']?'Yes':'No',($r['device']??'Unavailable').' | Server peer IP: '.(($r['network_ip']??'')?:'Unavailable').' | Forwarding header: '.(!empty($r['forwarding'])?'Present, unverified':'Not observed').'. VPN/proxy status: not assessed for this visit.'] as $v){echo '<td>'.esc_html((string)$v).'</td>';}echo '</tr>';}
+    foreach($rows as $r){echo '<tr>';foreach([$r['ts'],substr($r['visitor'],0,10).' / '.substr($r['session'],0,10),$r['event'],sa_tracking_path($r['path']),$r['source'],$r['country']?:'Unknown',$r['returning']?'Yes':'No',empty($r['device'])?'Not collected before this extension.':$r['device'].' | Server peer IP: '.(($r['network_ip']??'')?:'Unavailable').' | Forwarding header: '.(!empty($r['forwarding'])?'Present, unverified':'Not observed').'. VPN/proxy status: not assessed for this visit.'] as $v){echo '<td>'.esc_html((string)$v).'</td>';}echo '</tr>';}
     if(!$rows)echo '<tr><td colspan="8">No consented sessions captured yet.</td></tr>';
     echo '</tbody></table></div>';
 }
