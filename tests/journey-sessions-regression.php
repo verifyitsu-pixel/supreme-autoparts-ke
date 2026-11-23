@@ -26,3 +26,15 @@ check(str_contains(sa_journey_device('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 li
 check(str_contains(sa_journey_device('Mozilla/5.0 (Linux; Android 14) Chrome/120 Mobile Safari/537.36'),'Android'),'coarse Android class');
 check(str_contains(sa_journey_device('Mozilla/5.0 (Windows NT 10.0) Chrome/120 Edg/120'),'Edge'),'browser precedence');
 echo "PASS peer provenance, forwarded-header spoof rejection, coarse device classes\n";
+
+function add_filter(...$a){}
+require __DIR__.'/../wp-content/mu-plugins/sa-order-journey.php';
+$fixture=new class {function get_customer_ip_address(){return '8.8.8.8';}function get_customer_user_agent(){return 'HeadlessChrome/120';}};
+$f=sa_order_journey_facts($fixture);
+check(str_contains($f['IP format assessment'],'Valid public'),'syntax assessed without asserting identity');
+check(str_contains($f['Browser automation assessment'],'present'),'saved browser token assessed');
+check(str_contains($f['Timezone'],'Not collected')&&str_contains($f['Browser fingerprint'],'Not collected'),'unavailable additions honest');
+$code=file_get_contents(__DIR__.'/../wp-content/mu-plugins/sa-order-journey.php');
+check(str_contains($code,'visitor=%s AND session=%s AND ts<=%s'),'exact checkout IDs and pre-order cutoff');
+check(!str_contains($code,'wp_remote_')&&!str_contains($code,'<script>'),'read-only local assessment, no external/device probes');
+echo "PASS unified order facts, local assessments, exact-session cutoff, no new collection\n";
