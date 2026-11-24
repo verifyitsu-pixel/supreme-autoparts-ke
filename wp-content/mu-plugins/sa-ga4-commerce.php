@@ -29,6 +29,7 @@ add_action('wc_ajax_sa_ga4_commerce_pending',static function(): void {
     nocache_headers(); wp_send_json(sa_ga4_commerce_drain());
 });
 add_action('wp_footer',static function(): void {
+    if (function_exists('sa_tracking_policy_page') && sa_tracking_policy_page()) { return; }
     if (!function_exists('sa_ga4_allowed') || !sa_ga4_allowed() || !function_exists('sa_ga4_id') || sa_ga4_id()==='') { return; }
     $events=sa_ga4_commerce_drain();
     if (function_exists('is_product') && is_product()) {
