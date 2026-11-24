@@ -20,3 +20,8 @@ function sa_tracking_text(string $text): string {
     $text = preg_replace('~\?[^\s|]*~', '', $text);
     return preg_replace('~[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}~i', '[private]', $text);
 }
+
+/** Disclosure pages stay readable without optional browser tracking. */
+function sa_tracking_policy_page(): bool {
+    return function_exists('is_page') && is_page(['privacy-policy', 'cookie-policy']);
+}

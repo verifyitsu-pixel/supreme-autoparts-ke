@@ -280,6 +280,7 @@ add_action('sa_analytics_prune', static function (): void {
 /* ----------------------------------------------------------------------- */
 
 add_action('wp_head', static function (): void {
+    if (function_exists('sa_tracking_policy_page') && sa_tracking_policy_page()) { return; }
     $dfid = sa_analytics_datafast_id();
     if ($dfid === '' || is_admin()) {
         return;
