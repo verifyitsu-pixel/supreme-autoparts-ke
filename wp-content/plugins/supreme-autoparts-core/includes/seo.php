@@ -439,7 +439,7 @@ function sa_seo_context(): array
         if ($slug === 'shipping-to-kenya') {
             $desc = 'Free Nairobi delivery for orders weighing 10 kg or less. Other Kenya courier rates depend on destination and weight. Store pickup is free.';
         } elseif ($slug === 'free-shipping') {
-            $desc = 'Free shipping on USA orders, with no minimum order amount. Special-order or backordered items follow their confirmed availability dates.';
+            $desc = 'See delivery rules for your destination, including free USA shipping, Nairobi weight limits, courier rates and store pickup. Confirm options at checkout.';
         }
         if ($override_t === '' && is_string($slug)) {
             $special = [
