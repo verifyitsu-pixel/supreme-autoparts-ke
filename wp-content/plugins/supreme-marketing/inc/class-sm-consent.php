@@ -117,12 +117,12 @@ function sm_footer_subscribe_form(): void
 {
     $joined = isset($_GET['sm_joined']) ? sanitize_key((string) $_GET['sm_joined']) : '';
     echo '<div class="sm-foot-sub" style="margin-top:1rem;max-width:340px;">'
-        . '<p style="margin:0 0 .5rem;font-weight:700;font-size:.95rem;color:#F4F4F5;">New parts, restocks & offers</p>'
+        . '<p style="margin:0 0 .5rem;font-weight:700;font-size:.95rem;color:#171717;">New parts, restocks & offers</p>'
         . '<form action="' . esc_url(admin_url('admin-post.php')) . '" method="post" style="display:flex;gap:.5rem;">'
         . wp_nonce_field('sm_subscribe', 'sm_nonce', true, false)
         . '<input type="hidden" name="action" value="sm_subscribe">'
         . '<input type="email" name="sm_email" aria-label="Email address for parts and offers" required autocomplete="email" placeholder="Your email" '
-        . 'style="flex:1;min-width:0;padding:.6rem .8rem;border-radius:8px;border:1px solid rgba(244,244,245,.25);background:rgba(244,244,245,.08);color:#F4F4F5;font-size:.9rem;">'
+        . 'style="flex:1;min-width:0;padding:.6rem .8rem;border-radius:8px;border:1px solid #767676;background:#fff;color:#171717;font-size:.9rem;">'
         . '<button type="submit" style="padding:.6rem 1rem;border-radius:8px;border:0;background:#F5A623;color:#111;font-weight:700;font-size:.9rem;cursor:pointer;">Join</button>'
         . '</form>';
     if ($joined === 'done') {
@@ -130,7 +130,7 @@ function sm_footer_subscribe_form(): void
     } elseif ($joined === 'invalid') {
         echo '<p style="margin:.5rem 0 0;font-size:.8rem;color:#F5A623;">That email address does not look right. Try again?</p>';
     } else {
-        echo '<p style="margin:.5rem 0 0;font-size:.78rem;color:rgba(244,244,245,.55);">New parts, restocks and offers. Unsubscribe anytime.</p>';
+        echo '<p style="margin:.5rem 0 0;font-size:.78rem;color:#595959;">New parts, restocks and offers. Unsubscribe anytime.</p>';
     }
     echo '</div>';
 }
