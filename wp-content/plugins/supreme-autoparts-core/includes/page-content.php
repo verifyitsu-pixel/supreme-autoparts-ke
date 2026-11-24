@@ -389,23 +389,35 @@ add_filter('the_content', static function (string $content): string {
 function sa_core_garage_comparison_html(): string
 {
     return <<<'HTML'
-<section id="nairobi-garage-comparison" aria-labelledby="nairobi-garage-comparison-title">
-<h2 id="nairobi-garage-comparison-title">AutoXpress or Supreme Autoparts for car service in Nairobi?</h2>
-<p>Comparing garages for wheel alignment, brake work or a warning-light check? Start with the work your car needs, the location you can reach and the quote you receive for that vehicle.</p>
-<h3>What each garage lists</h3>
+<section id="nairobi-garage-comparison" style="scroll-margin-top:300px" aria-labelledby="nairobi-garage-comparison-title">
+<h2 id="nairobi-garage-comparison-title">Compare Nairobi garages: AutoXpress, Kingsway Tyres, CFAO and more</h2>
+<p>Comparing AutoXpress, Kingsway Tyres, CFAO Mobility, AutoFast or Insignia Bosch Service Centre with Supreme Autoparts for car service in Nairobi? Start with the work your car needs, the location you can reach and the quote you receive for that vehicle.</p>
+<h3>AutoXpress and Supreme: listed service overlap</h3>
 <h4>Wheels and tyres</h4>
 <p><strong>AutoXpress Kenya:</strong> wheel alignment, wheel balancing and tyre rotation. <strong>Supreme Autoparts:</strong> 3D wheel alignment, wheel balancing and tyre rotation.</p>
 <h4>Inspection and fault finding</h4>
 <p><strong>AutoXpress Kenya:</strong> a 30-point inspection and electronic diagnosis. <strong>Supreme Autoparts:</strong> electronic diagnostics with a system scan and written repair recommendation.</p>
 <h4>Brakes and suspension</h4>
 <p><strong>AutoXpress Kenya:</strong> brake pad fitting, brake disc fitting, shock absorber replacement and coil spring replacement. <strong>Supreme Autoparts:</strong> brake pad replacement and shock absorber/suspension work.</p>
+<h3>Kingsway Tyres or Supreme for alignment and diagnostics?</h3>
+<p>Kingsway Tyres lists wheel alignment, wheel balancing, tyre rotation, oil services, electrical diagnosis, suspension services and full vehicle inspection. Supreme lists alignment, balancing, rotation, oil and filter changes, electronic diagnostics and suspension work. For a wheel or warning-light problem, compare the checks included and the vehicle-specific quote rather than assuming the same service name means the same work.</p>
+<p><a href="https://www.kingswaytyres.com/all-services">Check Kingsway Tyres' current services</a></p>
+<h3>CFAO Mobility Kenya or an independent garage?</h3>
+<p>CFAO Mobility Kenya lists vehicle service, parts and accessories, with a brand portfolio including Toyota, Yamaha, Volkswagen, Suzuki, Mercedes-Benz, Hino and others. If your visit concerns a manufacturer warranty, a brand-specific service programme or a particular vehicle, ask the relevant CFAO branch what is covered. For Supreme, check the current service list and confirm your vehicle and required work before booking; do not assume every model or specialist procedure is supported.</p>
+<p><a href="https://cfaomobility.co.ke/">See CFAO Mobility Kenya</a> · <a href="https://cfaomobility.co.ke/our-location/">Find a CFAO location</a></p>
+<h3>AutoFast by CFAO or Supreme for maintenance?</h3>
+<p>CFAO describes AutoFast as its Pan-African quick-service network. Before comparing a quick-service visit with a Supreme booking, ask which maintenance items, checks and parts the quote includes. Supreme's oil and filter changes, wheel services and diagnostics are listed separately, so choose the work your vehicle needs rather than an assumed package.</p>
+<p><a href="https://cfaomobility.co.ke/cfao-mobility-brands/autofast/">Read CFAO's AutoFast information</a></p>
+<h3>Insignia Bosch Service Centre or Supreme?</h3>
+<p>Insignia's service-centre page lists computerized diagnostics, brakes and service repairs, wheel alignment and balancing, electrical and electronic repairs, and transmission service. Supreme lists electronic diagnostics, brake pad replacement, wheel services and automatic transmission service. A fluid service and a fault repair are different scopes: describe your symptoms and ask for the diagnosis, proposed work and quote for your vehicle before proceeding.</p>
+<p><a href="https://insigniagroup.co.ke/service-center/">Check Insignia's service-centre list</a></p>
 <h3>Before you choose</h3>
 <p>Send your vehicle's year, make and model, and explain the problem. Ask what the proposed work includes, whether parts are included, and the price for your vehicle before authorizing repairs. A scan, an inspection and a repair are different jobs, so compare the actual scope rather than the service name alone.</p>
 <p>At Supreme, ECU programming, vehicle coding and software updates start with a 60-minute assessment. Compatibility, the work, final price and timing are checked and quoted before proceeding.</p>
 <h3>Planning your visit</h3>
 <p>Check the current AutoXpress service and branch information when planning an AutoXpress visit. Supreme's Nairobi garage is at Ground Floor, Midax Plaza, Kangundo Road, Njiru. Choose a service and time online, with drop-off or pickup options.</p>
 <p><a href="/services/">See Supreme's current car services</a></p>
-<p><small>Service lists checked 25 November 2026: <a href="https://auto-xpress.co.ke/services">AutoXpress Kenya services</a> and <a href="/services/">Supreme Autoparts services</a>.</small></p>
+<p><small>Source pages checked 25 November 2026. Additional provider sources are linked beside each comparison. Service lists: <a href="https://auto-xpress.co.ke/services">AutoXpress Kenya services</a> and <a href="/services/">Supreme Autoparts services</a>.</small></p>
 </section>
 HTML;
 }
@@ -414,5 +426,5 @@ add_filter('the_content', static function (string $content): string {
         || str_contains($content, 'id="nairobi-garage-comparison"')) {
         return $content;
     }
-    return '<p><a href="#nairobi-garage-comparison">Compare AutoXpress and Supreme Autoparts for Nairobi car service</a></p>' . $content . sa_core_garage_comparison_html();
+    return '<p><a href="#nairobi-garage-comparison">Compare Nairobi garages and Supreme Autoparts</a></p>' . $content . sa_core_garage_comparison_html();
 }, 25);
