@@ -201,6 +201,7 @@ html,body{overflow-x:clip;max-width:100%}
 .sa-rsbar a{color:var(--ed-ink);font-weight:600;text-decoration:underline;text-decoration-color:var(--ed-amber);text-underline-offset:3px}
 .sa-rsbar__tel{font-weight:500!important;text-decoration:none!important}
 @media(max-width:700px){.sa-rsbar__in{justify-content:center;gap:10px;font-size:12.5px}.sa-rsbar__tel{display:none}}
+@media(max-width:700px){.sa-rsbar:not(.sa-rsbar--intl) .sa-rsbar__in{flex-wrap:wrap;white-space:normal;gap:3px 10px}.sa-rsbar:not(.sa-rsbar--intl) .sa-rsbar__in span{text-align:center}}
 .sa-ed-rs{padding-top:96px}
 .sa-ed-rs__in{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:72px;align-items:start;border-top:1px solid var(--ed-ink);padding-top:48px}
 .sa-ed-rs h2{font-size:40px;font-weight:600;letter-spacing:-.03em;line-height:1.08;margin:0}
