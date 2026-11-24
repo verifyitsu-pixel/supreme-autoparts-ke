@@ -149,6 +149,8 @@ function sa_seo_virtual_context(): ?array
         'thanks' => ['roadside/thanks/', 'Application received', 'Roadside responder application confirmation.', true],
     ];
     if ($rs !== '') return $roadside[$rs] ?? null;
+    $path = trim((string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH), '/');
+    if ($path === 'pricing') return ['pricing/', 'Car Service Prices in Nairobi', 'Compare vehicle software, diagnostics and maintenance services. See assessment fees and booking details before arranging your visit.', false];
     return null;
 }
 
