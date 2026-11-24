@@ -762,7 +762,7 @@ function sa_seo_faqs_for_current(): array
     // These legacy FAQs are not visible on their pages; shipping terms also changed.
     // Preserve page copy and other entities without emitting hidden FAQ claims.
     $shipping_slug = (string) get_post_field('post_name', $id);
-    if (in_array($shipping_slug, ['how-to-order', 'free-shipping', 'shipping-to-kenya', 'guides'], true)) {
+    if (in_array($shipping_slug, ['how-to-order', 'free-shipping', 'shipping-to-kenya', 'guides', 'fitment-guide', 'auto-parts-kenya', 'performance-truck-parts', 'contact'], true)) {
         return [];
     }
     $raw = get_post_meta($id, SA_SEO_FAQ_META, true);
