@@ -436,7 +436,10 @@ function sa_seo_context(): array
         // Known high-intent pages — stronger dual-market titles when no override.
         $slug = get_post_field('post_name', $id);
         // Keep this shipping snippet aligned with the current visible delivery terms.
-        if ($slug === 'about-us') {
+        if ($slug === 'guides') {
+            $title = 'Nairobi Garage Comparison & Parts Guides | ' . $site;
+            $desc = 'Compare AutoXpress, Kingsway Tyres, CFAO, AutoFast and Insignia Bosch service lists with Supreme. Get vehicle-specific quotes and parts-ordering help.';
+        } elseif ($slug === 'about-us') {
             $desc = 'Car and motorcycle parts, vehicle servicing and roadside help from Supreme Autoparts in Nairobi. Shop parts for delivery across Kenya and the US.';
         } elseif ($slug === 'shipping-to-kenya') {
             $desc = 'Free Nairobi delivery for orders weighing 10 kg or less. Other Kenya courier rates depend on destination and weight. Store pickup is free.';
@@ -450,7 +453,7 @@ function sa_seo_context(): array
                 'fitment-guide'     => 'Vehicle Fitment Guide | Year / Make / Model | ' . $site,
                 'auto-parts-kenya'  => 'Buy Car Parts in Kenya | Delivery to All 47 Counties | ' . $site,
                 'performance-truck-parts' => 'Performance Truck & Off-Road Parts | ' . $site,
-                'guides'            => 'Guides: Ordering, Fitment & Shipping | ' . $site,
+                'guides'            => 'Nairobi Garage Comparison & Parts Guides | ' . $site,
                 'contact'           => 'Contact Us | Phone, WhatsApp & Email | ' . $site,
                 'about-us'          => $site . ' | Parts & Nairobi Garage',
             ];
