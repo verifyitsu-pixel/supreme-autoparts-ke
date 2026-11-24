@@ -54,3 +54,6 @@ check($provider->get_url_list(1)===$urls,'native provider returns allowlisted UR
 check($provider->get_url_list(2)===[] && $provider->get_url_list(0)===[],'native provider rejects other pages');
 check($provider->get_url_list(1,'private')===[] && $provider->get_max_num_pages('private')===0,'native provider rejects subtypes');
 check($provider->get_max_num_pages()===1,'native provider single bounded sitemap');
+
+$consent=file_get_contents(__DIR__.'/../wp-content/plugins/supreme-marketing/inc/class-sm-consent.php');
+check(strpos($consent,'aria-label="Email address for parts and offers"')!==false,'footer email has accessible name beyond placeholder');
