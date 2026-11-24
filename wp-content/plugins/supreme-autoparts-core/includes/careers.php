@@ -130,6 +130,56 @@ function sa_careers_roles(): array
                 'Keep order and payment records accurate',
             ],
         ],
+        'diagnostic-electrical-technician' => [
+            'title' => 'Automotive Diagnostic & Electrical Technician',
+            'blurb' => 'Find and repair vehicle electrical and electronic faults.',
+            'duties' => [
+                'Trace faults using wiring diagrams, live data and test equipment',
+                'Diagnose starting, charging, wiring and sensor problems',
+                'Repair confirmed faults and record the work completed',
+                'Check repairs before the vehicle is handed back',
+            ],
+        ],
+        'ecu-coding-technician' => [
+            'title' => 'ECU Programming & Vehicle Coding Technician',
+            'blurb' => 'Handle vehicle software assessments, programming and coding.',
+            'duties' => [
+                'Check vehicle compatibility and record the requested work',
+                'Diagnose software-related faults before recommending changes',
+                'Carry out approved programming, coding and software updates',
+                'Keep before-and-after records and verify vehicle functions',
+            ],
+        ],
+        'automatic-transmission-technician' => [
+            'title' => 'Automatic Transmission Technician',
+            'blurb' => 'Diagnose and repair automatic transmission faults.',
+            'duties' => [
+                'Inspect transmission faults and explain the findings',
+                'Carry out approved servicing and repair work',
+                'Check fluid condition, leaks and related components',
+                'Record repairs and check operation after the work',
+            ],
+        ],
+        'automotive-ac-technician' => [
+            'title' => 'Automotive Air Conditioning Technician',
+            'blurb' => 'Diagnose and service vehicle air conditioning systems.',
+            'duties' => [
+                'Test cooling performance and trace system faults',
+                'Check for leaks and inspect AC components',
+                'Carry out approved repairs and refrigerant work safely',
+                'Verify cooling performance and record completed work',
+            ],
+        ],
+        'suspension-alignment-technician' => [
+            'title' => 'Suspension, Steering & Wheel Alignment Technician',
+            'blurb' => 'Diagnose handling faults and set up suspension and steering correctly.',
+            'duties' => [
+                'Inspect suspension, steering and tyre wear',
+                'Carry out approved component replacement and adjustments',
+                'Perform wheel alignment and balancing checks',
+                'Check the finished work and record the results',
+            ],
+        ],
     ];
 }
 
