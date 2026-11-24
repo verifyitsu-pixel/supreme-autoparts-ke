@@ -28,7 +28,7 @@ add_action('wp_enqueue_scripts', static function (): void {
         'supreme-autoparts-main',
         SA_THEME_URI . '/assets/css/main.css',
         ['supreme-autoparts'],
-        SA_THEME_VERSION
+        SA_THEME_VERSION . '.enquiry-contrast1'
     );
     wp_add_inline_style('supreme-autoparts-main', <<<'CSS'
 
