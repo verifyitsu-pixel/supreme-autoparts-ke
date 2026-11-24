@@ -23,3 +23,11 @@ $GLOBALS['q']=['sa_svc_view'=>'detail','sa_svc'=>'oil-change'];check(sa_seo_cano
 $GLOBALS['q']=['sa_svc_view'=>'detail','sa_svc'=>'missing'];check(sa_seo_virtual_context()===null,'unknown detail not invented');
 $GLOBALS['q']=[];check(sa_seo_virtual_context()===null,'ordinary pages untouched');
 check(strpos(file_get_contents(__DIR__.'/../wp-content/plugins/supreme-autoparts-core/includes/seo.php'),'$desc = $virtual[2]')!==false,'virtual metadata used before homepage fallback');
+
+$_SERVER['REQUEST_URI']='/pricing/?sa_view=ke';check(sa_seo_canonical_url()==='https://example.test/pricing/','pricing trailing slash query-free canonical');check(!sa_seo_should_noindex(),'pricing remains indexable');check(sa_seo_virtual_context()[1]==='Car Service Prices in Nairobi','pricing specific title');
+unset($_SERVER['REQUEST_URI']);
+
+$header=file_get_contents(__DIR__.'/../wp-content/themes/supreme-autoparts/header.php');
+$front=file_get_contents(__DIR__.'/../wp-content/themes/supreme-autoparts/front-page.php');
+check(strpos($header,'Skip to main content')!==false && strpos($header,'m.focus()')!==false,'visible-on-focus skip link targets actual main');
+check(strpos($front,'<main id="primary" tabindex="-1">')!==false && strpos($front,"echo '</main>'")!==false,'homepage main landmark encloses content');
