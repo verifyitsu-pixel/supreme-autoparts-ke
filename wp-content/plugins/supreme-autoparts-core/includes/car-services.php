@@ -1239,12 +1239,16 @@ add_action('wp_footer', static function (): void {
     ?>
 <script>
 (function(){var s=document.querySelector('[data-sa-side]');if(!s)return;
-function o(e){if(e)e.preventDefault();s.classList.add('is-open');s.setAttribute('aria-hidden','false');document.body.classList.add('sa-side-open');}
-function c(){s.classList.remove('is-open');s.setAttribute('aria-hidden','true');document.body.classList.remove('sa-side-open');}
+var panel=s.querySelector('[role="dialog"]'),opener=null;
+function focusables(){return Array.prototype.filter.call(panel.querySelectorAll('a[href],button,input,select,textarea,[tabindex]'),function(el){return !el.disabled&&el.tabIndex>=0&&el.getClientRects().length>0&&getComputedStyle(el).visibility!=='hidden';});}
+function firstFocus(){var close=panel.querySelector('button[data-sa-side-close]'),items=focusables();(close||items[0]||panel).focus();}
+function o(e){if(e)e.preventDefault();opener=e?e.target.closest('[data-sa-side-open],[data-sa-nav-toggle]'):document.activeElement;s.classList.add('is-open');s.setAttribute('aria-hidden','false');document.body.classList.add('sa-side-open');if(opener)opener.setAttribute('aria-expanded','true');firstFocus();}
+function c(){if(!s.classList.contains('is-open'))return;s.classList.remove('is-open');s.setAttribute('aria-hidden','true');document.body.classList.remove('sa-side-open');if(opener){opener.setAttribute('aria-expanded','false');if(opener.isConnected)opener.focus();}}
 document.addEventListener('click',function(e){var t=e.target.closest('[data-sa-side-open],[data-sa-nav-toggle]');if(t){e.stopImmediatePropagation();o(e);return;}
 if(e.target.closest('[data-sa-side-close]'))c();
 if(e.target.closest('[data-sa-side-cart]')){e.preventDefault();c();var b=document.querySelector('[data-sa-cart-open]');if(b)b.click();}},true);
-document.addEventListener('keydown',function(e){if(e.key==='Escape')c();});})();
+document.addEventListener('focusin',function(e){if(s.classList.contains('is-open')&&!panel.contains(e.target))firstFocus();});
+document.addEventListener('keydown',function(e){if(!s.classList.contains('is-open'))return;if(e.key==='Escape'){e.preventDefault();c();return;}if(e.key!=='Tab')return;var items=focusables(),first=items[0],last=items[items.length-1];if(!first){e.preventDefault();firstFocus();return;}if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}});})();
 </script>
     <?php
 }, 20);
