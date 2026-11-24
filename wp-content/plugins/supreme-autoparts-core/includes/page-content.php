@@ -384,3 +384,35 @@ add_filter('the_content', static function (string $content): string {
     }
     return $content . '<h2>Refund processing time</h2><p>Approved refunds are processed within 1-5 working days to the original payment method, depending on your bank.</p>';
 }, 20);
+
+/** A sourced garage comparison on the existing public Guides page only. */
+function sa_core_garage_comparison_html(): string
+{
+    return <<<'HTML'
+<section id="nairobi-garage-comparison" aria-labelledby="nairobi-garage-comparison-title">
+<h2 id="nairobi-garage-comparison-title">AutoXpress or Supreme Autoparts for car service in Nairobi?</h2>
+<p>Comparing garages for wheel alignment, brake work or a warning-light check? Start with the work your car needs, the location you can reach and the quote you receive for that vehicle.</p>
+<h3>What each garage lists</h3>
+<h4>Wheels and tyres</h4>
+<p><strong>AutoXpress Kenya:</strong> wheel alignment, wheel balancing and tyre rotation. <strong>Supreme Autoparts:</strong> 3D wheel alignment, wheel balancing and tyre rotation.</p>
+<h4>Inspection and fault finding</h4>
+<p><strong>AutoXpress Kenya:</strong> a 30-point inspection and electronic diagnosis. <strong>Supreme Autoparts:</strong> electronic diagnostics with a system scan and written repair recommendation.</p>
+<h4>Brakes and suspension</h4>
+<p><strong>AutoXpress Kenya:</strong> brake pad fitting, brake disc fitting, shock absorber replacement and coil spring replacement. <strong>Supreme Autoparts:</strong> brake pad replacement and shock absorber/suspension work.</p>
+<h3>Before you choose</h3>
+<p>Send your vehicle's year, make and model, and explain the problem. Ask what the proposed work includes, whether parts are included, and the price for your vehicle before authorizing repairs. A scan, an inspection and a repair are different jobs, so compare the actual scope rather than the service name alone.</p>
+<p>At Supreme, ECU programming, vehicle coding and software updates start with a 60-minute assessment. Compatibility, the work, final price and timing are checked and quoted before proceeding.</p>
+<h3>Planning your visit</h3>
+<p>Check the current AutoXpress service and branch information when planning an AutoXpress visit. Supreme's Nairobi garage is at Ground Floor, Midax Plaza, Kangundo Road, Njiru. Choose a service and time online, with drop-off or pickup options.</p>
+<p><a href="/services/">See Supreme's current car services</a></p>
+<p><small>Service lists checked 25 November 2026: <a href="https://auto-xpress.co.ke/services">AutoXpress Kenya services</a> and <a href="/services/">Supreme Autoparts services</a>.</small></p>
+</section>
+HTML;
+}
+add_filter('the_content', static function (string $content): string {
+    if (!is_page('guides') || !is_main_query() || !in_the_loop()
+        || str_contains($content, 'id="nairobi-garage-comparison"')) {
+        return $content;
+    }
+    return '<p><a href="#nairobi-garage-comparison">Compare AutoXpress and Supreme Autoparts for Nairobi car service</a></p>' . $content . sa_core_garage_comparison_html();
+}, 25);
