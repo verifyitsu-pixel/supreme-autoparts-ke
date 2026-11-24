@@ -1079,7 +1079,7 @@ body.sa-cart-open { overflow: hidden; }
   font-weight: 650;
   letter-spacing: .1em;
   text-transform: uppercase;
-  color: var(--sa-accent);
+  color: var(--sa-heading);
 }
 .sa-enquire__title {
   margin: 0 0 .55rem;
@@ -1112,7 +1112,7 @@ body.sa-cart-open { overflow: hidden; }
   font-weight: 600;
   color: var(--sa-heading);
 }
-.sa-enquire__req { color: var(--sa-accent); }
+.sa-enquire__req { color: var(--sa-heading); }
 .sa-enquire__rec,
 .sa-enquire__opt {
   font-size: .68rem;
@@ -1136,7 +1136,7 @@ body.sa-cart-open { overflow: hidden; }
 .sa-enquire__field .input-text:focus,
 .sa-enquire__field textarea.input-text:focus {
   outline: none;
-  border-color: var(--sa-accent);
+  border-color: var(--sa-heading);
 }
 .sa-enquire__field .input-text.is-invalid {
   border-color: var(--sa-danger);
@@ -3018,4 +3018,4 @@ html, body { overflow-x: clip; }
 .woocommerce div.product div.images.woocommerce-product-gallery {
   position: relative;
   top: auto;
-    }
+}
