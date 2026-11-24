@@ -57,3 +57,6 @@ check($provider->get_max_num_pages()===1,'native provider single bounded sitemap
 
 $consent=file_get_contents(__DIR__.'/../wp-content/plugins/supreme-marketing/inc/class-sm-consent.php');
 check(strpos($consent,'aria-label="Email address for parts and offers"')!==false,'footer email has accessible name beyond placeholder');
+
+$footer=substr($consent,strpos($consent,'function sm_footer_subscribe_form'));
+check(strpos($footer,'color:#171717;')!==false && strpos($footer,'color:#595959;')!==false && strpos($footer,'color:#F4F4F5;')===false,'footer subscribe text contrasts with white footer');
