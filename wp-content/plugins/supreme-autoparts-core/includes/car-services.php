@@ -677,7 +677,7 @@ function sa_svc_render_index(): void
           <?php foreach (sa_svc_catalog() as $slug => $s) : ?>
             <article class="sa-svc-card">
               <div class="sa-svc-card__top"><div class="sa-svc-card__ico"><?php echo sa_svc_icon($s['icon']); ?></div><span class="sa-svc-tag"><?php echo esc_html($s['group']); ?></span></div>
-              <h4><a href="<?php echo esc_url(sa_svc_url($slug)); ?>"><?php echo esc_html($s['name']); ?></a></h4>
+              <h3 style="margin:0;font-size:18px"><a style="color:var(--svc-ink);text-decoration:none" href="<?php echo esc_url(sa_svc_url($slug)); ?>"><?php echo esc_html($s['name']); ?></a></h3>
               <p><?php echo esc_html($s['summary']); ?></p>
               <div class="sa-svc-card__foot">
                 <span class="sa-svc-price<?php echo sa_svc_price_label($s, $region) === 'Quote on request' ? ' is-quote' : ''; ?>"><?php echo esc_html(sa_svc_price_label($s, $region)); ?></span>
