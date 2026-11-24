@@ -264,3 +264,6 @@ html,body{overscroll-behavior-x:none}
 /* iOS pan fix: make scrollers/cards the containing block so absolutely-positioned children
    (.screen-reader-text price/add-to-cart labels, sale badges) can't escape the scroller and widen the root. */
 .sa-hscroll,.sa-reco__list,ul.products,.sa-product-card,.sa-reco,.sa-reco-wrap{position:relative}
+
+/* Keep small public service labels readable on their existing pale backgrounds. */
+.sa-svc-catalog .sa-svc-tag,.sa-svc-catalog > .sa-svc-fine{color:var(--svc-ink)}
