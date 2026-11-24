@@ -267,3 +267,6 @@ html,body{overscroll-behavior-x:none}
 
 /* Keep small public service labels readable on their existing pale backgrounds. */
 .sa-svc-catalog .sa-svc-tag,.sa-svc-catalog > .sa-svc-fine{color:var(--svc-ink)}
+
+/* Give service price and duration their own space when a card is narrow. */
+.sa-svc-catalog .sa-svc-card__foot{flex-wrap:wrap;gap:4px 12px}
