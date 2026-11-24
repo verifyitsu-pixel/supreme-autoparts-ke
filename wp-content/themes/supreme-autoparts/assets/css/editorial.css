@@ -348,3 +348,10 @@ html,body{overscroll-behavior-x:none}
   }
   .sa-nav__link:active { background: var(--sa-border, #dae3ea); }
 }
+
+/* Keep the footer brand and signup within narrow grid tracks. */
+@media(max-width:700px){
+  .sa-foot__brandcol{min-width:0}
+  .sa-foot__brand{max-width:100%}
+  .sa-foot__email a{overflow-wrap:anywhere}
+}
