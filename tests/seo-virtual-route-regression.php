@@ -60,3 +60,6 @@ check(strpos($consent,'aria-label="Email address for parts and offers"')!==false
 
 $footer=substr($consent,strpos($consent,'function sm_footer_subscribe_form'));
 check(strpos($footer,'color:#171717;')!==false && strpos($footer,'color:#595959;')!==false && strpos($footer,'color:#F4F4F5;')===false,'footer subscribe text contrasts with white footer');
+
+$roadside=file_get_contents(__DIR__.'/../wp-content/plugins/supreme-autoparts-core/includes/roadside.php');
+check(strpos($roadside,'name="when_at" aria-label="Preferred date and time"')!==false,'roadside schedule field has a distinct accessible name');
