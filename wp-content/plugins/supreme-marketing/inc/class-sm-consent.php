@@ -121,7 +121,7 @@ function sm_footer_subscribe_form(): void
         . '<form action="' . esc_url(admin_url('admin-post.php')) . '" method="post" style="display:flex;gap:.5rem;">'
         . wp_nonce_field('sm_subscribe', 'sm_nonce', true, false)
         . '<input type="hidden" name="action" value="sm_subscribe">'
-        . '<input type="email" name="sm_email" required autocomplete="email" placeholder="Your email" '
+        . '<input type="email" name="sm_email" aria-label="Email address for parts and offers" required autocomplete="email" placeholder="Your email" '
         . 'style="flex:1;min-width:0;padding:.6rem .8rem;border-radius:8px;border:1px solid rgba(244,244,245,.25);background:rgba(244,244,245,.08);color:#F4F4F5;font-size:.9rem;">'
         . '<button type="submit" style="padding:.6rem 1rem;border-radius:8px;border:0;background:#F5A623;color:#111;font-weight:700;font-size:.9rem;cursor:pointer;">Join</button>'
         . '</form>';
