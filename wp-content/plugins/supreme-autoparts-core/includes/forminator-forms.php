@@ -65,6 +65,11 @@ function sa_ff_defs(): array
                         'mazda-specialist' => 'Mazda Specialist',
                         'custom-mods-technician' => 'Custom Mods Technician',
                         'online-orders-coordinator' => 'Online Orders & Receipts Coordinator',
+                        'diagnostic-electrical-technician' => 'Automotive Diagnostic & Electrical Technician',
+                        'ecu-coding-technician' => 'ECU Programming & Vehicle Coding Technician',
+                        'automatic-transmission-technician' => 'Automatic Transmission Technician',
+                        'automotive-ac-technician' => 'Automotive Air Conditioning Technician',
+                        'suspension-alignment-technician' => 'Suspension, Steering & Wheel Alignment Technician',
                         'general' => 'General application',
                     ]),
                 ])),
@@ -312,10 +317,10 @@ add_action('init', static function (): void {
 
 // Update careers only. Other forms and notification families are outside this fee change.
 add_action('init',static function(){
-    if(get_option('sa_careers_fee_form_ver')==='7' || !class_exists('Forminator_API'))return;
+    if(get_option('sa_careers_fee_form_ver')==='8' || !class_exists('Forminator_API'))return;
     $ids=(array)get_option('sa_forminator_forms',[]);$id=(int)($ids['careers']??0);if(!$id || !get_post_status($id))return;
     $def=sa_ff_defs()['careers'];$r=Forminator_API::update_form($id,$def['wrappers'],sa_ff_settings($def['name'],$def['settings']),'publish',$def['notifications']);
-    if(!is_wp_error($r))update_option('sa_careers_fee_form_ver','7',false);
+    if(!is_wp_error($r))update_option('sa_careers_fee_form_ver','8',false);
 },27);
 
 function sa_ff_id(string $key): int
