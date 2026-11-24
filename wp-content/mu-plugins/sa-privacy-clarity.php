@@ -13,6 +13,7 @@ function sa_privacy_should_print(): bool {
     return !is_admin() && !(function_exists('is_user_logged_in') && is_user_logged_in() && current_user_can('manage_options'));
 }
 add_action('wp_footer', static function (): void {
+    if (function_exists('sa_tracking_policy_page') && sa_tracking_policy_page()) { return; }
     if (!sa_privacy_should_print()) { return; }
     $cfg = ['geoUrl' => '/?wc-ajax=sa_geo_resolve', 'clarityId' => sa_privacy_clarity_id(), 'privacyUrl' => function_exists('get_privacy_policy_url') ? (string) get_privacy_policy_url() : ''];
     echo '<script>window.SA_PRIVACY=' . wp_json_encode($cfg) . ';</script>';
