@@ -435,6 +435,10 @@ function sa_seo_context(): array
         }
         // Known high-intent pages — stronger dual-market titles when no override.
         $slug = get_post_field('post_name', $id);
+        // Keep this shipping snippet aligned with the current visible delivery terms.
+        if ($slug === 'shipping-to-kenya') {
+            $desc = 'Free Nairobi delivery for orders weighing 10 kg or less. Other Kenya courier rates depend on destination and weight. Store pickup is free.';
+        }
         if ($override_t === '' && is_string($slug)) {
             $special = [
                 'shipping-to-kenya' => 'Shipping Auto Parts to Kenya | Import & Delivery | ' . $site,
@@ -753,6 +757,12 @@ function sa_seo_faqs_for_current(): array
         return [];
     }
     $id = get_the_ID();
+    // These legacy stored FAQs contain superseded shipping terms and are not visible.
+    // Preserve the current page copy and other entities without emitting stale FAQ claims.
+    $shipping_slug = (string) get_post_field('post_name', $id);
+    if (in_array($shipping_slug, ['how-to-order', 'free-shipping', 'shipping-to-kenya'], true)) {
+        return [];
+    }
     $raw = get_post_meta($id, SA_SEO_FAQ_META, true);
     if (is_array($raw) && $raw !== []) {
         return $raw;
