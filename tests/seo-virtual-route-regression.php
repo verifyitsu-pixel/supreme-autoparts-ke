@@ -29,5 +29,5 @@ unset($_SERVER['REQUEST_URI']);
 
 $header=file_get_contents(__DIR__.'/../wp-content/themes/supreme-autoparts/header.php');
 $front=file_get_contents(__DIR__.'/../wp-content/themes/supreme-autoparts/front-page.php');
-check(strpos($header,'Skip to main content')!==false && strpos($header,'m.focus()')!==false,'visible-on-focus skip link targets actual main');
+check(strpos($header,'Skip to main content')!==false && strpos($header,'m.focus({preventScroll:true})')!==false,'visible-on-focus skip link targets actual main');
 check(strpos($front,'<main id="primary" tabindex="-1">')!==false && strpos($front,"echo '</main>'")!==false,'homepage main landmark encloses content');
