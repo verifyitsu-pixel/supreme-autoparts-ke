@@ -17,7 +17,8 @@
 .sa-rs-safety{display:flex;gap:12px;background:#fff8eb;border:1px solid #f5d79e;border-radius:var(--rs-r);padding:16px;margin:24px 0}.sa-rs-safety p{margin:4px 0 0}
 .sa-rs-links{text-align:center;margin:24px 0}
 .sa-rs-callbar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;gap:10px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);border-top:1px solid var(--sa-border,#e4e4e4);backdrop-filter:blur(8px)}
-.sa-rs-callbar .sa-svc-btn{flex:1;justify-content:center}
+.sa-rs-callbar .sa-svc-btn{flex:1;min-width:0;justify-content:center}
+@media(max-width:359px){.sa-rs-callbar{flex-direction:column}.sa-rs-callbar .sa-svc-btn{width:100%}.sa-rs{padding-bottom:144px}}
 @media(min-width:900px){.sa-rs-callbar{left:auto;right:20px;bottom:20px;border:1px solid var(--sa-border,#e4e4e4);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.12)}.sa-rs-callbar .sa-svc-btn{flex:none}}
 /* form */
 .sa-rs-form fieldset{min-width:0;border:1px solid var(--sa-border,#e4e4e4);border-radius:var(--rs-r);padding:16px;margin:0 0 16px;background:#fff}
