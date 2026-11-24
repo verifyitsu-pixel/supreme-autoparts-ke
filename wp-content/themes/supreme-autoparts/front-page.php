@@ -4,6 +4,7 @@ declare(strict_types=1);
  * Homepage template — storefront landing.
  */
 get_header();
+echo '<main id="primary" tabindex="-1">';
 
 $sa_shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
 $sa_threshold = sa_free_shipping_threshold();
@@ -313,4 +314,5 @@ if ($sa_ed_brands !== []) : ?>
 
 
 <?php
+echo '</main>';
 get_footer();
