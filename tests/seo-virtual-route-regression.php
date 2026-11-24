@@ -67,3 +67,5 @@ check(strpos($roadside,'name="when_at" aria-label="Preferred date and time"')!==
 $roadsideCss=file_get_contents(__DIR__.'/../wp-content/plugins/supreme-autoparts-core/assets/roadside.css');
 check(strpos($roadsideCss,'fieldset{min-width:0;')!==false && strpos($roadsideCss,'.sa-rs-schedule input[type=datetime-local]{width:100%;min-width:0;max-width:100%}')!==false,'roadside form fields can shrink within mobile card');
 check(strpos($roadside,'required><span>I accept the')!==false && strpos($roadside,'call.</span></label>')!==false,'roadside consent remains one wrapping text block');
+
+check(strpos($roadsideCss,'@media(max-width:359px){.sa-rs-callbar{flex-direction:column}')!==false && strpos($roadsideCss,'.sa-rs{padding-bottom:144px}')!==false,'roadside contact bar stacks with matching page clearance on narrow phones');
