@@ -582,7 +582,7 @@
 .woocommerce div.product .woocommerce-tabs ul.tabs li.active {
   background: var(--sa-bg-card); border-color: var(--sa-border);
 }
-.woocommerce div.product .woocommerce-tabs ul.tabs li.active a { color: var(--sa-accent); }
+.woocommerce div.product .woocommerce-tabs ul.tabs li.active a { color: var(--sa-heading); }
 .woocommerce div.product .woocommerce-Tabs-panel img { border-radius: var(--sa-radius); margin: 1rem 0; }
 .woocommerce-product-gallery__image.sa-cdn-gallery-extra { margin-top: .5rem; }
 .woocommerce div.product .product_meta {
@@ -3018,4 +3018,4 @@ html, body { overflow-x: clip; }
 .woocommerce div.product div.images.woocommerce-product-gallery {
   position: relative;
   top: auto;
-}
+  }
