@@ -115,6 +115,43 @@ function sa_seo_bing_verification(): string
     return is_string($opt) ? trim($opt) : '';
 }
 
+/** Known virtual routes have no queried page object. Never canonicalise them to home. */
+function sa_seo_virtual_context(): ?array
+{
+    $svc = (string) get_query_var('sa_svc_view');
+    $rs = (string) get_query_var('sa_rs_view');
+    $routes = [
+        'index' => ['services/', 'Car Services & Repairs', 'Explore car servicing and repairs at Supreme Autoparts. Check the service details and request a booking.', false],
+        'book' => ['book-service/', 'Book a Service', 'Choose a vehicle service and enter your booking details.', true],
+        'confirmed' => ['book-service/confirmed/', 'Booking confirmation', 'View your service booking confirmation.', true],
+        'pay' => ['book-service/pay/', 'Booking payment', 'Complete your service booking payment.', true],
+        'manage' => ['manage-booking/', 'Manage booking', 'Manage an existing service booking.', true],
+        'track' => ['track-order/', 'Track your order', 'Check an existing order using its reference and billing email.', true],
+        'terms' => ['booking-terms/', 'Booking Terms & Policies', 'Read the service booking, rescheduling and cancellation terms.', false],
+    ];
+    if ($svc === 'detail' && function_exists('sa_svc_catalog')) {
+        $slug = (string) get_query_var('sa_svc');
+        $catalog = sa_svc_catalog();
+        if (isset($catalog[$slug])) {
+            return ['services/' . $slug . '/', (string) $catalog[$slug]['name'], 'Read the service details and request a booking with Supreme Autoparts.', false];
+        }
+        return null;
+    }
+    if ($svc !== '') return $routes[$svc] ?? null;
+    $roadside = [
+        'index' => ['roadside/', 'Roadside Rescue & Assistance', 'Explore roadside assistance from Supreme Autoparts and request help for your vehicle.', false],
+        'terms' => ['roadside-terms/', 'Roadside Terms', 'Read the terms for roadside assistance.', false],
+        'join' => ['roadside/join/', 'Become a roadside responder', 'Read about joining the roadside responder network.', false],
+        'request' => ['roadside/request/', 'Request roadside help', 'Enter the details of your roadside assistance request.', true],
+        'status' => ['roadside/status/', 'Roadside request status', 'View an existing roadside request.', true],
+        'track' => ['roadside/track/', 'Track a roadside request', 'Look up an existing roadside request.', true],
+        'provider' => ['roadside/provider/', 'Responder dashboard', 'Manage roadside response work.', true],
+        'thanks' => ['roadside/thanks/', 'Application received', 'Roadside responder application confirmation.', true],
+    ];
+    if ($rs !== '') return $roadside[$rs] ?? null;
+    return null;
+}
+
 /**
  * Whether the current view should be noindexed (cart, checkout, account, thank-you, search).
  */
@@ -123,6 +160,8 @@ function sa_seo_should_noindex(): bool
     if (is_admin() || (defined('REST_REQUEST') && REST_REQUEST)) {
         return false;
     }
+    $virtual = sa_seo_virtual_context();
+    if ($virtual !== null && $virtual[3]) return true;
     if (function_exists('is_cart') && is_cart()) {
         return true;
     }
@@ -150,6 +189,8 @@ function sa_seo_should_noindex(): bool
  */
 function sa_seo_canonical_url(): string
 {
+    $virtual = sa_seo_virtual_context();
+    if ($virtual !== null) return home_url('/' . $virtual[0]);
     // Each archive page contains different products. Do not collapse page 2+
     // into page 1; use WordPress's permalink-aware pagination URL.
     if (!is_singular() && (int) get_query_var('paged') > 1) {
@@ -262,7 +303,11 @@ function sa_seo_context(): array
     $title = $site;
     $desc  = $default_desc;
 
-    if (is_front_page() || is_home()) {
+    $virtual = sa_seo_virtual_context();
+    if ($virtual !== null) {
+        $title = $virtual[1] . ' | ' . $site;
+        $desc = $virtual[2];
+    } elseif (is_front_page() || is_home()) {
         $title = $site . ' | Car Parts, Servicing & Roadside Help in Kenya';
         $desc  = 'Car and motorcycle parts, riding gear and accessories for Japanese, American, British and European vehicles, searchable by part number or vehicle. Delivery to all 47 counties, a garage in Nairobi, and roadside help.';
     } elseif (function_exists('is_product') && is_product()) {
