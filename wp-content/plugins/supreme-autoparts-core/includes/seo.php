@@ -133,7 +133,10 @@ function sa_seo_virtual_context(): ?array
         $slug = (string) get_query_var('sa_svc');
         $catalog = sa_svc_catalog();
         if (isset($catalog[$slug])) {
-            return ['services/' . $slug . '/', (string) $catalog[$slug]['name'], 'Read the service details and request a booking with Supreme Autoparts.', false];
+            $name = (string) $catalog[$slug]['name'];
+            $summary = trim((string) ($catalog[$slug]['summary'] ?? ''));
+            $description = $summary !== '' ? $name . '. ' . $summary : 'Read the service details and request a booking with Supreme Autoparts.';
+            return ['services/' . $slug . '/', $name, $description, false];
         }
         return null;
     }
