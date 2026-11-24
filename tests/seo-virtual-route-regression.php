@@ -1,7 +1,7 @@
 <?php
 // Isolated virtual-route SEO fixtures. No WordPress database, network or order writes.
 define('ABSPATH', __DIR__);
-function add_action(...$a){} function add_filter(...$a){} function remove_action(...$a){}
+function add_action($tag,$cb,...$a){$GLOBALS['actions'][$tag][]=$cb;} function add_filter(...$a){} function remove_action(...$a){}
 function get_query_var($k){return $GLOBALS['q'][$k]??'';}
 function home_url($p='/'){return 'https://example.test'.$p;}
 function is_admin(){return false;} function is_cart(){return false;} function is_checkout(){return false;}
@@ -31,3 +31,26 @@ $header=file_get_contents(__DIR__.'/../wp-content/themes/supreme-autoparts/heade
 $front=file_get_contents(__DIR__.'/../wp-content/themes/supreme-autoparts/front-page.php');
 check(strpos($header,'Skip to main content')!==false && strpos($header,'m.focus({preventScroll:true})')!==false,'visible-on-focus skip link targets actual main');
 check(strpos($front,'<main id="primary" tabindex="-1">')!==false && strpos($front,"echo '</main>'")!==false,'homepage main landmark encloses content');
+
+$urls=sa_seo_public_virtual_sitemap_urls();
+check(count($urls)===7,'sitemap six public routes plus actual catalog service');
+check(count(array_unique(array_column($urls,'loc')))===count($urls),'sitemap no duplicate URLs');
+foreach($urls as $entry){
+ check(array_keys($entry)===['loc'],'sitemap no invented modified dates');
+ check(strpos($entry['loc'],'?')===false && substr($entry['loc'],-1)==='/','sitemap canonical trailing slash no query');
+ check(!preg_match('~book-service/|manage-booking/|track-order/|roadside/(request|status|track|provider|thanks)/~',$entry['loc']),'sitemap excludes private flows');
+}
+abstract class WP_Sitemaps_Provider {
+ protected $name=''; protected $object_type='';
+ abstract public function get_url_list($page_num,$object_subtype='');
+ abstract public function get_max_num_pages($object_subtype='');
+}
+$registry=new class {public $providers=[];function add_provider($name,$p){$this->providers[$name]=$p;}};
+$server=(object)['registry'=>$registry];
+foreach($GLOBALS['actions']['wp_sitemaps_init'] as $cb){$cb($server);}
+check(isset($registry->providers['supreme']),'native provider registered');
+$provider=$registry->providers['supreme'];
+check($provider->get_url_list(1)===$urls,'native provider returns allowlisted URLs');
+check($provider->get_url_list(2)===[] && $provider->get_url_list(0)===[],'native provider rejects other pages');
+check($provider->get_url_list(1,'private')===[] && $provider->get_max_num_pages('private')===0,'native provider rejects subtypes');
+check($provider->get_max_num_pages()===1,'native provider single bounded sitemap');
