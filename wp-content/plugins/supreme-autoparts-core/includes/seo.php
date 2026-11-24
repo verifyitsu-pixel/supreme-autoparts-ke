@@ -1172,3 +1172,29 @@ function sa_seo_camber_buying_help(): void
     echo '</section>';
 }
 add_action('woocommerce_after_shop_loop', 'sa_seo_camber_buying_help', 20);
+
+
+/** Only public, canonical virtual pages. Private booking and request flows stay out. */
+function sa_seo_public_virtual_sitemap_urls(): array
+{
+    $paths = ['services/', 'pricing/', 'roadside/', 'booking-terms/', 'roadside-terms/', 'roadside/join/'];
+    if (function_exists('sa_svc_catalog')) {
+        foreach (array_keys(sa_svc_catalog()) as $slug) {
+            if (is_string($slug) && preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', $slug)) {
+                $paths[] = 'services/' . $slug . '/';
+            }
+        }
+    }
+    return array_map(static fn ($path): array => ['loc' => home_url('/' . $path)], array_values(array_unique($paths)));
+}
+
+add_action('wp_sitemaps_init', static function ($server): void {
+    if (!class_exists('WP_Sitemaps_Provider') || !isset($server->registry)) return;
+    $server->registry->add_provider('supreme', new class extends WP_Sitemaps_Provider {
+        public function __construct() { $this->name = 'supreme'; $this->object_type = 'supreme'; }
+        public function get_url_list($page_num, $object_subtype = '') {
+            return (int) $page_num === 1 && $object_subtype === '' ? sa_seo_public_virtual_sitemap_urls() : [];
+        }
+        public function get_max_num_pages($object_subtype = '') { return $object_subtype === '' ? 1 : 0; }
+    });
+});
