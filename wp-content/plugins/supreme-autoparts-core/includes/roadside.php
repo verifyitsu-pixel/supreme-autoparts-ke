@@ -666,7 +666,7 @@ function sa_rs_render_request(): void
         <fieldset><legend>5. Anything else?</legend>
           <label>Note <textarea name="note" rows="3" placeholder="What happened? Any warning lights? Is the car safely off the road?"></textarea></label>
           <label>Photo (optional) <input type="file" name="photo" accept="image/*,.heic,.heif"></label>
-          <div class="sa-svc-row"><label class="sa-rs-inline"><input type="radio" name="when" value="now" checked> Help now</label><label class="sa-rs-inline"><input type="radio" name="when" value="later"> Schedule for later <input type="datetime-local" name="when_at"></label></div>
+          <div class="sa-svc-row"><label class="sa-rs-inline"><input type="radio" name="when" value="now" checked> Help now</label><label class="sa-rs-inline"><input type="radio" name="when" value="later"> Schedule for later <input type="datetime-local" name="when_at" aria-label="Preferred date and time"></label></div>
         </fieldset>
         <label class="sa-rs-inline sa-rs-agree"><input type="checkbox" name="agree" value="1" required> I accept the <a href="<?php echo esc_url(home_url('/roadside-terms/')); ?>" target="_blank">Roadside Terms</a>. I understand the price is agreed on the call.</label>
         <button class="sa-svc-btn sa-svc-btn--primary sa-rs-btn--big sa-rs-submit" type="submit">Send request</button>
