@@ -8,7 +8,7 @@ function is_admin(){return false;} function is_cart(){return false;} function is
 function is_account_page(){return false;} function is_wc_endpoint_url($v){return false;}
 function is_search(){return false;} function is_404(){return false;} function is_page($v){return false;}
 function apply_filters($tag,$v){return $v;}
-function sa_svc_catalog(){return ['oil-change'=>['name'=>'Oil change']];}
+function sa_svc_catalog(){return $GLOBALS['catalog'] ?? ['oil-change'=>['name'=>'Oil change']];}
 require __DIR__.'/../wp-content/plugins/supreme-autoparts-core/includes/seo.php';
 function check($ok,$why){if(!$ok)throw new RuntimeException($why);echo "PASS $why\n";}
 foreach(['index'=>'services/','book'=>'book-service/','confirmed'=>'book-service/confirmed/','pay'=>'book-service/pay/','manage'=>'manage-booking/','track'=>'track-order/','terms'=>'booking-terms/'] as $view=>$path){
@@ -69,3 +69,16 @@ check(strpos($roadsideCss,'fieldset{min-width:0;')!==false && strpos($roadsideCs
 check(strpos($roadside,'required><span>I accept the')!==false && strpos($roadside,'call.</span></label>')!==false,'roadside consent remains one wrapping text block');
 
 check(strpos($roadsideCss,'@media(max-width:599px){.sa-rs-callbar{flex-direction:column}')!==false && strpos($roadsideCss,'.sa-rs{padding-bottom:144px}')!==false,'roadside contact bar stacks with matching page clearance on narrow phones');
+
+$GLOBALS['q']=['sa_svc_view'=>'detail','sa_svc'=>'oil-change'];
+check(sa_seo_virtual_context()[2]==='Read the service details and request a booking with Supreme Autoparts.','service metadata retains fallback when summary absent');
+$GLOBALS['catalog']=require __DIR__.'/../wp-content/plugins/supreme-autoparts-core/data/service-catalog.php';
+$serviceDescriptions=[];
+foreach($GLOBALS['catalog'] as $slug=>$service){
+ $GLOBALS['q']=['sa_svc_view'=>'detail','sa_svc'=>$slug];$context=sa_seo_virtual_context();
+ check($context[2]===$service['name'].'. '.$service['summary'],'service description uses visible catalog summary '.$slug);
+ check($context[0]==='services/'.$slug.'/' && $context[3]===false,'service route and indexability preserved '.$slug);
+ $serviceDescriptions[]=$context[2];
+}
+check(count(array_unique($serviceDescriptions))===count($serviceDescriptions),'service descriptions distinct across actual catalog');
+unset($GLOBALS['catalog']);$GLOBALS['q']=[];
