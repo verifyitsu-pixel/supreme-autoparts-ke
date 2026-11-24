@@ -24,6 +24,8 @@ if (!defined('ABSPATH')) {
 </head>
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
+<style>.sa-skip-link{position:fixed;top:8px;left:8px;transform:translateY(-160%);z-index:2147483647;background:#111;color:#fff!important;padding:12px 18px;border:3px solid #fcb900;border-radius:4px;font-size:16px;font-weight:700;text-decoration:underline}.sa-skip-link:focus{transform:translateY(0);outline:3px solid #fff;outline-offset:2px}</style>
+<a class="sa-skip-link" href="#primary" onclick="var m=document.querySelector('main');if(m){m.setAttribute('tabindex','-1');m.focus();m.scrollIntoView();return false;}">Skip to main content</a>
 
 <?php if (function_exists('is_cart') && (is_cart() || (is_checkout() && !is_order_received_page()))) : ?>
 <header class="sa-purchase-header" role="banner"><div class="sa-purchase-header__in">
