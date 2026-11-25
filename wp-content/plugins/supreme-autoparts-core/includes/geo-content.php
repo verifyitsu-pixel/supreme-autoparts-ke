@@ -192,7 +192,7 @@ add_action('wp_footer', static function (): void {
 
 /* Keep policy search previews consistent with the live 15-day product-return text. */
 add_filter('get_post_metadata', static function ($value, $object_id, $meta_key, $single) {
-    if ($meta_key === '_sa_seo_description' && get_post_field('post_name', (int) $object_id) === 'refund-policy') {
+    if ($meta_key === '_sa_seo_description' && in_array(get_post_field('post_name', (int) $object_id), ['returns', 'refund-policy'], true)) {
         $description = 'Unused products may be returned within 15 days through My Account > Returns. See the policy for conditions and vehicle-service booking terms.';
         return $single ? $description : [$description];
     }
