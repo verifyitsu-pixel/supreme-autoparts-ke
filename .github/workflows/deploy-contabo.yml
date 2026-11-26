@@ -54,6 +54,8 @@ jobs:
           php tests/ga4-payload-regression.php
           php tests/seo-virtual-route-regression.php
           php tests/returns-search-description-regression.php
+          php tests/gallery-video-regression.php
+          node tests/gallery-video-regression.cjs
           php tests/advanced-cache-bypass-regression.php
           node tests/order-experience-client-regression.js
           node tests/order-experience-loading-regression.js

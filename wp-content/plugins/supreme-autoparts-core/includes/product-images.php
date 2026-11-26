@@ -489,3 +489,32 @@ add_filter('woocommerce_placeholder_img_src', static function ($src) {
     }
     return $src;
 });
+
+/** Optional gallery video. Photos remain first; no player request before a click. */
+function sa_core_gallery_video_config($product): array
+{
+    if (!$product instanceof WC_Product || sa_core_product_image_on_hold($product)) return [];
+    $id = $product->get_id();
+    $url = (string) get_post_meta($id, '_sa_gallery_video_url', true);
+    if (!preg_match('~^https://(?:www\.)?youtube\.com/watch\?v=([A-Za-z0-9_-]{11})$~D', $url, $m)) return [];
+    $poster = (string) wp_get_attachment_image_url((int) get_post_meta($id, '_sa_gallery_video_poster_id', true), 'large');
+    if (!preg_match('~^https://~i', $poster)) return [];
+    return ['embed' => 'https://www.youtube-nocookie.com/embed/' . $m[1] . '?autoplay=1&rel=0&playsinline=1',
+        'poster' => $poster, 'label' => (string) get_post_meta($id, '_sa_gallery_video_label', true) ?: 'Product video'];
+}
+add_action('wp_enqueue_scripts', static function (): void {
+    if (!function_exists('is_product') || !is_product()) return;
+    $p = wc_get_product(get_queried_object_id());
+    if (sa_core_gallery_video_config($p) === []) return;
+    wp_enqueue_script('sa-gallery-video', SA_CORE_URL . 'assets/gallery-video.js', [], '20261126-1', true);
+    wp_enqueue_style('sa-gallery-video', SA_CORE_URL . 'assets/gallery-video.css', [], '20261126-1');
+});
+add_action('woocommerce_product_thumbnails', static function (): void {
+    global $product;
+    $c = sa_core_gallery_video_config($product);
+    if ($c === []) return;
+    printf('<div data-thumb="%1$s" data-thumb-alt="%3$s" class="woocommerce-product-gallery__image sa-gallery-video">'
+        . '<div class="sa-gallery-video__media"><img src="%1$s" alt="%3$s" data-large_image="%1$s" data-large_image_width="600" data-large_image_height="600" width="600" height="600" loading="lazy" decoding="async" />'
+        . '<button type="button" class="sa-gallery-video__play" data-embed="%2$s" aria-label="Play %3$s"><span aria-hidden="true">&#9654;</span><span>Play video</span></button></div>'
+        . '<p class="sa-gallery-video__label">%4$s</p></div>', esc_url($c['poster']), esc_url($c['embed']), esc_attr($c['label']), esc_html($c['label']));
+}, 30);
