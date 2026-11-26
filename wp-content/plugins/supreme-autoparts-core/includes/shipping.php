@@ -90,8 +90,8 @@ add_filter('woocommerce_package_rates', static function ($rates, $package) {
 /** Current delivery policy: Kenya uses its calculated couriers, including Nairobi.
  * No zone/options migration is needed: this final gate also overrides old cached configuration.
  */
-const SA_DELIVERY_POLICY_VERSION = '2026-11-18-nairobi-10kg-v4';
-/** Known shippable weight only. Missing weights cannot prove a <=10 kg order. */
+const SA_DELIVERY_POLICY_VERSION = '2026-11-26-local-no-weight-v5';
+/** Known shippable weight for existing courier/cache context; local free eligibility does not require weight. */
 function sa_delivery_contents_kg(array $contents): ?float
 {
     $kg = 0.0;
@@ -130,6 +130,28 @@ add_filter('woocommerce_cart_shipping_packages', static function ($packages) {
     return $packages;
 }, 110);
 
+/** Exact destination names only, paired with county; no radius or whole neighboring county. */
+function sa_local_delivery_name(string $name): string
+{
+    $name = strtolower(trim($name));
+    return trim(preg_replace('/[^a-z0-9]+/', ' ', $name) ?? '');
+}
+function sa_local_free_delivery_area(array $destination): bool
+{
+    if (strtoupper(trim((string) ($destination['country'] ?? ''))) !== 'KE') { return false; }
+    $state = strtoupper(trim((string) ($destination['state'] ?? '')));
+    if (in_array($state, ['KE30', 'NAIROBI', 'NAIROBI COUNTY'], true)) { return true; }
+    $towns = [
+        'KE13' => ['kiambu', 'thika', 'ruiru', 'juja', 'kikuyu', 'limuru', 'karuri', 'banana', 'banana hill', 'ruaka', 'ndenderu', 'muchatha', 'kabete', 'uthiru', 'kinoo'],
+        'KE10' => ['ngong', 'ongata rongai', 'rongai', 'kiserian', 'kitengela'],
+        'KE22' => ['athi river', 'mavoko', 'syokimau', 'mlolongo', 'joska', 'kamulu'],
+    ];
+    $aliases = ['KIAMBU' => 'KE13', 'KIAMBU COUNTY' => 'KE13', 'KAJIADO' => 'KE10', 'KAJIADO COUNTY' => 'KE10', 'MACHAKOS' => 'KE22', 'MACHAKOS COUNTY' => 'KE22'];
+    $state = $aliases[$state] ?? $state;
+    $city = sa_local_delivery_name((string) ($destination['city'] ?? ''));
+    return in_array($city, $towns[$state] ?? [], true);
+}
+
 function sa_current_delivery_rates($rates, $package)
 {
     $cc = strtoupper((string) ($package['destination']['country'] ?? ''));
@@ -146,14 +168,9 @@ function sa_current_delivery_rates($rates, $package)
         return ['sa_us_free' => new WC_Shipping_Rate('sa_us_free', $label, 0, [], 'sa_us_free')];
     }
     if ($cc === 'KE') {
-        $state = strtoupper(trim((string) ($package['destination']['state'] ?? '')));
-        $kg = array_key_exists('sa_delivery_order_kg', $package)
-            ? $package['sa_delivery_order_kg']
-            : sa_delivery_contents_kg((array) ($package['contents'] ?? []));
-        if (in_array($state, ['KE30', 'NAIROBI', 'NAIROBI COUNTY'], true)
-            && $kg !== null && $kg > 0 && $kg <= 10.0 && class_exists('WC_Shipping_Rate')) {
+        if (sa_local_free_delivery_area((array) ($package['destination'] ?? [])) && class_exists('WC_Shipping_Rate')) {
             $contents = (array) ($package['contents'] ?? []);
-            $label = 'Free Nairobi delivery (10 kg or less)';
+            $label = 'Free local delivery · No weight limit';
             if (function_exists('sa_ff_contents_unknown_special_order') && sa_ff_contents_unknown_special_order($contents)) {
                 $label .= ' · Special order: dates not confirmed';
             } elseif (function_exists('sa_ff_contents_lead') && sa_ff_contents_lead($contents) > 0) {

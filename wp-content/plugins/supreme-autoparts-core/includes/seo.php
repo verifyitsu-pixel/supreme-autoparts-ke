@@ -442,9 +442,9 @@ function sa_seo_context(): array
         } elseif ($slug === 'about-us') {
             $desc = 'Car and motorcycle parts, vehicle servicing and roadside help from Supreme Autoparts in Nairobi. Shop parts for delivery across Kenya and the US.';
         } elseif ($slug === 'shipping-to-kenya') {
-            $desc = 'Free Nairobi delivery for orders weighing 10 kg or less. Other Kenya courier rates depend on destination and weight. Store pickup is free.';
+            $desc = 'Free delivery across Nairobi and listed nearby towns with no weight limit. Other Kenya courier rates depend on destination and weight. Store pickup is free.';
         } elseif ($slug === 'free-shipping') {
-            $desc = 'See delivery rules for your destination, including free USA shipping, Nairobi weight limits, courier rates and store pickup. Confirm options at checkout.';
+            $desc = 'See delivery rules for your destination, including free USA shipping, local delivery with no weight limit, courier rates and store pickup. Confirm options at checkout.';
         }
         if ($override_t === '' && is_string($slug)) {
             $special = [
@@ -878,8 +878,8 @@ function sa_seo_builtin_faqs(): array
         ],
         'free-shipping' => [
             [
-                'q' => 'What is the free shipping threshold?',
-                'a' => 'Complimentary shipping may apply when your order meets the USD threshold shown in the site banner (often around $199 equivalent). Exclusions can apply for oversized or supplier-direct items.',
+                'q' => 'Where is delivery free?',
+                'a' => 'USA shipping is free with no minimum. Local delivery across Nairobi County and the nearby towns listed on our delivery page is free with no weight limit. Other Kenya destinations use the courier rates shown at checkout.',
             ],
         ],
     ];
@@ -1079,7 +1079,7 @@ function sa_seo_seed_page_meta(): void
         ],
         'shipping-to-kenya' => [
             'title' => 'Shipping Auto Parts to Kenya | Import & Delivery | Supreme Autoparts',
-            'desc'  => 'How shipping to Kenya works: rates at checkout, free-shipping threshold, oversized exclusions, and local support via WhatsApp and email.',
+            'desc'  => 'Free delivery across Nairobi and listed nearby towns with no weight limit. Other Kenya destinations use courier rates shown at checkout.',
         ],
         'fitment-guide' => [
             'title' => 'Vehicle Fitment Guide | Year / Make / Model | Supreme Autoparts',

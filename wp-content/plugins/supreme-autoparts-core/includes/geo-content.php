@@ -31,7 +31,7 @@ function sa_gc_shipping_html(?string $zone = null): string
     $mail = 'calvin@supremeautoparts.co.ke';
     if ($z === 'KE') {
         return '<h2>Delivery in Kenya</h2>'
-            . '<ul><li><strong>Free Nairobi delivery</strong>: orders delivered within Nairobi County weighing 10 kg or less qualify. Above 10 kg, the existing weight-based courier rates apply. If a weight is not confirmed, the free-delivery offer is not applied automatically.</li>'
+            . '<ul><li><strong>Free local delivery, no weight limit</strong>: all Nairobi County, plus Kiambu, Thika, Ruiru, Juja, Kikuyu, Limuru, Karuri (Banana Hill), Ruaka, Ndenderu, Muchatha, Kabete, Uthiru, Kinoo, Ngong, Ongata Rongai, Kiserian, Kitengela, Athi River (Mavoko), Syokimau, Mlolongo, Joska and Kamulu. Select the correct county and town at checkout. Other locations in Kiambu, Kajiado and Machakos counties use the existing courier rates.</li>'
             . '<li><strong>Courier delivery</strong>: Fargo and other available couriers are calculated by destination and parcel weight. The available methods and exact price show at checkout before you pay. You can track the parcel on our site.</li>'
             . '<li><strong>Store pickup</strong> is free. Available collection times are shown at checkout for ready-to-collect items. Special-order collection dates are confirmed separately. Collect from our shop at Ground Floor, Midax Plaza, Kangundo Rd, Njiru.</li>'
             . '<li>Parts you buy with fitting stay at our garage and are not shipped.</li></ul>'
