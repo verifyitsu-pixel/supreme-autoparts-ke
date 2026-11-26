@@ -9,3 +9,7 @@
 .sa-gallery-video-active .woocommerce-product-gallery__trigger{display:none}
 .sa-gallery-video__thumb{position:relative}
 .sa-gallery-video__thumb:after{content:'\25B6';position:absolute;inset:0;display:grid;place-items:center;color:#fff;text-shadow:0 1px 4px #000;pointer-events:none}
+/* Woo zoom is for product photos, never the video poster or play control. */
+.sa-gallery-video .zoomImg{display:none!important;pointer-events:none!important}
+.sa-gallery-video__play{z-index:2}
+.sa-gallery-video__frame{z-index:3}
