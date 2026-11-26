@@ -10,3 +10,7 @@ assert.equal(frame.src,'https://www.youtube-nocookie.com/embed/x_PvR4tyqiA?autop
 const first=frame;click({target:{closest(){return button;}},preventDefault(){},stopPropagation(){}});assert.equal(frame,first,'no duplicate player');
 frame=undefined;button.getAttribute=()=> 'javascript:alert(1)';click({target:{closest(){return button;}}});assert.equal(frame,undefined,'reject tampered embed');
 console.log('PASS gallery lazy play, exact origin, one player and referrer policy');
+const css=fs.readFileSync(__dirname+'/../wp-content/plugins/supreme-autoparts-core/assets/gallery-video.css','utf8');
+assert.match(css,/\.sa-gallery-video \.zoomImg\{display:none!important;pointer-events:none!important\}/,'video poster zoom cannot cover touch control');
+assert.match(css,/\.sa-gallery-video__play\{z-index:2\}/);assert.match(css,/\.sa-gallery-video__frame\{z-index:3\}/);
+console.log('PASS video-only zoom overlay guard and player stacking');

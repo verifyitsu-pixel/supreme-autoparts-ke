@@ -506,8 +506,8 @@ add_action('wp_enqueue_scripts', static function (): void {
     if (!function_exists('is_product') || !is_product()) return;
     $p = wc_get_product(get_queried_object_id());
     if (sa_core_gallery_video_config($p) === []) return;
-    wp_enqueue_script('sa-gallery-video', SA_CORE_URL . 'assets/gallery-video.js', [], '20261126-1', true);
-    wp_enqueue_style('sa-gallery-video', SA_CORE_URL . 'assets/gallery-video.css', [], '20261126-1');
+    wp_enqueue_script('sa-gallery-video', SA_CORE_URL . 'assets/gallery-video.js', [], '20261126-2', true);
+    wp_enqueue_style('sa-gallery-video', SA_CORE_URL . 'assets/gallery-video.css', [], '20261126-2');
 });
 add_action('woocommerce_product_thumbnails', static function (): void {
     global $product;
