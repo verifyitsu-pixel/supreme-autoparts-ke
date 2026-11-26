@@ -1,0 +1,12 @@
+const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict');
+let click,frame,hidden=false,playing=false;
+const parent={appendChild(f){frame=f;}},slide={querySelector(){return frame;},classList:{add(){playing=true;}}};
+const button={getAttribute(k){return k==='data-embed'?'https://www.youtube-nocookie.com/embed/x_PvR4tyqiA?autoplay=1&rel=0&playsinline=1':'Play reference video';},closest(){return slide;},parentNode:parent,set hidden(v){hidden=v;}};
+const document={addEventListener(n,cb){click=cb;},querySelectorAll(){return [];},createElement(tag){assert.equal(tag,'iframe');return {focus(){}};}};
+vm.runInNewContext(fs.readFileSync(__dirname+'/../wp-content/plugins/supreme-autoparts-core/assets/gallery-video.js','utf8'),{document});
+assert.equal(frame,undefined,'no third party request before click');
+click({target:{closest(){return button;}},preventDefault(){},stopPropagation(){}});
+assert.equal(frame.src,'https://www.youtube-nocookie.com/embed/x_PvR4tyqiA?autoplay=1&rel=0&playsinline=1');assert.equal(frame.referrerPolicy,'strict-origin-when-cross-origin');assert.equal(hidden,true);assert.equal(playing,true);
+const first=frame;click({target:{closest(){return button;}},preventDefault(){},stopPropagation(){}});assert.equal(frame,first,'no duplicate player');
+frame=undefined;button.getAttribute=()=> 'javascript:alert(1)';click({target:{closest(){return button;}}});assert.equal(frame,undefined,'reject tampered embed');
+console.log('PASS gallery lazy play, exact origin, one player and referrer policy');
