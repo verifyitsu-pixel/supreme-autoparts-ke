@@ -442,9 +442,9 @@ function sa_seo_context(): array
         } elseif ($slug === 'about-us') {
             $desc = 'Car and motorcycle parts, vehicle servicing and roadside help from Supreme Autoparts in Nairobi. Shop parts for delivery across Kenya and the US.';
         } elseif ($slug === 'shipping-to-kenya') {
-            $desc = 'Free Nairobi delivery for orders weighing 10 kg or less. Other Kenya courier rates depend on destination and weight. Store pickup is free.';
+            $desc = 'Free delivery across Nairobi and listed nearby towns with no weight limit. Other Kenya courier rates depend on destination and weight. Store pickup is free.';
         } elseif ($slug === 'free-shipping') {
-            $desc = 'See delivery rules for your destination, including free USA shipping, Nairobi weight limits, courier rates and store pickup. Confirm options at checkout.';
+            $desc = 'See delivery rules for your destination, including free USA shipping, local delivery with no weight limit, courier rates and store pickup. Confirm options at checkout.';
         }
         if ($override_t === '' && is_string($slug)) {
             $special = [
