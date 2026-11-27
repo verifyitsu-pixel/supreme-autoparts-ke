@@ -17,3 +17,7 @@ check(str_contains($html,'&lt;script&gt;'),'untrusted caption escaped');
 foreach(['javascript:alert(1)','https://evil.test/watch?v=x_PvR4tyqiA','https://www.youtube.com/watch?v=x_PvR4tyqiA&x=1',"https://www.youtube.com/watch?v=x_PvR4tyqiA\n"] as $bad){$meta['_sa_gallery_video_url']=$bad;check(sa_core_gallery_video_config($product)===[],'reject malformed or nonapproved video URL');}
 $meta['_sa_gallery_video_url']='https://www.youtube.com/watch?v=x_PvR4tyqiA';$meta['_sa_gallery_video_poster_id']=0;check(sa_core_gallery_video_config($product)===[],'missing poster creates no slide');
 check(sa_core_gallery_video_config(null)===[],'no product safe');
+$meta['_sa_gallery_video_poster_id']=12;
+$meta['_sa_gallery_video_url']='https://www.supremeautoparts.co.ke/wp-content/uploads/2026/11/acty-reference.mp4';
+$c=sa_core_gallery_video_config($product);check($c['kind']==='native'&&str_ends_with($c['embed'],'.mp4'),'same-origin uploaded MP4 uses native player');
+foreach(['https://evil.test/a.mp4','https://www.supremeautoparts.co.ke.evil.test/wp-content/uploads/a.mp4','https://www.supremeautoparts.co.ke/wp-content/uploads/../secret.mp4','http://www.supremeautoparts.co.ke/wp-content/uploads/a.mp4'] as $bad){$meta['_sa_gallery_video_url']=$bad;check(sa_core_gallery_video_config($product)===[],'reject untrusted native video URL');}

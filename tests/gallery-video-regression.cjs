@@ -14,3 +14,10 @@ const css=fs.readFileSync(__dirname+'/../wp-content/plugins/supreme-autoparts-co
 assert.match(css,/\.sa-gallery-video \.zoomImg\{display:none!important;pointer-events:none!important\}/,'video poster zoom cannot cover touch control');
 assert.match(css,/\.sa-gallery-video__play\{z-index:2\}/);assert.match(css,/\.sa-gallery-video__frame\{z-index:3\}/);
 console.log('PASS video-only zoom overlay guard and player stacking');
+
+frame=undefined;let kind='native';
+button.getAttribute=(k)=>k==='data-video-kind'?kind:k==='data-embed'?'https://www.supremeautoparts.co.ke/wp-content/uploads/2026/11/acty-reference.mp4':'Play reference';
+document.createElement=(tag)=>{assert.equal(tag,'video');return {setAttribute(){},play(){return Promise.resolve();},focus(){}};};
+click({target:{closest(){return button;}},preventDefault(){},stopPropagation(){}});
+assert.equal(frame.controls,true);assert.equal(frame.playsInline,true);assert.equal(frame.preload,'none');assert.match(frame.src,/supremeautoparts\.co\.ke\/wp-content\/uploads/);
+console.log('PASS native same-origin video controls, inline playback and lazy load');
