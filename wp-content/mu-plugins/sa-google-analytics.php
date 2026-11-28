@@ -37,6 +37,7 @@ add_action('woocommerce_thankyou', static function ($order_id): void {
     echo '<script>window.SA_GA4_PURCHASE=' . wp_json_encode(sa_ga4_purchase_payload($order), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) . ';</script>';
 }, 30);
 add_action('wp_footer', static function (): void {
+    if (function_exists('sa_tracking_policy_page') && sa_tracking_policy_page()) { return; }
     $id = sa_ga4_id();
     if ($id === '' || !sa_ga4_allowed()) { return; }
     echo '<script>window.SA_GA4_ID=' . wp_json_encode($id) . ';</script>';
