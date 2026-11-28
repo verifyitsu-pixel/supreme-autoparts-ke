@@ -53,6 +53,7 @@ jobs:
           php tests/journey-sessions-regression.php
           php tests/ga4-payload-regression.php
           php tests/adsense-policy-preparation-regression.php
+          php tests/fitment-guide-claim-regression.php
           php tests/seo-virtual-route-regression.php
           php tests/returns-search-description-regression.php
           php tests/gallery-video-regression.php
