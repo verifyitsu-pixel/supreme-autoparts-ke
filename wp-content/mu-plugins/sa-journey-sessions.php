@@ -96,6 +96,7 @@ function sa_journey_order_meta($order): void {
 add_action('woocommerce_checkout_order_created','sa_journey_order_meta',21);
 add_action('woocommerce_store_api_checkout_order_processed','sa_journey_order_meta',21);
 add_action('wp_footer',static function(): void {
+    if (function_exists('sa_tracking_policy_page') && sa_tracking_policy_page()) { return; }
     if (!function_exists('sa_ga4_allowed') || !sa_ga4_allowed()) { return; }
     ?>
 <script>

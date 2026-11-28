@@ -23,6 +23,7 @@ const SA_CUST_ANALYTICS_VERSION = '1.0.0';
 /* ----------------------------------------------------------------------- */
 
 add_action('wp_footer', static function (): void {
+    if (function_exists('sa_tracking_policy_page') && sa_tracking_policy_page()) { return; }
     if (is_admin() || (function_exists('is_user_logged_in') && is_user_logged_in() && current_user_can('manage_options'))) {
         return;
     }
