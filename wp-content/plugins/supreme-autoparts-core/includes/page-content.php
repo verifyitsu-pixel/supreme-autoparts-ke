@@ -318,7 +318,7 @@ HTML,
         'fitment-guide' => [
             'title'   => 'Fitment Guide',
             'content' => <<<HTML
-<p>Wrong fitment is the #1 return driver. Spend two minutes here before you click buy — whether you run a <strong>Japanese</strong>, <strong>US</strong>, or <strong>UK</strong> car, an <strong>EV</strong>, a motorcycle, or a truck/SUV in <strong>Kenya</strong>.</p>
+<p>Check fitment before you order. Use this guide before you click buy — whether you run a <strong>Japanese</strong>, <strong>US</strong>, or <strong>UK</strong> car, an <strong>EV</strong>, a motorcycle, or a truck/SUV in <strong>Kenya</strong>.</p>
 <h2>Match these fields</h2>
 <ol>
 <li><strong>Year</strong> — cab/chassis changes mid-generation; do not assume “close enough.”</li>
@@ -375,6 +375,14 @@ HTML,
         ],
     ];
 }
+
+/** Remove an unsupported return-ranking claim from previously stored guide content. */
+add_filter('the_content', static function (string $content): string {
+    if (!is_page('fitment-guide') || !is_main_query() || !in_the_loop()) {
+        return $content;
+    }
+    return str_replace('Wrong fitment is the #1 return driver. Spend two minutes here', 'Check fitment before you order. Use this guide', $content);
+}, 21);
 
 /** Keep the approved refund timeframe visible on existing stored policy pages. */
 add_filter('the_content', static function (string $content): string {
