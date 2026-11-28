@@ -24,6 +24,9 @@ const SA_WHOP_PIXEL_BIZ_ID = 'biz_9VJcCdK7G30L63';
  * Print Whop pixel in <head> on public pages only.
  */
 add_action('wp_head', static function (): void {
+    if (function_exists('sa_tracking_policy_page') && sa_tracking_policy_page()) {
+        return;
+    }
     if (is_admin()) {
         return;
     }
