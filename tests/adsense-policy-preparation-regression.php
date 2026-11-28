@@ -36,3 +36,14 @@ foreach(['sa-analytics.php','sa-customer-analytics.php','sa-ga4-commerce.php','s
  $page='guides';check($guard()==='continued','hook retains guides: '.$file);
 }
 echo "PASS all six optional browser hooks exit on disclosure pages before other work\n";
+
+function is_feed(){return false;}
+require __DIR__.'/../wp-content/mu-plugins/supreme-meta-pixel.php';
+require __DIR__.'/../wp-content/mu-plugins/supreme-whop-pixel.php';
+foreach(['privacy-policy','cookie-policy'] as $page){
+ check(!sa_meta_pixel_should_inject(),'Meta policy guard');
+ foreach(['wp_head','wp_body_open','wp_footer'] as $hook){ob_start();foreach($actions[$hook]??[] as $fn)$fn();$out=ob_get_clean();check(!preg_match('~<script|<noscript|facebook|t\.whop\.tw~i',$out),'no pixel output on '.$page.' '.$hook);}
+}
+$page='guides';check(sa_meta_pixel_should_inject(),'Meta other routes retained');
+ob_start();foreach($actions['wp_head'] as $fn)$fn();$out=ob_get_clean();check(str_contains($out,'fbevents.js')&&str_contains($out,'t.whop.tw'),'other-route pixel behavior retained');
+echo "PASS Meta/Whop policy head/body/footer exclusions, other-route behavior retained\n";
