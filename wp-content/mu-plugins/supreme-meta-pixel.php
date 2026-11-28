@@ -19,6 +19,9 @@ const SA_META_PIXEL_ID = '1455607103130157';
 
 function sa_meta_pixel_should_inject(): bool
 {
+    if (function_exists('sa_tracking_policy_page') && sa_tracking_policy_page()) {
+        return false;
+    }
     if (is_admin()) {
         return false;
     }
